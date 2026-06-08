@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/gameplay/player/player_controller.gd" id="1_player_script"]
+
+[node name="Player" type="Node2D"]
+script = ExtResource("1_player_script")
+
+[node name="Body" type="Polygon2D" parent="."]
+color = Color(0.35, 0.8, 0.95, 1)
+polygon = PackedVector2Array(0, -12, 10, 8, -10, 8)
+
+[node name="Label" type="Label" parent="."]
+offset_left = -24.0
+offset_top = 12.0
+offset_right = 24.0
+offset_bottom = 36.0
+text = "Player"

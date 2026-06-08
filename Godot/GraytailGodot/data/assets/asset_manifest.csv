@@ -1,0 +1,12 @@
+asset_id,source_repo_path,godot_path,type,category,usage,import_preset,license_status,replacement_needed,linked_scene,linked_data,note
+icon.room.mine,,,,ui_icon,minimap mine icon,pixel_ui,unknown,true,,RoomDef.mine,internal placeholder only; replace before public release
+icon.room.chest,,,,ui_icon,minimap chest icon,pixel_ui,unknown,true,,RoomDef.chest,internal placeholder only; replace before public release
+icon.room.exit,,,,ui_icon,minimap exit icon,pixel_ui,unknown,true,,RoomDef.exit,internal placeholder only; replace before public release
+sprite.player.default,,,,sprite,player placeholder,pixel_sprite,unknown,true,,,internal placeholder only; replace before public release
+sfx.mine.trigger,,,,audio,mine trigger sfx,default_audio,unknown,true,,,internal placeholder only; replace before public release
+icon.room.spawn,,,,ui_icon,minimap spawn icon,pixel_ui,unknown,true,,RoomDef.spawn,internal placeholder only; replace before public release
+icon.room.event,,,,ui_icon,minimap event icon,pixel_ui,unknown,true,,RoomDef.event,internal placeholder only; replace before public release
+icon.room.monster,,,,ui_icon,minimap monster icon,pixel_ui,unknown,true,,RoomDef.monster,internal placeholder only; replace before public release
+icon.room.normal,,,,ui_icon,minimap normal room icon,pixel_ui,unknown,true,,RoomDef.normal,internal placeholder only; replace before public release
+icon.minimap.flag,,,,ui_icon,minimap flag marker,pixel_ui,unknown,true,,IntelMap.flag,internal placeholder only; replace before public release
+icon.minimap.player,,,,ui_icon,minimap player marker,pixel_ui,unknown,true,,RunContext.current_pos,internal placeholder only; replace before public release

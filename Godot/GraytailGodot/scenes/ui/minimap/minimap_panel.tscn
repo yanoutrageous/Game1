@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/minimap/minimap_panel.gd" id="1_minimap_script"]
+
+[node name="MiniMapPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 220.0
+offset_bottom = 220.0
+script = ExtResource("1_minimap_script")
+
+[node name="Grid" type="GridContainer" parent="."]
+layout_mode = 1
+columns = 5
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 212.0
+offset_bottom = 180.0
+
+[node name="PlaceholderLabel" type="Label" parent="."]
+layout_mode = 1
+offset_left = 8.0
+offset_top = 184.0
+offset_right = 212.0
+offset_bottom = 212.0
+text = "MiniMap"

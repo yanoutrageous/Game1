@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/gameplay/interactables/exit_beacon_placeholder.gd" id="1_exit_script"]
+
+[node name="ExitBeaconPlaceholder" type="Node2D"]
+script = ExtResource("1_exit_script")
+
+[node name="Body" type="Polygon2D" parent="."]
+color = Color(0.45, 0.95, 0.6, 1)
+polygon = PackedVector2Array(0, -16, 12, 0, 0, 16, -12, 0)
+
+[node name="Label" type="Label" parent="."]
+offset_left = -24.0
+offset_top = 18.0
+offset_right = 24.0
+offset_bottom = 42.0
+text = "Exit"
