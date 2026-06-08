@@ -1,47 +1,56 @@
 ﻿# ENGINEERING_STATUS
 
 ## Stage
-G2 Godot S1/S2 prototype foundation branch.
+
+G2.5 remote main audit, Lua baseline safe branch push, and Godot foundation handoff repair.
 
 ## Time
-2026-06-08 16:59:31 +08:00
+
+`2026-06-08 17:13:12 +08:00`
 
 ## Repository State
-- Current repository path: D:\AGAME1\_repo_cache\Game1_work
-- Current remote: https://github.com/yanoutrageous/Game1.git
-- Current branch: godot/prototype-foundation
-- Base commit: d53d117 G1: establish Lua prototype main baseline
-- Target commit: local G2 commit created by this stage; exact hash is in final execution output and git log -1 --oneline.
-- Push: blocked until remote state is known.
-- Push target: origin godot/prototype-foundation.
-- main modified by this stage: no.
-- Lua source directory modified: no.
-- Godot original directory modified: no.
+
+- Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
+- Current remote: `https://github.com/yanoutrageous/Game1.git`
+- Current working branch at update time: `godot/prototype-foundation`
+- Local Lua baseline commit: `d53d117af8c786014292c2981b7edfdaf11182ea`
+- Remote `main`: `8f7e3cb67642708e6a5245d19f722bbfdb357ebe`
+- Remote `lua-prototype-main`: `d53d117af8c786014292c2981b7edfdaf11182ea`
+- Remote `godot/prototype-foundation` before G2.5 repair commit: `2f2f4918f9715e711dcaaac3dea76732c8b62643`
+- Local Godot branch commit before G2.5 repair commit: `2f2f4918f9715e711dcaaac3dea76732c8b62643`
+- `main` modified or overwritten: no
+- Lua source directory modified: no
+- Godot original directory modified: no
+- Force push: no
+- Old `Game.git` push: no
+
+## Remote Main Audit
+
+Remote `main` was read using `git ls-remote --heads origin` and GitHub tree API. It differs from local Lua baseline and its visible tree contains only `README.md`; G2.5 keeps the non-overwrite strategy.
+
+## Lua Baseline Branch
+
+Local `main` commit `d53d117af8c786014292c2981b7edfdaf11182ea` was pushed as remote `lua-prototype-main` with normal push syntax `git push origin main:lua-prototype-main`. Remote `main` was not targeted.
+
+## Godot Foundation Branch
+
+The `godot/prototype-foundation` branch remains the branch for current Godot S1/S2 foundation. G2.5 repairs repository-copy validation scripts so they infer project root from their script location instead of requiring `D:\Godot\GraytailGodot`.
 
 ## Entrypoints
-- Lua prototype entry on main: scripts/main.lua
-- Godot project entry on this branch: Godot/GraytailGodot/project.godot
-- Godot main scene: res://scenes/main/main.tscn
-- Current Godot version: 4.6.3 stable console path D:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe
-- Current report path on this PC: D:\AGAME1\_codex_reports
+
+- Lua entry on Lua baseline: `scripts/main.lua`
+- Godot project entry on Godot branch: `Godot/GraytailGodot/project.godot`
+- Godot source copied into repository: `Godot/GraytailGodot`
+- Current Godot version reference: Godot 4.6.3 stable from the original PC setup
+- Current report path on this PC: `D:\AGAME1\_codex_reports`
+
+## Validation Results Before Commit
+
+- `validate_project_structure.ps1`: PASS from repository copy
+- `validate_s1_foundation.ps1`: PASS from repository copy
+- `validate_s2_rule_loop.ps1`: PASS from repository copy; external AGAME report/cache checks are optional via environment variables
+- `git remote -v`: origin is Game1 only
 
 ## Next Branch
-Future Lua parity work should start from godot/prototype-foundation and create godot/lua-parity-p0.
 
-## Post-Commit Validation Update - 2026-06-08 17:01:08 +08:00
-
-- Remote origin became reachable after the local G2 commit.
-- Remote branch state: efs/heads/main exists at 8f7e3cb67642708e6a5245d19f722bbfdb357ebe.
-- G1 main push remains blocked because remote main exists and content compatibility has not been confirmed.
-- Remote godot/prototype-foundation was not listed by git ls-remote --heads origin at this check.
-- Project validation scripts executed from the repository copy failed with project root mismatch: D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot.
-- The failure indicates the copied validation scripts still expect the original Godot project path; no code/tool fix was made in G2.
-
-## G2 Push Result - 2026-06-08 17:03:09 +08:00
-
-- Push precheck remote: https://github.com/yanoutrageous/Game1.git.
-- Remote main exists at 8f7e3cb67642708e6a5245d19f722bbfdb357ebe; local G1 main was not pushed.
-- Remote godot/prototype-foundation did not exist before push.
-- Normal push executed: git push origin godot/prototype-foundation.
-- Push result: success, new remote branch created.
-- Force push: no.
+Do not start Lua Parity P0 automatically. If authorized later, start from `godot/prototype-foundation` and create `godot/lua-parity-p0`.

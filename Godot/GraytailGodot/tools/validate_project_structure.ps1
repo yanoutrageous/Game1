@@ -1,12 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-$ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$ExpectedRoot = 'D:\Godot\GraytailGodot'
-
-if ($ProjectRoot -ne $ExpectedRoot) {
-    Write-Output "FAIL project root mismatch: $ProjectRoot"
-    exit 1
-}
+$ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
 
 $RequiredFiles = @(
     'project.godot',

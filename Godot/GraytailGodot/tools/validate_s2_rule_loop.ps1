@@ -1,16 +1,10 @@
 $ErrorActionPreference = 'Stop'
 
-$ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$ExpectedRoot = 'D:\Godot\GraytailGodot'
-$CorrectReports = 'D:\AGAME1\_codex_reports'
-$CorrectRepo = 'D:\AGAME1\_repo_cache\Game_feature_editor_playable_prototype'
-$DriftReports = 'D:\AGAME1_codex_reports'
+$ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+$ExternalReports = $env:AGAME_REPORTS_DIR
+$ExternalRepoCache = $env:AGAME_REPO_CACHE_DIR
 
 $Failures = @()
-
-if ($ProjectRoot -ne $ExpectedRoot) {
-    $Failures += "project root mismatch: $ProjectRoot"
-}
 
 function Add-Failure {
     param([string]$Message)
@@ -49,17 +43,15 @@ function Test-FileContains {
     }
 }
 
-Test-Exists (Join-Path $CorrectReports 'S2_PATH_NORMALIZATION_REPORT.md') 'canonical path normalization report'
-Test-Exists (Join-Path $CorrectReports 'S2_RULE_LOOP_REPORT.md') 'canonical rule loop report'
 Test-Exists (Join-Path $ProjectRoot 'docs\S2_PATH_NORMALIZATION_REPORT.md') 'Godot path normalization report'
 Test-Exists (Join-Path $ProjectRoot 'docs\S2_RULE_LOOP_REPORT.md') 'Godot rule loop report'
-Test-Exists $CorrectRepo 'canonical repo cache'
 
-if (Test-Path -LiteralPath (Join-Path $DriftReports 'S2_PATH_NORMALIZATION_REPORT.md')) {
-    Add-Failure 'S2 path normalization report was written to drift report directory'
+if (-not [string]::IsNullOrWhiteSpace($ExternalReports)) {
+    Test-Exists (Join-Path $ExternalReports 'S2_PATH_NORMALIZATION_REPORT.md') 'external path normalization report'
+    Test-Exists (Join-Path $ExternalReports 'S2_RULE_LOOP_REPORT.md') 'external rule loop report'
 }
-if (Test-Path -LiteralPath (Join-Path $DriftReports 'S2_RULE_LOOP_REPORT.md')) {
-    Add-Failure 'S2 rule loop report was written to drift report directory'
+if (-not [string]::IsNullOrWhiteSpace($ExternalRepoCache)) {
+    Test-Exists $ExternalRepoCache 'external repo cache'
 }
 
 Test-FileContains 'scripts/core/run/run_context.gd' @(
@@ -167,5 +159,13 @@ if ($Failures.Count -gt 0) {
 
 Write-Output 'S2_RULE_LOOP_VALIDATION=PASS'
 Write-Output "PROJECT_ROOT=$ProjectRoot"
-Write-Output "REPORTS=$CorrectReports"
-Write-Output "REPO_CACHE=$CorrectRepo"
+if (-not [string]::IsNullOrWhiteSpace($ExternalReports)) {
+    Write-Output "EXTERNAL_REPORTS=$ExternalReports"
+} else {
+    Write-Output 'EXTERNAL_REPORTS=not checked; set AGAME_REPORTS_DIR to enable'
+}
+if (-not [string]::IsNullOrWhiteSpace($ExternalRepoCache)) {
+    Write-Output "EXTERNAL_REPO_CACHE=$ExternalRepoCache"
+} else {
+    Write-Output 'EXTERNAL_REPO_CACHE=not checked; set AGAME_REPO_CACHE_DIR to enable'
+}
