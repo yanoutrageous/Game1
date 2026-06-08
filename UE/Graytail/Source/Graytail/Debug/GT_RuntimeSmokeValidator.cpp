@@ -1,0 +1,1545 @@
+#include "Debug/GT_RuntimeSmokeValidator.h"
+
+#include "Core/GT_CommandBus.h"
+#include "Core/GT_EventBus.h"
+#include "Core/GT_QueryFacade.h"
+#include "Core/GT_RunContext.h"
+#include "Core/GT_RunSubsystem.h"
+#include "Debug/GT_DebugSubsystem.h"
+#include "Debug/GT_DebugTypes.h"
+#include "UI/ViewModels/GT_MiniMapViewModel.h"
+
+namespace
+{
+	const FName GTCheck_RunSubsystemValid(TEXT("RunSubsystemValid"));
+	const FName GTCheck_PlayerExists(TEXT("PlayerExists"));
+	const FName GTCheck_InitialPlayerPosition(TEXT("InitialPlayerPosition"));
+	const FName GTCheck_InitialIntelCell(TEXT("InitialIntelCell"));
+	const FName GTCheck_LegalMoveAccepted(TEXT("LegalMoveAccepted"));
+	const FName GTCheck_MovedPlayerPosition(TEXT("MovedPlayerPosition"));
+	const FName GTCheck_MovedIntelCell(TEXT("MovedIntelCell"));
+	const FName GTCheck_RoomNotResolvedBeforeMove(TEXT("RoomNotResolvedBeforeMove"));
+	const FName GTCheck_MoveResolvesTargetRoom(TEXT("MoveResolvesTargetRoom"));
+	const FName GTCheck_MoveTriggersTargetRoom(TEXT("MoveTriggersTargetRoom"));
+	const FName GTCheck_RoomEnteredEvent(TEXT("RoomEnteredEvent"));
+	const FName GTCheck_RoomResolvedEvent(TEXT("RoomResolvedEvent"));
+	const FName GTCheck_InvalidMoveDoesNotResolveRoom(TEXT("InvalidMoveDoesNotResolveRoom"));
+	const FName GTCheck_OutOfBoundsMoveRejected(TEXT("OutOfBoundsMoveRejected"));
+	const FName GTCheck_RejectedMovePreservesPosition(TEXT("RejectedMovePreservesPosition"));
+	const FName GTCheck_EventsRecorded(TEXT("EventsRecorded"));
+	const FName GTCheck_QueryFacadePlayerPosition(TEXT("QueryFacadePlayerPosition"));
+	const FName GTCheck_TruthMapSize(TEXT("TruthMapSize"));
+	const FName GTCheck_TruthMapCellCount(TEXT("TruthMapCellCount"));
+	const FName GTCheck_TruthCellOrigin(TEXT("TruthCellOrigin"));
+	const FName GTCheck_TruthCellCorner(TEXT("TruthCellCorner"));
+	const FName GTCheck_Neighbors4Corner(TEXT("Neighbors4Corner"));
+	const FName GTCheck_Neighbors4Center(TEXT("Neighbors4Center"));
+	const FName GTCheck_Neighbors8Corner(TEXT("Neighbors8Corner"));
+	const FName GTCheck_Neighbors8Center(TEXT("Neighbors8Center"));
+	const FName GTCheck_ExitCellDebug(TEXT("ExitCellDebug"));
+	const FName GTCheck_MineCellDebug(TEXT("MineCellDebug"));
+	const FName GTCheck_AdjacentMineCountNearMine(TEXT("AdjacentMineCountNearMine"));
+	const FName GTCheck_AdjacentMineCountFarFromMine(TEXT("AdjacentMineCountFarFromMine"));
+	const FName GTCheck_AdjacentMineCountMineCellSelfExcluded(TEXT("AdjacentMineCountMineCellSelfExcluded"));
+	const FName GTCheck_AdjacentMineCountInvalidCoord(TEXT("AdjacentMineCountInvalidCoord"));
+	const FName GTCheck_ScanCommandAccepted(TEXT("ScanCommandAccepted"));
+	const FName GTCheck_ScannedIntelCellMarked(TEXT("ScannedIntelCellMarked"));
+	const FName GTCheck_ScannedDisplayedNumber(TEXT("ScannedDisplayedNumber"));
+	const FName GTCheck_CellScannedEvent(TEXT("CellScannedEvent"));
+	const FName GTCheck_ScanDoesNotResolveRoom(TEXT("ScanDoesNotResolveRoom"));
+	const FName GTCheck_InvalidScanRejected(TEXT("InvalidScanRejected"));
+	const FName GTCheck_InvalidScanDoesNotWriteIntel(TEXT("InvalidScanDoesNotWriteIntel"));
+	const FName GTCheck_InvalidScanCommandFailedEvent(TEXT("InvalidScanCommandFailedEvent"));
+	const FName GTCheck_MiniMapViewModelBuild(TEXT("MiniMapViewModelBuild"));
+	const FName GTCheck_MiniMapViewModelSize(TEXT("MiniMapViewModelSize"));
+	const FName GTCheck_MiniMapViewModelScannedCell(TEXT("MiniMapViewModelScannedCell"));
+	const FName GTCheck_MiniMapViewModelDisplayedNumber(TEXT("MiniMapViewModelDisplayedNumber"));
+	const FName GTCheck_MiniMapViewModelCellVisibleExplored(TEXT("MiniMapViewModelCellVisibleExplored"));
+	const FName GTCheck_MiniMapViewModelReliability(TEXT("MiniMapViewModelReliability"));
+	const FName GTCheck_NormalRoomResolveOutcome(TEXT("NormalRoomResolveOutcome"));
+	const FName GTCheck_NormalRoomEvents(TEXT("NormalRoomEvents"));
+	const FName GTCheck_MineRoomResolveOutcome(TEXT("MineRoomResolveOutcome"));
+	const FName GTCheck_MineEncounteredEvent(TEXT("MineEncounteredEvent"));
+	const FName GTCheck_MineDoesNotFailRunYet(TEXT("MineDoesNotFailRunYet"));
+	const FName GTCheck_ExitRoomResolveOutcome(TEXT("ExitRoomResolveOutcome"));
+	const FName GTCheck_ExitFoundEvent(TEXT("ExitFoundEvent"));
+	const FName GTCheck_ExitDoesNotWinRunYet(TEXT("ExitDoesNotWinRunYet"));
+	const FName GTCheck_ExtractRejectedAwayFromExit(TEXT("ExtractRejectedAwayFromExit"));
+	const FName GTCheck_ExtractAwayFromExitCommandFailed(TEXT("ExtractAwayFromExitCommandFailed"));
+	const FName GTCheck_MoveToExitAccepted(TEXT("MoveToExitAccepted"));
+	const FName GTCheck_ExitFoundBeforeExtract(TEXT("ExitFoundBeforeExtract"));
+	const FName GTCheck_RunStillActiveAtExitBeforeExtract(TEXT("RunStillActiveAtExitBeforeExtract"));
+	const FName GTCheck_ExtractAcceptedAtExit(TEXT("ExtractAcceptedAtExit"));
+	const FName GTCheck_RunSucceededAfterExtract(TEXT("RunSucceededAfterExtract"));
+	const FName GTCheck_RunSucceededEvent(TEXT("RunSucceededEvent"));
+	const FName GTCheck_MoveRejectedAfterRunSucceeded(TEXT("MoveRejectedAfterRunSucceeded"));
+	const FName GTCheck_ScanRejectedAfterRunSucceeded(TEXT("ScanRejectedAfterRunSucceeded"));
+	const FName GTCheck_ExtractRejectedAfterRunSucceeded(TEXT("ExtractRejectedAfterRunSucceeded"));
+	const FName GTCheck_ScanDoesNotTriggerRoomResolver(TEXT("ScanDoesNotTriggerRoomResolver"));
+	const FName GTCheck_RunStateAfterStart(TEXT("RunStateAfterStart"));
+	const FName GTCheck_MineMoveAccepted(TEXT("MineMoveAccepted"));
+	const FName GTCheck_MineEncounteredBeforeFail(TEXT("MineEncounteredBeforeFail"));
+	const FName GTCheck_RunFailedAfterMine(TEXT("RunFailedAfterMine"));
+	const FName GTCheck_RunFailedEvent(TEXT("RunFailedEvent"));
+	const FName GTCheck_MoveRejectedAfterRunFailed(TEXT("MoveRejectedAfterRunFailed"));
+	const FName GTCheck_ScanRejectedAfterRunFailed(TEXT("ScanRejectedAfterRunFailed"));
+	const FName GTCheck_PositionPreservedAfterFailedMove(TEXT("PositionPreservedAfterFailedMove"));
+	const FName GTCheck_IntelPreservedAfterFailedScan(TEXT("IntelPreservedAfterFailedScan"));
+	const FName GTCheck_ScenarioFailureStartRun(TEXT("ScenarioFailureStartRun"));
+	const FName GTCheck_ScenarioFailureInitialPosition(TEXT("ScenarioFailureInitialPosition"));
+	const FName GTCheck_ScenarioFailureScanBeforeMine(TEXT("ScenarioFailureScanBeforeMine"));
+	const FName GTCheck_ScenarioFailureMoveToMinePath(TEXT("ScenarioFailureMoveToMinePath"));
+	const FName GTCheck_ScenarioFailureMineEncountered(TEXT("ScenarioFailureMineEncountered"));
+	const FName GTCheck_ScenarioFailureRunFailed(TEXT("ScenarioFailureRunFailed"));
+	const FName GTCheck_ScenarioFailureRunFailedEvent(TEXT("ScenarioFailureRunFailedEvent"));
+	const FName GTCheck_ScenarioFailurePostFailMoveRejected(TEXT("ScenarioFailurePostFailMoveRejected"));
+	const FName GTCheck_ScenarioFailurePostFailScanRejected(TEXT("ScenarioFailurePostFailScanRejected"));
+	const FName GTCheck_ScenarioFailurePostFailExtractRejected(TEXT("ScenarioFailurePostFailExtractRejected"));
+	const FName GTCheck_ScenarioSuccessStartRun(TEXT("ScenarioSuccessStartRun"));
+	const FName GTCheck_ScenarioSuccessInitialPosition(TEXT("ScenarioSuccessInitialPosition"));
+	const FName GTCheck_ScenarioSuccessScanBeforeExit(TEXT("ScenarioSuccessScanBeforeExit"));
+	const FName GTCheck_ScenarioSuccessMoveToExitPath(TEXT("ScenarioSuccessMoveToExitPath"));
+	const FName GTCheck_ScenarioSuccessExitFound(TEXT("ScenarioSuccessExitFound"));
+	const FName GTCheck_ScenarioSuccessStillRunningAtExit(TEXT("ScenarioSuccessStillRunningAtExit"));
+	const FName GTCheck_ScenarioSuccessExtractAccepted(TEXT("ScenarioSuccessExtractAccepted"));
+	const FName GTCheck_ScenarioSuccessRunSucceeded(TEXT("ScenarioSuccessRunSucceeded"));
+	const FName GTCheck_ScenarioSuccessRunSucceededEvent(TEXT("ScenarioSuccessRunSucceededEvent"));
+	const FName GTCheck_ScenarioSuccessPostSuccessMoveRejected(TEXT("ScenarioSuccessPostSuccessMoveRejected"));
+	const FName GTCheck_ScenarioSuccessPostSuccessScanRejected(TEXT("ScenarioSuccessPostSuccessScanRejected"));
+	const FName GTCheck_ScenarioSuccessPostSuccessExtractRejected(TEXT("ScenarioSuccessPostSuccessExtractRejected"));
+	const FName GTCheck_DebugStartNewRunAccepted(TEXT("DebugStartNewRunAccepted"));
+	const FName GTCheck_DebugSnapshotAfterStart(TEXT("DebugSnapshotAfterStart"));
+	const FName GTCheck_DebugMoveAccepted(TEXT("DebugMoveAccepted"));
+	const FName GTCheck_DebugSnapshotAfterMove(TEXT("DebugSnapshotAfterMove"));
+	const FName GTCheck_DebugScanAccepted(TEXT("DebugScanAccepted"));
+	const FName GTCheck_DebugMiniMapAfterScan(TEXT("DebugMiniMapAfterScan"));
+	const FName GTCheck_DebugExtractRejectedAwayFromExit(TEXT("DebugExtractRejectedAwayFromExit"));
+	const FName GTCheck_DebugMoveToExitPathAccepted(TEXT("DebugMoveToExitPathAccepted"));
+	const FName GTCheck_DebugExtractAcceptedAtExit(TEXT("DebugExtractAcceptedAtExit"));
+	const FName GTCheck_DebugSnapshotAfterExtract(TEXT("DebugSnapshotAfterExtract"));
+	const FName GTCheck_DebugMoveRejectedAfterSuccess(TEXT("DebugMoveRejectedAfterSuccess"));
+	const FName GTCheck_DebugEventSummaryAvailable(TEXT("DebugEventSummaryAvailable"));
+
+	const FName GTCommandType_Move(TEXT("Move"));
+	const FName GTCommandType_Scan(TEXT("Scan"));
+	const FName GTCommandType_Extract(TEXT("Extract"));
+	const FName GTEventType_ActorMoved(TEXT("ActorMoved"));
+	const FName GTEventType_RoomEntered(TEXT("RoomEntered"));
+	const FName GTEventType_RoomResolved(TEXT("RoomResolved"));
+	const FName GTEventType_MineEncountered(TEXT("MineEncountered"));
+	const FName GTEventType_ExitFound(TEXT("ExitFound"));
+	const FName GTEventType_RunFailed(TEXT("RunFailed"));
+	const FName GTEventType_RunSucceeded(TEXT("RunSucceeded"));
+	const FName GTEventType_CellScanned(TEXT("CellScanned"));
+	const FName GTEventType_CommandFailed(TEXT("CommandFailed"));
+	const FName GTActorId_Player(TEXT("Player"));
+}
+
+void UGT_RuntimeSmokeValidator::Initialize(UGT_RunSubsystem* InRunSubsystem)
+{
+	RunSubsystem = InRunSubsystem;
+}
+
+void UGT_RuntimeSmokeValidator::SetDebugSubsystem(UGT_DebugSubsystem* InDebugSubsystem)
+{
+	DebugSubsystem = InDebugSubsystem;
+}
+
+bool UGT_RuntimeSmokeValidator::RunMinimalMovementSmokeTest(TArray<FGT_RuntimeSmokeCheckResult>& OutResults)
+{
+	OutResults.Reset();
+
+	if (!IsValid(RunSubsystem))
+	{
+		AddCheck(OutResults, GTCheck_RunSubsystemValid, false, TEXT("RunSubsystem is not valid."));
+		return false;
+	}
+
+	AddCheck(OutResults, GTCheck_RunSubsystemValid, true, TEXT("RunSubsystem is valid."));
+
+	RunSubsystem->StartNewRun(12345, 10, 10);
+
+	UGT_QueryFacade* QueryFacade = RunSubsystem->GetQueryFacade();
+	const UGT_RunContext* RunContext = RunSubsystem->GetCurrentRunContext();
+	const FGT_TruthMap* TruthMap = RunContext ? &RunContext->GetTruthMapForDebugOnly() : nullptr;
+	UGT_EventBus* EventBus = RunSubsystem->GetEventBus();
+	if (EventBus)
+	{
+		EventBus->ClearEventHistory();
+	}
+
+	const bool bRunStateAfterStartOk = QueryFacade
+		&& QueryFacade->GetRunState() == EGT_RunState::Running
+		&& QueryFacade->IsRunActive();
+	AddCheck(
+		OutResults,
+		GTCheck_RunStateAfterStart,
+		bRunStateAfterStartOk,
+		FString::Printf(TEXT("RunState after StartNewRun is %d."), QueryFacade ? static_cast<int32>(QueryFacade->GetRunState()) : static_cast<int32>(EGT_RunState::NotStarted)));
+
+	TArray<FGT_ActorRuntimeState> ActorStates;
+	const bool bGotActors = QueryFacade && QueryFacade->GetActorStates(ActorStates);
+	const bool bPlayerExists = bGotActors && ActorStates.ContainsByPredicate([](const FGT_ActorRuntimeState& ActorState)
+	{
+		return ActorState.ActorId.ToName() == GTActorId_Player;
+	});
+	AddCheck(OutResults, GTCheck_PlayerExists, bPlayerExists, bPlayerExists ? TEXT("Player actor exists.") : TEXT("Player actor was not found."));
+
+	int32 PlayerX = INDEX_NONE;
+	int32 PlayerY = INDEX_NONE;
+	const bool bGotInitialPosition = QueryFacade && QueryFacade->TryGetPlayerPosition(PlayerX, PlayerY);
+	const bool bInitialPositionOk = bGotInitialPosition && PlayerX == 0 && PlayerY == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_InitialPlayerPosition,
+		bInitialPositionOk,
+		FString::Printf(TEXT("Initial player position is (%d,%d)."), PlayerX, PlayerY));
+
+	const bool bInitialIntelOk = QueryFacade
+		&& QueryFacade->IsIntelCellVisible(0, 0)
+		&& QueryFacade->IsIntelCellExplored(0, 0);
+	AddCheck(OutResults, GTCheck_InitialIntelCell, bInitialIntelOk, bInitialIntelOk ? TEXT("Initial cell is visible and explored.") : TEXT("Initial cell is not visible/explored."));
+
+	const bool bTruthMapSizeOk = TruthMap && TruthMap->Width == 10 && TruthMap->Height == 10;
+	AddCheck(
+		OutResults,
+		GTCheck_TruthMapSize,
+		bTruthMapSizeOk,
+		FString::Printf(TEXT("TruthMap size is %dx%d."), TruthMap ? TruthMap->Width : 0, TruthMap ? TruthMap->Height : 0));
+
+	const int32 TruthCellCount = TruthMap ? TruthMap->Cells.Num() : 0;
+	const bool bTruthMapCellCountOk = TruthCellCount == 100;
+	AddCheck(
+		OutResults,
+		GTCheck_TruthMapCellCount,
+		bTruthMapCellCountOk,
+		FString::Printf(TEXT("TruthMap cell count is %d."), TruthCellCount));
+
+	FGT_TruthCell TruthCell;
+	const bool bTruthCellOriginOk = QueryFacade
+		&& QueryFacade->GetTruthCellDebugOnly(0, 0, TruthCell)
+		&& TruthCell.X == 0
+		&& TruthCell.Y == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_TruthCellOrigin,
+		bTruthCellOriginOk,
+		FString::Printf(TEXT("Truth origin cell is (%d,%d)."), TruthCell.X, TruthCell.Y));
+
+	TruthCell = FGT_TruthCell();
+	const bool bTruthCellCornerOk = QueryFacade
+		&& QueryFacade->GetTruthCellDebugOnly(9, 9, TruthCell)
+		&& TruthCell.X == 9
+		&& TruthCell.Y == 9;
+	AddCheck(
+		OutResults,
+		GTCheck_TruthCellCorner,
+		bTruthCellCornerOk,
+		FString::Printf(TEXT("Truth corner cell is (%d,%d)."), TruthCell.X, TruthCell.Y));
+
+	TArray<FIntPoint> AdjacentCoords;
+	const bool bNeighbors4CornerOk = QueryFacade
+		&& QueryFacade->GetTruthAdjacentCoords4DebugOnly(0, 0, AdjacentCoords)
+		&& AdjacentCoords.Num() == 2;
+	AddCheck(
+		OutResults,
+		GTCheck_Neighbors4Corner,
+		bNeighbors4CornerOk,
+		FString::Printf(TEXT("4-neighbor count at (0,0) is %d."), AdjacentCoords.Num()));
+
+	AdjacentCoords.Reset();
+	const bool bNeighbors4CenterOk = QueryFacade
+		&& QueryFacade->GetTruthAdjacentCoords4DebugOnly(1, 1, AdjacentCoords)
+		&& AdjacentCoords.Num() == 4;
+	AddCheck(
+		OutResults,
+		GTCheck_Neighbors4Center,
+		bNeighbors4CenterOk,
+		FString::Printf(TEXT("4-neighbor count at (1,1) is %d."), AdjacentCoords.Num()));
+
+	AdjacentCoords.Reset();
+	const bool bNeighbors8CornerOk = QueryFacade
+		&& QueryFacade->GetTruthAdjacentCoords8DebugOnly(0, 0, AdjacentCoords)
+		&& AdjacentCoords.Num() == 3;
+	AddCheck(
+		OutResults,
+		GTCheck_Neighbors8Corner,
+		bNeighbors8CornerOk,
+		FString::Printf(TEXT("8-neighbor count at (0,0) is %d."), AdjacentCoords.Num()));
+
+	AdjacentCoords.Reset();
+	const bool bNeighbors8CenterOk = QueryFacade
+		&& QueryFacade->GetTruthAdjacentCoords8DebugOnly(1, 1, AdjacentCoords)
+		&& AdjacentCoords.Num() == 8;
+	AddCheck(
+		OutResults,
+		GTCheck_Neighbors8Center,
+		bNeighbors8CenterOk,
+		FString::Printf(TEXT("8-neighbor count at (1,1) is %d."), AdjacentCoords.Num()));
+
+	const bool bExitCellDebugOk = QueryFacade && QueryFacade->IsTruthExitDebugOnly(9, 9);
+	AddCheck(OutResults, GTCheck_ExitCellDebug, bExitCellDebugOk, bExitCellDebugOk ? TEXT("Truth cell (9,9) is exit.") : TEXT("Truth cell (9,9) is not exit."));
+
+	const bool bMineCellDebugOk = QueryFacade && QueryFacade->IsTruthMineDebugOnly(2, 2);
+	AddCheck(OutResults, GTCheck_MineCellDebug, bMineCellDebugOk, bMineCellDebugOk ? TEXT("Truth cell (2,2) is mine.") : TEXT("Truth cell (2,2) is not mine."));
+
+	int32 AdjacentMineCount = INDEX_NONE;
+	const bool bAdjacentMineCountNearMineReturned = QueryFacade && QueryFacade->CountAdjacentMinesDebugOnly(1, 1, AdjacentMineCount);
+	const bool bAdjacentMineCountNearMineOk = bAdjacentMineCountNearMineReturned && AdjacentMineCount == 1;
+	AddCheck(
+		OutResults,
+		GTCheck_AdjacentMineCountNearMine,
+		bAdjacentMineCountNearMineOk,
+		FString::Printf(TEXT("Adjacent mine count at (1,1) is %d."), AdjacentMineCount));
+
+	AdjacentMineCount = INDEX_NONE;
+	const bool bAdjacentMineCountFarReturned = QueryFacade && QueryFacade->CountAdjacentMinesDebugOnly(0, 0, AdjacentMineCount);
+	const bool bAdjacentMineCountFarOk = bAdjacentMineCountFarReturned && AdjacentMineCount == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_AdjacentMineCountFarFromMine,
+		bAdjacentMineCountFarOk,
+		FString::Printf(TEXT("Adjacent mine count at (0,0) is %d."), AdjacentMineCount));
+
+	AdjacentMineCount = INDEX_NONE;
+	const bool bAdjacentMineCountSelfReturned = QueryFacade && QueryFacade->CountAdjacentMinesDebugOnly(2, 2, AdjacentMineCount);
+	const bool bAdjacentMineCountSelfOk = bAdjacentMineCountSelfReturned && AdjacentMineCount == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_AdjacentMineCountMineCellSelfExcluded,
+		bAdjacentMineCountSelfOk,
+		FString::Printf(TEXT("Adjacent mine count at mine cell (2,2) is %d."), AdjacentMineCount));
+
+	AdjacentMineCount = INDEX_NONE;
+	const bool bAdjacentMineCountInvalidReturned = QueryFacade && QueryFacade->CountAdjacentMinesDebugOnly(-1, 0, AdjacentMineCount);
+	const bool bAdjacentMineCountInvalidOk = !bAdjacentMineCountInvalidReturned && AdjacentMineCount == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_AdjacentMineCountInvalidCoord,
+		bAdjacentMineCountInvalidOk,
+		FString::Printf(TEXT("Invalid adjacent mine count query returned %s with count %d."), bAdjacentMineCountInvalidReturned ? TEXT("true") : TEXT("false"), AdjacentMineCount));
+
+	FGT_Command ScanCommand;
+	ScanCommand.CommandType = GTCommandType_Scan;
+	ScanCommand.SourceActorId = GTActorId_Player;
+	ScanCommand.TargetActorId = GTActorId_Player;
+	ScanCommand.TargetX = 1;
+	ScanCommand.TargetY = 1;
+
+	const int32 RoomEnteredCountBeforeScan = EventBus ? EventBus->CountEventsOfType(GTEventType_RoomEntered) : 0;
+	const int32 RoomResolvedCountBeforeScan = EventBus ? EventBus->CountEventsOfType(GTEventType_RoomResolved) : 0;
+	const int32 MineEncounteredCountBeforeScan = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+	const int32 ExitFoundCountBeforeScan = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+	const bool bScanAccepted = RunSubsystem->SubmitCommand(ScanCommand);
+	AddCheck(OutResults, GTCheck_ScanCommandAccepted, bScanAccepted, bScanAccepted ? TEXT("Scan command at (1,1) accepted.") : TEXT("Scan command at (1,1) was rejected."));
+
+	FGT_MiniMapCellViewData ScannedCell;
+	const bool bGotScannedCell = QueryFacade && QueryFacade->GetIntelCellViewData(1, 1, ScannedCell);
+	const bool bScannedIntelCellMarked = bGotScannedCell
+		&& ScannedCell.bScanned
+		&& ScannedCell.bVisible
+		&& ScannedCell.bExplored;
+	AddCheck(
+		OutResults,
+		GTCheck_ScannedIntelCellMarked,
+		bScannedIntelCellMarked,
+		FString::Printf(TEXT("Scanned intel cell flags are scanned=%s visible=%s explored=%s."),
+			ScannedCell.bScanned ? TEXT("true") : TEXT("false"),
+			ScannedCell.bVisible ? TEXT("true") : TEXT("false"),
+			ScannedCell.bExplored ? TEXT("true") : TEXT("false")));
+
+	const bool bScannedDisplayedNumberOk = bGotScannedCell && ScannedCell.DisplayedNumber == 1;
+	AddCheck(
+		OutResults,
+		GTCheck_ScannedDisplayedNumber,
+		bScannedDisplayedNumberOk,
+		FString::Printf(TEXT("Scanned displayed number at (1,1) is %d."), ScannedCell.DisplayedNumber));
+
+	const bool bCellScannedEventOk = EventBus && EventBus->HasEventOfType(GTEventType_CellScanned);
+	AddCheck(OutResults, GTCheck_CellScannedEvent, bCellScannedEventOk, bCellScannedEventOk ? TEXT("CellScanned event recorded.") : TEXT("CellScanned event was not recorded."));
+
+	const int32 RoomEnteredCountAfterScan = EventBus ? EventBus->CountEventsOfType(GTEventType_RoomEntered) : 0;
+	const int32 RoomResolvedCountAfterScan = EventBus ? EventBus->CountEventsOfType(GTEventType_RoomResolved) : 0;
+	const int32 MineEncounteredCountAfterScan = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+	const int32 ExitFoundCountAfterScan = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+	const bool bScanDoesNotTriggerRoomResolverOk = RoomEnteredCountAfterScan == RoomEnteredCountBeforeScan
+		&& RoomResolvedCountAfterScan == RoomResolvedCountBeforeScan
+		&& MineEncounteredCountAfterScan == MineEncounteredCountBeforeScan
+		&& ExitFoundCountAfterScan == ExitFoundCountBeforeScan;
+	AddCheck(
+		OutResults,
+		GTCheck_ScanDoesNotTriggerRoomResolver,
+		bScanDoesNotTriggerRoomResolverOk,
+		FString::Printf(TEXT("Resolver event counts after scan: entered %d->%d, resolved %d->%d, mine %d->%d, exit %d->%d."),
+			RoomEnteredCountBeforeScan,
+			RoomEnteredCountAfterScan,
+			RoomResolvedCountBeforeScan,
+			RoomResolvedCountAfterScan,
+			MineEncounteredCountBeforeScan,
+			MineEncounteredCountAfterScan,
+			ExitFoundCountBeforeScan,
+			ExitFoundCountAfterScan));
+
+	FGT_TruthCell ScannedTruthCell;
+	const bool bGotScannedTruthCell = QueryFacade && QueryFacade->GetTruthCellDebugOnly(1, 1, ScannedTruthCell);
+	const bool bScanDoesNotResolveRoomOk = bGotScannedTruthCell
+		&& !ScannedTruthCell.bResolved
+		&& !ScannedTruthCell.bTriggered;
+	AddCheck(
+		OutResults,
+		GTCheck_ScanDoesNotResolveRoom,
+		bScanDoesNotResolveRoomOk,
+		FString::Printf(TEXT("Scanned truth cell (1,1) resolved=%s triggered=%s."),
+			ScannedTruthCell.bResolved ? TEXT("true") : TEXT("false"),
+			ScannedTruthCell.bTriggered ? TEXT("true") : TEXT("false")));
+
+	UGT_MiniMapViewModel* MiniMapViewModel = NewObject<UGT_MiniMapViewModel>(this);
+	const bool bMiniMapViewModelBuildOk = MiniMapViewModel && RunContext;
+	if (bMiniMapViewModelBuildOk)
+	{
+		MiniMapViewModel->BuildFromIntelMap(RunContext->GetPlayerIntelMap());
+	}
+	AddCheck(OutResults, GTCheck_MiniMapViewModelBuild, bMiniMapViewModelBuildOk, bMiniMapViewModelBuildOk ? TEXT("MiniMapViewModel built from IntelMap.") : TEXT("MiniMapViewModel could not be built."));
+
+	TArray<FGT_MiniMapCellViewData> MiniMapCells;
+	int32 MiniMapWidth = 0;
+	int32 MiniMapHeight = 0;
+	if (MiniMapViewModel)
+	{
+		MiniMapCells = MiniMapViewModel->GetCells();
+		MiniMapWidth = MiniMapViewModel->GetWidth();
+		MiniMapHeight = MiniMapViewModel->GetHeight();
+	}
+
+	const bool bMiniMapViewModelSizeOk = MiniMapWidth == 10
+		&& MiniMapHeight == 10
+		&& MiniMapCells.Num() == 100;
+	AddCheck(
+		OutResults,
+		GTCheck_MiniMapViewModelSize,
+		bMiniMapViewModelSizeOk,
+		FString::Printf(TEXT("MiniMapViewModel size is %dx%d with %d cells."), MiniMapWidth, MiniMapHeight, MiniMapCells.Num()));
+
+	FGT_MiniMapCellViewData MiniMapScannedCell;
+	bool bFoundMiniMapScannedCell = false;
+	for (const FGT_MiniMapCellViewData& Cell : MiniMapCells)
+	{
+		if (Cell.X == 1 && Cell.Y == 1)
+		{
+			MiniMapScannedCell = Cell;
+			bFoundMiniMapScannedCell = true;
+			break;
+		}
+	}
+
+	const bool bMiniMapViewModelScannedCellOk = bFoundMiniMapScannedCell && MiniMapScannedCell.bScanned;
+	AddCheck(
+		OutResults,
+		GTCheck_MiniMapViewModelScannedCell,
+		bMiniMapViewModelScannedCellOk,
+		FString::Printf(TEXT("MiniMapViewModel cell (1,1) scanned=%s."), MiniMapScannedCell.bScanned ? TEXT("true") : TEXT("false")));
+
+	const bool bMiniMapViewModelDisplayedNumberOk = bFoundMiniMapScannedCell && MiniMapScannedCell.DisplayedNumber == 1;
+	AddCheck(
+		OutResults,
+		GTCheck_MiniMapViewModelDisplayedNumber,
+		bMiniMapViewModelDisplayedNumberOk,
+		FString::Printf(TEXT("MiniMapViewModel cell (1,1) displayed number is %d."), MiniMapScannedCell.DisplayedNumber));
+
+	const bool bMiniMapViewModelCellVisibleExploredOk = bFoundMiniMapScannedCell
+		&& MiniMapScannedCell.bVisible
+		&& MiniMapScannedCell.bExplored;
+	AddCheck(
+		OutResults,
+		GTCheck_MiniMapViewModelCellVisibleExplored,
+		bMiniMapViewModelCellVisibleExploredOk,
+		FString::Printf(TEXT("MiniMapViewModel cell (1,1) visible=%s explored=%s."),
+			MiniMapScannedCell.bVisible ? TEXT("true") : TEXT("false"),
+			MiniMapScannedCell.bExplored ? TEXT("true") : TEXT("false")));
+
+	const bool bMiniMapViewModelReliabilityOk = bFoundMiniMapScannedCell
+		&& MiniMapScannedCell.ReliabilityState == EGT_IntelReliabilityState::Accurate;
+	AddCheck(
+		OutResults,
+		GTCheck_MiniMapViewModelReliability,
+		bMiniMapViewModelReliabilityOk,
+		FString::Printf(TEXT("MiniMapViewModel cell (1,1) reliability is %d."), static_cast<int32>(MiniMapScannedCell.ReliabilityState)));
+
+	const int32 CommandFailedCountBeforeInvalidScan = EventBus ? EventBus->CountEventsOfType(GTEventType_CommandFailed) : 0;
+
+	FGT_Command InvalidScanCommand;
+	InvalidScanCommand.CommandType = GTCommandType_Scan;
+	InvalidScanCommand.SourceActorId = GTActorId_Player;
+	InvalidScanCommand.TargetActorId = GTActorId_Player;
+	InvalidScanCommand.TargetX = -1;
+	InvalidScanCommand.TargetY = 0;
+
+	const bool bInvalidScanAccepted = RunSubsystem->SubmitCommand(InvalidScanCommand);
+	AddCheck(OutResults, GTCheck_InvalidScanRejected, !bInvalidScanAccepted, !bInvalidScanAccepted ? TEXT("Invalid scan rejected.") : TEXT("Invalid scan was accepted."));
+
+	FGT_MiniMapCellViewData UntouchedCell;
+	const bool bGotUntouchedCell = QueryFacade && QueryFacade->GetIntelCellViewData(0, 1, UntouchedCell);
+	const bool bInvalidScanDoesNotWriteIntel = bGotUntouchedCell
+		&& !UntouchedCell.bScanned
+		&& UntouchedCell.DisplayedNumber == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_InvalidScanDoesNotWriteIntel,
+		bInvalidScanDoesNotWriteIntel,
+		FString::Printf(TEXT("Untouched intel cell (0,1) scanned=%s displayed=%d."),
+			UntouchedCell.bScanned ? TEXT("true") : TEXT("false"),
+			UntouchedCell.DisplayedNumber));
+
+	const int32 CommandFailedCountAfterInvalidScan = EventBus ? EventBus->CountEventsOfType(GTEventType_CommandFailed) : 0;
+	const bool bInvalidScanCommandFailedEventOk = CommandFailedCountAfterInvalidScan == CommandFailedCountBeforeInvalidScan + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_InvalidScanCommandFailedEvent,
+		bInvalidScanCommandFailedEventOk,
+		FString::Printf(TEXT("CommandFailed count before invalid scan was %d, after was %d."),
+			CommandFailedCountBeforeInvalidScan,
+			CommandFailedCountAfterInvalidScan));
+
+	FGT_TruthCell MoveTargetTruthCellBeforeMove;
+	const bool bGotMoveTargetBeforeMove = QueryFacade && QueryFacade->GetTruthCellDebugOnly(1, 0, MoveTargetTruthCellBeforeMove);
+	const bool bRoomNotResolvedBeforeMoveOk = bGotMoveTargetBeforeMove
+		&& !MoveTargetTruthCellBeforeMove.bResolved
+		&& !MoveTargetTruthCellBeforeMove.bTriggered;
+	AddCheck(
+		OutResults,
+		GTCheck_RoomNotResolvedBeforeMove,
+		bRoomNotResolvedBeforeMoveOk,
+		FString::Printf(TEXT("Move target room (1,0) before move resolved=%s triggered=%s."),
+			MoveTargetTruthCellBeforeMove.bResolved ? TEXT("true") : TEXT("false"),
+			MoveTargetTruthCellBeforeMove.bTriggered ? TEXT("true") : TEXT("false")));
+
+	const int32 RoomEnteredCountBeforeNormalMove = EventBus ? EventBus->CountEventsOfType(GTEventType_RoomEntered) : 0;
+	const int32 RoomResolvedCountBeforeNormalMove = EventBus ? EventBus->CountEventsOfType(GTEventType_RoomResolved) : 0;
+	const int32 MineEncounteredCountBeforeNormalMove = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+	const int32 ExitFoundCountBeforeNormalMove = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+
+	FGT_Command MoveCommand;
+	MoveCommand.CommandType = GTCommandType_Move;
+	MoveCommand.SourceActorId = GTActorId_Player;
+	MoveCommand.TargetActorId = GTActorId_Player;
+	MoveCommand.TargetX = 1;
+	MoveCommand.TargetY = 0;
+
+	const bool bMoveAccepted = RunSubsystem->SubmitCommand(MoveCommand);
+	AddCheck(OutResults, GTCheck_LegalMoveAccepted, bMoveAccepted, bMoveAccepted ? TEXT("Legal move to (1,0) accepted.") : TEXT("Legal move to (1,0) was rejected."));
+
+	PlayerX = INDEX_NONE;
+	PlayerY = INDEX_NONE;
+	const bool bGotMovedPosition = QueryFacade && QueryFacade->TryGetPlayerPosition(PlayerX, PlayerY);
+	const bool bMovedPositionOk = bGotMovedPosition && PlayerX == 1 && PlayerY == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_MovedPlayerPosition,
+		bMovedPositionOk,
+		FString::Printf(TEXT("Player position after legal move is (%d,%d)."), PlayerX, PlayerY));
+
+	const bool bMovedIntelOk = QueryFacade
+		&& QueryFacade->IsIntelCellVisible(1, 0)
+		&& QueryFacade->IsIntelCellExplored(1, 0);
+	AddCheck(OutResults, GTCheck_MovedIntelCell, bMovedIntelOk, bMovedIntelOk ? TEXT("Moved cell is visible and explored.") : TEXT("Moved cell is not visible/explored."));
+
+	FGT_TruthCell MoveTargetTruthCellAfterMove;
+	const bool bGotMoveTargetAfterMove = QueryFacade && QueryFacade->GetTruthCellDebugOnly(1, 0, MoveTargetTruthCellAfterMove);
+	const bool bMoveResolvesTargetRoomOk = bGotMoveTargetAfterMove && MoveTargetTruthCellAfterMove.bResolved;
+	AddCheck(
+		OutResults,
+		GTCheck_MoveResolvesTargetRoom,
+		bMoveResolvesTargetRoomOk,
+		FString::Printf(TEXT("Move target room (1,0) resolved=%s."),
+			MoveTargetTruthCellAfterMove.bResolved ? TEXT("true") : TEXT("false")));
+
+	const bool bMoveTriggersTargetRoomOk = bGotMoveTargetAfterMove && MoveTargetTruthCellAfterMove.bTriggered;
+	AddCheck(
+		OutResults,
+		GTCheck_MoveTriggersTargetRoom,
+		bMoveTriggersTargetRoomOk,
+		FString::Printf(TEXT("Move target room (1,0) triggered=%s."),
+			MoveTargetTruthCellAfterMove.bTriggered ? TEXT("true") : TEXT("false")));
+
+	const bool bRoomEnteredEventOk = EventBus && EventBus->HasEventOfType(GTEventType_RoomEntered);
+	AddCheck(OutResults, GTCheck_RoomEnteredEvent, bRoomEnteredEventOk, bRoomEnteredEventOk ? TEXT("RoomEntered event recorded.") : TEXT("RoomEntered event was not recorded."));
+
+	const bool bRoomResolvedEventOk = EventBus && EventBus->HasEventOfType(GTEventType_RoomResolved);
+	AddCheck(OutResults, GTCheck_RoomResolvedEvent, bRoomResolvedEventOk, bRoomResolvedEventOk ? TEXT("RoomResolved event recorded.") : TEXT("RoomResolved event was not recorded."));
+
+	const int32 RoomEnteredCountAfterNormalMove = EventBus ? EventBus->CountEventsOfType(GTEventType_RoomEntered) : 0;
+	const int32 RoomResolvedCountAfterNormalMove = EventBus ? EventBus->CountEventsOfType(GTEventType_RoomResolved) : 0;
+	const int32 MineEncounteredCountAfterNormalMove = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+	const int32 ExitFoundCountAfterNormalMove = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+	const bool bNormalRoomResolveOutcomeOk = bGotMoveTargetAfterMove
+		&& MoveTargetTruthCellAfterMove.RoomBaseType == EGT_RoomBaseType::Normal
+		&& !MoveTargetTruthCellAfterMove.bHasMine
+		&& !MoveTargetTruthCellAfterMove.bIsExit
+		&& RoomResolvedCountAfterNormalMove == RoomResolvedCountBeforeNormalMove + 1
+		&& MineEncounteredCountAfterNormalMove == MineEncounteredCountBeforeNormalMove
+		&& ExitFoundCountAfterNormalMove == ExitFoundCountBeforeNormalMove;
+	AddCheck(
+		OutResults,
+		GTCheck_NormalRoomResolveOutcome,
+		bNormalRoomResolveOutcomeOk,
+		FString::Printf(TEXT("Normal room (1,0) type=%d resolved events %d->%d, mine %d->%d, exit %d->%d."),
+			static_cast<int32>(MoveTargetTruthCellAfterMove.RoomBaseType),
+			RoomResolvedCountBeforeNormalMove,
+			RoomResolvedCountAfterNormalMove,
+			MineEncounteredCountBeforeNormalMove,
+			MineEncounteredCountAfterNormalMove,
+			ExitFoundCountBeforeNormalMove,
+			ExitFoundCountAfterNormalMove));
+
+	const bool bNormalRoomEventsOk = RoomEnteredCountAfterNormalMove == RoomEnteredCountBeforeNormalMove + 1
+		&& RoomResolvedCountAfterNormalMove == RoomResolvedCountBeforeNormalMove + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_NormalRoomEvents,
+		bNormalRoomEventsOk,
+		FString::Printf(TEXT("Normal room events entered %d->%d, resolved %d->%d."),
+			RoomEnteredCountBeforeNormalMove,
+			RoomEnteredCountAfterNormalMove,
+			RoomResolvedCountBeforeNormalMove,
+			RoomResolvedCountAfterNormalMove));
+
+	FGT_Command OutOfBoundsCommand;
+	OutOfBoundsCommand.CommandType = GTCommandType_Move;
+	OutOfBoundsCommand.SourceActorId = GTActorId_Player;
+	OutOfBoundsCommand.TargetActorId = GTActorId_Player;
+	OutOfBoundsCommand.TargetX = -1;
+	OutOfBoundsCommand.TargetY = 0;
+
+	const bool bOutOfBoundsAccepted = RunSubsystem->SubmitCommand(OutOfBoundsCommand);
+	AddCheck(OutResults, GTCheck_OutOfBoundsMoveRejected, !bOutOfBoundsAccepted, !bOutOfBoundsAccepted ? TEXT("Out-of-bounds move rejected.") : TEXT("Out-of-bounds move was accepted."));
+
+	FGT_TruthCell InvalidMoveTargetTruthCell;
+	const bool bInvalidMoveTargetExists = QueryFacade && QueryFacade->GetTruthCellDebugOnly(-1, 0, InvalidMoveTargetTruthCell);
+	FGT_TruthCell MoveTargetTruthCellAfterInvalidMove;
+	const bool bGotMoveTargetAfterInvalidMove = QueryFacade && QueryFacade->GetTruthCellDebugOnly(1, 0, MoveTargetTruthCellAfterInvalidMove);
+	const bool bInvalidMoveDoesNotResolveRoomOk = !bInvalidMoveTargetExists
+		&& bGotMoveTargetAfterInvalidMove
+		&& bGotMoveTargetAfterMove
+		&& MoveTargetTruthCellAfterInvalidMove.bResolved == MoveTargetTruthCellAfterMove.bResolved
+		&& MoveTargetTruthCellAfterInvalidMove.bTriggered == MoveTargetTruthCellAfterMove.bTriggered;
+	AddCheck(
+		OutResults,
+		GTCheck_InvalidMoveDoesNotResolveRoom,
+		bInvalidMoveDoesNotResolveRoomOk,
+		FString::Printf(TEXT("Invalid move target exists=%s; current room resolved %s->%s triggered %s->%s."),
+			bInvalidMoveTargetExists ? TEXT("true") : TEXT("false"),
+			MoveTargetTruthCellAfterMove.bResolved ? TEXT("true") : TEXT("false"),
+			MoveTargetTruthCellAfterInvalidMove.bResolved ? TEXT("true") : TEXT("false"),
+			MoveTargetTruthCellAfterMove.bTriggered ? TEXT("true") : TEXT("false"),
+			MoveTargetTruthCellAfterInvalidMove.bTriggered ? TEXT("true") : TEXT("false")));
+
+	PlayerX = INDEX_NONE;
+	PlayerY = INDEX_NONE;
+	const bool bGotRejectedPosition = QueryFacade && QueryFacade->TryGetPlayerPosition(PlayerX, PlayerY);
+	const bool bRejectedPositionOk = bGotRejectedPosition && PlayerX == 1 && PlayerY == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_RejectedMovePreservesPosition,
+		bRejectedPositionOk,
+		FString::Printf(TEXT("Player position after rejected move is (%d,%d)."), PlayerX, PlayerY));
+
+	const bool bEventsRecorded = EventBus
+		&& EventBus->HasEventOfType(GTEventType_ActorMoved)
+		&& EventBus->HasEventOfType(GTEventType_CommandFailed);
+	AddCheck(OutResults, GTCheck_EventsRecorded, bEventsRecorded, bEventsRecorded ? TEXT("ActorMoved and CommandFailed events recorded.") : TEXT("Expected movement events were not recorded."));
+
+	PlayerX = INDEX_NONE;
+	PlayerY = INDEX_NONE;
+	const bool bQueryPositionOk = QueryFacade
+		&& QueryFacade->TryGetPlayerPosition(PlayerX, PlayerY)
+		&& PlayerX == 1
+		&& PlayerY == 0;
+	AddCheck(OutResults, GTCheck_QueryFacadePlayerPosition, bQueryPositionOk, bQueryPositionOk ? TEXT("QueryFacade reads final player position.") : TEXT("QueryFacade failed to read final player position."));
+
+	const int32 CommandFailedCountBeforeAwayExtract = EventBus ? EventBus->CountEventsOfType(GTEventType_CommandFailed) : 0;
+	FGT_Command ExtractAwayCommand;
+	ExtractAwayCommand.CommandType = GTCommandType_Extract;
+	ExtractAwayCommand.SourceActorId = GTActorId_Player;
+	ExtractAwayCommand.TargetActorId = GTActorId_Player;
+	const bool bExtractAwayAccepted = RunSubsystem->SubmitCommand(ExtractAwayCommand);
+	AddCheck(
+		OutResults,
+		GTCheck_ExtractRejectedAwayFromExit,
+		!bExtractAwayAccepted,
+		!bExtractAwayAccepted ? TEXT("Extract away from exit was rejected.") : TEXT("Extract away from exit was accepted."));
+
+	const int32 CommandFailedCountAfterAwayExtract = EventBus ? EventBus->CountEventsOfType(GTEventType_CommandFailed) : 0;
+	const bool bExtractAwayCommandFailedOk = CommandFailedCountAfterAwayExtract == CommandFailedCountBeforeAwayExtract + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_ExtractAwayFromExitCommandFailed,
+		bExtractAwayCommandFailedOk,
+		FString::Printf(TEXT("CommandFailed count before away extract was %d, after was %d."),
+			CommandFailedCountBeforeAwayExtract,
+			CommandFailedCountAfterAwayExtract));
+
+	UGT_RunSubsystem* ActiveRunSubsystem = RunSubsystem;
+	auto SubmitPlayerMoveTo = [ActiveRunSubsystem](int32 TargetX, int32 TargetY) -> bool
+	{
+		if (!ActiveRunSubsystem)
+		{
+			return false;
+		}
+
+		FGT_Command Command;
+		Command.CommandType = GTCommandType_Move;
+		Command.SourceActorId = GTActorId_Player;
+		Command.TargetActorId = GTActorId_Player;
+		Command.TargetX = TargetX;
+		Command.TargetY = TargetY;
+		return ActiveRunSubsystem->SubmitCommand(Command);
+	};
+
+	auto SubmitPlayerScanAt = [ActiveRunSubsystem](int32 TargetX, int32 TargetY) -> bool
+	{
+		if (!ActiveRunSubsystem)
+		{
+			return false;
+		}
+
+		FGT_Command Command;
+		Command.CommandType = GTCommandType_Scan;
+		Command.SourceActorId = GTActorId_Player;
+		Command.TargetActorId = GTActorId_Player;
+		Command.TargetX = TargetX;
+		Command.TargetY = TargetY;
+		return ActiveRunSubsystem->SubmitCommand(Command);
+	};
+
+	auto SubmitPlayerExtract = [ActiveRunSubsystem]() -> bool
+	{
+		if (!ActiveRunSubsystem)
+		{
+			return false;
+		}
+
+		FGT_Command Command;
+		Command.CommandType = GTCommandType_Extract;
+		Command.SourceActorId = GTActorId_Player;
+		Command.TargetActorId = GTActorId_Player;
+		return ActiveRunSubsystem->SubmitCommand(Command);
+	};
+
+	const FIntPoint ExitApproachPath[] = {
+		FIntPoint(2, 0),
+		FIntPoint(3, 0),
+		FIntPoint(4, 0),
+		FIntPoint(5, 0),
+		FIntPoint(6, 0),
+		FIntPoint(7, 0),
+		FIntPoint(8, 0),
+		FIntPoint(9, 0),
+		FIntPoint(9, 1),
+		FIntPoint(9, 2),
+		FIntPoint(9, 3),
+		FIntPoint(9, 4),
+		FIntPoint(9, 5),
+		FIntPoint(9, 6),
+		FIntPoint(9, 7),
+		FIntPoint(9, 8)
+	};
+
+	bool bPathToExitOk = true;
+	for (const FIntPoint& Coord : ExitApproachPath)
+	{
+		if (!SubmitPlayerMoveTo(Coord.X, Coord.Y))
+		{
+			bPathToExitOk = false;
+			break;
+		}
+	}
+
+	const int32 ExitFoundCountBeforeExitMove = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+	const int32 MineEncounteredCountBeforeExitMove = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+	const bool bExitMoveAccepted = bPathToExitOk && SubmitPlayerMoveTo(9, 9);
+	const int32 ExitFoundCountAfterExitMove = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+	const int32 MineEncounteredCountAfterExitMove = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+
+	AddCheck(
+		OutResults,
+		GTCheck_MoveToExitAccepted,
+		bExitMoveAccepted,
+		bExitMoveAccepted ? TEXT("Legal move sequence reached exit (9,9).") : TEXT("Move sequence to exit failed."));
+
+	FGT_TruthCell ExitTruthCell;
+	const bool bGotExitTruthCell = QueryFacade && QueryFacade->GetTruthCellDebugOnly(9, 9, ExitTruthCell);
+	const bool bExitRoomResolveOutcomeOk = bPathToExitOk
+		&& bExitMoveAccepted
+		&& bGotExitTruthCell
+		&& (ExitTruthCell.bIsExit || ExitTruthCell.RoomBaseType == EGT_RoomBaseType::Exit)
+		&& ExitTruthCell.bResolved
+		&& ExitTruthCell.bTriggered
+		&& ExitFoundCountAfterExitMove == ExitFoundCountBeforeExitMove + 1
+		&& MineEncounteredCountAfterExitMove == MineEncounteredCountBeforeExitMove;
+	AddCheck(
+		OutResults,
+		GTCheck_ExitRoomResolveOutcome,
+		bExitRoomResolveOutcomeOk,
+		FString::Printf(TEXT("Exit room (9,9) path=%s accepted=%s exit=%s resolved=%s triggered=%s exit events %d->%d."),
+			bPathToExitOk ? TEXT("true") : TEXT("false"),
+			bExitMoveAccepted ? TEXT("true") : TEXT("false"),
+			ExitTruthCell.bIsExit ? TEXT("true") : TEXT("false"),
+			ExitTruthCell.bResolved ? TEXT("true") : TEXT("false"),
+			ExitTruthCell.bTriggered ? TEXT("true") : TEXT("false"),
+			ExitFoundCountBeforeExitMove,
+			ExitFoundCountAfterExitMove));
+
+	const bool bExitFoundEventOk = ExitFoundCountAfterExitMove == ExitFoundCountBeforeExitMove + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_ExitFoundEvent,
+		bExitFoundEventOk,
+		FString::Printf(TEXT("ExitFound events %d->%d."), ExitFoundCountBeforeExitMove, ExitFoundCountAfterExitMove));
+
+	AddCheck(
+		OutResults,
+		GTCheck_ExitFoundBeforeExtract,
+		bExitFoundEventOk,
+		bExitFoundEventOk ? TEXT("ExitFound event was recorded before Extract.") : TEXT("ExitFound event was not recorded before Extract."));
+
+	int32 ExitPositionX = INDEX_NONE;
+	int32 ExitPositionY = INDEX_NONE;
+	const bool bExitPositionReadable = QueryFacade && QueryFacade->TryGetPlayerPosition(ExitPositionX, ExitPositionY);
+	const bool bRunStillActiveAtExitBeforeExtractOk = QueryFacade
+		&& QueryFacade->GetRunState() == EGT_RunState::Running
+		&& QueryFacade->IsRunActive()
+		&& !QueryFacade->IsRunSucceeded();
+	AddCheck(
+		OutResults,
+		GTCheck_RunStillActiveAtExitBeforeExtract,
+		bRunStillActiveAtExitBeforeExtractOk,
+		FString::Printf(TEXT("RunState at exit before Extract is %d."), QueryFacade ? static_cast<int32>(QueryFacade->GetRunState()) : static_cast<int32>(EGT_RunState::NotStarted)));
+
+	const bool bExitDoesNotWinRunYetOk = RunSubsystem->GetCurrentRunContext() != nullptr
+		&& bExitPositionReadable
+		&& QueryFacade
+		&& !QueryFacade->IsRunSucceeded()
+		&& ExitPositionX == 9
+		&& ExitPositionY == 9;
+	AddCheck(
+		OutResults,
+		GTCheck_ExitDoesNotWinRunYet,
+		bExitDoesNotWinRunYetOk,
+		FString::Printf(TEXT("Run context after exit is %s; player position is (%d,%d)."),
+			RunSubsystem->GetCurrentRunContext() ? TEXT("valid") : TEXT("invalid"),
+			ExitPositionX,
+			ExitPositionY));
+
+	const int32 RunSucceededCountBeforeExtract = EventBus ? EventBus->CountEventsOfType(GTEventType_RunSucceeded) : 0;
+	FGT_Command ExtractAtExitCommand;
+	ExtractAtExitCommand.CommandType = GTCommandType_Extract;
+	ExtractAtExitCommand.SourceActorId = GTActorId_Player;
+	ExtractAtExitCommand.TargetActorId = GTActorId_Player;
+	const bool bExtractAtExitAccepted = RunSubsystem->SubmitCommand(ExtractAtExitCommand);
+	const int32 RunSucceededCountAfterExtract = EventBus ? EventBus->CountEventsOfType(GTEventType_RunSucceeded) : 0;
+	AddCheck(
+		OutResults,
+		GTCheck_ExtractAcceptedAtExit,
+		bExtractAtExitAccepted,
+		bExtractAtExitAccepted ? TEXT("Extract at exit was accepted.") : TEXT("Extract at exit was rejected."));
+
+	const bool bRunSucceededAfterExtractOk = QueryFacade
+		&& QueryFacade->GetRunState() == EGT_RunState::Succeeded
+		&& QueryFacade->IsRunSucceeded()
+		&& !QueryFacade->IsRunActive();
+	AddCheck(
+		OutResults,
+		GTCheck_RunSucceededAfterExtract,
+		bRunSucceededAfterExtractOk,
+		FString::Printf(TEXT("RunState after Extract is %d."), QueryFacade ? static_cast<int32>(QueryFacade->GetRunState()) : static_cast<int32>(EGT_RunState::NotStarted)));
+
+	const bool bRunSucceededEventOk = RunSucceededCountAfterExtract == RunSucceededCountBeforeExtract + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_RunSucceededEvent,
+		bRunSucceededEventOk,
+		FString::Printf(TEXT("RunSucceeded events %d->%d."), RunSucceededCountBeforeExtract, RunSucceededCountAfterExtract));
+
+	FGT_Command MoveAfterSucceededCommand;
+	MoveAfterSucceededCommand.CommandType = GTCommandType_Move;
+	MoveAfterSucceededCommand.SourceActorId = GTActorId_Player;
+	MoveAfterSucceededCommand.TargetActorId = GTActorId_Player;
+	MoveAfterSucceededCommand.TargetX = 9;
+	MoveAfterSucceededCommand.TargetY = 8;
+	const bool bMoveAfterSucceededAccepted = RunSubsystem->SubmitCommand(MoveAfterSucceededCommand);
+	AddCheck(
+		OutResults,
+		GTCheck_MoveRejectedAfterRunSucceeded,
+		!bMoveAfterSucceededAccepted,
+		!bMoveAfterSucceededAccepted ? TEXT("Move after RunSucceeded was rejected.") : TEXT("Move after RunSucceeded was accepted."));
+
+	FGT_Command ScanAfterSucceededCommand;
+	ScanAfterSucceededCommand.CommandType = GTCommandType_Scan;
+	ScanAfterSucceededCommand.SourceActorId = GTActorId_Player;
+	ScanAfterSucceededCommand.TargetActorId = GTActorId_Player;
+	ScanAfterSucceededCommand.TargetX = 8;
+	ScanAfterSucceededCommand.TargetY = 8;
+	const bool bScanAfterSucceededAccepted = RunSubsystem->SubmitCommand(ScanAfterSucceededCommand);
+	AddCheck(
+		OutResults,
+		GTCheck_ScanRejectedAfterRunSucceeded,
+		!bScanAfterSucceededAccepted,
+		!bScanAfterSucceededAccepted ? TEXT("Scan after RunSucceeded was rejected.") : TEXT("Scan after RunSucceeded was accepted."));
+
+	FGT_Command ExtractAfterSucceededCommand;
+	ExtractAfterSucceededCommand.CommandType = GTCommandType_Extract;
+	ExtractAfterSucceededCommand.SourceActorId = GTActorId_Player;
+	ExtractAfterSucceededCommand.TargetActorId = GTActorId_Player;
+	const bool bExtractAfterSucceededAccepted = RunSubsystem->SubmitCommand(ExtractAfterSucceededCommand);
+	AddCheck(
+		OutResults,
+		GTCheck_ExtractRejectedAfterRunSucceeded,
+		!bExtractAfterSucceededAccepted,
+		!bExtractAfterSucceededAccepted ? TEXT("Extract after RunSucceeded was rejected.") : TEXT("Extract after RunSucceeded was accepted."));
+
+	RunSubsystem->StartNewRun(12345, 10, 10);
+	QueryFacade = RunSubsystem->GetQueryFacade();
+	RunContext = RunSubsystem->GetCurrentRunContext();
+	TruthMap = RunContext ? &RunContext->GetTruthMapForDebugOnly() : nullptr;
+	EventBus = RunSubsystem->GetEventBus();
+	if (EventBus)
+	{
+		EventBus->ClearEventHistory();
+	}
+
+	bool bPathToMineOk = SubmitPlayerMoveTo(1, 0);
+	bPathToMineOk = bPathToMineOk && SubmitPlayerMoveTo(2, 0);
+	bPathToMineOk = bPathToMineOk && SubmitPlayerMoveTo(2, 1);
+	const int32 MineEncounteredCountBeforeMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+	const int32 ExitFoundCountBeforeMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+	const int32 RunFailedCountBeforeMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_RunFailed) : 0;
+	const bool bMineMoveAccepted = bPathToMineOk && SubmitPlayerMoveTo(2, 2);
+	const int32 MineEncounteredCountAfterMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+	const int32 ExitFoundCountAfterMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+	const int32 RunFailedCountAfterMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_RunFailed) : 0;
+
+	AddCheck(OutResults, GTCheck_MineMoveAccepted, bMineMoveAccepted, bMineMoveAccepted ? TEXT("Final move onto mine was accepted.") : TEXT("Final move onto mine was rejected."));
+
+	FGT_TruthCell MineTruthCell;
+	const bool bGotMineTruthCell = QueryFacade && QueryFacade->GetTruthCellDebugOnly(2, 2, MineTruthCell);
+	const bool bMineRoomResolveOutcomeOk = bPathToMineOk
+		&& bMineMoveAccepted
+		&& bGotMineTruthCell
+		&& (MineTruthCell.bHasMine || MineTruthCell.RoomBaseType == EGT_RoomBaseType::Mine)
+		&& MineTruthCell.bResolved
+		&& MineTruthCell.bTriggered
+		&& MineEncounteredCountAfterMineMove == MineEncounteredCountBeforeMineMove + 1
+		&& ExitFoundCountAfterMineMove == ExitFoundCountBeforeMineMove;
+	AddCheck(
+		OutResults,
+		GTCheck_MineRoomResolveOutcome,
+		bMineRoomResolveOutcomeOk,
+		FString::Printf(TEXT("Mine room (2,2) path=%s accepted=%s mine=%s resolved=%s triggered=%s mine events %d->%d."),
+			bPathToMineOk ? TEXT("true") : TEXT("false"),
+			bMineMoveAccepted ? TEXT("true") : TEXT("false"),
+			MineTruthCell.bHasMine ? TEXT("true") : TEXT("false"),
+			MineTruthCell.bResolved ? TEXT("true") : TEXT("false"),
+			MineTruthCell.bTriggered ? TEXT("true") : TEXT("false"),
+			MineEncounteredCountBeforeMineMove,
+			MineEncounteredCountAfterMineMove));
+
+	const bool bMineEncounteredEventOk = MineEncounteredCountAfterMineMove == MineEncounteredCountBeforeMineMove + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_MineEncounteredEvent,
+		bMineEncounteredEventOk,
+		FString::Printf(TEXT("MineEncountered events %d->%d."), MineEncounteredCountBeforeMineMove, MineEncounteredCountAfterMineMove));
+
+	AddCheck(
+		OutResults,
+		GTCheck_MineEncounteredBeforeFail,
+		bMineEncounteredEventOk,
+		bMineEncounteredEventOk ? TEXT("MineEncountered event was recorded before failure checks.") : TEXT("MineEncountered event was not recorded."));
+
+	int32 MinePositionX = INDEX_NONE;
+	int32 MinePositionY = INDEX_NONE;
+	const bool bMinePositionReadable = QueryFacade && QueryFacade->TryGetPlayerPosition(MinePositionX, MinePositionY);
+	const bool bMineDoesNotFailRunYetOk = RunSubsystem->GetCurrentRunContext() != nullptr
+		&& bMinePositionReadable
+		&& MinePositionX == 2
+		&& MinePositionY == 2;
+	AddCheck(
+		OutResults,
+		GTCheck_MineDoesNotFailRunYet,
+		bMineDoesNotFailRunYetOk,
+		FString::Printf(TEXT("Run context after mine is %s; player position is (%d,%d)."),
+			RunSubsystem->GetCurrentRunContext() ? TEXT("valid") : TEXT("invalid"),
+			MinePositionX,
+			MinePositionY));
+
+	const bool bRunFailedAfterMineOk = QueryFacade
+		&& QueryFacade->GetRunState() == EGT_RunState::Failed
+		&& QueryFacade->IsRunFailed();
+	AddCheck(
+		OutResults,
+		GTCheck_RunFailedAfterMine,
+		bRunFailedAfterMineOk,
+		FString::Printf(TEXT("RunState after mine is %d."), QueryFacade ? static_cast<int32>(QueryFacade->GetRunState()) : static_cast<int32>(EGT_RunState::NotStarted)));
+
+	const bool bRunFailedEventOk = RunFailedCountAfterMineMove == RunFailedCountBeforeMineMove + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_RunFailedEvent,
+		bRunFailedEventOk,
+		FString::Printf(TEXT("RunFailed events %d->%d."), RunFailedCountBeforeMineMove, RunFailedCountAfterMineMove));
+
+	FGT_Command MoveAfterFailedCommand;
+	MoveAfterFailedCommand.CommandType = GTCommandType_Move;
+	MoveAfterFailedCommand.SourceActorId = GTActorId_Player;
+	MoveAfterFailedCommand.TargetActorId = GTActorId_Player;
+	MoveAfterFailedCommand.TargetX = 2;
+	MoveAfterFailedCommand.TargetY = 3;
+	const bool bMoveAfterFailedAccepted = RunSubsystem->SubmitCommand(MoveAfterFailedCommand);
+	AddCheck(
+		OutResults,
+		GTCheck_MoveRejectedAfterRunFailed,
+		!bMoveAfterFailedAccepted,
+		!bMoveAfterFailedAccepted ? TEXT("Move after RunFailed was rejected.") : TEXT("Move after RunFailed was accepted."));
+
+	int32 PositionAfterFailedMoveX = INDEX_NONE;
+	int32 PositionAfterFailedMoveY = INDEX_NONE;
+	const bool bPositionAfterFailedMoveReadable = QueryFacade && QueryFacade->TryGetPlayerPosition(PositionAfterFailedMoveX, PositionAfterFailedMoveY);
+	const bool bPositionPreservedAfterFailedMoveOk = bPositionAfterFailedMoveReadable
+		&& PositionAfterFailedMoveX == MinePositionX
+		&& PositionAfterFailedMoveY == MinePositionY;
+	AddCheck(
+		OutResults,
+		GTCheck_PositionPreservedAfterFailedMove,
+		bPositionPreservedAfterFailedMoveOk,
+		FString::Printf(TEXT("Position after failed move command is (%d,%d), before was (%d,%d)."),
+			PositionAfterFailedMoveX,
+			PositionAfterFailedMoveY,
+			MinePositionX,
+			MinePositionY));
+
+	FGT_MiniMapCellViewData IntelBeforeFailedScan;
+	const bool bGotIntelBeforeFailedScan = QueryFacade && QueryFacade->GetIntelCellViewData(0, 2, IntelBeforeFailedScan);
+	FGT_Command ScanAfterFailedCommand;
+	ScanAfterFailedCommand.CommandType = GTCommandType_Scan;
+	ScanAfterFailedCommand.SourceActorId = GTActorId_Player;
+	ScanAfterFailedCommand.TargetActorId = GTActorId_Player;
+	ScanAfterFailedCommand.TargetX = 0;
+	ScanAfterFailedCommand.TargetY = 2;
+	const bool bScanAfterFailedAccepted = RunSubsystem->SubmitCommand(ScanAfterFailedCommand);
+	AddCheck(
+		OutResults,
+		GTCheck_ScanRejectedAfterRunFailed,
+		!bScanAfterFailedAccepted,
+		!bScanAfterFailedAccepted ? TEXT("Scan after RunFailed was rejected.") : TEXT("Scan after RunFailed was accepted."));
+
+	FGT_MiniMapCellViewData IntelAfterFailedScan;
+	const bool bGotIntelAfterFailedScan = QueryFacade && QueryFacade->GetIntelCellViewData(0, 2, IntelAfterFailedScan);
+	const bool bIntelPreservedAfterFailedScanOk = bGotIntelBeforeFailedScan
+		&& bGotIntelAfterFailedScan
+		&& IntelAfterFailedScan.bScanned == IntelBeforeFailedScan.bScanned
+		&& IntelAfterFailedScan.bVisible == IntelBeforeFailedScan.bVisible
+		&& IntelAfterFailedScan.bExplored == IntelBeforeFailedScan.bExplored
+		&& IntelAfterFailedScan.DisplayedNumber == IntelBeforeFailedScan.DisplayedNumber;
+	AddCheck(
+		OutResults,
+		GTCheck_IntelPreservedAfterFailedScan,
+		bIntelPreservedAfterFailedScanOk,
+		FString::Printf(TEXT("Intel (0,2) after failed scan scanned %s->%s visible %s->%s explored %s->%s displayed %d->%d."),
+			IntelBeforeFailedScan.bScanned ? TEXT("true") : TEXT("false"),
+			IntelAfterFailedScan.bScanned ? TEXT("true") : TEXT("false"),
+			IntelBeforeFailedScan.bVisible ? TEXT("true") : TEXT("false"),
+			IntelAfterFailedScan.bVisible ? TEXT("true") : TEXT("false"),
+			IntelBeforeFailedScan.bExplored ? TEXT("true") : TEXT("false"),
+			IntelAfterFailedScan.bExplored ? TEXT("true") : TEXT("false"),
+			IntelBeforeFailedScan.DisplayedNumber,
+			IntelAfterFailedScan.DisplayedNumber));
+
+	RunSubsystem->StartNewRun(22345, 10, 10);
+	QueryFacade = RunSubsystem->GetQueryFacade();
+	RunContext = RunSubsystem->GetCurrentRunContext();
+	TruthMap = RunContext ? &RunContext->GetTruthMapForDebugOnly() : nullptr;
+	EventBus = RunSubsystem->GetEventBus();
+	if (EventBus)
+	{
+		EventBus->ClearEventHistory();
+	}
+
+	const bool bScenarioFailureStartRunOk = QueryFacade
+		&& QueryFacade->GetRunState() == EGT_RunState::Running
+		&& QueryFacade->IsRunActive();
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailureStartRun,
+		bScenarioFailureStartRunOk,
+		FString::Printf(TEXT("Failure scenario RunState after StartNewRun is %d."), QueryFacade ? static_cast<int32>(QueryFacade->GetRunState()) : static_cast<int32>(EGT_RunState::NotStarted)));
+
+	int32 ScenarioFailurePlayerX = INDEX_NONE;
+	int32 ScenarioFailurePlayerY = INDEX_NONE;
+	const bool bScenarioFailureInitialPositionReadable = QueryFacade && QueryFacade->TryGetPlayerPosition(ScenarioFailurePlayerX, ScenarioFailurePlayerY);
+	const bool bScenarioFailureInitialPositionOk = bScenarioFailureInitialPositionReadable
+		&& ScenarioFailurePlayerX == 0
+		&& ScenarioFailurePlayerY == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailureInitialPosition,
+		bScenarioFailureInitialPositionOk,
+		FString::Printf(TEXT("Failure scenario initial player position is (%d,%d)."), ScenarioFailurePlayerX, ScenarioFailurePlayerY));
+
+	const bool bScenarioFailureScanAccepted = SubmitPlayerScanAt(1, 1);
+	FGT_MiniMapCellViewData ScenarioFailureScanCell;
+	const bool bScenarioFailureScanCellReadable = QueryFacade && QueryFacade->GetIntelCellViewData(1, 1, ScenarioFailureScanCell);
+	const bool bScenarioFailureScanBeforeMineOk = bScenarioFailureScanAccepted
+		&& bScenarioFailureScanCellReadable
+		&& ScenarioFailureScanCell.bScanned
+		&& ScenarioFailureScanCell.DisplayedNumber == 1;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailureScanBeforeMine,
+		bScenarioFailureScanBeforeMineOk,
+		FString::Printf(TEXT("Failure scenario scan accepted=%s, scanned=%s, displayed=%d."),
+			bScenarioFailureScanAccepted ? TEXT("true") : TEXT("false"),
+			ScenarioFailureScanCell.bScanned ? TEXT("true") : TEXT("false"),
+			ScenarioFailureScanCell.DisplayedNumber));
+
+	bool bScenarioFailureMovePathOk = SubmitPlayerMoveTo(1, 0);
+	bScenarioFailureMovePathOk = bScenarioFailureMovePathOk && SubmitPlayerMoveTo(2, 0);
+	bScenarioFailureMovePathOk = bScenarioFailureMovePathOk && SubmitPlayerMoveTo(2, 1);
+	const int32 ScenarioFailureMineEncounteredCountBeforeMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+	const int32 ScenarioFailureRunFailedCountBeforeMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_RunFailed) : 0;
+	const bool bScenarioFailureMineMoveAccepted = bScenarioFailureMovePathOk && SubmitPlayerMoveTo(2, 2);
+	const int32 ScenarioFailureMineEncounteredCountAfterMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_MineEncountered) : 0;
+	const int32 ScenarioFailureRunFailedCountAfterMineMove = EventBus ? EventBus->CountEventsOfType(GTEventType_RunFailed) : 0;
+
+	ScenarioFailurePlayerX = INDEX_NONE;
+	ScenarioFailurePlayerY = INDEX_NONE;
+	const bool bScenarioFailureMinePositionReadable = QueryFacade && QueryFacade->TryGetPlayerPosition(ScenarioFailurePlayerX, ScenarioFailurePlayerY);
+	const bool bScenarioFailureMoveToMinePathOk = bScenarioFailureMovePathOk
+		&& bScenarioFailureMineMoveAccepted
+		&& bScenarioFailureMinePositionReadable
+		&& ScenarioFailurePlayerX == 2
+		&& ScenarioFailurePlayerY == 2;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailureMoveToMinePath,
+		bScenarioFailureMoveToMinePathOk,
+		FString::Printf(TEXT("Failure scenario path=%s final move=%s, player position=(%d,%d)."),
+			bScenarioFailureMovePathOk ? TEXT("true") : TEXT("false"),
+			bScenarioFailureMineMoveAccepted ? TEXT("true") : TEXT("false"),
+			ScenarioFailurePlayerX,
+			ScenarioFailurePlayerY));
+
+	const bool bScenarioFailureMineEncounteredOk = ScenarioFailureMineEncounteredCountAfterMineMove == ScenarioFailureMineEncounteredCountBeforeMineMove + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailureMineEncountered,
+		bScenarioFailureMineEncounteredOk,
+		FString::Printf(TEXT("Failure scenario MineEncountered events %d->%d."),
+			ScenarioFailureMineEncounteredCountBeforeMineMove,
+			ScenarioFailureMineEncounteredCountAfterMineMove));
+
+	const bool bScenarioFailureRunFailedOk = QueryFacade
+		&& QueryFacade->GetRunState() == EGT_RunState::Failed
+		&& QueryFacade->IsRunFailed();
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailureRunFailed,
+		bScenarioFailureRunFailedOk,
+		FString::Printf(TEXT("Failure scenario RunState after mine is %d."), QueryFacade ? static_cast<int32>(QueryFacade->GetRunState()) : static_cast<int32>(EGT_RunState::NotStarted)));
+
+	const bool bScenarioFailureRunFailedEventOk = ScenarioFailureRunFailedCountAfterMineMove == ScenarioFailureRunFailedCountBeforeMineMove + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailureRunFailedEvent,
+		bScenarioFailureRunFailedEventOk,
+		FString::Printf(TEXT("Failure scenario RunFailed events %d->%d."),
+			ScenarioFailureRunFailedCountBeforeMineMove,
+			ScenarioFailureRunFailedCountAfterMineMove));
+
+	const bool bScenarioFailurePostFailMoveAccepted = SubmitPlayerMoveTo(2, 3);
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailurePostFailMoveRejected,
+		!bScenarioFailurePostFailMoveAccepted,
+		!bScenarioFailurePostFailMoveAccepted ? TEXT("Failure scenario move after RunFailed was rejected.") : TEXT("Failure scenario move after RunFailed was accepted."));
+
+	const bool bScenarioFailurePostFailScanAccepted = SubmitPlayerScanAt(0, 2);
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailurePostFailScanRejected,
+		!bScenarioFailurePostFailScanAccepted,
+		!bScenarioFailurePostFailScanAccepted ? TEXT("Failure scenario scan after RunFailed was rejected.") : TEXT("Failure scenario scan after RunFailed was accepted."));
+
+	const bool bScenarioFailurePostFailExtractAccepted = SubmitPlayerExtract();
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioFailurePostFailExtractRejected,
+		!bScenarioFailurePostFailExtractAccepted,
+		!bScenarioFailurePostFailExtractAccepted ? TEXT("Failure scenario extract after RunFailed was rejected.") : TEXT("Failure scenario extract after RunFailed was accepted."));
+
+	RunSubsystem->StartNewRun(32345, 10, 10);
+	QueryFacade = RunSubsystem->GetQueryFacade();
+	RunContext = RunSubsystem->GetCurrentRunContext();
+	TruthMap = RunContext ? &RunContext->GetTruthMapForDebugOnly() : nullptr;
+	EventBus = RunSubsystem->GetEventBus();
+	if (EventBus)
+	{
+		EventBus->ClearEventHistory();
+	}
+
+	const bool bScenarioSuccessStartRunOk = QueryFacade
+		&& QueryFacade->GetRunState() == EGT_RunState::Running
+		&& QueryFacade->IsRunActive();
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessStartRun,
+		bScenarioSuccessStartRunOk,
+		FString::Printf(TEXT("Success scenario RunState after StartNewRun is %d."), QueryFacade ? static_cast<int32>(QueryFacade->GetRunState()) : static_cast<int32>(EGT_RunState::NotStarted)));
+
+	int32 ScenarioSuccessPlayerX = INDEX_NONE;
+	int32 ScenarioSuccessPlayerY = INDEX_NONE;
+	const bool bScenarioSuccessInitialPositionReadable = QueryFacade && QueryFacade->TryGetPlayerPosition(ScenarioSuccessPlayerX, ScenarioSuccessPlayerY);
+	const bool bScenarioSuccessInitialPositionOk = bScenarioSuccessInitialPositionReadable
+		&& ScenarioSuccessPlayerX == 0
+		&& ScenarioSuccessPlayerY == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessInitialPosition,
+		bScenarioSuccessInitialPositionOk,
+		FString::Printf(TEXT("Success scenario initial player position is (%d,%d)."), ScenarioSuccessPlayerX, ScenarioSuccessPlayerY));
+
+	const bool bScenarioSuccessScanAccepted = SubmitPlayerScanAt(1, 1);
+	FGT_MiniMapCellViewData ScenarioSuccessScanCell;
+	const bool bScenarioSuccessScanCellReadable = QueryFacade && QueryFacade->GetIntelCellViewData(1, 1, ScenarioSuccessScanCell);
+	const bool bScenarioSuccessScanBeforeExitOk = bScenarioSuccessScanAccepted
+		&& bScenarioSuccessScanCellReadable
+		&& ScenarioSuccessScanCell.bScanned
+		&& ScenarioSuccessScanCell.DisplayedNumber == 1;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessScanBeforeExit,
+		bScenarioSuccessScanBeforeExitOk,
+		FString::Printf(TEXT("Success scenario scan accepted=%s, scanned=%s, displayed=%d."),
+			bScenarioSuccessScanAccepted ? TEXT("true") : TEXT("false"),
+			ScenarioSuccessScanCell.bScanned ? TEXT("true") : TEXT("false"),
+			ScenarioSuccessScanCell.DisplayedNumber));
+
+	const FIntPoint ScenarioSuccessExitPath[] = {
+		FIntPoint(1, 0),
+		FIntPoint(2, 0),
+		FIntPoint(3, 0),
+		FIntPoint(4, 0),
+		FIntPoint(5, 0),
+		FIntPoint(6, 0),
+		FIntPoint(7, 0),
+		FIntPoint(8, 0),
+		FIntPoint(9, 0),
+		FIntPoint(9, 1),
+		FIntPoint(9, 2),
+		FIntPoint(9, 3),
+		FIntPoint(9, 4),
+		FIntPoint(9, 5),
+		FIntPoint(9, 6),
+		FIntPoint(9, 7),
+		FIntPoint(9, 8),
+		FIntPoint(9, 9)
+	};
+
+	const int32 ScenarioSuccessExitFoundCountBeforePath = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+	bool bScenarioSuccessMovePathOk = true;
+	for (const FIntPoint& Coord : ScenarioSuccessExitPath)
+	{
+		if (!SubmitPlayerMoveTo(Coord.X, Coord.Y))
+		{
+			bScenarioSuccessMovePathOk = false;
+			break;
+		}
+	}
+	const int32 ScenarioSuccessExitFoundCountAfterPath = EventBus ? EventBus->CountEventsOfType(GTEventType_ExitFound) : 0;
+
+	ScenarioSuccessPlayerX = INDEX_NONE;
+	ScenarioSuccessPlayerY = INDEX_NONE;
+	const bool bScenarioSuccessExitPositionReadable = QueryFacade && QueryFacade->TryGetPlayerPosition(ScenarioSuccessPlayerX, ScenarioSuccessPlayerY);
+	const bool bScenarioSuccessMoveToExitPathOk = bScenarioSuccessMovePathOk
+		&& bScenarioSuccessExitPositionReadable
+		&& ScenarioSuccessPlayerX == 9
+		&& ScenarioSuccessPlayerY == 9;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessMoveToExitPath,
+		bScenarioSuccessMoveToExitPathOk,
+		FString::Printf(TEXT("Success scenario path=%s, player position=(%d,%d)."),
+			bScenarioSuccessMovePathOk ? TEXT("true") : TEXT("false"),
+			ScenarioSuccessPlayerX,
+			ScenarioSuccessPlayerY));
+
+	const bool bScenarioSuccessExitFoundOk = ScenarioSuccessExitFoundCountAfterPath == ScenarioSuccessExitFoundCountBeforePath + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessExitFound,
+		bScenarioSuccessExitFoundOk,
+		FString::Printf(TEXT("Success scenario ExitFound events %d->%d."),
+			ScenarioSuccessExitFoundCountBeforePath,
+			ScenarioSuccessExitFoundCountAfterPath));
+
+	const bool bScenarioSuccessStillRunningAtExitOk = QueryFacade
+		&& QueryFacade->GetRunState() == EGT_RunState::Running
+		&& QueryFacade->IsRunActive()
+		&& !QueryFacade->IsRunSucceeded();
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessStillRunningAtExit,
+		bScenarioSuccessStillRunningAtExitOk,
+		FString::Printf(TEXT("Success scenario RunState at exit before Extract is %d."), QueryFacade ? static_cast<int32>(QueryFacade->GetRunState()) : static_cast<int32>(EGT_RunState::NotStarted)));
+
+	const int32 ScenarioSuccessRunSucceededCountBeforeExtract = EventBus ? EventBus->CountEventsOfType(GTEventType_RunSucceeded) : 0;
+	const bool bScenarioSuccessExtractAccepted = SubmitPlayerExtract();
+	const int32 ScenarioSuccessRunSucceededCountAfterExtract = EventBus ? EventBus->CountEventsOfType(GTEventType_RunSucceeded) : 0;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessExtractAccepted,
+		bScenarioSuccessExtractAccepted,
+		bScenarioSuccessExtractAccepted ? TEXT("Success scenario Extract at exit was accepted.") : TEXT("Success scenario Extract at exit was rejected."));
+
+	const bool bScenarioSuccessRunSucceededOk = QueryFacade
+		&& QueryFacade->GetRunState() == EGT_RunState::Succeeded
+		&& QueryFacade->IsRunSucceeded()
+		&& !QueryFacade->IsRunActive();
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessRunSucceeded,
+		bScenarioSuccessRunSucceededOk,
+		FString::Printf(TEXT("Success scenario RunState after Extract is %d."), QueryFacade ? static_cast<int32>(QueryFacade->GetRunState()) : static_cast<int32>(EGT_RunState::NotStarted)));
+
+	const bool bScenarioSuccessRunSucceededEventOk = ScenarioSuccessRunSucceededCountAfterExtract == ScenarioSuccessRunSucceededCountBeforeExtract + 1;
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessRunSucceededEvent,
+		bScenarioSuccessRunSucceededEventOk,
+		FString::Printf(TEXT("Success scenario RunSucceeded events %d->%d."),
+			ScenarioSuccessRunSucceededCountBeforeExtract,
+			ScenarioSuccessRunSucceededCountAfterExtract));
+
+	const bool bScenarioSuccessPostSuccessMoveAccepted = SubmitPlayerMoveTo(9, 8);
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessPostSuccessMoveRejected,
+		!bScenarioSuccessPostSuccessMoveAccepted,
+		!bScenarioSuccessPostSuccessMoveAccepted ? TEXT("Success scenario move after RunSucceeded was rejected.") : TEXT("Success scenario move after RunSucceeded was accepted."));
+
+	const bool bScenarioSuccessPostSuccessScanAccepted = SubmitPlayerScanAt(8, 8);
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessPostSuccessScanRejected,
+		!bScenarioSuccessPostSuccessScanAccepted,
+		!bScenarioSuccessPostSuccessScanAccepted ? TEXT("Success scenario scan after RunSucceeded was rejected.") : TEXT("Success scenario scan after RunSucceeded was accepted."));
+
+	const bool bScenarioSuccessPostSuccessExtractAccepted = SubmitPlayerExtract();
+	AddCheck(
+		OutResults,
+		GTCheck_ScenarioSuccessPostSuccessExtractRejected,
+		!bScenarioSuccessPostSuccessExtractAccepted,
+		!bScenarioSuccessPostSuccessExtractAccepted ? TEXT("Success scenario extract after RunSucceeded was rejected.") : TEXT("Success scenario extract after RunSucceeded was accepted."));
+
+	FGT_DebugRunSnapshot DebugSnapshot;
+	const bool bDebugStartNewRunAccepted = IsValid(DebugSubsystem)
+		&& DebugSubsystem->DebugStartNewRun(42345, 10, 10, DebugSnapshot);
+	AddCheck(
+		OutResults,
+		GTCheck_DebugStartNewRunAccepted,
+		bDebugStartNewRunAccepted,
+		bDebugStartNewRunAccepted ? TEXT("DebugStartNewRun accepted.") : TEXT("DebugStartNewRun was rejected."));
+
+	const bool bDebugSnapshotAfterStartOk = bDebugStartNewRunAccepted
+		&& DebugSnapshot.RunState == EGT_RunState::Running
+		&& DebugSnapshot.PlayerX == 0
+		&& DebugSnapshot.PlayerY == 0
+		&& DebugSnapshot.MapWidth == 10
+		&& DebugSnapshot.MapHeight == 10;
+	AddCheck(
+		OutResults,
+		GTCheck_DebugSnapshotAfterStart,
+		bDebugSnapshotAfterStartOk,
+		FString::Printf(TEXT("Debug snapshot after start: state=%d player=(%d,%d) size=%dx%d events=%d."),
+			static_cast<int32>(DebugSnapshot.RunState),
+			DebugSnapshot.PlayerX,
+			DebugSnapshot.PlayerY,
+			DebugSnapshot.MapWidth,
+			DebugSnapshot.MapHeight,
+			DebugSnapshot.EventCount));
+
+	const bool bDebugMoveAccepted = IsValid(DebugSubsystem)
+		&& DebugSubsystem->DebugMoveTo(1, 0, DebugSnapshot);
+	AddCheck(
+		OutResults,
+		GTCheck_DebugMoveAccepted,
+		bDebugMoveAccepted,
+		bDebugMoveAccepted ? TEXT("DebugMoveTo(1,0) accepted.") : TEXT("DebugMoveTo(1,0) was rejected."));
+
+	const bool bDebugSnapshotAfterMoveOk = bDebugMoveAccepted
+		&& DebugSnapshot.RunState == EGT_RunState::Running
+		&& DebugSnapshot.PlayerX == 1
+		&& DebugSnapshot.PlayerY == 0;
+	AddCheck(
+		OutResults,
+		GTCheck_DebugSnapshotAfterMove,
+		bDebugSnapshotAfterMoveOk,
+		FString::Printf(TEXT("Debug snapshot after move: state=%d player=(%d,%d)."),
+			static_cast<int32>(DebugSnapshot.RunState),
+			DebugSnapshot.PlayerX,
+			DebugSnapshot.PlayerY));
+
+	const bool bDebugScanAccepted = IsValid(DebugSubsystem)
+		&& DebugSubsystem->DebugScanCell(1, 1, DebugSnapshot);
+	AddCheck(
+		OutResults,
+		GTCheck_DebugScanAccepted,
+		bDebugScanAccepted,
+		bDebugScanAccepted ? TEXT("DebugScanCell(1,1) accepted.") : TEXT("DebugScanCell(1,1) was rejected."));
+
+	TArray<FGT_MiniMapCellViewData> DebugMiniMapCells;
+	int32 DebugMiniMapWidth = 0;
+	int32 DebugMiniMapHeight = 0;
+	const bool bDebugMiniMapReadable = IsValid(DebugSubsystem)
+		&& DebugSubsystem->GetDebugMiniMapViewData(DebugMiniMapCells, DebugMiniMapWidth, DebugMiniMapHeight);
+	const FGT_MiniMapCellViewData* DebugScannedCell = DebugMiniMapCells.FindByPredicate([](const FGT_MiniMapCellViewData& Cell)
+	{
+		return Cell.X == 1 && Cell.Y == 1;
+	});
+	const bool bDebugMiniMapAfterScanOk = bDebugMiniMapReadable
+		&& DebugMiniMapWidth == 10
+		&& DebugMiniMapHeight == 10
+		&& DebugScannedCell
+		&& DebugScannedCell->bScanned
+		&& DebugScannedCell->DisplayedNumber == 1;
+	AddCheck(
+		OutResults,
+		GTCheck_DebugMiniMapAfterScan,
+		bDebugMiniMapAfterScanOk,
+		FString::Printf(TEXT("Debug minimap after scan: readable=%s size=%dx%d scanned=%s displayed=%d."),
+			bDebugMiniMapReadable ? TEXT("true") : TEXT("false"),
+			DebugMiniMapWidth,
+			DebugMiniMapHeight,
+			DebugScannedCell && DebugScannedCell->bScanned ? TEXT("true") : TEXT("false"),
+			DebugScannedCell ? DebugScannedCell->DisplayedNumber : INDEX_NONE));
+
+	const bool bDebugExtractAwayFromExitAccepted = IsValid(DebugSubsystem)
+		&& DebugSubsystem->DebugExtract(DebugSnapshot);
+	AddCheck(
+		OutResults,
+		GTCheck_DebugExtractRejectedAwayFromExit,
+		!bDebugExtractAwayFromExitAccepted,
+		!bDebugExtractAwayFromExitAccepted ? TEXT("DebugExtract away from exit was rejected.") : TEXT("DebugExtract away from exit was accepted."));
+
+	const FIntPoint DebugExitPath[] = {
+		FIntPoint(2, 0),
+		FIntPoint(3, 0),
+		FIntPoint(4, 0),
+		FIntPoint(5, 0),
+		FIntPoint(6, 0),
+		FIntPoint(7, 0),
+		FIntPoint(8, 0),
+		FIntPoint(9, 0),
+		FIntPoint(9, 1),
+		FIntPoint(9, 2),
+		FIntPoint(9, 3),
+		FIntPoint(9, 4),
+		FIntPoint(9, 5),
+		FIntPoint(9, 6),
+		FIntPoint(9, 7),
+		FIntPoint(9, 8),
+		FIntPoint(9, 9)
+	};
+
+	bool bDebugMoveToExitPathAccepted = IsValid(DebugSubsystem);
+	for (const FIntPoint& Coord : DebugExitPath)
+	{
+		if (!DebugSubsystem->DebugMoveTo(Coord.X, Coord.Y, DebugSnapshot))
+		{
+			bDebugMoveToExitPathAccepted = false;
+			break;
+		}
+	}
+	const bool bDebugMoveToExitPathOk = bDebugMoveToExitPathAccepted
+		&& DebugSnapshot.RunState == EGT_RunState::Running
+		&& DebugSnapshot.PlayerX == 9
+		&& DebugSnapshot.PlayerY == 9;
+	AddCheck(
+		OutResults,
+		GTCheck_DebugMoveToExitPathAccepted,
+		bDebugMoveToExitPathOk,
+		FString::Printf(TEXT("Debug path to exit accepted=%s player=(%d,%d) state=%d."),
+			bDebugMoveToExitPathAccepted ? TEXT("true") : TEXT("false"),
+			DebugSnapshot.PlayerX,
+			DebugSnapshot.PlayerY,
+			static_cast<int32>(DebugSnapshot.RunState)));
+
+	const bool bDebugExtractAcceptedAtExit = IsValid(DebugSubsystem)
+		&& DebugSubsystem->DebugExtract(DebugSnapshot);
+	AddCheck(
+		OutResults,
+		GTCheck_DebugExtractAcceptedAtExit,
+		bDebugExtractAcceptedAtExit,
+		bDebugExtractAcceptedAtExit ? TEXT("DebugExtract at exit accepted.") : TEXT("DebugExtract at exit was rejected."));
+
+	const bool bDebugSnapshotAfterExtractOk = bDebugExtractAcceptedAtExit
+		&& DebugSnapshot.RunState == EGT_RunState::Succeeded;
+	AddCheck(
+		OutResults,
+		GTCheck_DebugSnapshotAfterExtract,
+		bDebugSnapshotAfterExtractOk,
+		FString::Printf(TEXT("Debug snapshot after extract: state=%d player=(%d,%d)."),
+			static_cast<int32>(DebugSnapshot.RunState),
+			DebugSnapshot.PlayerX,
+			DebugSnapshot.PlayerY));
+
+	const bool bDebugMoveAfterSuccessAccepted = IsValid(DebugSubsystem)
+		&& DebugSubsystem->DebugMoveTo(9, 8, DebugSnapshot);
+	AddCheck(
+		OutResults,
+		GTCheck_DebugMoveRejectedAfterSuccess,
+		!bDebugMoveAfterSuccessAccepted,
+		!bDebugMoveAfterSuccessAccepted ? TEXT("DebugMoveTo after success was rejected.") : TEXT("DebugMoveTo after success was accepted."));
+
+	TArray<FGT_DebugEventSummary> DebugEventSummary;
+	if (IsValid(DebugSubsystem))
+	{
+		DebugSubsystem->GetDebugEventSummary(DebugEventSummary);
+	}
+
+	auto HasDebugEventType = [&DebugEventSummary](FName EventType) -> bool
+	{
+		return DebugEventSummary.ContainsByPredicate([EventType](const FGT_DebugEventSummary& Summary)
+		{
+			return Summary.EventType == EventType && Summary.Count > 0;
+		});
+	};
+
+	const bool bDebugEventSummaryAvailable = HasDebugEventType(GTEventType_ActorMoved)
+		&& HasDebugEventType(GTEventType_CellScanned)
+		&& HasDebugEventType(GTEventType_ExitFound)
+		&& HasDebugEventType(GTEventType_RunSucceeded);
+	AddCheck(
+		OutResults,
+		GTCheck_DebugEventSummaryAvailable,
+		bDebugEventSummaryAvailable,
+		FString::Printf(TEXT("Debug event summary contains %d event types."), DebugEventSummary.Num()));
+
+	for (const FGT_RuntimeSmokeCheckResult& Result : OutResults)
+	{
+		if (!Result.bPassed)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void UGT_RuntimeSmokeValidator::AddCheck(TArray<FGT_RuntimeSmokeCheckResult>& OutResults, FName CheckName, bool bPassed, const FString& Message)
+{
+	FGT_RuntimeSmokeCheckResult Result;
+	Result.bPassed = bPassed;
+	Result.CheckName = CheckName;
+	Result.Message = Message;
+	OutResults.Add(Result);
+}

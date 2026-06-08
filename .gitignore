@@ -1,0 +1,38 @@
+.build/
+dist/
+.tmp/
+logs/
+.cache/
+build/
+*.log
+.DS_Store
+Thumbs.db
+
+# Unreal Engine generated files
+UE/Graytail/Binaries/
+UE/Graytail/Intermediate/
+UE/Graytail/Saved/
+UE/Graytail/DerivedDataCache/
+UE/Graytail/.vs/
+UE/Graytail/*.sln
+UE/Graytail/*.VC.db
+UE/Graytail/*.opensdf
+UE/Graytail/*.sdf
+
+# Godot generated/cache/editor files
+Godot/**/.godot/
+Godot/**/.import/
+Godot/**/*.import
+Godot/**/editor_data/
+Godot/**/export.cfg
+Godot/**/export_presets.cfg
+Godot/**/.mono/
+Godot/**/bin/
+Godot/**/obj/
+Godot/**/tmp/
+Godot/**/temp/
+Godot/**/.cache/
+
+# Local Godot tools must never be committed
+Godot/Tools/
+D:/Godot/Tools/
