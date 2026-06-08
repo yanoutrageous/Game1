@@ -49,3 +49,29 @@ D:\Godot\downloads\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_conso
 ## Boundary
 
 No real art migration, no full MetaProgress, no Deploy UI, and no action combat were implemented in G3 P0. Do not merge to `main` or start the next stage automatically.
+
+## Playable Graybox v0.1 Status
+
+- Current Godot state: Playable Graybox v0.1.
+- G3 Lua Parity P0 validation: PASS.
+- G3.5 runtime repair validation: PASS.
+- G4 playable graybox validation: PASS.
+- Godot headless editor on Computer 2: PASS.
+- Runtime smoke on Computer 2: PASS.
+- Tutorial manual start: YES.
+- Standard manual start: YES.
+- HUD/MiniMap/ResultPanel readable: YES.
+
+## Current Unfinished Items
+
+- Real art asset migration remains excluded.
+- Full MetaProgress remains excluded.
+- Action combat remains excluded.
+- Deploy UI remains excluded.
+- Event trader/dice/altar/trap content remains future work.
+- Failure settlement and deeper rewards remain future work.
+- MapOverlay polish and manual playtest feedback remain future work.
+
+## Next Stage Recommendation
+
+Resume on `godot/lua-parity-p0` from Computer 1. The recommended next stage is G5 content system P1 after separate user authorization. Do not merge to `main` and do not migrate real art assets unless a separate art/export or art-integration branch is planned.

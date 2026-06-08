@@ -51,3 +51,16 @@ Validation passed with `validate_project_structure.ps1`, `validate_lua_parity_p0
 ## Next Stage
 
 Do not start automatically. Future work requires separate user approval.
+
+## C2 To C1 Handoff Status
+
+- G3 completion commit: `3cb79bc feat: implement Godot Lua parity P0`.
+- G3.5+G4 completion commit: `0b19a05 feat: make Godot parity build manually playable`.
+- Current usable branch: `godot/lua-parity-p0`.
+- Current playable state: manually playable graybox v0.1.
+- Next-stage entry branch: `godot/lua-parity-p0`.
+- Computer 1 resume method: fetch/pull `godot/lua-parity-p0` from `https://github.com/yanoutrageous/Game1.git`.
+- Detailed Computer 2 to Computer 1 handoff: `docs/handoff/HANDOFF_C2_TO_C1_GODOT_LUA_PARITY_P0.md`.
+- Do not merge to `main` automatically.
+- Do not modify `lua-prototype-main`.
+- Recommended next stage after separate authorization: G5 content system P1.

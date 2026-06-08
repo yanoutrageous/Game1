@@ -114,3 +114,17 @@ Every later stage must write:
 - `docs/audits/...`
 - an engineering status note
 - a two-PC handoff update or supplement
+
+## Computer 2 To Computer 1 Handoff Summary
+
+- Handoff document: `docs/handoff/HANDOFF_C2_TO_C1_GODOT_LUA_PARITY_P0.md`.
+- Current Computer 2 branch: `godot/lua-parity-p0`.
+- Current Computer 2 completion baseline: `0b19a05 feat: make Godot parity build manually playable`.
+- G3 Lua Parity P0: complete.
+- G3.5 runtime repair: complete.
+- G4 playable graybox v0.1: complete.
+- Pushed branch: `origin/godot/lua-parity-p0`.
+- `main` modified: no.
+- `lua-prototype-main` modified: no.
+- Real art assets migrated: no.
+- Recommended Computer 1 first action: fetch/pull `godot/lua-parity-p0`, confirm a clean worktree, then continue only after separate user authorization.
