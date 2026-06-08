@@ -83,6 +83,8 @@ func interact_current_room(context: RunContext) -> Dictionary:
 	match context.current_room_type:
 		&"Chest":
 			return search_current_room(context)
+		&"Normal":
+			return search_current_room(context)
 		&"Event":
 			if context.interacted_cells.has(key):
 				context.last_message = "Event already completed."

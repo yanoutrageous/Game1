@@ -142,7 +142,7 @@ Test-FileContains 'scripts/core/run/room_resolver.gd' @(
 
 Test-FileContains 'scripts/core/run/protocol_service.gd' @('pressure >= 80', 'pressure >= 60', 'pressure >= 40', 'pressure >= 20', 'return 5')
 Test-FileContains 'scripts/core/run/combat_state.gd' @('BASE_MINE_DAMAGE := 30', 'func take_mine_hit', 'func fight_enemy')
-Test-FileContains 'scripts/core/run/run_inventory.gd' @('func add_search_reward', 'min(4', 'min(11', 'context.carried_items.append_array')
+Test-FileContains 'scripts/core/run/run_inventory.gd' @('func add_search_reward', 'mini(4', 'mini(11', 'context.carried_items.append_array')
 Test-FileContains 'scripts/core/run/tutorial_service.gd' @('func trigger_for', 'tutorial_popup', 'func confirm_popup')
 Test-FileContains 'scripts/ui/minimap/minimap_view_model.gd' @('func build_from_intel', 'intel_map.get_visible_map')
 Test-FileContains 'scripts/ui/hud/hud_view_model.gd' @('HP:', 'Power:', 'Pressure:', 'Adjacent Mines:', 'Search:', 'Enemy/Event/Exit Hint')

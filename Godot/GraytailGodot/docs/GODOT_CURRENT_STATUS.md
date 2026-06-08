@@ -2,11 +2,11 @@
 
 ## Updated
 
-`2026-06-08 19:55:38 +08:00`
+`2026-06-08`
 
 ## Branch
 
-This project copy is on repository branch `godot/lua-parity-p0`. It contains the G3 Godot Lua Parity P0 implementation slice.
+This project copy is on repository branch `godot/lua-parity-p0`. It contains the G3 Lua Parity P0 implementation plus G3.5 runtime repair and G4 playable graybox v0.1.
 
 ## Project Path
 
@@ -25,6 +25,9 @@ Godot/GraytailGodot/project.godot
 - CommandBus is the only player and Debug UI command entry.
 - HUD, MiniMap, and ResultPanel consume snapshots/ViewModels.
 - Fallback labels/placeholders remain in use; no real art migration occurred.
+- Player-facing start buttons are available for `Start Tutorial 5x5` and `Start Standard 10x10`.
+- Keyboard play is available through movement, E interact/search/extract, Space/J fight, F flag, and R restart.
+- ResultPanel displays extraction, failure, or training complete summaries.
 
 ## Validation
 
@@ -33,9 +36,15 @@ Run from repository root:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_project_structure.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_lua_parity_p0.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_playable_graybox_v0_1.ps1
 ```
 
-Godot headless editor/runtime smoke may be run only with a local existing Godot executable and without installation or global config changes.
+Godot headless editor/runtime smoke should be run with:
+
+```powershell
+D:\Godot\downloads\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe --headless --path D:\AGAME2\repo\Game1\Godot\GraytailGodot --editor --quit
+D:\Godot\downloads\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe --headless --path D:\AGAME2\repo\Game1\Godot\GraytailGodot --quit-after 1
+```
 
 ## Boundary
 

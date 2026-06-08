@@ -194,7 +194,7 @@ func _safe_normal_candidates() -> Array[Vector2i]:
 	for y in range(height):
 		for x in range(width):
 			var pos := Vector2i(x, y)
-			var cell := rooms[_key(pos)]
+			var cell: Dictionary = rooms[_key(pos)]
 			if bool(cell.get("spawn", false)):
 				continue
 			if bool(cell.get("mine", false)):

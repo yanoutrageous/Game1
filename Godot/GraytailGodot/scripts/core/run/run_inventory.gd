@@ -30,12 +30,12 @@ static func record_move(context: RunContext) -> void:
 static func add_search_reward(context: RunContext, pos: Vector2i, adjacent_mines: int, is_chest: bool) -> Dictionary:
 	if context == null:
 		return {"ok": false}
-	var base := abs((pos.x * 19 + pos.y * 23 + context.seed_value + context.turn) % 3)
-	var gold := min(4, base + int(floor(float(adjacent_mines) / 2.0)))
+	var base: int = absi((pos.x * 19 + pos.y * 23 + context.seed_value + context.turn) % 3)
+	var gold: int = mini(4, base + int(floor(float(adjacent_mines) / 2.0)))
 	var items: Array[Dictionary] = []
 	if is_chest:
-		gold = min(11, 3 + abs((pos.x * 29 + pos.y * 11 + context.seed_value) % 5) + adjacent_mines)
-		items.append({"id": "chest_part_%d_%d" % [pos.x, pos.y], "value": max(1, gold)})
+		gold = mini(11, 3 + absi((pos.x * 29 + pos.y * 11 + context.seed_value) % 5) + adjacent_mines)
+		items.append({"id": "chest_part_%d_%d" % [pos.x, pos.y], "value": maxi(1, gold)})
 		if adjacent_mines >= 2:
 			items.append({"id": "risk_find_%d_%d" % [pos.x, pos.y], "value": adjacent_mines})
 		context.run_stats["chest_rooms"] = int(context.run_stats.get("chest_rooms", 0)) + 1

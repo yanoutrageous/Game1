@@ -136,6 +136,12 @@ func search_current_room() -> void:
 func interact_current_room() -> void:
 	if not _can_accept_command():
 		return
+	if context.current_room_type == &"Exit":
+		if context.phase == &"confirm_extract":
+			confirm_extract()
+		else:
+			request_extract()
+		return
 	room_resolver.interact_current_room(context)
 	_emit_state()
 	if context.failed:

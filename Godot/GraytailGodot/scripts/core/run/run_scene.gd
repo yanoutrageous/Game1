@@ -8,7 +8,9 @@ const ResultPanelScene := preload("res://scenes/ui/result/result_panel.tscn")
 
 var run_context: RunContext
 var command_bus: CommandBus
+var mode_label: Label
 var room_label: Label
+var controls_label: Label
 var debug_log: Label
 var hud: Hud
 var minimap_panel: MiniMapPanel
@@ -63,12 +65,27 @@ func _build_accessible_ui() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	ui_layer.add_child(root)
 
+	var mode_panel := VBoxContainer.new()
+	mode_panel.name = "ModeEntryPanel"
+	mode_panel.offset_left = 400.0
+	mode_panel.offset_top = 16.0
+	mode_panel.offset_right = 880.0
+	mode_panel.offset_bottom = 120.0
+	root.add_child(mode_panel)
+
+	mode_label = Label.new()
+	mode_label.name = "ModeEntryLabel"
+	mode_label.text = "Choose a mode"
+	mode_panel.add_child(mode_label)
+	_add_mode_button(mode_panel, "Start Tutorial 5x5", func() -> void: command_bus.start_tutorial_run())
+	_add_mode_button(mode_panel, "Start Standard 10x10", func() -> void: command_bus.start_standard_run())
+
 	var room_panel := PanelContainer.new()
 	room_panel.name = "RoomArea"
 	room_panel.offset_left = 400.0
-	room_panel.offset_top = 48.0
+	room_panel.offset_top = 136.0
 	room_panel.offset_right = 880.0
-	room_panel.offset_bottom = 220.0
+	room_panel.offset_bottom = 308.0
 	root.add_child(room_panel)
 
 	room_label = Label.new()
@@ -76,6 +93,16 @@ func _build_accessible_ui() -> void:
 	room_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	room_label.text = "Room Area"
 	room_panel.add_child(room_label)
+
+	controls_label = Label.new()
+	controls_label.name = "ControlsLabel"
+	controls_label.offset_left = 400.0
+	controls_label.offset_top = 320.0
+	controls_label.offset_right = 880.0
+	controls_label.offset_bottom = 404.0
+	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	controls_label.text = "Controls: W/A/S/D or arrows move. E searches, interacts, or extracts. Space/J fights. F flags. M/Tab map note. R restarts."
+	root.add_child(controls_label)
 
 	hud = HUDScene.instantiate() as Hud
 	hud.name = "HUD"
@@ -134,6 +161,14 @@ func _add_debug_button(parent: Control, label: String, callback: Callable) -> vo
 	parent.add_child(button)
 
 
+func _add_mode_button(parent: Control, label: String, callback: Callable) -> void:
+	var button := Button.new()
+	button.text = label
+	button.custom_minimum_size = Vector2(360, 34)
+	button.pressed.connect(callback)
+	parent.add_child(button)
+
+
 func _on_state_changed(_snapshot: Dictionary) -> void:
 	_refresh_view_models()
 
@@ -150,6 +185,12 @@ func _refresh_view_models() -> void:
 
 	var snapshot := run_context.get_status_snapshot()
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
+	if mode_label != null:
+		mode_label.text = "Mode: %s | Phase: %s | Outcome: %s" % [
+			String(snapshot.get("mode", &"")),
+			String(snapshot.get("phase", &"")),
+			String(snapshot.get("outcome", "Running")),
+		]
 	if room_label != null:
 		room_label.text = "Room Area\nMode: %s\nPhase: %s\nType: %s\nPosition: (%d,%d)\nAdjacent Mines: %s\nUse W/A/S/D, E, F, Space/J, Tab/M, R." % [
 			String(snapshot.get("mode", &"")),
