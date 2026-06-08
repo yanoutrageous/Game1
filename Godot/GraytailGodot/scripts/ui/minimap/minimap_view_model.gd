@@ -1,10 +1,7 @@
 extends RefCounted
 class_name MiniMapViewModel
 
-# TruthMap = 真实地图
-# IntelMap = 玩家已知情报
-# MiniMapViewModel = UI 可读数据
-# UI 不得直接读取 TruthMap
+# MiniMapViewModel is built from IntelMap public cells only.
 
 var room_markers: Array[Dictionary] = []
 var width: int = 0
@@ -27,11 +24,15 @@ static func build_from_intel(intel_map: IntelMap, player_pos: Vector2i = Vector2
 		return model
 	model.width = intel_map.width
 	model.height = intel_map.height
-	for cell in intel_map.get_all_cells():
+	for cell in intel_map.get_visible_map():
 		var marker := cell.duplicate(true)
 		var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 		if pos == player_pos:
 			marker["asset_id"] = &"icon.minimap.player"
 			marker["label"] = "P"
+		elif bool(marker.get("flagged", false)):
+			marker["label"] = "F"
+		elif not bool(marker.get("revealed", false)) and StringName(marker.get("exit_id", &"")) == &"":
+			marker["label"] = "?"
 		model.room_markers.append(marker)
 	return model

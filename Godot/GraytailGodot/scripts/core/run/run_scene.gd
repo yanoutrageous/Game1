@@ -23,7 +23,7 @@ func _ready() -> void:
 	command_bus.state_changed.connect(_on_state_changed)
 	command_bus.result_available.connect(_on_result_available)
 	_build_accessible_ui()
-	command_bus.start_demo_run()
+	command_bus.start_tutorial_run()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -40,7 +40,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		command_bus.move_by(Vector2i(1, 0))
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("interact"):
-		command_bus.interact()
+		command_bus.interact_current_room()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("attack"):
+		command_bus.fight_current_enemy()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("flag_cell"):
 		command_bus.flag_current_cell()
@@ -97,14 +100,19 @@ func _build_accessible_ui() -> void:
 	var debug_title := Label.new()
 	debug_title.text = "Debug"
 	debug_panel.add_child(debug_title)
-	_add_debug_button(debug_panel, "StartRun", func() -> void: command_bus.start_demo_run())
+	_add_debug_button(debug_panel, "Tutorial", func() -> void: command_bus.start_tutorial_run())
+	_add_debug_button(debug_panel, "Standard", func() -> void: command_bus.start_standard_run())
 	_add_debug_button(debug_panel, "MoveUp", func() -> void: command_bus.move_by(Vector2i(0, -1)))
 	_add_debug_button(debug_panel, "MoveDown", func() -> void: command_bus.move_by(Vector2i(0, 1)))
 	_add_debug_button(debug_panel, "MoveLeft", func() -> void: command_bus.move_by(Vector2i(-1, 0)))
 	_add_debug_button(debug_panel, "MoveRight", func() -> void: command_bus.move_by(Vector2i(1, 0)))
 	_add_debug_button(debug_panel, "Flag", func() -> void: command_bus.flag_current_cell())
-	_add_debug_button(debug_panel, "Interact", func() -> void: command_bus.interact())
-	_add_debug_button(debug_panel, "Extract", func() -> void: command_bus.extract())
+	_add_debug_button(debug_panel, "Search", func() -> void: command_bus.search_current_room())
+	_add_debug_button(debug_panel, "Interact", func() -> void: command_bus.interact_current_room())
+	_add_debug_button(debug_panel, "Fight", func() -> void: command_bus.fight_current_enemy())
+	_add_debug_button(debug_panel, "ReqExtract", func() -> void: command_bus.request_extract())
+	_add_debug_button(debug_panel, "ConfirmExt", func() -> void: command_bus.confirm_extract())
+	_add_debug_button(debug_panel, "CancelExt", func() -> void: command_bus.cancel_extract())
 	_add_debug_button(debug_panel, "Restart", func() -> void: command_bus.restart_run())
 
 	debug_log = Label.new()
@@ -143,7 +151,9 @@ func _refresh_view_models() -> void:
 	var snapshot := run_context.get_status_snapshot()
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	if room_label != null:
-		room_label.text = "Room Area\nType: %s\nPosition: (%d,%d)\nAdjacent Mines: %s\nUse W/A/S/D, E, F, Tab/M, R." % [
+		room_label.text = "Room Area\nMode: %s\nPhase: %s\nType: %s\nPosition: (%d,%d)\nAdjacent Mines: %s\nUse W/A/S/D, E, F, Space/J, Tab/M, R." % [
+			String(snapshot.get("mode", &"")),
+			String(snapshot.get("phase", &"")),
 			String(snapshot.get("current_room", &"Unknown")),
 			pos.x,
 			pos.y,

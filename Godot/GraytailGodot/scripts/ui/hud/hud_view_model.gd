@@ -1,10 +1,7 @@
 extends RefCounted
 class_name HUDViewModel
 
-# TruthMap = 真实地图
-# IntelMap = 玩家已知情报
-# MiniMapViewModel = UI 可读数据
-# UI 不得直接读取 TruthMap
+# HUD receives public snapshots only. It must not read TruthMap.
 
 var run_label: String = ""
 var status_text: String = ""
@@ -29,19 +26,51 @@ static func build_status(context: RunContext) -> HUDViewModel:
 
 	var snapshot := context.get_status_snapshot()
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
-	model.run_label = String(snapshot.get("run_id", &""))
-	model.status_text = "HP: %s/%s\nPending Gold: %s\nPosition: (%d,%d)\nRoom: %s\nAdjacent Mines: %s" % [
+	model.run_label = "%s / %s" % [String(snapshot.get("run_id", &"")), String(snapshot.get("mode", &""))]
+	model.status_text = "HP: %s/%s\nPower: %s\nGold: pending %s / safe %s\nParts: %s\nPosition: (%d,%d)\nRoom: %s\nAdjacent Mines: %s\nSearch: %s" % [
 		snapshot.get("hp", 0),
 		snapshot.get("max_hp", 0),
+		snapshot.get("power", 0),
 		snapshot.get("pending_gold", 0),
+		snapshot.get("safe_gold", 0),
+		snapshot.get("parts", 0),
 		pos.x,
 		pos.y,
 		String(snapshot.get("current_room", &"Unknown")),
 		snapshot.get("adjacent_mines", 0),
+		String(snapshot.get("search_state", "blocked")),
 	]
-	model.protocol_text = "Pressure: %s\nOutcome: %s" % [
+	model.protocol_text = "Pressure: %s / 100\nProtocol Level: %s\nPhase: %s\nOutcome: %s" % [
 		snapshot.get("pressure", 0),
+		snapshot.get("protocol_level", 5),
+		String(snapshot.get("phase", &"idle")),
 		snapshot.get("outcome", "Running"),
 	]
-	model.hint_text = "Last Message: %s" % String(snapshot.get("last_message", ""))
+	var popup: Dictionary = snapshot.get("tutorial_popup", {})
+	var popup_text := ""
+	if not popup.is_empty():
+		popup_text = "\nTutorial: %s" % String(popup.get("id", ""))
+	model.hint_text = "Enemy/Event/Exit Hint: %s\nLast Message: %s%s" % [
+		_hint_for_snapshot(snapshot),
+		String(snapshot.get("last_message", "")),
+		popup_text,
+	]
 	return model
+
+
+static func _hint_for_snapshot(snapshot: Dictionary) -> String:
+	match StringName(snapshot.get("current_room", &"Unknown")):
+		&"Exit":
+			return "request_extract -> confirm_extract"
+		&"Monster":
+			return "fight_current_enemy"
+		&"Event":
+			return "interact_current_room"
+		&"Chest":
+			return "search_current_room"
+		&"Normal":
+			return "search_current_room"
+		&"Mine":
+			return "mine already known after trigger"
+		_:
+			return "move/search"

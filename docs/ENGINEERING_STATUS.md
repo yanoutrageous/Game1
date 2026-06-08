@@ -2,61 +2,48 @@
 
 ## Stage
 
-G3-Prep Lua audit and parity specification import for Godot Lua Parity P0.
+G3 Godot Lua Parity P0 implementation.
 
 ## Time
 
-`2026-06-08 19:42:35 +08:00`
+`2026-06-08 19:55:38 +08:00`
 
 ## Repository State
 
 - Current repository path: `D:\AGAME2\repo\Game1`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Current working branch at update time: `godot/lua-parity-p0`
-- Base branch: `godot/prototype-foundation`
-- Base commit: `43501afd5e9ae27338051a119bcbce67b956a713`
-- Target commit: created by this stage; see `git log -1 --oneline` after commit.
-- Remote `main`: `8f7e3cb67642708e6a5245d19f722bbfdb357ebe`
-- Remote `lua-prototype-main`: `d53d117af8c786014292c2981b7edfdaf11182ea`
-- Remote `godot/prototype-foundation`: `43501afd5e9ae27338051a119bcbce67b956a713`
+- Base commit: `1ca472b98a44ab40116751192b7afef6ae62c0fe`
+- Target commit: created by this stage; see final `git log -1 --oneline`.
 - `main` modified or overwritten: no
 - `lua-prototype-main` modified or overwritten: no
 - Remote modified: no
 - Force push: no
 - Old `Game.git` push: no
 
-## Imported Lua Audit Files
+## Implemented
 
-Source directory:
+- Tutorial 5x5 fixed mode from imported Lua audit coordinates.
+- Standard 10x10 generated mode with required P0 room counts.
+- TruthMap/IntelMap separation for real vs public player-known state.
+- RunContext P0 fields for mode, phase, turn, player state, protocol, inventory, stats, and result snapshots.
+- CommandBus-only player and Debug UI command entry.
+- RoomResolver P0 movement/search/mine/chest/event/monster/extract rules.
+- HUD, MiniMap, and ResultPanel snapshot/ViewModel display updates.
+- Lua parity P0 validator script.
 
-```text
-D:\AGAME2\Base
-```
+## Not Implemented
 
-Repository destination:
+- Real art migration.
+- Full MetaProgress.
+- Deploy UI.
+- Action combat.
+- P1/P2 event detail parity.
 
-```text
-docs\lua_audit
-```
+## Validation
 
-Imported files:
+Validation must include `validate_project_structure.ps1`, `validate_lua_parity_p0.ps1`, and Godot headless checks if a local Godot executable can run without install or global config changes.
 
-- `docs\lua_audit\LUA_DEEP_AUDIT_REPORT.md`
-- `docs\lua_audit\LUA_TO_GODOT_PARITY_SPEC.md`
-- `docs\lua_audit\LUA_SYSTEM_CALLGRAPH.md`
-- `docs\lua_audit\LUA_PARITY_TASKS_FOR_GODOT.csv`
+## Next Stage
 
-The imported files are now the local repository reference set for future G3 Godot Lua Parity P0 planning and implementation.
-
-## Safety Result
-
-- Godot was not run.
-- Godot Lua Parity P0 implementation was not started.
-- No Godot scripts, scenes, runtime code, or validators were changed for P0.
-- No real art assets were migrated.
-- No files were deleted.
-- Writes were limited to the Game1 repository under `D:\AGAME2\repo\Game1`.
-
-## Next Branch
-
-The branch `godot/lua-parity-p0` now has the Lua audit/parity specification files required for the next stage. After user authorization, G3 Godot Lua Parity P0 implementation may start from this branch.
+Do not start automatically. Future work requires separate user approval.

@@ -26,11 +26,11 @@ func _apply_labels() -> void:
 	var hint_panel := get_node_or_null("HintPanel") as Label
 
 	if status_panel != null:
-		status_panel.custom_minimum_size = Vector2(360, 140)
+		status_panel.custom_minimum_size = Vector2(380, 210)
 		status_panel.text = view_model.status_text if view_model != null else "HP: --"
 	if protocol_panel != null:
-		protocol_panel.custom_minimum_size = Vector2(360, 70)
+		protocol_panel.custom_minimum_size = Vector2(380, 110)
 		protocol_panel.text = view_model.protocol_text if view_model != null else "Pressure: --"
 	if hint_panel != null:
-		hint_panel.custom_minimum_size = Vector2(520, 70)
+		hint_panel.custom_minimum_size = Vector2(560, 100)
 		hint_panel.text = view_model.hint_text if view_model != null else "Last Message: --"

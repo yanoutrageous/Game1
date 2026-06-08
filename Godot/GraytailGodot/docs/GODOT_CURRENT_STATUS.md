@@ -1,12 +1,12 @@
-﻿# GODOT_CURRENT_STATUS
+# GODOT_CURRENT_STATUS
 
 ## Updated
 
-`2026-06-08 17:13:12 +08:00`
+`2026-06-08 19:55:38 +08:00`
 
 ## Branch
 
-This project copy lives under repository branch `godot/prototype-foundation`. It records the current Godot S1/S2 foundation only. It is not Lua Parity P0 and must not be merged into `main` automatically.
+This project copy is on repository branch `godot/lua-parity-p0`. It contains the G3 Godot Lua Parity P0 implementation slice.
 
 ## Project Path
 
@@ -16,32 +16,27 @@ Repository project path:
 Godot/GraytailGodot/project.godot
 ```
 
-Original source project on the current PC remains read-only for this stage:
+## Current Capability
 
-```text
-D:\Godot\GraytailGodot
-```
+- Tutorial P0 mode: 5x5 fixed Lua-derived map, seed 777, fixed mine/event/monster/chest/exit layout.
+- Standard P0 mode: 10x10 generated map with 20 mines, 10 monsters, 10 chests, 10 events, and 2 hidden random exits.
+- TruthMap stores real map state.
+- IntelMap stores player-known public state.
+- CommandBus is the only player and Debug UI command entry.
+- HUD, MiniMap, and ResultPanel consume snapshots/ViewModels.
+- Fallback labels/placeholders remain in use; no real art migration occurred.
 
-## Validation Script Portability
+## Validation
 
-G2.5 changed repository-copy validation scripts so project root is inferred from the script directory instead of the original absolute path `D:\Godot\GraytailGodot`.
-
-Run from the repository root:
+Run from repository root:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_project_structure.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_s1_foundation.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_s2_rule_loop.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_lua_parity_p0.ps1
 ```
 
-G2.5 results:
-
-- Project structure validation: PASS
-- S1 foundation validation: PASS
-- S2 rule loop validation: PASS
-
-`validate_s2_rule_loop.ps1` can optionally check local external report/cache paths if `AGAME_REPORTS_DIR` and `AGAME_REPO_CACHE_DIR` are set.
+Godot headless editor/runtime smoke may be run only with a local existing Godot executable and without installation or global config changes.
 
 ## Boundary
 
-No real art migration, no Lua Parity P0 implementation, and no modification to the original Godot source directory occurred in G2.5.
+No real art migration, no full MetaProgress, no Deploy UI, and no action combat were implemented in G3 P0. Do not merge to `main` or start the next stage automatically.

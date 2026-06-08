@@ -1,10 +1,7 @@
 extends RefCounted
 class_name IntelMap
 
-# TruthMap = 真实地图
-# IntelMap = 玩家已知情报
-# MiniMapViewModel = UI 可读数据
-# UI 不得直接读取 TruthMap
+# IntelMap owns player-known information. UI must not read TruthMap directly.
 
 var known_rooms: Dictionary = {}
 var width: int = 0
@@ -24,53 +21,52 @@ func setup(next_width: int, next_height: int) -> void:
 	for y in range(height):
 		for x in range(width):
 			var pos := Vector2i(x, y)
-			known_rooms[_key(pos)] = {
-				"pos": pos,
-				"revealed": false,
-				"flagged": false,
-				"room_type": &"Unknown",
-				"adjacent_mines": -1,
-				"asset_id": &"",
-				"label": "?",
-			}
+			known_rooms[_key(pos)] = _base_public_cell(pos)
 
 
 func reveal_cell(pos: Vector2i, truth_map: TruthMap = null) -> void:
 	if not _has_cell(pos):
 		return
-	var cell: Dictionary = known_rooms[_key(pos)]
+	var cell := build_public_cell(pos, truth_map, true)
 	cell["revealed"] = true
-	if truth_map != null:
-		var room_type := truth_map.get_room_type(pos)
-		cell["room_type"] = room_type
-		cell["adjacent_mines"] = truth_map.get_adjacent_mine_count(pos)
-		cell["asset_id"] = _asset_id_for_room(room_type)
-		cell["label"] = _label_for_room(room_type, int(cell["adjacent_mines"]))
+	cell["flagged"] = bool(known_rooms[_key(pos)].get("flagged", false))
+	if bool(cell["flagged"]):
+		cell["state"] = &"flagged"
+		cell["asset_id"] = &"icon.minimap.flag"
+		cell["label"] = "F"
 	known_rooms[_key(pos)] = cell
 
 
-func flag_cell(pos: Vector2i) -> void:
+func toggle_flag(pos: Vector2i) -> void:
 	if not _has_cell(pos):
 		return
 	var cell: Dictionary = known_rooms[_key(pos)]
 	cell["flagged"] = not bool(cell.get("flagged", false))
 	if bool(cell["flagged"]):
+		cell["state"] = &"flagged"
 		cell["asset_id"] = &"icon.minimap.flag"
 		cell["label"] = "F"
 	elif bool(cell.get("revealed", false)):
-		var room_type := StringName(cell.get("room_type", &"Unknown"))
-		cell["asset_id"] = _asset_id_for_room(room_type)
-		cell["label"] = _label_for_room(room_type, int(cell.get("adjacent_mines", -1)))
+		cell["state"] = cell.get("state_before_flag", &"empty")
+		cell["asset_id"] = cell.get("asset_before_flag", &"")
+		cell["label"] = cell.get("label_before_flag", ".")
 	else:
+		cell["state"] = &"hidden"
 		cell["asset_id"] = &""
 		cell["label"] = "?"
 	known_rooms[_key(pos)] = cell
 
 
+func flag_cell(pos: Vector2i) -> void:
+	toggle_flag(pos)
+
+
 func is_revealed(pos: Vector2i) -> bool:
-	if not _has_cell(pos):
-		return false
-	return bool(known_rooms[_key(pos)].get("revealed", false))
+	return _has_cell(pos) and bool(known_rooms[_key(pos)].get("revealed", false))
+
+
+func is_flagged(pos: Vector2i) -> bool:
+	return _has_cell(pos) and bool(known_rooms[_key(pos)].get("flagged", false))
 
 
 func get_cell_info(pos: Vector2i) -> Dictionary:
@@ -79,12 +75,80 @@ func get_cell_info(pos: Vector2i) -> Dictionary:
 	return known_rooms[_key(pos)].duplicate(true)
 
 
+func get_visible_map() -> Array[Dictionary]:
+	return get_all_cells()
+
+
 func get_all_cells() -> Array[Dictionary]:
 	var cells: Array[Dictionary] = []
 	for y in range(height):
 		for x in range(width):
 			cells.append(get_cell_info(Vector2i(x, y)))
 	return cells
+
+
+func build_public_cell(pos: Vector2i, truth_map: TruthMap, reveal_mines: bool = false) -> Dictionary:
+	var cell := _base_public_cell(pos)
+	if truth_map == null or not truth_map.is_inside(pos):
+		return cell
+	var truth := truth_map.get_cell(pos)
+	var room_type := StringName(truth.get("room_type", &"Normal"))
+	if bool(truth.get("spawn", false)):
+		room_type = &"Spawn"
+	var random_exit := bool(truth.get("random_exit", false))
+	var exit_id := StringName(truth.get("exit_id", &""))
+	var revealed := is_revealed(pos) or bool(cell.get("revealed", false))
+
+	if room_type == &"Exit" and not random_exit:
+		cell["exit_id"] = exit_id
+		cell["random_exit"] = false
+
+	if not revealed and not reveal_mines:
+		return cell
+
+	cell["revealed"] = true
+	cell["room_type"] = room_type
+	cell["mine"] = bool(truth.get("mine", false))
+	cell["adjacent_mines"] = int(truth.get("adjacent_mines", 0))
+	cell["exit_id"] = exit_id
+	cell["random_exit"] = random_exit
+	cell["explored"] = bool(truth.get("explored", false))
+	cell["cleared"] = bool(truth.get("cleared", false))
+	cell["asset_id"] = _asset_id_for_room(room_type)
+	cell["label"] = _label_for_room(room_type, int(cell["adjacent_mines"]))
+	if bool(cell["mine"]):
+		cell["state"] = &"mine"
+	elif int(cell["adjacent_mines"]) > 0:
+		cell["state"] = &"number"
+	else:
+		cell["state"] = &"empty"
+	cell["state_before_flag"] = cell["state"]
+	cell["asset_before_flag"] = cell["asset_id"]
+	cell["label_before_flag"] = cell["label"]
+	return cell
+
+
+func refresh_revealed_cell(pos: Vector2i, truth_map: TruthMap) -> void:
+	if is_revealed(pos):
+		reveal_cell(pos, truth_map)
+
+
+func _base_public_cell(pos: Vector2i) -> Dictionary:
+	return {
+		"pos": pos,
+		"state": &"hidden",
+		"revealed": false,
+		"flagged": false,
+		"room_type": &"Unknown",
+		"mine": false,
+		"adjacent_mines": -1,
+		"exit_id": &"",
+		"random_exit": false,
+		"explored": false,
+		"cleared": false,
+		"asset_id": &"",
+		"label": "?",
+	}
 
 
 func _has_cell(pos: Vector2i) -> bool:
