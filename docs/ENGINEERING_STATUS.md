@@ -1,56 +1,62 @@
-﻿# ENGINEERING_STATUS
+# ENGINEERING_STATUS
 
 ## Stage
 
-G2.5 remote main audit, Lua baseline safe branch push, and Godot foundation handoff repair.
+G3-Prep Lua audit and parity specification import for Godot Lua Parity P0.
 
 ## Time
 
-`2026-06-08 17:13:12 +08:00`
+`2026-06-08 19:42:35 +08:00`
 
 ## Repository State
 
-- Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
+- Current repository path: `D:\AGAME2\repo\Game1`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
-- Current working branch at update time: `godot/prototype-foundation`
-- Local Lua baseline commit: `d53d117af8c786014292c2981b7edfdaf11182ea`
+- Current working branch at update time: `godot/lua-parity-p0`
+- Base branch: `godot/prototype-foundation`
+- Base commit: `43501afd5e9ae27338051a119bcbce67b956a713`
+- Target commit: created by this stage; see `git log -1 --oneline` after commit.
 - Remote `main`: `8f7e3cb67642708e6a5245d19f722bbfdb357ebe`
 - Remote `lua-prototype-main`: `d53d117af8c786014292c2981b7edfdaf11182ea`
-- Remote `godot/prototype-foundation` before G2.5 repair commit: `2f2f4918f9715e711dcaaac3dea76732c8b62643`
-- Local Godot branch commit before G2.5 repair commit: `2f2f4918f9715e711dcaaac3dea76732c8b62643`
+- Remote `godot/prototype-foundation`: `43501afd5e9ae27338051a119bcbce67b956a713`
 - `main` modified or overwritten: no
-- Lua source directory modified: no
-- Godot original directory modified: no
+- `lua-prototype-main` modified or overwritten: no
+- Remote modified: no
 - Force push: no
 - Old `Game.git` push: no
 
-## Remote Main Audit
+## Imported Lua Audit Files
 
-Remote `main` was read using `git ls-remote --heads origin` and GitHub tree API. It differs from local Lua baseline and its visible tree contains only `README.md`; G2.5 keeps the non-overwrite strategy.
+Source directory:
 
-## Lua Baseline Branch
+```text
+D:\AGAME2\Base
+```
 
-Local `main` commit `d53d117af8c786014292c2981b7edfdaf11182ea` was pushed as remote `lua-prototype-main` with normal push syntax `git push origin main:lua-prototype-main`. Remote `main` was not targeted.
+Repository destination:
 
-## Godot Foundation Branch
+```text
+docs\lua_audit
+```
 
-The `godot/prototype-foundation` branch remains the branch for current Godot S1/S2 foundation. G2.5 repairs repository-copy validation scripts so they infer project root from their script location instead of requiring `D:\Godot\GraytailGodot`.
+Imported files:
 
-## Entrypoints
+- `docs\lua_audit\LUA_DEEP_AUDIT_REPORT.md`
+- `docs\lua_audit\LUA_TO_GODOT_PARITY_SPEC.md`
+- `docs\lua_audit\LUA_SYSTEM_CALLGRAPH.md`
+- `docs\lua_audit\LUA_PARITY_TASKS_FOR_GODOT.csv`
 
-- Lua entry on Lua baseline: `scripts/main.lua`
-- Godot project entry on Godot branch: `Godot/GraytailGodot/project.godot`
-- Godot source copied into repository: `Godot/GraytailGodot`
-- Current Godot version reference: Godot 4.6.3 stable from the original PC setup
-- Current report path on this PC: `D:\AGAME1\_codex_reports`
+The imported files are now the local repository reference set for future G3 Godot Lua Parity P0 planning and implementation.
 
-## Validation Results Before Commit
+## Safety Result
 
-- `validate_project_structure.ps1`: PASS from repository copy
-- `validate_s1_foundation.ps1`: PASS from repository copy
-- `validate_s2_rule_loop.ps1`: PASS from repository copy; external AGAME report/cache checks are optional via environment variables
-- `git remote -v`: origin is Game1 only
+- Godot was not run.
+- Godot Lua Parity P0 implementation was not started.
+- No Godot scripts, scenes, runtime code, or validators were changed for P0.
+- No real art assets were migrated.
+- No files were deleted.
+- Writes were limited to the Game1 repository under `D:\AGAME2\repo\Game1`.
 
 ## Next Branch
 
-Do not start Lua Parity P0 automatically. If authorized later, start from `godot/prototype-foundation` and create `godot/lua-parity-p0`.
+The branch `godot/lua-parity-p0` now has the Lua audit/parity specification files required for the next stage. After user authorization, G3 Godot Lua Parity P0 implementation may start from this branch.
