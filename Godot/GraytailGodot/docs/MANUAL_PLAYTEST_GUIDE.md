@@ -1,52 +1,52 @@
-# MANUAL_PLAYTEST_GUIDE
+# Manual Playtest Guide
+
+## Scope
+
+This guide covers the G4 playable graybox loop plus G5 Asset/UI/Visual Parity surfaces. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
 
 ## Start Tutorial 5x5
 
-1. Open the main scene or run the project.
-2. Select `Start Tutorial 5x5`.
-3. Move with W/A/S/D or arrow keys.
-4. Press E to search, interact, request extraction, and confirm extraction.
-5. Press Space or J to fight a monster room.
-6. Press F to flag the current cell.
+Use `Start Tutorial 5x5` to verify the fixed tutorial route and tutorial popup.
 
-## Tutorial Recommended Route
+### Tutorial recommended route
 
-From spawn `(0,0)`, use this route to exercise the loop:
+- Move with W/A/S/D or arrow keys.
+- Use E to search, interact, request extraction, or confirm extraction.
+- Use Space/J to fight when the current room is Monster.
+- Use F to flag the current cell.
+- Use M/Tab to toggle MapOverlay.
+- Use R to restart.
 
-```text
-(0,0) -> (0,1) -> (0,2) -> (0,3) -> (0,4) -> (1,4) -> (2,4) -> (3,4) -> (4,4)
-```
+Expected G5 visuals:
 
-Expected coverage:
-
-- Number hint near mines.
-- Mine trigger with non-fatal damage.
-- Event placeholder.
-- Monster fight.
-- Chest search.
-- Exit extraction and training complete result.
+- HUD uses left/protocol/bottom presentation panels.
+- MiniMap shows manifest-backed icons or text fallback.
+- Tutorial popup appears as a panel rather than only HUD text.
+- Room visual updates as the public current room changes.
+- Player marker updates position without changing rules.
 
 ## Start Standard 10x10
 
-1. Select `Start Standard 10x10`.
-2. Explore with W/A/S/D or arrow keys.
-3. Use E on normal/chest/event/exit rooms.
-4. Use Space or J on monster rooms.
-5. Continue until a random exit is discovered, then use E twice to request and confirm extraction.
+Use `Start Standard 10x10` for the Standard smoke route.
 
-## Standard Smoke Route
+### Standard smoke route
 
-Because the map is generated from a fixed seed, the exact route can be replayed once discovered. For smoke testing, verify:
+- Start a standard run.
+- Move several rooms.
+- Flag a cell.
+- Open and close MapOverlay.
+- Search a Normal or Chest room.
+- Fight a Monster if reached.
+- Confirm extraction only from an Exit room.
 
-- The map is 10x10.
-- HP, Power, Pressure, Gold, Position, Room, Adjacent Mines, and Search State update.
-- MiniMap expands with movement.
-- Monster fight resolves deterministically.
-- ResultPanel appears after extraction or failure.
+Expected G5 visuals:
+
+- MiniMap and MapOverlay share the same ViewModel.
+- Room/player visuals update from snapshots.
+- ResultPanel still shows extraction/failure/training summaries.
 
 ## Known limits
 
-- Event behavior is a placeholder.
-- Monster combat is deterministic command combat, not action combat.
-- Real art assets are not migrated.
-- Full MetaProgress and Deploy UI are not part of this stage.
+- No Godot import/runtime smoke is part of the static G5 validation.
+- No full MetaProgress, Deploy UI, action combat, video, music, or font migration.
+- Some migrated icons remain internal placeholders until final art approval.

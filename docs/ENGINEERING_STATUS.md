@@ -2,65 +2,48 @@
 
 ## Stage
 
-G3.5 runtime repair and G4 playable graybox v0.1.
+G5 Asset / UI / Visual Parity + Presentation Decoupling Refactor.
 
 ## Time
 
-`2026-06-08`
+`2026-06-09`
 
 ## Repository State
 
 - Current repository path: `D:\AGAME2\repo\Game1`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
-- Current working branch at update time: `godot/lua-parity-p0`
-- Base commit for this update: `3cb79bc06db7ce038446c3739f6c86085f37a375`
-- Target commit: created by this stage; see final `git log -1 --oneline`.
+- Base branch: `godot/lua-parity-p0`
+- G5 branch: `godot/g5-asset-ui-presentation`
+- Base commit: `688f3bc72be6a0f521956001eeb9657fa4c43e26`
 - `main` modified or overwritten: no
 - `lua-prototype-main` modified or overwritten: no
-- Remote modified: no
-- Force push: no
-- Old `Game.git` push: no
+- Old `Game.git` modified or pushed: no
 
-## Implemented
+## Implemented In G5
 
-- Tutorial 5x5 fixed mode from imported Lua audit coordinates.
-- Standard 10x10 generated mode with required P0 room counts.
-- TruthMap/IntelMap separation for real vs public player-known state.
-- RunContext P0 fields for mode, phase, turn, player state, protocol, inventory, stats, and result snapshots.
-- CommandBus-only player and Debug UI command entry.
-- RoomResolver P0 movement/search/mine/chest/event/monster/extract rules.
-- HUD, MiniMap, and ResultPanel snapshot/ViewModel display updates.
-- Lua parity P0 validator script.
-- Godot 4.6 runtime repair for GDScript type inference errors.
-- Player-facing `Start Tutorial 5x5` and `Start Standard 10x10` entry buttons.
-- Keyboard play loop for movement, search/interact/extract, fight, flag, and restart.
-- Playable graybox v0.1 validator and manual playtest guide.
+- AssetCatalog and ContentDB manifest boundary.
+- Compatible manifest expansion for presentation metadata.
+- First audited Godot asset migration batch.
+- PresentationMapping and PresentationTheme.
+- MiniMap, MapOverlay, HUD, TutorialPopup, ResultPanel, room visual, and player visual parity surfaces.
+- Core rule protection: TruthMap/IntelMap/RunContext/CommandBus/RoomResolver behavior contract preserved.
+- Static G5 validation script.
 
 ## Not Implemented
 
-- Real art migration.
 - Full MetaProgress.
 - Deploy UI.
 - Action combat.
-- P1/P2 event detail parity.
+- Video/music/font migration.
+- Full event system parity.
 
 ## Validation
 
-Validation passed with `validate_project_structure.ps1`, `validate_lua_parity_p0.ps1`, `validate_playable_graybox_v0_1.ps1`, Godot headless editor, and Godot runtime smoke.
+Local static validations passed:
 
-## Next Stage
+- `validate_project_structure.ps1`
+- `validate_lua_parity_p0.ps1`
+- `validate_playable_graybox_v0_1.ps1`
+- `validate_asset_ui_parity_g5.ps1`
 
-Do not start automatically. Future work requires separate user approval.
-
-## C2 To C1 Handoff Status
-
-- G3 completion commit: `3cb79bc feat: implement Godot Lua parity P0`.
-- G3.5+G4 completion commit: `0b19a05 feat: make Godot parity build manually playable`.
-- Current usable branch: `godot/lua-parity-p0`.
-- Current playable state: manually playable graybox v0.1.
-- Next-stage entry branch: `godot/lua-parity-p0`.
-- Computer 1 resume method: fetch/pull `godot/lua-parity-p0` from `https://github.com/yanoutrageous/Game1.git`.
-- Detailed Computer 2 to Computer 1 handoff: `docs/handoff/HANDOFF_C2_TO_C1_GODOT_LUA_PARITY_P0.md`.
-- Do not merge to `main` automatically.
-- Do not modify `lua-prototype-main`.
-- Recommended next stage after separate authorization: G5 content system P1.
+Godot editor/runtime/import was not run in this stage.

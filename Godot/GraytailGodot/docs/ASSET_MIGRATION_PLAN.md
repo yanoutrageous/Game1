@@ -1,23 +1,40 @@
 # Asset Migration Plan
 
-第一批资产迁移顺序：
+## G5 Status
 
-1. 先迁移小地图图标。
-2. 再迁移玩家占位图。
-3. 再迁移房间 Tile / 背景。
-4. 再迁移基础 UI。
-5. 再迁移音效。
+G5 migrates only audited repository-local assets into the Godot project. It does not copy videos, music, fonts, deploy UI, or unknown-license bulk folders.
 
-暂不迁移：
+## Godot Asset Layout
 
-- 视频。
-- 宣传图。
-- 未知授权素材。
-- 大型临时素材。
+- `assets/ui/minimap`: player marker, unknown/scanned/explored cells, flag, room icons, number icons.
+- `assets/ui/hud`: left panel, protocol panel, bottom bar, mine-risk tag, bar frame, warning bar.
+- `assets/ui/common`: reusable dark button and gold icon.
+- `assets/player`: default idle-facing player sprites.
+- `assets/rooms`: normal, mine, chest, event, monster, exit room backgrounds.
+- `assets/props`: chest, mine trap, gold pile props.
 
-每个资产必须登记：
+## Manifest Contract
+
+`data/assets/asset_manifest.csv` remains compatible with the existing required columns:
 
 - `asset_id`
-- 来源路径
-- Godot 路径
-- 授权状态
+- `godot_path`
+- `usage`
+
+G5 adds optional metadata columns for presentation mapping:
+
+- `theme_key`
+- `presentation_role`
+- `state`
+- `variant`
+- `source_status`
+
+Empty `godot_path` is allowed only when `replacement_needed=true`.
+
+## Deferred
+
+- Video files.
+- Music and SFX except manifest placeholders.
+- Fonts until license and import behavior are separately approved.
+- Full Deploy UI asset set.
+- Unknown-license or oversized temporary assets.
