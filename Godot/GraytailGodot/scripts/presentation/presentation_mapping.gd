@@ -142,16 +142,16 @@ static func prop_asset_for_room(room_type: StringName) -> StringName:
 static func hint_for_snapshot(snapshot: Dictionary) -> String:
 	match StringName(snapshot.get("current_room", &"Unknown")):
 		&"Exit":
-			return "E: request extract, then confirm"
+			return "E：请求撤离并确认"
 		&"Monster":
-			return "Space/J: clear monster"
+			return "Space/J：清理异常体"
 		&"Event":
-			return "E: resolve event placeholder"
+			return "E：查看事件选项"
 		&"Chest":
-			return "E: search chest"
+			return "E：开启物资箱"
 		&"Normal":
-			return "E: search room"
+			return "E：搜索房间"
 		&"Mine":
-			return "Mine confirmed; move with care"
+			return "地雷已确认，谨慎移动"
 		_:
-			return "Move / search / map"
+			return "移动 / 搜索 / 地图"

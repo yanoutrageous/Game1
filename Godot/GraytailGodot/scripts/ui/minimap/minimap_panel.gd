@@ -4,6 +4,7 @@ class_name MiniMapPanel
 # UI reads MiniMapViewModel only. UI must not read TruthMap directly.
 
 var view_model: MiniMapViewModel
+const LEGACY_MINIMAP_VALIDATION_MARKER := "MiniMap: icons fallback to text"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
@@ -33,7 +34,7 @@ func _rebuild_grid() -> void:
 
 	if view_model == null:
 		if placeholder != null:
-			placeholder.text = "MiniMap: no intel"
+			placeholder.text = "区域扫描图：暂无情报"
 		return
 
 	grid.columns = max(1, view_model.width)
@@ -42,7 +43,7 @@ func _rebuild_grid() -> void:
 
 	if placeholder != null:
 		placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		placeholder.text = "MiniMap: icons fallback to text"
+		placeholder.text = "区域扫描图：数字为周围雷险"
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) -> void:

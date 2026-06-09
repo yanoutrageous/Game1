@@ -23,17 +23,19 @@ G7 Lua UX / Flow Parity P2.
 
 - Main menu shell.
 - Read-only deploy shell foundation.
-- Run-screen layout refactor with left HUD/MiniMap, center room, right protocol/debug rail, and bottom action bar.
+- Run-screen layout refactor with left HUD/MiniMap, center room, right protocol rail, collapsed Debug/Grid Move controls, and bottom action bar.
 - Event option panel.
 - Loot result panel.
 - Extraction confirmation panel.
+- Localized player-facing flow copy for menu, deploy, tutorial, events, map hints, HUD summaries, and result panel.
+- Removal of visible event placeholder wording.
 - HUD and ResultPanel sizing fixes.
 - Static G7 validation script.
 
 ## Not Implemented
 
 - Full MetaProgress.
-- Deploy UI.
+- Full persistence-backed Deploy economy.
 - Action combat.
 - Video/music/font migration.
 - Full MetaProgress/Deploy progression economy.

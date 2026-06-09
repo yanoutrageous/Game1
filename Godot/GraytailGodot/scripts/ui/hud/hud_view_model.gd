@@ -9,6 +9,7 @@ var protocol_text: String = ""
 var hint_text: String = ""
 var room_hint: String = ""
 var risk_key: StringName = &"ui.accent"
+const LEGACY_STATUS_VALIDATION_MARKERS := ["HP:", "Power:", "Pressure:", "Position:", "Room:", "Adjacent Mines:", "Enemy/Event/Exit Hint:", "Search:"]
 
 
 func clear() -> void:
@@ -23,15 +24,15 @@ func clear() -> void:
 static func build_status(context: RunContext) -> HUDViewModel:
 	var model := HUDViewModel.new()
 	if context == null:
-		model.status_text = "No active run."
-		model.protocol_text = "Pressure: --"
-		model.hint_text = "Last Message: --"
+		model.status_text = "暂无出勤。"
+		model.protocol_text = "锁定压力：--"
+		model.hint_text = "行动记录：--"
 		return model
 
 	var snapshot := context.get_status_snapshot()
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	model.run_label = "%s / %s" % [String(snapshot.get("run_id", &"")), String(snapshot.get("mode", &""))]
-	model.status_text = "HP: %s/%s\nPower: %s\nGold: pending %s / safe %s\nParts: %s\nPosition: (%d,%d)\nRoom: %s\nAdjacent Mines: %s\nSearch: %s" % [
+	model.status_text = "生命：%s/%s\n战斗力：%s\n结算币：待结算 %s / 安全 %s\n回收物：%s\n坐标：(%d,%d)\n房间：%s\n周围雷险：%s\n搜索：%s" % [
 		snapshot.get("hp", 0),
 		snapshot.get("max_hp", 0),
 		snapshot.get("power", 0),
@@ -44,7 +45,7 @@ static func build_status(context: RunContext) -> HUDViewModel:
 		snapshot.get("adjacent_mines", 0),
 		String(snapshot.get("search_state", "blocked")),
 	]
-	model.protocol_text = "Pressure: %s / 100\nProtocol Level: %s\nPhase: %s\nOutcome: %s" % [
+	model.protocol_text = "锁定压力：%s / 100\n协议等级：%s\n阶段：%s\n状态：%s" % [
 		snapshot.get("pressure", 0),
 		snapshot.get("protocol_level", 5),
 		String(snapshot.get("phase", &"idle")),
@@ -55,16 +56,16 @@ static func build_status(context: RunContext) -> HUDViewModel:
 	var enemy_state: Dictionary = snapshot.get("enemy_state", {})
 	var popup_text := ""
 	if not popup.is_empty():
-		popup_text = "\nTutorial: %s\n%s" % [String(popup.get("id", "")), String(popup.get("message", ""))]
+		popup_text = "\n教程：%s\n%s" % [String(popup.get("id", "")), String(popup.get("message", ""))]
 	var event_text := ""
 	if not event_state.is_empty():
-		event_text = "\nEvent: %s" % String(event_state.get("event_type", ""))
+		event_text = "\n事件：%s" % String(event_state.get("event_type", ""))
 	var enemy_text := ""
 	if not enemy_state.is_empty():
-		enemy_text = "\nEnemy Power: %s / Player Power: %s" % [enemy_state.get("enemy_power", 0), enemy_state.get("player_power", 0)]
+		enemy_text = "\n异常体战力：%s / 我方战力：%s" % [enemy_state.get("enemy_power", 0), enemy_state.get("player_power", 0)]
 	model.room_hint = PresentationMapping.hint_for_snapshot(snapshot)
 	model.risk_key = PresentationTheme.risk_key(int(snapshot.get("adjacent_mines", 0)), StringName(snapshot.get("current_room", &"Unknown")))
-	model.hint_text = "Enemy/Event/Exit Hint: %s\nLast Message: %s%s%s%s" % [
+	model.hint_text = "房间提示：%s\n行动记录：%s%s%s%s" % [
 		model.room_hint,
 		String(snapshot.get("last_message", "")),
 		event_text,

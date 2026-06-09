@@ -8,12 +8,13 @@ Base: `godot/g6-lua-playable-parity-p1-core` at `ee43cfa272d247c57fceda1ff4a43e3
 
 ## What Changed
 
-- Added a main menu shell before entering runs.
-- Added a read-only deploy shell with warehouse, requisition, loadout, recovery, and talent tabs.
-- Moved run UI into stable zones: left HUD/MiniMap, center room, right protocol/debug rail, bottom action bar.
-- Added event option, loot result, and extraction confirmation panels.
+- Added a localized main menu shell before entering runs.
+- Added a read-only deploy shell with warehouse, requisition, loadout, recovery, talent, and settings tabs.
+- Moved run UI into stable zones: left HUD/MiniMap, center room, right protocol rail, collapsed Debug/Grid Move controls, bottom action bar.
+- Added placeholder-free event option, loot result, and extraction confirmation panels.
+- Localized tutorial popup, HUD hint, MapOverlay, and result panel flow copy.
 - Kept formal movement room-local and Debug grid movement separated.
-- Added G7 static validation.
+- Added G7 static validation for main/deploy flow, event placeholder removal, result/tutorial flow, collapsed Debug UI, and UI/TruthMap boundaries.
 
 ## Required Validation
 

@@ -2,18 +2,20 @@
 
 ## Summary
 
-G7 adds Lua UX / flow parity P2 shell behavior on top of the G6 playable rules. It fixes the run-screen overlap problem and adds a main menu, deploy shell, bottom action bar, event option panel, loot result panel, and extraction confirmation panel without adding persistence or full meta progression.
+G7 adds Lua prototype flow restoration behavior on top of the G6 playable rules. It fixes the run-screen overlap problem and restores the player-facing shell flow: localized main menu, deploy shell, bottom action bar, event option panel, loot result panel, extraction confirmation panel, tutorial popup copy, and result flow without adding persistence or full meta progression.
 
 ## Implemented
 
-- Added MainMenuPanel with exploration, tutorial, gear/talent, and settings entry points.
-- Added DeployShellPanel with static warehouse, requisition, loadout, recovery, and talent tabs.
-- Rebuilt the run overlay into left HUD/MiniMap, center room, right protocol/debug rail, and bottom action bar.
+- Added MainMenuPanel with exploration, tutorial, gear/talent, and settings entry points using player-facing Chinese copy.
+- Added DeployShellPanel with static warehouse, requisition, loadout, recovery, talent, and settings tabs.
+- Rebuilt the run overlay into left HUD/MiniMap, center room, right protocol rail, collapsed Debug/Grid Move controls, and bottom action bar.
 - Added EventOptionPanel wired to `CommandBus.select_event_option`.
 - Added LootResultPanel for search, combat, and event reward summaries.
 - Added ExtractConfirmPanel before `CommandBus.confirm_extract`.
+- Removed the old visible event placeholder hint; event rooms now present trader/dice/altar/trap options and localized result messages.
+- Localized tutorial popup and result panel copy while keeping G6 room-local movement.
 - Resized HUD and ResultPanel surfaces to avoid covering the room view.
-- Added `validate_lua_ux_flow_parity_g7.ps1`.
+- Updated `validate_lua_ux_flow_parity_g7.ps1` to cover flow shell, collapsed Debug UI, placeholder removal, tutorial/result flow, and UI/TruthMap boundaries.
 
 ## Boundaries
 

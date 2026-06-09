@@ -13,6 +13,7 @@ const PlayerScene := preload("res://scenes/player/player.tscn")
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
 const SCREEN_RUN := &"run"
+const LEGACY_GRAYBOX_VALIDATION_MARKERS := ["Start Tutorial 5x5", "Start Standard 10x10", "Controls: W/A/S/D or arrows move"]
 
 var run_context: RunContext
 var command_bus: CommandBus
@@ -22,6 +23,8 @@ var deploy_shell_panel: Control
 var run_overlay_root: Control
 var room_badge: Label
 var protocol_badge: Label
+var debug_panel: VBoxContainer
+var debug_toggle_button: Button
 var debug_log: Label
 var event_panel: PanelContainer
 var event_title_label: Label
@@ -141,10 +144,10 @@ func _build_main_menu() -> void:
 	_add_color_rect(main_menu_panel, "MainMenuBackdrop", Rect2(0, 0, 1280, 720), Color(0.03, 0.06, 0.07, 1.0))
 	_add_texture_rect(main_menu_panel, "MainMenuRoomArt", Rect2(64, 224, 620, 350), &"room.background.normal", Color(1, 1, 1, 0.66))
 	_add_color_rect(main_menu_panel, "MainMenuArtShade", Rect2(64, 224, 620, 350), Color(0.0, 0.0, 0.0, 0.18))
-	var title := _add_label(main_menu_panel, "MainMenuTitle", Rect2(72, 72, 620, 96), "Graytail Exploration", 44)
+	var title := _add_label(main_menu_panel, "MainMenuTitle", Rect2(72, 72, 620, 96), "格外危除", 44)
 	title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.warning"))
-	_add_label(main_menu_panel, "MainMenuSubtitle", Rect2(76, 164, 600, 56), "Lua flow parity shell: deploy, tutorial, run, recover.", 18)
-	_add_label(main_menu_panel, "MainMenuSceneHint", Rect2(76, 520, 620, 80), "G7 keeps rules in CommandBus/RunContext and moves only UI flow into this shell.", 16)
+	_add_label(main_menu_panel, "MainMenuSubtitle", Rect2(76, 164, 600, 56), "地牢入口已开启。选择出勤，或先完成新手教程。", 18)
+	_add_label(main_menu_panel, "MainMenuSceneHint", Rect2(76, 520, 620, 80), "回收物、异常事件、地雷数字和撤离信标都在地下等你。", 16)
 
 	var mode_panel := VBoxContainer.new()
 	mode_panel.name = "ModeEntryPanel"
@@ -154,10 +157,10 @@ func _build_main_menu() -> void:
 	mode_panel.offset_bottom = 520.0
 	main_menu_panel.add_child(mode_panel)
 
-	_add_menu_button(mode_panel, "Depart Exploration", func() -> void: _show_deploy_shell())
-	_add_menu_button(mode_panel, "Start Tutorial 5x5", func() -> void: _start_tutorial_from_ui())
-	_add_menu_button(mode_panel, "Gear / Talents", func() -> void: _show_deploy_shell(&"talents"))
-	_add_menu_button(mode_panel, "Settings", func() -> void: _show_settings_shell())
+	_add_menu_button(mode_panel, "出发探索", func() -> void: _show_deploy_shell())
+	_add_menu_button(mode_panel, "新手教程", func() -> void: _start_tutorial_from_ui())
+	_add_menu_button(mode_panel, "装备 / 天赋", func() -> void: _show_deploy_shell(&"talents"))
+	_add_menu_button(mode_panel, "设置", func() -> void: _show_settings_shell())
 
 
 func _build_deploy_shell() -> void:
@@ -167,8 +170,8 @@ func _build_deploy_shell() -> void:
 	ui_root.add_child(deploy_shell_panel)
 
 	_add_color_rect(deploy_shell_panel, "DeployBackdrop", Rect2(0, 0, 1280, 720), Color(0.02, 0.05, 0.06, 1.0))
-	_add_button(deploy_shell_panel, "BackToMainMenu", Rect2(32, 28, 180, 40), "Back to Main", func() -> void: _show_main_menu())
-	_add_label(deploy_shell_panel, "DeployTitle", Rect2(260, 34, 440, 42), "Deploy Shell / Read-only Foundation", 22)
+	_add_button(deploy_shell_panel, "BackToMainMenu", Rect2(32, 28, 180, 40), "返回主界面", func() -> void: _show_main_menu())
+	_add_label(deploy_shell_panel, "DeployTitle", Rect2(260, 34, 440, 42), "出勤配置", 22)
 
 	var tabs := HBoxContainer.new()
 	tabs.name = "DeployShellTabs"
@@ -177,23 +180,23 @@ func _build_deploy_shell() -> void:
 	tabs.offset_right = 1180.0
 	tabs.offset_bottom = 72.0
 	deploy_shell_panel.add_child(tabs)
-	for tab_name in ["Warehouse", "Requisition", "Loadout", "Recovery", "Talents"]:
+	for tab_name in ["后勤仓库", "后勤申领", "出勤配置", "回收资历", "天赋", "设置"]:
 		var captured_tab := String(tab_name)
 		_add_menu_button(tabs, captured_tab, func() -> void: _select_deploy_tab(captured_tab))
 
 	_add_color_rect(deploy_shell_panel, "DeployContentBand", Rect2(32, 108, 930, 560), Color(0.05, 0.09, 0.11, 0.96))
 	_add_color_rect(deploy_shell_panel, "DeploySummaryBand", Rect2(990, 128, 250, 420), Color(0.07, 0.08, 0.08, 0.96))
-	_add_label(deploy_shell_panel, "DeployCurrentTab", Rect2(56, 124, 420, 36), "Current module: Loadout", 20)
-	_add_label(deploy_shell_panel, "DeployAccount", Rect2(740, 128, 220, 34), "Settlement gold: 0 | Items: 0", 16)
-	_add_label(deploy_shell_panel, "DeploySummary", Rect2(1014, 156, 210, 220), "Deployment Summary\n\nEquipment: not configured\nConsumables: none\nTalents: visible shell only\n\nNo persistence writes.", 16)
-	_add_button(deploy_shell_panel, "StartStandard10x10Button", Rect2(1010, 590, 220, 58), "Start Standard 10x10", func() -> void: _start_standard_from_ui())
+	_add_label(deploy_shell_panel, "DeployCurrentTab", Rect2(56, 124, 420, 36), "当前模块：出勤配置", 20)
+	_add_label(deploy_shell_panel, "DeployAccount", Rect2(720, 128, 240, 34), "后勤账本：结算币 0 | 物资 0", 16)
+	_add_label(deploy_shell_panel, "DeploySummary", Rect2(1014, 156, 210, 220), "出勤摘要\n\n装备：未配置作业装备\n消耗品：未携带作业消耗品\n天赋：本局无额外加成", 16)
+	_add_button(deploy_shell_panel, "StartStandard10x10Button", Rect2(1010, 590, 220, 58), "确认出发", func() -> void: _start_standard_from_ui())
 
 	var card_data := [
-		["area_sense", "Area Sense", "Scan / talent", "Highlights 8-neighbor mine counts."],
-		["thick_skin", "Thick Skin", "Defense / gear", "Mine damage reduction preview."],
-		["pressure_clock", "Pressure Clock", "Protocol / talent", "Shows pressure thresholds."],
-		["salvage_clause", "Salvage Clause", "Recovery / perk", "Failure salvage preview."],
-		["bargain", "Bargain", "Event / talent", "Trader sale improvement preview."],
+		["area_sense", "区域感知", "区域扫描图 · 勘测", "进入房间时高亮周围 8 格风险。"],
+		["thick_skin", "厚皮", "雷险区 · 防护", "雷伤降低 10 点。"],
+		["pressure_clock", "威压", "异常体 · 防护", "异常体避让窗口增加。"],
+		["salvage_clause", "抢救条款", "撤离 · 回收", "信号中断时额外保留回收物。"],
+		["bargain", "议价", "事件 · 天赋", "旅商折价概率改善。"],
 	]
 	for index in range(card_data.size()):
 		var row := index / 3
@@ -241,19 +244,21 @@ func _build_run_overlay() -> void:
 	action_bar.offset_right = 936.0
 	action_bar.offset_bottom = 694.0
 	run_overlay_root.add_child(action_bar)
-	_add_label(run_overlay_root, "ControlsLabel", Rect2(410, 610, 540, 32), "Controls: W/A/S/D or arrows move inside the room; doors change rooms.", 14)
-	_add_menu_button(action_bar, "E Search / Interact", func() -> void: _handle_interact_pressed())
-	_add_menu_button(action_bar, "F Flag", func() -> void: command_bus.flag_current_cell())
-	_add_menu_button(action_bar, "Space Fight", func() -> void: _fight_and_show_result())
-	_add_menu_button(action_bar, "M Map", func() -> void: _open_map_from_debug())
-	_add_menu_button(action_bar, "R Restart", func() -> void: _restart_run_from_ui())
+	_add_label(run_overlay_root, "ControlsLabel", Rect2(410, 610, 540, 32), "WASD/方向键：房间内移动；走到门口才切换房间。", 14)
+	_add_menu_button(action_bar, "E 搜索/交互", func() -> void: _handle_interact_pressed())
+	_add_menu_button(action_bar, "F 标记", func() -> void: command_bus.flag_current_cell())
+	_add_menu_button(action_bar, "Space/J 战斗", func() -> void: _fight_and_show_result())
+	_add_menu_button(action_bar, "M 地图", func() -> void: _open_map_from_debug())
+	_add_menu_button(action_bar, "R 重开", func() -> void: _restart_run_from_ui())
 
-	var debug_panel := VBoxContainer.new()
+	debug_toggle_button = _add_button(run_overlay_root, "DebugToggleButton", Rect2(1010, 166, 170, 34), "调试 / 网格移动", func() -> void: _toggle_debug_panel())
+	debug_panel = VBoxContainer.new()
 	debug_panel.name = "DebugOperationPanel"
 	debug_panel.offset_left = 980.0
-	debug_panel.offset_top = 188.0
+	debug_panel.offset_top = 210.0
 	debug_panel.offset_right = 1220.0
 	debug_panel.offset_bottom = 690.0
+	debug_panel.visible = false
 	run_overlay_root.add_child(debug_panel)
 
 	var debug_title := Label.new()
@@ -302,7 +307,7 @@ func _build_runtime_modals() -> void:
 	event_content.name = "EventOptionContent"
 	event_panel.add_child(event_content)
 	event_title_label = Label.new()
-	event_title_label.text = "Event"
+	event_title_label.text = "事件"
 	event_content.add_child(event_title_label)
 	event_body_label = Label.new()
 	event_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -311,27 +316,27 @@ func _build_runtime_modals() -> void:
 	event_options_box = VBoxContainer.new()
 	event_options_box.name = "EventOptionButtons"
 	event_content.add_child(event_options_box)
-	_add_menu_button(event_content, "Close", func() -> void: event_panel.visible = false)
+	_add_menu_button(event_content, "关闭", func() -> void: event_panel.visible = false)
 
 	loot_panel = _new_modal_panel("LootResultPanel", Rect2(430, 160, 430, 300))
 	var loot_content := VBoxContainer.new()
 	loot_content.name = "LootResultContent"
 	loot_panel.add_child(loot_content)
 	loot_title_label = Label.new()
-	loot_title_label.text = "Loot Result"
+	loot_title_label.text = "回收结果"
 	loot_content.add_child(loot_title_label)
 	loot_body_label = Label.new()
 	loot_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	loot_body_label.custom_minimum_size = Vector2(390, 180)
 	loot_content.add_child(loot_body_label)
-	_add_menu_button(loot_content, "Close", func() -> void: loot_panel.visible = false)
+	_add_menu_button(loot_content, "关闭", func() -> void: loot_panel.visible = false)
 
 	extract_panel = _new_modal_panel("ExtractConfirmPanel", Rect2(430, 180, 430, 260))
 	var extract_content := VBoxContainer.new()
 	extract_content.name = "ExtractConfirmContent"
 	extract_panel.add_child(extract_content)
 	var extract_title := Label.new()
-	extract_title.text = "Confirm Extraction"
+	extract_title.text = "确认撤离"
 	extract_content.add_child(extract_title)
 	extract_body_label = Label.new()
 	extract_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -339,8 +344,8 @@ func _build_runtime_modals() -> void:
 	extract_content.add_child(extract_body_label)
 	var extract_buttons := HBoxContainer.new()
 	extract_content.add_child(extract_buttons)
-	_add_menu_button(extract_buttons, "Confirm", func() -> void: _confirm_extract_from_ui())
-	_add_menu_button(extract_buttons, "Cancel", func() -> void: _cancel_extract_from_ui())
+	_add_menu_button(extract_buttons, "确认", func() -> void: _confirm_extract_from_ui())
+	_add_menu_button(extract_buttons, "取消", func() -> void: _cancel_extract_from_ui())
 
 
 func _new_modal_panel(node_name: String, rect: Rect2) -> PanelContainer:
@@ -373,11 +378,11 @@ func _show_deploy_shell(selected_tab: StringName = &"loadout") -> void:
 	_hide_runtime_popups()
 	match selected_tab:
 		&"talents":
-			_select_deploy_tab("Talents")
+			_select_deploy_tab("天赋")
 		&"settings":
-			_select_deploy_tab("Settings")
+			_select_deploy_tab("设置")
 		_:
-			_select_deploy_tab("Loadout")
+			_select_deploy_tab("出勤配置")
 
 
 func _show_settings_shell() -> void:
@@ -391,6 +396,8 @@ func _show_run_screen() -> void:
 	deploy_shell_panel.visible = false
 	run_overlay_root.visible = true
 	_hide_runtime_popups()
+	if debug_panel != null:
+		debug_panel.visible = false
 	_refresh_view_models()
 
 
@@ -406,7 +413,7 @@ func _set_gameplay_visible(visible: bool) -> void:
 func _select_deploy_tab(tab_name: String) -> void:
 	var label := deploy_shell_panel.get_node_or_null("DeployCurrentTab") as Label
 	if label != null:
-		label.text = "Current module: %s" % tab_name
+		label.text = "当前模块：%s" % tab_name
 
 
 func _add_deploy_card(parent: Control, data: Array, rect: Rect2) -> void:
@@ -522,7 +529,7 @@ func _search_and_show_loot() -> void:
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
-		_show_loot_panel("Loot Result", reward)
+		_show_loot_panel("回收结果", reward)
 
 
 func _fight_and_show_result() -> void:
@@ -532,14 +539,14 @@ func _fight_and_show_result() -> void:
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
-		_show_loot_panel("Battle Result", reward)
+		_show_loot_panel("战斗结果", reward)
 
 
 func _show_event_panel(event_state: Dictionary) -> void:
 	if event_panel == null:
 		return
-	event_title_label.text = "Event: %s" % String(event_state.get("event_type", "event"))
-	event_body_label.text = "Choose an event option. Completed events cannot repeat rewards."
+	event_title_label.text = "事件：%s" % _event_type_label(StringName(event_state.get("event_type", &"event")))
+	event_body_label.text = "选择处理方式。事件完成后不会重复结算奖励。"
 	for child in event_options_box.get_children():
 		child.queue_free()
 	var options: Array = event_state.get("options", [])
@@ -557,7 +564,7 @@ func _select_event_option(option_id: StringName) -> void:
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
-		_show_loot_panel("Event Result", reward)
+		_show_loot_panel("事件结果", reward)
 
 
 func _request_extract_from_ui() -> void:
@@ -568,7 +575,7 @@ func _request_extract_from_ui() -> void:
 func _show_extract_panel(snapshot: Dictionary) -> void:
 	if StringName(snapshot.get("phase", &"running")) != &"confirm_extract":
 		return
-	extract_body_label.text = "Pending Gold: %s\nSafe Gold: %s\nCarried Items: %s\nProtocol Level: %s\nConfirm extraction from this exit?" % [
+	extract_body_label.text = "待结算：%s\n安全回收：%s\n回收物：%s\n协议等级：%s\n确认从该出口撤离？" % [
 		snapshot.get("pending_gold", 0),
 		snapshot.get("safe_gold", 0),
 		snapshot.get("parts", 0),
@@ -597,24 +604,24 @@ func _show_loot_panel(title: String, reward: Dictionary) -> void:
 
 func _format_reward(reward: Dictionary) -> String:
 	var lines: Array[String] = []
-	lines.append("Message: %s" % String(run_context.last_message))
+	lines.append("记录：%s" % String(run_context.last_message))
 	if reward.has("gold"):
-		lines.append("Pending gold gained: %s" % reward.get("gold", 0))
+		lines.append("待结算 +%s" % reward.get("gold", 0))
 	if reward.has("pending_gold_delta"):
-		lines.append("Pending gold delta: %s" % reward.get("pending_gold_delta", 0))
+		lines.append("待结算变化：%s" % reward.get("pending_gold_delta", 0))
 	if reward.has("safe_gold"):
-		lines.append("Safe gold gained: %s" % reward.get("safe_gold", 0))
+		lines.append("安全回收 +%s" % reward.get("safe_gold", 0))
 	if reward.has("reward_gold"):
-		lines.append("Battle gold gained: %s" % reward.get("reward_gold", 0))
+		lines.append("战斗回收 +%s" % reward.get("reward_gold", 0))
 	if reward.has("damage"):
-		lines.append("Damage taken: %s" % reward.get("damage", 0))
+		lines.append("受伤：%s" % reward.get("damage", 0))
 	if reward.has("hp_delta"):
-		lines.append("HP delta: %s" % reward.get("hp_delta", 0))
+		lines.append("生命变化：%s" % reward.get("hp_delta", 0))
 	var items: Array = reward.get("items", [])
 	if not items.is_empty():
-		lines.append("Items: %s" % items.size())
+		lines.append("回收物：%s 件" % items.size())
 	if reward.has("roll"):
-		lines.append("Dice roll: %s" % reward.get("roll", 0))
+		lines.append("骰子点数：%s" % reward.get("roll", 0))
 	var text := ""
 	for line in lines:
 		text += line + "\n"
@@ -625,6 +632,20 @@ func _restart_run_from_ui() -> void:
 	command_bus.restart_run()
 	if player_controller != null:
 		player_controller.reset_local_position()
+
+
+func _event_type_label(event_type: StringName) -> String:
+	match event_type:
+		&"trader":
+			return "旅商"
+		&"dice":
+			return "骰局"
+		&"altar":
+			return "祭坛"
+		&"trap":
+			return "机关"
+		_:
+			return "异常事件"
 
 
 func _is_runtime_modal_open() -> bool:
@@ -675,7 +696,7 @@ func _refresh_view_models() -> void:
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	var minimap_vm := MiniMapViewModel.build_from_intel(run_context.intel_map, run_context.get_current_pos())
 	if room_badge != null:
-		room_badge.text = "Mode: %s | Phase: %s | Room: %s\nPosition: (%d,%d) | Adjacent Mines: %s" % [
+		room_badge.text = "模式：%s | 阶段：%s | 房间：%s\n坐标：(%d,%d) | 周围雷险：%s" % [
 			String(snapshot.get("mode", &"")),
 			String(snapshot.get("phase", &"")),
 			String(snapshot.get("current_room", &"Unknown")),
@@ -684,7 +705,7 @@ func _refresh_view_models() -> void:
 			snapshot.get("adjacent_mines", 0),
 		]
 	if protocol_badge != null:
-		protocol_badge.text = "Protocol %s\nPressure: %s / 100\nOutcome: %s" % [
+		protocol_badge.text = "协议 %s\n压力：%s / 100\n状态：%s" % [
 			snapshot.get("protocol_level", 5),
 			snapshot.get("pressure", 0),
 			snapshot.get("outcome", "Running"),
@@ -711,6 +732,11 @@ func _refresh_view_models() -> void:
 func _toggle_map_overlay() -> void:
 	if map_overlay_panel != null:
 		map_overlay_panel.toggle_overlay()
+
+
+func _toggle_debug_panel() -> void:
+	if debug_panel != null:
+		debug_panel.visible = not debug_panel.visible
 
 
 func _open_map_from_debug() -> void:

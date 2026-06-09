@@ -28,8 +28,9 @@ Base commit: `ee43cfa272d247c57fceda1ff4a43e39e44f7ae1`.
 - Event rooms resolve P1 trader, dice, altar, and trap outcomes.
 - Result snapshots include carried item value and failure salvage details.
 - G7 adds a main menu shell and read-only deploy shell foundation.
-- G7 run UI separates left HUD/MiniMap, center room, right protocol/debug rail, and bottom action bar.
-- Event option, loot result, and extraction confirmation panels are available.
+- G7 run UI separates left HUD/MiniMap, center room, right protocol rail, collapsed Debug/Grid Move controls, and bottom action bar.
+- Event option, loot result, and extraction confirmation panels are available without the old placeholder event prompt.
+- Main/deploy/tutorial/HUD/map/result flow copy is localized toward the Lua prototype player experience.
 - Player-facing start buttons remain available through the main/deploy shell.
 - Keyboard play remains room-local movement, E interact/search/extract, Space/J fight, F flag, M/Tab map overlay, and R restart.
 
@@ -51,7 +52,7 @@ Do not run Godot/editor/import unless separately authorized.
 ## Current Unfinished Items
 
 - No full MetaProgress.
-- No Deploy UI.
+- No persistence-backed Deploy economy.
 - No video/music/font migration.
 - No full MetaProgress/Deploy progression economy.
 - No action combat.

@@ -4,6 +4,7 @@ class_name MapOverlayPanel
 signal cell_action_requested(marker: Dictionary)
 
 var view_model: MiniMapViewModel
+const LEGACY_MAP_OVERLAY_VALIDATION_MARKER := "Click hidden cells to flag"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
@@ -44,10 +45,10 @@ func _rebuild_grid() -> void:
 
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
-		title.text = "Map Overlay"
+		title.text = "区域扫描图"
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		footer.text = "Click hidden cells to flag. Click explored safe cells to return."
+		footer.text = "点击未知房间插旗；点击已探索安全房间快速返回。"
 
 	if view_model == null:
 		return

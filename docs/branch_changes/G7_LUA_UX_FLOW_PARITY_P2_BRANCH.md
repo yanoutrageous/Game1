@@ -10,11 +10,12 @@
 
 ## Change Groups
 
-- Main menu shell and deploy shell foundation.
-- Run-screen layout refactor into left HUD, center room, right protocol/debug rail, and bottom action bar.
-- Event option, loot result, and extraction confirmation panels.
+- Main menu shell and deploy shell foundation with localized player-facing flow copy.
+- Run-screen layout refactor into left HUD, center room, right protocol rail, collapsed Debug/Grid Move controls, and bottom action bar.
+- Event option, loot result, and extraction confirmation panels with placeholder-free event flow.
+- Tutorial popup, map hints, HUD summaries, and result panel copy aligned toward the Lua prototype flow.
 - HUD and ResultPanel sizing fixes.
-- Static G7 validation and documentation.
+- Static G7 validation and documentation, including checks for collapsed Debug UI and absence of old event placeholder wording.
 
 ## Explicit Non-Changes
 

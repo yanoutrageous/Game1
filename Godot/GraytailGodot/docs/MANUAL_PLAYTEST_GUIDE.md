@@ -2,14 +2,16 @@
 
 ## Scope
 
-This guide covers the G4 playable graybox loop, G5 Asset/UI/Visual Parity surfaces, G6 Lua Playable Parity P1 core behavior, and G7 Lua UX/flow shell. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+This guide covers the G4 playable graybox loop, G5 Asset/UI/Visual Parity surfaces, G6 Lua Playable Parity P1 core behavior, and G7 Lua prototype flow restoration shell. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+
+Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
 
 ## Main Menu / Deploy Shell
 
-- Use `Depart Exploration` to open the read-only DeployShell.
+- Use the main menu `出发探索` entry to open the read-only DeployShell.
 - Use deploy tabs to inspect warehouse, requisition, loadout, recovery, and talents shell content.
-- Use `Start Standard 10x10` in DeployShell to start a standard run.
-- Use `Start Tutorial 5x5` from the main menu to start tutorial directly.
+- Use `确认出发` in DeployShell to start a standard run.
+- Use `新手教程` from the main menu to start tutorial directly.
 
 Expected G7 visuals:
 
@@ -17,9 +19,9 @@ Expected G7 visuals:
 - DeployShell does not write save data or persistent progression.
 - Starting a run switches to the run overlay with no menu buttons covering the room.
 
-## Start Tutorial 5x5
+## Tutorial Run
 
-Use `Start Tutorial 5x5` to verify the fixed tutorial route and tutorial popup.
+Use `新手教程` to verify the fixed tutorial route and tutorial popup.
 
 ### Tutorial recommended route
 
@@ -48,13 +50,13 @@ Expected G6 behavior:
 Expected G7 behavior:
 
 - HUD and MiniMap remain inside the left sidebar.
-- Protocol and Debug controls stay in the right rail.
+- Protocol stays in the right rail, while Debug/Grid Move is collapsed behind its own toggle.
 - Bottom action bar exposes search/interact, flag, fight, map, and restart actions.
 - Search or combat opens a compact result panel instead of relying only on HUD text.
 
-## Start Standard 10x10
+## Standard Run
 
-Use `Start Standard 10x10` for the Standard smoke route.
+Use `出发探索` -> `确认出发` for the Standard smoke route.
 
 ### Standard smoke route
 
@@ -84,9 +86,10 @@ Expected G7 behavior:
 - Event rooms open an EventOptionPanel with selectable options.
 - Exit rooms open an ExtractConfirmPanel before final result.
 - ResultPanel has enough space for extraction/failure summaries.
+- The old event placeholder prompt should not appear.
 
 ## Known limits
 
 - No Godot import/runtime smoke is part of the static G5 validation.
-- No full MetaProgress, Deploy UI, action combat, video, music, or font migration.
+- No full MetaProgress, persistence-backed Deploy economy, action combat, video, music, or font migration.
 - Some migrated icons remain internal placeholders until final art approval.
