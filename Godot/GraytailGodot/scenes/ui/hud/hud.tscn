@@ -19,23 +19,23 @@ offset_bottom = 216.0
 [node name="StatusPanel" type="Label" parent="."]
 layout_mode = 1
 offset_left = 16.0
-offset_top = 232.0
-offset_right = 360.0
-offset_bottom = 264.0
+offset_top = 252.0
+offset_right = 352.0
+offset_bottom = 408.0
 text = "Status"
 
 [node name="ProtocolPanel" type="Label" parent="."]
 layout_mode = 1
 offset_left = 16.0
-offset_top = 272.0
-offset_right = 360.0
-offset_bottom = 304.0
+offset_top = 424.0
+offset_right = 352.0
+offset_bottom = 514.0
 text = "Protocol"
 
 [node name="HintPanel" type="Label" parent="."]
 layout_mode = 1
 offset_left = 16.0
-offset_top = 312.0
-offset_right = 360.0
-offset_bottom = 344.0
+offset_top = 532.0
+offset_right = 352.0
+offset_bottom = 674.0
 text = "Hint"

@@ -60,7 +60,7 @@ func _ensure_backdrop() -> void:
 	backdrop.name = "Backdrop"
 	backdrop.color = PresentationTheme.panel_color()
 	backdrop.position = Vector2(-8, -8)
-	backdrop.size = Vector2(496, 256)
+	backdrop.size = Vector2(636, 456)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 	move_child(backdrop, 0)

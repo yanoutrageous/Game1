@@ -2,7 +2,7 @@
 
 ## Stage
 
-G6 Lua Playable Parity P1 Core.
+G7 Lua UX / Flow Parity P2.
 
 ## Time
 
@@ -12,24 +12,23 @@ G6 Lua Playable Parity P1 Core.
 
 - Current repository path: `D:\AGAME2\repo\Game1`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
-- Base branch: `godot/g5-asset-ui-presentation`
-- G6 branch: `godot/g6-lua-playable-parity-p1-core`
-- Base commit: `95a14b0d6905d0fadd5ad56cd399cd52f7b02721`
+- Base branch: `godot/g6-lua-playable-parity-p1-core`
+- G7 branch: `godot/g7-lua-ux-flow-parity-p2`
+- Base commit: `ee43cfa272d247c57fceda1ff4a43e39e44f7ae1`
 - `main` modified or overwritten: no
 - `lua-prototype-main` modified or overwritten: no
 - Old `Game.git` modified or pushed: no
 
-## Implemented In G6
+## Implemented In G7
 
-- Room-local player movement foundation.
-- Door/boundary room transitions through `CommandBus.attempt_room_transition`.
-- MiniMap current-room updates only after map coordinate changes.
-- Debug grid move controls remain separate from formal movement.
-- MapOverlay flag and explored-cell teleport commands.
-- P1 event outcomes for trader, dice, altar, and trap.
-- Search/chest reward details, monster fight state, mine re-entry, extract/failure result snapshots, and failure salvage.
-- Once/blocking tutorial popup semantics.
-- Static G6 validation script.
+- Main menu shell.
+- Read-only deploy shell foundation.
+- Run-screen layout refactor with left HUD/MiniMap, center room, right protocol/debug rail, and bottom action bar.
+- Event option panel.
+- Loot result panel.
+- Extraction confirmation panel.
+- HUD and ResultPanel sizing fixes.
+- Static G7 validation script.
 
 ## Not Implemented
 
@@ -38,7 +37,7 @@ G6 Lua Playable Parity P1 Core.
 - Action combat.
 - Video/music/font migration.
 - Full MetaProgress/Deploy progression economy.
-- Action combat.
+- Persistent warehouse/equipment/talent economy.
 - Final tuned event economy.
 
 ## Validation
@@ -50,5 +49,6 @@ Local static validations passed:
 - `validate_playable_graybox_v0_1.ps1`
 - `validate_asset_ui_parity_g5.ps1`
 - `validate_lua_playable_parity_g6.ps1`
+- `validate_lua_ux_flow_parity_g7.ps1`
 
 Godot editor/runtime/import was not run in this stage.

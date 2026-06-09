@@ -2,7 +2,20 @@
 
 ## Scope
 
-This guide covers the G4 playable graybox loop, G5 Asset/UI/Visual Parity surfaces, and G6 Lua Playable Parity P1 core behavior. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+This guide covers the G4 playable graybox loop, G5 Asset/UI/Visual Parity surfaces, G6 Lua Playable Parity P1 core behavior, and G7 Lua UX/flow shell. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+
+## Main Menu / Deploy Shell
+
+- Use `Depart Exploration` to open the read-only DeployShell.
+- Use deploy tabs to inspect warehouse, requisition, loadout, recovery, and talents shell content.
+- Use `Start Standard 10x10` in DeployShell to start a standard run.
+- Use `Start Tutorial 5x5` from the main menu to start tutorial directly.
+
+Expected G7 visuals:
+
+- Menu and DeployShell hide the room and player layers.
+- DeployShell does not write save data or persistent progression.
+- Starting a run switches to the run overlay with no menu buttons covering the room.
 
 ## Start Tutorial 5x5
 
@@ -32,6 +45,13 @@ Expected G6 behavior:
 - Blocking tutorial popups pause formal movement until confirmed.
 - Search, event, monster, mine, extract, and failure result text updates are reflected in HUD/ResultPanel snapshots.
 
+Expected G7 behavior:
+
+- HUD and MiniMap remain inside the left sidebar.
+- Protocol and Debug controls stay in the right rail.
+- Bottom action bar exposes search/interact, flag, fight, map, and restart actions.
+- Search or combat opens a compact result panel instead of relying only on HUD text.
+
 ## Start Standard 10x10
 
 Use `Start Standard 10x10` for the Standard smoke route.
@@ -58,6 +78,12 @@ Expected G6 behavior:
 - Event rooms resolve one of trader, dice, altar, or trap outcomes.
 - Monster rooms show deterministic fight state and update after combat.
 - Failure results include pending-gold loss and salvage details.
+
+Expected G7 behavior:
+
+- Event rooms open an EventOptionPanel with selectable options.
+- Exit rooms open an ExtractConfirmPanel before final result.
+- ResultPanel has enough space for extraction/failure summaries.
 
 ## Known limits
 
