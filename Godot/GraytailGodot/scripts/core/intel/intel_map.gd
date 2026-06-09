@@ -2,6 +2,7 @@ extends RefCounted
 class_name IntelMap
 
 # IntelMap owns player-known information. UI must not read TruthMap directly.
+# It exposes public semantic state only; PresentationMapping assigns asset ids.
 
 var known_rooms: Dictionary = {}
 var width: int = 0
@@ -32,8 +33,6 @@ func reveal_cell(pos: Vector2i, truth_map: TruthMap = null) -> void:
 	cell["flagged"] = bool(known_rooms[_key(pos)].get("flagged", false))
 	if bool(cell["flagged"]):
 		cell["state"] = &"flagged"
-		cell["asset_id"] = &"icon.minimap.flag"
-		cell["label"] = "F"
 	known_rooms[_key(pos)] = cell
 
 
@@ -44,16 +43,10 @@ func toggle_flag(pos: Vector2i) -> void:
 	cell["flagged"] = not bool(cell.get("flagged", false))
 	if bool(cell["flagged"]):
 		cell["state"] = &"flagged"
-		cell["asset_id"] = &"icon.minimap.flag"
-		cell["label"] = "F"
 	elif bool(cell.get("revealed", false)):
 		cell["state"] = cell.get("state_before_flag", &"empty")
-		cell["asset_id"] = cell.get("asset_before_flag", &"")
-		cell["label"] = cell.get("label_before_flag", ".")
 	else:
 		cell["state"] = &"hidden"
-		cell["asset_id"] = &""
-		cell["label"] = "?"
 	known_rooms[_key(pos)] = cell
 
 
@@ -114,8 +107,6 @@ func build_public_cell(pos: Vector2i, truth_map: TruthMap, reveal_mines: bool = 
 	cell["random_exit"] = random_exit
 	cell["explored"] = bool(truth.get("explored", false))
 	cell["cleared"] = bool(truth.get("cleared", false))
-	cell["asset_id"] = _asset_id_for_room(room_type)
-	cell["label"] = _label_for_room(room_type, int(cell["adjacent_mines"]))
 	if bool(cell["mine"]):
 		cell["state"] = &"mine"
 	elif int(cell["adjacent_mines"]) > 0:
@@ -123,8 +114,6 @@ func build_public_cell(pos: Vector2i, truth_map: TruthMap, reveal_mines: bool = 
 	else:
 		cell["state"] = &"empty"
 	cell["state_before_flag"] = cell["state"]
-	cell["asset_before_flag"] = cell["asset_id"]
-	cell["label_before_flag"] = cell["label"]
 	return cell
 
 
@@ -146,8 +135,6 @@ func _base_public_cell(pos: Vector2i) -> Dictionary:
 		"random_exit": false,
 		"explored": false,
 		"cleared": false,
-		"asset_id": &"",
-		"label": "?",
 	}
 
 
@@ -157,41 +144,3 @@ func _has_cell(pos: Vector2i) -> bool:
 
 func _key(pos: Vector2i) -> String:
 	return "%d,%d" % [pos.x, pos.y]
-
-
-func _asset_id_for_room(room_type: StringName) -> StringName:
-	match room_type:
-		&"Spawn":
-			return &"icon.room.spawn"
-		&"Mine":
-			return &"icon.room.mine"
-		&"Chest":
-			return &"icon.room.chest"
-		&"Event":
-			return &"icon.room.event"
-		&"Monster":
-			return &"icon.room.monster"
-		&"Exit":
-			return &"icon.room.exit"
-		_:
-			return &"icon.room.normal"
-
-
-func _label_for_room(room_type: StringName, adjacent_mines: int) -> String:
-	match room_type:
-		&"Spawn":
-			return "G"
-		&"Mine":
-			return "M"
-		&"Chest":
-			return "C"
-		&"Event":
-			return "E"
-		&"Monster":
-			return "!"
-		&"Exit":
-			return "X"
-		_:
-			if adjacent_mines >= 0:
-				return str(adjacent_mines)
-			return "."

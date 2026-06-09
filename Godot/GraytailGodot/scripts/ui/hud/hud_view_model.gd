@@ -7,6 +7,8 @@ var run_label: String = ""
 var status_text: String = ""
 var protocol_text: String = ""
 var hint_text: String = ""
+var room_hint: String = ""
+var risk_key: StringName = &"ui.accent"
 
 
 func clear() -> void:
@@ -14,6 +16,8 @@ func clear() -> void:
 	status_text = ""
 	protocol_text = ""
 	hint_text = ""
+	room_hint = ""
+	risk_key = &"ui.accent"
 
 
 static func build_status(context: RunContext) -> HUDViewModel:
@@ -49,28 +53,12 @@ static func build_status(context: RunContext) -> HUDViewModel:
 	var popup: Dictionary = snapshot.get("tutorial_popup", {})
 	var popup_text := ""
 	if not popup.is_empty():
-		popup_text = "\nTutorial: %s" % String(popup.get("id", ""))
+		popup_text = "\nTutorial: %s\n%s" % [String(popup.get("id", "")), String(popup.get("message", ""))]
+	model.room_hint = PresentationMapping.hint_for_snapshot(snapshot)
+	model.risk_key = PresentationTheme.risk_key(int(snapshot.get("adjacent_mines", 0)), StringName(snapshot.get("current_room", &"Unknown")))
 	model.hint_text = "Enemy/Event/Exit Hint: %s\nLast Message: %s%s" % [
-		_hint_for_snapshot(snapshot),
+		model.room_hint,
 		String(snapshot.get("last_message", "")),
 		popup_text,
 	]
 	return model
-
-
-static func _hint_for_snapshot(snapshot: Dictionary) -> String:
-	match StringName(snapshot.get("current_room", &"Unknown")):
-		&"Exit":
-			return "request_extract -> confirm_extract"
-		&"Monster":
-			return "fight_current_enemy"
-		&"Event":
-			return "interact_current_room"
-		&"Chest":
-			return "search_current_room"
-		&"Normal":
-			return "search_current_room"
-		&"Mine":
-			return "mine already known after trigger"
-		_:
-			return "move/search"

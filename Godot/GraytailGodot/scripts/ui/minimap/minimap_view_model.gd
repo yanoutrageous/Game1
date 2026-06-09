@@ -25,14 +25,6 @@ static func build_from_intel(intel_map: IntelMap, player_pos: Vector2i = Vector2
 	model.width = intel_map.width
 	model.height = intel_map.height
 	for cell in intel_map.get_visible_map():
-		var marker := cell.duplicate(true)
-		var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
-		if pos == player_pos:
-			marker["asset_id"] = &"icon.minimap.player"
-			marker["label"] = "P"
-		elif bool(marker.get("flagged", false)):
-			marker["label"] = "F"
-		elif not bool(marker.get("revealed", false)) and StringName(marker.get("exit_id", &"")) == &"":
-			marker["label"] = "?"
+		var marker := PresentationMapping.minimap_marker_from_cell(cell, player_pos)
 		model.room_markers.append(marker)
 	return model
