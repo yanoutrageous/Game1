@@ -37,6 +37,8 @@ var current_room_type: StringName = &"Unknown"
 var current_adjacent_mines: int = 0
 var last_message: String = ""
 var last_reward: Dictionary = {}
+var event_state: Dictionary = {}
+var enemy_state: Dictionary = {}
 var outcome: String = "Idle"
 var run_active: bool = false
 var extracted: bool = false
@@ -48,6 +50,7 @@ var entered_cells: Dictionary = {}
 var interacted_cells: Dictionary = {}
 var run_stats: Dictionary = {}
 var result_snapshot: Dictionary = {}
+var failure_salvage: Dictionary = {}
 var tutorial_triggers: Dictionary = {}
 var tutorial_shown: Dictionary = {}
 var tutorial_popup: Dictionary = {}
@@ -86,6 +89,8 @@ func reset() -> void:
 	current_adjacent_mines = 0
 	last_message = ""
 	last_reward = {}
+	event_state.clear()
+	enemy_state.clear()
 	outcome = "Idle"
 	run_active = false
 	extracted = false
@@ -97,6 +102,7 @@ func reset() -> void:
 	interacted_cells.clear()
 	run_stats.clear()
 	result_snapshot.clear()
+	failure_salvage.clear()
 	tutorial_triggers.clear()
 	tutorial_shown.clear()
 	tutorial_popup.clear()
@@ -177,19 +183,26 @@ func get_current_pos() -> Vector2i:
 
 
 func can_accept_command() -> bool:
-	return run_active and not failed and not extracted and phase != &"idle"
+	return run_active and not failed and not extracted and phase != &"idle" and not has_blocking_tutorial_popup()
+
+
+func has_blocking_tutorial_popup() -> bool:
+	return not tutorial_popup.is_empty() and bool(tutorial_popup.get("blocking", false))
 
 
 func fail_run(reason: String) -> void:
+	failure_salvage = RunInventory.build_failure_salvage(self)
 	failed = true
 	run_active = false
 	phase = &"failed"
 	outcome = "Failed"
 	last_message = "Run failed: %s." % reason
 	result_snapshot = build_result_snapshot()
+	pending_gold = 0
 
 
 func complete_extract() -> void:
+	var extracted_pending := pending_gold
 	extracted = true
 	run_active = false
 	phase = &"extracted"
@@ -197,6 +210,7 @@ func complete_extract() -> void:
 	safe_gold += pending_gold
 	pending_gold = 0
 	result_snapshot = build_result_snapshot()
+	result_snapshot["extracted_pending_gold"] = extracted_pending
 
 
 func build_result_snapshot() -> Dictionary:
@@ -212,6 +226,10 @@ func build_result_snapshot() -> Dictionary:
 		"pending_gold": pending_gold,
 		"safe_gold": safe_gold,
 		"parts": parts,
+		"carried_item_count": carried_items.size(),
+		"carried_item_value": RunInventory.get_carried_item_value(self),
+		"carried_items": carried_items.duplicate(true),
+		"failure_salvage": failure_salvage.duplicate(true),
 		"stats": run_stats.duplicate(true),
 		"final_room": current_room_type,
 		"turn": turn,
@@ -239,6 +257,9 @@ func get_status_snapshot() -> Dictionary:
 		"current_room": current_room_type,
 		"adjacent_mines": current_adjacent_mines,
 		"search_state": get_search_state_label(),
+		"search_state_data": get_search_state_data(),
+		"event_state": event_state.duplicate(true),
+		"enemy_state": enemy_state.duplicate(true),
 		"last_message": last_message,
 		"last_reward": last_reward.duplicate(true),
 		"outcome": outcome,
@@ -248,6 +269,7 @@ func get_status_snapshot() -> Dictionary:
 		"exit_id": exit_id,
 		"tutorial_popup": tutorial_popup.duplicate(true),
 		"result_snapshot": result_snapshot.duplicate(true),
+		"failure_salvage": failure_salvage.duplicate(true),
 		"stats": run_stats.duplicate(true),
 	}
 
@@ -262,6 +284,41 @@ func get_search_state_label() -> String:
 			return "chest"
 		_:
 			return "blocked"
+
+
+func get_search_state_data() -> Dictionary:
+	if truth_map == null:
+		return {"can_search": false, "searched": false, "reason": "not_ready", "is_chest": false}
+	var key := cell_key(player_pos)
+	var searched := searched_cells.has(key)
+	var can_search := false
+	var reason := "blocked"
+	var is_chest := false
+	if searched:
+		reason = "searched"
+	elif player_pos == truth_map.spawn_pos:
+		reason = "spawn"
+	elif current_room_type == &"Normal":
+		can_search = true
+		reason = "searchable"
+	elif current_room_type == &"Chest":
+		can_search = true
+		reason = "chest"
+		is_chest = true
+	elif current_room_type == &"Event":
+		reason = "event"
+	elif current_room_type == &"Monster":
+		reason = "monster"
+	elif current_room_type == &"Exit":
+		reason = "exit"
+	elif current_room_type == &"Mine":
+		reason = "mine"
+	return {
+		"can_search": can_search,
+		"searched": searched,
+		"reason": reason,
+		"is_chest": is_chest,
+	}
 
 
 func cell_key(pos: Vector2i) -> String:

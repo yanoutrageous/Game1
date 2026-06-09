@@ -22,12 +22,17 @@ func set_result_summary(title: String, summary: String) -> void:
 func show_summary(snapshot: Dictionary) -> void:
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	var stats: Dictionary = snapshot.get("stats", {})
-	var summary := "Outcome: %s\nMode: %s\nSafe Gold: %s\nPending Gold: %s\nParts: %s\nFinal HP: %s/%s\nFinal Pressure: %s\nProtocol: %s\nFinal Position: (%d,%d)\nMoves: %s\nSearches: %s\nMine Hits: %s\nMonsters Defeated: %s\nEvents Completed: %s" % [
+	var salvage: Dictionary = snapshot.get("failure_salvage", {})
+	var summary := "Outcome: %s\nMode: %s\nSafe Gold: %s\nPending Gold: %s\nParts: %s\nCarried Items: %s\nCarried Value: %s\nFailure Pending Lost: %s\nFailure Salvaged Items: %s\nFinal HP: %s/%s\nFinal Pressure: %s\nProtocol: %s\nFinal Position: (%d,%d)\nMoves: %s\nSearches: %s\nMine Hits: %s\nMonsters Defeated: %s\nEvents Completed: %s" % [
 		snapshot.get("outcome", "Unknown"),
 		String(snapshot.get("mode", &"")),
 		snapshot.get("safe_gold", 0),
 		snapshot.get("pending_gold", 0),
 		snapshot.get("parts", 0),
+		snapshot.get("carried_item_count", 0),
+		snapshot.get("carried_item_value", 0),
+		salvage.get("pending_gold_lost", 0),
+		salvage.get("salvaged_item_count", 0),
 		snapshot.get("hp", 0),
 		snapshot.get("max_hp", 0),
 		snapshot.get("pressure", 0),

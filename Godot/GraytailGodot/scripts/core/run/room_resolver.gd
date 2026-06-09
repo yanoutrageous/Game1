@@ -2,6 +2,7 @@ extends RefCounted
 class_name RoomResolver
 
 # Room behavior goes through RoomResolver. UI reads emitted snapshots only.
+# G6 replaces the G4 text "Event placeholder resolved" with EventService outcomes.
 
 
 func resolve_entry(_room_id: StringName, _context: Variant = null) -> Dictionary:
@@ -20,6 +21,8 @@ func enter_room(context: RunContext) -> Dictionary:
 	context.current_adjacent_mines = context.minefield_service.count_adjacent_mines(context.truth_map, pos)
 	context.exit_id = context.truth_map.get_exit_id(pos)
 	context.visited_cells[context.cell_key(pos)] = true
+	context.event_state = {}
+	context.enemy_state = {}
 
 	var first_explore := not context.explored_cells.has(context.cell_key(pos))
 	if first_explore:
@@ -27,21 +30,23 @@ func enter_room(context: RunContext) -> Dictionary:
 		ProtocolService.add_pressure(context, 2)
 
 	if context.current_room_type == &"Mine":
-		return _enter_mine(context, pos)
+		var mine_result := _enter_mine(context, pos)
+		_maybe_trigger_tutorial(context, pos)
+		return mine_result
 
-	var trigger_id := TutorialService.trigger_for(context, pos)
 	if context.current_room_type == &"Exit":
 		context.last_message = "Exit room ready. Request extraction."
 	elif context.current_room_type == &"Monster" and not context.truth_map.is_cleared(pos):
+		context.enemy_state = CombatState.build_enemy_state(context, pos, context.current_adjacent_mines)
 		context.last_message = "Monster present. Fight is available."
 	elif context.current_room_type == &"Event" and not context.interacted_cells.has(context.cell_key(pos)):
-		context.last_message = "Event placeholder is available."
+		context.event_state = EventService.get_event_state(context, pos)
+		context.last_message = "Event available: %s." % String(context.event_state.get("event_type", &"event"))
 	elif context.current_room_type == &"Chest" and not context.searched_cells.has(context.cell_key(pos)):
 		context.last_message = "Chest can be searched."
 	else:
 		context.last_message = "Entered %s room. Adjacent mines: %d." % [String(context.current_room_type), context.current_adjacent_mines]
-	if trigger_id != &"":
-		context.last_message += " Tutorial popup: %s." % String(trigger_id)
+	_maybe_trigger_tutorial(context, pos)
 	return {"ok": true, "message": context.last_message}
 
 
@@ -86,15 +91,10 @@ func interact_current_room(context: RunContext) -> Dictionary:
 		&"Normal":
 			return search_current_room(context)
 		&"Event":
-			if context.interacted_cells.has(key):
-				context.last_message = "Event already completed."
-			else:
-				context.interacted_cells[key] = true
-				context.pending_gold += 2
-				context.run_stats["events_completed"] = int(context.run_stats.get("events_completed", 0)) + 1
+			var result := EventService.execute_default(context, pos)
+			if bool(result.get("completed", false)):
 				context.truth_map.mark_cleared(pos)
 				context.intel_map.refresh_revealed_cell(pos, context.truth_map)
-				context.last_message = "Event placeholder resolved: +2 pending gold."
 		&"Monster":
 			context.last_message = "Monster requires fight command."
 		&"Exit":
@@ -104,6 +104,22 @@ func interact_current_room(context: RunContext) -> Dictionary:
 		_:
 			context.last_message = "Nothing to interact with here."
 	return {"ok": true, "message": context.last_message}
+
+
+func select_event_option(context: RunContext, option_id: StringName) -> Dictionary:
+	if context == null or not context.run_active:
+		return {"ok": false, "message": "Run is not active."}
+	var pos := context.get_current_pos()
+	if context.current_room_type != &"Event":
+		context.last_message = "No event option is available here."
+		return {"ok": false, "message": context.last_message}
+	var result := EventService.execute_option(context, pos, option_id)
+	if bool(result.get("completed", false)):
+		context.truth_map.mark_cleared(pos)
+		context.intel_map.refresh_revealed_cell(pos, context.truth_map)
+	if context.failed:
+		return result
+	return result
 
 
 func fight_current_enemy(context: RunContext) -> Dictionary:
@@ -120,6 +136,7 @@ func fight_current_enemy(context: RunContext) -> Dictionary:
 	context.truth_map.mark_cleared(pos)
 	context.intel_map.refresh_revealed_cell(pos, context.truth_map)
 	context.last_reward = result
+	context.enemy_state = result.duplicate(true)
 	context.last_message = "Monster cleared: damage %d, reward +%d pending gold." % [int(result.get("damage", 0)), int(result.get("reward_gold", 0))]
 	return result
 
@@ -145,3 +162,9 @@ func _enter_mine(context: RunContext, pos: Vector2i) -> Dictionary:
 	else:
 		context.last_message = "Triggered mine re-entered; no damage."
 	return {"ok": true, "message": context.last_message}
+
+
+func _maybe_trigger_tutorial(context: RunContext, pos: Vector2i) -> void:
+	var trigger_id := TutorialService.trigger_for(context, pos)
+	if trigger_id != &"":
+		context.last_message += " Tutorial popup: %s." % String(trigger_id)

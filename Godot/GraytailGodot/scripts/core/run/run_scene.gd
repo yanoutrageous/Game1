@@ -35,22 +35,25 @@ func _ready() -> void:
 	_build_playfield_visuals()
 	_build_accessible_ui()
 	command_bus.start_tutorial_run()
+	if player_controller != null:
+		player_controller.reset_local_position()
+
+
+func _process(delta: float) -> void:
+	if player_controller == null or command_bus == null or run_context == null:
+		return
+	if map_overlay_panel != null and map_overlay_panel.visible:
+		return
+	if run_context.has_blocking_tutorial_popup():
+		return
+	var move_vector := player_controller.get_move_vector()
+	var local_result := player_controller.move_local(move_vector, delta)
+	if StringName(local_result.get("status", &"")) == &"transition":
+		_attempt_room_transition(local_result.get("direction", Vector2i.ZERO))
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("move_up"):
-		command_bus.move_by(Vector2i(0, -1))
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_down"):
-		command_bus.move_by(Vector2i(0, 1))
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_left"):
-		command_bus.move_by(Vector2i(-1, 0))
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("move_right"):
-		command_bus.move_by(Vector2i(1, 0))
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("interact"):
+	if event.is_action_pressed("interact"):
 		command_bus.interact_current_room()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("attack"):
@@ -65,6 +68,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("debug_restart_run"):
 		command_bus.restart_run()
+		if player_controller != null:
+			player_controller.reset_local_position()
 		get_viewport().set_input_as_handled()
 
 
@@ -100,8 +105,8 @@ func _build_accessible_ui() -> void:
 	mode_label.name = "ModeEntryLabel"
 	mode_label.text = "Choose a mode"
 	mode_panel.add_child(mode_label)
-	_add_mode_button(mode_panel, "Start Tutorial 5x5", func() -> void: command_bus.start_tutorial_run())
-	_add_mode_button(mode_panel, "Start Standard 10x10", func() -> void: command_bus.start_standard_run())
+	_add_mode_button(mode_panel, "Start Tutorial 5x5", func() -> void: _start_tutorial_from_ui())
+	_add_mode_button(mode_panel, "Start Standard 10x10", func() -> void: _start_standard_from_ui())
 
 	var room_panel := PanelContainer.new()
 	room_panel.name = "RoomArea"
@@ -124,7 +129,7 @@ func _build_accessible_ui() -> void:
 	controls_label.offset_right = 880.0
 	controls_label.offset_bottom = 404.0
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	controls_label.text = "Controls: W/A/S/D or arrows move. E searches, interacts, or extracts. Space/J fights. F flags. M/Tab map note. R restarts."
+	controls_label.text = "Controls: W/A/S/D or arrows move inside the room. Reach a door to change rooms. E searches, interacts, or extracts. Space/J fights. F flags current room. M/Tab map. R restarts."
 	root.add_child(controls_label)
 
 	hud = HUDScene.instantiate() as Hud
@@ -148,14 +153,14 @@ func _build_accessible_ui() -> void:
 	root.add_child(debug_panel)
 
 	var debug_title := Label.new()
-	debug_title.text = "Debug"
+	debug_title.text = "Debug / Grid Move"
 	debug_panel.add_child(debug_title)
-	_add_debug_button(debug_panel, "Tutorial", func() -> void: command_bus.start_tutorial_run())
-	_add_debug_button(debug_panel, "Standard", func() -> void: command_bus.start_standard_run())
-	_add_debug_button(debug_panel, "MoveUp", func() -> void: command_bus.move_by(Vector2i(0, -1)))
-	_add_debug_button(debug_panel, "MoveDown", func() -> void: command_bus.move_by(Vector2i(0, 1)))
-	_add_debug_button(debug_panel, "MoveLeft", func() -> void: command_bus.move_by(Vector2i(-1, 0)))
-	_add_debug_button(debug_panel, "MoveRight", func() -> void: command_bus.move_by(Vector2i(1, 0)))
+	_add_debug_button(debug_panel, "Tutorial", func() -> void: _start_tutorial_from_ui())
+	_add_debug_button(debug_panel, "Standard", func() -> void: _start_standard_from_ui())
+	_add_debug_button(debug_panel, "GridUp", func() -> void: command_bus.move_by(Vector2i(0, -1)))
+	_add_debug_button(debug_panel, "GridDown", func() -> void: command_bus.move_by(Vector2i(0, 1)))
+	_add_debug_button(debug_panel, "GridLeft", func() -> void: command_bus.move_by(Vector2i(-1, 0)))
+	_add_debug_button(debug_panel, "GridRight", func() -> void: command_bus.move_by(Vector2i(1, 0)))
 	_add_debug_button(debug_panel, "Flag", func() -> void: command_bus.flag_current_cell())
 	_add_debug_button(debug_panel, "Search", func() -> void: command_bus.search_current_room())
 	_add_debug_button(debug_panel, "Interact", func() -> void: command_bus.interact_current_room())
@@ -178,6 +183,7 @@ func _build_accessible_ui() -> void:
 
 	map_overlay_panel = MapOverlayScene.instantiate() as MapOverlayPanel
 	map_overlay_panel.name = "MapOverlayPanel"
+	map_overlay_panel.cell_action_requested.connect(_on_map_overlay_cell_action_requested)
 	root.add_child(map_overlay_panel)
 
 	tutorial_popup_panel = TutorialPopupScene.instantiate() as TutorialPopupPanel
@@ -239,7 +245,6 @@ func _refresh_view_models() -> void:
 		room_controller.configure(PresentationMapping.room_visual_from_snapshot(snapshot))
 	if player_controller != null:
 		player_controller.set_visual_asset(&"sprite.player.default")
-		player_controller.set_grid_position(pos)
 	if hud != null:
 		hud.apply_view_model(HUDViewModel.build_status(run_context))
 	if minimap_panel != null:
@@ -267,3 +272,42 @@ func _open_map_from_debug() -> void:
 func _on_tutorial_popup_confirmed() -> void:
 	if command_bus != null:
 		command_bus.confirm_tutorial_popup()
+
+
+func _start_tutorial_from_ui() -> void:
+	command_bus.start_tutorial_run()
+	if player_controller != null:
+		player_controller.reset_local_position()
+
+
+func _start_standard_from_ui() -> void:
+	command_bus.start_standard_run()
+	if player_controller != null:
+		player_controller.reset_local_position()
+
+
+func _attempt_room_transition(direction: Vector2i) -> void:
+	var before := run_context.get_current_pos()
+	var result := command_bus.attempt_room_transition(direction)
+	var moved := bool(result.get("ok", false)) and run_context.get_current_pos() != before
+	if moved:
+		player_controller.place_from_entry(direction)
+	else:
+		player_controller.block_transition(direction)
+
+
+func _on_map_overlay_cell_action_requested(marker: Dictionary) -> void:
+	if command_bus == null or run_context == null:
+		return
+	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
+	var state := StringName(marker.get("state", &"hidden"))
+	if state == &"hidden" or state == &"flagged":
+		command_bus.toggle_flag_cell(pos)
+		return
+	if bool(marker.get("explored", false)) and not bool(marker.get("mine", false)):
+		var result := command_bus.teleport_to_explored(pos)
+		if bool(result.get("ok", false)):
+			if player_controller != null:
+				player_controller.reset_local_position()
+			if map_overlay_panel != null:
+				map_overlay_panel.hide_overlay()

@@ -22,6 +22,8 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> void:
 			start_standard_run()
 		&"move_by":
 			move_by(payload.get("delta", Vector2i.ZERO))
+		&"attempt_room_transition":
+			attempt_room_transition(payload.get("direction", Vector2i.ZERO))
 		&"toggle_flag_cell":
 			toggle_flag_cell(payload.get("pos", null))
 		&"flag_current_cell":
@@ -34,6 +36,10 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> void:
 			interact()
 		&"fight_current_enemy":
 			fight_current_enemy()
+		&"teleport_to_explored":
+			teleport_to_explored(payload.get("pos", Vector2i.ZERO))
+		&"select_event_option":
+			select_event_option(StringName(payload.get("option_id", &"default")))
 		&"request_extract":
 			request_extract()
 		&"confirm_extract":
@@ -81,26 +87,30 @@ func start_standard_run() -> void:
 	_emit_state()
 
 
-func move_by(delta: Vector2i) -> void:
+func attempt_room_transition(direction: Vector2i) -> Dictionary:
+	return move_by(direction)
+
+
+func move_by(delta: Vector2i) -> Dictionary:
 	if not _can_accept_command():
-		return
+		return {"ok": false, "status": &"blocked"}
 	if abs(delta.x) + abs(delta.y) != 1:
 		context.last_message = "Invalid move: only four-direction movement is allowed."
 		_emit_state()
-		return
+		return {"ok": false, "status": &"invalid_direction"}
 	var target := context.get_current_pos() + delta
 	if not context.is_inside(target):
 		context.last_message = "Blocked by map boundary."
 		_emit_state()
-		return
+		return {"ok": false, "status": &"out_of_bounds"}
 	if context.intel_map.is_flagged(target):
 		context.last_message = "Blocked by flag."
 		_emit_state()
-		return
+		return {"ok": false, "status": &"blocked_flagged"}
 	if context.move_requires_revealed and not context.intel_map.is_revealed(target):
 		context.last_message = "Blocked: target is not revealed."
 		_emit_state()
-		return
+		return {"ok": false, "status": &"blocked_hidden"}
 
 	context.player_pos = target
 	context.current_pos = target
@@ -109,6 +119,7 @@ func move_by(delta: Vector2i) -> void:
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
+	return {"ok": true, "status": &"moved", "position": target}
 
 
 func toggle_flag_cell(pos = null) -> void:
@@ -159,6 +170,38 @@ func fight_current_enemy() -> void:
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
+
+
+func select_event_option(option_id: StringName = &"default") -> void:
+	if not _can_accept_command():
+		return
+	room_resolver.select_event_option(context, option_id)
+	_emit_state()
+	if context.failed:
+		result_available.emit(context.result_snapshot)
+
+
+func teleport_to_explored(pos: Vector2i) -> Dictionary:
+	if not _can_accept_command():
+		return {"ok": false, "status": &"blocked"}
+	if context.intel_map == null or context.truth_map == null:
+		return {"ok": false, "status": &"not_ready"}
+	if not context.is_inside(pos):
+		context.last_message = "Teleport target is outside the map."
+		_emit_state()
+		return {"ok": false, "status": &"out_of_bounds"}
+	var cell := context.intel_map.get_cell_info(pos)
+	if not bool(cell.get("explored", false)) or bool(cell.get("mine", false)) or bool(cell.get("flagged", false)):
+		context.last_message = "Teleport requires an explored safe room."
+		_emit_state()
+		return {"ok": false, "status": &"not_explored_safe"}
+
+	context.player_pos = pos
+	context.current_pos = pos
+	room_resolver.enter_room(context)
+	context.last_message = "Teleported to explored room (%d,%d)." % [pos.x, pos.y]
+	_emit_state()
+	return {"ok": true, "status": &"teleported", "position": pos}
 
 
 func request_extract() -> void:

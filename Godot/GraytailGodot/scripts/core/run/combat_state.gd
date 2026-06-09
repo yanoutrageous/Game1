@@ -30,7 +30,9 @@ static func take_mine_hit(context: RunContext) -> int:
 static func fight_enemy(context: RunContext, pos: Vector2i, adjacent_mines: int) -> Dictionary:
 	if context == null:
 		return {"ok": false, "message": "No active run."}
-	var enemy_power: int = 4 + adjacent_mines + absi((pos.x * 17 + pos.y * 31 + context.seed_value) % 3)
+	var enemy_state := build_enemy_state(context, pos, adjacent_mines)
+	var enemy_power: int = int(enemy_state.get("enemy_power", 0))
+	var player_power := context.power
 	var damage: int = maxi(0, enemy_power - context.power)
 	apply_damage(context, damage, "monster")
 	var reward_gold: int = absi((pos.x * 13 + pos.y * 7 + context.seed_value) % 4)
@@ -42,7 +44,26 @@ static func fight_enemy(context: RunContext, pos: Vector2i, adjacent_mines: int)
 		context.power += 1
 	return {
 		"ok": true,
+		"fought": true,
+		"cleared": true,
+		"player_win": player_power >= enemy_power,
+		"player_power": player_power,
 		"enemy_power": enemy_power,
 		"damage": damage,
+		"hp": context.hp,
 		"reward_gold": reward_gold,
+		"power_gain": int(context.run_stats.get("monster_power_bonus", 0)),
+	}
+
+
+static func build_enemy_state(context: RunContext, pos: Vector2i, adjacent_mines: int) -> Dictionary:
+	if context == null:
+		return {}
+	var enemy_power: int = 4 + adjacent_mines + absi((pos.x * 17 + pos.y * 31 + context.seed_value) % 3)
+	return {
+		"enemy_name": "Anomaly %d,%d" % [pos.x, pos.y],
+		"enemy_power": enemy_power,
+		"player_power": context.power,
+		"alive": true,
+		"cleared": context.truth_map != null and context.truth_map.is_cleared(pos),
 	}

@@ -1,6 +1,8 @@
 extends Control
 class_name MapOverlayPanel
 
+signal cell_action_requested(marker: Dictionary)
+
 var view_model: MiniMapViewModel
 
 
@@ -45,7 +47,7 @@ func _rebuild_grid() -> void:
 		title.text = "Map Overlay"
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		footer.text = "M/Tab toggles map. F flags current cell."
+		footer.text = "Click hidden cells to flag. Click explored safe cells to return."
 
 	if view_model == null:
 		return
@@ -59,19 +61,13 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	var asset_id := StringName(marker.get("asset_id", &""))
 	var asset_ref := ContentDB.get_asset_ref(asset_id)
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(42, 42)
+	button.text = String(marker.get("label", "?"))
+	button.tooltip_text = String(marker.get("tooltip", "cell"))
+	button.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
 	if asset_ref is Texture2D:
-		var icon := TextureRect.new()
-		icon.texture = asset_ref
-		icon.custom_minimum_size = Vector2(42, 42)
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.tooltip_text = String(marker.get("tooltip", ContentDB.get_placeholder_label(asset_id)))
-		grid.add_child(icon)
-	else:
-		var label := Label.new()
-		label.custom_minimum_size = Vector2(42, 42)
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
-		label.text = String(marker.get("label", "?"))
-		label.tooltip_text = String(marker.get("tooltip", "cell"))
-		grid.add_child(label)
+		button.icon = asset_ref
+		button.expand_icon = true
+	button.pressed.connect(func() -> void: cell_action_requested.emit(marker.duplicate(true)))
+	grid.add_child(button)

@@ -2,7 +2,7 @@
 
 ## Scope
 
-This guide covers the G4 playable graybox loop plus G5 Asset/UI/Visual Parity surfaces. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+This guide covers the G4 playable graybox loop, G5 Asset/UI/Visual Parity surfaces, and G6 Lua Playable Parity P1 core behavior. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
 
 ## Start Tutorial 5x5
 
@@ -10,7 +10,8 @@ Use `Start Tutorial 5x5` to verify the fixed tutorial route and tutorial popup.
 
 ### Tutorial recommended route
 
-- Move with W/A/S/D or arrow keys.
+- Move inside the current room with W/A/S/D or arrow keys.
+- Walk through a centered door or boundary to change rooms.
 - Use E to search, interact, request extraction, or confirm extraction.
 - Use Space/J to fight when the current room is Monster.
 - Use F to flag the current cell.
@@ -25,6 +26,12 @@ Expected G5 visuals:
 - Room visual updates as the public current room changes.
 - Player marker updates position without changing rules.
 
+Expected G6 behavior:
+
+- MiniMap current room changes only after a room transition.
+- Blocking tutorial popups pause formal movement until confirmed.
+- Search, event, monster, mine, extract, and failure result text updates are reflected in HUD/ResultPanel snapshots.
+
 ## Start Standard 10x10
 
 Use `Start Standard 10x10` for the Standard smoke route.
@@ -33,8 +40,9 @@ Use `Start Standard 10x10` for the Standard smoke route.
 
 - Start a standard run.
 - Move several rooms.
+- Confirm room-local movement does not move the MiniMap current cell until a door/boundary transition succeeds.
 - Flag a cell.
-- Open and close MapOverlay.
+- Open MapOverlay, flag a hidden cell, and teleport to an explored safe cell.
 - Search a Normal or Chest room.
 - Fight a Monster if reached.
 - Confirm extraction only from an Exit room.
@@ -44,6 +52,12 @@ Expected G5 visuals:
 - MiniMap and MapOverlay share the same ViewModel.
 - Room/player visuals update from snapshots.
 - ResultPanel still shows extraction/failure/training summaries.
+
+Expected G6 behavior:
+
+- Event rooms resolve one of trader, dice, altar, or trap outcomes.
+- Monster rooms show deterministic fight state and update after combat.
+- Failure results include pending-gold loss and salvage details.
 
 ## Known limits
 

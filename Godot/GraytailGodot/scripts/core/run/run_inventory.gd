@@ -15,6 +15,10 @@ static func setup_stats(context: RunContext) -> void:
 		"monster_power_bonus": 0,
 		"combat_damage": 0,
 		"events_completed": 0,
+		"events_trader": 0,
+		"events_dice": 0,
+		"events_altar": 0,
+		"events_trap": 0,
 		"turns": 0,
 	}
 
@@ -39,6 +43,8 @@ static func add_search_reward(context: RunContext, pos: Vector2i, adjacent_mines
 		if adjacent_mines >= 2:
 			items.append({"id": "risk_find_%d_%d" % [pos.x, pos.y], "value": adjacent_mines})
 		context.run_stats["chest_rooms"] = int(context.run_stats.get("chest_rooms", 0)) + 1
+	elif adjacent_mines >= 2:
+		items.append({"id": "scrap_%d_%d" % [pos.x, pos.y], "value": maxi(1, adjacent_mines)})
 	context.pending_gold += gold
 	context.parts += items.size()
 	context.carried_items.append_array(items)
@@ -55,4 +61,34 @@ static func get_reward_summary(context: RunContext) -> Dictionary:
 		"parts": context.parts,
 		"carried_items": context.carried_items.size(),
 		"stats": context.run_stats.duplicate(true),
+	}
+
+
+static func get_carried_item_value(context: RunContext) -> int:
+	if context == null:
+		return 0
+	var total := 0
+	for item in context.carried_items:
+		total += int(item.get("value", 0))
+	return total
+
+
+static func build_failure_salvage(context: RunContext) -> Dictionary:
+	if context == null:
+		return {}
+	var salvaged_item: Dictionary = {}
+	var best_value := -1
+	for item in context.carried_items:
+		var value := int(item.get("value", 0))
+		if value > best_value:
+			best_value = value
+			salvaged_item = item.duplicate(true)
+	return {
+		"safe_gold": context.safe_gold,
+		"pending_gold_lost": context.pending_gold,
+		"lost_parts": context.parts,
+		"lost_item_count": context.carried_items.size(),
+		"lost_item_value": get_carried_item_value(context),
+		"salvaged_item": salvaged_item,
+		"salvaged_item_count": 0 if salvaged_item.is_empty() else 1,
 	}

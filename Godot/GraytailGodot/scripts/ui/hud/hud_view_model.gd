@@ -51,14 +51,24 @@ static func build_status(context: RunContext) -> HUDViewModel:
 		snapshot.get("outcome", "Running"),
 	]
 	var popup: Dictionary = snapshot.get("tutorial_popup", {})
+	var event_state: Dictionary = snapshot.get("event_state", {})
+	var enemy_state: Dictionary = snapshot.get("enemy_state", {})
 	var popup_text := ""
 	if not popup.is_empty():
 		popup_text = "\nTutorial: %s\n%s" % [String(popup.get("id", "")), String(popup.get("message", ""))]
+	var event_text := ""
+	if not event_state.is_empty():
+		event_text = "\nEvent: %s" % String(event_state.get("event_type", ""))
+	var enemy_text := ""
+	if not enemy_state.is_empty():
+		enemy_text = "\nEnemy Power: %s / Player Power: %s" % [enemy_state.get("enemy_power", 0), enemy_state.get("player_power", 0)]
 	model.room_hint = PresentationMapping.hint_for_snapshot(snapshot)
 	model.risk_key = PresentationTheme.risk_key(int(snapshot.get("adjacent_mines", 0)), StringName(snapshot.get("current_room", &"Unknown")))
-	model.hint_text = "Enemy/Event/Exit Hint: %s\nLast Message: %s%s" % [
+	model.hint_text = "Enemy/Event/Exit Hint: %s\nLast Message: %s%s%s%s" % [
 		model.room_hint,
 		String(snapshot.get("last_message", "")),
+		event_text,
+		enemy_text,
 		popup_text,
 	]
 	return model

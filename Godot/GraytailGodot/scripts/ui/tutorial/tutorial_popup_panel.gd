@@ -34,7 +34,7 @@ func _refresh() -> void:
 
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
-		title.text = "Tutorial: %s" % String(popup.get("id", ""))
+		title.text = String(popup.get("title", "Tutorial: %s" % String(popup.get("id", ""))))
 	if message != null:
 		message.add_theme_color_override("font_color", PresentationTheme.text_color())
 		message.text = String(popup.get("message", ""))
