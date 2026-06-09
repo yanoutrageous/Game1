@@ -5,6 +5,10 @@ const RunContextScript := preload("res://scripts/core/run/run_context.gd")
 const HUDScene := preload("res://scenes/ui/hud/hud.tscn")
 const MiniMapScene := preload("res://scenes/ui/minimap/minimap_panel.tscn")
 const ResultPanelScene := preload("res://scenes/ui/result/result_panel.tscn")
+const MapOverlayScene := preload("res://scenes/ui/map_overlay/map_overlay_panel.tscn")
+const TutorialPopupScene := preload("res://scenes/ui/tutorial/tutorial_popup_panel.tscn")
+const RoomScene := preload("res://scenes/room/room_scene.tscn")
+const PlayerScene := preload("res://scenes/player/player.tscn")
 
 var run_context: RunContext
 var command_bus: CommandBus
@@ -15,6 +19,10 @@ var debug_log: Label
 var hud: Hud
 var minimap_panel: MiniMapPanel
 var result_panel: ResultPanel
+var map_overlay_panel: MapOverlayPanel
+var tutorial_popup_panel: TutorialPopupPanel
+var room_controller: RoomSceneController
+var player_controller: PlayerController
 
 
 func _ready() -> void:
@@ -24,6 +32,7 @@ func _ready() -> void:
 	command_bus.bind_context(run_context)
 	command_bus.state_changed.connect(_on_state_changed)
 	command_bus.result_available.connect(_on_result_available)
+	_build_playfield_visuals()
 	_build_accessible_ui()
 	command_bus.start_tutorial_run()
 
@@ -52,10 +61,24 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("open_map"):
 		command_bus.dispatch(&"open_map")
+		_toggle_map_overlay()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("debug_restart_run"):
 		command_bus.restart_run()
 		get_viewport().set_input_as_handled()
+
+
+func _build_playfield_visuals() -> void:
+	var room_layer := get_node("RoomLayer") as Node2D
+	var player_layer := get_node("PlayerLayer") as Node2D
+
+	room_controller = RoomScene.instantiate() as RoomSceneController
+	room_controller.name = "RoomSceneController"
+	room_layer.add_child(room_controller)
+
+	player_controller = PlayerScene.instantiate() as PlayerController
+	player_controller.name = "PlayerController"
+	player_layer.add_child(player_controller)
 
 
 func _build_accessible_ui() -> void:
@@ -137,6 +160,7 @@ func _build_accessible_ui() -> void:
 	_add_debug_button(debug_panel, "Search", func() -> void: command_bus.search_current_room())
 	_add_debug_button(debug_panel, "Interact", func() -> void: command_bus.interact_current_room())
 	_add_debug_button(debug_panel, "Fight", func() -> void: command_bus.fight_current_enemy())
+	_add_debug_button(debug_panel, "Map", func() -> void: _open_map_from_debug())
 	_add_debug_button(debug_panel, "ReqExtract", func() -> void: command_bus.request_extract())
 	_add_debug_button(debug_panel, "ConfirmExt", func() -> void: command_bus.confirm_extract())
 	_add_debug_button(debug_panel, "CancelExt", func() -> void: command_bus.cancel_extract())
@@ -151,6 +175,15 @@ func _build_accessible_ui() -> void:
 	result_panel.name = "ResultPanel"
 	result_panel.hide_result()
 	root.add_child(result_panel)
+
+	map_overlay_panel = MapOverlayScene.instantiate() as MapOverlayPanel
+	map_overlay_panel.name = "MapOverlayPanel"
+	root.add_child(map_overlay_panel)
+
+	tutorial_popup_panel = TutorialPopupScene.instantiate() as TutorialPopupPanel
+	tutorial_popup_panel.name = "TutorialPopupPanel"
+	tutorial_popup_panel.confirmed.connect(_on_tutorial_popup_confirmed)
+	root.add_child(tutorial_popup_panel)
 
 
 func _add_debug_button(parent: Control, label: String, callback: Callable) -> void:
@@ -185,6 +218,7 @@ func _refresh_view_models() -> void:
 
 	var snapshot := run_context.get_status_snapshot()
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
+	var minimap_vm := MiniMapViewModel.build_from_intel(run_context.intel_map, run_context.get_current_pos())
 	if mode_label != null:
 		mode_label.text = "Mode: %s | Phase: %s | Outcome: %s" % [
 			String(snapshot.get("mode", &"")),
@@ -201,11 +235,35 @@ func _refresh_view_models() -> void:
 			snapshot.get("adjacent_mines", 0),
 		]
 
+	if room_controller != null:
+		room_controller.configure(PresentationMapping.room_visual_from_snapshot(snapshot))
+	if player_controller != null:
+		player_controller.set_visual_asset(&"sprite.player.default")
+		player_controller.set_grid_position(pos)
 	if hud != null:
 		hud.apply_view_model(HUDViewModel.build_status(run_context))
 	if minimap_panel != null:
-		minimap_panel.apply_view_model(MiniMapViewModel.build_from_intel(run_context.intel_map, run_context.get_current_pos()))
+		minimap_panel.apply_view_model(minimap_vm)
+	if map_overlay_panel != null:
+		map_overlay_panel.apply_view_model(minimap_vm)
+	if tutorial_popup_panel != null:
+		tutorial_popup_panel.apply_popup(snapshot.get("tutorial_popup", {}))
 	if debug_log != null:
 		debug_log.text = String(snapshot.get("last_message", ""))
 	if result_panel != null and bool(snapshot.get("run_active", false)):
 		result_panel.hide_result()
+
+
+func _toggle_map_overlay() -> void:
+	if map_overlay_panel != null:
+		map_overlay_panel.toggle_overlay()
+
+
+func _open_map_from_debug() -> void:
+	command_bus.dispatch(&"open_map")
+	_toggle_map_overlay()
+
+
+func _on_tutorial_popup_confirmed() -> void:
+	if command_bus != null:
+		command_bus.confirm_tutorial_popup()
