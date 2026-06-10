@@ -61,7 +61,7 @@ Test-FileContains 'scripts/core/command/command_bus.gd' @(
     'return move_by(direction)',
     'func teleport_to_explored',
     'func select_event_option',
-    'toggle_flag_cell(payload.get("pos", null))'
+    'toggle_flag_cell(command_payload.get("pos", null))'
 )
 
 Test-FileContains 'scripts/core/run/event_service.gd' @(

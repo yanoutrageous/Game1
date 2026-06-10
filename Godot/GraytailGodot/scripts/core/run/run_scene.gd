@@ -272,6 +272,8 @@ func _build_run_overlay() -> void:
 	_add_debug_button(debug_panel, "GridRight", func() -> void: command_bus.move_by(Vector2i(1, 0)))
 	_add_debug_button(debug_panel, "Flag", func() -> void: command_bus.flag_current_cell())
 	_add_debug_button(debug_panel, "Search", func() -> void: _search_and_show_loot())
+	_add_debug_button(debug_panel, "PickupFloor", func() -> void: _pickup_floor_from_ui())
+	_add_debug_button(debug_panel, "DropItem", func() -> void: _drop_inventory_from_ui())
 	_add_debug_button(debug_panel, "Interact", func() -> void: _handle_interact_pressed())
 	_add_debug_button(debug_panel, "Fight", func() -> void: _fight_and_show_result())
 	_add_debug_button(debug_panel, "Map", func() -> void: _open_map_from_debug())
@@ -542,6 +544,20 @@ func _fight_and_show_result() -> void:
 		_show_loot_panel("战斗结果", reward)
 
 
+func _pickup_floor_from_ui() -> void:
+	if command_bus == null:
+		return
+	var result := command_bus.pickup_ground_item()
+	_show_loot_panel("Floor Command", result)
+
+
+func _drop_inventory_from_ui() -> void:
+	if command_bus == null:
+		return
+	var result := command_bus.drop_inventory_item()
+	_show_loot_panel("Floor Command", result)
+
+
 func _show_event_panel(event_state: Dictionary) -> void:
 	if event_panel == null:
 		return
@@ -581,6 +597,13 @@ func _show_extract_panel(snapshot: Dictionary) -> void:
 		snapshot.get("parts", 0),
 		snapshot.get("protocol_level", 5),
 	]
+	extract_body_label.text += "\nBlack Coin: %s\nGold Coin: %s\nBag: %s/%s\nFloor left behind: %s" % [
+		snapshot.get("black_coin", snapshot.get("pending_gold", 0)),
+		snapshot.get("gold_coin", snapshot.get("safe_gold", 0)),
+		snapshot.get("backpack_used", 0),
+		snapshot.get("backpack_capacity", 0),
+		snapshot.get("room_floor_item_count", 0),
+	]
 	extract_panel.visible = true
 
 
@@ -613,6 +636,10 @@ func _format_reward(reward: Dictionary) -> String:
 		lines.append("安全回收 +%s" % reward.get("safe_gold", 0))
 	if reward.has("reward_gold"):
 		lines.append("战斗回收 +%s" % reward.get("reward_gold", 0))
+	if reward.has("black_coin_delta"):
+		lines.append("Black Coin delta: %s" % reward.get("black_coin_delta", 0))
+	if reward.has("gold_coin_delta"):
+		lines.append("Gold Coin delta: %s" % reward.get("gold_coin_delta", 0))
 	if reward.has("damage"):
 		lines.append("受伤：%s" % reward.get("damage", 0))
 	if reward.has("hp_delta"):
@@ -620,6 +647,14 @@ func _format_reward(reward: Dictionary) -> String:
 	var items: Array = reward.get("items", [])
 	if not items.is_empty():
 		lines.append("回收物：%s 件" % items.size())
+	var ground_items: Array = reward.get("ground_items", [])
+	if not ground_items.is_empty():
+		lines.append("Ground items: %s" % ground_items.size())
+	if reward.has("capacity"):
+		var capacity: Dictionary = reward.get("capacity", {})
+		lines.append("Bag: %s/%s" % [capacity.get("used", 0), capacity.get("capacity", 0)])
+	if String(reward.get("blocked_reason", reward.get("reason", ""))) != "":
+		lines.append("Blocked: %s" % String(reward.get("blocked_reason", reward.get("reason", ""))))
 	if reward.has("roll"):
 		lines.append("骰子点数：%s" % reward.get("roll", 0))
 	var text := ""
@@ -716,7 +751,7 @@ func _refresh_view_models() -> void:
 	if player_controller != null:
 		player_controller.set_visual_asset(&"sprite.player.default")
 	if hud != null:
-		hud.apply_view_model(HUDViewModel.build_status(run_context))
+		hud.apply_view_model(HUDViewModel.build_from_snapshot(snapshot))
 	if minimap_panel != null:
 		minimap_panel.apply_view_model(minimap_vm)
 	if map_overlay_panel != null:

@@ -29,10 +29,15 @@ var mine_immunity: int = 0
 var mine_dmg_reduce: int = 0
 var pressure: int = 0
 var protocol_level: int = 5
+var asset_ledger: RunAssetLedger
+var query_facade: RunQueryFacade
 var pending_gold: int = 0
 var safe_gold: int = 0
 var parts: int = 0
 var carried_items: Array[Dictionary] = []
+var encounter_type: StringName = &"none"
+var encounter_tags: Array = []
+var blocked_reason: String = ""
 var current_room_type: StringName = &"Unknown"
 var current_adjacent_mines: int = 0
 var last_message: String = ""
@@ -81,10 +86,15 @@ func reset() -> void:
 	mine_dmg_reduce = 0
 	pressure = 0
 	protocol_level = 5
+	asset_ledger = null
+	query_facade = null
 	pending_gold = 0
 	safe_gold = 0
 	parts = 0
 	carried_items.clear()
+	encounter_type = &"none"
+	encounter_tags.clear()
+	blocked_reason = ""
 	current_room_type = &"Unknown"
 	current_adjacent_mines = 0
 	last_message = ""
@@ -114,6 +124,9 @@ func start_run(config: Dictionary) -> void:
 	mode = StringName(config.get("mode", &"standard"))
 	seed_value = int(config.get("seed", 1001))
 	phase = &"running"
+	asset_ledger = RunAssetLedger.new()
+	asset_ledger.setup(config)
+	query_facade = RunQueryFacade.new()
 	truth_map = TruthMap.new()
 	truth_map.setup_from_config(config)
 	width = truth_map.width
@@ -143,6 +156,8 @@ func start_run(config: Dictionary) -> void:
 	explored_cells[cell_key(player_pos)] = true
 	current_room_type = truth_map.get_room_type(player_pos)
 	current_adjacent_mines = minefield_service.count_adjacent_mines(truth_map, player_pos)
+	if asset_ledger != null:
+		asset_ledger.sync_compat_fields(self)
 
 
 func start_tutorial_run() -> void:
@@ -191,135 +206,49 @@ func has_blocking_tutorial_popup() -> bool:
 
 
 func fail_run(reason: String) -> void:
-	failure_salvage = RunInventory.build_failure_salvage(self)
+	var settlement := RunRuleService.settle_failure(self)
+	failure_salvage = settlement.duplicate(true)
 	failed = true
 	run_active = false
 	phase = &"failed"
 	outcome = "Failed"
 	last_message = "Run failed: %s." % reason
 	result_snapshot = build_result_snapshot()
-	pending_gold = 0
 
 
 func complete_extract() -> void:
-	var extracted_pending := pending_gold
+	var settlement := RunRuleService.settle_success(self)
+	var extracted_pending := int(settlement.get("black_coin_converted", 0))
 	extracted = true
 	run_active = false
 	phase = &"extracted"
 	outcome = "Extracted" if mode != &"tutorial" else "Training Complete"
-	safe_gold += pending_gold
-	pending_gold = 0
 	result_snapshot = build_result_snapshot()
 	result_snapshot["extracted_pending_gold"] = extracted_pending
+	result_snapshot["settlement"] = settlement
 
 
 func build_result_snapshot() -> Dictionary:
-	return {
-		"outcome": outcome,
-		"mode": mode,
-		"position": player_pos,
-		"hp": hp,
-		"max_hp": max_hp,
-		"power": power,
-		"pressure": pressure,
-		"protocol_level": protocol_level,
-		"pending_gold": pending_gold,
-		"safe_gold": safe_gold,
-		"parts": parts,
-		"carried_item_count": carried_items.size(),
-		"carried_item_value": RunInventory.get_carried_item_value(self),
-		"carried_items": carried_items.duplicate(true),
-		"failure_salvage": failure_salvage.duplicate(true),
-		"stats": run_stats.duplicate(true),
-		"final_room": current_room_type,
-		"turn": turn,
-	}
+	return _query().build_result_snapshot(self)
 
 
 func get_status_snapshot() -> Dictionary:
-	return {
-		"run_id": run_id,
-		"mode": mode,
-		"phase": phase,
-		"run_started": run_started,
-		"width": width,
-		"height": height,
-		"player_pos": player_pos,
-		"hp": hp,
-		"max_hp": max_hp,
-		"power": power,
-		"pressure": pressure,
-		"protocol_level": protocol_level,
-		"pending_gold": pending_gold,
-		"safe_gold": safe_gold,
-		"parts": parts,
-		"position": player_pos,
-		"current_room": current_room_type,
-		"adjacent_mines": current_adjacent_mines,
-		"search_state": get_search_state_label(),
-		"search_state_data": get_search_state_data(),
-		"event_state": event_state.duplicate(true),
-		"enemy_state": enemy_state.duplicate(true),
-		"last_message": last_message,
-		"last_reward": last_reward.duplicate(true),
-		"outcome": outcome,
-		"run_active": run_active,
-		"extracted": extracted,
-		"failed": failed,
-		"exit_id": exit_id,
-		"tutorial_popup": tutorial_popup.duplicate(true),
-		"result_snapshot": result_snapshot.duplicate(true),
-		"failure_salvage": failure_salvage.duplicate(true),
-		"stats": run_stats.duplicate(true),
-	}
+	return _query().build_status_snapshot(self)
 
 
 func get_search_state_label() -> String:
-	if searched_cells.has(cell_key(player_pos)):
-		return "searched"
-	match current_room_type:
-		&"Normal":
-			return "searchable"
-		&"Chest":
-			return "chest"
-		_:
-			return "blocked"
+	return _query().get_search_state_label(self)
 
 
 func get_search_state_data() -> Dictionary:
-	if truth_map == null:
-		return {"can_search": false, "searched": false, "reason": "not_ready", "is_chest": false}
-	var key := cell_key(player_pos)
-	var searched := searched_cells.has(key)
-	var can_search := false
-	var reason := "blocked"
-	var is_chest := false
-	if searched:
-		reason = "searched"
-	elif player_pos == truth_map.spawn_pos:
-		reason = "spawn"
-	elif current_room_type == &"Normal":
-		can_search = true
-		reason = "searchable"
-	elif current_room_type == &"Chest":
-		can_search = true
-		reason = "chest"
-		is_chest = true
-	elif current_room_type == &"Event":
-		reason = "event"
-	elif current_room_type == &"Monster":
-		reason = "monster"
-	elif current_room_type == &"Exit":
-		reason = "exit"
-	elif current_room_type == &"Mine":
-		reason = "mine"
-	return {
-		"can_search": can_search,
-		"searched": searched,
-		"reason": reason,
-		"is_chest": is_chest,
-	}
+	return _query().get_search_state_data(self)
 
 
 func cell_key(pos: Vector2i) -> String:
 	return "%d,%d" % [pos.x, pos.y]
+
+
+func _query() -> RunQueryFacade:
+	if query_facade == null:
+		query_facade = RunQueryFacade.new()
+	return query_facade

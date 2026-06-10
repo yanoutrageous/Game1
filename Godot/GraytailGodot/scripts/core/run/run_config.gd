@@ -17,6 +17,9 @@ static func tutorial_5x5() -> Dictionary:
 		"mine_hits_are_fatal": false,
 		"reveal_on_move": true,
 		"move_requires_revealed": false,
+		"backpack_capacity": 10,
+		"failure_salvage_capacity": 1,
+		"black_to_gold_rate": 1.0,
 		"use_loadout": false,
 		"apply_meta_progress": false,
 		"allow_warehouse_rewards": false,
@@ -43,6 +46,9 @@ static func standard_10x10() -> Dictionary:
 		"mine_hits_are_fatal": false,
 		"reveal_on_move": true,
 		"move_requires_revealed": false,
+		"backpack_capacity": 10,
+		"failure_salvage_capacity": 1,
+		"black_to_gold_rate": 1.0,
 	}
 
 

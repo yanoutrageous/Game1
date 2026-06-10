@@ -2,15 +2,19 @@
 
 ## Updated
 
-`2026-06-09`
+`2026-06-10`
 
 ## Branch
 
-Current G7 work branch: `godot/g7-lua-ux-flow-parity-p2`.
+Current G8.1 hardening branch: `godot/g8-1-architecture-hardening`.
 
-Base branch: `godot/g6-lua-playable-parity-p1-core`.
+G8 rules branch: `godot/g8-rules-asset-ledger-core`.
 
-Base commit: `ee43cfa272d247c57fceda1ff4a43e39e44f7ae1`.
+Base branch: `main`.
+
+Implementation baseline commit before documentation closure: `f2dd365cca153793883960caa3ba26f5b959ba9b`.
+
+G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 
 ## Current Capability
 
@@ -24,15 +28,34 @@ Base commit: `ee43cfa272d247c57fceda1ff4a43e39e44f7ae1`.
 - PresentationMapping and PresentationTheme isolate asset ids, labels, hints, colors, and visual roles from core rules.
 - G5 migrated a first audited asset batch for minimap icons, HUD panels, player idle sprites, room backgrounds, and room props.
 - G6 separates map room coordinates from room-local player coordinates.
-- Formal movement changes room-local position; room coordinates change only after transition commands.
-- Event rooms resolve P1 trader, dice, altar, and trap outcomes.
-- Result snapshots include carried item value and failure salvage details.
-- G7 adds a main menu shell and read-only deploy shell foundation.
-- G7 run UI separates left HUD/MiniMap, center room, right protocol rail, collapsed Debug/Grid Move controls, and bottom action bar.
-- Event option, loot result, and extraction confirmation panels are available without the old placeholder event prompt.
-- Main/deploy/tutorial/HUD/map/result flow copy is localized toward the Lua prototype player experience.
-- Player-facing start buttons remain available through the main/deploy shell.
-- Keyboard play remains room-local movement, E interact/search/extract, Space/J fight, F flag, M/Tab map overlay, and R restart.
+- G7 adds the main menu shell, read-only deploy shell foundation, run layout, event option panel, loot result panel, and extraction confirmation panel.
+- G8 adds a run-scoped `RunAssetLedger` and `RunRuleService` for asset rules.
+- `black_coin` and `gold_coin` are available through ledger currency definitions and snapshot outputs.
+- Item instances carry `location_state`, `room_pos`, rarity, weight, value state, and source data.
+- Ground loot is tracked per room through `room_floor_items`.
+- Pickup/drop commands are exposed through CommandBus.
+- Pickup checks backpack capacity and returns `blocked_capacity` when full.
+- Equipment, consumable, Buff/Debuff, rarity, and `unique` hooks are reserved in the rules layer.
+- Success settlement converts black coin to gold coin and routes eligible inventory/equipped items to Warehouse Lite.
+- Failure settlement loses black coin, keeps gold coin, sends eligible inventory/equipped items through salvage, and loses room floor items by default.
+- G7 compatibility mirrors remain available through `pending_gold`, `safe_gold`, `parts`, and `carried_items`.
+- G8.1 adds `RunQueryFacade` as the status/result snapshot boundary.
+- G8.1 routes asset-related effects through `RunAssetEffectHandler`; `RunAssetLedger` remains the single asset state owner.
+- G8.1 normalizes `RunRuleService` results as `RuleResult` dictionaries with `EffectSpec` entries.
+- G8.1 normalizes CommandBus command envelopes with `command_id`, `actor_id`, `source`, `payload`, and `sequence`.
+- G8.1 adds `RunRuleContent` as the minimal content-definition fallback for rule rewards.
+- G8.1 reserves `SaveAdapter` and `MetaProgressAdapter` as contract-only boundaries without storage writes.
+
+## UI Boundary
+
+Future UI work should consume:
+
+- `RunContext.get_status_snapshot()`
+- result snapshots
+- HUD/ViewModel fields
+- CommandBus commands
+
+The recommended follow-up branch `godot/player-ui-g8` should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state.
 
 ## Validation
 
@@ -45,17 +68,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_asset_ui_parity_g5.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_lua_playable_parity_g6.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_lua_ux_flow_parity_g7.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_asset_rules_g8.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_architecture_hardening_g8_1.ps1
 ```
 
-Do not run Godot/editor/import unless separately authorized.
+Do not run Godot/editor/game/import unless separately authorized.
 
 ## Current Unfinished Items
 
 - No full MetaProgress.
-- No persistence-backed Deploy economy.
-- No video/music/font migration.
-- No full MetaProgress/Deploy progression economy.
+- No full Deploy persistence.
+- No full Warehouse UI.
+- No drag/drop or replacement inventory UI.
+- No consignment, insurance, or lottery pool implementation.
 - No action combat.
 - No final event economy tuning.
 - No persistence-backed deploy economy.
-- No merge to `main`.

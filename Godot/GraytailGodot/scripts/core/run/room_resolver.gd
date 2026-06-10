@@ -23,6 +23,10 @@ func enter_room(context: RunContext) -> Dictionary:
 	context.visited_cells[context.cell_key(pos)] = true
 	context.event_state = {}
 	context.enemy_state = {}
+	context.blocked_reason = ""
+	var encounter := RunRuleService.encounter_for_room(context, context.current_room_type, pos)
+	context.encounter_type = StringName(encounter.get("encounter_type", &"none"))
+	context.encounter_tags = encounter.get("encounter_tags", []).duplicate(true)
 
 	var first_explore := not context.explored_cells.has(context.cell_key(pos))
 	if first_explore:
@@ -72,11 +76,16 @@ func search_current_room(context: RunContext) -> Dictionary:
 	var reward := RunInventory.add_search_reward(context, pos, context.current_adjacent_mines, is_chest)
 	context.searched_cells[key] = true
 	context.last_reward = reward
+	context.blocked_reason = String(reward.get("blocked_reason", ""))
 	if is_chest:
 		context.truth_map.mark_cleared(pos)
 	context.intel_map.refresh_revealed_cell(pos, context.truth_map)
 	var reward_items: Array = reward.get("items", [])
-	context.last_message = "Search complete: +%d pending gold, +%d items." % [int(reward.get("gold", 0)), reward_items.size()]
+	var floor_items: Array = reward.get("ground_items", [])
+	if context.blocked_reason != "":
+		context.last_message = "Search complete: +%d black coin, %d items, %d on room floor (%s)." % [int(reward.get("gold", 0)), reward_items.size(), floor_items.size(), context.blocked_reason]
+	else:
+		context.last_message = "Search complete: +%d black coin, +%d items." % [int(reward.get("gold", 0)), reward_items.size()]
 	return {"ok": true, "message": context.last_message}
 
 
@@ -133,11 +142,13 @@ func fight_current_enemy(context: RunContext) -> Dictionary:
 		context.last_message = "Monster already cleared."
 		return {"ok": true, "message": context.last_message}
 	var result := CombatState.fight_enemy(context, pos, context.current_adjacent_mines)
-	context.truth_map.mark_cleared(pos)
-	context.intel_map.refresh_revealed_cell(pos, context.truth_map)
+	if bool(result.get("cleared", false)):
+		context.truth_map.mark_cleared(pos)
+		context.intel_map.refresh_revealed_cell(pos, context.truth_map)
 	context.last_reward = result
+	context.blocked_reason = String(result.get("blocked_reason", ""))
 	context.enemy_state = result.duplicate(true)
-	context.last_message = "Monster cleared: damage %d, reward +%d pending gold." % [int(result.get("damage", 0)), int(result.get("reward_gold", 0))]
+	context.last_message = "Monster cleared: damage %d, reward +%d black coin." % [int(result.get("damage", 0)), int(result.get("reward_gold", 0))]
 	return result
 
 
