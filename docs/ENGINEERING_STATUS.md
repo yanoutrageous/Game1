@@ -2,49 +2,50 @@
 
 ## Stage
 
-G7 Lua UX / Flow Parity P2.
+G8 Rules: Asset Ledger / Inventory / Settlement Core.
 
 ## Time
 
-`2026-06-09`
+`2026-06-10`
 
 ## Repository State
 
-- Current repository path: `D:\AGAME2\repo\Game1`
+- Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
-- Base branch: `godot/g6-lua-playable-parity-p1-core`
-- G7 branch: `godot/g7-lua-ux-flow-parity-p2`
-- Base commit: `ee43cfa272d247c57fceda1ff4a43e39e44f7ae1`
-- `main` modified or overwritten: no
+- Base branch: `main`
+- G8 branch: `godot/g8-rules-asset-ledger-core`
 - `lua-prototype-main` modified or overwritten: no
-- Old `Game.git` modified or pushed: no
 
-## Implemented In G7
+## Implemented In G8-Rules
 
-- Main menu shell.
-- Read-only deploy shell foundation.
-- Run-screen layout refactor with left HUD/MiniMap, center room, right protocol rail, collapsed Debug/Grid Move controls, and bottom action bar.
-- Event option panel.
-- Loot result panel.
-- Extraction confirmation panel.
-- Localized player-facing flow copy for menu, deploy, tutorial, events, map hints, HUD summaries, and result panel.
-- Removal of visible event placeholder wording.
-- HUD and ResultPanel sizing fixes.
-- Static G7 validation script.
+- Run-scoped `RunAssetLedger`.
+- Default `RunRuleService` for search, combat, event rewards, pickup/drop, and settlement.
+- Black coin and gold coin definitions.
+- Item instances with location state and room position.
+- Ground loot lists per room.
+- Backpack capacity and `blocked_capacity` pickup result.
+- Inventory/equipped capacity rules.
+- Consumable and Buff/Debuff data hooks.
+- Seven rarity tiers with `unique` reserved as not sellable by default.
+- Success and failure settlement outputs.
+- Warehouse Lite snapshot output.
+- Legacy field mirrors for G7 HUD/result compatibility.
+- HUD/ViewModel and ResultPanel G8 exports.
+- `validate_asset_rules_g8.ps1`.
 
 ## Not Implemented
 
-- Full MetaProgress.
-- Full persistence-backed Deploy economy.
+- Full MetaProgress persistence.
+- Full Deploy persistence.
+- Full Warehouse UI.
+- Drag/drop or replacement inventory UI.
+- Consignment, insurance, lottery pool, or special rule-room systems.
+- Final economy tuning.
 - Action combat.
-- Video/music/font migration.
-- Full MetaProgress/Deploy progression economy.
-- Persistent warehouse/equipment/talent economy.
-- Final tuned event economy.
 
 ## Validation
 
-Local static validations passed:
+Expected local static validations:
 
 - `validate_project_structure.ps1`
 - `validate_lua_parity_p0.ps1`
@@ -52,5 +53,6 @@ Local static validations passed:
 - `validate_asset_ui_parity_g5.ps1`
 - `validate_lua_playable_parity_g6.ps1`
 - `validate_lua_ux_flow_parity_g7.ps1`
+- `validate_asset_rules_g8.ps1`
 
-Godot editor/runtime/import was not run in this stage.
+Godot editor/runtime/import is not run in this stage.

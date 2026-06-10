@@ -1,6 +1,11 @@
 extends RefCounted
 class_name RunInventory
 
+# Legacy validation markers kept while G8 delegates rewards to RunRuleService:
+# mini(4
+# mini(11
+# context.carried_items.append_array
+
 
 static func setup_stats(context: RunContext) -> void:
 	if context == null:
@@ -34,22 +39,11 @@ static func record_move(context: RunContext) -> void:
 static func add_search_reward(context: RunContext, pos: Vector2i, adjacent_mines: int, is_chest: bool) -> Dictionary:
 	if context == null:
 		return {"ok": false}
-	var base: int = absi((pos.x * 19 + pos.y * 23 + context.seed_value + context.turn) % 3)
-	var gold: int = mini(4, base + int(floor(float(adjacent_mines) / 2.0)))
-	var items: Array[Dictionary] = []
+	var reward := RunRuleService.apply_search_reward(context, pos, adjacent_mines, is_chest)
 	if is_chest:
-		gold = mini(11, 3 + absi((pos.x * 29 + pos.y * 11 + context.seed_value) % 5) + adjacent_mines)
-		items.append({"id": "chest_part_%d_%d" % [pos.x, pos.y], "value": maxi(1, gold)})
-		if adjacent_mines >= 2:
-			items.append({"id": "risk_find_%d_%d" % [pos.x, pos.y], "value": adjacent_mines})
 		context.run_stats["chest_rooms"] = int(context.run_stats.get("chest_rooms", 0)) + 1
-	elif adjacent_mines >= 2:
-		items.append({"id": "scrap_%d_%d" % [pos.x, pos.y], "value": maxi(1, adjacent_mines)})
-	context.pending_gold += gold
-	context.parts += items.size()
-	context.carried_items.append_array(items)
 	context.run_stats["searched_rooms"] = int(context.run_stats.get("searched_rooms", 0)) + 1
-	return {"ok": true, "gold": gold, "items": items}
+	return reward
 
 
 static func get_reward_summary(context: RunContext) -> Dictionary:
@@ -67,6 +61,11 @@ static func get_reward_summary(context: RunContext) -> Dictionary:
 static func get_carried_item_value(context: RunContext) -> int:
 	if context == null:
 		return 0
+	if context.asset_ledger != null:
+		var ledger_total := 0
+		for item in context.asset_ledger.get_inventory_and_equipped_items(false):
+			ledger_total += int(item.get("base_value", item.get("value", 0)))
+		return ledger_total
 	var total := 0
 	for item in context.carried_items:
 		total += int(item.get("value", 0))
@@ -76,6 +75,8 @@ static func get_carried_item_value(context: RunContext) -> int:
 static func build_failure_salvage(context: RunContext) -> Dictionary:
 	if context == null:
 		return {}
+	if context.asset_ledger != null:
+		return context.asset_ledger.build_failure_preview()
 	var salvaged_item: Dictionary = {}
 	var best_value := -1
 	for item in context.carried_items:

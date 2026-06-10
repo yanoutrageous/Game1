@@ -40,6 +40,10 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> void:
 			teleport_to_explored(payload.get("pos", Vector2i.ZERO))
 		&"select_event_option":
 			select_event_option(StringName(payload.get("option_id", &"default")))
+		&"pickup_ground_item":
+			pickup_ground_item(String(payload.get("instance_id", "")))
+		&"drop_inventory_item":
+			drop_inventory_item(String(payload.get("instance_id", "")))
 		&"request_extract":
 			request_extract()
 		&"confirm_extract":
@@ -179,6 +183,38 @@ func select_event_option(option_id: StringName = &"default") -> void:
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
+
+
+func pickup_ground_item(instance_id: String = "") -> Dictionary:
+	if not _can_accept_command():
+		return {"ok": false, "status": &"blocked"}
+	var result := RunRuleService.pickup_ground_item(context, instance_id)
+	context.last_reward = result.duplicate(true)
+	if bool(result.get("ok", false)):
+		context.blocked_reason = ""
+		var item: Dictionary = result.get("item", {})
+		context.last_message = "Picked up floor item: %s." % String(item.get("display_name", item.get("item_id", "item")))
+	else:
+		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
+		context.last_message = "Pickup blocked: %s." % context.blocked_reason
+	_emit_state()
+	return result
+
+
+func drop_inventory_item(instance_id: String = "") -> Dictionary:
+	if not _can_accept_command():
+		return {"ok": false, "status": &"blocked"}
+	var result := RunRuleService.drop_inventory_item(context, instance_id)
+	context.last_reward = result.duplicate(true)
+	if bool(result.get("ok", false)):
+		context.blocked_reason = ""
+		var item: Dictionary = result.get("item", {})
+		context.last_message = "Dropped inventory item: %s." % String(item.get("display_name", item.get("item_id", "item")))
+	else:
+		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
+		context.last_message = "Drop blocked: %s." % context.blocked_reason
+	_emit_state()
+	return result
 
 
 func teleport_to_explored(pos: Vector2i) -> Dictionary:

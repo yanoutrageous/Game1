@@ -35,8 +35,22 @@ static func fight_enemy(context: RunContext, pos: Vector2i, adjacent_mines: int)
 	var player_power := context.power
 	var damage: int = maxi(0, enemy_power - context.power)
 	apply_damage(context, damage, "monster")
+	if context.failed:
+		context.run_stats["combat_damage"] = int(context.run_stats.get("combat_damage", 0)) + damage
+		return {
+			"ok": true,
+			"fought": true,
+			"cleared": false,
+			"player_win": false,
+			"player_power": player_power,
+			"enemy_power": enemy_power,
+			"damage": damage,
+			"hp": context.hp,
+			"reward_gold": 0,
+			"black_coin_delta": 0,
+		}
 	var reward_gold: int = absi((pos.x * 13 + pos.y * 7 + context.seed_value) % 4)
-	context.pending_gold += reward_gold
+	var reward_result := RunRuleService.apply_combat_reward(context, pos, reward_gold)
 	context.run_stats["monsters_defeated"] = int(context.run_stats.get("monsters_defeated", 0)) + 1
 	context.run_stats["combat_damage"] = int(context.run_stats.get("combat_damage", 0)) + damage
 	if int(context.run_stats.get("monster_power_bonus", 0)) < 5:
@@ -52,6 +66,7 @@ static func fight_enemy(context: RunContext, pos: Vector2i, adjacent_mines: int)
 		"damage": damage,
 		"hp": context.hp,
 		"reward_gold": reward_gold,
+		"black_coin_delta": reward_result.get("black_coin_delta", reward_gold),
 		"power_gain": int(context.run_stats.get("monster_power_bonus", 0)),
 	}
 
