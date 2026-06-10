@@ -751,7 +751,7 @@ func _refresh_view_models() -> void:
 	if player_controller != null:
 		player_controller.set_visual_asset(&"sprite.player.default")
 	if hud != null:
-		hud.apply_view_model(HUDViewModel.build_status(run_context))
+		hud.apply_view_model(HUDViewModel.build_from_snapshot(snapshot))
 	if minimap_panel != null:
 		minimap_panel.apply_view_model(minimap_vm)
 	if map_overlay_panel != null:

@@ -7,12 +7,17 @@ signal command_requested(command_name: StringName, payload: Dictionary)
 signal state_changed(snapshot: Dictionary)
 signal result_available(summary: Dictionary)
 
+const DEFAULT_ACTOR_ID := &"player"
+
 var context: RunContext
 var room_resolver := RoomResolver.new()
+var command_sequence: int = 0
 
 
 func dispatch(command_name: StringName, payload: Dictionary = {}) -> void:
-	command_requested.emit(command_name, payload)
+	var command := _normalize_command(command_name, payload)
+	var command_payload: Dictionary = command.get("payload", {})
+	command_requested.emit(command_name, command)
 	match command_name:
 		&"start_demo_run":
 			start_demo_run()
@@ -21,11 +26,11 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> void:
 		&"start_standard_run":
 			start_standard_run()
 		&"move_by":
-			move_by(payload.get("delta", Vector2i.ZERO))
+			move_by(command_payload.get("delta", Vector2i.ZERO))
 		&"attempt_room_transition":
-			attempt_room_transition(payload.get("direction", Vector2i.ZERO))
+			attempt_room_transition(command_payload.get("direction", Vector2i.ZERO))
 		&"toggle_flag_cell":
-			toggle_flag_cell(payload.get("pos", null))
+			toggle_flag_cell(command_payload.get("pos", null))
 		&"flag_current_cell":
 			flag_current_cell()
 		&"search_current_room":
@@ -37,13 +42,13 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> void:
 		&"fight_current_enemy":
 			fight_current_enemy()
 		&"teleport_to_explored":
-			teleport_to_explored(payload.get("pos", Vector2i.ZERO))
+			teleport_to_explored(command_payload.get("pos", Vector2i.ZERO))
 		&"select_event_option":
-			select_event_option(StringName(payload.get("option_id", &"default")))
+			select_event_option(StringName(command_payload.get("option_id", &"default")))
 		&"pickup_ground_item":
-			pickup_ground_item(String(payload.get("instance_id", "")))
+			pickup_ground_item(String(command_payload.get("instance_id", "")))
 		&"drop_inventory_item":
-			drop_inventory_item(String(payload.get("instance_id", "")))
+			drop_inventory_item(String(command_payload.get("instance_id", "")))
 		&"request_extract":
 			request_extract()
 		&"confirm_extract":
@@ -97,25 +102,30 @@ func attempt_room_transition(direction: Vector2i) -> Dictionary:
 
 func move_by(delta: Vector2i) -> Dictionary:
 	if not _can_accept_command():
-		return {"ok": false, "status": &"blocked"}
+		return _blocked(&"blocked", "command_blocked")
 	if abs(delta.x) + abs(delta.y) != 1:
+		context.blocked_reason = "invalid_direction"
 		context.last_message = "Invalid move: only four-direction movement is allowed."
 		_emit_state()
-		return {"ok": false, "status": &"invalid_direction"}
+		return _blocked(&"invalid_direction", "invalid_direction")
 	var target := context.get_current_pos() + delta
 	if not context.is_inside(target):
+		context.blocked_reason = "out_of_bounds"
 		context.last_message = "Blocked by map boundary."
 		_emit_state()
-		return {"ok": false, "status": &"out_of_bounds"}
+		return _blocked(&"out_of_bounds", "out_of_bounds")
 	if context.intel_map.is_flagged(target):
+		context.blocked_reason = "blocked_flagged"
 		context.last_message = "Blocked by flag."
 		_emit_state()
-		return {"ok": false, "status": &"blocked_flagged"}
+		return _blocked(&"blocked_flagged", "blocked_flagged")
 	if context.move_requires_revealed and not context.intel_map.is_revealed(target):
+		context.blocked_reason = "blocked_hidden"
 		context.last_message = "Blocked: target is not revealed."
 		_emit_state()
-		return {"ok": false, "status": &"blocked_hidden"}
+		return _blocked(&"blocked_hidden", "blocked_hidden")
 
+	context.blocked_reason = ""
 	context.player_pos = target
 	context.current_pos = target
 	RunInventory.record_move(context)
@@ -123,7 +133,7 @@ func move_by(delta: Vector2i) -> Dictionary:
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
-	return {"ok": true, "status": &"moved", "position": target}
+	return {"ok": true, "status": &"moved", "position": target, "actor_id": DEFAULT_ACTOR_ID}
 
 
 func toggle_flag_cell(pos = null) -> void:
@@ -187,7 +197,7 @@ func select_event_option(option_id: StringName = &"default") -> void:
 
 func pickup_ground_item(instance_id: String = "") -> Dictionary:
 	if not _can_accept_command():
-		return {"ok": false, "status": &"blocked"}
+		return _blocked(&"blocked", "command_blocked")
 	var result := RunRuleService.pickup_ground_item(context, instance_id)
 	context.last_reward = result.duplicate(true)
 	if bool(result.get("ok", false)):
@@ -203,7 +213,7 @@ func pickup_ground_item(instance_id: String = "") -> Dictionary:
 
 func drop_inventory_item(instance_id: String = "") -> Dictionary:
 	if not _can_accept_command():
-		return {"ok": false, "status": &"blocked"}
+		return _blocked(&"blocked", "command_blocked")
 	var result := RunRuleService.drop_inventory_item(context, instance_id)
 	context.last_reward = result.duplicate(true)
 	if bool(result.get("ok", false)):
@@ -219,25 +229,28 @@ func drop_inventory_item(instance_id: String = "") -> Dictionary:
 
 func teleport_to_explored(pos: Vector2i) -> Dictionary:
 	if not _can_accept_command():
-		return {"ok": false, "status": &"blocked"}
+		return _blocked(&"blocked", "command_blocked")
 	if context.intel_map == null or context.truth_map == null:
-		return {"ok": false, "status": &"not_ready"}
+		return _blocked(&"not_ready", "not_ready")
 	if not context.is_inside(pos):
+		context.blocked_reason = "out_of_bounds"
 		context.last_message = "Teleport target is outside the map."
 		_emit_state()
-		return {"ok": false, "status": &"out_of_bounds"}
+		return _blocked(&"out_of_bounds", "out_of_bounds")
 	var cell := context.intel_map.get_cell_info(pos)
 	if not bool(cell.get("explored", false)) or bool(cell.get("mine", false)) or bool(cell.get("flagged", false)):
+		context.blocked_reason = "not_explored_safe"
 		context.last_message = "Teleport requires an explored safe room."
 		_emit_state()
-		return {"ok": false, "status": &"not_explored_safe"}
+		return _blocked(&"not_explored_safe", "not_explored_safe")
 
+	context.blocked_reason = ""
 	context.player_pos = pos
 	context.current_pos = pos
 	room_resolver.enter_room(context)
 	context.last_message = "Teleported to explored room (%d,%d)." % [pos.x, pos.y]
 	_emit_state()
-	return {"ok": true, "status": &"teleported", "position": pos}
+	return {"ok": true, "status": &"teleported", "position": pos, "actor_id": DEFAULT_ACTOR_ID}
 
 
 func request_extract() -> void:
@@ -315,3 +328,21 @@ func _emit_state() -> void:
 
 func _format_pos(pos: Vector2i) -> String:
 	return "(%d,%d)" % [pos.x, pos.y]
+
+
+func _normalize_command(command_name: StringName, payload: Dictionary) -> Dictionary:
+	command_sequence += 1
+	var actor_id := StringName(payload.get("actor_id", DEFAULT_ACTOR_ID))
+	var source := String(payload.get("source", "ui"))
+	return {
+		"command_id": "cmd_%04d_%s" % [command_sequence, String(command_name)],
+		"command_name": command_name,
+		"actor_id": actor_id,
+		"source": source,
+		"payload": payload.duplicate(true),
+		"sequence": command_sequence,
+	}
+
+
+func _blocked(status: StringName, reason: String) -> Dictionary:
+	return {"ok": false, "status": status, "reason": reason, "blocked_reason": reason, "actor_id": DEFAULT_ACTOR_ID}

@@ -47,7 +47,7 @@ Test-FileContains $ProjectRoot 'scripts/core/command/command_bus.gd' @(
     'context.current_room_type == &"Exit"',
     'request_extract()',
     'confirm_extract()',
-    'move_by(payload.get("delta", Vector2i.ZERO))',
+    'move_by(command_payload.get("delta", Vector2i.ZERO))',
     'fight_current_enemy()'
 )
 

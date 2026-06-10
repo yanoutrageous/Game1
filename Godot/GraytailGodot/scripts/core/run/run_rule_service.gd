@@ -1,8 +1,35 @@
 extends RefCounted
 class_name RunRuleService
 
-# Default rule interface for G8. Encounters build RuleResult dictionaries;
-# the ledger applies assets, locations, settlement pools, and compatibility mirrors.
+# Default rule interface for G8.1.
+# RuleResult dictionaries describe outcomes; EffectSpec dictionaries describe asset mutations.
+
+const DEFAULT_ACTOR_ID := &"player"
+
+
+static func make_rule_result(ok: bool, status: StringName, actor_id: StringName = DEFAULT_ACTOR_ID, reason: String = "", effects: Array = [], messages: Array[String] = [], snapshot_delta: Dictionary = {}, settlement_log_entry: Dictionary = {}) -> Dictionary:
+	return {
+		"ok": ok,
+		"status": status,
+		"rule_result": status,
+		"reason": reason,
+		"blocked_reason": reason if not ok else "",
+		"actor_id": actor_id,
+		"effects": effects.duplicate(true),
+		"messages": messages.duplicate(true),
+		"snapshot_delta": snapshot_delta.duplicate(true),
+		"settlement_log_entry": settlement_log_entry.duplicate(true),
+	}
+
+
+static func make_effect_spec(effect_type: StringName, source: String, target: Variant, payload: Dictionary, actor_id: StringName = DEFAULT_ACTOR_ID) -> Dictionary:
+	return {
+		"type": effect_type,
+		"source": source,
+		"target": target,
+		"payload": payload.duplicate(true),
+		"actor_id": actor_id,
+	}
 
 
 static func encounter_for_room(context: RunContext, room_type: StringName, pos: Vector2i) -> Dictionary:
@@ -34,188 +61,205 @@ static func encounter_for_room(context: RunContext, room_type: StringName, pos: 
 
 static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_mines: int, is_chest: bool) -> Dictionary:
 	if context == null or context.asset_ledger == null:
-		return {"ok": false, "message": "No active asset ledger."}
-	var black_coin := _default_search_black_coin(context, pos, adjacent_mines, is_chest)
-	var item_defs := _default_search_items(context, pos, adjacent_mines, is_chest, black_coin)
-	context.asset_ledger.add_currency(RunAssetLedger.CURRENCY_BLACK, black_coin, "search")
-	var item_result := context.asset_ledger.add_reward_items(item_defs, RunAssetLedger.LOCATION_INVENTORY, pos, "search")
+		return make_rule_result(false, &"search_reward", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	var black_coin := RunRuleContent.default_search_black_coin(context, pos, adjacent_mines, is_chest)
+	var item_defs := RunRuleContent.default_search_items(pos, adjacent_mines, is_chest, black_coin)
+	var effects := [
+		make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "search", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": black_coin}),
+		make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "search", pos, {"item_defs": item_defs, "preferred_location": RunAssetLedger.LOCATION_INVENTORY, "room_pos": pos}),
+	]
+	var applied := RunAssetEffectHandler.apply_effects(context, effects)
+	var item_result := _effect_result(applied, RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS)
 	var combined_items := _combine_item_results(item_result)
-	context.asset_ledger.sync_compat_fields(context)
-	var result := {
-		"ok": true,
-		"rule_result": &"search_reward",
-		"gold": black_coin,
-		"black_coin_delta": black_coin,
-		"items": combined_items,
-		"inventory_items": item_result.get("inventory_items", []),
-		"equipped_items": item_result.get("equipped_items", []),
-		"ground_items": item_result.get("ground_items", []),
-		"blocked_reason": item_result.get("blocked_reason", ""),
-	}
-	context.asset_ledger.settlement_log.append({"type": &"rule_result", "rule_result": &"search_reward", "black_coin": black_coin, "items": combined_items.size()})
+	var log_entry := {"type": &"rule_result", "rule_result": &"search_reward", "black_coin": black_coin, "items": combined_items.size()}
+	_append_rule_log(context, log_entry)
+	var result := make_rule_result(true, &"search_reward", DEFAULT_ACTOR_ID, "", effects, ["Search reward resolved."], {}, log_entry)
+	result["gold"] = black_coin
+	result["black_coin_delta"] = black_coin
+	result["items"] = combined_items
+	result["inventory_items"] = item_result.get("inventory_items", [])
+	result["equipped_items"] = item_result.get("equipped_items", [])
+	result["ground_items"] = item_result.get("ground_items", [])
+	result["blocked_reason"] = item_result.get("blocked_reason", "")
+	result["effect_results"] = applied.get("effect_results", [])
 	return result
 
 
 static func apply_combat_reward(context: RunContext, pos: Vector2i, reward_gold: int) -> Dictionary:
 	if context == null or context.asset_ledger == null:
-		return {"ok": false, "message": "No active asset ledger."}
+		return make_rule_result(false, &"combat_reward", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
 	var item_defs: Array[Dictionary] = []
 	if reward_gold >= 10:
-		item_defs.append(_item_def("monster_trophy_%d_%d" % [pos.x, pos.y], "Monster Trophy", &"recovered", maxi(1, int(floor(float(reward_gold) / 2.0))), &"good", ["monster", "combat"]))
-	context.asset_ledger.add_currency(RunAssetLedger.CURRENCY_BLACK, reward_gold, "combat")
-	var item_result := context.asset_ledger.add_reward_items(item_defs, RunAssetLedger.LOCATION_INVENTORY, pos, "combat")
-	context.asset_ledger.sync_compat_fields(context)
-	return {
-		"ok": true,
-		"rule_result": &"combat_reward",
-		"reward_gold": reward_gold,
-		"black_coin_delta": reward_gold,
-		"items": _combine_item_results(item_result),
-		"ground_items": item_result.get("ground_items", []),
-		"blocked_reason": item_result.get("blocked_reason", ""),
-	}
+		item_defs.append(RunRuleContent.monster_trophy(pos, reward_gold))
+	var effects := [
+		make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "combat", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": reward_gold}),
+		make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "combat", pos, {"item_defs": item_defs, "preferred_location": RunAssetLedger.LOCATION_INVENTORY, "room_pos": pos}),
+	]
+	var applied := RunAssetEffectHandler.apply_effects(context, effects)
+	var item_result := _effect_result(applied, RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS)
+	var result := make_rule_result(true, &"combat_reward", DEFAULT_ACTOR_ID, "", effects, ["Combat reward resolved."])
+	result["reward_gold"] = reward_gold
+	result["black_coin_delta"] = reward_gold
+	result["items"] = _combine_item_results(item_result)
+	result["ground_items"] = item_result.get("ground_items", [])
+	result["blocked_reason"] = item_result.get("blocked_reason", "")
+	result["effect_results"] = applied.get("effect_results", [])
+	return result
 
 
 static func apply_event_rule_result(context: RunContext, event_type: StringName, rule_result: Dictionary) -> Dictionary:
 	if context == null or context.asset_ledger == null:
-		return {"ok": false, "message": "No active asset ledger."}
+		return make_rule_result(false, &"event", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
 	var result := rule_result.duplicate(true)
+	var effects: Array = []
 	if result.has("spend_black_coin"):
-		var spend_result := context.asset_ledger.spend_currency(RunAssetLedger.CURRENCY_BLACK, int(result.get("spend_black_coin", 0)), "event_%s" % String(event_type))
-		if not bool(spend_result.get("ok", false)):
-			context.asset_ledger.sync_compat_fields(context)
-			return spend_result
+		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_SPEND_CURRENCY, "event_%s" % String(event_type), context.get_current_pos(), {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": int(result.get("spend_black_coin", 0))}))
 	if result.has("black_coin_delta"):
-		context.asset_ledger.add_currency(RunAssetLedger.CURRENCY_BLACK, int(result.get("black_coin_delta", 0)), "event_%s" % String(event_type))
+		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "event_%s" % String(event_type), context.get_current_pos(), {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": int(result.get("black_coin_delta", 0))}))
 	if result.has("gold_coin_delta"):
-		context.asset_ledger.add_currency(RunAssetLedger.CURRENCY_GOLD, int(result.get("gold_coin_delta", 0)), "event_%s" % String(event_type))
+		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "event_%s" % String(event_type), context.get_current_pos(), {"currency_id": RunAssetLedger.CURRENCY_GOLD, "amount": int(result.get("gold_coin_delta", 0))}))
 	var item_defs: Array = result.get("item_defs", [])
 	if not item_defs.is_empty():
 		var reward_location := StringName(result.get("reward_location", RunAssetLedger.LOCATION_INVENTORY))
 		if bool(result.get("drop_on_floor", false)):
 			reward_location = RunAssetLedger.LOCATION_ROOM_FLOOR
-		var item_result := context.asset_ledger.add_reward_items(item_defs, reward_location, context.get_current_pos(), "event_%s" % String(event_type))
+		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "event_%s" % String(event_type), context.get_current_pos(), {"item_defs": item_defs, "preferred_location": reward_location, "room_pos": context.get_current_pos()}))
+	var status_effects: Array = result.get("status_effects", [])
+	for effect in status_effects:
+		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_STATUS_EFFECT, "event_%s" % String(event_type), context.get_current_pos(), {"effect": effect}))
+	var applied := RunAssetEffectHandler.apply_effects(context, effects)
+	if not bool(applied.get("ok", false)):
+		var blocked := make_rule_result(false, &"event", DEFAULT_ACTOR_ID, String(applied.get("reason", "blocked")), effects, [String(result.get("message", "Event blocked."))])
+		blocked["event_type"] = event_type
+		return blocked
+	var item_result := _effect_result(applied, RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS)
+	if not item_result.is_empty():
 		result["items"] = _combine_item_results(item_result)
 		result["inventory_items"] = item_result.get("inventory_items", [])
 		result["equipped_items"] = item_result.get("equipped_items", [])
 		result["ground_items"] = item_result.get("ground_items", [])
 		result["blocked_reason"] = item_result.get("blocked_reason", "")
-	var effects: Array = result.get("status_effects", [])
-	for effect in effects:
-		context.asset_ledger.add_status_effect(effect)
-	context.asset_ledger.sync_compat_fields(context)
-	context.asset_ledger.settlement_log.append({"type": &"rule_result", "rule_result": &"event", "event_type": event_type, "result": result.duplicate(true)})
+	var log_entry := {"type": &"rule_result", "rule_result": &"event", "event_type": event_type, "result": result.duplicate(true)}
+	_append_rule_log(context, log_entry)
+	result.merge(make_rule_result(bool(result.get("ok", true)), &"event", DEFAULT_ACTOR_ID, String(result.get("blocked_reason", "")), effects, [String(result.get("message", "Event resolved."))], {}, log_entry), false)
+	result["effect_results"] = applied.get("effect_results", [])
 	return result
 
 
 static func execute_trader_sell_best(context: RunContext) -> Dictionary:
 	if context == null or context.asset_ledger == null:
-		return {"ok": false, "message": "No active asset ledger."}
-	var sold := context.asset_ledger.sell_best_inventory_item()
-	context.asset_ledger.sync_compat_fields(context)
+		return make_rule_result(false, &"trader_sell", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	var effects := [make_effect_spec(RunAssetEffectHandler.EFFECT_SELL_BEST_INVENTORY_ITEM, "event_trader", context.get_current_pos(), {})]
+	var applied := RunAssetEffectHandler.apply_effects(context, effects)
+	var sold := applied.get("last_result", {})
 	if not bool(sold.get("ok", false)):
-		return {"ok": false, "message": "No sellable inventory item.", "blocked_reason": sold.get("reason", "no_sellable_inventory_item")}
+		var reason := String(sold.get("reason", "no_sellable_inventory_item"))
+		return make_rule_result(false, &"trader_sell", DEFAULT_ACTOR_ID, reason, effects, ["No sellable inventory item."])
 	var gold_coin := int(sold.get("gold_coin", 0))
-	return {"ok": true, "completed": true, "event_type": &"trader", "gold_coin_delta": gold_coin, "safe_gold": gold_coin, "sold_item": sold.get("sold_item", {}), "message": "Trader sale complete: gold_coin +%d." % gold_coin}
+	var result := make_rule_result(true, &"trader_sell", DEFAULT_ACTOR_ID, "", effects, ["Trader sale complete."])
+	result["completed"] = true
+	result["event_type"] = &"trader"
+	result["gold_coin_delta"] = gold_coin
+	result["safe_gold"] = gold_coin
+	result["sold_item"] = sold.get("sold_item", {})
+	result["message"] = "Trader sale complete: gold_coin +%d." % gold_coin
+	return result
 
 
 static func execute_dice_bet(context: RunContext, pos: Vector2i, bet: int) -> Dictionary:
 	if context == null or context.asset_ledger == null:
-		return {"ok": false, "message": "No active asset ledger."}
-	var spend_result := context.asset_ledger.spend_currency(RunAssetLedger.CURRENCY_BLACK, bet, "dice_bet")
-	if not bool(spend_result.get("ok", false)):
-		context.asset_ledger.sync_compat_fields(context)
-		return {"ok": false, "message": "Dice needs %d black_coin." % bet, "blocked_reason": spend_result.get("reason", "blocked_currency")}
+		return make_rule_result(false, &"dice_bet", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	var spend_effect := make_effect_spec(RunAssetEffectHandler.EFFECT_SPEND_CURRENCY, "dice_bet", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": bet})
+	var spend_applied := RunAssetEffectHandler.apply_effects(context, [spend_effect])
+	if not bool(spend_applied.get("ok", false)):
+		var reason := String(spend_applied.get("reason", "blocked_currency"))
+		var blocked := make_rule_result(false, &"dice_bet", DEFAULT_ACTOR_ID, reason, [spend_effect], ["Dice needs %d black_coin." % bet])
+		blocked["message"] = "Dice needs %d black_coin." % bet
+		return blocked
 	var roll := absi((pos.x * 197 + pos.y * 83 + context.seed_value * 59 + context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK)) % 6) + 1
 	var gain := 0
 	if roll == 5:
 		gain = bet + 20
 	elif roll == 6:
 		gain = bet + 60
-	context.asset_ledger.add_currency(RunAssetLedger.CURRENCY_BLACK, gain, "dice_reward")
-	context.asset_ledger.sync_compat_fields(context)
+	var gain_effect := make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "dice_reward", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": gain})
+	var gain_applied := RunAssetEffectHandler.apply_effects(context, [gain_effect])
 	var delta := gain - bet
-	return {"ok": true, "completed": true, "event_type": &"dice", "roll": roll, "pending_gold_delta": delta, "black_coin_delta": delta, "message": "Dice roll %d: black_coin delta %d." % [roll, delta]}
+	var result := make_rule_result(true, &"dice_bet", DEFAULT_ACTOR_ID, "", [spend_effect, gain_effect], ["Dice bet resolved."])
+	result["completed"] = true
+	result["event_type"] = &"dice"
+	result["roll"] = roll
+	result["pending_gold_delta"] = delta
+	result["black_coin_delta"] = delta
+	result["message"] = "Dice roll %d: black_coin delta %d." % [roll, delta]
+	result["effect_results"] = spend_applied.get("effect_results", []) + gain_applied.get("effect_results", [])
+	return result
 
 
 static func pickup_ground_item(context: RunContext, instance_id: String = "") -> Dictionary:
 	if context == null or context.asset_ledger == null:
-		return {"ok": false, "message": "No active asset ledger."}
+		return make_rule_result(false, &"pickup_ground_item", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
 	var target_id := instance_id
 	if target_id == "":
 		var floor_items := context.asset_ledger.get_room_floor_items(context.get_current_pos())
 		if floor_items.is_empty():
-			return {"ok": false, "status": &"not_found", "reason": "no_room_floor_items", "message": "No room floor items."}
+			return make_rule_result(false, &"pickup_ground_item", DEFAULT_ACTOR_ID, "no_room_floor_items", [], ["No room floor items."])
 		target_id = String(floor_items[0].get("instance_id", ""))
-	var result := context.asset_ledger.pickup_ground_item(target_id, context.get_current_pos())
-	context.asset_ledger.sync_compat_fields(context)
+	var effect := make_effect_spec(RunAssetEffectHandler.EFFECT_PICKUP_GROUND_ITEM, "pickup", context.get_current_pos(), {"instance_id": target_id, "room_pos": context.get_current_pos()})
+	var applied := RunAssetEffectHandler.apply_effects(context, [effect])
+	var result: Dictionary = applied.get("last_result", {})
+	result.merge(make_rule_result(bool(result.get("ok", false)), &"pickup_ground_item", DEFAULT_ACTOR_ID, String(result.get("reason", "")), [effect], [String(result.get("message", "Pickup resolved."))]), false)
+	result["effect_results"] = applied.get("effect_results", [])
 	return result
 
 
 static func drop_inventory_item(context: RunContext, instance_id: String = "") -> Dictionary:
 	if context == null or context.asset_ledger == null:
-		return {"ok": false, "message": "No active asset ledger."}
+		return make_rule_result(false, &"drop_inventory_item", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
 	var target_id := instance_id
 	if target_id == "":
 		var inventory_items := context.asset_ledger.get_items_by_location(RunAssetLedger.LOCATION_INVENTORY)
 		if inventory_items.is_empty():
-			return {"ok": false, "status": &"not_found", "reason": "no_inventory_items", "message": "No inventory items."}
+			return make_rule_result(false, &"drop_inventory_item", DEFAULT_ACTOR_ID, "no_inventory_items", [], ["No inventory items."])
 		target_id = String(inventory_items[0].get("instance_id", ""))
-	var result := context.asset_ledger.drop_inventory_item(target_id, context.get_current_pos())
-	context.asset_ledger.sync_compat_fields(context)
+	var effect := make_effect_spec(RunAssetEffectHandler.EFFECT_DROP_INVENTORY_ITEM, "drop", context.get_current_pos(), {"instance_id": target_id, "room_pos": context.get_current_pos()})
+	var applied := RunAssetEffectHandler.apply_effects(context, [effect])
+	var result: Dictionary = applied.get("last_result", {})
+	result.merge(make_rule_result(bool(result.get("ok", false)), &"drop_inventory_item", DEFAULT_ACTOR_ID, String(result.get("reason", "")), [effect], [String(result.get("message", "Drop resolved."))]), false)
+	result["effect_results"] = applied.get("effect_results", [])
 	return result
 
 
 static func settle_success(context: RunContext) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return {}
-	var result := context.asset_ledger.settle_success()
-	context.asset_ledger.sync_compat_fields(context)
+	var effect := make_effect_spec(RunAssetEffectHandler.EFFECT_SETTLE_SUCCESS, "settlement", context.get_current_pos(), {})
+	var applied := RunAssetEffectHandler.apply_effects(context, [effect])
+	var result: Dictionary = applied.get("last_result", {})
+	result.merge(make_rule_result(true, &"settle_success", DEFAULT_ACTOR_ID, "", [effect], ["Success settlement resolved."]), false)
 	return result
 
 
 static func settle_failure(context: RunContext) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return {}
-	var result := context.asset_ledger.settle_failure()
-	context.asset_ledger.sync_compat_fields(context)
+	var effect := make_effect_spec(RunAssetEffectHandler.EFFECT_SETTLE_FAILURE, "settlement", context.get_current_pos(), {})
+	var applied := RunAssetEffectHandler.apply_effects(context, [effect])
+	var result: Dictionary = applied.get("last_result", {})
+	result.merge(make_rule_result(true, &"settle_failure", DEFAULT_ACTOR_ID, "", [effect], ["Failure settlement resolved."]), false)
 	return result
 
 
-static func _default_search_black_coin(context: RunContext, pos: Vector2i, adjacent_mines: int, is_chest: bool) -> int:
-	var base: int = absi((pos.x * 19 + pos.y * 23 + context.seed_value + context.turn) % 3)
-	if is_chest:
-		return mini(11, 3 + absi((pos.x * 29 + pos.y * 11 + context.seed_value) % 5) + adjacent_mines)
-	return mini(4, base + int(floor(float(adjacent_mines) / 2.0)))
+static func _effect_result(applied: Dictionary, effect_type: StringName) -> Dictionary:
+	for effect_result in applied.get("effect_results", []):
+		if StringName(effect_result.get("effect_type", &"")) == effect_type:
+			return effect_result
+	return {}
 
 
-static func _default_search_items(_context: RunContext, pos: Vector2i, adjacent_mines: int, is_chest: bool, black_coin: int) -> Array[Dictionary]:
-	var items: Array[Dictionary] = []
-	if is_chest:
-		items.append(_item_def("chest_part_%d_%d" % [pos.x, pos.y], "Chest Salvage", &"recovered", maxi(1, black_coin), &"good", ["loot", "container"]))
-		if adjacent_mines >= 2:
-			items.append(_item_def("risk_find_%d_%d" % [pos.x, pos.y], "Risk Salvage", &"recovered", adjacent_mines, &"rare", ["loot", "risk"]))
-	elif adjacent_mines >= 2:
-		items.append(_item_def("scrap_%d_%d" % [pos.x, pos.y], "Locked Scrap", &"recovered", maxi(1, adjacent_mines), &"common", ["loot"]))
-	return items
-
-
-static func _item_def(item_id: String, display_name: String, item_type: StringName, value: int, rarity: StringName, tags: Array) -> Dictionary:
-	return {
-		"item_id": item_id,
-		"display_name": display_name,
-		"item_type": item_type,
-		"rarity": rarity,
-		"weight": 1,
-		"value_state": &"known_value",
-		"base_value": value,
-		"tags": tags,
-		"can_sell": rarity != &"unique",
-		"can_store": true,
-		"can_equip": false,
-		"can_consume": false,
-		"is_unique": rarity == &"unique",
-	}
+static func _append_rule_log(context: RunContext, entry: Dictionary) -> void:
+	if context != null and context.asset_ledger != null:
+		context.asset_ledger.settlement_log.append(entry)
 
 
 static func _combine_item_results(item_result: Dictionary) -> Array:

@@ -22,14 +22,17 @@ func clear() -> void:
 
 
 static func build_status(context: RunContext) -> HUDViewModel:
-	var model := HUDViewModel.new()
 	if context == null:
+		var model := HUDViewModel.new()
 		model.status_text = "No active run."
 		model.protocol_text = "Pressure: -"
 		model.hint_text = "Last Action: -"
 		return model
+	return build_from_snapshot(context.get_status_snapshot())
 
-	var snapshot := context.get_status_snapshot()
+
+static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
+	var model := HUDViewModel.new()
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	var inventory_items: Array = snapshot.get("inventory_items", [])
 	var equipped_items: Array = snapshot.get("equipped_items", [])

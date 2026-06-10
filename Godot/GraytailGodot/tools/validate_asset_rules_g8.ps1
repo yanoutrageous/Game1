@@ -89,6 +89,10 @@ Test-FileContains 'scripts/core/run/run_asset_ledger.gd' @(
 Test-FileContains 'scripts/core/run/run_rule_service.gd' @(
     'class_name RunRuleService',
     'RuleResult',
+    'EffectSpec',
+    'make_rule_result',
+    'make_effect_spec',
+    'actor_id',
     'func encounter_for_room',
     'encounter_type',
     'encounter_tags',
@@ -99,6 +103,7 @@ Test-FileContains 'scripts/core/run/run_rule_service.gd' @(
     'func drop_inventory_item',
     'func settle_success',
     'func settle_failure',
+    'RunAssetEffectHandler.apply_effects',
     'RunAssetLedger.LOCATION_INVENTORY',
     'RunAssetLedger.LOCATION_ROOM_FLOOR',
     'gold_coin_delta',
@@ -107,9 +112,22 @@ Test-FileContains 'scripts/core/run/run_rule_service.gd' @(
 
 Test-FileContains 'scripts/core/run/run_context.gd' @(
     'var asset_ledger',
+    'var query_facade',
     'RunAssetLedger.new()',
+    'RunQueryFacade.new()',
     'RunRuleService.settle_success',
     'RunRuleService.settle_failure',
+    '_query().build_result_snapshot(self)',
+    '_query().build_status_snapshot(self)',
+    'encounter_type',
+    'encounter_tags',
+    'blocked_reason'
+)
+
+Test-FileContains 'scripts/core/run/run_query_facade.gd' @(
+    'class_name RunQueryFacade',
+    'func build_status_snapshot',
+    'func build_result_snapshot',
     '"black_coin"',
     '"gold_coin"',
     '"backpack_capacity"',
@@ -124,12 +142,36 @@ Test-FileContains 'scripts/core/run/run_context.gd' @(
 )
 
 Test-FileContains 'scripts/core/command/command_bus.gd' @(
+    'command_id',
+    'actor_id',
+    'sequence',
+    'DEFAULT_ACTOR_ID',
     '&"pickup_ground_item"',
     '&"drop_inventory_item"',
     'func pickup_ground_item',
     'func drop_inventory_item',
     'RunRuleService.pickup_ground_item',
     'RunRuleService.drop_inventory_item'
+)
+
+Test-FileContains 'scripts/core/run/run_asset_effect_handler.gd' @(
+    'class_name RunAssetEffectHandler',
+    'EffectSpec',
+    'EFFECT_ADD_CURRENCY',
+    'EFFECT_ADD_REWARD_ITEMS',
+    'EFFECT_PICKUP_GROUND_ITEM',
+    'EFFECT_DROP_INVENTORY_ITEM',
+    'EFFECT_SETTLE_SUCCESS',
+    'EFFECT_SETTLE_FAILURE',
+    'sync_compat_fields'
+)
+
+Test-FileContains 'scripts/core/content/run_rule_content.gd' @(
+    'class_name RunRuleContent',
+    'default_search_black_coin',
+    'default_search_items',
+    'monster_trophy',
+    'item_def'
 )
 
 Test-FileContains 'scripts/core/run/event_service.gd' @(
@@ -194,9 +236,12 @@ foreach ($RelativePath in $UiFiles) {
 
 $NoPersistenceFiles = @(
     'scripts/core/run/run_asset_ledger.gd',
+    'scripts/core/run/run_asset_effect_handler.gd',
     'scripts/core/run/run_rule_service.gd',
+    'scripts/core/run/run_query_facade.gd',
     'scripts/core/run/run_context.gd',
     'scripts/core/command/command_bus.gd',
+    'scripts/core/content/run_rule_content.gd',
     'scripts/core/run/run_scene.gd',
     'scripts/ui/result/result_panel.gd'
 )

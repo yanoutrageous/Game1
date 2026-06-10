@@ -6,11 +6,15 @@
 
 ## Branch
 
-Current G8 rules branch: `godot/g8-rules-asset-ledger-core`.
+Current G8.1 hardening branch: `godot/g8-1-architecture-hardening`.
+
+G8 rules branch: `godot/g8-rules-asset-ledger-core`.
 
 Base branch: `main`.
 
 Implementation baseline commit before documentation closure: `f2dd365cca153793883960caa3ba26f5b959ba9b`.
+
+G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 
 ## Current Capability
 
@@ -35,6 +39,12 @@ Implementation baseline commit before documentation closure: `f2dd365cca15379388
 - Success settlement converts black coin to gold coin and routes eligible inventory/equipped items to Warehouse Lite.
 - Failure settlement loses black coin, keeps gold coin, sends eligible inventory/equipped items through salvage, and loses room floor items by default.
 - G7 compatibility mirrors remain available through `pending_gold`, `safe_gold`, `parts`, and `carried_items`.
+- G8.1 adds `RunQueryFacade` as the status/result snapshot boundary.
+- G8.1 routes asset-related effects through `RunAssetEffectHandler`; `RunAssetLedger` remains the single asset state owner.
+- G8.1 normalizes `RunRuleService` results as `RuleResult` dictionaries with `EffectSpec` entries.
+- G8.1 normalizes CommandBus command envelopes with `command_id`, `actor_id`, `source`, `payload`, and `sequence`.
+- G8.1 adds `RunRuleContent` as the minimal content-definition fallback for rule rewards.
+- G8.1 reserves `SaveAdapter` and `MetaProgressAdapter` as contract-only boundaries without storage writes.
 
 ## UI Boundary
 
@@ -59,6 +69,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_lua_playable_parity_g6.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_lua_ux_flow_parity_g7.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_asset_rules_g8.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_architecture_hardening_g8_1.ps1
 ```
 
 Do not run Godot/editor/game/import unless separately authorized.

@@ -2,7 +2,7 @@
 
 ## Stage
 
-G8 Rules: Asset Ledger / Inventory / Settlement Core.
+G8.1 Architecture Hardening: Rule Core Alignment.
 
 ## Time
 
@@ -14,7 +14,9 @@ G8 Rules: Asset Ledger / Inventory / Settlement Core.
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
 - G8 branch: `godot/g8-rules-asset-ledger-core`
+- G8.1 branch: `godot/g8-1-architecture-hardening`
 - Implementation baseline commit before documentation closure: `f2dd365cca153793883960caa3ba26f5b959ba9b`
+- G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`
 - `lua-prototype-main` modified or overwritten: no
 
 ## Implemented In G8-Rules
@@ -36,6 +38,18 @@ G8 Rules: Asset Ledger / Inventory / Settlement Core.
 - Design source normalized from `D:\AGAME1\Base Docs\主模块修改策划案.txt` into `docs/design/G8_ASSET_LEDGER_INVENTORY_SETTLEMENT_CORE_PLAN.md`.
 - G8 audit and handoff docs for the next UI branch.
 
+## Implemented In G8.1
+
+- `RunQueryFacade` provides the read-only run snapshot boundary.
+- `RunContext` now delegates status/result snapshot construction to the query facade.
+- `RunRuleService` exposes a normalized `RuleResult` and `EffectSpec` shape.
+- `RunAssetEffectHandler` applies the asset-related EffectSpec subset while `RunAssetLedger` remains the single asset state owner.
+- `CommandBus` normalizes command envelopes with `command_id`, `actor_id`, `source`, `payload`, and `sequence`.
+- `RunRuleContent` provides the minimal content-definition fallback for search, monster trophy, and item definition data.
+- `SaveAdapter` and `MetaProgressAdapter` reserve contract-only persistence boundaries without storage writes.
+- HUD ViewModel can build directly from public snapshots.
+- `validate_architecture_hardening_g8_1.ps1`.
+
 ## Not Implemented
 
 - Full MetaProgress persistence.
@@ -53,7 +67,11 @@ G8 Rules: Asset Ledger / Inventory / Settlement Core.
 - `docs/handoff/HANDOFF_G8_ASSET_LEDGER_RULES_CORE.md`
 - `docs/branch_changes/G8_RULES_ASSET_LEDGER_CORE_BRANCH.md`
 - `Godot/GraytailGodot/docs/GODOT_ASSET_RULES_G8_REPORT.md`
+- `Godot/GraytailGodot/docs/GODOT_ARCHITECTURE_HARDENING_G8_1_REPORT.md`
 - `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
+- `docs/audits/AUDIT_G8_1_ARCHITECTURE_HARDENING.md`
+- `docs/handoff/HANDOFF_G8_1_ARCHITECTURE_HARDENING.md`
+- `docs/branch_changes/G8_1_ARCHITECTURE_HARDENING_BRANCH.md`
 
 ## Follow-Up Boundary
 
@@ -72,5 +90,6 @@ Expected local static validations:
 - `validate_lua_playable_parity_g6.ps1`
 - `validate_lua_ux_flow_parity_g7.ps1`
 - `validate_asset_rules_g8.ps1`
+- `validate_architecture_hardening_g8_1.ps1`
 
 Godot editor/runtime/import is not run in this stage.

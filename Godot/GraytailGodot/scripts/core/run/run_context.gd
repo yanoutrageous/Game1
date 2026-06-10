@@ -30,6 +30,7 @@ var mine_dmg_reduce: int = 0
 var pressure: int = 0
 var protocol_level: int = 5
 var asset_ledger: RunAssetLedger
+var query_facade: RunQueryFacade
 var pending_gold: int = 0
 var safe_gold: int = 0
 var parts: int = 0
@@ -86,6 +87,7 @@ func reset() -> void:
 	pressure = 0
 	protocol_level = 5
 	asset_ledger = null
+	query_facade = null
 	pending_gold = 0
 	safe_gold = 0
 	parts = 0
@@ -124,6 +126,7 @@ func start_run(config: Dictionary) -> void:
 	phase = &"running"
 	asset_ledger = RunAssetLedger.new()
 	asset_ledger.setup(config)
+	query_facade = RunQueryFacade.new()
 	truth_map = TruthMap.new()
 	truth_map.setup_from_config(config)
 	width = truth_map.width
@@ -226,150 +229,26 @@ func complete_extract() -> void:
 
 
 func build_result_snapshot() -> Dictionary:
-	var ledger_snapshot := _asset_snapshot()
-	return {
-		"outcome": outcome,
-		"mode": mode,
-		"position": player_pos,
-		"hp": hp,
-		"max_hp": max_hp,
-		"power": power,
-		"pressure": pressure,
-		"protocol_level": protocol_level,
-		"black_coin": ledger_snapshot.get("black_coin", pending_gold),
-		"gold_coin": ledger_snapshot.get("gold_coin", safe_gold),
-		"pending_gold": pending_gold,
-		"safe_gold": safe_gold,
-		"parts": parts,
-		"backpack_capacity": ledger_snapshot.get("backpack_capacity", 0),
-		"backpack_used": ledger_snapshot.get("backpack_used", 0),
-		"backpack_remaining": ledger_snapshot.get("backpack_remaining", 0),
-		"carried_item_count": carried_items.size(),
-		"carried_item_value": RunInventory.get_carried_item_value(self),
-		"carried_items": carried_items.duplicate(true),
-		"inventory_items": ledger_snapshot.get("inventory_items", []),
-		"equipped_items": ledger_snapshot.get("equipped_items", []),
-		"room_floor_items": ledger_snapshot.get("room_floor_items", []),
-		"room_floor_item_count": ledger_snapshot.get("room_floor_item_count", 0),
-		"warehouse_lite": ledger_snapshot.get("warehouse_lite", []),
-		"settlement_log": ledger_snapshot.get("settlement_log", []),
-		"status_effects": ledger_snapshot.get("status_effects", []),
-		"failure_salvage": failure_salvage.duplicate(true),
-		"stats": run_stats.duplicate(true),
-		"final_room": current_room_type,
-		"encounter_type": encounter_type,
-		"encounter_tags": encounter_tags.duplicate(true),
-		"blocked_reason": blocked_reason,
-		"turn": turn,
-	}
+	return _query().build_result_snapshot(self)
 
 
 func get_status_snapshot() -> Dictionary:
-	var ledger_snapshot := _asset_snapshot()
-	return {
-		"run_id": run_id,
-		"mode": mode,
-		"phase": phase,
-		"run_started": run_started,
-		"width": width,
-		"height": height,
-		"player_pos": player_pos,
-		"hp": hp,
-		"max_hp": max_hp,
-		"power": power,
-		"pressure": pressure,
-		"protocol_level": protocol_level,
-		"black_coin": ledger_snapshot.get("black_coin", pending_gold),
-		"gold_coin": ledger_snapshot.get("gold_coin", safe_gold),
-		"pending_gold": pending_gold,
-		"safe_gold": safe_gold,
-		"parts": parts,
-		"backpack_capacity": ledger_snapshot.get("backpack_capacity", 0),
-		"backpack_used": ledger_snapshot.get("backpack_used", 0),
-		"backpack_remaining": ledger_snapshot.get("backpack_remaining", 0),
-		"inventory_items": ledger_snapshot.get("inventory_items", []),
-		"equipped_items": ledger_snapshot.get("equipped_items", []),
-		"room_floor_items": ledger_snapshot.get("room_floor_items", []),
-		"room_floor_item_count": ledger_snapshot.get("room_floor_item_count", 0),
-		"warehouse_lite": ledger_snapshot.get("warehouse_lite", []),
-		"settlement_log": ledger_snapshot.get("settlement_log", []),
-		"status_effects": ledger_snapshot.get("status_effects", []),
-		"position": player_pos,
-		"current_room": current_room_type,
-		"encounter_type": encounter_type,
-		"encounter_tags": encounter_tags.duplicate(true),
-		"blocked_reason": blocked_reason,
-		"adjacent_mines": current_adjacent_mines,
-		"search_state": get_search_state_label(),
-		"search_state_data": get_search_state_data(),
-		"event_state": event_state.duplicate(true),
-		"enemy_state": enemy_state.duplicate(true),
-		"last_message": last_message,
-		"last_reward": last_reward.duplicate(true),
-		"outcome": outcome,
-		"run_active": run_active,
-		"extracted": extracted,
-		"failed": failed,
-		"exit_id": exit_id,
-		"tutorial_popup": tutorial_popup.duplicate(true),
-		"result_snapshot": result_snapshot.duplicate(true),
-		"failure_salvage": failure_salvage.duplicate(true),
-		"stats": run_stats.duplicate(true),
-	}
+	return _query().build_status_snapshot(self)
 
 
 func get_search_state_label() -> String:
-	if searched_cells.has(cell_key(player_pos)):
-		return "searched"
-	match current_room_type:
-		&"Normal":
-			return "searchable"
-		&"Chest":
-			return "chest"
-		_:
-			return "blocked"
+	return _query().get_search_state_label(self)
 
 
 func get_search_state_data() -> Dictionary:
-	if truth_map == null:
-		return {"can_search": false, "searched": false, "reason": "not_ready", "is_chest": false}
-	var key := cell_key(player_pos)
-	var searched := searched_cells.has(key)
-	var can_search := false
-	var reason := "blocked"
-	var is_chest := false
-	if searched:
-		reason = "searched"
-	elif player_pos == truth_map.spawn_pos:
-		reason = "spawn"
-	elif current_room_type == &"Normal":
-		can_search = true
-		reason = "searchable"
-	elif current_room_type == &"Chest":
-		can_search = true
-		reason = "chest"
-		is_chest = true
-	elif current_room_type == &"Event":
-		reason = "event"
-	elif current_room_type == &"Monster":
-		reason = "monster"
-	elif current_room_type == &"Exit":
-		reason = "exit"
-	elif current_room_type == &"Mine":
-		reason = "mine"
-	return {
-		"can_search": can_search,
-		"searched": searched,
-		"reason": reason,
-		"is_chest": is_chest,
-	}
+	return _query().get_search_state_data(self)
 
 
 func cell_key(pos: Vector2i) -> String:
 	return "%d,%d" % [pos.x, pos.y]
 
 
-func _asset_snapshot() -> Dictionary:
-	if asset_ledger == null:
-		return {}
-	return asset_ledger.get_public_snapshot(player_pos)
+func _query() -> RunQueryFacade:
+	if query_facade == null:
+		query_facade = RunQueryFacade.new()
+	return query_facade
