@@ -49,7 +49,7 @@ Test-FileContains 'scripts/core/run/run_scene.gd' @(
     'func _process',
     'player_controller.move_local',
     '_attempt_room_transition',
-    'command_bus.attempt_room_transition',
+    'command_bus.dispatch(&"attempt_room_transition"',
     'GridUp',
     'Debug / Grid Move',
     'cell_action_requested.connect',

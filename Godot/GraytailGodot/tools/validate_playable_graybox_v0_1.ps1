@@ -39,8 +39,8 @@ Test-FileContains $ProjectRoot 'scripts/core/run/run_scene.gd' @(
     'Start Tutorial 5x5',
     'Start Standard 10x10',
     'Controls: W/A/S/D or arrows move',
-    'command_bus.start_tutorial_run()',
-    'command_bus.start_standard_run()'
+    'command_bus.dispatch(&"start_tutorial_run")',
+    'command_bus.dispatch(&"start_standard_run")'
 )
 
 Test-FileContains $ProjectRoot 'scripts/core/command/command_bus.gd' @(

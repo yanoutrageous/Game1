@@ -2,7 +2,7 @@
 
 ## Stage
 
-G8.1 Architecture Hardening: Rule Core Alignment.
+G8.2 Kernel Protocol Hardening: Command, Query, Event, Effect, Modifier, and ContentDef closure.
 
 ## Time
 
@@ -15,6 +15,8 @@ G8.1 Architecture Hardening: Rule Core Alignment.
 - Base branch: `main`
 - G8 branch: `godot/g8-rules-asset-ledger-core`
 - G8.1 branch: `godot/g8-1-architecture-hardening`
+- G8.2 branch: `godot/g8-2-kernel-protocol-hardening`
+- G8.2 base main commit: `91ddf591b04923520834e72eab99a8b6d8702aa4`
 - Implementation baseline commit before documentation closure: `f2dd365cca153793883960caa3ba26f5b959ba9b`
 - G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`
 - `lua-prototype-main` modified or overwritten: no
@@ -50,6 +52,19 @@ G8.1 Architecture Hardening: Rule Core Alignment.
 - HUD ViewModel can build directly from public snapshots.
 - `validate_architecture_hardening_g8_1.ps1`.
 
+## Implemented In G8.2
+
+- Formal UI/debug command entry through `CommandBus.dispatch`.
+- `CommandResult` with `accepted`, `reason_code`, `message_key`, `command_id`, `produced_events`, `produced_transactions`, and `snapshot_delta`.
+- `RunEventLog` for fact-only domain events.
+- `RunTransactionLog` for asset transaction audit entries.
+- EffectSpec correlation fields: `effect_id`, `command_id`, and `rule_request_id`.
+- `RunRulePipeline` for RuleRequest, RuleContext, DefaultRuleResult, ModifierSpec application, Final RuleResult, produced EffectSpec, produced Event, and produced Transaction hooks.
+- `RunModifierSpec` with stable phase + priority + sequence ordering.
+- `ContentDefRegistry` for CurrencyDef, ItemDef, EncounterDef, EffectDef, ModifierDef, and LootTableDef.
+- `RunQueryFacade` snapshots for event log, transaction log, and content definitions.
+- `validate_kernel_protocol_g8_2.ps1`.
+
 ## Not Implemented
 
 - Full MetaProgress persistence.
@@ -72,6 +87,10 @@ G8.1 Architecture Hardening: Rule Core Alignment.
 - `docs/audits/AUDIT_G8_1_ARCHITECTURE_HARDENING.md`
 - `docs/handoff/HANDOFF_G8_1_ARCHITECTURE_HARDENING.md`
 - `docs/branch_changes/G8_1_ARCHITECTURE_HARDENING_BRANCH.md`
+- `docs/branch_changes/G8_2_KERNEL_PROTOCOL_HARDENING_BRANCH.md`
+- `docs/audits/AUDIT_G8_2_KERNEL_PROTOCOL_HARDENING.md`
+- `docs/handoff/HANDOFF_G8_2_KERNEL_PROTOCOL_HARDENING.md`
+- `Godot/GraytailGodot/docs/GODOT_KERNEL_PROTOCOL_G8_2_REPORT.md`
 
 ## Follow-Up Boundary
 
@@ -91,5 +110,6 @@ Expected local static validations:
 - `validate_lua_ux_flow_parity_g7.ps1`
 - `validate_asset_rules_g8.ps1`
 - `validate_architecture_hardening_g8_1.ps1`
+- `validate_kernel_protocol_g8_2.ps1`
 
 Godot editor/runtime/import is not run in this stage.

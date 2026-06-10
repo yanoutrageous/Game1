@@ -6,11 +6,15 @@
 
 ## Branch
 
-Current G8.1 hardening branch: `godot/g8-1-architecture-hardening`.
+Current G8.2 hardening branch: `godot/g8-2-kernel-protocol-hardening`.
+
+G8.1 hardening branch: `godot/g8-1-architecture-hardening`.
 
 G8 rules branch: `godot/g8-rules-asset-ledger-core`.
 
 Base branch: `main`.
+
+G8.2 base main commit: `91ddf591b04923520834e72eab99a8b6d8702aa4`.
 
 Implementation baseline commit before documentation closure: `f2dd365cca153793883960caa3ba26f5b959ba9b`.
 
@@ -45,6 +49,14 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G8.1 normalizes CommandBus command envelopes with `command_id`, `actor_id`, `source`, `payload`, and `sequence`.
 - G8.1 adds `RunRuleContent` as the minimal content-definition fallback for rule rewards.
 - G8.1 reserves `SaveAdapter` and `MetaProgressAdapter` as contract-only boundaries without storage writes.
+- G8.2 makes `CommandBus.dispatch` the formal UI/debug command entry.
+- G8.2 adds `CommandResult` for accepted/rejected command output and blocked reason propagation.
+- G8.2 adds `RunEventLog` for fact-only domain events.
+- G8.2 adds `RunTransactionLog` for asset transaction audit records.
+- G8.2 standardizes EffectSpec correlation fields: `effect_id`, `command_id`, and `rule_request_id`.
+- G8.2 reserves `RunRulePipeline` and `RunModifierSpec` for deterministic rule modification.
+- G8.2 reserves `ContentDefRegistry` for CurrencyDef, ItemDef, EncounterDef, EffectDef, ModifierDef, and LootTableDef.
+- G8.2 exposes event log, transaction log, and ContentDef snapshots through `RunQueryFacade`.
 
 ## UI Boundary
 
@@ -54,8 +66,12 @@ Future UI work should consume:
 - result snapshots
 - HUD/ViewModel fields
 - CommandBus commands
+- `CommandResult.reason_code` / `message_key`
+- Event and transaction snapshots when audit/debug panels need them
 
 The recommended follow-up branch `godot/player-ui-g8` should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state.
+
+Rules work should extend `RunRulePipeline`, `RunModifierSpec`, and `RunAssetEffectHandler`. Content work should register declarative ContentDef entries. Later persistence work should attach through `SaveAdapter` and `MetaProgressAdapter`.
 
 ## Validation
 
@@ -70,6 +86,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_lua_ux_flow_parity_g7.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_asset_rules_g8.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_architecture_hardening_g8_1.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_kernel_protocol_g8_2.ps1
 ```
 
 Do not run Godot/editor/game/import unless separately authorized.

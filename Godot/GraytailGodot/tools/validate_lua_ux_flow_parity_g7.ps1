@@ -82,7 +82,7 @@ Test-FileContains 'scripts/core/run/run_scene.gd' @(
     'func _request_extract_from_ui',
     'func _event_type_label',
     'player_controller.move_local',
-    'command_bus.attempt_room_transition',
+    'command_bus.dispatch(&"attempt_room_transition"',
     'GridUp'
 )
 
