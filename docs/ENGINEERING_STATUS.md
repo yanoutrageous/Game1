@@ -14,6 +14,7 @@ G8 Rules: Asset Ledger / Inventory / Settlement Core.
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
 - G8 branch: `godot/g8-rules-asset-ledger-core`
+- Implementation baseline commit before documentation closure: `f2dd365cca153793883960caa3ba26f5b959ba9b`
 - `lua-prototype-main` modified or overwritten: no
 
 ## Implemented In G8-Rules
@@ -32,6 +33,8 @@ G8 Rules: Asset Ledger / Inventory / Settlement Core.
 - Legacy field mirrors for G7 HUD/result compatibility.
 - HUD/ViewModel and ResultPanel G8 exports.
 - `validate_asset_rules_g8.ps1`.
+- Design source normalized from `D:\AGAME1\Base Docs\主模块修改策划案.txt` into `docs/design/G8_ASSET_LEDGER_INVENTORY_SETTLEMENT_CORE_PLAN.md`.
+- G8 audit and handoff docs for the next UI branch.
 
 ## Not Implemented
 
@@ -42,6 +45,21 @@ G8 Rules: Asset Ledger / Inventory / Settlement Core.
 - Consignment, insurance, lottery pool, or special rule-room systems.
 - Final economy tuning.
 - Action combat.
+
+## Documentation
+
+- `docs/design/G8_ASSET_LEDGER_INVENTORY_SETTLEMENT_CORE_PLAN.md`
+- `docs/audits/AUDIT_G8_ASSET_LEDGER_RULES_CORE.md`
+- `docs/handoff/HANDOFF_G8_ASSET_LEDGER_RULES_CORE.md`
+- `docs/branch_changes/G8_RULES_ASSET_LEDGER_CORE_BRANCH.md`
+- `Godot/GraytailGodot/docs/GODOT_ASSET_RULES_G8_REPORT.md`
+- `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
+
+## Follow-Up Boundary
+
+Recommended UI branch: `godot/player-ui-g8`.
+
+That branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 
 ## Validation
 
