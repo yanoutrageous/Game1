@@ -8,61 +8,78 @@ signal state_changed(snapshot: Dictionary)
 signal result_available(summary: Dictionary)
 
 const DEFAULT_ACTOR_ID := &"player"
+const REJECTION_EVENT_OPTION_UNAVAILABLE := "event_option_unavailable"
+const REJECTION_CANNOT_EXTRACT := "cannot_extract"
+const REJECTION_NO_EXTRACT_REQUEST := "no_extract_request"
 
 var context: RunContext
 var room_resolver := RoomResolver.new()
 var command_sequence: int = 0
 
 
-func dispatch(command_name: StringName, payload: Dictionary = {}) -> void:
+func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 	var command := _normalize_command(command_name, payload)
 	var command_payload: Dictionary = command.get("payload", {})
+	if context == null and command_name in [&"start_demo_run", &"start_tutorial_run", &"start_standard_run"]:
+		context = RunContext.new()
+	var event_start := _event_count()
+	var transaction_start := _transaction_count()
+	if context != null:
+		context.active_command = command.duplicate(true)
 	command_requested.emit(command_name, command)
+	var action_result: Dictionary = {}
 	match command_name:
 		&"start_demo_run":
-			start_demo_run()
+			action_result = start_demo_run()
 		&"start_tutorial_run":
-			start_tutorial_run()
+			action_result = start_tutorial_run()
 		&"start_standard_run":
-			start_standard_run()
+			action_result = start_standard_run()
 		&"move_by":
-			move_by(command_payload.get("delta", Vector2i.ZERO))
+			action_result = move_by(command_payload.get("delta", Vector2i.ZERO))
 		&"attempt_room_transition":
-			attempt_room_transition(command_payload.get("direction", Vector2i.ZERO))
+			action_result = attempt_room_transition(command_payload.get("direction", Vector2i.ZERO))
 		&"toggle_flag_cell":
-			toggle_flag_cell(command_payload.get("pos", null))
+			action_result = toggle_flag_cell(command_payload.get("pos", null))
 		&"flag_current_cell":
-			flag_current_cell()
+			action_result = flag_current_cell()
 		&"search_current_room":
-			search_current_room()
+			action_result = search_current_room()
 		&"interact_current_room":
-			interact_current_room()
+			action_result = interact_current_room()
 		&"interact":
-			interact()
+			action_result = interact()
 		&"fight_current_enemy":
-			fight_current_enemy()
+			action_result = fight_current_enemy()
 		&"teleport_to_explored":
-			teleport_to_explored(command_payload.get("pos", Vector2i.ZERO))
+			action_result = teleport_to_explored(command_payload.get("pos", Vector2i.ZERO))
 		&"select_event_option":
-			select_event_option(StringName(command_payload.get("option_id", &"default")))
+			action_result = select_event_option(StringName(command_payload.get("option_id", &"default")))
 		&"pickup_ground_item":
-			pickup_ground_item(String(command_payload.get("instance_id", "")))
+			action_result = pickup_ground_item(String(command_payload.get("instance_id", "")))
 		&"drop_inventory_item":
-			drop_inventory_item(String(command_payload.get("instance_id", "")))
+			action_result = drop_inventory_item(String(command_payload.get("instance_id", "")))
 		&"request_extract":
-			request_extract()
+			action_result = request_extract()
 		&"confirm_extract":
-			confirm_extract()
+			action_result = confirm_extract()
 		&"cancel_extract":
-			cancel_extract()
+			action_result = cancel_extract()
 		&"extract":
-			extract()
+			action_result = extract()
 		&"restart_run":
-			restart_run()
+			action_result = restart_run()
 		&"confirm_tutorial_popup":
-			confirm_tutorial_popup()
+			action_result = confirm_tutorial_popup()
 		&"open_map":
-			_mark_open_map_placeholder()
+			action_result = _mark_open_map_placeholder()
+		_:
+			action_result = _blocked(&"unknown_command", "unknown_command")
+	if context != null:
+		context.active_command.clear()
+	var produced_events := _events_since(event_start)
+	var produced_transactions := _transactions_since(transaction_start)
+	return CommandResult.from_action(command, action_result, produced_events, produced_transactions, _snapshot_delta_for(action_result))
 
 
 func bind_context(next_context: RunContext) -> void:
@@ -72,28 +89,31 @@ func bind_context(next_context: RunContext) -> void:
 		_emit_state()
 
 
-func start_demo_run() -> void:
+func start_demo_run() -> Dictionary:
 	if context == null:
 		context = RunContext.new()
 	context.reset_demo_run()
 	room_resolver.enter_room(context)
 	_emit_state()
+	return {"ok": true, "status": &"run_started", "mode": context.mode, "actor_id": DEFAULT_ACTOR_ID}
 
 
-func start_tutorial_run() -> void:
+func start_tutorial_run() -> Dictionary:
 	if context == null:
 		context = RunContext.new()
 	context.start_tutorial_run()
 	room_resolver.enter_room(context)
 	_emit_state()
+	return {"ok": true, "status": &"run_started", "mode": context.mode, "actor_id": DEFAULT_ACTOR_ID}
 
 
-func start_standard_run() -> void:
+func start_standard_run() -> Dictionary:
 	if context == null:
 		context = RunContext.new()
 	context.start_standard_run()
 	room_resolver.enter_room(context)
 	_emit_state()
+	return {"ok": true, "status": &"run_started", "mode": context.mode, "actor_id": DEFAULT_ACTOR_ID}
 
 
 func attempt_room_transition(direction: Vector2i) -> Dictionary:
@@ -136,63 +156,67 @@ func move_by(delta: Vector2i) -> Dictionary:
 	return {"ok": true, "status": &"moved", "position": target, "actor_id": DEFAULT_ACTOR_ID}
 
 
-func toggle_flag_cell(pos = null) -> void:
+func toggle_flag_cell(pos = null) -> Dictionary:
 	if context == null or context.intel_map == null:
-		return
+		return _blocked(&"not_ready", "not_ready")
 	var target: Vector2i = context.get_current_pos() if pos == null else pos
 	context.intel_map.toggle_flag(target)
 	context.last_message = "Flag toggled at %s." % _format_pos(target)
 	_emit_state()
+	return {"ok": true, "status": &"flag_toggled", "position": target, "actor_id": DEFAULT_ACTOR_ID}
 
 
-func flag_current_cell() -> void:
-	toggle_flag_cell()
+func flag_current_cell() -> Dictionary:
+	return toggle_flag_cell()
 
 
-func search_current_room() -> void:
+func search_current_room() -> Dictionary:
 	if not _can_accept_command():
-		return
-	room_resolver.search_current_room(context)
+		return _blocked(&"blocked", _current_blocked_reason())
+	var result := room_resolver.search_current_room(context)
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
+	return result
 
 
-func interact_current_room() -> void:
+func interact_current_room() -> Dictionary:
 	if not _can_accept_command():
-		return
+		return _blocked(&"blocked", _current_blocked_reason())
 	if context.current_room_type == &"Exit":
 		if context.phase == &"confirm_extract":
-			confirm_extract()
+			return confirm_extract()
 		else:
-			request_extract()
-		return
-	room_resolver.interact_current_room(context)
+			return request_extract()
+	var result := room_resolver.interact_current_room(context)
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
+	return result
 
 
-func interact() -> void:
-	interact_current_room()
+func interact() -> Dictionary:
+	return interact_current_room()
 
 
-func fight_current_enemy() -> void:
+func fight_current_enemy() -> Dictionary:
 	if not _can_accept_command():
-		return
-	room_resolver.fight_current_enemy(context)
+		return _blocked(&"blocked", _current_blocked_reason())
+	var result := room_resolver.fight_current_enemy(context)
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
+	return result
 
 
-func select_event_option(option_id: StringName = &"default") -> void:
+func select_event_option(option_id: StringName = &"default") -> Dictionary:
 	if not _can_accept_command():
-		return
-	room_resolver.select_event_option(context, option_id)
+		return _blocked(&"blocked", _current_blocked_reason())
+	var result := room_resolver.select_event_option(context, option_id)
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
+	return result
 
 
 func pickup_ground_item(instance_id: String = "") -> Dictionary:
@@ -253,72 +277,88 @@ func teleport_to_explored(pos: Vector2i) -> Dictionary:
 	return {"ok": true, "status": &"teleported", "position": pos, "actor_id": DEFAULT_ACTOR_ID}
 
 
-func request_extract() -> void:
+func request_extract() -> Dictionary:
 	if not _can_accept_command():
-		return
+		return _blocked(&"blocked", _current_blocked_reason())
 	if not room_resolver.can_extract(context):
+		context.blocked_reason = "cannot_extract"
 		context.last_message = "Extraction requires an exit room."
 		_emit_state()
-		return
+		return _blocked(&"cannot_extract", "cannot_extract")
 	context.phase = &"confirm_extract"
 	context.last_message = "Extraction requested. Confirm or cancel."
+	context.record_event(RunEventLog.EVENT_EXTRACTION_FOUND, _active_command_id(), DEFAULT_ACTOR_ID, "command_bus", {"position": context.get_current_pos(), "exit_id": context.exit_id})
 	_emit_state()
+	return {"ok": true, "status": &"extract_requested", "actor_id": DEFAULT_ACTOR_ID}
 
 
-func confirm_extract() -> void:
+func confirm_extract() -> Dictionary:
 	if context == null:
-		return
+		return _blocked(&"not_ready", "not_ready")
 	if context.phase != &"confirm_extract":
 		context.last_message = "No extraction request is active."
 		_emit_state()
-		return
+		return _blocked(&"no_extract_request", "no_extract_request")
 	if not room_resolver.can_extract(context):
 		context.phase = &"running"
 		context.last_message = "Extraction cancelled: not on exit."
 		_emit_state()
-		return
+		return _blocked(&"cannot_extract", "cannot_extract")
 	context.complete_extract()
 	context.last_message = "Extraction complete."
 	_emit_state()
 	result_available.emit(context.result_snapshot)
+	return {"ok": true, "status": &"extracted", "actor_id": DEFAULT_ACTOR_ID, "result_snapshot": context.result_snapshot.duplicate(true)}
 
 
-func cancel_extract() -> void:
+func cancel_extract() -> Dictionary:
 	if context == null:
-		return
+		return _blocked(&"not_ready", "not_ready")
 	if context.phase == &"confirm_extract":
 		context.phase = &"running"
 		context.last_message = "Extraction cancelled."
 	_emit_state()
+	return {"ok": true, "status": &"extract_cancelled", "actor_id": DEFAULT_ACTOR_ID}
 
 
-func extract() -> void:
-	request_extract()
+func extract() -> Dictionary:
+	var request_result := request_extract()
 	if context != null and context.phase == &"confirm_extract":
-		confirm_extract()
+		return confirm_extract()
+	return request_result
 
 
-func restart_run() -> void:
+func restart_run() -> Dictionary:
 	if context != null and context.mode == &"standard":
-		start_standard_run()
+		return start_standard_run()
 	else:
-		start_tutorial_run()
+		return start_tutorial_run()
 
 
-func confirm_tutorial_popup() -> void:
+func confirm_tutorial_popup() -> Dictionary:
 	TutorialService.confirm_popup(context)
 	_emit_state()
+	return {"ok": true, "status": &"tutorial_popup_confirmed", "actor_id": DEFAULT_ACTOR_ID}
 
 
 func _can_accept_command() -> bool:
 	return context != null and context.can_accept_command()
 
 
-func _mark_open_map_placeholder() -> void:
+func _current_blocked_reason() -> String:
 	if context == null:
-		return
+		return "not_ready"
+	if context.has_blocking_tutorial_popup():
+		return "tutorial_lock"
+	return "command_blocked"
+
+
+func _mark_open_map_placeholder() -> Dictionary:
+	if context == null:
+		return _blocked(&"not_ready", "not_ready")
 	context.last_message = "Map overlay placeholder opened."
 	_emit_state()
+	return {"ok": true, "status": &"map_opened", "actor_id": DEFAULT_ACTOR_ID}
 
 
 func _emit_state() -> void:
@@ -345,4 +385,42 @@ func _normalize_command(command_name: StringName, payload: Dictionary) -> Dictio
 
 
 func _blocked(status: StringName, reason: String) -> Dictionary:
-	return {"ok": false, "status": status, "reason": reason, "blocked_reason": reason, "actor_id": DEFAULT_ACTOR_ID}
+	return {"ok": false, "status": status, "reason": reason, "blocked_reason": reason, "reason_code": reason, "message_key": "command.rejected.%s" % reason, "actor_id": DEFAULT_ACTOR_ID}
+
+
+func _event_count() -> int:
+	if context == null or context.run_event_log == null:
+		return 0
+	return context.run_event_log.size()
+
+
+func _transaction_count() -> int:
+	if context == null or context.transaction_log == null:
+		return 0
+	return context.transaction_log.size()
+
+
+func _events_since(start_index: int) -> Array[Dictionary]:
+	if context == null or context.run_event_log == null:
+		return []
+	return context.run_event_log.get_events_since(start_index)
+
+
+func _transactions_since(start_index: int) -> Array[Dictionary]:
+	if context == null or context.transaction_log == null:
+		return []
+	return context.transaction_log.get_entries_since(start_index)
+
+
+func _snapshot_delta_for(action_result: Dictionary) -> Dictionary:
+	return {
+		"status": action_result.get("status", &""),
+		"reason_code": String(action_result.get("reason", action_result.get("blocked_reason", ""))),
+		"refresh": &"run_status",
+	}
+
+
+func _active_command_id() -> String:
+	if context == null:
+		return ""
+	return String(context.active_command.get("command_id", ""))

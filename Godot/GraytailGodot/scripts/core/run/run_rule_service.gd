@@ -7,28 +7,39 @@ class_name RunRuleService
 const DEFAULT_ACTOR_ID := &"player"
 
 
-static func make_rule_result(ok: bool, status: StringName, actor_id: StringName = DEFAULT_ACTOR_ID, reason: String = "", effects: Array = [], messages: Array[String] = [], snapshot_delta: Dictionary = {}, settlement_log_entry: Dictionary = {}) -> Dictionary:
+static func make_rule_result(ok: bool, status: StringName, actor_id: StringName = DEFAULT_ACTOR_ID, reason: String = "", effects: Array = [], messages: Array[String] = [], snapshot_delta: Dictionary = {}, settlement_log_entry: Dictionary = {}, rule_request_id: String = "", produced_events: Array = [], produced_transactions: Array = []) -> Dictionary:
 	return {
 		"ok": ok,
 		"status": status,
 		"rule_result": status,
+		"rule_request_id": rule_request_id,
 		"reason": reason,
 		"blocked_reason": reason if not ok else "",
 		"actor_id": actor_id,
 		"effects": effects.duplicate(true),
+		"produced_effects": effects.duplicate(true),
+		"produced_events": produced_events.duplicate(true),
+		"produced_transactions": produced_transactions.duplicate(true),
 		"messages": messages.duplicate(true),
 		"snapshot_delta": snapshot_delta.duplicate(true),
 		"settlement_log_entry": settlement_log_entry.duplicate(true),
 	}
 
 
-static func make_effect_spec(effect_type: StringName, source: String, target: Variant, payload: Dictionary, actor_id: StringName = DEFAULT_ACTOR_ID) -> Dictionary:
+static func make_effect_spec(effect_type: StringName, source: String, target: Variant, payload: Dictionary, actor_id: StringName = DEFAULT_ACTOR_ID, command_id: String = "", rule_request_id: String = "", effect_id: String = "") -> Dictionary:
+	var normalized_effect_id := effect_id
+	if normalized_effect_id == "":
+		var suffix := rule_request_id if rule_request_id != "" else String(actor_id)
+		normalized_effect_id = "effect_%s_%s" % [String(effect_type).replace(".", "_"), suffix]
 	return {
+		"effect_id": normalized_effect_id,
 		"type": effect_type,
 		"source": source,
 		"target": target,
 		"payload": payload.duplicate(true),
 		"actor_id": actor_id,
+		"command_id": command_id,
+		"rule_request_id": rule_request_id,
 	}
 
 
@@ -62,11 +73,12 @@ static func encounter_for_room(context: RunContext, room_type: StringName, pos: 
 static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_mines: int, is_chest: bool) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return make_rule_result(false, &"search_reward", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	var request := _make_rule_request(context, &"search_reward", "search", {"pos": pos, "adjacent_mines": adjacent_mines, "is_chest": is_chest})
 	var black_coin := RunRuleContent.default_search_black_coin(context, pos, adjacent_mines, is_chest)
 	var item_defs := RunRuleContent.default_search_items(pos, adjacent_mines, is_chest, black_coin)
 	var effects := [
-		make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "search", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": black_coin}),
-		make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "search", pos, {"item_defs": item_defs, "preferred_location": RunAssetLedger.LOCATION_INVENTORY, "room_pos": pos}),
+		_effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "search", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": black_coin}),
+		_effect_for_request(request, 2, RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "search", pos, {"item_defs": item_defs, "preferred_location": RunAssetLedger.LOCATION_INVENTORY, "room_pos": pos}),
 	]
 	var applied := RunAssetEffectHandler.apply_effects(context, effects)
 	var item_result := _effect_result(applied, RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS)
@@ -82,18 +94,19 @@ static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_min
 	result["ground_items"] = item_result.get("ground_items", [])
 	result["blocked_reason"] = item_result.get("blocked_reason", "")
 	result["effect_results"] = applied.get("effect_results", [])
-	return result
+	return _finalize_rule(context, request, result, applied)
 
 
 static func apply_combat_reward(context: RunContext, pos: Vector2i, reward_gold: int) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return make_rule_result(false, &"combat_reward", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	var request := _make_rule_request(context, &"combat_reward", "combat", {"pos": pos, "reward_gold": reward_gold})
 	var item_defs: Array[Dictionary] = []
 	if reward_gold >= 10:
 		item_defs.append(RunRuleContent.monster_trophy(pos, reward_gold))
 	var effects := [
-		make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "combat", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": reward_gold}),
-		make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "combat", pos, {"item_defs": item_defs, "preferred_location": RunAssetLedger.LOCATION_INVENTORY, "room_pos": pos}),
+		_effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "combat", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": reward_gold}),
+		_effect_for_request(request, 2, RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "combat", pos, {"item_defs": item_defs, "preferred_location": RunAssetLedger.LOCATION_INVENTORY, "room_pos": pos}),
 	]
 	var applied := RunAssetEffectHandler.apply_effects(context, effects)
 	var item_result := _effect_result(applied, RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS)
@@ -104,29 +117,36 @@ static func apply_combat_reward(context: RunContext, pos: Vector2i, reward_gold:
 	result["ground_items"] = item_result.get("ground_items", [])
 	result["blocked_reason"] = item_result.get("blocked_reason", "")
 	result["effect_results"] = applied.get("effect_results", [])
-	return result
+	return _finalize_rule(context, request, result, applied)
 
 
 static func apply_event_rule_result(context: RunContext, event_type: StringName, rule_result: Dictionary) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return make_rule_result(false, &"event", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	var request := _make_rule_request(context, &"event", "event_%s" % String(event_type), {"event_type": event_type, "rule_result": rule_result})
 	var result := rule_result.duplicate(true)
 	var effects: Array = []
+	var effect_index := 1
 	if result.has("spend_black_coin"):
-		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_SPEND_CURRENCY, "event_%s" % String(event_type), context.get_current_pos(), {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": int(result.get("spend_black_coin", 0))}))
+		effects.append(_effect_for_request(request, effect_index, RunAssetEffectHandler.EFFECT_SPEND_CURRENCY, "event_%s" % String(event_type), context.get_current_pos(), {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": int(result.get("spend_black_coin", 0))}))
+		effect_index += 1
 	if result.has("black_coin_delta"):
-		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "event_%s" % String(event_type), context.get_current_pos(), {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": int(result.get("black_coin_delta", 0))}))
+		effects.append(_effect_for_request(request, effect_index, RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "event_%s" % String(event_type), context.get_current_pos(), {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": int(result.get("black_coin_delta", 0))}))
+		effect_index += 1
 	if result.has("gold_coin_delta"):
-		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "event_%s" % String(event_type), context.get_current_pos(), {"currency_id": RunAssetLedger.CURRENCY_GOLD, "amount": int(result.get("gold_coin_delta", 0))}))
+		effects.append(_effect_for_request(request, effect_index, RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "event_%s" % String(event_type), context.get_current_pos(), {"currency_id": RunAssetLedger.CURRENCY_GOLD, "amount": int(result.get("gold_coin_delta", 0))}))
+		effect_index += 1
 	var item_defs: Array = result.get("item_defs", [])
 	if not item_defs.is_empty():
 		var reward_location := StringName(result.get("reward_location", RunAssetLedger.LOCATION_INVENTORY))
 		if bool(result.get("drop_on_floor", false)):
 			reward_location = RunAssetLedger.LOCATION_ROOM_FLOOR
-		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "event_%s" % String(event_type), context.get_current_pos(), {"item_defs": item_defs, "preferred_location": reward_location, "room_pos": context.get_current_pos()}))
+		effects.append(_effect_for_request(request, effect_index, RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "event_%s" % String(event_type), context.get_current_pos(), {"item_defs": item_defs, "preferred_location": reward_location, "room_pos": context.get_current_pos()}))
+		effect_index += 1
 	var status_effects: Array = result.get("status_effects", [])
 	for effect in status_effects:
-		effects.append(make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_STATUS_EFFECT, "event_%s" % String(event_type), context.get_current_pos(), {"effect": effect}))
+		effects.append(_effect_for_request(request, effect_index, RunAssetEffectHandler.EFFECT_ADD_STATUS_EFFECT, "event_%s" % String(event_type), context.get_current_pos(), {"effect": effect}))
+		effect_index += 1
 	var applied := RunAssetEffectHandler.apply_effects(context, effects)
 	if not bool(applied.get("ok", false)):
 		var blocked := make_rule_result(false, &"event", DEFAULT_ACTOR_ID, String(applied.get("reason", "blocked")), effects, [String(result.get("message", "Event blocked."))])
@@ -143,13 +163,14 @@ static func apply_event_rule_result(context: RunContext, event_type: StringName,
 	_append_rule_log(context, log_entry)
 	result.merge(make_rule_result(bool(result.get("ok", true)), &"event", DEFAULT_ACTOR_ID, String(result.get("blocked_reason", "")), effects, [String(result.get("message", "Event resolved."))], {}, log_entry), false)
 	result["effect_results"] = applied.get("effect_results", [])
-	return result
+	return _finalize_rule(context, request, result, applied)
 
 
 static func execute_trader_sell_best(context: RunContext) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return make_rule_result(false, &"trader_sell", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
-	var effects := [make_effect_spec(RunAssetEffectHandler.EFFECT_SELL_BEST_INVENTORY_ITEM, "event_trader", context.get_current_pos(), {})]
+	var request := _make_rule_request(context, &"trader_sell", "event_trader", {"pos": context.get_current_pos()})
+	var effects := [_effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SELL_BEST_INVENTORY_ITEM, "event_trader", context.get_current_pos(), {})]
 	var applied := RunAssetEffectHandler.apply_effects(context, effects)
 	var sold := applied.get("last_result", {})
 	if not bool(sold.get("ok", false)):
@@ -163,13 +184,14 @@ static func execute_trader_sell_best(context: RunContext) -> Dictionary:
 	result["safe_gold"] = gold_coin
 	result["sold_item"] = sold.get("sold_item", {})
 	result["message"] = "Trader sale complete: gold_coin +%d." % gold_coin
-	return result
+	return _finalize_rule(context, request, result, applied)
 
 
 static func execute_dice_bet(context: RunContext, pos: Vector2i, bet: int) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return make_rule_result(false, &"dice_bet", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
-	var spend_effect := make_effect_spec(RunAssetEffectHandler.EFFECT_SPEND_CURRENCY, "dice_bet", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": bet})
+	var request := _make_rule_request(context, &"dice_bet", "dice_bet", {"pos": pos, "bet": bet})
+	var spend_effect := _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SPEND_CURRENCY, "dice_bet", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": bet})
 	var spend_applied := RunAssetEffectHandler.apply_effects(context, [spend_effect])
 	if not bool(spend_applied.get("ok", false)):
 		var reason := String(spend_applied.get("reason", "blocked_currency"))
@@ -182,7 +204,7 @@ static func execute_dice_bet(context: RunContext, pos: Vector2i, bet: int) -> Di
 		gain = bet + 20
 	elif roll == 6:
 		gain = bet + 60
-	var gain_effect := make_effect_spec(RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "dice_reward", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": gain})
+	var gain_effect := _effect_for_request(request, 2, RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "dice_reward", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": gain})
 	var gain_applied := RunAssetEffectHandler.apply_effects(context, [gain_effect])
 	var delta := gain - bet
 	var result := make_rule_result(true, &"dice_bet", DEFAULT_ACTOR_ID, "", [spend_effect, gain_effect], ["Dice bet resolved."])
@@ -193,7 +215,11 @@ static func execute_dice_bet(context: RunContext, pos: Vector2i, bet: int) -> Di
 	result["black_coin_delta"] = delta
 	result["message"] = "Dice roll %d: black_coin delta %d." % [roll, delta]
 	result["effect_results"] = spend_applied.get("effect_results", []) + gain_applied.get("effect_results", [])
-	return result
+	var combined_applied := {
+		"produced_transactions": spend_applied.get("produced_transactions", []) + gain_applied.get("produced_transactions", []),
+		"transactions": spend_applied.get("transactions", []) + gain_applied.get("transactions", []),
+	}
+	return _finalize_rule(context, request, result, combined_applied)
 
 
 static func pickup_ground_item(context: RunContext, instance_id: String = "") -> Dictionary:
@@ -205,12 +231,13 @@ static func pickup_ground_item(context: RunContext, instance_id: String = "") ->
 		if floor_items.is_empty():
 			return make_rule_result(false, &"pickup_ground_item", DEFAULT_ACTOR_ID, "no_room_floor_items", [], ["No room floor items."])
 		target_id = String(floor_items[0].get("instance_id", ""))
-	var effect := make_effect_spec(RunAssetEffectHandler.EFFECT_PICKUP_GROUND_ITEM, "pickup", context.get_current_pos(), {"instance_id": target_id, "room_pos": context.get_current_pos()})
+	var request := _make_rule_request(context, &"pickup_ground_item", "pickup", {"instance_id": target_id, "room_pos": context.get_current_pos()})
+	var effect := _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_PICKUP_GROUND_ITEM, "pickup", context.get_current_pos(), {"instance_id": target_id, "room_pos": context.get_current_pos()})
 	var applied := RunAssetEffectHandler.apply_effects(context, [effect])
 	var result: Dictionary = applied.get("last_result", {})
 	result.merge(make_rule_result(bool(result.get("ok", false)), &"pickup_ground_item", DEFAULT_ACTOR_ID, String(result.get("reason", "")), [effect], [String(result.get("message", "Pickup resolved."))]), false)
 	result["effect_results"] = applied.get("effect_results", [])
-	return result
+	return _finalize_rule(context, request, result, applied)
 
 
 static func drop_inventory_item(context: RunContext, instance_id: String = "") -> Dictionary:
@@ -222,32 +249,35 @@ static func drop_inventory_item(context: RunContext, instance_id: String = "") -
 		if inventory_items.is_empty():
 			return make_rule_result(false, &"drop_inventory_item", DEFAULT_ACTOR_ID, "no_inventory_items", [], ["No inventory items."])
 		target_id = String(inventory_items[0].get("instance_id", ""))
-	var effect := make_effect_spec(RunAssetEffectHandler.EFFECT_DROP_INVENTORY_ITEM, "drop", context.get_current_pos(), {"instance_id": target_id, "room_pos": context.get_current_pos()})
+	var request := _make_rule_request(context, &"drop_inventory_item", "drop", {"instance_id": target_id, "room_pos": context.get_current_pos()})
+	var effect := _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_DROP_INVENTORY_ITEM, "drop", context.get_current_pos(), {"instance_id": target_id, "room_pos": context.get_current_pos()})
 	var applied := RunAssetEffectHandler.apply_effects(context, [effect])
 	var result: Dictionary = applied.get("last_result", {})
 	result.merge(make_rule_result(bool(result.get("ok", false)), &"drop_inventory_item", DEFAULT_ACTOR_ID, String(result.get("reason", "")), [effect], [String(result.get("message", "Drop resolved."))]), false)
 	result["effect_results"] = applied.get("effect_results", [])
-	return result
+	return _finalize_rule(context, request, result, applied)
 
 
 static func settle_success(context: RunContext) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return {}
-	var effect := make_effect_spec(RunAssetEffectHandler.EFFECT_SETTLE_SUCCESS, "settlement", context.get_current_pos(), {})
+	var request := _make_rule_request(context, &"settle_success", "settlement", {"outcome": &"success"})
+	var effect := _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SETTLE_SUCCESS, "settlement", context.get_current_pos(), {})
 	var applied := RunAssetEffectHandler.apply_effects(context, [effect])
 	var result: Dictionary = applied.get("last_result", {})
 	result.merge(make_rule_result(true, &"settle_success", DEFAULT_ACTOR_ID, "", [effect], ["Success settlement resolved."]), false)
-	return result
+	return _finalize_rule(context, request, result, applied)
 
 
 static func settle_failure(context: RunContext) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return {}
-	var effect := make_effect_spec(RunAssetEffectHandler.EFFECT_SETTLE_FAILURE, "settlement", context.get_current_pos(), {})
+	var request := _make_rule_request(context, &"settle_failure", "settlement", {"outcome": &"failure"})
+	var effect := _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SETTLE_FAILURE, "settlement", context.get_current_pos(), {})
 	var applied := RunAssetEffectHandler.apply_effects(context, [effect])
 	var result: Dictionary = applied.get("last_result", {})
 	result.merge(make_rule_result(true, &"settle_failure", DEFAULT_ACTOR_ID, "", [effect], ["Failure settlement resolved."]), false)
-	return result
+	return _finalize_rule(context, request, result, applied)
 
 
 static func _effect_result(applied: Dictionary, effect_type: StringName) -> Dictionary:
@@ -268,3 +298,46 @@ static func _combine_item_results(item_result: Dictionary) -> Array:
 	combined.append_array(item_result.get("equipped_items", []))
 	combined.append_array(item_result.get("ground_items", []))
 	return combined
+
+
+static func _make_rule_request(context: RunContext, rule_id: StringName, source: String, payload: Dictionary = {}) -> Dictionary:
+	var command := {} if context == null else context.active_command
+	var actor_id := StringName(command.get("actor_id", DEFAULT_ACTOR_ID))
+	var command_id := String(command.get("command_id", ""))
+	if context != null and context.rule_pipeline != null:
+		return context.rule_pipeline.make_rule_request(rule_id, actor_id, source, payload, command_id)
+	return {
+		"rule_request_id": "rule_%s_%s" % [String(rule_id), command_id],
+		"rule_id": rule_id,
+		"actor_id": actor_id,
+		"source": source,
+		"payload": payload.duplicate(true),
+		"command_id": command_id,
+		"sequence": 0,
+	}
+
+
+static func _effect_for_request(request: Dictionary, index: int, effect_type: StringName, source: String, target: Variant, payload: Dictionary) -> Dictionary:
+	var rule_request_id := String(request.get("rule_request_id", ""))
+	return make_effect_spec(
+		effect_type,
+		source,
+		target,
+		payload,
+		StringName(request.get("actor_id", DEFAULT_ACTOR_ID)),
+		String(request.get("command_id", "")),
+		rule_request_id,
+		"%s_fx_%02d" % [rule_request_id, index]
+	)
+
+
+static func _finalize_rule(context: RunContext, request: Dictionary, result: Dictionary, applied: Dictionary = {}) -> Dictionary:
+	var final_result := result.duplicate(true)
+	var transactions: Array = applied.get("produced_transactions", applied.get("transactions", []))
+	final_result["rule_request_id"] = String(request.get("rule_request_id", ""))
+	final_result["produced_transactions"] = transactions.duplicate(true)
+	final_result["produced_events"] = []
+	if context != null and context.rule_pipeline != null:
+		var rule_context := context.rule_pipeline.make_rule_context(context, request)
+		final_result = context.rule_pipeline.apply_modifiers(rule_context, final_result)
+	return final_result

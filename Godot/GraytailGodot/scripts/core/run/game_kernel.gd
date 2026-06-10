@@ -17,8 +17,8 @@ func reset_run() -> void:
 	current_run_context = RunContextScript.new()
 
 
-func dispatch_command(command_name: StringName, payload: Dictionary = {}) -> void:
+func dispatch_command(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 	if command_bus == null:
 		command_bus = CommandBusScript.new()
 
-	command_bus.dispatch(command_name, payload)
+	return command_bus.dispatch(command_name, payload)

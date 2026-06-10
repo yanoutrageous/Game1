@@ -96,14 +96,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_fight_and_show_result()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("flag_cell"):
-		command_bus.flag_current_cell()
+		command_bus.dispatch(&"flag_current_cell")
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("open_map"):
 		command_bus.dispatch(&"open_map")
 		_toggle_map_overlay()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("debug_restart_run"):
-		command_bus.restart_run()
+		command_bus.dispatch(&"restart_run")
 		if player_controller != null:
 			player_controller.reset_local_position()
 		get_viewport().set_input_as_handled()
@@ -246,7 +246,7 @@ func _build_run_overlay() -> void:
 	run_overlay_root.add_child(action_bar)
 	_add_label(run_overlay_root, "ControlsLabel", Rect2(410, 610, 540, 32), "WASD/方向键：房间内移动；走到门口才切换房间。", 14)
 	_add_menu_button(action_bar, "E 搜索/交互", func() -> void: _handle_interact_pressed())
-	_add_menu_button(action_bar, "F 标记", func() -> void: command_bus.flag_current_cell())
+	_add_menu_button(action_bar, "F 标记", func() -> void: command_bus.dispatch(&"flag_current_cell"))
 	_add_menu_button(action_bar, "Space/J 战斗", func() -> void: _fight_and_show_result())
 	_add_menu_button(action_bar, "M 地图", func() -> void: _open_map_from_debug())
 	_add_menu_button(action_bar, "R 重开", func() -> void: _restart_run_from_ui())
@@ -266,11 +266,11 @@ func _build_run_overlay() -> void:
 	debug_panel.add_child(debug_title)
 	_add_debug_button(debug_panel, "Tutorial", func() -> void: _start_tutorial_from_ui())
 	_add_debug_button(debug_panel, "Standard", func() -> void: _start_standard_from_ui())
-	_add_debug_button(debug_panel, "GridUp", func() -> void: command_bus.move_by(Vector2i(0, -1)))
-	_add_debug_button(debug_panel, "GridDown", func() -> void: command_bus.move_by(Vector2i(0, 1)))
-	_add_debug_button(debug_panel, "GridLeft", func() -> void: command_bus.move_by(Vector2i(-1, 0)))
-	_add_debug_button(debug_panel, "GridRight", func() -> void: command_bus.move_by(Vector2i(1, 0)))
-	_add_debug_button(debug_panel, "Flag", func() -> void: command_bus.flag_current_cell())
+	_add_debug_button(debug_panel, "GridUp", func() -> void: command_bus.dispatch(&"move_by", {"delta": Vector2i(0, -1), "source": "debug"}))
+	_add_debug_button(debug_panel, "GridDown", func() -> void: command_bus.dispatch(&"move_by", {"delta": Vector2i(0, 1), "source": "debug"}))
+	_add_debug_button(debug_panel, "GridLeft", func() -> void: command_bus.dispatch(&"move_by", {"delta": Vector2i(-1, 0), "source": "debug"}))
+	_add_debug_button(debug_panel, "GridRight", func() -> void: command_bus.dispatch(&"move_by", {"delta": Vector2i(1, 0), "source": "debug"}))
+	_add_debug_button(debug_panel, "Flag", func() -> void: command_bus.dispatch(&"flag_current_cell", {"source": "debug"}))
 	_add_debug_button(debug_panel, "Search", func() -> void: _search_and_show_loot())
 	_add_debug_button(debug_panel, "PickupFloor", func() -> void: _pickup_floor_from_ui())
 	_add_debug_button(debug_panel, "DropItem", func() -> void: _drop_inventory_from_ui())
@@ -278,8 +278,8 @@ func _build_run_overlay() -> void:
 	_add_debug_button(debug_panel, "Fight", func() -> void: _fight_and_show_result())
 	_add_debug_button(debug_panel, "Map", func() -> void: _open_map_from_debug())
 	_add_debug_button(debug_panel, "ReqExtract", func() -> void: _request_extract_from_ui())
-	_add_debug_button(debug_panel, "ConfirmExt", func() -> void: command_bus.confirm_extract())
-	_add_debug_button(debug_panel, "CancelExt", func() -> void: command_bus.cancel_extract())
+	_add_debug_button(debug_panel, "ConfirmExt", func() -> void: command_bus.dispatch(&"confirm_extract", {"source": "debug"}))
+	_add_debug_button(debug_panel, "CancelExt", func() -> void: command_bus.dispatch(&"cancel_extract", {"source": "debug"}))
 
 	debug_log = Label.new()
 	debug_log.name = "DebugLastMessage"
@@ -521,13 +521,13 @@ func _handle_interact_pressed() -> void:
 	if bool(search_data.get("can_search", false)):
 		_search_and_show_loot()
 		return
-	command_bus.interact_current_room()
+	command_bus.dispatch(&"interact_current_room")
 
 
 func _search_and_show_loot() -> void:
 	if command_bus == null:
 		return
-	command_bus.search_current_room()
+	command_bus.dispatch(&"search_current_room")
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
@@ -537,7 +537,7 @@ func _search_and_show_loot() -> void:
 func _fight_and_show_result() -> void:
 	if command_bus == null:
 		return
-	command_bus.fight_current_enemy()
+	command_bus.dispatch(&"fight_current_enemy")
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
@@ -547,14 +547,14 @@ func _fight_and_show_result() -> void:
 func _pickup_floor_from_ui() -> void:
 	if command_bus == null:
 		return
-	var result := command_bus.pickup_ground_item()
+	var result := command_bus.dispatch(&"pickup_ground_item")
 	_show_loot_panel("Floor Command", result)
 
 
 func _drop_inventory_from_ui() -> void:
 	if command_bus == null:
 		return
-	var result := command_bus.drop_inventory_item()
+	var result := command_bus.dispatch(&"drop_inventory_item")
 	_show_loot_panel("Floor Command", result)
 
 
@@ -576,7 +576,7 @@ func _show_event_panel(event_state: Dictionary) -> void:
 
 func _select_event_option(option_id: StringName) -> void:
 	event_panel.visible = false
-	command_bus.select_event_option(option_id)
+	command_bus.dispatch(&"select_event_option", {"option_id": option_id})
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
@@ -584,7 +584,7 @@ func _select_event_option(option_id: StringName) -> void:
 
 
 func _request_extract_from_ui() -> void:
-	command_bus.request_extract()
+	command_bus.dispatch(&"request_extract")
 	_show_extract_panel(run_context.get_status_snapshot())
 
 
@@ -609,12 +609,12 @@ func _show_extract_panel(snapshot: Dictionary) -> void:
 
 func _confirm_extract_from_ui() -> void:
 	extract_panel.visible = false
-	command_bus.confirm_extract()
+	command_bus.dispatch(&"confirm_extract")
 
 
 func _cancel_extract_from_ui() -> void:
 	extract_panel.visible = false
-	command_bus.cancel_extract()
+	command_bus.dispatch(&"cancel_extract")
 
 
 func _show_loot_panel(title: String, reward: Dictionary) -> void:
@@ -664,7 +664,7 @@ func _format_reward(reward: Dictionary) -> String:
 
 
 func _restart_run_from_ui() -> void:
-	command_bus.restart_run()
+	command_bus.dispatch(&"restart_run")
 	if player_controller != null:
 		player_controller.reset_local_position()
 
@@ -781,18 +781,18 @@ func _open_map_from_debug() -> void:
 
 func _on_tutorial_popup_confirmed() -> void:
 	if command_bus != null:
-		command_bus.confirm_tutorial_popup()
+		command_bus.dispatch(&"confirm_tutorial_popup")
 
 
 func _start_tutorial_from_ui() -> void:
-	command_bus.start_tutorial_run()
+	command_bus.dispatch(&"start_tutorial_run")
 	if player_controller != null:
 		player_controller.reset_local_position()
 	_show_run_screen()
 
 
 func _start_standard_from_ui() -> void:
-	command_bus.start_standard_run()
+	command_bus.dispatch(&"start_standard_run")
 	if player_controller != null:
 		player_controller.reset_local_position()
 	_show_run_screen()
@@ -800,7 +800,7 @@ func _start_standard_from_ui() -> void:
 
 func _attempt_room_transition(direction: Vector2i) -> void:
 	var before := run_context.get_current_pos()
-	var result := command_bus.attempt_room_transition(direction)
+	var result := command_bus.dispatch(&"attempt_room_transition", {"direction": direction})
 	var moved := bool(result.get("ok", false)) and run_context.get_current_pos() != before
 	if moved:
 		player_controller.place_from_entry(direction)
@@ -814,10 +814,10 @@ func _on_map_overlay_cell_action_requested(marker: Dictionary) -> void:
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var state := StringName(marker.get("state", &"hidden"))
 	if state == &"hidden" or state == &"flagged":
-		command_bus.toggle_flag_cell(pos)
+		command_bus.dispatch(&"toggle_flag_cell", {"pos": pos})
 		return
 	if bool(marker.get("explored", false)) and not bool(marker.get("mine", false)):
-		var result := command_bus.teleport_to_explored(pos)
+		var result := command_bus.dispatch(&"teleport_to_explored", {"pos": pos})
 		if bool(result.get("ok", false)):
 			if player_controller != null:
 				player_controller.reset_local_position()

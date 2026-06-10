@@ -31,6 +31,11 @@ var pressure: int = 0
 var protocol_level: int = 5
 var asset_ledger: RunAssetLedger
 var query_facade: RunQueryFacade
+var run_event_log: RunEventLog
+var transaction_log: RunTransactionLog
+var rule_pipeline: RunRulePipeline
+var content_defs: ContentDefRegistry
+var active_command: Dictionary = {}
 var pending_gold: int = 0
 var safe_gold: int = 0
 var parts: int = 0
@@ -88,6 +93,11 @@ func reset() -> void:
 	protocol_level = 5
 	asset_ledger = null
 	query_facade = null
+	run_event_log = null
+	transaction_log = null
+	rule_pipeline = null
+	content_defs = null
+	active_command.clear()
 	pending_gold = 0
 	safe_gold = 0
 	parts = 0
@@ -119,11 +129,18 @@ func reset() -> void:
 
 
 func start_run(config: Dictionary) -> void:
+	var command_before_reset := active_command.duplicate(true)
 	reset()
+	active_command = command_before_reset
 	run_id = StringName(config.get("id", &"run"))
 	mode = StringName(config.get("mode", &"standard"))
 	seed_value = int(config.get("seed", 1001))
 	phase = &"running"
+	run_event_log = RunEventLog.new()
+	transaction_log = RunTransactionLog.new()
+	rule_pipeline = RunRulePipeline.new()
+	content_defs = ContentDefRegistry.new()
+	content_defs.setup_defaults()
 	asset_ledger = RunAssetLedger.new()
 	asset_ledger.setup(config)
 	query_facade = RunQueryFacade.new()
@@ -158,6 +175,7 @@ func start_run(config: Dictionary) -> void:
 	current_adjacent_mines = minefield_service.count_adjacent_mines(truth_map, player_pos)
 	if asset_ledger != null:
 		asset_ledger.sync_compat_fields(self)
+	record_event(RunEventLog.EVENT_RUN_STARTED, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"system")), "run_context", {"mode": mode, "position": player_pos})
 
 
 func start_tutorial_run() -> void:
@@ -206,6 +224,7 @@ func has_blocking_tutorial_popup() -> bool:
 
 
 func fail_run(reason: String) -> void:
+	record_event(RunEventLog.EVENT_RUN_FAILED, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"system")), "run_context", {"reason": reason, "position": player_pos})
 	var settlement := RunRuleService.settle_failure(self)
 	failure_salvage = settlement.duplicate(true)
 	failed = true
@@ -217,6 +236,7 @@ func fail_run(reason: String) -> void:
 
 
 func complete_extract() -> void:
+	record_event(RunEventLog.EVENT_EXTRACTION_SUCCESS, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"player")), "command_bus", {"position": player_pos, "exit_id": exit_id})
 	var settlement := RunRuleService.settle_success(self)
 	var extracted_pending := int(settlement.get("black_coin_converted", 0))
 	extracted = true
@@ -242,6 +262,12 @@ func get_search_state_label() -> String:
 
 func get_search_state_data() -> Dictionary:
 	return _query().get_search_state_data(self)
+
+
+func record_event(event_type: StringName, command_id: String = "", actor_id: StringName = &"player", source: String = "", payload: Dictionary = {}) -> Dictionary:
+	if run_event_log == null:
+		run_event_log = RunEventLog.new()
+	return run_event_log.record_event(event_type, command_id, actor_id, source, payload)
 
 
 func cell_key(pos: Vector2i) -> String:

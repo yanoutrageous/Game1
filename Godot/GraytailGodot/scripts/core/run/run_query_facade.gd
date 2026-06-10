@@ -7,6 +7,8 @@ class_name RunQueryFacade
 
 func build_result_snapshot(context: RunContext) -> Dictionary:
 	var ledger_snapshot := get_asset_snapshot(context)
+	var event_log_snapshot := get_event_log_snapshot(context)
+	var transaction_log_snapshot := get_transaction_log_snapshot(context)
 	return {
 		"outcome": context.outcome,
 		"mode": context.mode,
@@ -33,6 +35,10 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 		"room_floor_item_count": ledger_snapshot.get("room_floor_item_count", 0),
 		"warehouse_lite": ledger_snapshot.get("warehouse_lite", []),
 		"settlement_log": ledger_snapshot.get("settlement_log", []),
+		"event_log": event_log_snapshot,
+		"event_count": event_log_snapshot.size(),
+		"transaction_log": transaction_log_snapshot,
+		"transaction_count": transaction_log_snapshot.size(),
 		"status_effects": ledger_snapshot.get("status_effects", []),
 		"failure_salvage": context.failure_salvage.duplicate(true),
 		"stats": context.run_stats.duplicate(true),
@@ -46,6 +52,9 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 
 func build_status_snapshot(context: RunContext) -> Dictionary:
 	var ledger_snapshot := get_asset_snapshot(context)
+	var event_log_snapshot := get_event_log_snapshot(context)
+	var transaction_log_snapshot := get_transaction_log_snapshot(context)
+	var content_def_snapshot := get_content_def_snapshot(context)
 	return {
 		"run_id": context.run_id,
 		"mode": context.mode,
@@ -73,6 +82,12 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"room_floor_item_count": ledger_snapshot.get("room_floor_item_count", 0),
 		"warehouse_lite": ledger_snapshot.get("warehouse_lite", []),
 		"settlement_log": ledger_snapshot.get("settlement_log", []),
+		"event_log": event_log_snapshot,
+		"event_count": event_log_snapshot.size(),
+		"transaction_log": transaction_log_snapshot,
+		"transaction_count": transaction_log_snapshot.size(),
+		"content_definitions": content_def_snapshot,
+		"content_definition_count": content_def_snapshot.size(),
 		"status_effects": ledger_snapshot.get("status_effects", []),
 		"position": context.player_pos,
 		"current_room": context.current_room_type,
@@ -102,6 +117,24 @@ func get_asset_snapshot(context: RunContext) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return {}
 	return context.asset_ledger.get_public_snapshot(context.player_pos)
+
+
+func get_event_log_snapshot(context: RunContext) -> Array[Dictionary]:
+	if context == null or context.run_event_log == null:
+		return []
+	return context.run_event_log.snapshot()
+
+
+func get_transaction_log_snapshot(context: RunContext) -> Array[Dictionary]:
+	if context == null or context.transaction_log == null:
+		return []
+	return context.transaction_log.snapshot()
+
+
+func get_content_def_snapshot(context: RunContext) -> Dictionary:
+	if context == null or context.content_defs == null:
+		return {}
+	return context.content_defs.snapshot()
 
 
 func get_inventory_summary(context: RunContext) -> Dictionary:

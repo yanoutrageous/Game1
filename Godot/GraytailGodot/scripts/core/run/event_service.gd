@@ -77,6 +77,18 @@ static func execute_option(context: RunContext, pos: Vector2i, option_id: String
 		context.last_message = "Event left unresolved."
 		context.event_state = get_event_state(context, pos)
 		return {"ok": true, "completed": false, "message": context.last_message}
+	var option_available := false
+	var option_enabled := false
+	for option in get_event_options(context, pos, event_type, false):
+		if StringName(option.get("id", &"")) == option_id:
+			option_available = true
+			option_enabled = bool(option.get("enabled", true))
+			break
+	if not option_available or not option_enabled:
+		context.blocked_reason = "event_option_unavailable"
+		context.event_state = get_event_state(context, pos)
+		context.last_message = "Event option unavailable."
+		return {"ok": false, "completed": false, "blocked_reason": "event_option_unavailable", "reason": "event_option_unavailable", "message": context.last_message}
 
 	var result := {}
 	match event_type:
