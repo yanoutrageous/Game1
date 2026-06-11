@@ -38,6 +38,7 @@ Content/art line:
 
 G10 suggestions:
 
+- Treat the G9 baseline as an engineering closeout, bug-fix, and optimization input boundary.
 - Dedicated UI layout polish and accessibility pass.
 - Formal ViewModel extraction for shell pages.
 - Optional persisted settings after storage boundary is approved.

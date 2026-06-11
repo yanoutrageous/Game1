@@ -38,6 +38,7 @@ This stage turns the G9 presentation contract into a playable UI baseline. The r
 - Full character/outfit system.
 - Action combat.
 - Large art migration.
+- Future G10 work should treat this as an engineering closeout, bug-fix, and optimization input boundary, not as permission to expand G9 scope.
 
 ## Runtime Smoke
 

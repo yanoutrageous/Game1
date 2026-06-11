@@ -40,3 +40,4 @@ G9 UI Final Integration creates a formal player flow for the current Godot proto
 - No action combat.
 - No full MetaProgress.
 - No Deploy persistence.
+- Follow-up work should use this branch as an engineering closeout, bug-fix, and optimization boundary, not as a new feature expansion mandate.
