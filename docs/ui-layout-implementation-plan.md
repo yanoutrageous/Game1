@@ -6,6 +6,16 @@
 
 ---
 
+## G9 Presentation Layering Correction
+
+This legacy UI layout plan is superseded by the G9 presentation layering contract for background and theme handling. The main background should remain a stable base-space composition. Map theme, character outfit, scene props, atmosphere VFX, foreground FX, panel skin, and popup presentation should be independent overlay layers.
+
+Future UI work should resolve visuals through ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, OutfitPresentationDef, PanelState, UIVisibilityPolicy, NavigationEntry, ShortcutEntry, ExpeditionSummaryViewModel, and LongTermSummaryViewModel contracts. Core gameplay should provide semantic ids and snapshots only; it should not build image paths or import art resources.
+
+See `docs/design/G9_UI_PRESENTATION_LAYERING_ARCHITECTURE.md`.
+
+---
+
 ## 1. 当前工程基线
 
 现有工程已经具备 UI 重布局所需的数据来源：

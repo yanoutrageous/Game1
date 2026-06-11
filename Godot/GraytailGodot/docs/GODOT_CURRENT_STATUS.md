@@ -2,11 +2,15 @@
 
 ## Updated
 
-`2026-06-10`
+`2026-06-11`
 
 ## Branch
 
-Current G8.2 hardening branch: `godot/g8-2-kernel-protocol-hardening`.
+Current G9 UI presentation layering revision branch: `godot/g9-ui-presentation-layering-revision`.
+
+Current main baseline for G9: `c5fa0622f98be5b8cb61eedefdfa9990027c00e7`.
+
+G8.2 hardening branch: `godot/g8-2-kernel-protocol-hardening`.
 
 G8.1 hardening branch: `godot/g8-1-architecture-hardening`.
 
@@ -57,6 +61,10 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G8.2 reserves `RunRulePipeline` and `RunModifierSpec` for deterministic rule modification.
 - G8.2 reserves `ContentDefRegistry` for CurrencyDef, ItemDef, EncounterDef, EffectDef, ModifierDef, and LootTableDef.
 - G8.2 exposes event log, transaction log, and ContentDef snapshots through `RunQueryFacade`.
+- G9 UI presentation layering revision reserves a fixed base background plus independent Presentation Overlay layers.
+- G9 keeps map theme, character outfit, scene props, foreground effects, and panel skins outside the baked base background.
+- `PresentationLayerContracts` provides contract-only schemas and placeholder examples for ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, OutfitPresentationDef, PanelState, UIVisibilityPolicy, NavigationEntry, ShortcutEntry, ExpeditionSummaryViewModel, and LongTermSummaryViewModel.
+- G9 does not connect the contracts to scenes, load resources, import real art, or implement full UI navigation.
 
 ## UI Boundary
 
@@ -68,8 +76,12 @@ Future UI work should consume:
 - CommandBus commands
 - `CommandResult.reason_code` / `message_key`
 - Event and transaction snapshots when audit/debug panels need them
+- G9 presentation contract fields for visual layer resolution
+- semantic ids such as `theme_id`, `character_id`, `outfit_id`, `risk_level`, and `tracked_objective_id`
 
-The recommended follow-up branch `godot/player-ui-g8` should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state.
+The recommended follow-up UI shell branch should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state.
+
+Presentation work should map semantic ids into ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, panel skins, and fallback asset ids. Core gameplay should not directly build image paths.
 
 Rules work should extend `RunRulePipeline`, `RunModifierSpec`, and `RunAssetEffectHandler`. Content work should register declarative ContentDef entries. Later persistence work should attach through `SaveAdapter` and `MetaProgressAdapter`.
 
@@ -87,6 +99,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_asset_rules_g8.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_architecture_hardening_g8_1.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_kernel_protocol_g8_2.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_ui_presentation_layering_g9.ps1
 ```
 
 Do not run Godot/editor/game/import unless separately authorized.
@@ -101,3 +114,7 @@ Do not run Godot/editor/game/import unless separately authorized.
 - No action combat.
 - No final event economy tuning.
 - No persistence-backed deploy economy.
+- No full G9 UI shell.
+- No real art import.
+- No complete character or outfit system.
+- No complete Inventory, GroundLoot, or Settlement UI.
