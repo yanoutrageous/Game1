@@ -22,12 +22,12 @@ static func make(modifier_id: String, source: String, priority: int, phase: Stri
 
 
 static func compare_stable(a: Dictionary, b: Dictionary) -> bool:
-	var phase_a := String(a.get("phase", &""))
-	var phase_b := String(b.get("phase", &""))
+	var phase_a: String = String(a.get("phase", &""))
+	var phase_b: String = String(b.get("phase", &""))
 	if phase_a != phase_b:
 		return phase_a < phase_b
-	var priority_a := int(a.get("priority", 0))
-	var priority_b := int(b.get("priority", 0))
+	var priority_a: int = int(a.get("priority", 0))
+	var priority_b: int = int(b.get("priority", 0))
 	if priority_a != priority_b:
 		return priority_a < priority_b
 	return int(a.get("sequence", 0)) < int(b.get("sequence", 0))

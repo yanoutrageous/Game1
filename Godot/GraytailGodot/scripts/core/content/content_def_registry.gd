@@ -28,7 +28,7 @@ func setup_defaults() -> void:
 
 
 func register_content_def(content_id: String, kind: StringName, display_name_key: String, tags: Array, definition: Dictionary, schema_version: int = 1, deprecated_state: StringName = &"active") -> Dictionary:
-	var content_def := {
+	var content_def: Dictionary = {
 		"content_id": content_id,
 		"schema_version": schema_version,
 		"kind": kind,

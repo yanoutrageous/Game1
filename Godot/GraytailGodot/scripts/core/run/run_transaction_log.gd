@@ -13,9 +13,9 @@ func reset() -> void:
 
 
 func record_transaction(command_id: String, effect_id: String, actor_id: StringName, source: String, action: StringName, before: Dictionary = {}, after: Dictionary = {}, currency_delta: Dictionary = {}, item_moves: Array = [], reason: String = "") -> Dictionary:
-	var sequence := next_sequence
+	var sequence: int = next_sequence
 	next_sequence += 1
-	var entry := {
+	var entry: Dictionary = {
 		"transaction_id": "txn_%04d_%s" % [sequence, String(action)],
 		"command_id": command_id,
 		"effect_id": effect_id,

@@ -13,17 +13,17 @@ const REJECTION_CANNOT_EXTRACT := "cannot_extract"
 const REJECTION_NO_EXTRACT_REQUEST := "no_extract_request"
 
 var context: RunContext
-var room_resolver := RoomResolver.new()
+var room_resolver: RoomResolver = RoomResolver.new()
 var command_sequence: int = 0
 
 
 func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
-	var command := _normalize_command(command_name, payload)
+	var command: Dictionary = _normalize_command(command_name, payload)
 	var command_payload: Dictionary = command.get("payload", {})
 	if context == null and command_name in [&"start_demo_run", &"start_tutorial_run", &"start_standard_run"]:
 		context = RunContext.new()
-	var event_start := _event_count()
-	var transaction_start := _transaction_count()
+	var event_start: int = _event_count()
+	var transaction_start: int = _transaction_count()
 	if context != null:
 		context.active_command = command.duplicate(true)
 	command_requested.emit(command_name, command)
@@ -77,8 +77,8 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = _blocked(&"unknown_command", "unknown_command")
 	if context != null:
 		context.active_command.clear()
-	var produced_events := _events_since(event_start)
-	var produced_transactions := _transactions_since(transaction_start)
+	var produced_events: Array[Dictionary] = _events_since(event_start)
+	var produced_transactions: Array[Dictionary] = _transactions_since(transaction_start)
 	return CommandResult.from_action(command, action_result, produced_events, produced_transactions, _snapshot_delta_for(action_result))
 
 
@@ -128,7 +128,7 @@ func move_by(delta: Vector2i) -> Dictionary:
 		context.last_message = "Invalid move: only four-direction movement is allowed."
 		_emit_state()
 		return _blocked(&"invalid_direction", "invalid_direction")
-	var target := context.get_current_pos() + delta
+	var target: Vector2i = context.get_current_pos() + delta
 	if not context.is_inside(target):
 		context.blocked_reason = "out_of_bounds"
 		context.last_message = "Blocked by map boundary."
@@ -173,7 +173,7 @@ func flag_current_cell() -> Dictionary:
 func search_current_room() -> Dictionary:
 	if not _can_accept_command():
 		return _blocked(&"blocked", _current_blocked_reason())
-	var result := room_resolver.search_current_room(context)
+	var result: Dictionary = room_resolver.search_current_room(context)
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
@@ -188,7 +188,7 @@ func interact_current_room() -> Dictionary:
 			return confirm_extract()
 		else:
 			return request_extract()
-	var result := room_resolver.interact_current_room(context)
+	var result: Dictionary = room_resolver.interact_current_room(context)
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
@@ -202,7 +202,7 @@ func interact() -> Dictionary:
 func fight_current_enemy() -> Dictionary:
 	if not _can_accept_command():
 		return _blocked(&"blocked", _current_blocked_reason())
-	var result := room_resolver.fight_current_enemy(context)
+	var result: Dictionary = room_resolver.fight_current_enemy(context)
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
@@ -212,7 +212,7 @@ func fight_current_enemy() -> Dictionary:
 func select_event_option(option_id: StringName = &"default") -> Dictionary:
 	if not _can_accept_command():
 		return _blocked(&"blocked", _current_blocked_reason())
-	var result := room_resolver.select_event_option(context, option_id)
+	var result: Dictionary = room_resolver.select_event_option(context, option_id)
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
@@ -222,7 +222,7 @@ func select_event_option(option_id: StringName = &"default") -> Dictionary:
 func pickup_ground_item(instance_id: String = "") -> Dictionary:
 	if not _can_accept_command():
 		return _blocked(&"blocked", "command_blocked")
-	var result := RunRuleService.pickup_ground_item(context, instance_id)
+	var result: Dictionary = RunRuleService.pickup_ground_item(context, instance_id)
 	context.last_reward = result.duplicate(true)
 	if bool(result.get("ok", false)):
 		context.blocked_reason = ""
@@ -238,7 +238,7 @@ func pickup_ground_item(instance_id: String = "") -> Dictionary:
 func drop_inventory_item(instance_id: String = "") -> Dictionary:
 	if not _can_accept_command():
 		return _blocked(&"blocked", "command_blocked")
-	var result := RunRuleService.drop_inventory_item(context, instance_id)
+	var result: Dictionary = RunRuleService.drop_inventory_item(context, instance_id)
 	context.last_reward = result.duplicate(true)
 	if bool(result.get("ok", false)):
 		context.blocked_reason = ""
@@ -261,7 +261,7 @@ func teleport_to_explored(pos: Vector2i) -> Dictionary:
 		context.last_message = "Teleport target is outside the map."
 		_emit_state()
 		return _blocked(&"out_of_bounds", "out_of_bounds")
-	var cell := context.intel_map.get_cell_info(pos)
+	var cell: Dictionary = context.intel_map.get_cell_info(pos)
 	if not bool(cell.get("explored", false)) or bool(cell.get("mine", false)) or bool(cell.get("flagged", false)):
 		context.blocked_reason = "not_explored_safe"
 		context.last_message = "Teleport requires an explored safe room."
@@ -322,7 +322,7 @@ func cancel_extract() -> Dictionary:
 
 
 func extract() -> Dictionary:
-	var request_result := request_extract()
+	var request_result: Dictionary = request_extract()
 	if context != null and context.phase == &"confirm_extract":
 		return confirm_extract()
 	return request_result
@@ -372,8 +372,8 @@ func _format_pos(pos: Vector2i) -> String:
 
 func _normalize_command(command_name: StringName, payload: Dictionary) -> Dictionary:
 	command_sequence += 1
-	var actor_id := StringName(payload.get("actor_id", DEFAULT_ACTOR_ID))
-	var source := String(payload.get("source", "ui"))
+	var actor_id: StringName = StringName(payload.get("actor_id", DEFAULT_ACTOR_ID))
+	var source: String = String(payload.get("source", "ui"))
 	return {
 		"command_id": "cmd_%04d_%s" % [command_sequence, String(command_name)],
 		"command_name": command_name,

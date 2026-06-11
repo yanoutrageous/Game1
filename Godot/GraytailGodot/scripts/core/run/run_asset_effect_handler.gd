@@ -20,12 +20,12 @@ static func apply_effects(context: RunContext, effects: Array) -> Dictionary:
 		return {"ok": false, "status": &"no_ledger", "reason": "no_active_asset_ledger", "effect_results": []}
 	var effect_results: Array[Dictionary] = []
 	var produced_transactions: Array[Dictionary] = []
-	var first_blocked_reason := ""
+	var first_blocked_reason: String = ""
 	for raw_effect in effects:
 		var effect: Dictionary = raw_effect
-		var result := apply_effect(context, effect)
+		var result: Dictionary = apply_effect(context, effect)
 		effect_results.append(result)
-		produced_transactions.append_array(result.get("transactions", []))
+		produced_transactions.append_array(_array_from_variant(result.get("transactions", [])))
 		if not bool(result.get("ok", true)):
 			first_blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
 			break
@@ -43,10 +43,10 @@ static func apply_effects(context: RunContext, effects: Array) -> Dictionary:
 
 
 static func apply_effect(context: RunContext, effect: Dictionary) -> Dictionary:
-	var effect_type := StringName(effect.get("type", &""))
-	var payload: Dictionary = effect.get("payload", {})
-	var source := String(effect.get("source", payload.get("source", "")))
-	var before := _asset_summary(context)
+	var effect_type: StringName = StringName(effect.get("type", &""))
+	var payload: Dictionary = _dictionary_from_variant(effect.get("payload", {}))
+	var source: String = String(effect.get("source", payload.get("source", "")))
+	var before: Dictionary = _asset_summary(context)
 	var result: Dictionary = {}
 	match effect_type:
 		EFFECT_ADD_CURRENCY:
@@ -54,7 +54,7 @@ static func apply_effect(context: RunContext, effect: Dictionary) -> Dictionary:
 		EFFECT_SPEND_CURRENCY:
 			result = _with_effect_type(context.asset_ledger.spend_currency(StringName(payload.get("currency_id", &"")), int(payload.get("amount", 0)), source), effect_type)
 		EFFECT_ADD_REWARD_ITEMS:
-			var item_result := context.asset_ledger.add_reward_items(payload.get("item_defs", []), StringName(payload.get("preferred_location", RunAssetLedger.LOCATION_INVENTORY)), payload.get("room_pos", context.get_current_pos()), source)
+			var item_result: Dictionary = context.asset_ledger.add_reward_items(_array_from_variant(payload.get("item_defs", [])), StringName(payload.get("preferred_location", RunAssetLedger.LOCATION_INVENTORY)), payload.get("room_pos", context.get_current_pos()), source)
 			item_result["ok"] = true
 			item_result["effect_type"] = effect_type
 			result = item_result
@@ -73,8 +73,8 @@ static func apply_effect(context: RunContext, effect: Dictionary) -> Dictionary:
 			result = _with_effect_type(context.asset_ledger.settle_failure(), effect_type, true)
 		_:
 			result = {"ok": false, "status": &"unknown_effect", "reason": "unknown_asset_effect", "effect_type": effect_type}
-	var after := _asset_summary(context)
-	var transaction := _record_transaction_for_effect(context, effect, effect_type, result, before, after)
+	var after: Dictionary = _asset_summary(context)
+	var transaction: Dictionary = _record_transaction_for_effect(context, effect, effect_type, result, before, after)
 	if not transaction.is_empty():
 		result["transaction"] = transaction
 		result["transactions"] = [transaction]
@@ -83,7 +83,7 @@ static func apply_effect(context: RunContext, effect: Dictionary) -> Dictionary:
 
 
 static func _with_effect_type(result: Dictionary, effect_type: StringName, default_ok: Variant = null) -> Dictionary:
-	var next_result := result.duplicate(true)
+	var next_result: Dictionary = result.duplicate(true)
 	if default_ok != null and not next_result.has("ok"):
 		next_result["ok"] = bool(default_ok)
 	next_result["effect_type"] = effect_type
@@ -93,33 +93,33 @@ static func _with_effect_type(result: Dictionary, effect_type: StringName, defau
 static func _record_transaction_for_effect(context: RunContext, effect: Dictionary, effect_type: StringName, result: Dictionary, before: Dictionary, after: Dictionary) -> Dictionary:
 	if context == null or context.transaction_log == null:
 		return {}
-	var payload: Dictionary = effect.get("payload", {})
-	var command_id := String(effect.get("command_id", ""))
-	var effect_id := String(effect.get("effect_id", "%s_%s" % [String(effect_type).replace(".", "_"), command_id]))
-	var actor_id := StringName(effect.get("actor_id", &"player"))
-	var source := String(effect.get("source", payload.get("source", "")))
-	var reason := String(result.get("reason", result.get("blocked_reason", "")))
-	var currency_delta := _currency_delta_for_effect(effect_type, payload, result)
-	var item_moves := _item_moves_for_effect(effect_type, result)
+	var payload: Dictionary = _dictionary_from_variant(effect.get("payload", {}))
+	var command_id: String = String(effect.get("command_id", ""))
+	var effect_id: String = String(effect.get("effect_id", "%s_%s" % [String(effect_type).replace(".", "_"), command_id]))
+	var actor_id: StringName = StringName(effect.get("actor_id", &"player"))
+	var source: String = String(effect.get("source", payload.get("source", "")))
+	var reason: String = String(result.get("reason", result.get("blocked_reason", "")))
+	var currency_delta: Dictionary = _currency_delta_for_effect(effect_type, payload, result)
+	var item_moves: Array = _item_moves_for_effect(effect_type, result)
 	return context.transaction_log.record_transaction(command_id, effect_id, actor_id, source, effect_type, before, after, currency_delta, item_moves, reason)
 
 
 static func _record_events_for_effect(context: RunContext, effect: Dictionary, effect_type: StringName, result: Dictionary) -> void:
 	if context == null or context.run_event_log == null or not bool(result.get("ok", true)):
 		return
-	var payload: Dictionary = effect.get("payload", {})
-	var command_id := String(effect.get("command_id", ""))
-	var actor_id := StringName(effect.get("actor_id", &"player"))
-	var source := String(effect.get("source", payload.get("source", "")))
+	var payload: Dictionary = _dictionary_from_variant(effect.get("payload", {}))
+	var command_id: String = String(effect.get("command_id", ""))
+	var actor_id: StringName = StringName(effect.get("actor_id", &"player"))
+	var source: String = String(effect.get("source", payload.get("source", "")))
 	match effect_type:
 		EFFECT_ADD_REWARD_ITEMS:
-			var gained_items := _item_moves_for_effect(effect_type, result)
+			var gained_items: Array = _item_moves_for_effect(effect_type, result)
 			if not gained_items.is_empty():
 				context.record_event(RunEventLog.EVENT_ITEM_GAINED, command_id, actor_id, source, {"items": gained_items})
 		EFFECT_PICKUP_GROUND_ITEM:
-			context.record_event(RunEventLog.EVENT_ITEM_PICKED_UP, command_id, actor_id, source, {"item": result.get("item", {}).duplicate(true)})
+			context.record_event(RunEventLog.EVENT_ITEM_PICKED_UP, command_id, actor_id, source, {"item": _dictionary_from_variant(result.get("item", {}))})
 		EFFECT_DROP_INVENTORY_ITEM:
-			context.record_event(RunEventLog.EVENT_ITEM_DROPPED, command_id, actor_id, source, {"item": result.get("item", {}).duplicate(true)})
+			context.record_event(RunEventLog.EVENT_ITEM_DROPPED, command_id, actor_id, source, {"item": _dictionary_from_variant(result.get("item", {}))})
 		EFFECT_SETTLE_SUCCESS, EFFECT_SETTLE_FAILURE:
 			context.record_event(RunEventLog.EVENT_SETTLEMENT_COMPLETED, command_id, actor_id, source, {"outcome": result.get("outcome", ""), "settlement": result.duplicate(true)})
 
@@ -142,12 +142,12 @@ static func _currency_delta_for_effect(effect_type: StringName, payload: Diction
 		EFFECT_ADD_CURRENCY:
 			return {String(payload.get("currency_id", "")): int(payload.get("amount", 0))}
 		EFFECT_SPEND_CURRENCY:
-			var spend_delta := -int(payload.get("amount", 0)) if bool(result.get("ok", false)) else 0
+			var spend_delta: int = -int(payload.get("amount", 0)) if bool(result.get("ok", false)) else 0
 			return {String(payload.get("currency_id", "")): spend_delta}
 		EFFECT_SELL_BEST_INVENTORY_ITEM:
 			return {"gold_coin": int(result.get("gold_coin", 0))}
 		EFFECT_SETTLE_SUCCESS:
-			return result.get("currency_delta", {}).duplicate(true)
+			return _dictionary_from_variant(result.get("currency_delta", {}))
 		EFFECT_SETTLE_FAILURE:
 			return {"black_coin": -int(result.get("black_coin_lost", 0)), "gold_coin": 0}
 	return {}
@@ -185,3 +185,15 @@ static func _item_moves_for_effect(effect_type: StringName, result: Dictionary) 
 			for item in result.get("room_floor_lost_items", []):
 				moves.append({"instance_id": item.get("instance_id", ""), "from": RunAssetLedger.LOCATION_ROOM_FLOOR, "to": RunAssetLedger.LOCATION_LOST})
 	return moves
+
+
+static func _dictionary_from_variant(value: Variant) -> Dictionary:
+	if value is Dictionary:
+		return value.duplicate(true)
+	return {}
+
+
+static func _array_from_variant(value: Variant) -> Array:
+	if value is Array:
+		return value.duplicate(true)
+	return []

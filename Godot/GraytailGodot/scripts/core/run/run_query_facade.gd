@@ -6,9 +6,9 @@ class_name RunQueryFacade
 
 
 func build_result_snapshot(context: RunContext) -> Dictionary:
-	var ledger_snapshot := get_asset_snapshot(context)
-	var event_log_snapshot := get_event_log_snapshot(context)
-	var transaction_log_snapshot := get_transaction_log_snapshot(context)
+	var ledger_snapshot: Dictionary = get_asset_snapshot(context)
+	var event_log_snapshot: Array[Dictionary] = get_event_log_snapshot(context)
+	var transaction_log_snapshot: Array[Dictionary] = get_transaction_log_snapshot(context)
 	return {
 		"outcome": context.outcome,
 		"mode": context.mode,
@@ -51,10 +51,10 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 
 
 func build_status_snapshot(context: RunContext) -> Dictionary:
-	var ledger_snapshot := get_asset_snapshot(context)
-	var event_log_snapshot := get_event_log_snapshot(context)
-	var transaction_log_snapshot := get_transaction_log_snapshot(context)
-	var content_def_snapshot := get_content_def_snapshot(context)
+	var ledger_snapshot: Dictionary = get_asset_snapshot(context)
+	var event_log_snapshot: Array[Dictionary] = get_event_log_snapshot(context)
+	var transaction_log_snapshot: Array[Dictionary] = get_transaction_log_snapshot(context)
+	var content_def_snapshot: Dictionary = get_content_def_snapshot(context)
 	return {
 		"run_id": context.run_id,
 		"mode": context.mode,
@@ -138,7 +138,7 @@ func get_content_def_snapshot(context: RunContext) -> Dictionary:
 
 
 func get_inventory_summary(context: RunContext) -> Dictionary:
-	var snapshot := get_asset_snapshot(context)
+	var snapshot: Dictionary = get_asset_snapshot(context)
 	return {
 		"backpack_capacity": snapshot.get("backpack_capacity", 0),
 		"backpack_used": snapshot.get("backpack_used", 0),
@@ -178,11 +178,11 @@ func get_search_state_label(context: RunContext) -> String:
 func get_search_state_data(context: RunContext) -> Dictionary:
 	if context == null or context.truth_map == null:
 		return {"can_search": false, "searched": false, "reason": "not_ready", "is_chest": false}
-	var key := context.cell_key(context.player_pos)
-	var searched := context.searched_cells.has(key)
-	var can_search := false
-	var reason := "blocked"
-	var is_chest := false
+	var key: String = context.cell_key(context.player_pos)
+	var searched: bool = context.searched_cells.has(key)
+	var can_search: bool = false
+	var reason: String = "blocked"
+	var is_chest: bool = false
 	if searched:
 		reason = "searched"
 	elif context.player_pos == context.truth_map.spawn_pos:
