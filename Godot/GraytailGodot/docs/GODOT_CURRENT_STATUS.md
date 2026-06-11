@@ -6,7 +6,7 @@
 
 ## Branch
 
-Current G9 UI presentation layering revision branch: `godot/g9-ui-presentation-layering-revision`.
+Current G9 UI final integration branch: `godot/g9-ui-final-integration`.
 
 Current main baseline for G9: `c5fa0622f98be5b8cb61eedefdfa9990027c00e7`.
 
@@ -64,7 +64,12 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G9 UI presentation layering revision reserves a fixed base background plus independent Presentation Overlay layers.
 - G9 keeps map theme, character outfit, scene props, foreground effects, and panel skins outside the baked base background.
 - `PresentationLayerContracts` provides contract-only schemas and placeholder examples for ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, OutfitPresentationDef, PanelState, UIVisibilityPolicy, NavigationEntry, ShortcutEntry, ExpeditionSummaryViewModel, and LongTermSummaryViewModel.
-- G9 does not connect the contracts to scenes, load resources, import real art, or implement full UI navigation.
+- G9 final integration adds a playable three-page UI shell.
+- The main page exposes `出发探索`, `长期系统`, and `设置`.
+- The expedition page exposes map, warehouse, claim, loadout, talent, character/outfit placeholders, tutorial, standard, and confirm deploy entries.
+- The long-term page exposes task, codex, achievement, profile, and research placeholders.
+- InventoryPanel and GroundLootPanel provide formal player pickup/drop flow.
+- ResultPanel explains success/failure settlement with EventLog and TransactionLog summaries.
 
 ## UI Boundary
 
@@ -78,6 +83,8 @@ Future UI work should consume:
 - Event and transaction snapshots when audit/debug panels need them
 - G9 presentation contract fields for visual layer resolution
 - semantic ids such as `theme_id`, `character_id`, `outfit_id`, `risk_level`, and `tracked_objective_id`
+- InventoryPanel and GroundLootPanel snapshots
+- ResultPanel EventLog and TransactionLog summaries
 
 The recommended follow-up UI shell branch should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state.
 
@@ -100,6 +107,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_architecture_hardening_g8_1.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_kernel_protocol_g8_2.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_ui_presentation_layering_g9.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_ui_final_g9.ps1
 ```
 
 Do not run Godot/editor/game/import unless separately authorized.
@@ -114,7 +122,8 @@ Do not run Godot/editor/game/import unless separately authorized.
 - No action combat.
 - No final event economy tuning.
 - No persistence-backed deploy economy.
-- No full G9 UI shell.
 - No real art import.
 - No complete character or outfit system.
 - No complete Inventory, GroundLoot, or Settlement UI.
+- No final UI polish pass.
+- No complete long-term backend.

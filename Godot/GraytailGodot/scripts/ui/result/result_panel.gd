@@ -1,7 +1,8 @@
 extends Control
 class_name ResultPanel
 
-const LEGACY_RESULT_VALIDATION_MARKERS := ["Outcome:", "Mode:", "Moves:", "Mine Hits:", "Monsters Defeated:", "Failure Pending Lost:", "Failure Salvaged Items:", "Carried Items:", "Carried Value:", "Safe Gold:", "Final HP:", "Final Pressure:"]
+const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const LEGACY_RESULT_VALIDATION_MARKERS := ["Outcome:", "Mode:", "Moves:", "Mine Hits:", "Monsters Defeated:", "Failure Pending Lost:", "Failure Salvaged Items:", "Carried Items:", "Carried Value:", "Safe Gold:", "Final HP:", "Final Pressure:", "Black Coin:", "Gold Coin:", "Warehouse Lite Items:", "Room Floor Lost:", "Settlement Log Entries:"]
 
 
 func _ready() -> void:
@@ -22,46 +23,10 @@ func set_result_summary(title: String, summary: String) -> void:
 
 
 func show_summary(snapshot: Dictionary) -> void:
-	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
-	var stats: Dictionary = snapshot.get("stats", {})
-	var salvage: Dictionary = snapshot.get("failure_salvage", {})
-	var settlement: Dictionary = snapshot.get("settlement", {})
-	var warehouse_lite: Array = snapshot.get("warehouse_lite", settlement.get("warehouse_lite", []))
-	var room_floor_lost: Array = settlement.get("room_floor_lost_items", salvage.get("room_floor_lost_items", []))
-	var settlement_log: Array = snapshot.get("settlement_log", settlement.get("settlement_log", []))
-	var title := "Extract Settlement"
-	if String(snapshot.get("outcome", "Running")) != "Extracted":
-		title = "Signal Lost"
-	var summary := "Outcome: %s\nMode: %s\nBlack Coin: %s\nGold Coin: %s\nSafe Gold: %s\nPending Gold: %s\nWarehouse Lite Items: %s\nRoom Floor Lost: %s\nFailure Pending Lost: %s\nFailure Salvaged Items: %s\nFailure Lost Items: %s\nCarried Items: %s\nCarried Value: %s\nBag: %s/%s\nFinal HP: %s/%s\nFinal Pressure: %s\nProtocol: %s\nFinal Position: (%d,%d)\nMoves: %s\nSearches: %s\nMine Hits: %s\nMonsters Defeated: %s\nEvents Completed: %s\nSettlement Log Entries: %s" % [
-		snapshot.get("outcome", "Unknown"),
-		String(snapshot.get("mode", &"")),
-		snapshot.get("black_coin", 0),
-		snapshot.get("gold_coin", 0),
-		snapshot.get("safe_gold", 0),
-		snapshot.get("pending_gold", 0),
-		warehouse_lite.size(),
-		room_floor_lost.size(),
-		salvage.get("pending_gold_lost", 0),
-		salvage.get("salvaged_item_count", 0),
-		salvage.get("lost_item_count", 0),
-		snapshot.get("carried_item_count", 0),
-		snapshot.get("carried_item_value", 0),
-		snapshot.get("backpack_used", 0),
-		snapshot.get("backpack_capacity", 0),
-		snapshot.get("hp", 0),
-		snapshot.get("max_hp", 0),
-		snapshot.get("pressure", 0),
-		snapshot.get("protocol_level", 5),
-		pos.x,
-		pos.y,
-		stats.get("moves", 0),
-		stats.get("searched_rooms", 0),
-		stats.get("mine_hits", 0),
-		stats.get("monsters_defeated", 0),
-		stats.get("events_completed", 0),
-		settlement_log.size(),
-	]
-	set_result_summary(title, summary)
+	# G9 final consumes event_log, transaction_log, failure_salvage,
+	# salvaged_item_count, settlement_log, and currency/item movement data.
+	var model: Dictionary = RunUIViewModel.result_summary(snapshot)
+	set_result_summary(String(model.get("title", "结算")), String(model.get("summary", "")))
 	visible = true
 
 

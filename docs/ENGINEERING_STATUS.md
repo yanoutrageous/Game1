@@ -2,7 +2,7 @@
 
 ## Stage
 
-G9 UI Presentation Layering Revision: fixed base background, theme overlays, character presentation, and low-coupling UI panel contracts.
+G9 UI Final Integration: three-page shell, inventory/ground loot flow, and settlement explanation baseline.
 
 ## Time
 
@@ -17,6 +17,7 @@ G9 UI Presentation Layering Revision: fixed base background, theme overlays, cha
 - G8.1 branch: `godot/g8-1-architecture-hardening`
 - G8.2 branch: `godot/g8-2-kernel-protocol-hardening`
 - G9 branch: `godot/g9-ui-presentation-layering-revision`
+- G9 final branch: `godot/g9-ui-final-integration`
 - G8.2 base main commit: `91ddf591b04923520834e72eab99a8b6d8702aa4`
 - G9 base main commit: `c5fa0622f98be5b8cb61eedefdfa9990027c00e7`
 - Implementation baseline commit before documentation closure: `f2dd365cca153793883960caa3ba26f5b959ba9b`
@@ -69,12 +70,24 @@ G9 UI Presentation Layering Revision: fixed base background, theme overlays, cha
 
 ## Implemented In G9
 
+- G9 UI Presentation Layering Revision completed before final integration.
 - G9 UI presentation layering architecture for a fixed base background plus independent overlay layers.
 - `PresentationLayerContracts` as a contract-only GDScript schema and placeholder example source.
 - Reserved ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, OutfitPresentationDef, PanelState, UIVisibilityPolicy, NavigationEntry, ShortcutEntry, ExpeditionSummaryViewModel, and LongTermSummaryViewModel.
 - UI planning correction: map theme, character outfit, props, atmosphere, foreground effects, and panel skins are not baked into the main background.
 - Art import boundary: future art replaces asset ids, catalog entries, layer config, theme profiles, character presentation config, and panel skin definitions.
 - `validate_ui_presentation_layering_g9.ps1`.
+
+## Implemented In G9 Final Integration
+
+- Three-page shell for main page, expedition page, and long-term system page.
+- Product title correction to `灰尾回收`; `五四三二一` remains the project subtitle.
+- Formal player InventoryPanel and GroundLootPanel.
+- Pickup/drop flow through CommandBus from player UI.
+- CommandResult reason display for blocked operations.
+- ResultPanel explanation of success/failure settlement using EventLog and TransactionLog summaries.
+- Debug panel remains folded and dev-only.
+- `validate_ui_final_g9.ps1`.
 
 ## Not Implemented
 
@@ -85,10 +98,10 @@ G9 UI Presentation Layering Revision: fixed base background, theme overlays, cha
 - Consignment, insurance, lottery pool, or special rule-room systems.
 - Final economy tuning.
 - Action combat.
-- Full G9 UI shell navigation.
-- Complete main page, expedition page, or long-term page.
 - Real art import.
 - Complete character or outfit system.
+- Final UI polish and animation pass.
+- Complete long-term system backends.
 
 ## Documentation
 
@@ -110,6 +123,10 @@ G9 UI Presentation Layering Revision: fixed base background, theme overlays, cha
 - `docs/audits/AUDIT_G9_UI_PRESENTATION_LAYERING_REVISION.md`
 - `docs/handoff/HANDOFF_G9_UI_PRESENTATION_LAYERING_REVISION.md`
 - `docs/branch_changes/G9_UI_PRESENTATION_LAYERING_REVISION_BRANCH.md`
+- `Godot/GraytailGodot/docs/GODOT_UI_FINAL_G9_REPORT.md`
+- `docs/audits/AUDIT_G9_UI_FINAL_INTEGRATION.md`
+- `docs/handoff/HANDOFF_G9_UI_FINAL_INTEGRATION.md`
+- `docs/branch_changes/G9_UI_FINAL_INTEGRATION_BRANCH.md`
 
 ## Follow-Up Boundary
 
@@ -131,5 +148,6 @@ Expected local static validations:
 - `validate_architecture_hardening_g8_1.ps1`
 - `validate_kernel_protocol_g8_2.ps1`
 - `validate_ui_presentation_layering_g9.ps1`
+- `validate_ui_final_g9.ps1`
 
-Godot editor/runtime/import is not run in this stage.
+Godot runtime smoke is allowed in this stage for UI verification only. Do not use it for resource import or persistence work.
