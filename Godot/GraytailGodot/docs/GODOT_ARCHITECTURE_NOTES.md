@@ -1,5 +1,11 @@
 # Godot Architecture Notes
 
+## Current Baseline Entry
+
+Use `docs/PROJECT_BASELINE.md` as the current engineering fact source, `docs/NEXT_HANDOFF.md` as the minimum next-chat entry, and `docs/DOCS_INDEX.md` as the document navigation and historical index.
+
+Milestone names should use `docs/MILESTONES.md`; historical G labels remain for traceability but should not be the only long-term engineering names.
+
 ## G5 Presentation Boundary
 
 - `TruthMap` owns real hidden map state.

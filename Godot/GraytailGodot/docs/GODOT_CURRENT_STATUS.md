@@ -6,9 +6,21 @@
 
 ## Branch
 
-Current G9 UI final integration branch: `godot/g9-ui-final-integration`.
+Current stage: Pre-G10 Project Baseline Consolidation.
 
-Current main baseline for G9: `c5fa0622f98be5b8cb61eedefdfa9990027c00e7`.
+Current main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`.
+
+Current remote main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`.
+
+Current fact source: `docs/PROJECT_BASELINE.md`.
+
+Next-chat entry: `docs/NEXT_HANDOFF.md`.
+
+Docs index: `docs/DOCS_INDEX.md`.
+
+Milestone map: `docs/MILESTONES.md`.
+
+G9 UI final integration branch: `godot/g9-ui-final-integration`.
 
 G8.2 hardening branch: `godot/g8-2-kernel-protocol-hardening`.
 
@@ -71,6 +83,8 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - InventoryPanel and GroundLootPanel provide formal player pickup/drop flow.
 - ResultPanel explains success/failure settlement with EventLog and TransactionLog summaries.
 
+G9 UI core flow baseline is in `main`. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
+
 ## UI Boundary
 
 Future UI work should consume:
@@ -127,3 +141,9 @@ Do not run Godot/editor/game/import unless separately authorized.
 - No complete Inventory, GroundLoot, or Settlement UI.
 - No final UI polish pass.
 - No complete long-term backend.
+
+## G10 Boundary
+
+G10 is reserved for stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
+
+G10 does not include complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping unless a later approved plan changes that boundary.

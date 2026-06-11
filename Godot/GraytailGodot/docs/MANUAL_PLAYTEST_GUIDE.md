@@ -2,9 +2,11 @@
 
 ## Scope
 
-This guide covers the G4 playable graybox loop, G5 Asset/UI/Visual Parity surfaces, G6 Lua Playable Parity P1 core behavior, and G7 Lua prototype flow restoration shell. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+This guide now treats the older G4-G7 routes as historical foundations and points manual smoke toward the G9 UI core flow baseline in current `main`. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
 
 Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
+
+Current baseline smoke should cover the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, and ResultPanel settlement explanation. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
 
 ## Main Menu / Deploy Shell
 

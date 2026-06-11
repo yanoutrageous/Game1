@@ -2,7 +2,7 @@
 
 ## Stage
 
-G9 UI Final Integration: three-page shell, inventory/ground loot flow, and settlement explanation baseline.
+Pre-G10 Project Baseline Consolidation: current fact source, docs index, milestone naming, and handoff template.
 
 ## Time
 
@@ -13,6 +13,11 @@ G9 UI Final Integration: three-page shell, inventory/ground loot flow, and settl
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
+- Current main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`
+- Current remote main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`
+- Current fact source: `docs/PROJECT_BASELINE.md`
+- Next-chat entry: `docs/NEXT_HANDOFF.md`
+- Docs navigation: `docs/DOCS_INDEX.md`
 - G8 branch: `godot/g8-rules-asset-ledger-core`
 - G8.1 branch: `godot/g8-1-architecture-hardening`
 - G8.2 branch: `godot/g8-2-kernel-protocol-hardening`
@@ -89,6 +94,16 @@ G9 UI Final Integration: three-page shell, inventory/ground loot flow, and settl
 - Debug panel remains folded and dev-only.
 - `validate_ui_final_g9.ps1`.
 
+G9 UI core flow baseline is in `main`. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
+
+## Pre-G10 Baseline Documents
+
+- `docs/PROJECT_BASELINE.md` is the current engineering fact source.
+- `docs/NEXT_HANDOFF.md` is the minimum next Codex/ChatGPT context entry.
+- `docs/DOCS_INDEX.md` is the document navigation and historical index.
+- `docs/MILESTONES.md` maps historical G labels to stable milestone names.
+- `docs/handoff/HANDOFF_TEMPLATE.md` is required for future branch, closure, promotion, BUG-fix, and runtime-smoke handoffs.
+
 ## Not Implemented
 
 - Full MetaProgress persistence.
@@ -102,6 +117,12 @@ G9 UI Final Integration: three-page shell, inventory/ground loot flow, and settl
 - Complete character or outfit system.
 - Final UI polish and animation pass.
 - Complete long-term system backends.
+
+## G10 Boundary
+
+G10 is reserved for stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
+
+G10 is not a complete MetaProgress phase, Deploy persistence phase, complete long-term system phase, action combat phase, new gameplay phase, large real-art migration, or broad architecture reshaping pass unless a later approved plan changes that boundary.
 
 ## Documentation
 
@@ -127,6 +148,11 @@ G9 UI Final Integration: three-page shell, inventory/ground loot flow, and settl
 - `docs/audits/AUDIT_G9_UI_FINAL_INTEGRATION.md`
 - `docs/handoff/HANDOFF_G9_UI_FINAL_INTEGRATION.md`
 - `docs/branch_changes/G9_UI_FINAL_INTEGRATION_BRANCH.md`
+- `docs/PROJECT_BASELINE.md`
+- `docs/NEXT_HANDOFF.md`
+- `docs/DOCS_INDEX.md`
+- `docs/MILESTONES.md`
+- `docs/handoff/HANDOFF_TEMPLATE.md`
 
 ## Follow-Up Boundary
 
@@ -149,5 +175,6 @@ Expected local static validations:
 - `validate_kernel_protocol_g8_2.ps1`
 - `validate_ui_presentation_layering_g9.ps1`
 - `validate_ui_final_g9.ps1`
+- `validate_project_baseline_docs_pre_g10.ps1`
 
-Godot runtime smoke is allowed in this stage for UI verification only. Do not use it for resource import or persistence work.
+Godot runtime smoke is not part of Pre-G10 baseline consolidation. Do not use it for resource import or persistence work without separate authorization.
