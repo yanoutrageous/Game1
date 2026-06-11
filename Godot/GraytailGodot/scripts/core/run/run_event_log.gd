@@ -26,9 +26,9 @@ func reset() -> void:
 
 
 func record_event(event_type: StringName, command_id: String = "", actor_id: StringName = &"player", source: String = "", payload: Dictionary = {}) -> Dictionary:
-	var sequence := next_sequence
+	var sequence: int = next_sequence
 	next_sequence += 1
-	var event := {
+	var event: Dictionary = {
 		"event_id": "evt_%04d_%s" % [sequence, String(event_type)],
 		"event_type": event_type,
 		"command_id": command_id,

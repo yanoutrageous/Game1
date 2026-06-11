@@ -11,7 +11,7 @@ var modifiers: Array[Dictionary] = []
 
 
 func make_rule_request(rule_id: StringName, actor_id: StringName = &"player", source: String = "", payload: Dictionary = {}, command_id: String = "") -> Dictionary:
-	var sequence := next_rule_sequence
+	var sequence: int = next_rule_sequence
 	next_rule_sequence += 1
 	return {
 		"rule_request_id": "rule_%04d_%s" % [sequence, String(rule_id)],
@@ -39,7 +39,7 @@ func make_rule_context(context: RunContext, request: Dictionary) -> Dictionary:
 
 
 func register_modifier(spec: Dictionary) -> Dictionary:
-	var next_spec := spec.duplicate(true)
+	var next_spec: Dictionary = spec.duplicate(true)
 	if not next_spec.has("sequence") or int(next_spec.get("sequence", 0)) <= 0:
 		next_spec["sequence"] = next_modifier_sequence
 		next_modifier_sequence += 1
@@ -49,10 +49,10 @@ func register_modifier(spec: Dictionary) -> Dictionary:
 
 
 func apply_modifiers(rule_context: Dictionary, default_rule_result: Dictionary) -> Dictionary:
-	var final_result := default_rule_result.duplicate(true)
+	var final_result: Dictionary = default_rule_result.duplicate(true)
 	var applied: Array[Dictionary] = []
-	var rule_id := StringName(rule_context.get("rule_id", &""))
-	var stable_modifiers := modifiers.duplicate(true)
+	var rule_id: StringName = StringName(rule_context.get("rule_id", &""))
+	var stable_modifiers: Array = modifiers.duplicate(true)
 	stable_modifiers.sort_custom(RunModifierSpec.compare_stable)
 	for modifier in stable_modifiers:
 		if StringName(modifier.get("target_rule", &"")) != rule_id:
@@ -67,8 +67,8 @@ func apply_modifiers(rule_context: Dictionary, default_rule_result: Dictionary) 
 
 
 func resolve(context: RunContext, rule_id: StringName, payload: Dictionary, default_rule_result: Dictionary, command: Dictionary = {}) -> Dictionary:
-	var request := make_rule_request(rule_id, StringName(command.get("actor_id", &"player")), String(command.get("source", "")), payload, String(command.get("command_id", "")))
-	var rule_context := make_rule_context(context, request)
-	var final_result := apply_modifiers(rule_context, default_rule_result)
+	var request: Dictionary = make_rule_request(rule_id, StringName(command.get("actor_id", &"player")), String(command.get("source", "")), payload, String(command.get("command_id", "")))
+	var rule_context: Dictionary = make_rule_context(context, request)
+	var final_result: Dictionary = apply_modifiers(rule_context, default_rule_result)
 	final_result["rule_context"] = rule_context
 	return final_result
