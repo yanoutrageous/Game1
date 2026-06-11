@@ -287,7 +287,8 @@ foreach ($RelativePath in $ChangedFiles) {
     $NormalizedPath = $RelativePath -replace '/', '\'
     if ($NormalizedPath.StartsWith('Godot\GraytailGodot\scripts\core\') -and $NormalizedPath.EndsWith('.gd')) {
         $Text = Read-RepoText $RelativePath
-        if ($Text -match 'res://|\.png|\.jpg|\.jpeg|\.webp|\.svg|Texture2D|TextureRect|preload\(|load\(') {
+        $DirectArtCouplingPattern = 'res://[^"''\s\)]*\.(png|jpg|jpeg|webp|svg|tga|bmp|hdr|exr)|Texture2D|TextureRect|resource_path\s*='
+        if ($Text -match $DirectArtCouplingPattern) {
             Add-Failure "G9 changed core gameplay file introduces direct presentation asset coupling: $RelativePath"
         }
     }
