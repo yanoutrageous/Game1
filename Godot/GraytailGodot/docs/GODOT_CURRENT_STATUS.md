@@ -6,13 +6,13 @@
 
 ## Branch
 
-Current stage: G10 Progress & Art Smoke Foundation.
+Current stage: Post-G10 closeout baseline. Progress & Art Smoke Foundation (G10) is complete, merged to main, and closed.
 
-Current main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`.
+Current main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 
-Current remote main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`.
+Current remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 
-Active G10 branch: `godot/g10-progress-art-smoke-foundation`.
+Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 
 Current fact source: `docs/PROJECT_BASELINE.md`.
 
@@ -86,9 +86,9 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - ResultPanel explains success/failure settlement with EventLog and TransactionLog summaries.
 - G10 adds ResultPanel return actions, a run pause/settings overlay, MiniMapPanel click-to-map, MapOverlay action feedback, blocked-reason pulse feedback, dev-only diagnostics gating, manifest/fallback art smoke, and `UILayoutProfile` responsive reservation.
 
-G9 UI core flow baseline is in `main`. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
+Current `main` includes G10 Progress & Art Smoke Foundation. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
 
-G10 is a bounded stabilization and smoke-foundation stage. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
+G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
 ## UI Boundary
 
@@ -105,7 +105,7 @@ Future UI work should consume:
 - InventoryPanel and GroundLootPanel snapshots
 - ResultPanel EventLog and TransactionLog summaries
 
-The recommended follow-up UI shell branch should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state.
+Any future follow-up UI branch should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state. No G11 or UI branch is active as part of this closeout follow-up.
 
 Presentation work should map semantic ids into ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, panel skins, and fallback asset ids. Core gameplay should not directly build image paths.
 
@@ -151,6 +151,6 @@ G10 permits bounded runtime smoke when explicitly planned. Do not use Godot/edit
 
 ## G10 Boundary
 
-G10 is reserved for stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
+G10 was reserved for stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
 
-G10 does not include complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping unless a later approved plan changes that boundary.
+G10 is now closed. It does not include complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping unless a later separately approved plan changes that boundary.

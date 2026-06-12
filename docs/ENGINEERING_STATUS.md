@@ -2,7 +2,7 @@
 
 ## Stage
 
-G10 Progress & Art Smoke Foundation: current progress整理, bounded UI interaction fixes, dev-only diagnostics, art smoke, responsive reservation, and future content planning.
+Post-G10 closeout baseline. Progress & Art Smoke Foundation (G10) is complete, merged to main, and closed. This status reflects closeout follow-up documentation calibration only; it does not start G11.
 
 ## Time
 
@@ -13,9 +13,10 @@ G10 Progress & Art Smoke Foundation: current progress整理, bounded UI interact
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
-- Current remote main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
-- Active G10 branch: `godot/g10-progress-art-smoke-foundation`
+- Current main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Current remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - Current fact source: `docs/PROJECT_BASELINE.md`
 - Next-chat entry: `docs/NEXT_HANDOFF.md`
 - Docs navigation: `docs/DOCS_INDEX.md`
@@ -112,14 +113,14 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G10 audit, handoff, branch change, art smoke, and future planning docs.
 - G10 closeout validation transcript at `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md`.
 
-## Pre-G10 Baseline Documents
+## Current Baseline Documents
 
 - `docs/PROJECT_BASELINE.md` is the current engineering fact source.
 - `docs/NEXT_HANDOFF.md` is the minimum next Codex/ChatGPT context entry.
 - `docs/DOCS_INDEX.md` is the document navigation and historical index.
 - `docs/MILESTONES.md` maps historical G labels to stable milestone names.
 - `docs/handoff/HANDOFF_TEMPLATE.md` is required for future branch, closure, promotion, BUG-fix, and runtime-smoke handoffs.
-- G10 documents must keep `PROJECT_BASELINE.md`, `NEXT_HANDOFF.md`, `DOCS_INDEX.md`, `MILESTONES.md`, `ENGINEERING_STATUS.md`, and `GODOT_CURRENT_STATUS.md` aligned with the actual main/branch status.
+- G10 closeout follow-up documents must keep `PROJECT_BASELINE.md`, `NEXT_HANDOFF.md`, `DOCS_INDEX.md`, `MILESTONES.md`, `ENGINEERING_STATUS.md`, and `GODOT_CURRENT_STATUS.md` aligned with the actual main and remote live status.
 
 ## Not Implemented
 
@@ -137,9 +138,9 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 
 ## G10 Boundary
 
-G10 is reserved for stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
+G10 was reserved for stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
 
-G10 is not a complete MetaProgress phase, Deploy persistence phase, complete long-term system phase, action combat phase, new gameplay phase, large real-art migration, or broad architecture reshaping pass unless a later approved plan changes that boundary.
+G10 is now closed. It is not a complete MetaProgress phase, Deploy persistence phase, complete long-term system phase, action combat phase, new gameplay phase, large real-art migration, or broad architecture reshaping pass unless a later separately approved plan changes that boundary.
 
 G10 art work is smoke/foundation only: no loose assets, no direct core resource-path coupling, no Chinese UI text baked into images, and no full art replacement.
 
@@ -181,9 +182,9 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 
 ## Follow-Up Boundary
 
-Recommended follow-up UI shell branch: `godot/g9-ui-shell`.
+No follow-up branch is active as part of this closeout follow-up. Any future UI shell branch or G11 work requires separate approval.
 
-That branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
+Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 
 ## Validation
 

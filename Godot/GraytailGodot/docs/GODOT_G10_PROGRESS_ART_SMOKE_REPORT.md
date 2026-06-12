@@ -2,9 +2,16 @@
 
 ## Summary
 
-G10 is a bounded foundation stage on top of `main @ a13a6fae3208850ae43e4b511511e008eb311a3e`. It整理 current progress, fixes selected P1 UI flow blockers, adds dev-only diagnostics gating, validates a small art manifest/fallback path, reserves responsive layout contracts, and updates handoff/status docs.
+G10 is a bounded foundation stage closed out and merged to `main @ aa19db2f1989c6ebfc22676d84b83da5c6977f64`. It整理 current progress, fixes selected P1 UI flow blockers, adds dev-only diagnostics gating, validates a small art manifest/fallback path, reserves responsive layout contracts, and updates handoff/status docs.
 
 This is not a complete final UI, complete MetaProgress, Deploy persistence, complete long-term backend, action combat, new gameplay, full art replacement, or broad architecture rewrite.
+
+## Closeout Follow-up
+
+- Remote live `main` was confirmed at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+- Remote live `godot/g10-progress-art-smoke-foundation` was confirmed at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+- The closeout follow-up only corrects documentation facts and remote confirmation records.
+- The closeout follow-up is not G11 and does not continue G10 development.
 
 ## UI Flow Fixes
 

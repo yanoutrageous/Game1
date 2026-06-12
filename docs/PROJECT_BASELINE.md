@@ -2,13 +2,14 @@
 
 ## Current Authority
 
-- Stage: G10 Progress & Art Smoke Foundation.
+- Stage: Post-G10 closeout baseline after Progress & Art Smoke Foundation.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`.
-- Current remote main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`.
-- Active G10 branch: `godot/g10-progress-art-smoke-foundation`.
+- Current main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+- Current remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+- Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+- G10 closeout status: complete, merged to main, and closed.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
 
@@ -23,7 +24,8 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G9 UI Presentation Layering Contracts are in `main`.
 - G9 UI core flow baseline is in `main`.
 - Current UI includes the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, CommandResult reason display, and ResultPanel settlement explanation.
-- G10 adds bounded progress整理, interaction fixes, dev-only diagnostics gating, art smoke registry/fallback checks, and responsive layout contracts on top of the G9 UI core flow baseline.
+- G10 Progress & Art Smoke Foundation is complete and in `main`.
+- G10 added bounded progress整理, interaction fixes, dev-only diagnostics gating, art smoke registry/fallback checks, and responsive layout contracts on top of the G9 UI core flow baseline.
 
 ## Current Validation Chain
 
@@ -69,20 +71,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Current Non-Goals
 
-- Do not expand G10 into complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
+- G10 is closed. Do not reopen or expand it into complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 - Do not treat G10 art smoke as real art migration.
 - Do not treat G10 responsive hooks as complete mobile/touch support.
 - Do not move, delete, or rename historical documentation during this phase.
 
 ## Recommended Next Step
 
-After G10, use this baseline for targeted stabilization, BUG-fix batches, final UI readability passes, art production planning, and future content planning. Keep handoff files current for every branch or fix batch.
+After G10 closeout, use this baseline for targeted stabilization, BUG-fix batches, final UI readability passes, art production planning, and future content planning only after separate approval. This closeout follow-up does not start G11. Keep handoff files current for every future branch or fix batch.
 
 ## G10 Boundary
 
-G10 covers current progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning.
+G10 covered current progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning.
 
-G10 must not cover complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping unless a later plan explicitly changes the boundary.
+G10 is complete, merged to main, and closed. It must not be continued as complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping unless a later separately approved phase changes the boundary.
 
 ## Safety Boundary Summary
 

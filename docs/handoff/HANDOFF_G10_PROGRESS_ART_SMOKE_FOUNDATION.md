@@ -7,18 +7,22 @@
 - Chinese name: 当前进度整理与美术接入基础验证
 - Branch: `godot/g10-progress-art-smoke-foundation`
 - G10 implementation HEAD before closeout: `cf6e73d16574f6b900d18217471522aa18a6ab10`
-- Final G10 closeout HEAD: recorded in final execution report
-- Final mainline HEAD: recorded in final execution report
-- Merged to main: no
-- Corresponding main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
+- Final G10 closeout HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Final mainline HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Merged to main: yes
+- Corresponding main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Remote live G10 branch HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 
 ## Current Fact Source
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Current branch: `godot/g10-progress-art-smoke-foundation`
-- Main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
-- Worktree status: must be clean after validation and commit
+- Current branch: `main`
+- Main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Closed G10 branch: `godot/g10-progress-art-smoke-foundation`
+- Worktree status: known dirty is limited to the Godot-generated whitelist: tracked `project.godot`, tracked/untracked `asset_manifest.*.translation`, and untracked `*.gd.uid`.
 - Primary docs to read next:
   - `docs/NEXT_HANDOFF.md`
   - `docs/PROJECT_BASELINE.md`
@@ -37,7 +41,15 @@
 - Added MiniMapPanel direct click to open MapOverlay through the existing `open_map` command path.
 - Kept MapOverlay feedback minimal: open-source hint plus selected/action feedback only.
 - Added closeout validation transcript at `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md`.
-- Updated current fact-source/status docs from `eb9f5d6...` to `a13a6fa...`.
+- Updated G10-facing baseline/status docs during implementation before final closeout.
+- Post-merge closeout follow-up calibrated current fact-source/status docs to `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+
+## Closeout Follow-up
+
+- Remote live `main` confirmed at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+- Remote live `godot/g10-progress-art-smoke-foundation` confirmed at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+- This follow-up only corrects documentation facts and remote confirmation records.
+- This follow-up is not G11 and does not reopen or continue G10 development.
 
 ## Explicitly Not Done
 
@@ -66,7 +78,7 @@
 
 ## Next Handoff Guide
 
-- Recommended next step: after mainline promotion, close G10 and move only to non-G10 follow-up if separately approved.
+- Recommended next step: G10 is already closed; move only to a separately approved non-G10 phase if requested later.
 - Not recommended next step: complete MetaProgress, Deploy persistence, full art migration, action combat, or new gameplay.
 - Files to inspect first: `docs/bugs/G10_BASELINE_BUG_BACKLOG.md`, `Godot/GraytailGodot/scripts/core/run/run_scene.gd`, `Godot/GraytailGodot/scripts/ui/dev/dev_diagnostics_panel.gd`, `Godot/GraytailGodot/scripts/presentation/g10_art_smoke_registry.gd`.
 

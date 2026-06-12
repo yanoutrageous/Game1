@@ -6,10 +6,10 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
-- Remote main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
-- Active branch: `godot/g10-progress-art-smoke-foundation`
-- Current milestone: Progress & Art Smoke Foundation (G10) is in progress on top of UI Core Flow Baseline (G9 Final).
+- Main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Current branch: `main`
+- Current milestone: Progress & Art Smoke Foundation (G10) is complete, merged to main, and closed. The closeout follow-up is documentation calibration only; it is not G11.
 
 ## What Main Can Do
 
@@ -17,7 +17,7 @@ Main contains playable flow, asset ledger and settlement rules, architecture har
 
 The UI baseline includes a three-page shell, InventoryPanel, GroundLootPanel, pickup/drop through CommandBus, blocked reason display, and ResultPanel settlement explanation.
 
-G10 adds bounded player-flow fixes, MiniMap click-to-map, dev-only diagnostics gating, manifest/fallback art smoke, responsive layout contracts, and updated bug/backlog documentation. It does not change core gameplay state ownership.
+Main also contains the completed G10 bounded player-flow fixes, MiniMap click-to-map, dev-only diagnostics gating, manifest/fallback art smoke, responsive layout contracts, and updated bug/backlog documentation. It does not change core gameplay state ownership.
 
 ## What Main Does Not Mean
 
@@ -25,7 +25,7 @@ It does not represent complete final UI, complete MetaProgress, complete Deploy 
 
 ## G10 Boundary
 
-G10 area: current progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning.
+G10 is closed. Its completed area was current progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning.
 
 Do not treat G10 as permission for complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping.
 
@@ -34,7 +34,8 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 1. `docs/PROJECT_BASELINE.md`
 2. `docs/DOCS_INDEX.md`
 3. `docs/MILESTONES.md`
-4. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff
+4. `docs/validation/G10_CLOSEOUT_REMOTE_CONFIRMATION_FOLLOWUP.md`
+5. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff
 
 ## Safety And Dirty Rules
 
@@ -48,4 +49,4 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 
 ## First Thing To Know
 
-The next conversation should know: main starts from `a13a6fae3208850ae43e4b511511e008eb311a3e` before G10 promotion; G10 is a bounded stabilization/art-smoke foundation branch, not a new gameplay or full systems phase; read `docs/bugs/G10_BASELINE_BUG_BACKLOG.md` and `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md` before changing UI flow.
+The next conversation should know: main is at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`; remote live `main` and remote live `godot/g10-progress-art-smoke-foundation` were both confirmed at that commit; G10 is complete, merged, and closed. This does not start G11 and does not mean new gameplay, full systems, persistence, final UI, action combat, or full art migration is complete.
