@@ -6,15 +6,19 @@
 
 ## Branch
 
-Current stage: G11 Mainline Testability & UX Readability Repair.
+Current stage: G11 Mainline Testability & UX Readability Repair closeout.
 
-Current main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
+Current main HEAD: `e261ac7d8671b59e7e72750122e6581af6ea6644`.
 
-Current remote live main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
+Current remote live main HEAD: `e261ac7d8671b59e7e72750122e6581af6ea6644`.
 
 Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 
 G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+
+G10 closeout follow-up commit: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
+
+G11-R3 commit: `e261ac7 fix(godot): improve G11 mainline UX readability`.
 
 Current fact source: `docs/PROJECT_BASELINE.md`.
 
@@ -87,9 +91,9 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - InventoryPanel and GroundLootPanel provide formal player pickup/drop flow.
 - ResultPanel explains success/failure settlement with EventLog and TransactionLog summaries.
 - G10 adds ResultPanel return actions, a run pause/settings overlay, MiniMapPanel click-to-map, MapOverlay action feedback, blocked-reason pulse feedback, dev-only diagnostics gating, manifest/fallback art smoke, and `UILayoutProfile` responsive reservation.
-- G11 improves mainline testability and UX readability through manual playtest coverage, clearer MapOverlay feedback, inventory/ground-loot hints, result return tooltips, and Pause/Settings wording.
+- G11-R3 improves mainline testability and UX readability through manual playtest coverage, clearer MapOverlay feedback, inventory/ground-loot hints, result return tooltips, and Pause/Settings wording. G11-R4 is docs-only closeout and does not continue UI repair.
 
-Current `main` includes G10 Progress & Art Smoke Foundation. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
+Current `main` includes G10 Progress & Art Smoke Foundation and the completed G11-R3 mainline UX readability pass. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
@@ -108,7 +112,7 @@ Future UI work should consume:
 - InventoryPanel and GroundLootPanel snapshots
 - ResultPanel EventLog and TransactionLog summaries
 
-G11 UI work should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state. G11 does not start G12 or any new gameplay/system branch.
+G11 UI work should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state. G11-R4 is closeout only and does not start G12 or any new gameplay/system branch.
 
 Presentation work should map semantic ids into ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, panel skins, and fallback asset ids. Core gameplay should not directly build image paths.
 
@@ -134,7 +138,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_g10_progress_art_smoke.ps1
 ```
 
-G10 permits bounded runtime smoke when explicitly planned. Do not use Godot/editor/game/import for broad resource import, persistence work, or full art migration.
+G11-R3 did not run Godot/editor/game/import. G11-R4 is docs-only closeout and must not run Godot/editor/game/import. G10 permits bounded runtime smoke only when explicitly planned. Do not use Godot/editor/game/import for broad resource import, persistence work, or full art migration.
 
 ## Current Unfinished Items
 

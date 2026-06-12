@@ -17,9 +17,10 @@ Read these first in a new Codex or ChatGPT conversation:
 1. `docs/NEXT_HANDOFF.md`
 2. `docs/PROJECT_BASELINE.md`
 3. `docs/DOCS_INDEX.md`
-4. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-5. `docs/validation/G10_CLOSEOUT_REMOTE_CONFIRMATION_FOLLOWUP.md`
-6. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+4. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+5. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+6. `docs/validation/G10_CLOSEOUT_REMOTE_CONFIRMATION_FOLLOWUP.md`
+7. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
@@ -46,7 +47,7 @@ Current and recent audit files live under `docs/audits/`.
 
 - `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md` records the G10 closeout 13-item static validation run.
 - `docs/validation/G10_CLOSEOUT_REMOTE_CONFIRMATION_FOLLOWUP.md` records the post-merge remote live confirmation and documentation calibration follow-up.
-- `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md` records the G11 mainline UX readability validation checklist and execution notes.
+- `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md` records the G11 mainline UX readability validation checklist, R3 execution notes, and R4 docs-only closeout record.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -57,6 +58,7 @@ Current handoffs live under `docs/handoff/`.
 - Use `docs/handoff/HANDOFF_TEMPLATE.md` for every new phase, branch closure, mainline promotion, BUG-fix batch, and runtime smoke report.
 - Existing G5-G9 handoffs are historical evidence. They should not be deleted or renamed in this consolidation.
 - G10 handoff records bounded stabilization/art-smoke work, closeout, mainline merge status, and remaining out-of-scope systems.
+- `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md` records the G11 mainline testability and UX readability pass closeout.
 
 ## Branch Change Records
 
@@ -77,8 +79,8 @@ Root-level handoff files, old G2-G7 notes, Lua audit docs, UE docs, and early fe
 
 ## Current Boundary
 
-Current main is `53a4e122376998d2f6d0a2a617b753a3d382b2f0` and includes G10 Progress & Art Smoke Foundation plus the G10 closeout follow-up. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
+Current main is `e261ac7d8671b59e7e72750122e6581af6ea6644` and includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, and the completed G11-R3 mainline UX readability pass. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
 
-G10 is complete, merged to main, and closed. It was limited to progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning. It is not complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping. This closeout follow-up does not start G11.
+G10 is complete, merged to main, and closed. It was limited to progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning. It is not complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
-G11 is active as a narrow mainline testability and UX readability repair stage. It is not a G10 continuation, not G12, not a new gameplay phase, and not a new systems phase.
+G11-R3 is complete and pushed. G11-R4 is docs-only closeout and handoff/status alignment. It is not a G10 continuation, not G12, not a new gameplay phase, and not a new systems phase.
