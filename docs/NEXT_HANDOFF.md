@@ -6,9 +6,10 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`
-- Remote main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`
-- Current milestone: UI Core Flow Baseline (G9 Final) is in main.
+- Main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
+- Remote main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
+- Active branch: `godot/g10-progress-art-smoke-foundation`
+- Current milestone: Progress & Art Smoke Foundation (G10) is in progress on top of UI Core Flow Baseline (G9 Final).
 
 ## What Main Can Do
 
@@ -16,13 +17,15 @@ Main contains playable flow, asset ledger and settlement rules, architecture har
 
 The UI baseline includes a three-page shell, InventoryPanel, GroundLootPanel, pickup/drop through CommandBus, blocked reason display, and ResultPanel settlement explanation.
 
+G10 adds bounded player-flow fixes, dev-only diagnostics gating, manifest/fallback art smoke, responsive layout contracts, and updated bug/backlog documentation. It does not change core gameplay state ownership.
+
 ## What Main Does Not Mean
 
 It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
 
 ## G10 Boundary
 
-Recommended next planning area: stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
+G10 area: current progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning.
 
 Do not treat G10 as permission for complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping.
 
@@ -45,4 +48,4 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 
 ## First Thing To Know
 
-The next conversation should know: main is at `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`; G9 UI core flow baseline is complete and merged; Pre-G10 baseline docs define the current fact source; the next phase should not start implementation until its own plan is approved.
+The next conversation should know: main is at `a13a6fae3208850ae43e4b511511e008eb311a3e`; G10 is a bounded stabilization/art-smoke foundation branch, not a new gameplay or full systems phase; read `docs/bugs/G10_BASELINE_BUG_BACKLOG.md` before changing UI flow.

@@ -2,12 +2,13 @@
 
 ## Current Authority
 
-- Stage: Pre-G10 Project Baseline Consolidation.
+- Stage: G10 Progress & Art Smoke Foundation.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`.
-- Current remote main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`.
+- Current main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`.
+- Current remote main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`.
+- Active G10 branch: `godot/g10-progress-art-smoke-foundation`.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
 
@@ -22,6 +23,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G9 UI Presentation Layering Contracts are in `main`.
 - G9 UI core flow baseline is in `main`.
 - Current UI includes the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, CommandResult reason display, and ResultPanel settlement explanation.
+- G10 adds bounded progress整理, interaction fixes, dev-only diagnostics gating, art smoke registry/fallback checks, and responsive layout contracts on top of the G9 UI core flow baseline.
 
 ## Current Validation Chain
 
@@ -40,6 +42,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_ui_presentation_layering_g9.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_ui_final_g9.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_project_baseline_docs_pre_g10.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_g10_progress_art_smoke.ps1
 ```
 
 ## Playable Range
@@ -48,6 +51,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 - Movement, room transitions, search, event selection, monster resolution, extraction, failure, and settlement summaries are present.
 - Inventory and current-room ground loot can be inspected through formal UI panels.
 - Pickup/drop can be triggered from player-facing UI and returns CommandResult feedback.
+- ResultPanel has explicit return actions to main and expedition shell.
+- The run screen has a pause/settings overlay for player-facing interruption without persistence writes.
+- Dev diagnostics are shell-only, gated by a build-channel/UIVisibilityPolicy equivalent, hidden and disabled in the default player channel.
+- A small art smoke registry validates manifest asset IDs and fallback IDs for panel, button, icon, character placeholder, and theme overlay roles.
+- `UILayoutProfile` reserves desktop/narrow layout behavior for future responsive/mobile work.
 
 ## Unfinished Range
 
@@ -59,17 +67,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Current Non-Goals
 
-- Do not start G10 implementation during this baseline consolidation.
-- Do not do BUG fixes, UI optimization, code refactors, gameplay changes, MetaProgress, Deploy persistence, action combat, or new gameplay in this phase.
+- Do not expand G10 into complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
+- Do not treat G10 art smoke as real art migration.
+- Do not treat G10 responsive hooks as complete mobile/touch support.
 - Do not move, delete, or rename historical documentation during this phase.
 
 ## Recommended Next Step
 
-Use this baseline for a G10 planning pass focused on stability analysis, BUG-fix batching, UI readability optimization, interaction blocker triage, validation-chain credibility, code convergence, documentation clarity, and future content planning.
+After G10, use this baseline for targeted stabilization, BUG-fix batches, final UI readability passes, art production planning, and future content planning. Keep handoff files current for every branch or fix batch.
 
 ## G10 Boundary
 
-G10 may cover stability analysis, BUG fixes, UI readability optimization, interaction blocker fixes, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
+G10 covers current progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning.
 
 G10 must not cover complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping unless a later plan explicitly changes the boundary.
 

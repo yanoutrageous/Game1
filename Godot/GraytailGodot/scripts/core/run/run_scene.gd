@@ -12,6 +12,9 @@ const PlayerScene := preload("res://scenes/player/player.tscn")
 const G9ShellPanelScript := preload("res://scripts/ui/shell/g9_shell_panel.gd")
 const InventoryPanelScript := preload("res://scripts/ui/inventory/inventory_panel.gd")
 const GroundLootPanelScript := preload("res://scripts/ui/ground_loot/ground_loot_panel.gd")
+const DevDiagnosticsPanelScript := preload("res://scripts/ui/dev/dev_diagnostics_panel.gd")
+const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
+const G10ArtSmokeRegistry := preload("res://scripts/presentation/g10_art_smoke_registry.gd")
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
@@ -57,6 +60,10 @@ var command_result_label: Label
 var debug_panel: VBoxContainer
 var debug_toggle_button: Button
 var debug_log: Label
+var layout_profile_label: Label
+var pause_panel: PanelContainer
+var pause_status_label: Label
+var dev_diagnostics_panel: Control
 var event_panel: PanelContainer
 var event_title_label: Label
 var event_body_label: Label
@@ -76,6 +83,8 @@ var tutorial_popup_panel: TutorialPopupPanel
 var room_controller: RoomSceneController
 var player_controller: PlayerController
 var screen_state: StringName = SCREEN_MAIN_MENU
+var current_layout_profile_id: StringName = &"desktop"
+var last_command_result: Dictionary = {}
 
 
 func _ready() -> void:
@@ -114,6 +123,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		if screen_state in [SCREEN_DEPLOY, SCREEN_LONG_TERM, SCREEN_SETTINGS]:
 			_show_main_menu()
+			get_viewport().set_input_as_handled()
+			return
+		if screen_state == SCREEN_RUN:
+			_show_pause_panel()
 			get_viewport().set_input_as_handled()
 			return
 
@@ -171,6 +184,7 @@ func _build_shell_pages() -> void:
 	ui_shell.connect("long_term_entry_requested", _on_long_term_entry_requested)
 	ui_shell.connect("start_tutorial_requested", _start_tutorial_from_ui)
 	ui_shell.connect("start_standard_requested", _start_standard_from_ui)
+	ui_shell.connect("dev_diagnostics_requested", _show_dev_diagnostics_panel)
 	main_menu_panel = ui_shell.call("get_main_page") as Control
 	deploy_shell_panel = ui_shell.call("get_deploy_page") as Control
 	long_term_shell_panel = ui_shell.call("get_long_term_page") as Control
@@ -225,7 +239,11 @@ func _build_run_overlay() -> void:
 
 	command_result_label = _add_label(run_overlay_root, "CommandResultReasonLabel", Rect2(982, 156, 238, 64), "操作提示：无", 13)
 
+	layout_profile_label = _add_label(run_overlay_root, "LayoutProfileStatus", Rect2(982, 202, 238, 24), "Layout: desktop", 12)
 	debug_toggle_button = _add_button(run_overlay_root, "DebugToggleButton", Rect2(1010, 226, 170, 34), "Dev Debug", func() -> void: _toggle_debug_panel())
+	debug_toggle_button.visible = G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED
+	debug_toggle_button.disabled = not G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED
+	debug_toggle_button.tooltip_text = "dev_only=true; hidden outside dev build channel"
 	debug_panel = VBoxContainer.new()
 	debug_panel.name = "DebugOperationPanel"
 	debug_panel.offset_left = 980.0
@@ -268,8 +286,15 @@ func _build_run_overlay() -> void:
 
 	result_panel = ResultPanelScene.instantiate() as ResultPanel
 	result_panel.name = "ResultPanel"
+	result_panel.return_main_requested.connect(_return_from_result_to_main)
+	result_panel.return_deploy_requested.connect(_return_from_result_to_deploy)
 	result_panel.hide_result()
 	run_overlay_root.add_child(result_panel)
+
+	dev_diagnostics_panel = DevDiagnosticsPanelScript.new() as Control
+	dev_diagnostics_panel.name = "DevDiagnosticsPanel"
+	dev_diagnostics_panel.connect("close_requested", func() -> void: dev_diagnostics_panel.call("hide_panel"))
+	ui_root.add_child(dev_diagnostics_panel)
 
 	map_overlay_panel = MapOverlayScene.instantiate() as MapOverlayPanel
 	map_overlay_panel.name = "MapOverlayPanel"
@@ -333,6 +358,24 @@ func _build_runtime_modals() -> void:
 	extract_content.add_child(extract_buttons)
 	_add_menu_button(extract_buttons, "确认", func() -> void: _confirm_extract_from_ui())
 	_add_menu_button(extract_buttons, "取消", func() -> void: _cancel_extract_from_ui())
+
+	pause_panel = _new_modal_panel("PauseSettingsOverlayPanel", Rect2(440, 146, 400, 270))
+	var pause_content := VBoxContainer.new()
+	pause_content.name = "PauseSettingsOverlayContent"
+	pause_content.add_theme_constant_override("separation", 8)
+	pause_panel.add_child(pause_content)
+	var pause_title := Label.new()
+	pause_title.text = "暂停 / 设置"
+	pause_title.add_theme_font_size_override("font_size", 20)
+	pause_content.add_child(pause_title)
+	pause_status_label = Label.new()
+	pause_status_label.name = "PauseSettingsOverlayStatus"
+	pause_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	pause_status_label.text = "本 overlay 只处理 UI 暂停、设置入口与返回，不写本地持久化偏好。"
+	pause_content.add_child(pause_status_label)
+	_add_menu_button(pause_content, "继续", func() -> void: pause_panel.visible = false)
+	_add_menu_button(pause_content, "设置占位", func() -> void: _open_settings_from_pause())
+	_add_menu_button(pause_content, "关闭", func() -> void: pause_panel.visible = false)
 
 
 func _new_modal_panel(node_name: String, rect: Rect2) -> PanelContainer:
@@ -401,6 +444,35 @@ func _set_gameplay_visible(visible: bool) -> void:
 		ui_shell.visible = not visible
 
 
+func _show_pause_panel() -> void:
+	if pause_panel == null:
+		return
+	if pause_status_label != null and run_context != null:
+		var snapshot: Dictionary = run_context.get_status_snapshot()
+		pause_status_label.text = "暂停中。当前阶段=%s，房间=%s。设置入口为壳层，不写持久化偏好。" % [
+			snapshot.get("phase", ""),
+			snapshot.get("current_room", ""),
+		]
+	pause_panel.visible = true
+
+
+func _open_settings_from_pause() -> void:
+	if pause_status_label != null:
+		pause_status_label.text = "设置占位：后续可接入音量、可访问性和 UI 减法；本阶段不写本地持久化偏好。"
+
+
+func _return_from_result_to_main() -> void:
+	if result_panel != null:
+		result_panel.hide_result()
+	_show_main_menu()
+
+
+func _return_from_result_to_deploy() -> void:
+	if result_panel != null:
+		result_panel.hide_result()
+	_show_deploy_shell(&"config")
+
+
 func _normalize_deploy_tab(tab_id: StringName) -> StringName:
 	match tab_id:
 		&"loadout":
@@ -424,8 +496,11 @@ func _on_main_entry_requested(entry_id: StringName) -> void:
 
 
 func _on_deploy_entry_requested(entry_id: StringName) -> void:
-	if entry_id == &"back_main":
-		_show_main_menu()
+	match entry_id:
+		&"back_main":
+			_show_main_menu()
+		&"long_term":
+			_show_long_term_shell()
 
 
 func _on_long_term_entry_requested(entry_id: StringName) -> void:
@@ -627,6 +702,8 @@ func _is_runtime_modal_open() -> bool:
 		or (inventory_panel != null and inventory_panel.visible)
 		or (ground_loot_panel != null and ground_loot_panel.visible)
 		or (result_panel != null and result_panel.visible)
+		or (pause_panel != null and pause_panel.visible)
+		or (dev_diagnostics_panel != null and dev_diagnostics_panel.visible)
 	)
 
 
@@ -646,6 +723,12 @@ func _close_top_runtime_modal() -> bool:
 	if extract_panel != null and extract_panel.visible:
 		_cancel_extract_from_ui()
 		return true
+	if pause_panel != null and pause_panel.visible:
+		pause_panel.visible = false
+		return true
+	if dev_diagnostics_panel != null and dev_diagnostics_panel.visible:
+		dev_diagnostics_panel.call("hide_panel")
+		return true
 	return false
 
 
@@ -662,6 +745,10 @@ func _hide_runtime_popups() -> void:
 		ground_loot_panel.call("hide_panel")
 	if result_panel != null:
 		result_panel.hide_result()
+	if pause_panel != null:
+		pause_panel.visible = false
+	if dev_diagnostics_panel != null:
+		dev_diagnostics_panel.call("hide_panel")
 	if map_overlay_panel != null:
 		map_overlay_panel.hide_overlay()
 
@@ -681,6 +768,7 @@ func _refresh_view_models() -> void:
 	if run_context == null:
 		return
 	var snapshot := run_context.get_status_snapshot()
+	var layout_profile: Dictionary = _current_layout_profile()
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	var minimap_vm := MiniMapViewModel.build_from_intel(run_context.intel_map, run_context.get_current_pos())
 	if ui_shell != null:
@@ -711,22 +799,71 @@ func _refresh_view_models() -> void:
 		minimap_panel.apply_view_model(minimap_vm)
 	if map_overlay_panel != null:
 		map_overlay_panel.apply_view_model(minimap_vm)
+	if layout_profile_label != null:
+		layout_profile_label.text = "Layout: %s" % current_layout_profile_id
 	if tutorial_popup_panel != null:
 		tutorial_popup_panel.apply_popup(snapshot.get("tutorial_popup", {}))
 	if inventory_panel != null:
+		inventory_panel.call("apply_layout_profile", layout_profile)
 		inventory_panel.call("apply_snapshot", snapshot)
 	if ground_loot_panel != null:
+		ground_loot_panel.call("apply_layout_profile", layout_profile)
 		ground_loot_panel.call("apply_snapshot", snapshot)
+	if result_panel != null:
+		result_panel.apply_layout_profile(layout_profile)
+	if dev_diagnostics_panel != null and dev_diagnostics_panel.visible:
+		_apply_dev_diagnostics(snapshot)
 	if debug_log != null:
 		debug_log.text = String(snapshot.get("last_message", ""))
 	if result_panel != null and bool(snapshot.get("run_active", false)):
 		result_panel.hide_result()
 
 
+func _current_layout_profile() -> Dictionary:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var profile: Dictionary = UILayoutProfileScript.profile_for_size(viewport_size)
+	current_layout_profile_id = StringName(profile.get("profile_id", &"desktop"))
+	return profile
+
+
+func _show_dev_diagnostics_panel() -> void:
+	var policy: Dictionary = DevDiagnosticsPanelScript.DEV_ONLY_POLICY
+	var enabled: bool = G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED and bool(policy.get("dev_only", false)) and StringName(policy.get("unlock_condition", &"")) == &"dev_channel"
+	if not enabled:
+		_show_command_feedback({
+			"ok": false,
+			"accepted": false,
+			"reason_code": &"dev_diagnostics_hidden",
+			"message_key": &"ui.dev_diagnostics.hidden",
+			"command_id": &"open_dev_diagnostics",
+		})
+		return
+	if dev_diagnostics_panel == null:
+		return
+	var snapshot: Dictionary = {}
+	if run_context != null:
+		snapshot = run_context.get_status_snapshot()
+	_apply_dev_diagnostics(snapshot)
+	dev_diagnostics_panel.call("show_panel")
+
+
+func _apply_dev_diagnostics(snapshot: Dictionary) -> void:
+	if dev_diagnostics_panel == null:
+		return
+	var ui_state: Dictionary = {
+		"page": screen_state,
+		"panel": "DevDiagnosticsPanel",
+		"layout_profile": current_layout_profile_id,
+	}
+	var art_report: Dictionary = G10ArtSmokeRegistry.build_smoke_report()
+	dev_diagnostics_panel.call("apply_diagnostics", snapshot, last_command_result, ui_state, art_report)
+
+
 func _dispatch_command(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 	if command_bus == null:
 		return {}
 	var result: Dictionary = command_bus.dispatch(command_name, payload)
+	last_command_result = result.duplicate(true)
 	_show_command_feedback(result)
 	return result
 
@@ -734,10 +871,21 @@ func _dispatch_command(command_name: StringName, payload: Dictionary = {}) -> Di
 func _show_command_feedback(result: Dictionary) -> void:
 	if command_result_label != null:
 		command_result_label.text = "操作提示：%s" % RunUIViewModel.command_result_text(result)
+		var accepted: bool = bool(result.get("accepted", result.get("ok", true)))
+		if not accepted:
+			_flash_blocked_reason()
 	if inventory_panel != null and inventory_panel.visible:
 		inventory_panel.call("show_command_result", result)
 	if ground_loot_panel != null and ground_loot_panel.visible:
 		ground_loot_panel.call("show_command_result", result)
+
+func _flash_blocked_reason() -> void:
+	if command_result_label == null:
+		return
+	command_result_label.name = "BlockedReasonFlash"
+	var tween: Tween = create_tween()
+	tween.tween_property(command_result_label, "modulate", Color(1.0, 0.55, 0.35, 1.0), 0.06)
+	tween.tween_property(command_result_label, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.18)
 
 
 func _open_map_from_ui() -> void:
@@ -747,6 +895,8 @@ func _open_map_from_ui() -> void:
 
 
 func _toggle_debug_panel() -> void:
+	if not G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED:
+		return
 	if debug_panel != null:
 		debug_panel.visible = not debug_panel.visible
 
@@ -757,6 +907,7 @@ func _on_tutorial_popup_confirmed() -> void:
 
 func _start_tutorial_from_ui() -> void:
 	var result: Dictionary = command_bus.dispatch(&"start_tutorial_run")
+	last_command_result = result.duplicate(true)
 	_show_command_feedback(result)
 	if player_controller != null:
 		player_controller.reset_local_position()
@@ -765,6 +916,7 @@ func _start_tutorial_from_ui() -> void:
 
 func _start_standard_from_ui() -> void:
 	var result: Dictionary = command_bus.dispatch(&"start_standard_run")
+	last_command_result = result.duplicate(true)
 	_show_command_feedback(result)
 	if player_controller != null:
 		player_controller.reset_local_position()
@@ -773,7 +925,8 @@ func _start_standard_from_ui() -> void:
 
 func _attempt_room_transition(direction: Vector2i) -> void:
 	var before := run_context.get_current_pos()
-	var result := command_bus.dispatch(&"attempt_room_transition", {"direction": direction})
+	var result: Dictionary = command_bus.dispatch(&"attempt_room_transition", {"direction": direction})
+	last_command_result = result.duplicate(true)
 	_show_command_feedback(result)
 	var moved: bool = bool(result.get("ok", false)) and run_context.get_current_pos() != before
 	if moved:
@@ -788,10 +941,14 @@ func _on_map_overlay_cell_action_requested(marker: Dictionary) -> void:
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var state: StringName = StringName(marker.get("state", &"hidden"))
 	if state == &"hidden" or state == &"flagged":
-		_dispatch_command(&"toggle_flag_cell", {"pos": pos})
+		var flag_result: Dictionary = _dispatch_command(&"toggle_flag_cell", {"pos": pos})
+		if map_overlay_panel != null:
+			map_overlay_panel.show_action_feedback(marker, flag_result)
 		return
 	if bool(marker.get("explored", false)) and not bool(marker.get("mine", false)):
-		var result := _dispatch_command(&"teleport_to_explored", {"pos": pos})
+		var result: Dictionary = _dispatch_command(&"teleport_to_explored", {"pos": pos})
+		if map_overlay_panel != null:
+			map_overlay_panel.show_action_feedback(marker, result)
 		if bool(result.get("ok", false)):
 			if player_controller != null:
 				player_controller.reset_local_position()

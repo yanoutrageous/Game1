@@ -8,6 +8,7 @@ This file is the document navigation and historical index. It is not the fact so
 - `docs/ENGINEERING_STATUS.md` - broader engineering status and validation list.
 - `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md` - Godot-specific current status.
 - `docs/MILESTONES.md` - historical G-number to formal milestone mapping.
+- `docs/bugs/G10_BASELINE_BUG_BACKLOG.md` - current G10 baseline bug and remaining-scope backlog.
 
 ## Next Conversation Minimum Reading
 
@@ -24,6 +25,7 @@ Do not start by reading every old audit, branch change, or design file unless th
 
 - `docs/design/G8_ASSET_LEDGER_INVENTORY_SETTLEMENT_CORE_PLAN.md`
 - `docs/design/G9_UI_PRESENTATION_LAYERING_ARCHITECTURE.md`
+- `docs/design/G10_FUTURE_CONTENT_PLANNING.md`
 - `docs/ui-layout-implementation-plan.md`
 - Older design/reference docs under `docs/design/`, `docs/art/`, and root `docs/*.md` are historical unless linked by the current task.
 
@@ -36,6 +38,7 @@ Current and recent audit files live under `docs/audits/`.
 - G8.2 Kernel Protocol Baseline audit.
 - G9 Presentation Layering Contracts audit.
 - G9 UI Core Flow Baseline audit.
+- G10 Progress & Art Smoke Foundation audit.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -45,6 +48,7 @@ Current handoffs live under `docs/handoff/`.
 
 - Use `docs/handoff/HANDOFF_TEMPLATE.md` for every new phase, branch closure, mainline promotion, BUG-fix batch, and runtime smoke report.
 - Existing G5-G9 handoffs are historical evidence. They should not be deleted or renamed in this consolidation.
+- G10 handoff records bounded stabilization/art-smoke work and remaining out-of-scope systems.
 
 ## Branch Change Records
 
@@ -67,4 +71,4 @@ Root-level handoff files, old G2-G7 notes, Lua audit docs, UE docs, and early fe
 
 G9 UI core flow baseline is in main. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
 
-G10 is not started here. G10 is limited to stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
+G10 is in progress on `godot/g10-progress-art-smoke-foundation`. It is limited to progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning. It is not complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.

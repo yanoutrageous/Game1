@@ -109,6 +109,20 @@ func hide_panel() -> void:
 	visible = false
 
 
+func apply_layout_profile(profile: Dictionary) -> void:
+	var profile_id: StringName = StringName(profile.get("profile_id", &"desktop"))
+	if profile_id == &"narrow":
+		offset_left = 20.0
+		offset_top = 88.0
+		offset_right = 600.0
+		offset_bottom = 650.0
+	else:
+		offset_left = 390.0
+		offset_top = 98.0
+		offset_right = 930.0
+		offset_bottom = 610.0
+
+
 func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	var row := HBoxContainer.new()
 	row.name = "InventoryItemRow"

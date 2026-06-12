@@ -8,11 +8,14 @@ signal deploy_entry_requested(entry_id: StringName)
 signal long_term_entry_requested(entry_id: StringName)
 signal start_tutorial_requested
 signal start_standard_requested
+signal dev_diagnostics_requested
 
 const PAGE_MAIN := &"main"
 const PAGE_DEPLOY := &"deploy"
 const PAGE_LONG_TERM := &"long_term"
 const PAGE_SETTINGS := &"settings"
+const BUILD_CHANNEL := &"player"
+const DEV_DIAGNOSTICS_ENABLED := BUILD_CHANNEL == &"dev"
 
 var current_page: StringName = PAGE_MAIN
 var current_deploy_tab: StringName = &"config"
@@ -185,6 +188,8 @@ func _build_deploy_page() -> void:
 	_add_button(deploy_page, "StartStandard10x10Button", Rect2(1110, 506, 118, 44), "标准局", func() -> void: start_standard_requested.emit())
 	_add_button(deploy_page, "ConfirmDeployButton", Rect2(990, 566, 238, 56), "确认出发", func() -> void: start_standard_requested.emit())
 
+	_add_button(deploy_page, "DeployToLongTermButton", Rect2(990, 630, 238, 34), "长期系统", func() -> void: deploy_entry_requested.emit(&"long_term"))
+
 
 func _build_long_term_page() -> void:
 	long_term_page = Control.new()
@@ -233,6 +238,11 @@ func _build_settings_page() -> void:
 	_add_button(settings_page, "SettingsBackToMainMenu", Rect2(32, 28, 150, 40), "返回主界面", func() -> void: main_entry_requested.emit(&"main"))
 	_add_label(settings_page, "SettingsTitle", Rect2(214, 30, 360, 42), "设置", 26, PresentationTheme.color_for_key(&"ui.accent"))
 	settings_body_label = _add_label(settings_page, "SettingsBody", Rect2(80, 130, 980, 320), "本阶段保留设置入口与壳层，不写入本地持久化偏好。\n\n可后续接入音量、窗口、可访问性、UI 减法与 Debug 可见性策略。", 18)
+
+	var dev_button := _add_button(settings_page, "DevDiagnosticsEntryButton", Rect2(80, 478, 260, 38), "Dev Diagnostics", func() -> void: dev_diagnostics_requested.emit())
+	dev_button.visible = DEV_DIAGNOSTICS_ENABLED
+	dev_button.disabled = not DEV_DIAGNOSTICS_ENABLED
+	dev_button.tooltip_text = "UIVisibilityPolicy: dev_only=true, visible=false outside dev channel"
 
 
 func _toggle_center_panel() -> void:

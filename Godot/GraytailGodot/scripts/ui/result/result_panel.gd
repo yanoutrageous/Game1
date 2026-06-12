@@ -4,9 +4,13 @@ class_name ResultPanel
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const LEGACY_RESULT_VALIDATION_MARKERS := ["Outcome:", "Mode:", "Moves:", "Mine Hits:", "Monsters Defeated:", "Failure Pending Lost:", "Failure Salvaged Items:", "Carried Items:", "Carried Value:", "Safe Gold:", "Final HP:", "Final Pressure:", "Black Coin:", "Gold Coin:", "Warehouse Lite Items:", "Room Floor Lost:", "Settlement Log Entries:"]
 
+signal return_main_requested
+signal return_deploy_requested
+
 
 func _ready() -> void:
 	_ensure_backdrop()
+	_ensure_actions()
 
 
 func set_result_summary(title: String, summary: String) -> void:
@@ -28,6 +32,9 @@ func show_summary(snapshot: Dictionary) -> void:
 	var model: Dictionary = RunUIViewModel.result_summary(snapshot)
 	set_result_summary(String(model.get("title", "结算")), String(model.get("summary", "")))
 	visible = true
+	modulate.a = 0.0
+	var tween: Tween = create_tween()
+	tween.tween_property(self, "modulate:a", 1.0, 0.12)
 
 
 func hide_result() -> void:
@@ -45,3 +52,40 @@ func _ensure_backdrop() -> void:
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 	move_child(backdrop, 0)
+
+
+func _ensure_actions() -> void:
+	if get_node_or_null("ResultActions") != null:
+		return
+	var actions := HBoxContainer.new()
+	actions.name = "ResultActions"
+	actions.offset_left = 24.0
+	actions.offset_top = 408.0
+	actions.offset_right = 600.0
+	actions.offset_bottom = 448.0
+	actions.add_theme_constant_override("separation", 10)
+	add_child(actions)
+
+	var main_button := Button.new()
+	main_button.name = "ResultReturnMainButton"
+	main_button.text = "返回主界面"
+	main_button.custom_minimum_size = Vector2(150, 34)
+	main_button.pressed.connect(func() -> void: return_main_requested.emit())
+	actions.add_child(main_button)
+
+	var deploy_button := Button.new()
+	deploy_button.name = "ResultReturnDeployButton"
+	deploy_button.text = "返回出发页"
+	deploy_button.custom_minimum_size = Vector2(150, 34)
+	deploy_button.pressed.connect(func() -> void: return_deploy_requested.emit())
+	actions.add_child(deploy_button)
+
+
+func apply_layout_profile(profile: Dictionary) -> void:
+	var profile_id: StringName = StringName(profile.get("profile_id", &"desktop"))
+	if profile_id == &"narrow":
+		position = Vector2(18, 70)
+		size = Vector2(560, 520)
+	else:
+		position = Vector2(330, 96)
+		size = Vector2(620, 440)

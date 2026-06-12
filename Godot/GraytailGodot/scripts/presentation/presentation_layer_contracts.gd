@@ -176,6 +176,20 @@ const LONG_TERM_SUMMARY_VIEW_MODEL_REQUIRED_FIELDS := [
 	"tracked_objective",
 ]
 
+const UI_LAYOUT_PROFILE_REQUIRED_FIELDS := [
+	"profile_id",
+	"schema_version",
+	"min_width",
+	"max_width",
+	"compact_mode",
+	"safe_area",
+	"min_button_size",
+	"panel_stack_policy",
+	"summary_mode",
+	"touch_ready",
+	"deprecated_state",
+]
+
 
 static func layer_order() -> Array:
 	return LAYER_ORDER.duplicate()
@@ -193,6 +207,7 @@ static func contract_names() -> Array:
 		&"ShortcutEntry",
 		&"ExpeditionSummaryViewModel",
 		&"LongTermSummaryViewModel",
+		&"UILayoutProfile",
 	]
 
 
@@ -218,6 +233,8 @@ static func required_fields_for(contract_name: StringName) -> Array:
 			return EXPEDITION_SUMMARY_VIEW_MODEL_REQUIRED_FIELDS.duplicate()
 		&"LongTermSummaryViewModel":
 			return LONG_TERM_SUMMARY_VIEW_MODEL_REQUIRED_FIELDS.duplicate()
+		&"UILayoutProfile":
+			return UI_LAYOUT_PROFILE_REQUIRED_FIELDS.duplicate()
 		_:
 			return []
 
@@ -389,4 +406,20 @@ static func long_term_summary_view_model_example() -> Dictionary:
 		"achievement_progress": {},
 		"research_progress": {},
 		"tracked_objective": &"",
+	}
+
+
+static func ui_layout_profile_example() -> Dictionary:
+	return {
+		"profile_id": &"desktop",
+		"schema_version": 1,
+		"min_width": 1024,
+		"max_width": 99999,
+		"compact_mode": false,
+		"safe_area": Rect2(0, 0, 0, 0),
+		"min_button_size": Vector2(96, 34),
+		"panel_stack_policy": &"side_by_side",
+		"summary_mode": &"standard",
+		"touch_ready": false,
+		"deprecated_state": &"active",
 	}

@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..')).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
 $RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $ProjectRoot '..\..')).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
 $Failures = @()
-$CurrentMainHead = 'eb9f5d6a9df18bd019b424b1fca3000e56e20f3b'
+$CurrentMainHead = 'a13a6fae3208850ae43e4b511511e008eb311a3e'
 
 function Add-Failure {
     param([string]$Message)
@@ -83,7 +83,7 @@ Test-RepoFileContains 'docs/DOCS_INDEX.md' @(
     'current engineering fact source',
     'Next Conversation Minimum Reading',
     'historical references',
-    'G10 is not started here'
+    'G10 is in progress on `godot/g10-progress-art-smoke-foundation`'
 )
 
 Test-RepoFileContains 'docs/MILESTONES.md' @(
@@ -125,7 +125,7 @@ Test-RepoFileContains 'docs/handoff/HANDOFF_TEMPLATE.md' @(
 )
 
 Test-RepoFileContains 'docs/ENGINEERING_STATUS.md' @(
-    'Pre-G10 Project Baseline Consolidation',
+    'G10 Progress & Art Smoke Foundation',
     $CurrentMainHead,
     'PROJECT_BASELINE.md',
     'NEXT_HANDOFF.md',
@@ -134,7 +134,7 @@ Test-RepoFileContains 'docs/ENGINEERING_STATUS.md' @(
 )
 
 Test-RepoFileContains 'Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md' @(
-    'Pre-G10 Project Baseline Consolidation',
+    'G10 Progress & Art Smoke Foundation',
     $CurrentMainHead,
     'PROJECT_BASELINE.md',
     'NEXT_HANDOFF.md',
@@ -165,8 +165,8 @@ $ForbiddenFiles = @(
 
 foreach ($RelativePath in $ForbiddenFiles) {
     $Text = Read-RepoText $RelativePath
-    if ($Text -match 'G10 implementation started|G10 has started|G10 work has begun|G10 development started') {
-        Add-Failure "doc incorrectly claims G10 implementation has started: $RelativePath"
+    if ($Text -match 'complete MetaProgress is implemented|Deploy persistence is complete|complete long-term system is implemented|action combat is implemented|new gameplay is implemented') {
+        Add-Failure "doc incorrectly claims out-of-scope G10 systems are complete: $RelativePath"
     }
 }
 

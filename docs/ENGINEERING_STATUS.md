@@ -2,19 +2,20 @@
 
 ## Stage
 
-Pre-G10 Project Baseline Consolidation: current fact source, docs index, milestone naming, and handoff template.
+G10 Progress & Art Smoke Foundation: current progress整理, bounded UI interaction fixes, dev-only diagnostics, art smoke, responsive reservation, and future content planning.
 
 ## Time
 
-`2026-06-11`
+`2026-06-12`
 
 ## Repository State
 
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`
-- Current remote main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`
+- Current main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
+- Current remote main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
+- Active G10 branch: `godot/g10-progress-art-smoke-foundation`
 - Current fact source: `docs/PROJECT_BASELINE.md`
 - Next-chat entry: `docs/NEXT_HANDOFF.md`
 - Docs navigation: `docs/DOCS_INDEX.md`
@@ -96,6 +97,18 @@ Pre-G10 Project Baseline Consolidation: current fact source, docs index, milesto
 
 G9 UI core flow baseline is in `main`. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
 
+## Implemented In G10
+
+- Baseline BUG backlog at `docs/bugs/G10_BASELINE_BUG_BACKLOG.md`.
+- ResultPanel return actions to main menu and expedition shell.
+- In-run pause/settings overlay that does not write preferences or core state.
+- MapOverlay selected-cell/action feedback.
+- Blocked CommandResult visual pulse.
+- Dev diagnostics panel with build-channel/UIVisibilityPolicy gating; default player channel hides and disables the entry.
+- G10 art smoke registry using manifest asset IDs and fallback IDs only.
+- `UILayoutProfile` responsive/mobile reservation and key panel hooks for desktop/narrow profiles.
+- G10 audit, handoff, branch change, art smoke, and future planning docs.
+
 ## Pre-G10 Baseline Documents
 
 - `docs/PROJECT_BASELINE.md` is the current engineering fact source.
@@ -103,6 +116,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - `docs/DOCS_INDEX.md` is the document navigation and historical index.
 - `docs/MILESTONES.md` maps historical G labels to stable milestone names.
 - `docs/handoff/HANDOFF_TEMPLATE.md` is required for future branch, closure, promotion, BUG-fix, and runtime-smoke handoffs.
+- G10 documents must keep `PROJECT_BASELINE.md`, `NEXT_HANDOFF.md`, `DOCS_INDEX.md`, `MILESTONES.md`, `ENGINEERING_STATUS.md`, and `GODOT_CURRENT_STATUS.md` aligned with the actual main/branch status.
 
 ## Not Implemented
 
@@ -123,6 +137,8 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 G10 is reserved for stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
 
 G10 is not a complete MetaProgress phase, Deploy persistence phase, complete long-term system phase, action combat phase, new gameplay phase, large real-art migration, or broad architecture reshaping pass unless a later approved plan changes that boundary.
+
+G10 art work is smoke/foundation only: no loose assets, no direct core resource-path coupling, no Chinese UI text baked into images, and no full art replacement.
 
 ## Documentation
 
@@ -153,6 +169,11 @@ G10 is not a complete MetaProgress phase, Deploy persistence phase, complete lon
 - `docs/DOCS_INDEX.md`
 - `docs/MILESTONES.md`
 - `docs/handoff/HANDOFF_TEMPLATE.md`
+- `docs/bugs/G10_BASELINE_BUG_BACKLOG.md`
+- `docs/audits/AUDIT_G10_PROGRESS_ART_SMOKE_FOUNDATION.md`
+- `docs/handoff/HANDOFF_G10_PROGRESS_ART_SMOKE_FOUNDATION.md`
+- `docs/branch_changes/G10_PROGRESS_ART_SMOKE_FOUNDATION_BRANCH.md`
+- `Godot/GraytailGodot/docs/GODOT_G10_PROGRESS_ART_SMOKE_REPORT.md`
 
 ## Follow-Up Boundary
 
@@ -176,5 +197,6 @@ Expected local static validations:
 - `validate_ui_presentation_layering_g9.ps1`
 - `validate_ui_final_g9.ps1`
 - `validate_project_baseline_docs_pre_g10.ps1`
+- `validate_g10_progress_art_smoke.ps1`
 
-Godot runtime smoke is not part of Pre-G10 baseline consolidation. Do not use it for resource import or persistence work without separate authorization.
+G10 runtime smoke is limited to parser/project launch and bounded UI sanity checks. Do not use it for broad resource import, persistence work, or full art migration without separate authorization.

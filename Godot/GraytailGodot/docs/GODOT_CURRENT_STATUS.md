@@ -2,15 +2,17 @@
 
 ## Updated
 
-`2026-06-11`
+`2026-06-12`
 
 ## Branch
 
-Current stage: Pre-G10 Project Baseline Consolidation.
+Current stage: G10 Progress & Art Smoke Foundation.
 
-Current main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`.
+Current main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`.
 
-Current remote main HEAD: `eb9f5d6a9df18bd019b424b1fca3000e56e20f3b`.
+Current remote main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`.
+
+Active G10 branch: `godot/g10-progress-art-smoke-foundation`.
 
 Current fact source: `docs/PROJECT_BASELINE.md`.
 
@@ -82,8 +84,11 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - The long-term page exposes task, codex, achievement, profile, and research placeholders.
 - InventoryPanel and GroundLootPanel provide formal player pickup/drop flow.
 - ResultPanel explains success/failure settlement with EventLog and TransactionLog summaries.
+- G10 adds ResultPanel return actions, a run pause/settings overlay, MapOverlay action feedback, blocked-reason pulse feedback, dev-only diagnostics gating, manifest/fallback art smoke, and `UILayoutProfile` responsive reservation.
 
 G9 UI core flow baseline is in `main`. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
+
+G10 is a bounded stabilization and smoke-foundation stage. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
 ## UI Boundary
 
@@ -122,9 +127,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_kernel_protocol_g8_2.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_ui_presentation_layering_g9.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_ui_final_g9.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_project_baseline_docs_pre_g10.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_g10_progress_art_smoke.ps1
 ```
 
-Do not run Godot/editor/game/import unless separately authorized.
+G10 permits bounded runtime smoke when explicitly planned. Do not use Godot/editor/game/import for broad resource import, persistence work, or full art migration.
 
 ## Current Unfinished Items
 

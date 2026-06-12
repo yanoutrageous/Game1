@@ -4,6 +4,7 @@ class_name MapOverlayPanel
 signal cell_action_requested(marker: Dictionary)
 
 var view_model: MiniMapViewModel
+var selected_feedback_text: String = ""
 const LEGACY_MAP_OVERLAY_VALIDATION_MARKER := "Click hidden cells to flag"
 
 
@@ -50,6 +51,9 @@ func _rebuild_grid() -> void:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		footer.text = "点击未知房间插旗；点击已探索安全房间快速返回。"
 
+	if footer != null and selected_feedback_text != "":
+		footer.text += "\n" + selected_feedback_text
+
 	if view_model == null:
 		return
 
@@ -72,3 +76,15 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 		button.expand_icon = true
 	button.pressed.connect(func() -> void: cell_action_requested.emit(marker.duplicate(true)))
 	grid.add_child(button)
+
+
+func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
+	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
+	var accepted: bool = bool(result.get("accepted", result.get("ok", false)))
+	var reason: String = String(result.get("reason_code", result.get("reason", "")))
+	var command_id: String = String(result.get("command_id", "map_action"))
+	if accepted:
+		selected_feedback_text = "MapOverlay selection: (%d,%d) command=%s accepted" % [pos.x, pos.y, command_id]
+	else:
+		selected_feedback_text = "MapOverlay selection: (%d,%d) command=%s blocked=%s" % [pos.x, pos.y, command_id, reason]
+	_rebuild_grid()
