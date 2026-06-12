@@ -102,12 +102,15 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - Baseline BUG backlog at `docs/bugs/G10_BASELINE_BUG_BACKLOG.md`.
 - ResultPanel return actions to main menu and expedition shell.
 - In-run pause/settings overlay that does not write preferences or core state.
+- MiniMapPanel direct click opens MapOverlay through the existing `open_map` command path.
 - MapOverlay selected-cell/action feedback.
+- MapOverlay minimal open-source hint.
 - Blocked CommandResult visual pulse.
 - Dev diagnostics panel with build-channel/UIVisibilityPolicy gating; default player channel hides and disables the entry.
 - G10 art smoke registry using manifest asset IDs and fallback IDs only.
 - `UILayoutProfile` responsive/mobile reservation and key panel hooks for desktop/narrow profiles.
 - G10 audit, handoff, branch change, art smoke, and future planning docs.
+- G10 closeout validation transcript at `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md`.
 
 ## Pre-G10 Baseline Documents
 
@@ -174,6 +177,7 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 - `docs/handoff/HANDOFF_G10_PROGRESS_ART_SMOKE_FOUNDATION.md`
 - `docs/branch_changes/G10_PROGRESS_ART_SMOKE_FOUNDATION_BRANCH.md`
 - `Godot/GraytailGodot/docs/GODOT_G10_PROGRESS_ART_SMOKE_REPORT.md`
+- `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md`
 
 ## Follow-Up Boundary
 

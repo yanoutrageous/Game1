@@ -6,7 +6,9 @@
 - Formal name: Progress & Art Smoke Foundation
 - Chinese name: 当前进度整理与美术接入基础验证
 - Branch: `godot/g10-progress-art-smoke-foundation`
-- Branch HEAD: record from `git rev-parse HEAD` after final commit/push
+- G10 implementation HEAD before closeout: `cf6e73d16574f6b900d18217471522aa18a6ab10`
+- Final G10 closeout HEAD: recorded in final execution report
+- Final mainline HEAD: recorded in final execution report
 - Merged to main: no
 - Corresponding main HEAD: `a13a6fae3208850ae43e4b511511e008eb311a3e`
 
@@ -32,6 +34,9 @@
 - Added dev-only diagnostics panel controlled by build-channel/UIVisibilityPolicy-equivalent gating.
 - Added G10 art smoke registry using manifest asset IDs and fallback IDs only.
 - Added `UILayoutProfile` responsive/mobile reservation and key panel hooks.
+- Added MiniMapPanel direct click to open MapOverlay through the existing `open_map` command path.
+- Kept MapOverlay feedback minimal: open-source hint plus selected/action feedback only.
+- Added closeout validation transcript at `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md`.
 - Updated current fact-source/status docs from `eb9f5d6...` to `a13a6fa...`.
 
 ## Explicitly Not Done
@@ -48,7 +53,7 @@
 
 ## Validation Results
 
-- Static validation: final result recorded in final report.
+- Static validation: 13-item closeout transcript recorded at `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md`.
 - Runtime smoke: Godot headless parse/project launch PASS; no parser errors observed.
 - Manual smoke: not a full manual QA pass; use G10 backlog for remaining targeted manual checks.
 
@@ -61,7 +66,7 @@
 
 ## Next Handoff Guide
 
-- Recommended next step: targeted stabilization or mainline promotion after validation and user review.
+- Recommended next step: after mainline promotion, close G10 and move only to non-G10 follow-up if separately approved.
 - Not recommended next step: complete MetaProgress, Deploy persistence, full art migration, action combat, or new gameplay.
 - Files to inspect first: `docs/bugs/G10_BASELINE_BUG_BACKLOG.md`, `Godot/GraytailGodot/scripts/core/run/run_scene.gd`, `Godot/GraytailGodot/scripts/ui/dev/dev_diagnostics_panel.gd`, `Godot/GraytailGodot/scripts/presentation/g10_art_smoke_registry.gd`.
 

@@ -145,7 +145,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_dispatch_command(&"flag_current_cell")
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("open_map"):
-		_open_map_from_ui()
+		_open_map_from_ui(&"keyboard")
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("debug_restart_run"):
 		_restart_run_from_ui()
@@ -206,6 +206,7 @@ func _build_run_overlay() -> void:
 	minimap_panel.offset_top = 22.0
 	minimap_panel.offset_right = 358.0
 	minimap_panel.offset_bottom = 238.0
+	minimap_panel.open_map_requested.connect(func() -> void: _open_map_from_ui(&"minimap"))
 	run_overlay_root.add_child(minimap_panel)
 
 	hud = HUDScene.instantiate() as Hud
@@ -234,7 +235,7 @@ func _build_run_overlay() -> void:
 	_add_menu_button(action_bar, "E 搜索/交互", func() -> void: _handle_interact_pressed())
 	_add_menu_button(action_bar, "背包", func() -> void: _show_inventory_panel())
 	_add_menu_button(action_bar, "地面物品", func() -> void: _show_ground_loot_panel())
-	_add_menu_button(action_bar, "M 地图", func() -> void: _open_map_from_ui())
+	_add_menu_button(action_bar, "M 地图", func() -> void: _open_map_from_ui(&"button"))
 	_add_menu_button(action_bar, "Space/J 战斗", func() -> void: _fight_and_show_result())
 
 	command_result_label = _add_label(run_overlay_root, "CommandResultReasonLabel", Rect2(982, 156, 238, 64), "操作提示：无", 13)
@@ -888,10 +889,12 @@ func _flash_blocked_reason() -> void:
 	tween.tween_property(command_result_label, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.18)
 
 
-func _open_map_from_ui() -> void:
+func _open_map_from_ui(source: StringName = &"button") -> void:
 	_dispatch_command(&"open_map")
 	if map_overlay_panel != null:
 		map_overlay_panel.toggle_overlay()
+		if map_overlay_panel.visible:
+			map_overlay_panel.show_open_feedback(source)
 
 
 func _toggle_debug_panel() -> void:

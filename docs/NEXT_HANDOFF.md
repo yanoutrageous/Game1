@@ -17,7 +17,7 @@ Main contains playable flow, asset ledger and settlement rules, architecture har
 
 The UI baseline includes a three-page shell, InventoryPanel, GroundLootPanel, pickup/drop through CommandBus, blocked reason display, and ResultPanel settlement explanation.
 
-G10 adds bounded player-flow fixes, dev-only diagnostics gating, manifest/fallback art smoke, responsive layout contracts, and updated bug/backlog documentation. It does not change core gameplay state ownership.
+G10 adds bounded player-flow fixes, MiniMap click-to-map, dev-only diagnostics gating, manifest/fallback art smoke, responsive layout contracts, and updated bug/backlog documentation. It does not change core gameplay state ownership.
 
 ## What Main Does Not Mean
 
@@ -48,4 +48,4 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 
 ## First Thing To Know
 
-The next conversation should know: main is at `a13a6fae3208850ae43e4b511511e008eb311a3e`; G10 is a bounded stabilization/art-smoke foundation branch, not a new gameplay or full systems phase; read `docs/bugs/G10_BASELINE_BUG_BACKLOG.md` before changing UI flow.
+The next conversation should know: main starts from `a13a6fae3208850ae43e4b511511e008eb311a3e` before G10 promotion; G10 is a bounded stabilization/art-smoke foundation branch, not a new gameplay or full systems phase; read `docs/bugs/G10_BASELINE_BUG_BACKLOG.md` and `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md` before changing UI flow.

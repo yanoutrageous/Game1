@@ -8,6 +8,7 @@ This document records what G10 intentionally leaves for later planning. It is no
 
 - Stabilization and BUG-fix batches should start from `docs/bugs/G10_BASELINE_BUG_BACKLOG.md`.
 - UI readability work should remain bounded to existing shell, InventoryPanel, GroundLootPanel, MapOverlay, ResultPanel, and pause/settings overlay.
+- MiniMapPanel click-to-map is now a baseline interaction; later map work should extend MapOverlay through existing command/query boundaries rather than adding a second map system.
 - Art production planning should continue through manifest IDs, registry entries, fallback records, ThemeProfile, PresentationLayerEntry, and CharacterPresentationConfig.
 - Responsive work should extend `UILayoutProfile` after desktop flow remains stable.
 

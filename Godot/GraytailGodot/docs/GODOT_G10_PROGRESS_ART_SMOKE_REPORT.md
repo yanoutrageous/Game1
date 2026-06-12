@@ -10,7 +10,9 @@ This is not a complete final UI, complete MetaProgress, Deploy persistence, comp
 
 - ResultPanel now exposes return actions to main menu and expedition shell.
 - Run screen has a pause/settings overlay that does not write preferences or core state.
+- MiniMapPanel can be clicked directly to open MapOverlay through the existing `open_map` command path.
 - MapOverlay shows selected/action feedback after flag or teleport commands.
+- MapOverlay also shows a minimal open-source hint when opened from MiniMap, keyboard, or button.
 - Blocked CommandResult feedback has a short visible pulse.
 
 ## Dev Diagnostics
@@ -45,3 +47,5 @@ The final validation chain must include all previous validators plus:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_g10_progress_art_smoke.ps1
 ```
+
+Closeout transcript: `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md`.

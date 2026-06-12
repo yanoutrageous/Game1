@@ -13,6 +13,7 @@
   - ResultPanel return actions.
   - Run pause/settings overlay.
   - MapOverlay selected/action feedback.
+  - MiniMapPanel direct click to open MapOverlay through the existing `open_map` path.
   - Blocked CommandResult flash feedback.
 - Added dev-only diagnostics contracts and panel:
   - Default player channel hides/disables diagnostics.
@@ -29,6 +30,8 @@
   - key panel profile hooks
 - Updated baseline/status docs to use `a13a6fae3208850ae43e4b511511e008eb311a3e`.
 - Added G10 validation script.
+- Added closeout validation transcript at `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md`.
+- Fixed G10 handoff HEAD placeholder without writing a self-referential commit SHA.
 
 ## Not Changed
 

@@ -84,7 +84,7 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - The long-term page exposes task, codex, achievement, profile, and research placeholders.
 - InventoryPanel and GroundLootPanel provide formal player pickup/drop flow.
 - ResultPanel explains success/failure settlement with EventLog and TransactionLog summaries.
-- G10 adds ResultPanel return actions, a run pause/settings overlay, MapOverlay action feedback, blocked-reason pulse feedback, dev-only diagnostics gating, manifest/fallback art smoke, and `UILayoutProfile` responsive reservation.
+- G10 adds ResultPanel return actions, a run pause/settings overlay, MiniMapPanel click-to-map, MapOverlay action feedback, blocked-reason pulse feedback, dev-only diagnostics gating, manifest/fallback art smoke, and `UILayoutProfile` responsive reservation.
 
 G9 UI core flow baseline is in `main`. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
 

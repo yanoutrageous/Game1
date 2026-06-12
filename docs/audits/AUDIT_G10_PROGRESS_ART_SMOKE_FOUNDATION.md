@@ -9,7 +9,7 @@
 ## Findings
 
 - G10 remains within the approved boundary: no complete MetaProgress, Deploy persistence, complete long-term backend, action combat, new gameplay, full art replacement, or broad architecture reshaping.
-- Player-facing UI fixes are limited to ResultPanel return actions, run pause/settings overlay, MapOverlay action feedback, and blocked CommandResult visual feedback.
+- Player-facing UI fixes are limited to ResultPanel return actions, run pause/settings overlay, MiniMapPanel click-to-map, MapOverlay action feedback, and blocked CommandResult visual feedback.
 - Dev diagnostics are gated by build-channel/UIVisibilityPolicy-equivalent constants. The default player channel hides and disables the entry.
 - Art smoke uses manifest `asset_id` and fallback records only through `G10ArtSmokeRegistry`; it does not load direct resource paths and does not add loose art files.
 - Responsive/mobile work is limited to `UILayoutProfile` contracts and key panel hooks. It does not claim complete mobile or touch support.
@@ -23,7 +23,7 @@
 ## Validation
 
 - Full validation chain is required before push, including `validate_g10_progress_art_smoke.ps1`.
-- Final pass/fail status is recorded in the final report after command execution.
+- Closeout pass/fail transcript is recorded in `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md`; final mainline pass/fail status is recorded in the final execution report.
 
 ## Residual Risk
 

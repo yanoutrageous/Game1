@@ -3,8 +3,11 @@ class_name MiniMapPanel
 
 # UI reads MiniMapViewModel only. UI must not read TruthMap directly.
 
+signal open_map_requested
+
 var view_model: MiniMapViewModel
 const LEGACY_MINIMAP_VALIDATION_MARKER := "MiniMap: icons fallback to text"
+const G10_MINIMAP_CLICK_VALIDATION_MARKER := "MiniMapPanel click opens MapOverlay"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
@@ -20,7 +23,20 @@ func clear() -> void:
 
 
 func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	tooltip_text = "Click to open MapOverlay"
+	var placeholder := get_node_or_null("PlaceholderLabel") as Label
+	if placeholder != null:
+		placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_rebuild_grid()
+
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse_button: InputEventMouseButton = event
+		if mouse_button.button_index == MOUSE_BUTTON_LEFT and mouse_button.pressed:
+			open_map_requested.emit()
+			accept_event()
 
 
 func _rebuild_grid() -> void:
@@ -28,6 +44,7 @@ func _rebuild_grid() -> void:
 	var placeholder := get_node_or_null("PlaceholderLabel") as Label
 	if grid == null:
 		return
+	grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	for child in grid.get_children():
 		child.queue_free()
@@ -58,6 +75,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		icon.texture = asset_ref
 		icon.custom_minimum_size = size
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		icon.tooltip_text = String(marker.get("tooltip", ContentDB.get_placeholder_label(asset_id)))
 		grid.add_child(icon)
 	else:
@@ -65,6 +83,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		label.custom_minimum_size = size
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
 		label.text = String(marker.get("label", "?"))
 		label.tooltip_text = String(marker.get("tooltip", ContentDB.get_placeholder_label(asset_id) if asset_id != &"" else "unknown cell"))

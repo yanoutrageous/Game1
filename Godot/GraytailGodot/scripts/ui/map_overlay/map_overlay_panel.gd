@@ -88,3 +88,8 @@ func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 	else:
 		selected_feedback_text = "MapOverlay selection: (%d,%d) command=%s blocked=%s" % [pos.x, pos.y, command_id, reason]
 	_rebuild_grid()
+
+
+func show_open_feedback(source: StringName) -> void:
+	selected_feedback_text = "MapOverlay opened from %s. Click cells for flag or safe-room return." % String(source)
+	_rebuild_grid()

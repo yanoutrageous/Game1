@@ -53,6 +53,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 - Pickup/drop can be triggered from player-facing UI and returns CommandResult feedback.
 - ResultPanel has explicit return actions to main and expedition shell.
 - The run screen has a pause/settings overlay for player-facing interruption without persistence writes.
+- MiniMapPanel direct click opens MapOverlay through the existing `open_map` command path.
+- MapOverlay provides minimal open-source and selected/action feedback.
 - Dev diagnostics are shell-only, gated by a build-channel/UIVisibilityPolicy equivalent, hidden and disabled in the default player channel.
 - A small art smoke registry validates manifest asset IDs and fallback IDs for panel, button, icon, character placeholder, and theme overlay roles.
 - `UILayoutProfile` reserves desktop/narrow layout behavior for future responsive/mobile work.

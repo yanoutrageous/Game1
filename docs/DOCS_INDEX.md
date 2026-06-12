@@ -40,6 +40,10 @@ Current and recent audit files live under `docs/audits/`.
 - G9 UI Core Flow Baseline audit.
 - G10 Progress & Art Smoke Foundation audit.
 
+## Validation Evidence
+
+- `docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md` records the G10 closeout 13-item static validation run.
+
 Older audits remain useful for traceability but are not the first source for current state.
 
 ## Handoff Documents

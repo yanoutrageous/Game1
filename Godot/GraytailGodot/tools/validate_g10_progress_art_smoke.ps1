@@ -82,8 +82,18 @@ Test-RepoFileContains 'docs/bugs/G10_BASELINE_BUG_BACKLOG.md' @(
     $CurrentMainHead
 )
 
+Test-RepoFileContains 'docs/validation/G10_CLOSEOUT_VALIDATION_TRANSCRIPT.md' @(
+    'G10 Closeout Validation Transcript',
+    'Validation count: 13',
+    'validate_g10_progress_art_smoke.ps1',
+    'G10_PROGRESS_ART_SMOKE_VALIDATION=PASS',
+    'Result: all 13 static validations PASS'
+)
+
 Test-ProjectFileContains 'scripts/core/run/run_scene.gd' @(
     'PauseSettingsOverlayPanel',
+    'open_map_requested.connect',
+    '_open_map_from_ui(&"minimap")',
     'return_main_requested.connect',
     'return_deploy_requested.connect',
     'BlockedReasonFlash',
@@ -125,8 +135,17 @@ Test-ProjectFileContains 'scripts/ui/result/result_panel.gd' @(
 
 Test-ProjectFileContains 'scripts/ui/map_overlay/map_overlay_panel.gd' @(
     'show_action_feedback',
+    'show_open_feedback',
     'selected_feedback_text',
     'cell_action_requested'
+)
+
+Test-ProjectFileContains 'scripts/ui/minimap/minimap_panel.gd' @(
+    'open_map_requested',
+    '_gui_input',
+    'MOUSE_BUTTON_LEFT',
+    'MiniMapPanel click opens MapOverlay',
+    'MOUSE_FILTER_IGNORE'
 )
 
 Test-ProjectFileContains 'scripts/ui/shell/ui_layout_profile.gd' @(
