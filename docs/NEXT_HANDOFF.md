@@ -6,10 +6,11 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
-- Remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
+- Remote live main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
 - Current branch: `main`
-- Current milestone: Progress & Art Smoke Foundation (G10) is complete, merged to main, and closed. The closeout follow-up is documentation calibration only; it is not G11.
+- Current milestone: G11 Mainline Testability & UX Readability Repair is active. G10 is complete, merged to main, and closed.
+- G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 
 ## What Main Can Do
 
@@ -34,8 +35,9 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 1. `docs/PROJECT_BASELINE.md`
 2. `docs/DOCS_INDEX.md`
 3. `docs/MILESTONES.md`
-4. `docs/validation/G10_CLOSEOUT_REMOTE_CONFIRMATION_FOLLOWUP.md`
-5. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff
+4. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+5. `docs/validation/G10_CLOSEOUT_REMOTE_CONFIRMATION_FOLLOWUP.md`
+6. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff
 
 ## Safety And Dirty Rules
 
@@ -49,4 +51,4 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 
 ## First Thing To Know
 
-The next conversation should know: main is at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`; remote live `main` and remote live `godot/g10-progress-art-smoke-foundation` were both confirmed at that commit; G10 is complete, merged, and closed. This does not start G11 and does not mean new gameplay, full systems, persistence, final UI, action combat, or full art migration is complete.
+The next conversation should know: main is at `53a4e122376998d2f6d0a2a617b753a3d382b2f0`; G11 is a narrow mainline testability and UX readability repair stage. G10 closeout remains `aa19db2f1989c6ebfc22676d84b83da5c6977f64`; G11 is not a G10 continuation, not G12, and does not mean new gameplay, full systems, persistence, final UI, action combat, or full art migration is complete.

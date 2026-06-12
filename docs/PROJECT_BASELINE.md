@@ -2,14 +2,15 @@
 
 ## Current Authority
 
-- Stage: Post-G10 closeout baseline after Progress & Art Smoke Foundation.
+- Stage: G11 Mainline Testability & UX Readability Repair.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
-- Current remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+- Current main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
+- Current remote live main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout status: complete, merged to main, and closed.
+- G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
 
@@ -26,6 +27,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - Current UI includes the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, CommandResult reason display, and ResultPanel settlement explanation.
 - G10 Progress & Art Smoke Foundation is complete and in `main`.
 - G10 added bounded progress整理, interaction fixes, dev-only diagnostics gating, art smoke registry/fallback checks, and responsive layout contracts on top of the G9 UI core flow baseline.
+- G11 is a narrow mainline testability and UX readability repair stage for current UI text, tooltips, hand-test coverage, and status documentation.
 
 ## Current Validation Chain
 
@@ -78,7 +80,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-After G10 closeout, use this baseline for targeted stabilization, BUG-fix batches, final UI readability passes, art production planning, and future content planning only after separate approval. This closeout follow-up does not start G11. Keep handoff files current for every future branch or fix batch.
+Use G11 only for targeted mainline testability, hand-test coverage, and UX readability repair. Keep future branch or fix-batch handoff files current.
+
+## G11 Boundary
+
+G11 covers current mainline testability, manual smoke checklist clarity, current fact-source calibration, and small UI text/tooltip/empty-state/disabled-reason/return-path readability fixes.
+
+G11 must not cover complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, new levels, new enemies, new economy systems, full art migration, complete final UI, complete settings, complete diagnostics, mobile adaptation, broad architecture reshaping, or broad formatting.
 
 ## G10 Boundary
 

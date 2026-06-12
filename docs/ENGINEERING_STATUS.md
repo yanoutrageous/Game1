@@ -2,7 +2,7 @@
 
 ## Stage
 
-Post-G10 closeout baseline. Progress & Art Smoke Foundation (G10) is complete, merged to main, and closed. This status reflects closeout follow-up documentation calibration only; it does not start G11.
+G11 Mainline Testability & UX Readability Repair. This is a narrow current-main repair stage for hand-test coverage, current fact-source calibration, and small UI readability fixes. It is not G10 continuation and not G12.
 
 ## Time
 
@@ -13,8 +13,8 @@ Post-G10 closeout baseline. Progress & Art Smoke Foundation (G10) is complete, m
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
-- Current remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
+- Current main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
+- Current remote live main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - Current fact source: `docs/PROJECT_BASELINE.md`
@@ -120,7 +120,14 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - `docs/DOCS_INDEX.md` is the document navigation and historical index.
 - `docs/MILESTONES.md` maps historical G labels to stable milestone names.
 - `docs/handoff/HANDOFF_TEMPLATE.md` is required for future branch, closure, promotion, BUG-fix, and runtime-smoke handoffs.
-- G10 closeout follow-up documents must keep `PROJECT_BASELINE.md`, `NEXT_HANDOFF.md`, `DOCS_INDEX.md`, `MILESTONES.md`, `ENGINEERING_STATUS.md`, and `GODOT_CURRENT_STATUS.md` aligned with the actual main and remote live status.
+- G11 documents must keep `PROJECT_BASELINE.md`, `NEXT_HANDOFF.md`, `DOCS_INDEX.md`, `MILESTONES.md`, `ENGINEERING_STATUS.md`, and `GODOT_CURRENT_STATUS.md` aligned with the actual main and remote live status.
+- G11 validation checklist: `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`.
+
+## Implemented In G11
+
+- Current fact-source documents are calibrated to main `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
+- Manual playtest guidance covers MiniMap click-to-map, MapOverlay feedback, Inventory/GroundLoot, ResultPanel return routes, Pause/Settings overlay, and hidden dev diagnostics.
+- UI readability changes are limited to text, tooltip, empty-state, disabled-reason, and return-path wording.
 
 ## Not Implemented
 
@@ -182,7 +189,7 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 
 ## Follow-Up Boundary
 
-No follow-up branch is active as part of this closeout follow-up. Any future UI shell branch or G11 work requires separate approval.
+G11 is active as a narrow mainline repair stage. Any G12 work or broader UI/system branch requires separate approval.
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 

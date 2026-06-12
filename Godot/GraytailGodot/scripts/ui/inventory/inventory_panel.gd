@@ -84,7 +84,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		child.queue_free()
 	if inventory_items.is_empty() and equipped_items.is_empty():
 		var empty_label := Label.new()
-		empty_label.text = "背包为空。搜索、宝箱、怪物或事件奖励可生成物品。"
+		empty_label.text = "背包为空。搜索、宝箱、怪物或事件奖励可能获得物品；容量不足时物品可能留在地面。"
 		item_list.add_child(empty_label)
 	else:
 		for item: Dictionary in inventory_items:
@@ -92,7 +92,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		for item: Dictionary in equipped_items:
 			_add_item_row(item, false)
 	if tooltip_label != null:
-		tooltip_label.text = "选择物品可查看说明。已装备物品默认不占容量；G9 不实现完整装备 UI。"
+		tooltip_label.text = "选择物品可查看说明；背包物品可丢弃，已装备物品暂不可从此面板丢弃。"
 
 
 func show_command_result(result: Dictionary) -> void:
@@ -137,6 +137,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	drop_button.name = "InventoryDropButton"
 	drop_button.text = "丢弃"
 	drop_button.disabled = not can_drop
+	drop_button.tooltip_text = "丢弃到当前房间地面。" if can_drop else "已装备物品暂不可从此面板丢弃。"
 	var instance_id: String = String(item.get("instance_id", ""))
 	drop_button.pressed.connect(func() -> void: drop_item_requested.emit(instance_id))
 	row.add_child(drop_button)

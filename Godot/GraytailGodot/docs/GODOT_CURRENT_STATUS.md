@@ -6,13 +6,15 @@
 
 ## Branch
 
-Current stage: Post-G10 closeout baseline. Progress & Art Smoke Foundation (G10) is complete, merged to main, and closed.
+Current stage: G11 Mainline Testability & UX Readability Repair.
 
-Current main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+Current main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
 
-Current remote live main HEAD: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+Current remote live main HEAD: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
 
 Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
+
+G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 
 Current fact source: `docs/PROJECT_BASELINE.md`.
 
@@ -85,6 +87,7 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - InventoryPanel and GroundLootPanel provide formal player pickup/drop flow.
 - ResultPanel explains success/failure settlement with EventLog and TransactionLog summaries.
 - G10 adds ResultPanel return actions, a run pause/settings overlay, MiniMapPanel click-to-map, MapOverlay action feedback, blocked-reason pulse feedback, dev-only diagnostics gating, manifest/fallback art smoke, and `UILayoutProfile` responsive reservation.
+- G11 improves mainline testability and UX readability through manual playtest coverage, clearer MapOverlay feedback, inventory/ground-loot hints, result return tooltips, and Pause/Settings wording.
 
 Current `main` includes G10 Progress & Art Smoke Foundation. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, and not complete long-term system completion.
 
@@ -105,7 +108,7 @@ Future UI work should consume:
 - InventoryPanel and GroundLootPanel snapshots
 - ResultPanel EventLog and TransactionLog summaries
 
-Any future follow-up UI branch should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state. No G11 or UI branch is active as part of this closeout follow-up.
+G11 UI work should only consume ViewModel/snapshot data and dispatch commands. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state. G11 does not start G12 or any new gameplay/system branch.
 
 Presentation work should map semantic ids into ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, panel skins, and fallback asset ids. Core gameplay should not directly build image paths.
 

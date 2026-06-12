@@ -84,12 +84,12 @@ func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 	var reason: String = String(result.get("reason_code", result.get("reason", "")))
 	var command_id: String = String(result.get("command_id", "map_action"))
 	if accepted:
-		selected_feedback_text = "MapOverlay selection: (%d,%d) command=%s accepted" % [pos.x, pos.y, command_id]
+		selected_feedback_text = "地图反馈：已选择 (%d,%d)，命令 %s 已接受。" % [pos.x, pos.y, command_id]
 	else:
-		selected_feedback_text = "MapOverlay selection: (%d,%d) command=%s blocked=%s" % [pos.x, pos.y, command_id, reason]
+		selected_feedback_text = "地图反馈：已选择 (%d,%d)，命令 %s 被阻止：%s" % [pos.x, pos.y, command_id, reason]
 	_rebuild_grid()
 
 
 func show_open_feedback(source: StringName) -> void:
-	selected_feedback_text = "MapOverlay opened from %s. Click cells for flag or safe-room return." % String(source)
+	selected_feedback_text = "地图反馈：从 %s 打开。点击未知房间插旗；点击已探索安全房间快速返回。" % String(source)
 	_rebuild_grid()

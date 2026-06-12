@@ -372,10 +372,10 @@ func _build_runtime_modals() -> void:
 	pause_status_label = Label.new()
 	pause_status_label.name = "PauseSettingsOverlayStatus"
 	pause_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	pause_status_label.text = "本 overlay 只处理 UI 暂停、设置入口与返回，不写本地持久化偏好。"
+	pause_status_label.text = "本面板只暂停 UI 并提供设置入口；继续会返回当前局，不写本地持久化偏好。"
 	pause_content.add_child(pause_status_label)
 	_add_menu_button(pause_content, "继续", func() -> void: pause_panel.visible = false)
-	_add_menu_button(pause_content, "设置占位", func() -> void: _open_settings_from_pause())
+	_add_menu_button(pause_content, "设置说明", func() -> void: _open_settings_from_pause())
 	_add_menu_button(pause_content, "关闭", func() -> void: pause_panel.visible = false)
 
 
@@ -450,7 +450,7 @@ func _show_pause_panel() -> void:
 		return
 	if pause_status_label != null and run_context != null:
 		var snapshot: Dictionary = run_context.get_status_snapshot()
-		pause_status_label.text = "暂停中。当前阶段=%s，房间=%s。设置入口为壳层，不写持久化偏好。" % [
+		pause_status_label.text = "暂停中。当前阶段=%s，房间=%s。点击继续返回当前局；设置入口不保存偏好。" % [
 			snapshot.get("phase", ""),
 			snapshot.get("current_room", ""),
 		]
@@ -459,7 +459,7 @@ func _show_pause_panel() -> void:
 
 func _open_settings_from_pause() -> void:
 	if pause_status_label != null:
-		pause_status_label.text = "设置占位：后续可接入音量、可访问性和 UI 减法；本阶段不写本地持久化偏好。"
+		pause_status_label.text = "设置说明：后续可接入音量、可访问性和 UI 减法；本阶段不写本地持久化偏好。"
 
 
 func _return_from_result_to_main() -> void:

@@ -2,11 +2,11 @@
 
 ## Scope
 
-This guide now treats the older G4-G7 routes as historical foundations and points manual smoke toward the G9 UI core flow baseline in current `main`. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+This guide treats the older G4-G7 routes as historical foundations and points manual smoke toward the current mainline G11 testability and UX readability baseline. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
 
 Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
 
-Current baseline smoke should cover the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, and ResultPanel settlement explanation. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
+Current baseline smoke should cover the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, and ResultPanel settlement/return routes. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
 
 ## Main Menu / Deploy Shell
 
@@ -89,6 +89,21 @@ Expected G7 behavior:
 - Exit rooms open an ExtractConfirmPanel before final result.
 - ResultPanel has enough space for extraction/failure summaries.
 - The old event placeholder prompt should not appear.
+
+## G11 Mainline UX Readability Smoke
+
+Use this route for the current mainline readability pass. This checklist is valid for manual testing only; do not mark it PASS unless the route was actually played.
+
+- Start from the main menu, choose `出发探索`, inspect the deploy shell, then start a standard run with `确认出发`.
+- Click MiniMap directly and confirm MapOverlay opens without using only the keyboard shortcut.
+- In MapOverlay, click an unknown cell and confirm the feedback line names the selected coordinate, command id, and accepted/blocked state.
+- In MapOverlay, click an explored safe cell and confirm the feedback line remains readable before the overlay closes or the return action completes.
+- Open InventoryPanel and confirm empty state, item tooltip, command result, and disabled drop reason are readable.
+- Open GroundLootPanel and confirm empty state, pickup tooltip, capacity hint, and `blocked_capacity` reason are understandable.
+- Complete or fail a run and confirm ResultPanel explains the outcome and exposes clear return routes to main menu and deploy page.
+- Open Pause/Settings overlay during a run and confirm the text explains that continue returns to the current run and settings do not write local preferences.
+- Open the settings shell and confirm dev-only diagnostics remains hidden or disabled in the default player channel.
+- Record whether Godot/editor/game/import was run; if not run, record "not run" rather than claiming runtime PASS.
 
 ## Known limits
 

@@ -81,13 +81,13 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		child.queue_free()
 	if ground_items.is_empty():
 		var empty_label := Label.new()
-		empty_label.text = "当前房间没有地面物品。搜索、宝箱、怪物或事件奖励可能把物品生成在地面。"
+		empty_label.text = "当前房间没有地面物品。搜索、宝箱、怪物或事件奖励可能把物品留在地面。"
 		item_list.add_child(empty_label)
 	else:
 		for item: Dictionary in ground_items:
 			_add_item_row(item)
 	if tooltip_label != null:
-		tooltip_label.text = "拾取会检查背包容量；容量不足时显示 blocked_capacity。"
+		tooltip_label.text = "选择物品可查看说明；拾取会检查背包容量，容量不足时显示 blocked_capacity。"
 
 
 func show_command_result(result: Dictionary) -> void:
@@ -131,6 +131,7 @@ func _add_item_row(item: Dictionary) -> void:
 	var pickup_button := Button.new()
 	pickup_button.name = "GroundLootPickupButton"
 	pickup_button.text = "拾取"
+	pickup_button.tooltip_text = "拾取到背包；容量不足时会显示 blocked_capacity。"
 	var instance_id: String = String(item.get("instance_id", ""))
 	pickup_button.pressed.connect(func() -> void: pickup_item_requested.emit(instance_id))
 	row.add_child(pickup_button)
