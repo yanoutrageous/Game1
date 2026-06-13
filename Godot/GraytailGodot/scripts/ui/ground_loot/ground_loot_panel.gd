@@ -36,7 +36,8 @@ func build() -> void:
 	root.add_child(header)
 	title_label = Label.new()
 	title_label.name = "GroundLootPanelTitle"
-	title_label.text = "地面物品"
+	title_label.text = "地面回收物"
+	title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 	title_label.add_theme_font_size_override("font_size", 20)
 	header.add_child(title_label)
 	var close_button := Button.new()
@@ -48,6 +49,8 @@ func build() -> void:
 	summary_label = Label.new()
 	summary_label.name = "GroundLootSummary"
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary_label.add_theme_font_size_override("font_size", 13)
+	summary_label.add_theme_constant_override("line_spacing", 2)
 	root.add_child(summary_label)
 
 	item_list = VBoxContainer.new()
@@ -59,6 +62,8 @@ func build() -> void:
 	tooltip_label.name = "GroundLootItemTooltip"
 	tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tooltip_label.custom_minimum_size = Vector2(500, 120)
+	tooltip_label.add_theme_font_size_override("font_size", 13)
+	tooltip_label.add_theme_constant_override("line_spacing", 2)
 	root.add_child(tooltip_label)
 
 	last_result_label = Label.new()
@@ -71,7 +76,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	if summary_label == null:
 		build()
 	var ground_items: Array = _array_from(snapshot, "room_floor_items")
-	summary_label.text = "当前房间地面物品：%s | 背包容量：%s/%s | 剩余：%s" % [
+	summary_label.text = "当前房间地面回收物：%s | 背包容量：%s/%s | 剩余容量：%s" % [
 		ground_items.size(),
 		snapshot.get("backpack_used", 0),
 		snapshot.get("backpack_capacity", 0),
@@ -81,7 +86,9 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		child.queue_free()
 	if ground_items.is_empty():
 		var empty_label := Label.new()
-		empty_label.text = "当前房间没有地面物品。搜索、宝箱、怪物或事件奖励可能把物品留在地面。"
+		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty_label.add_theme_constant_override("line_spacing", 2)
+		empty_label.text = "当前房间没有地面回收物。搜索、物资箱、异常体或事件奖励可能把物品留在地面。"
 		item_list.add_child(empty_label)
 	else:
 		for item: Dictionary in ground_items:
@@ -131,7 +138,7 @@ func _add_item_row(item: Dictionary) -> void:
 	var pickup_button := Button.new()
 	pickup_button.name = "GroundLootPickupButton"
 	pickup_button.text = "拾取"
-	pickup_button.tooltip_text = "拾取到背包；容量不足时会显示 blocked_capacity。"
+	pickup_button.tooltip_text = "拾取到背包；容量不足时会显示 blocked_capacity 并保留在地面。"
 	var instance_id: String = String(item.get("instance_id", ""))
 	pickup_button.pressed.connect(func() -> void: pickup_item_requested.emit(instance_id))
 	row.add_child(pickup_button)

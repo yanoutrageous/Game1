@@ -36,7 +36,8 @@ func build() -> void:
 	root.add_child(header)
 	title_label = Label.new()
 	title_label.name = "InventoryPanelTitle"
-	title_label.text = "背包"
+	title_label.text = "回收背包"
+	title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 	title_label.add_theme_font_size_override("font_size", 20)
 	header.add_child(title_label)
 	var close_button := Button.new()
@@ -48,6 +49,8 @@ func build() -> void:
 	summary_label = Label.new()
 	summary_label.name = "InventorySummary"
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary_label.add_theme_font_size_override("font_size", 13)
+	summary_label.add_theme_constant_override("line_spacing", 2)
 	root.add_child(summary_label)
 
 	item_list = VBoxContainer.new()
@@ -59,6 +62,8 @@ func build() -> void:
 	tooltip_label.name = "InventoryItemTooltip"
 	tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tooltip_label.custom_minimum_size = Vector2(500, 120)
+	tooltip_label.add_theme_font_size_override("font_size", 13)
+	tooltip_label.add_theme_constant_override("line_spacing", 2)
 	root.add_child(tooltip_label)
 
 	last_result_label = Label.new()
@@ -72,7 +77,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		build()
 	var inventory_items: Array = _array_from(snapshot, "inventory_items")
 	var equipped_items: Array = _array_from(snapshot, "equipped_items")
-	summary_label.text = "容量：%s/%s | 黑币：%s | 金币：%s | 背包物品：%s | 已装备：%s" % [
+	summary_label.text = "背包容量：%s/%s | 待结算黑币：%s | 安全金币：%s | 背包物品：%s | 已装备：%s" % [
 		snapshot.get("backpack_used", 0),
 		snapshot.get("backpack_capacity", 0),
 		snapshot.get("black_coin", 0),
@@ -84,7 +89,9 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		child.queue_free()
 	if inventory_items.is_empty() and equipped_items.is_empty():
 		var empty_label := Label.new()
-		empty_label.text = "背包为空。搜索、宝箱、怪物或事件奖励可能获得物品；容量不足时物品可能留在地面。"
+		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty_label.add_theme_constant_override("line_spacing", 2)
+		empty_label.text = "背包为空。搜索、物资箱、异常体或事件奖励可能获得物品；容量不足时物品会留在当前房间地面。"
 		item_list.add_child(empty_label)
 	else:
 		for item: Dictionary in inventory_items:
@@ -92,7 +99,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		for item: Dictionary in equipped_items:
 			_add_item_row(item, false)
 	if tooltip_label != null:
-		tooltip_label.text = "选择物品可查看说明；背包物品可丢弃，已装备物品暂不可从此面板丢弃。"
+		tooltip_label.text = "选择物品可查看说明；背包物品可丢弃到当前房间地面，已装备物品暂不可从此面板丢弃。"
 
 
 func show_command_result(result: Dictionary) -> void:
@@ -137,7 +144,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	drop_button.name = "InventoryDropButton"
 	drop_button.text = "丢弃"
 	drop_button.disabled = not can_drop
-	drop_button.tooltip_text = "丢弃到当前房间地面。" if can_drop else "已装备物品暂不可从此面板丢弃。"
+	drop_button.tooltip_text = "丢弃到当前房间地面，稍后可从地面物品重新拾取。" if can_drop else "已装备物品暂不可从此面板丢弃。"
 	var instance_id: String = String(item.get("instance_id", ""))
 	drop_button.pressed.connect(func() -> void: drop_item_requested.emit(instance_id))
 	row.add_child(drop_button)

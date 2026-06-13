@@ -12,7 +12,7 @@ static func format_expedition_summary(snapshot: Dictionary) -> String:
 	lines.append("状态效果：%s" % _array_from(snapshot, "status_effects").size())
 	lines.append("当前阻塞：%s" % reason_label(String(snapshot.get("blocked_reason", ""))))
 	lines.append("")
-	lines.append("推荐路线：探索安全房间，发现撤离点后确认带出 inventory/equipped。")
+	lines.append("推荐路线：探索安全房间，发现撤离点后确认带出背包与装备物品。")
 	return _join_lines(lines)
 
 
@@ -37,7 +37,7 @@ static func item_display_line(item: Dictionary) -> String:
 	var rarity: String = String(item.get("rarity", "common"))
 	var weight: Variant = item.get("weight", 1)
 	var value: Variant = item.get("base_value", 0)
-	return "%s | %s | %s | 重量 %s | 价值 %s" % [display_name, item_type, rarity, weight, value]
+	return "%s | 类型 %s | 品质 %s | 重量 %s | 估值 %s" % [display_name, item_type, rarity, weight, value]
 
 
 static func item_tooltip(item: Dictionary) -> String:
@@ -47,9 +47,9 @@ static func item_tooltip(item: Dictionary) -> String:
 	var source: Dictionary = _dict_from(item, "source")
 	var lines: Array[String] = []
 	lines.append(item_display_line(item))
-	lines.append("实例：%s" % String(item.get("instance_id", "")))
-	lines.append("位置：%s" % String(item.get("location_state", "")))
-	lines.append("来源：%s" % String(source.get("kind", source.get("source_id", "unknown"))))
+	lines.append("物品编号：%s" % String(item.get("instance_id", "")))
+	lines.append("当前位置：%s" % String(item.get("location_state", "")))
+	lines.append("来源记录：%s" % String(source.get("kind", source.get("source_id", "unknown"))))
 	lines.append("标签：%s" % _join_variants(tags, ", "))
 	return _join_lines(lines)
 
@@ -61,7 +61,11 @@ static func command_result_text(result: Dictionary) -> String:
 	var reason: String = String(result.get("reason_code", result.get("blocked_reason", result.get("reason", ""))))
 	var message_key: String = String(result.get("message_key", ""))
 	if accepted:
-		return "操作完成。%s" % message_key
+		if message_key == "":
+			return "操作完成。"
+		return "操作完成：%s" % message_key
+	if message_key == "":
+		return "操作受阻：%s" % reason_label(reason)
 	return "操作受阻：%s（%s）" % [reason_label(reason), message_key]
 
 
@@ -85,6 +89,12 @@ static func reason_label(reason_code: String) -> String:
 			return "当前房间没有地面物品"
 		"no_inventory_items":
 			return "背包没有可丢弃物品"
+		"room_unrevealed":
+			return "当前房间尚未揭示"
+		"room_not_searchable":
+			return "当前房间不可搜索"
+		"spawn_not_searchable":
+			return "出发点不可搜索"
 		"cannot_extract":
 			return "当前位置不能撤离"
 		"no_extract_request":
@@ -93,6 +103,8 @@ static func reason_label(reason_code: String) -> String:
 			return "事件选项不可用"
 		"combat_unavailable":
 			return "当前没有可处理的战斗"
+		"no_active_asset_ledger":
+			return "资产记录暂不可用"
 		_:
 			return reason_code
 
@@ -103,7 +115,7 @@ static func compact_event_log(snapshot: Dictionary, max_count: int = 5) -> Array
 	var start_index: int = max(0, events.size() - max_count)
 	for index in range(start_index, events.size()):
 		var event: Dictionary = events[index]
-		lines.append("#%s %s / %s" % [event.get("sequence", index), event.get("event_type", "event"), event.get("source", "")])
+		lines.append("#%s 事件：%s / 来源：%s" % [event.get("sequence", index), event.get("event_type", "event"), event.get("source", "")])
 	return lines
 
 
@@ -115,7 +127,7 @@ static func compact_transaction_log(snapshot: Dictionary, max_count: int = 5) ->
 		var transaction: Dictionary = transactions[index]
 		var currency_delta: Dictionary = _dict_from(transaction, "currency_delta")
 		var moves: Array = _array_from(transaction, "item_moves")
-		lines.append("#%s %s | 币 %s | 物品移动 %s" % [
+		lines.append("#%s 动作：%s | 货币变化 %s | 物品移动 %s" % [
 			transaction.get("sequence", index),
 			transaction.get("action", "transaction"),
 			currency_delta,
@@ -134,7 +146,7 @@ static func result_summary(snapshot: Dictionary) -> Dictionary:
 	lines.append("背包：%s/%s" % [snapshot.get("backpack_used", 0), snapshot.get("backpack_capacity", 0)])
 	lines.append("带出物品：%s | 装备：%s" % [_array_from(snapshot, "inventory_items").size(), _array_from(snapshot, "equipped_items").size()])
 	lines.append("地面遗留：%s" % snapshot.get("room_floor_item_count", 0))
-	lines.append("Warehouse Lite：%s" % _array_from(snapshot, "warehouse_lite").size())
+	lines.append("临时仓库记录：%s" % _array_from(snapshot, "warehouse_lite").size())
 	var salvage: Dictionary = _dict_from(snapshot, "failure_salvage")
 	if not salvage.is_empty():
 		lines.append("失败抢救：保留 %s / 丢失 %s" % [salvage.get("salvaged_item_count", 0), salvage.get("lost_item_count", 0)])
@@ -144,7 +156,7 @@ static func result_summary(snapshot: Dictionary) -> Dictionary:
 	lines.append("事件记录")
 	lines.append_array(compact_event_log(snapshot))
 	lines.append("")
-	lines.append("资产交易")
+	lines.append("资产记录")
 	lines.append_array(compact_transaction_log(snapshot))
 	return {
 		"title": title,
@@ -155,7 +167,7 @@ static func result_summary(snapshot: Dictionary) -> Dictionary:
 static func reward_text(reward: Dictionary, last_message: String = "") -> String:
 	var lines: Array[String] = []
 	if last_message != "":
-		lines.append("记录：%s" % last_message)
+		lines.append("记录：%s" % _player_message(last_message))
 	if reward.has("black_coin_delta"):
 		lines.append("黑币变化：%s" % reward.get("black_coin_delta", 0))
 	if reward.has("gold_coin_delta"):
@@ -185,6 +197,44 @@ static func reward_text(reward: Dictionary, last_message: String = "") -> String
 	if lines.is_empty():
 		lines.append("没有新的奖励或变动。")
 	return _join_lines(lines)
+
+
+static func _player_message(message: String) -> String:
+	var text := message.strip_edges()
+	if text == "":
+		return ""
+	text = text.replace("Exit room ready. Request extraction.", "撤离点已就绪：可请求撤离。")
+	text = text.replace("Exit ready. Request extraction.", "撤离点可用：再次确认后撤离。")
+	text = text.replace("Monster present. Fight is available.", "发现异常体：可执行清理。")
+	text = text.replace("Monster requires fight command.", "异常体活动中：需要清理指令。")
+	text = text.replace("Monster already cleared.", "异常体已清理。")
+	text = text.replace("No monster to fight here.", "当前房间没有可清理的异常体。")
+	text = text.replace("Chest can be searched.", "发现未登记物资箱：可搜索。")
+	text = text.replace("This room was already searched.", "当前房间已搜索。")
+	text = text.replace("Cannot search unrevealed room.", "未揭示房间不可搜索。")
+	text = text.replace("This room cannot be searched.", "当前房间不可搜索。")
+	text = text.replace("Spawn cannot be searched.", "出发点不可搜索。")
+	text = text.replace("No event option is available here.", "当前房间没有可用事件选项。")
+	text = text.replace("Event already resolved.", "事件已处理。")
+	text = text.replace("Event left unresolved.", "事件已暂时搁置。")
+	text = text.replace("Event option unavailable.", "事件选项不可用。")
+	text = text.replace("Mine room has no safe interaction.", "雷险房间没有安全交互。")
+	text = text.replace("Nothing to interact with here.", "当前房间暂无可交互目标。")
+	text = text.replace("Triggered mine re-entered; no damage.", "已确认雷险再次经过，不重复伤害。")
+	text = text.replace("Search complete:", "搜索完成：")
+	text = text.replace("Monster cleared:", "异常体已清理：")
+	text = text.replace("Mine triggered:", "雷险触发：")
+	text = text.replace("Event available:", "发现事件：")
+	text = text.replace("Entered ", "进入")
+	text = text.replace(" room. Adjacent mines:", "房间；周围雷险：")
+	text = text.replace("black coin", "待结算黑币")
+	text = text.replace("items", "物品")
+	text = text.replace("on room floor", "留在地面")
+	text = text.replace("damage", "伤害")
+	text = text.replace("reward", "奖励")
+	text = text.replace("pressure", "压力")
+	text = text.replace("HP", "生命")
+	return text
 
 
 static func _array_from(source: Dictionary, key: String) -> Array:

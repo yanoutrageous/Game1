@@ -23,6 +23,8 @@ func set_result_summary(title: String, summary: String) -> void:
 
 	if summary_node != null:
 		summary_node.add_theme_color_override("font_color", PresentationTheme.text_color())
+		summary_node.add_theme_font_size_override("font_size", 13)
+		summary_node.add_theme_constant_override("line_spacing", 2)
 		summary_node.text = summary
 
 
@@ -69,7 +71,7 @@ func _ensure_actions() -> void:
 	var main_button := Button.new()
 	main_button.name = "ResultReturnMainButton"
 	main_button.text = "返回主界面"
-	main_button.tooltip_text = "关闭结算并返回主界面。"
+	main_button.tooltip_text = "关闭本次结算记录并返回主界面。"
 	main_button.custom_minimum_size = Vector2(150, 34)
 	main_button.pressed.connect(func() -> void: return_main_requested.emit())
 	actions.add_child(main_button)
@@ -77,7 +79,7 @@ func _ensure_actions() -> void:
 	var deploy_button := Button.new()
 	deploy_button.name = "ResultReturnDeployButton"
 	deploy_button.text = "返回出发页"
-	deploy_button.tooltip_text = "关闭结算并返回出发页。"
+	deploy_button.tooltip_text = "关闭本次结算记录并返回出发页，准备下一次探索。"
 	deploy_button.custom_minimum_size = Vector2(150, 34)
 	deploy_button.pressed.connect(func() -> void: return_deploy_requested.emit())
 	actions.add_child(deploy_button)

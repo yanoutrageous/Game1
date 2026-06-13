@@ -6,13 +6,14 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Main HEAD: `e261ac7d8671b59e7e72750122e6581af6ea6644`
-- Remote live main HEAD: `e261ac7d8671b59e7e72750122e6581af6ea6644`
+- Main HEAD: `4be0010dd68abe1b0e74966775db64f736d78e15`
+- Remote live main HEAD: `4be0010dd68abe1b0e74966775db64f736d78e15`
 - Current branch: `main`
-- Current milestone: G11 Mainline Testability & UX Readability Repair closeout. G11-R3 is complete and pushed; G11-R4 is docs-only closeout, not G12.
+- Current milestone: G12 Legacy Demo Core Loop, Chinese Readability & Typography Parity is active. G10 and G11 are complete, pushed, and closed.
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout follow-up commit: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
 - G11-R3 commit: `e261ac7 fix(godot): improve G11 mainline UX readability`
+- G11 closeout commit: `4be0010 docs: close G11 mainline UX readability pass`
 
 ## What Main Can Do
 
@@ -20,11 +21,13 @@ Main contains playable flow, asset ledger and settlement rules, architecture har
 
 The UI baseline includes a three-page shell, InventoryPanel, GroundLootPanel, pickup/drop through CommandBus, blocked reason display, and ResultPanel settlement explanation.
 
-Main also contains the completed G10 bounded player-flow fixes, MiniMap click-to-map, dev-only diagnostics gating, manifest/fallback art smoke, responsive layout contracts, and updated bug/backlog documentation. It also contains the completed G11-R3 mainline readability pass for current fact sources, hand-test coverage, MapOverlay feedback wording, Inventory/GroundLoot hints, ResultPanel return tooltips, and Pause/Settings wording. It does not change core gameplay state ownership.
+Main also contains the completed G10 bounded player-flow fixes, MiniMap click-to-map, dev-only diagnostics gating, manifest/fallback art smoke, responsive layout contracts, and updated bug/backlog documentation. It also contains the completed G11 mainline readability pass and closeout. G12 now targets lightweight legacy Demo core-loop feel, Chinese readability, and typography/readability alignment on top of existing systems. It does not change core gameplay state ownership.
 
 ## What Main Does Not Mean
 
 It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
+
+G12 does not mean 1:1 legacy Demo remake, new gameplay, new systems, full font pipeline, full art migration, action combat, or G13.
 
 ## G10 Boundary
 
@@ -37,10 +40,11 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 1. `docs/PROJECT_BASELINE.md`
 2. `docs/DOCS_INDEX.md`
 3. `docs/MILESTONES.md`
-4. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-5. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-6. `docs/validation/G10_CLOSEOUT_REMOTE_CONFIRMATION_FOLLOWUP.md`
-7. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff
+4. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+5. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+6. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+7. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+8. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff
 
 ## Safety And Dirty Rules
 
@@ -56,16 +60,17 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 
 The next conversation should know:
 
-- Main is at `e261ac7d8671b59e7e72750122e6581af6ea6644`.
-- G11-R3 is complete and pushed, and G11-R4 is a docs-only closeout.
+- Main is at `4be0010dd68abe1b0e74966775db64f736d78e15`.
+- G12 is active as a lightweight legacy Demo core-loop, Chinese readability, and typography/readability alignment stage.
 - G10 closeout remains `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout follow-up remains `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
-- G11 is not a G10 continuation, not G12, and does not mean new gameplay, full systems, persistence, final UI, action combat, or full art migration is complete.
+- G11 is closed at `4be0010dd68abe1b0e74966775db64f736d78e15`.
+- G12 is not a G10/G11 continuation, not G13, not a 1:1 legacy Demo remake, and does not mean new gameplay, full systems, persistence, final UI, action combat, full font pipeline, or full art migration is complete.
 
 ## Next Stage Candidates
 
 - MetaProgress / long-term progression systems.
 - Deploy persistence / save and deployment continuity.
-- Main gameplay deepening.
+- Main gameplay deepening after G12 validation.
 
-These are candidates only. G11-R4 does not start or implement them.
+These are candidates only. G12 does not start or implement them.

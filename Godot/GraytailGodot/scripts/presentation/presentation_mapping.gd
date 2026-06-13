@@ -109,10 +109,10 @@ static func theme_key_for_minimap_cell(cell: Dictionary, is_player: bool) -> Str
 
 static func tooltip_for_cell(room_type: StringName, adjacent_mines: int, flagged: bool, revealed: bool) -> String:
 	if flagged:
-		return "Flagged cell"
+		return "已标记：疑似危险房间"
 	if not revealed:
-		return "Unknown cell"
-	return "%s | Adjacent mines: %d" % [String(room_type), adjacent_mines]
+		return "未知房间：点击可标记"
+	return "%s | 周围雷险：%d" % [_room_type_label(room_type), adjacent_mines]
 
 
 static func room_visual_from_snapshot(snapshot: Dictionary) -> Dictionary:
@@ -123,7 +123,7 @@ static func room_visual_from_snapshot(snapshot: Dictionary) -> Dictionary:
 		"background_asset_id": ROOM_BACKGROUND_ASSET.get(room_type, &"room.background.normal"),
 		"prop_asset_id": prop_asset_for_room(room_type),
 		"theme_key": ROOM_THEME_KEY.get(room_type, &"mini.normal"),
-		"title": "%s Room" % String(room_type),
+		"title": _room_type_label(room_type),
 		"hint": hint_for_snapshot(snapshot),
 		"risk_key": PresentationTheme.risk_key(adjacent, room_type),
 	}
@@ -144,14 +144,34 @@ static func hint_for_snapshot(snapshot: Dictionary) -> String:
 		&"Exit":
 			return "E：请求撤离并确认"
 		&"Monster":
-			return "Space/J：清理异常体"
+			return "Space/J：清理异常体，注意协议压力"
 		&"Event":
-			return "E：查看事件选项"
+			return "E：查看事件选项，处理后不会重复结算"
 		&"Chest":
-			return "E：开启物资箱"
+			return "E：开启未登记物资箱"
 		&"Normal":
-			return "E：搜索房间"
+			return "E：搜索房间，奖励可能进入背包或落在地面"
 		&"Mine":
-			return "地雷已确认，谨慎移动"
+			return "雷险已确认，谨慎移动"
 		_:
-			return "移动 / 搜索 / 地图"
+			return "移动 / 搜索 / 区域扫描"
+
+
+static func _room_type_label(room_type: StringName) -> String:
+	match room_type:
+		&"Spawn":
+			return "出发点"
+		&"Normal":
+			return "普通房间"
+		&"Mine":
+			return "雷险房间"
+		&"Chest":
+			return "物资箱房间"
+		&"Event":
+			return "事件房间"
+		&"Monster":
+			return "异常体房间"
+		&"Exit":
+			return "撤离点"
+		_:
+			return String(room_type)

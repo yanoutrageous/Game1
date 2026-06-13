@@ -29,16 +29,22 @@ func _apply_labels() -> void:
 	if status_panel != null:
 		status_panel.custom_minimum_size = Vector2(344, 158)
 		status_panel.add_theme_color_override("font_color", PresentationTheme.text_color())
-		status_panel.text = view_model.status_text if view_model != null else "HP: --"
+		status_panel.add_theme_font_size_override("font_size", 13)
+		status_panel.add_theme_constant_override("line_spacing", 2)
+		status_panel.text = view_model.status_text if view_model != null else "生命：--"
 	if protocol_panel != null:
 		protocol_panel.custom_minimum_size = Vector2(344, 92)
 		protocol_panel.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.warning"))
-		protocol_panel.text = view_model.protocol_text if view_model != null else "Pressure: --"
+		protocol_panel.add_theme_font_size_override("font_size", 13)
+		protocol_panel.add_theme_constant_override("line_spacing", 2)
+		protocol_panel.text = view_model.protocol_text if view_model != null else "压力：--"
 	if hint_panel != null:
 		hint_panel.custom_minimum_size = Vector2(344, 124)
 		var hint_color := PresentationTheme.color_for_key(view_model.risk_key) if view_model != null else PresentationTheme.text_color()
 		hint_panel.add_theme_color_override("font_color", hint_color)
-		hint_panel.text = view_model.hint_text if view_model != null else "Last Message: --"
+		hint_panel.add_theme_font_size_override("font_size", 13)
+		hint_panel.add_theme_constant_override("line_spacing", 2)
+		hint_panel.text = view_model.hint_text if view_model != null else "最新记录：--"
 
 
 func _ensure_asset_backdrops() -> void:

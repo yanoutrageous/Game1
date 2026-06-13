@@ -2,11 +2,11 @@
 
 ## Scope
 
-This guide treats the older G4-G7 routes as historical foundations and points manual smoke toward the current mainline G11 testability and UX readability baseline. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+This guide treats the older G4-G7 routes as historical foundations and points manual smoke toward the current mainline G12 legacy Demo core-loop, Chinese readability, and typography/readability baseline. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
 
 Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
 
-Current baseline smoke should cover the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, and ResultPanel settlement/return routes. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
+Current baseline smoke should cover the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, and local typography/readability. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
 
 ## Main Menu / Deploy Shell
 
@@ -104,6 +104,21 @@ Use this route for the current mainline readability pass. This checklist is vali
 - Open Pause/Settings overlay during a run and confirm the text explains that continue returns to the current run and settings do not write local preferences.
 - Open the settings shell and confirm dev-only diagnostics remains hidden or disabled in the default player channel.
 - Record whether Godot/editor/game/import was run; if not run, record "not run" rather than claiming runtime PASS.
+
+## G12 Legacy Demo Core Loop Readability Smoke
+
+Use this route for G12 only after a human or explicitly authorized runtime smoke starts the game. Do not mark PASS from static inspection alone.
+
+- From the main menu, confirm `出发探索` and `新手教程` are readable and lead to the expected deploy or tutorial route.
+- In tutorial or standard run, confirm the left scan/minimap area reads as a region scanner rather than an engineering debug view.
+- Click MiniMap and confirm MapOverlay opens with readable scan/review instructions, selected coordinate feedback, command id, and blocked reason when relevant.
+- Move through several rooms and confirm HUD room, position, adjacent danger, search state, protocol level, pressure, event/enemy/exit hint, and latest action are readable Chinese.
+- Trigger or inspect Event, Chest, Monster, Normal search, Mine, and Exit states when reachable; confirm text explains the room state without changing rules.
+- Search a room and inspect the reward panel; confirm black coin, gold coin, item count, ground loot, damage, roll, and blocked reason labels are understandable.
+- Open Inventory and GroundLoot; confirm capacity, empty states, tooltip text, pickup/drop labels, and `blocked_capacity` are readable.
+- Extract or fail the run and confirm ResultPanel explains success/failure, salvage/loss, warehouse-lite movement, logs, and return paths.
+- Check Chinese readability on dark panels: no obvious mojibake, no missing glyph blocks, no unreadable contrast, and no clipped button text in the tested viewport.
+- Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.
 
 ## Known limits
 

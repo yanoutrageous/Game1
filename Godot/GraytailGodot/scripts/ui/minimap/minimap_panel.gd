@@ -24,7 +24,7 @@ func clear() -> void:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	tooltip_text = "Click to open MapOverlay"
+	tooltip_text = "点击打开区域扫描器回顾"
 	var placeholder := get_node_or_null("PlaceholderLabel") as Label
 	if placeholder != null:
 		placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -51,6 +51,7 @@ func _rebuild_grid() -> void:
 
 	if view_model == null:
 		if placeholder != null:
+			placeholder.add_theme_font_size_override("font_size", 13)
 			placeholder.text = "区域扫描图：暂无情报"
 		return
 
@@ -60,7 +61,8 @@ func _rebuild_grid() -> void:
 
 	if placeholder != null:
 		placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		placeholder.text = "区域扫描图：数字为周围雷险"
+		placeholder.add_theme_font_size_override("font_size", 13)
+		placeholder.text = "区域扫描图：点击打开回顾；数字为周围雷险"
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) -> void:
@@ -85,6 +87,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
+		label.add_theme_font_size_override("font_size", 13)
 		label.text = String(marker.get("label", "?"))
-		label.tooltip_text = String(marker.get("tooltip", ContentDB.get_placeholder_label(asset_id) if asset_id != &"" else "unknown cell"))
+		label.tooltip_text = String(marker.get("tooltip", ContentDB.get_placeholder_label(asset_id) if asset_id != &"" else "未知房间"))
 		grid.add_child(label)

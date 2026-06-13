@@ -46,10 +46,13 @@ func _rebuild_grid() -> void:
 
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
-		title.text = "区域扫描图"
+		title.add_theme_font_size_override("font_size", 20)
+		title.text = "区域扫描器回顾"
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		footer.text = "点击未知房间插旗；点击已探索安全房间快速返回。"
+		footer.add_theme_font_size_override("font_size", 13)
+		footer.add_theme_constant_override("line_spacing", 2)
+		footer.text = "点击未知房间标记风险；点击已探索安全房间尝试快速返回。"
 
 	if footer != null and selected_feedback_text != "":
 		footer.text += "\n" + selected_feedback_text
@@ -84,12 +87,12 @@ func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 	var reason: String = String(result.get("reason_code", result.get("reason", "")))
 	var command_id: String = String(result.get("command_id", "map_action"))
 	if accepted:
-		selected_feedback_text = "地图反馈：已选择 (%d,%d)，命令 %s 已接受。" % [pos.x, pos.y, command_id]
+		selected_feedback_text = "扫描记录：已选择 (%d,%d)，命令 %s 已接受。" % [pos.x, pos.y, command_id]
 	else:
-		selected_feedback_text = "地图反馈：已选择 (%d,%d)，命令 %s 被阻止：%s" % [pos.x, pos.y, command_id, reason]
+		selected_feedback_text = "扫描记录：已选择 (%d,%d)，命令 %s 被阻止：%s" % [pos.x, pos.y, command_id, reason]
 	_rebuild_grid()
 
 
 func show_open_feedback(source: StringName) -> void:
-	selected_feedback_text = "地图反馈：从 %s 打开。点击未知房间插旗；点击已探索安全房间快速返回。" % String(source)
+	selected_feedback_text = "扫描记录：从 %s 打开。未知房间可标记，已探索安全房间可尝试快速返回。" % String(source)
 	_rebuild_grid()
