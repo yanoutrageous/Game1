@@ -15,8 +15,8 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G9 Final | UI Core Flow Baseline | UI 核心流程基线 | In main |
 | G10 | Progress & Art Smoke Foundation | 当前进度整理与美术接入基础验证 | Complete; merged to main and closed at `aa19db2f1989c6ebfc22676d84b83da5c6977f64` |
 | G11 | Mainline Testability & UX Readability Repair | 主线可测性与 UX 可读性修补 | Complete and closed at `4be0010dd68abe1b0e74966775db64f736d78e15` |
-| G12 | Legacy Demo Core Loop, Chinese Readability & Typography Parity | 旧 Demo 核心体验、中文可读性与字体排版轻量对齐 | Complete and closed at `2855ca9889e394fb79d22c468b1355cd3871fd39` |
-| G13 | Fixed Resolution Layout Adaptation | 固定分辨率档位与布局适配 | Active on main baseline `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f` |
+| G12 | Legacy Demo Core Loop, Chinese Readability & Typography Parity | 旧 Demo 核心体验、中文可读性与字体排版轻量对齐 | Complete; R3 at `2855ca9889e394fb79d22c468b1355cd3871fd39`, closeout at `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f` |
+| G13 | Fixed Resolution Layout Adaptation | 固定分辨率档位与布局适配 | Complete and in docs-only closeout at `5afdb05fefe65031da1486507b0b39bdd2f1cea7`; static validation only, no runtime PASS |
 
 ## Naming Rule
 
@@ -26,10 +26,10 @@ Example: `UI Core Flow Baseline (G9 Final)`.
 
 ## Current Mainline
 
-Current main HEAD: `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f`.
+Current main HEAD: `5afdb05fefe65031da1486507b0b39bdd2f1cea7`.
 
-The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, and the completed G12 legacy Demo readability/typography parity pass. G13 is active for fixed 16:9 resolution tiers and bounded layout adaptation. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
+The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, and G13-R3 fixed resolution layout support. G13 is complete and in docs-only closeout for fixed 16:9 resolution tiers and bounded layout adaptation. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, or runtime PASS.
 
 G10 was a bounded foundation branch for progress整理, stability/BUG fixes, UI interaction fixes, dev-only diagnostics, art smoke, responsive reservation, and future content planning. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
-G11 and G12 are complete and closed. G13 is active and is not G10/G11/G12 continuation, not G14, not arbitrary responsive UI, not mobile/ultrawide/4K/DPI parity, not a complete settings system, and not a new gameplay phase or new systems phase.
+G11 and G12 are complete and closed. G13-R3 is complete, pushed, and statically validated; G13-R5 is docs-only closeout. G13 is not G10/G11/G12 continuation, not G14, not arbitrary responsive UI, not mobile/ultrawide/4K/DPI parity, not a complete settings system, not a new gameplay phase or new systems phase, and not runtime PASS.

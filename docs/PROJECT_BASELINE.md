@@ -2,12 +2,12 @@
 
 ## Current Authority
 
-- Stage: G13 Fixed Resolution Layout Adaptation active.
+- Stage: G13 Fixed Resolution Layout Adaptation complete; docs-only closeout/handoff/status is being recorded.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current main HEAD: `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f`.
-- Current remote live main HEAD: `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f`.
+- Current main HEAD: `5afdb05fefe65031da1486507b0b39bdd2f1cea7`.
+- Current remote live main HEAD: `5afdb05fefe65031da1486507b0b39bdd2f1cea7`.
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout status: complete, merged to main, and closed.
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
@@ -16,6 +16,8 @@
 - G11 closeout commit: `4be0010 docs: close G11 mainline UX readability pass`.
 - G12-R3 commit: `2855ca9 fix(godot): align G12 core loop readability with legacy demo`.
 - G12 closeout commit: `e90bd27 docs: close G12 legacy demo parity pass`.
+- G13 baseline commit: `e90bd27 docs: close G12 legacy demo parity pass`.
+- G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
 
@@ -34,7 +36,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G10 added bounded progress整理, interaction fixes, dev-only diagnostics gating, art smoke registry/fallback checks, and responsive layout contracts on top of the G9 UI core flow baseline.
 - G11-R3 completed the narrow mainline testability and UX readability repair for current UI text, tooltips, hand-test coverage, and status documentation.
 - G12 is complete and closed for lightweight legacy Demo core-loop feel, Chinese readability, typography/readability, and current UI feedback alignment on existing systems.
-- G13 is active for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and bounded layout adaptation.
+- G13-R3 is complete, pushed, and statically validated for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and bounded layout adaptation. G13-R5 is docs-only closeout/handoff/status alignment.
 
 ## Current Validation Chain
 
@@ -68,7 +70,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 - MapOverlay provides minimal open-source and selected/action feedback.
 - Dev diagnostics are shell-only, gated by a build-channel/UIVisibilityPolicy equivalent, hidden and disabled in the default player channel.
 - A small art smoke registry validates manifest asset IDs and fallback IDs for panel, button, icon, character placeholder, and theme overlay roles.
-- `UILayoutProfile` reserves desktop/narrow layout behavior for future responsive/mobile work.
+- `UILayoutProfile` now includes fixed-tier G13 layout fields while retaining earlier desktop/narrow compatibility.
 
 ## Unfinished Range
 
@@ -87,13 +89,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Use G13 only for fixed 16:9 resolution tiers, minimal runtime display settings, and bounded layout adaptation across the current UI surfaces. Keep future branch or fix-batch handoff files current.
+G13 is closing after fixed 16:9 resolution tiers, minimal runtime display settings, and bounded layout adaptation across the current UI surfaces. Keep future branch or fix-batch handoff files current.
 
 ## G13 Boundary
 
-G13 covers exactly these fixed resolution tiers: `1280x720`, `1366x768`, `1600x900`, `1920x1080`, and `2560x1440`. It may add runtime-only display selection, startup auto recommendation, resize locking, `UILayoutProfile` fixed-tier fields, and small panel/text sizing changes for existing UI.
+G13 covers exactly these fixed resolution tiers: `1280x720`, `1366x768`, `1600x900`, `1920x1080`, and `2560x1440`. G13-R3 added runtime-only display selection, startup auto recommendation, manual apply/reset, resize locking, `UILayoutProfile` fixed-tier fields, and small panel/text sizing changes for existing UI.
 
-G13 must not become arbitrary aspect-ratio responsiveness, mobile support, ultrawide support, 4K support, full platform DPI parity, complete final UI, complete settings, Deploy persistence, MetaProgress, action combat, new gameplay, new resources, full art migration, broad UI rewrite, or broad architecture reshaping.
+G13 did not run Godot/editor/game/import, did not submit `project.godot`, did not submit resources/import products/font files, and did not submit the existing Godot dirty whitelist. Closeout is static-validation only and must not be read as runtime PASS.
+
+G13 must not become arbitrary aspect-ratio responsiveness, mobile support, ultrawide support, 4K support, full platform DPI parity, complete final UI, complete settings, Deploy persistence, MetaProgress, action combat, new gameplay, new resources, full art migration, broad UI rewrite, broad architecture reshaping, or a claim that runtime/manual verification is complete.
 
 ## G12 Boundary
 
@@ -112,12 +116,14 @@ G11 must not cover complete MetaProgress, Deploy persistence, complete long-term
 ## Next Stage Candidates
 
 - Runtime smoke / playable verification.
+- Five-tier resolution manual smoke.
+- DisplayServer window behavior verification.
 - MetaProgress / long-term progression systems.
 - Deploy persistence / save and deployment continuity.
 - Main gameplay deepening.
 - More complete legacy Demo experience reproduction.
 
-These are candidates only. They require separate approval, are not part of G13, and do not start G14.
+These are candidates only. They require separate approval, are not part of G13 closeout, and do not start G14.
 
 ## G10 Boundary
 
