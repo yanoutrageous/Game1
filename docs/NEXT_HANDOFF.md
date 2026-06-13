@@ -6,10 +6,11 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME2\repo\Game1`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- G14-R3 baseline main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
-- G14-R3 baseline remote live main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
+- Current main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`
+- Current remote live main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`
+- G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
 - Current branch: `main`
-- Current milestone: G14 Legacy Demo UI Surface Sprint is active. G10, G11, G12, and G13 are complete, pushed, and closed.
+- Current milestone: G14 Legacy Demo UI Surface Sprint is active; G14-R3 is complete, committed, and pushed. G10, G11, G12, and G13 are complete, pushed, and closed.
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout follow-up commit: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
 - G11-R3 commit: `e261ac7 fix(godot): improve G11 mainline UX readability`
@@ -19,6 +20,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G13 baseline commit: `e90bd27 docs: close G12 legacy demo parity pass`
 - G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`
 - G13 closeout commit: `8878bd3 docs: close G13 resolution layout adaptation pass`
+- G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`
 
 ## What Main Can Do
 
@@ -27,6 +29,8 @@ Main contains playable flow, asset ledger and settlement rules, architecture har
 The UI baseline includes a three-page shell, InventoryPanel, GroundLootPanel, pickup/drop through CommandBus, blocked reason display, and ResultPanel settlement explanation.
 
 Main also contains the completed G10 bounded player-flow fixes, MiniMap click-to-map, dev-only diagnostics gating, manifest/fallback art smoke, responsive layout contracts, and updated bug/backlog documentation. It also contains the completed G11 mainline readability pass and the completed G12 legacy Demo readability/typography pass. G13 added fixed 16:9 resolution tiers, runtime-only display selection, resize locking, a minimal settings-page selector, fixed-tier `UILayoutProfile` fields, and bounded layout adaptation on existing UI surfaces. G14-R3 starts the legacy Demo visible run surface by adding `RunSurface` and `RunSurfaceModel` without moving rules or CommandBus decisions into UI.
+
+G14-R3 acceptance fact: `RunSurface` is UI surface composition only, and `RunSurfaceModel` is display-only. They do not directly read `TruthMap`, `RunRuleService`, Ledger, or `AssetLedger` private state, do not dispatch CommandBus, and do not add rules. `run_scene.gd` keeps CommandBus dispatch, screen routing, and event / loot / extract decisions.
 
 ## What Main Does Not Mean
 
@@ -62,7 +66,10 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 - Do not force push.
 - Do not use `git rebase`, `git reset`, `git clean`, or `git stash`.
 - Do not run Godot/editor/game/import unless the user explicitly authorizes it.
+- Do not create temporary scripts, logs, caches, or derived files outside `D:\AGAME2\repo\Game1`.
+- Do not scan or clean paths outside `D:\AGAME2\repo\Game1` unless the user provides an explicit path and authorization.
 - Dirty whitelist only: tracked `project.godot`, tracked/untracked `asset_manifest.*.translation`, and untracked `*.gd.uid`.
+- Protective stash must remain untouched: `stash@{0}: On godot/g7-lua-ux-flow-parity-p2: pre-sync generated dirty before aligning to G13 closeout main`.
 - If unknown dirty appears, stop and report.
 
 ## First Thing To Know
@@ -70,8 +77,9 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 The next conversation should know:
 
 - G14-R3 started from `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`, the G13 closeout main.
+- G14-R3 is complete, committed, and pushed at `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5` (`1d33c89 feat(godot): add legacy demo run surface shell`).
 - G12 is complete and closed as a lightweight legacy Demo core-loop, Chinese readability, and typography/readability alignment stage.
-- G13 is complete, pushed, and in docs-only closeout for fixed resolution tiers and bounded layout adaptation.
+- G13 is complete, pushed, and closed for fixed resolution tiers and bounded layout adaptation.
 - G13 supported tiers are `1280x720`, `1366x768`, `1600x900`, `1920x1080`, and `2560x1440`.
 - G13-R3 did not run Godot/editor/game/import, did not submit `project.godot`, did not submit resources/import products/font files, and did not submit the existing dirty whitelist.
 - G13 closeout is static-validation only; DisplayServer window behavior, five-tier runtime behavior, settings-page apply/reset behavior, resize locking, and visual clipping still need later runtime smoke or manual verification before any PASS claim.
@@ -79,6 +87,8 @@ The next conversation should know:
 - G10 closeout follow-up remains `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
 - G11 is closed at `4be0010dd68abe1b0e74966775db64f736d78e15`.
 - G12-R3 did not run Godot/editor/game/import, did not add font files/resources/import products, did not modify `run_scene.gd`, and did not commit the existing Godot dirty whitelist.
+- G14-R3 did not run Godot/editor/game/import and does not claim runtime PASS.
+- G14-R3 execution reported one safety incident: two temporary script files were mistakenly created outside the repository and then cleaned as necessary deletion. The repository commit contains no outside-repository path. Future CodeX instructions must keep explicitly forbidding outside-repository temporary files. Do not independently scan outside-repository paths; if residue confirmation is needed, the user must provide the exact path and authorization.
 - G14-R3 is not a G10/G11/G12/G13 continuation, not G15, not a full UI remake, not new gameplay, and not runtime PASS.
 
 ## Next Stage Candidates

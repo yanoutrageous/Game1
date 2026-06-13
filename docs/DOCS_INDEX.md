@@ -55,7 +55,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md` records the G11 mainline UX readability validation checklist, R3 execution notes, and R4 docs-only closeout record.
 - `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md` records the G12 lightweight legacy Demo core-loop, Chinese readability, typography/readability validation checklist, R3 implementation record, and R4 docs-only closeout notes.
 - `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md` records the G13 fixed resolution tier and layout adaptation validation checklist, R3 static validation, and R5 closeout boundary.
-- `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md` records the G14 run surface shell validation checklist and static R3 boundary.
+- `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md` records the G14 run surface shell validation checklist, static R3 boundary, acceptance follow-up, and outside-repository temporary-script safety event record.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -89,7 +89,11 @@ Root-level handoff files, old G2-G7 notes, Lua audit docs, UE docs, and early fe
 
 ## Current Boundary
 
-G14-R3 starts from `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf` and adds the first legacy Demo-style run surface shell on top of completed G10, G11, G12, and G13 work. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, or runtime PASS.
+Current main HEAD and remote live main HEAD are `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5` after G14-R3 (`1d33c89 feat(godot): add legacy demo run surface shell`). G14-R3 started from `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`, which remains the G13 closeout and G14-R3 baseline history only. G14-R3 adds the first legacy Demo-style run surface shell on top of completed G10, G11, G12, and G13 work. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, or runtime PASS.
+
+G14-R3 acceptance follow-up records that `RunSurface` is UI surface composition only, `RunSurfaceModel` is display-only, neither directly reads `TruthMap`, `RunRuleService`, Ledger, or `AssetLedger` private state, neither dispatches CommandBus, and `run_scene.gd` retains CommandBus dispatch, screen routing, and event / loot / extract decisions.
+
+Safety note: G14-R3 execution reported an outside-repository temporary-script incident that was cleaned as necessary deletion. Future CodeX work must keep forbidding outside-repository temporary files and must not scan outside-repository paths unless the user provides a concrete path and authorization.
 
 G10 is complete, merged to main, and closed. It was limited to progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning. It is not complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 

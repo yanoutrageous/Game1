@@ -2,7 +2,7 @@
 
 ## Stage
 
-G14 Legacy Demo UI Surface Sprint is active. G14-R3 implements the minimal `RunSurface` / `RunSurfaceModel` cut and first low-fidelity legacy Demo-style run surface. G10, G11, G12, and G13 are complete and closed.
+G14 Legacy Demo UI Surface Sprint is active. G14-R3 completed the minimal `RunSurface` / `RunSurfaceModel` cut and first low-fidelity legacy Demo-style run surface. G10, G11, G12, and G13 are complete and closed.
 
 ## Time
 
@@ -13,8 +13,9 @@ G14 Legacy Demo UI Surface Sprint is active. G14-R3 implements the minimal `RunS
 - Current repository path: `D:\AGAME2\repo\Game1`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- G14-R3 baseline main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
-- G14-R3 baseline remote live main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
+- Current main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`
+- Current remote live main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`
+- G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout follow-up commit: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
@@ -25,6 +26,7 @@ G14 Legacy Demo UI Surface Sprint is active. G14-R3 implements the minimal `RunS
 - G13 baseline commit: `e90bd27 docs: close G12 legacy demo parity pass`
 - G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`
 - G13 closeout commit: `8878bd3 docs: close G13 resolution layout adaptation pass`
+- G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`
 - Current fact source: `docs/PROJECT_BASELINE.md`
 - Next-chat entry: `docs/NEXT_HANDOFF.md`
 - Docs navigation: `docs/DOCS_INDEX.md`
@@ -176,7 +178,19 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - `run_scene.gd` remains the run orchestration owner: it still handles CommandBus dispatch, event/loot/extract decisions, screen routing, and existing panel control.
 - Existing HUD, MiniMap, MapOverlay, Inventory, GroundLoot, ResultPanel, TutorialPopup, event, loot, extract, pause, and diagnostics paths remain reusable.
 - G14-R3 does not run Godot/editor/game/import and does not claim runtime PASS.
+- G14-R3 is complete, committed, and pushed at `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`.
+- `RunSurface` is UI surface composition only, and `RunSurfaceModel` is display-only.
+- `RunSurface` and `RunSurfaceModel` do not directly read `TruthMap`, `RunRuleService`, Ledger, or `AssetLedger` private state, do not dispatch CommandBus, and do not add rules.
 - G14-R3 does not change rules, snapshot schema, CommandBus semantics, TruthMap, Ledger, AssetLedger, MetaProgress, Deploy persistence, resources, fonts, import products, or project metadata.
+
+## G14-R3 Safety Event Record
+
+- During G14-R3, execution reported that two temporary script files were mistakenly created outside `D:\AGAME2\repo\Game1`.
+- Execution reported that the two outside-repository temporary scripts were cleaned as necessary deletion and that no outside-repository change remains in the repository commit.
+- This follow-up does not scan or clean outside-repository paths.
+- Future CodeX instructions must keep explicitly forbidding outside-repository temporary scripts, logs, caches, or derived files.
+- If outside-repository residue confirmation is required, the user must provide the exact path and explicit authorization; CodeX must not independently search parent, sibling, user, system, or other repository directories.
+- Protective stash remains expected and must not be apply/pop/drop: `stash@{0}: On godot/g7-lua-ux-flow-parity-p2: pre-sync generated dirty before aligning to G13 closeout main`.
 
 ## Not Implemented
 

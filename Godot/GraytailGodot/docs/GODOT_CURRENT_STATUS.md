@@ -6,11 +6,13 @@
 
 ## Branch
 
-Current stage: G14 Legacy Demo UI Surface Sprint active; R3 implements the minimal run surface shell.
+Current stage: G14 Legacy Demo UI Surface Sprint active; R3 completed the minimal run surface shell.
 
-G14-R3 baseline main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
+Current main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`.
 
-G14-R3 baseline remote live main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
+Current remote live main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`.
+
+G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
 Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 
@@ -31,6 +33,8 @@ G13 baseline commit: `e90bd27 docs: close G12 legacy demo parity pass`.
 G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`.
 
 G13 closeout commit: `8878bd3 docs: close G13 resolution layout adaptation pass`.
+
+G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`.
 
 Current fact source: `docs/PROJECT_BASELINE.md`.
 
@@ -106,7 +110,7 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G11-R3 improves mainline testability and UX readability through manual playtest coverage, clearer MapOverlay feedback, inventory/ground-loot hints, result return tooltips, and Pause/Settings wording. G11-R4 is docs-only closeout and does not continue UI repair.
 - G12-R3 aligned the current UI with legacy Demo core-loop feel through Chinese readability, scan/map feedback, protocol/pressure text, loot/settlement wording, and local typography/readability tweaks on existing UI only.
 - G13-R3 completed fixed 16:9 resolution tiers, runtime-only display selection, manual apply/reset, resize locking, fixed-tier `UILayoutProfile` fields, and bounded layout adaptation.
-- G14-R3 adds `RunSurfaceModel` and `RunSurface` for the first low-fidelity legacy Demo-style run surface while preserving existing panel, routing, and CommandBus paths.
+- G14-R3 is complete, committed, and pushed. It adds `RunSurfaceModel` and `RunSurface` for the first low-fidelity legacy Demo-style run surface while preserving existing panel, routing, and CommandBus paths.
 
 Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, and active G14 run surface work. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, and not runtime PASS.
 
@@ -155,11 +159,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 G14-R3, G13-R3, and G13-R5 did not run Godot/editor/game/import and must not be reported as runtime PASS unless a later authorized runtime/manual smoke records it. G14-R3 did not submit `project.godot`, resources, import products, font files, or the existing Godot dirty whitelist. Do not use Godot/editor/game/import for broad resource import, persistence work, full font pipeline, or full art migration.
 
+G14-R3 safety event record: execution reported that two temporary script files were mistakenly created outside `D:\AGAME2\repo\Game1` and were then cleaned as necessary deletion. The repository commit contains no outside-repository path. Future CodeX work must forbid outside-repository temporary files, and must not scan or clean outside-repository directories unless the user provides the exact path and explicit authorization.
+
 ## G14 Boundary
 
 G14 is limited to a visible legacy Demo-style run UI surface sprint. R3 adds a minimal `RunSurface` / `RunSurfaceModel` cut and first shell only: left scanner rail, center room/objective surface, right protocol/danger/status rail, bottom action bar, resource pocket, and reusable overlay/modal slots.
 
 G14-R3 keeps event, loot, extract, command decisions, and screen routing in `run_scene.gd`. It does not change rules, CommandBus semantics, snapshot schema, TruthMap, Ledger, AssetLedger, MetaProgress, Deploy persistence, resources, fonts, import products, project metadata, action combat, full event library, full talent/card systems, full art migration, or runtime PASS.
+
+`RunSurface` is UI surface composition only. `RunSurfaceModel` is display-only. They do not directly read `TruthMap`, `RunRuleService`, Ledger, or `AssetLedger` private state, and they do not dispatch CommandBus.
 
 ## G13 Boundary
 

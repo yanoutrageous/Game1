@@ -19,6 +19,8 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G13 | Fixed Resolution Layout Adaptation | 固定分辨率档位与布局适配 | Complete and closed at `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`; static validation only, no runtime PASS |
 | G14 | Legacy Demo UI Surface Sprint | 旧 Demo 主局 UI 表层快速复现 | Active; R3 adds minimal `RunSurface` / `RunSurfaceModel` shell from baseline `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf` |
 
+G14 current correction: R3 is complete, committed, and pushed at `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5` (`1d33c89 feat(godot): add legacy demo run surface shell`). The `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf` value is the G13 closeout / G14-R3 baseline history only.
+
 ## Naming Rule
 
 Use the formal name in new planning and handoff documents, and keep the historical label in parentheses when it helps locate old branches or validation scripts.
@@ -27,10 +29,16 @@ Example: `UI Core Flow Baseline (G9 Final)`.
 
 ## Current Mainline
 
-G14-R3 baseline main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
+Current main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`.
+
+Current remote live main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`.
+
+G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`.
+
+G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
 The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, and the active G14 run surface sprint. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, or runtime PASS.
 
 G10 was a bounded foundation branch for progress整理, stability/BUG fixes, UI interaction fixes, dev-only diagnostics, art smoke, responsive reservation, and future content planning. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
-G11, G12, and G13 are complete and closed. G14 is active and bounded to visible run UI surface work; it is not G15, not a complete settings system, not a new gameplay phase or new systems phase, and not runtime PASS.
+G11, G12, and G13 are complete and closed. G14 is active and bounded to visible run UI surface work; it is not G15, not a complete settings system, not a new gameplay phase or new systems phase, and not runtime PASS. G14-R3 acceptance follow-up records that `RunSurface` is UI-only composition, `RunSurfaceModel` is display-only, CommandBus dispatch and event / loot / extract decisions stay in `run_scene.gd`, and the outside-repository temporary-script incident was reported as cleaned without repository commit residue.

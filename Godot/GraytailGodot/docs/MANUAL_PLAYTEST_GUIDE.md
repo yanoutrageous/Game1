@@ -8,6 +8,8 @@ Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
 
 Current baseline smoke should cover the three-page shell, the G14 run surface shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, local typography/readability, and the five supported fixed 16:9 resolution tiers. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, or runtime PASS.
 
+G14-R3 acceptance fact: current main is `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5` (`1d33c89 feat(godot): add legacy demo run surface shell`). G14-R3 was not run in Godot/editor/game/import and is not runtime PASS. `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf` is only the G13 closeout / G14-R3 baseline history.
+
 ## Main Menu / Deploy Shell
 
 - Use the main menu `出发探索` entry to open the read-only DeployShell.
@@ -139,6 +141,8 @@ Use this route for G13 only after a human or explicitly authorized runtime smoke
 
 Use this route for G14 only after a human or explicitly authorized runtime smoke starts the game. Do not mark PASS from static inspection alone.
 
+- G14-R3 static acceptance says `RunSurface` is UI surface composition only and `RunSurfaceModel` is display-only.
+- Confirm runtime behavior only after explicit authorization; static docs do not prove visual PASS.
 - Start tutorial and standard runs through the existing shell routes.
 - Confirm the run screen has a clear old Demo-style information hierarchy: left region scanner, center current room/objective, right protocol/danger/status, bottom action bar, and lower-left resource/backpack summary.
 - Confirm the MiniMap still opens MapOverlay through the existing command path.
@@ -147,6 +151,8 @@ Use this route for G14 only after a human or explicitly authorized runtime smoke
 - Confirm the surface buttons do not introduce new gameplay rules and only call the existing run scene orchestration paths.
 - Confirm no visible text, button, or panel clips at the G13 fixed tiers before any runtime PASS claim.
 - Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.
+
+Safety note for future manual or CodeX follow-up: do not create temporary scripts, logs, caches, or derived files outside `D:\AGAME2\repo\Game1`. G14-R3 execution reported an outside-repository temporary-script incident that was cleaned as necessary deletion; do not scan outside-repository paths unless the user provides a concrete path and explicit authorization.
 
 ## Known limits
 
