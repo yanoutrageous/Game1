@@ -16,6 +16,8 @@ const DevDiagnosticsPanelScript := preload("res://scripts/ui/dev/dev_diagnostics
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
 const G10ArtSmokeRegistry := preload("res://scripts/presentation/g10_art_smoke_registry.gd")
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const RunSurfaceScript := preload("res://scripts/ui/run_surface/run_surface.gd")
+const RunSurfaceModel := preload("res://scripts/ui/run_surface/run_surface_model.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
@@ -54,6 +56,7 @@ var main_menu_panel: Control
 var deploy_shell_panel: Control
 var long_term_shell_panel: Control
 var run_overlay_root: Control
+var run_surface: RunSurface
 var room_badge: Label
 var protocol_badge: Label
 var command_result_label: Label
@@ -196,51 +199,22 @@ func _build_run_overlay() -> void:
 	run_overlay_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	ui_root.add_child(run_overlay_root)
 
-	_add_color_rect(run_overlay_root, "LeftSidebar", Rect2(0, 0, 380, 720), Color(0.03, 0.06, 0.07, 0.94))
-	_add_color_rect(run_overlay_root, "RightUtilityRail", Rect2(960, 0, 280, 720), Color(0.05, 0.05, 0.05, 0.78))
-	_add_color_rect(run_overlay_root, "BottomActionBar", Rect2(390, 642, 560, 62), Color(0.03, 0.06, 0.07, 0.92))
+	run_surface = RunSurfaceScript.new() as RunSurface
+	run_surface.name = "RunSurface"
+	run_surface.build()
+	run_surface.interact_requested.connect(_handle_interact_pressed)
+	run_surface.inventory_requested.connect(_show_inventory_panel)
+	run_surface.ground_loot_requested.connect(_show_ground_loot_panel)
+	run_surface.map_requested.connect(_open_map_from_ui)
+	run_surface.combat_requested.connect(_fight_and_show_result)
+	run_surface.extract_requested.connect(_request_extract_from_ui)
+	run_surface.pause_requested.connect(_show_pause_panel)
+	run_overlay_root.add_child(run_surface)
 
-	minimap_panel = MiniMapScene.instantiate() as MiniMapPanel
-	minimap_panel.name = "MiniMapPanel"
-	minimap_panel.offset_left = 18.0
-	minimap_panel.offset_top = 22.0
-	minimap_panel.offset_right = 358.0
-	minimap_panel.offset_bottom = 238.0
-	minimap_panel.open_map_requested.connect(func() -> void: _open_map_from_ui(&"minimap"))
-	run_overlay_root.add_child(minimap_panel)
+	hud = run_surface.get_hud()
+	minimap_panel = run_surface.get_minimap_panel()
+	var surface_overlay_slot := run_surface.get_overlay_slot()
 
-	hud = HUDScene.instantiate() as Hud
-	hud.name = "HUD"
-	run_overlay_root.add_child(hud)
-
-	room_badge = _add_label(run_overlay_root, "RoomAreaStatusBadge", Rect2(420, 22, 440, 74), "Room Area", 16)
-	room_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_add_color_rect(run_overlay_root, "RoomBadgeBackdrop", Rect2(410, 18, 460, 82), Color(0.03, 0.06, 0.07, 0.62))
-	run_overlay_root.move_child(run_overlay_root.get_node("RoomBadgeBackdrop"), room_badge.get_index())
-
-	protocol_badge = _add_label(run_overlay_root, "ProtocolStatusPanel", Rect2(980, 24, 238, 124), "Protocol", 18)
-	protocol_badge.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
-	_add_color_rect(run_overlay_root, "ProtocolBackdrop", Rect2(968, 16, 254, 140), Color(0.03, 0.07, 0.07, 0.94))
-	run_overlay_root.move_child(run_overlay_root.get_node("ProtocolBackdrop"), protocol_badge.get_index())
-
-	var action_bar := HBoxContainer.new()
-	action_bar.name = "BottomActionBarButtons"
-	action_bar.offset_left = 408.0
-	action_bar.offset_top = 656.0
-	action_bar.offset_right = 936.0
-	action_bar.offset_bottom = 694.0
-	action_bar.add_theme_constant_override("separation", 6)
-	run_overlay_root.add_child(action_bar)
-	_add_label(run_overlay_root, "ControlsLabel", Rect2(410, 610, 540, 32), "WASD/方向键：房间内移动；走到门口切换房间。E 搜索/交互。", 14)
-	_add_menu_button(action_bar, "E 搜索/交互", func() -> void: _handle_interact_pressed())
-	_add_menu_button(action_bar, "背包", func() -> void: _show_inventory_panel())
-	_add_menu_button(action_bar, "地面物品", func() -> void: _show_ground_loot_panel())
-	_add_menu_button(action_bar, "M 地图", func() -> void: _open_map_from_ui(&"button"))
-	_add_menu_button(action_bar, "Space/J 战斗", func() -> void: _fight_and_show_result())
-
-	command_result_label = _add_label(run_overlay_root, "CommandResultReasonLabel", Rect2(982, 156, 238, 64), "操作提示：无", 13)
-
-	layout_profile_label = _add_label(run_overlay_root, "LayoutProfileStatus", Rect2(982, 202, 238, 24), "Layout: desktop", 12)
 	debug_toggle_button = _add_button(run_overlay_root, "DebugToggleButton", Rect2(1010, 226, 170, 34), "Dev Debug", func() -> void: _toggle_debug_panel())
 	debug_toggle_button.visible = G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED
 	debug_toggle_button.disabled = not G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED
@@ -277,20 +251,20 @@ func _build_run_overlay() -> void:
 	inventory_panel.name = "InventoryPanel"
 	inventory_panel.connect("drop_item_requested", _on_inventory_drop_requested)
 	inventory_panel.connect("close_requested", func() -> void: inventory_panel.call("hide_panel"))
-	run_overlay_root.add_child(inventory_panel)
+	surface_overlay_slot.add_child(inventory_panel)
 
 	ground_loot_panel = GroundLootPanelScript.new() as Control
 	ground_loot_panel.name = "GroundLootPanel"
 	ground_loot_panel.connect("pickup_item_requested", _on_ground_loot_pickup_requested)
 	ground_loot_panel.connect("close_requested", func() -> void: ground_loot_panel.call("hide_panel"))
-	run_overlay_root.add_child(ground_loot_panel)
+	surface_overlay_slot.add_child(ground_loot_panel)
 
 	result_panel = ResultPanelScene.instantiate() as ResultPanel
 	result_panel.name = "ResultPanel"
 	result_panel.return_main_requested.connect(_return_from_result_to_main)
 	result_panel.return_deploy_requested.connect(_return_from_result_to_deploy)
 	result_panel.hide_result()
-	run_overlay_root.add_child(result_panel)
+	surface_overlay_slot.add_child(result_panel)
 
 	dev_diagnostics_panel = DevDiagnosticsPanelScript.new() as Control
 	dev_diagnostics_panel.name = "DevDiagnosticsPanel"
@@ -300,12 +274,12 @@ func _build_run_overlay() -> void:
 	map_overlay_panel = MapOverlayScene.instantiate() as MapOverlayPanel
 	map_overlay_panel.name = "MapOverlayPanel"
 	map_overlay_panel.cell_action_requested.connect(_on_map_overlay_cell_action_requested)
-	run_overlay_root.add_child(map_overlay_panel)
+	surface_overlay_slot.add_child(map_overlay_panel)
 
 	tutorial_popup_panel = TutorialPopupScene.instantiate() as TutorialPopupPanel
 	tutorial_popup_panel.name = "TutorialPopupPanel"
 	tutorial_popup_panel.confirmed.connect(_on_tutorial_popup_confirmed)
-	run_overlay_root.add_child(tutorial_popup_panel)
+	surface_overlay_slot.add_child(tutorial_popup_panel)
 
 
 func _build_runtime_modals() -> void:
@@ -387,7 +361,10 @@ func _new_modal_panel(node_name: String, rect: Rect2) -> PanelContainer:
 	panel.offset_right = rect.position.x + rect.size.x
 	panel.offset_bottom = rect.position.y + rect.size.y
 	panel.visible = false
-	run_overlay_root.add_child(panel)
+	var modal_parent: Control = run_overlay_root
+	if run_surface != null:
+		modal_parent = run_surface.get_modal_slot()
+	modal_parent.add_child(panel)
 	return panel
 
 
@@ -772,9 +749,13 @@ func _refresh_view_models() -> void:
 	var layout_profile: Dictionary = _current_layout_profile()
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	var minimap_vm := MiniMapViewModel.build_from_intel(run_context.intel_map, run_context.get_current_pos())
+	if run_surface != null:
+		var surface_model := RunSurfaceModel.build(snapshot, minimap_vm, layout_profile, last_command_result)
+		run_surface.apply_layout_profile(layout_profile)
+		run_surface.apply_surface_model(surface_model)
 	if ui_shell != null:
 		ui_shell.call("apply_snapshot", snapshot)
-	if room_badge != null:
+	if run_surface == null and room_badge != null:
 		room_badge.text = "模式：%s | 阶段：%s | 房间：%s\n坐标：(%d,%d) | 周围雷险：%s" % [
 			String(snapshot.get("mode", &"")),
 			String(snapshot.get("phase", &"")),
@@ -783,7 +764,7 @@ func _refresh_view_models() -> void:
 			pos.y,
 			snapshot.get("adjacent_mines", 0),
 		]
-	if protocol_badge != null:
+	if run_surface == null and protocol_badge != null:
 		protocol_badge.text = "协议 %s\n压力：%s / 100\n状态：%s\n地面物品：%s" % [
 			snapshot.get("protocol_level", 5),
 			snapshot.get("pressure", 0),
@@ -803,7 +784,7 @@ func _refresh_view_models() -> void:
 	if map_overlay_panel != null:
 		map_overlay_panel.apply_layout_profile(layout_profile)
 		map_overlay_panel.apply_view_model(minimap_vm)
-	if layout_profile_label != null:
+	if run_surface == null and layout_profile_label != null:
 		layout_profile_label.text = "Layout: %s" % current_layout_profile_id
 	if tutorial_popup_panel != null:
 		tutorial_popup_panel.apply_popup(snapshot.get("tutorial_popup", {}))
@@ -877,6 +858,8 @@ func _dispatch_command(command_name: StringName, payload: Dictionary = {}) -> Di
 
 
 func _show_command_feedback(result: Dictionary) -> void:
+	if run_surface != null:
+		run_surface.show_command_feedback(result)
 	if command_result_label != null:
 		command_result_label.text = "操作提示：%s" % RunUIViewModel.command_result_text(result)
 		var accepted: bool = bool(result.get("accepted", result.get("ok", true)))

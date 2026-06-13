@@ -2,19 +2,19 @@
 
 ## Stage
 
-G13 Fixed Resolution Layout Adaptation closeout. G13-R3 is complete, pushed, and statically validated for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and small layout adaptations. G13-R5 records docs-only handoff/status closeout. G10, G11, and G12 are complete and closed; G14 is not started.
+G14 Legacy Demo UI Surface Sprint is active. G14-R3 implements the minimal `RunSurface` / `RunSurfaceModel` cut and first low-fidelity legacy Demo-style run surface. G10, G11, G12, and G13 are complete and closed.
 
 ## Time
 
-`2026-06-13`
+`2026-06-14`
 
 ## Repository State
 
-- Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
+- Current repository path: `D:\AGAME2\repo\Game1`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current main HEAD: `5afdb05fefe65031da1486507b0b39bdd2f1cea7`
-- Current remote live main HEAD: `5afdb05fefe65031da1486507b0b39bdd2f1cea7`
+- G14-R3 baseline main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
+- G14-R3 baseline remote live main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout follow-up commit: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
@@ -24,6 +24,7 @@ G13 Fixed Resolution Layout Adaptation closeout. G13-R3 is complete, pushed, and
 - G12 closeout commit: `e90bd27 docs: close G12 legacy demo parity pass`
 - G13 baseline commit: `e90bd27 docs: close G12 legacy demo parity pass`
 - G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`
+- G13 closeout commit: `8878bd3 docs: close G13 resolution layout adaptation pass`
 - Current fact source: `docs/PROJECT_BASELINE.md`
 - Next-chat entry: `docs/NEXT_HANDOFF.md`
 - Docs navigation: `docs/DOCS_INDEX.md`
@@ -134,6 +135,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G12 handoff: `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`.
 - G13 validation checklist: `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`.
 - G13 handoff: `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`.
+- G14 validation checklist: `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`.
 
 ## Implemented In G11
 
@@ -166,6 +168,15 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G13 closeout is static-validation only and does not claim runtime PASS.
 - G13 does not modify core rules, CommandBus, ledger, TruthMap, save/persistence, MetaProgress, or Deploy persistence.
 - G13 is not arbitrary aspect-ratio responsiveness, mobile support, ultrawide support, 4K support, full DPI parity, complete final UI, complete settings, new gameplay, runtime PASS, or G14.
+
+## Implemented In G14
+
+- G14-R3 adds `RunSurfaceModel`, a display-only adapter from public snapshot data, `MiniMapViewModel`, `UILayoutProfile`, and latest command result.
+- G14-R3 adds `RunSurface`, a lightweight run-screen composition layer for left scanner, center room/objective, right protocol/danger/status, bottom actions, lower-left resources, overlay slot, modal slot, and feedback slot.
+- `run_scene.gd` remains the run orchestration owner: it still handles CommandBus dispatch, event/loot/extract decisions, screen routing, and existing panel control.
+- Existing HUD, MiniMap, MapOverlay, Inventory, GroundLoot, ResultPanel, TutorialPopup, event, loot, extract, pause, and diagnostics paths remain reusable.
+- G14-R3 does not run Godot/editor/game/import and does not claim runtime PASS.
+- G14-R3 does not change rules, snapshot schema, CommandBus semantics, TruthMap, Ledger, AssetLedger, MetaProgress, Deploy persistence, resources, fonts, import products, or project metadata.
 
 ## Not Implemented
 
@@ -230,10 +241,11 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 - `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
 - `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
 - `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+- `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
 
 ## Follow-Up Boundary
 
-G13 is closing as a bounded fixed-resolution layout pass. Any G14 work, runtime smoke, five-tier manual verification, broader UI/system branch, mobile/ultrawide/4K support, or gameplay/system expansion requires separate approval.
+G14 is active as a bounded legacy Demo run surface UI sprint. R4 may refine surface presentation and modal/feedback readability; R5 should close out with handoff/status alignment.
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 

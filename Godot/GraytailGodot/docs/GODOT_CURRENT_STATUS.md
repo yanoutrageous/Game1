@@ -2,15 +2,15 @@
 
 ## Updated
 
-`2026-06-13`
+`2026-06-14`
 
 ## Branch
 
-Current stage: G13 Fixed Resolution Layout Adaptation complete; docs-only closeout is being recorded.
+Current stage: G14 Legacy Demo UI Surface Sprint active; R3 implements the minimal run surface shell.
 
-Current main HEAD: `5afdb05fefe65031da1486507b0b39bdd2f1cea7`.
+G14-R3 baseline main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
-Current remote live main HEAD: `5afdb05fefe65031da1486507b0b39bdd2f1cea7`.
+G14-R3 baseline remote live main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
 Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 
@@ -29,6 +29,8 @@ G12 closeout commit: `e90bd27 docs: close G12 legacy demo parity pass`.
 G13 baseline commit: `e90bd27 docs: close G12 legacy demo parity pass`.
 
 G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`.
+
+G13 closeout commit: `8878bd3 docs: close G13 resolution layout adaptation pass`.
 
 Current fact source: `docs/PROJECT_BASELINE.md`.
 
@@ -104,8 +106,9 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G11-R3 improves mainline testability and UX readability through manual playtest coverage, clearer MapOverlay feedback, inventory/ground-loot hints, result return tooltips, and Pause/Settings wording. G11-R4 is docs-only closeout and does not continue UI repair.
 - G12-R3 aligned the current UI with legacy Demo core-loop feel through Chinese readability, scan/map feedback, protocol/pressure text, loot/settlement wording, and local typography/readability tweaks on existing UI only.
 - G13-R3 completed fixed 16:9 resolution tiers, runtime-only display selection, manual apply/reset, resize locking, fixed-tier `UILayoutProfile` fields, and bounded layout adaptation.
+- G14-R3 adds `RunSurfaceModel` and `RunSurface` for the first low-fidelity legacy Demo-style run surface while preserving existing panel, routing, and CommandBus paths.
 
-Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, and G13-R3 fixed resolution layout support. G13 is in docs-only closeout for fixed 16:9 resolution tiers and bounded layout adaptation. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, and not runtime PASS.
+Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, and active G14 run surface work. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, and not runtime PASS.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
@@ -124,7 +127,7 @@ Future UI work should consume:
 - InventoryPanel and GroundLootPanel snapshots
 - ResultPanel EventLog and TransactionLog summaries
 
-G13 UI work should only consume ViewModel/snapshot data, `SettingsManager` runtime display state, and existing `UILayoutProfile` data. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private run-rule state. G13 does not start G14 or any new gameplay/system branch.
+G14 UI work should only consume ViewModel/snapshot data, `MiniMapViewModel`, latest command result data, and existing `UILayoutProfile` data. It must not directly read or write `RunAssetLedger`, `TruthMap`, `RunRuleService`, Ledger private state, or private run-rule state. G14 does not start G15 or any new gameplay/system branch.
 
 Presentation work should map semantic ids into ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, panel skins, and fallback asset ids. Core gameplay should not directly build image paths.
 
@@ -150,7 +153,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_g10_progress_art_smoke.ps1
 ```
 
-G13-R3 and G13-R5 did not run Godot/editor/game/import and must not be reported as runtime PASS unless a later authorized runtime/manual smoke records it. G13-R3 did not submit `project.godot`, resources, import products, font files, or the existing Godot dirty whitelist. G12-R3 and G12-R4 did not run Godot/editor/game/import. Do not use Godot/editor/game/import for broad resource import, persistence work, full font pipeline, or full art migration.
+G14-R3, G13-R3, and G13-R5 did not run Godot/editor/game/import and must not be reported as runtime PASS unless a later authorized runtime/manual smoke records it. G14-R3 did not submit `project.godot`, resources, import products, font files, or the existing Godot dirty whitelist. Do not use Godot/editor/game/import for broad resource import, persistence work, full font pipeline, or full art migration.
+
+## G14 Boundary
+
+G14 is limited to a visible legacy Demo-style run UI surface sprint. R3 adds a minimal `RunSurface` / `RunSurfaceModel` cut and first shell only: left scanner rail, center room/objective surface, right protocol/danger/status rail, bottom action bar, resource pocket, and reusable overlay/modal slots.
+
+G14-R3 keeps event, loot, extract, command decisions, and screen routing in `run_scene.gd`. It does not change rules, CommandBus semantics, snapshot schema, TruthMap, Ledger, AssetLedger, MetaProgress, Deploy persistence, resources, fonts, import products, project metadata, action combat, full event library, full talent/card systems, full art migration, or runtime PASS.
 
 ## G13 Boundary
 

@@ -2,12 +2,12 @@
 
 ## Current Authority
 
-- Stage: G13 Fixed Resolution Layout Adaptation complete; docs-only closeout/handoff/status is being recorded.
-- Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
+- Stage: G14 Legacy Demo UI Surface Sprint active; R3 implements the minimal run surface cut and first visible legacy Demo-style shell.
+- Repository path: `D:\AGAME2\repo\Game1`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current main HEAD: `5afdb05fefe65031da1486507b0b39bdd2f1cea7`.
-- Current remote live main HEAD: `5afdb05fefe65031da1486507b0b39bdd2f1cea7`.
+- G14-R3 baseline main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
+- G14-R3 baseline remote live main HEAD: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout status: complete, merged to main, and closed.
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
@@ -18,6 +18,7 @@
 - G12 closeout commit: `e90bd27 docs: close G12 legacy demo parity pass`.
 - G13 baseline commit: `e90bd27 docs: close G12 legacy demo parity pass`.
 - G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`.
+- G13 closeout commit: `8878bd3 docs: close G13 resolution layout adaptation pass`.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
 
@@ -37,6 +38,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G11-R3 completed the narrow mainline testability and UX readability repair for current UI text, tooltips, hand-test coverage, and status documentation.
 - G12 is complete and closed for lightweight legacy Demo core-loop feel, Chinese readability, typography/readability, and current UI feedback alignment on existing systems.
 - G13-R3 is complete, pushed, and statically validated for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and bounded layout adaptation. G13-R5 is docs-only closeout/handoff/status alignment.
+- G14-R3 adds a minimal `RunSurface` / `RunSurfaceModel` cut for the first legacy Demo-style run screen surface while preserving existing panel, command, and routing paths.
 
 ## Current Validation Chain
 
@@ -89,7 +91,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-G13 is closing after fixed 16:9 resolution tiers, minimal runtime display settings, and bounded layout adaptation across the current UI surfaces. Keep future branch or fix-batch handoff files current.
+Continue G14 as a bounded UI sprint: R3 covers the first run surface shell, R4 may refine event/loot/extract presentation and spacing, and R5 should close out with handoff/status updates.
+
+## G14 Boundary
+
+G14 is the legacy Demo visible run UI surface sprint. R3 is limited to `RunSurface`, `RunSurfaceModel`, a low-fidelity left scanner / center room / right protocol / bottom action / resource pocket shell, and validation/manual checklist updates.
+
+G14-R3 does not change rules, CommandBus semantics, snapshot schema, TruthMap, Ledger, AssetLedger private logic, MetaProgress, Deploy persistence, resources, fonts, import products, project metadata, or gameplay systems. Event, loot, and extract command decisions stay in `run_scene.gd`; the surface only provides slots and display entry points.
+
+G14 is not complete 1:1 legacy Demo reproduction, complete final UI, complete action combat, complete talent/card systems, full event library, full art migration, broad architecture rewrite, G10/G11/G12/G13 continuation, or G15.
 
 ## G13 Boundary
 
@@ -121,9 +131,10 @@ G11 must not cover complete MetaProgress, Deploy persistence, complete long-term
 - MetaProgress / long-term progression systems.
 - Deploy persistence / save and deployment continuity.
 - Main gameplay deepening.
-- More complete legacy Demo experience reproduction.
+- G14-R4 second-wave run surface refinement after R3 review.
+- Runtime smoke / playable verification after explicit authorization.
 
-These are candidates only. They require separate approval, are not part of G13 closeout, and do not start G14.
+These are candidates only. G14-R3 does not start G15 and does not close G14.
 
 ## G10 Boundary
 
