@@ -2,7 +2,7 @@
 
 ## Stage
 
-G12 Legacy Demo Core Loop, Chinese Readability & Typography Parity closeout. G12-R3 is complete, verified, committed, and pushed; G12-R4 is docs-only closeout. G10 and G11 are complete and closed; G13 is not started.
+G13 Fixed Resolution Layout Adaptation. This is a bounded current-main pass for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and small layout adaptations. G10, G11, and G12 are complete and closed; G14 is not started.
 
 ## Time
 
@@ -13,14 +13,15 @@ G12 Legacy Demo Core Loop, Chinese Readability & Typography Parity closeout. G12
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current main HEAD: `2855ca9889e394fb79d22c468b1355cd3871fd39`
-- Current remote live main HEAD: `2855ca9889e394fb79d22c468b1355cd3871fd39`
+- Current main HEAD: `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f`
+- Current remote live main HEAD: `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f`
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout follow-up commit: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
 - G11-R3 commit: `e261ac7 fix(godot): improve G11 mainline UX readability`
 - G11 closeout commit: `4be0010 docs: close G11 mainline UX readability pass`
 - G12-R3 commit: `2855ca9 fix(godot): align G12 core loop readability with legacy demo`
+- G12 closeout commit: `e90bd27 docs: close G12 legacy demo parity pass`
 - Current fact source: `docs/PROJECT_BASELINE.md`
 - Next-chat entry: `docs/NEXT_HANDOFF.md`
 - Docs navigation: `docs/DOCS_INDEX.md`
@@ -129,6 +130,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G11 handoff: `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`.
 - G12 validation checklist: `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`.
 - G12 handoff: `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`.
+- G13 validation checklist: `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`.
 
 ## Implemented In G11
 
@@ -149,6 +151,13 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G12-R3 did not modify `run_scene.gd`.
 - G12-R3 did not commit the existing Godot dirty whitelist.
 - G12 is complete, pushed, and closed. It is not a 1:1 legacy Demo remake, not G13, and not a new gameplay/system/persistence/art-migration stage.
+
+## Active In G13
+
+- G13 supports only these fixed 16:9 resolution tiers: `1280x720`, `1366x768`, `1600x900`, `1920x1080`, and `2560x1440`.
+- G13 may add startup auto recommendation, runtime-only display selection, window resize locking, fixed-tier `UILayoutProfile` fields, and small layout adaptations for existing UI.
+- G13 does not modify resources, import products, fonts, core rules, CommandBus, ledger, TruthMap, save/persistence, MetaProgress, or Deploy persistence.
+- G13 is not arbitrary aspect-ratio responsiveness, mobile support, ultrawide support, 4K support, full DPI parity, complete final UI, complete settings, new gameplay, or G14.
 
 ## Not Implemented
 
@@ -213,7 +222,7 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 
 ## Follow-Up Boundary
 
-G12 is closed as a bounded lightweight readability/parity pass. Any G13 work, runtime smoke, broader UI/system branch, or gameplay/system expansion requires separate approval.
+G13 is active as a bounded fixed-resolution layout pass. Any G14 work, runtime smoke, broader UI/system branch, mobile/ultrawide/4K support, or gameplay/system expansion requires separate approval.
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 

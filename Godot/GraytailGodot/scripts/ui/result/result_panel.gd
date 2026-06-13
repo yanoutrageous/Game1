@@ -87,9 +87,26 @@ func _ensure_actions() -> void:
 
 func apply_layout_profile(profile: Dictionary) -> void:
 	var profile_id: StringName = StringName(profile.get("profile_id", &"desktop"))
-	if profile_id == &"narrow":
+	var is_low := bool(profile.get("is_low_resolution", false))
+	var is_high := bool(profile.get("is_high_resolution", false))
+	var summary_node := get_node_or_null("ResultSummary") as Label
+	if summary_node != null:
+		summary_node.add_theme_font_size_override("font_size", 12 if is_low else (15 if is_high else 13))
+		summary_node.add_theme_constant_override("line_spacing", 1 if is_low else (3 if is_high else 2))
+	if profile_id == &"narrow" or is_low:
 		position = Vector2(18, 70)
 		size = Vector2(560, 520)
+	elif is_high:
+		position = Vector2(300, 82)
+		size = Vector2(680, 480)
 	else:
 		position = Vector2(330, 96)
 		size = Vector2(620, 440)
+	var backdrop := get_node_or_null("Backdrop") as ColorRect
+	if backdrop != null:
+		backdrop.size = size + Vector2(16, 16)
+	var actions := get_node_or_null("ResultActions") as HBoxContainer
+	if actions != null:
+		actions.offset_top = size.y - 32.0
+		actions.offset_right = size.x - 20.0
+		actions.offset_bottom = size.y + 8.0

@@ -32,6 +32,9 @@ var deploy_center_panel: Control
 var long_term_body_label: Label
 var long_term_summary_label: Label
 var settings_body_label: Label
+var settings_resolution_option: OptionButton
+var settings_resolution_status_label: Label
+var settings_resolution_ids: Array[StringName] = []
 
 
 func _ready() -> void:
@@ -67,6 +70,7 @@ func show_long_term(entry_id: StringName = &"tasks") -> void:
 
 func show_settings() -> void:
 	current_page = PAGE_SETTINGS
+	_refresh_settings_display()
 	_set_page_visible(settings_page)
 
 
@@ -237,12 +241,71 @@ func _build_settings_page() -> void:
 	_add_color_rect(settings_page, "SettingsBackdrop", Rect2(0, 0, 1280, 720), Color(0.025, 0.045, 0.05, 1.0))
 	_add_button(settings_page, "SettingsBackToMainMenu", Rect2(32, 28, 150, 40), "返回主界面", func() -> void: main_entry_requested.emit(&"main"))
 	_add_label(settings_page, "SettingsTitle", Rect2(214, 30, 360, 42), "设置", 26, PresentationTheme.color_for_key(&"ui.accent"))
-	settings_body_label = _add_label(settings_page, "SettingsBody", Rect2(80, 130, 980, 320), "本阶段保留设置入口与壳层，不写入本地持久化偏好。\n\n可后续接入音量、窗口、可访问性、UI 减法与 Debug 可见性策略。", 18)
+	settings_body_label = _add_label(settings_page, "SettingsBody", Rect2(80, 118, 980, 96), "显示设置仅支持固定 16:9 分辨率档位；不会写入本地持久化偏好，重启后会重新自动推荐。", 17)
+
+	_add_label(settings_page, "ResolutionSettingLabel", Rect2(80, 238, 220, 32), "分辨率档位", 16, PresentationTheme.color_for_key(&"ui.accent"))
+	settings_resolution_option = OptionButton.new()
+	settings_resolution_option.name = "ResolutionOptionButton"
+	settings_resolution_option.offset_left = 80.0
+	settings_resolution_option.offset_top = 278.0
+	settings_resolution_option.offset_right = 300.0
+	settings_resolution_option.offset_bottom = 316.0
+	settings_page.add_child(settings_resolution_option)
+	_populate_resolution_options()
+
+	_add_button(settings_page, "ApplyResolutionButton", Rect2(320, 278, 126, 38), "应用", func() -> void: _apply_selected_resolution())
+	_add_button(settings_page, "AutoResolutionButton", Rect2(460, 278, 190, 38), "恢复自动推荐", func() -> void: _reset_resolution_to_auto())
+	settings_resolution_status_label = _add_label(settings_page, "ResolutionStatusLabel", Rect2(80, 342, 780, 120), "", 15)
+	settings_resolution_status_label.add_theme_constant_override("line_spacing", 2)
+	_refresh_settings_display()
 
 	var dev_button := _add_button(settings_page, "DevDiagnosticsEntryButton", Rect2(80, 478, 260, 38), "Dev Diagnostics", func() -> void: dev_diagnostics_requested.emit())
 	dev_button.visible = DEV_DIAGNOSTICS_ENABLED
 	dev_button.disabled = not DEV_DIAGNOSTICS_ENABLED
 	dev_button.tooltip_text = "UIVisibilityPolicy: dev_only=true, visible=false outside dev channel"
+
+
+func _populate_resolution_options() -> void:
+	if settings_resolution_option == null:
+		return
+	settings_resolution_option.clear()
+	settings_resolution_ids.clear()
+	for entry in SettingsManager.supported_resolution_entries():
+		var resolution_id := StringName(entry.get("id", &""))
+		settings_resolution_ids.append(resolution_id)
+		settings_resolution_option.add_item(String(entry.get("label", String(resolution_id))))
+	_select_current_resolution_option()
+
+
+func _refresh_settings_display() -> void:
+	_select_current_resolution_option()
+	if settings_resolution_status_label != null:
+		settings_resolution_status_label.text = SettingsManager.display_settings_summary() + "\n不支持任意比例、超宽屏、竖屏、4K 或移动端档位。"
+
+
+func _select_current_resolution_option() -> void:
+	if settings_resolution_option == null:
+		return
+	var current_resolution_id := SettingsManager.get_current_resolution_id()
+	for index in range(settings_resolution_ids.size()):
+		if settings_resolution_ids[index] == current_resolution_id:
+			settings_resolution_option.select(index)
+			return
+
+
+func _apply_selected_resolution() -> void:
+	if settings_resolution_option == null:
+		return
+	var selected_index := settings_resolution_option.selected
+	if selected_index < 0 or selected_index >= settings_resolution_ids.size():
+		return
+	SettingsManager.apply_resolution_id(settings_resolution_ids[selected_index])
+	_refresh_settings_display()
+
+
+func _reset_resolution_to_auto() -> void:
+	SettingsManager.reset_display_resolution_to_auto()
+	_refresh_settings_display()
 
 
 func _toggle_center_panel() -> void:

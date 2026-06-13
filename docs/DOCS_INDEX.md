@@ -17,12 +17,13 @@ Read these first in a new Codex or ChatGPT conversation:
 1. `docs/NEXT_HANDOFF.md`
 2. `docs/PROJECT_BASELINE.md`
 3. `docs/DOCS_INDEX.md`
-4. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-5. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-6. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-7. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-8. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-9. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+4. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
+5. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
+6. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+7. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+8. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+9. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+10. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
@@ -51,6 +52,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G10_CLOSEOUT_REMOTE_CONFIRMATION_FOLLOWUP.md` records the post-merge remote live confirmation and documentation calibration follow-up.
 - `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md` records the G11 mainline UX readability validation checklist, R3 execution notes, and R4 docs-only closeout record.
 - `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md` records the G12 lightweight legacy Demo core-loop, Chinese readability, typography/readability validation checklist, R3 implementation record, and R4 docs-only closeout notes.
+- `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md` records the G13 fixed resolution tier and layout adaptation validation checklist.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -83,8 +85,8 @@ Root-level handoff files, old G2-G7 notes, Lua audit docs, UE docs, and early fe
 
 ## Current Boundary
 
-Current main is `2855ca9889e394fb79d22c468b1355cd3871fd39` and includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, and the completed G12 lightweight legacy Demo readability/typography pass. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
+Current main is `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f` and includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, and the completed G12 lightweight legacy Demo readability/typography pass. G13 is active for fixed 16:9 resolution tiers and bounded layout adaptation. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
 
 G10 is complete, merged to main, and closed. It was limited to progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning. It is not complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
-G11 is complete and closed. G12 is complete and closed as lightweight legacy Demo core-loop, Chinese readability, and typography/readability alignment. It is not a G10/G11 continuation, not G13, not a 1:1 remake, not a new gameplay phase, and not a new systems phase.
+G11 and G12 are complete and closed. G13 is active. It is not a G10/G11/G12 continuation, not G14, not arbitrary responsive UI, not mobile/ultrawide/4K/DPI parity, not a complete settings system, and not a new gameplay or systems phase.

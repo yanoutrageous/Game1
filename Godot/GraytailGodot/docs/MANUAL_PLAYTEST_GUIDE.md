@@ -2,11 +2,11 @@
 
 ## Scope
 
-This guide treats the older G4-G7 routes as historical foundations and points manual smoke toward the current mainline G12 legacy Demo core-loop, Chinese readability, and typography/readability baseline. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+This guide treats the older G4-G7 routes as historical foundations and points manual smoke toward the current mainline G13 fixed resolution and layout adaptation baseline. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
 
 Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
 
-Current baseline smoke should cover the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, and local typography/readability. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
+Current baseline smoke should cover the three-page shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, local typography/readability, and the five supported fixed 16:9 resolution tiers. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
 
 ## Main Menu / Deploy Shell
 
@@ -120,8 +120,23 @@ Use this route for G12 only after a human or explicitly authorized runtime smoke
 - Check Chinese readability on dark panels: no obvious mojibake, no missing glyph blocks, no unreadable contrast, and no clipped button text in the tested viewport.
 - Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.
 
+## G13 Fixed Resolution Layout Smoke
+
+Use this route for G13 only after a human or explicitly authorized runtime smoke starts the game. Do not mark PASS from static inspection alone.
+
+- Confirm the first launch or auto reset chooses the largest supported tier that fits the current display area.
+- Confirm the Settings page only lists `1280x720`, `1366x768`, `1600x900`, `1920x1080`, and `2560x1440`.
+- Confirm applying each supported tier changes the window to that fixed size and the status text updates.
+- Confirm restoring automatic recommendation returns to the best supported tier for the current display area.
+- Confirm the window cannot be freely resized by dragging and that unsupported aspect ratios are not offered.
+- At `1280x720`, confirm HUD, MiniMap, MapOverlay, Inventory, GroundLoot, ResultPanel, tooltips, and Chinese text do not clip in the expected route.
+- At `1366x768`, confirm the extra height does not leave important controls misaligned or clipped.
+- At `1600x900` and `1920x1080`, confirm standard UI density remains readable and centered enough for the controlled 16:9 layout.
+- At `2560x1440`, confirm text is not unreasonably small and panel spacing remains readable.
+- Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.
+
 ## Known limits
 
 - No Godot import/runtime smoke is part of the static G5 validation.
-- No full MetaProgress, persistence-backed Deploy economy, action combat, video, music, or font migration.
+- No arbitrary aspect-ratio responsiveness, mobile support, ultrawide support, 4K support, full DPI parity, complete settings system, full MetaProgress, persistence-backed Deploy economy, action combat, video, music, or font migration.
 - Some migrated icons remain internal placeholders until final art approval.

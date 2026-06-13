@@ -795,10 +795,13 @@ func _refresh_view_models() -> void:
 	if player_controller != null:
 		player_controller.set_visual_asset(&"sprite.player.default")
 	if hud != null:
+		hud.apply_layout_profile(layout_profile)
 		hud.apply_view_model(HUDViewModel.build_from_snapshot(snapshot))
 	if minimap_panel != null:
+		minimap_panel.apply_layout_profile(layout_profile)
 		minimap_panel.apply_view_model(minimap_vm)
 	if map_overlay_panel != null:
+		map_overlay_panel.apply_layout_profile(layout_profile)
 		map_overlay_panel.apply_view_model(minimap_vm)
 	if layout_profile_label != null:
 		layout_profile_label.text = "Layout: %s" % current_layout_profile_id
@@ -822,6 +825,10 @@ func _refresh_view_models() -> void:
 
 func _current_layout_profile() -> Dictionary:
 	var viewport_size: Vector2 = get_viewport_rect().size
+	if SettingsManager != null:
+		var resolution_size: Vector2i = SettingsManager.get_current_resolution_size()
+		if resolution_size.x > 0 and resolution_size.y > 0:
+			viewport_size = Vector2(resolution_size.x, resolution_size.y)
 	var profile: Dictionary = UILayoutProfileScript.profile_for_size(viewport_size)
 	current_layout_profile_id = StringName(profile.get("profile_id", &"desktop"))
 	return profile

@@ -2,12 +2,12 @@
 
 ## Current Authority
 
-- Stage: G12 Legacy Demo Core Loop, Chinese Readability & Typography Parity closeout complete.
+- Stage: G13 Fixed Resolution Layout Adaptation active.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current main HEAD: `2855ca9889e394fb79d22c468b1355cd3871fd39`.
-- Current remote live main HEAD: `2855ca9889e394fb79d22c468b1355cd3871fd39`.
+- Current main HEAD: `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f`.
+- Current remote live main HEAD: `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f`.
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout status: complete, merged to main, and closed.
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
@@ -15,6 +15,7 @@
 - G11-R3 commit: `e261ac7 fix(godot): improve G11 mainline UX readability`.
 - G11 closeout commit: `4be0010 docs: close G11 mainline UX readability pass`.
 - G12-R3 commit: `2855ca9 fix(godot): align G12 core loop readability with legacy demo`.
+- G12 closeout commit: `e90bd27 docs: close G12 legacy demo parity pass`.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
 
@@ -33,6 +34,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G10 added bounded progress整理, interaction fixes, dev-only diagnostics gating, art smoke registry/fallback checks, and responsive layout contracts on top of the G9 UI core flow baseline.
 - G11-R3 completed the narrow mainline testability and UX readability repair for current UI text, tooltips, hand-test coverage, and status documentation.
 - G12 is complete and closed for lightweight legacy Demo core-loop feel, Chinese readability, typography/readability, and current UI feedback alignment on existing systems.
+- G13 is active for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and bounded layout adaptation.
 
 ## Current Validation Chain
 
@@ -85,7 +87,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-G12 is closed. Choose a separately approved next phase before doing runtime smoke, MetaProgress, Deploy persistence, gameplay deepening, or a more complete legacy Demo experience pass. Keep future branch or fix-batch handoff files current.
+Use G13 only for fixed 16:9 resolution tiers, minimal runtime display settings, and bounded layout adaptation across the current UI surfaces. Keep future branch or fix-batch handoff files current.
+
+## G13 Boundary
+
+G13 covers exactly these fixed resolution tiers: `1280x720`, `1366x768`, `1600x900`, `1920x1080`, and `2560x1440`. It may add runtime-only display selection, startup auto recommendation, resize locking, `UILayoutProfile` fixed-tier fields, and small panel/text sizing changes for existing UI.
+
+G13 must not become arbitrary aspect-ratio responsiveness, mobile support, ultrawide support, 4K support, full platform DPI parity, complete final UI, complete settings, Deploy persistence, MetaProgress, action combat, new gameplay, new resources, full art migration, broad UI rewrite, or broad architecture reshaping.
 
 ## G12 Boundary
 
@@ -109,7 +117,7 @@ G11 must not cover complete MetaProgress, Deploy persistence, complete long-term
 - Main gameplay deepening.
 - More complete legacy Demo experience reproduction.
 
-These are candidates only. They require separate approval, are not part of G12, and do not start G13.
+These are candidates only. They require separate approval, are not part of G13, and do not start G14.
 
 ## G10 Boundary
 

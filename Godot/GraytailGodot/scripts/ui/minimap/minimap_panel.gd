@@ -6,12 +6,25 @@ class_name MiniMapPanel
 signal open_map_requested
 
 var view_model: MiniMapViewModel
+var layout_profile: Dictionary = {}
+var marker_size: Vector2 = Vector2(28, 28)
+var marker_font_size: int = 13
 const LEGACY_MINIMAP_VALIDATION_MARKER := "MiniMap: icons fallback to text"
 const G10_MINIMAP_CLICK_VALIDATION_MARKER := "MiniMapPanel click opens MapOverlay"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
 	view_model = next_view_model
+	_rebuild_grid()
+	queue_redraw()
+
+
+func apply_layout_profile(profile: Dictionary) -> void:
+	layout_profile = profile.duplicate(true)
+	var is_low := bool(layout_profile.get("is_low_resolution", false))
+	var is_high := bool(layout_profile.get("is_high_resolution", false))
+	marker_size = Vector2(26, 26) if is_low else (Vector2(32, 32) if is_high else Vector2(28, 28))
+	marker_font_size = 12 if is_low else (15 if is_high else 13)
 	_rebuild_grid()
 	queue_redraw()
 
@@ -51,17 +64,17 @@ func _rebuild_grid() -> void:
 
 	if view_model == null:
 		if placeholder != null:
-			placeholder.add_theme_font_size_override("font_size", 13)
+			placeholder.add_theme_font_size_override("font_size", marker_font_size)
 			placeholder.text = "区域扫描图：暂无情报"
 		return
 
 	grid.columns = max(1, view_model.width)
 	for marker in view_model.room_markers:
-		_add_marker_node(grid, marker, Vector2(28, 28))
+		_add_marker_node(grid, marker, marker_size)
 
 	if placeholder != null:
 		placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		placeholder.add_theme_font_size_override("font_size", 13)
+		placeholder.add_theme_font_size_override("font_size", marker_font_size)
 		placeholder.text = "区域扫描图：点击打开回顾；数字为周围雷险"
 
 
@@ -87,7 +100,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
-		label.add_theme_font_size_override("font_size", 13)
+		label.add_theme_font_size_override("font_size", marker_font_size)
 		label.text = String(marker.get("label", "?"))
 		label.tooltip_text = String(marker.get("tooltip", ContentDB.get_placeholder_label(asset_id) if asset_id != &"" else "未知房间"))
 		grid.add_child(label)

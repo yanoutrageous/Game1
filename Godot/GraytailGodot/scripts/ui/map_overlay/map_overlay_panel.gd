@@ -5,11 +5,25 @@ signal cell_action_requested(marker: Dictionary)
 
 var view_model: MiniMapViewModel
 var selected_feedback_text: String = ""
+var layout_profile: Dictionary = {}
+var marker_size: Vector2 = Vector2(42, 42)
+var title_font_size: int = 20
+var footer_font_size: int = 13
 const LEGACY_MAP_OVERLAY_VALIDATION_MARKER := "Click hidden cells to flag"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
 	view_model = next_view_model
+	_rebuild_grid()
+
+
+func apply_layout_profile(profile: Dictionary) -> void:
+	layout_profile = profile.duplicate(true)
+	var is_low := bool(layout_profile.get("is_low_resolution", false))
+	var is_high := bool(layout_profile.get("is_high_resolution", false))
+	marker_size = Vector2(38, 38) if is_low else (Vector2(48, 48) if is_high else Vector2(42, 42))
+	title_font_size = 18 if is_low else (22 if is_high else 20)
+	footer_font_size = 12 if is_low else (15 if is_high else 13)
 	_rebuild_grid()
 
 
@@ -46,11 +60,11 @@ func _rebuild_grid() -> void:
 
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
-		title.add_theme_font_size_override("font_size", 20)
+		title.add_theme_font_size_override("font_size", title_font_size)
 		title.text = "区域扫描器回顾"
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		footer.add_theme_font_size_override("font_size", 13)
+		footer.add_theme_font_size_override("font_size", footer_font_size)
 		footer.add_theme_constant_override("line_spacing", 2)
 		footer.text = "点击未知房间标记风险；点击已探索安全房间尝试快速返回。"
 
@@ -70,7 +84,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	var asset_ref := ContentDB.get_asset_ref(asset_id)
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
 	var button := Button.new()
-	button.custom_minimum_size = Vector2(42, 42)
+	button.custom_minimum_size = marker_size
 	button.text = String(marker.get("label", "?"))
 	button.tooltip_text = String(marker.get("tooltip", "cell"))
 	button.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))

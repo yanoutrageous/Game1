@@ -11,6 +11,7 @@ var summary_label: Label
 var item_list: VBoxContainer
 var tooltip_label: Label
 var last_result_label: Label
+var item_button_minimum_size: Vector2 = Vector2(380, 30)
 
 
 func _ready() -> void:
@@ -112,17 +113,39 @@ func hide_panel() -> void:
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
+	var is_low := bool(profile.get("is_low_resolution", false))
+	var is_high := bool(profile.get("is_high_resolution", false))
 	var profile_id: StringName = StringName(profile.get("profile_id", &"desktop"))
-	if profile_id == &"narrow":
+	if profile_id == &"narrow" or is_low:
 		offset_left = 20.0
 		offset_top = 88.0
 		offset_right = 600.0
 		offset_bottom = 650.0
+		item_button_minimum_size = Vector2(360, 30)
+		if item_list != null:
+			item_list.custom_minimum_size = Vector2(500, 190)
+		if tooltip_label != null:
+			tooltip_label.custom_minimum_size = Vector2(500, 104)
+	elif is_high:
+		offset_left = 350.0
+		offset_top = 98.0
+		offset_right = 970.0
+		offset_bottom = 636.0
+		item_button_minimum_size = Vector2(430, 34)
+		if item_list != null:
+			item_list.custom_minimum_size = Vector2(560, 236)
+		if tooltip_label != null:
+			tooltip_label.custom_minimum_size = Vector2(560, 138)
 	else:
 		offset_left = 390.0
 		offset_top = 116.0
 		offset_right = 930.0
 		offset_bottom = 610.0
+		item_button_minimum_size = Vector2(380, 30)
+		if item_list != null:
+			item_list.custom_minimum_size = Vector2(500, 210)
+		if tooltip_label != null:
+			tooltip_label.custom_minimum_size = Vector2(500, 120)
 
 
 func _add_item_row(item: Dictionary) -> void:
@@ -132,7 +155,7 @@ func _add_item_row(item: Dictionary) -> void:
 	var item_button := Button.new()
 	item_button.name = "GroundLootItemButton"
 	item_button.text = RunUIViewModel.item_display_line(item)
-	item_button.custom_minimum_size = Vector2(380, 30)
+	item_button.custom_minimum_size = item_button_minimum_size
 	item_button.pressed.connect(func() -> void: tooltip_label.text = RunUIViewModel.item_tooltip(item))
 	row.add_child(item_button)
 	var pickup_button := Button.new()
