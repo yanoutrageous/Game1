@@ -142,12 +142,17 @@ Use this route for G13 only after a human or explicitly authorized runtime smoke
 Use this route for G14 only after a human or explicitly authorized runtime smoke starts the game. Do not mark PASS from static inspection alone.
 
 - G14-R3 static acceptance says `RunSurface` is UI surface composition only and `RunSurfaceModel` is display-only.
+- G14-R4 static acceptance adds only display/presentation refinement; it does not prove runtime PASS.
 - Confirm runtime behavior only after explicit authorization; static docs do not prove visual PASS.
 - Start tutorial and standard runs through the existing shell routes.
 - Confirm the run screen has a clear old Demo-style information hierarchy: left region scanner, center current room/objective, right protocol/danger/status, bottom action bar, and lower-left resource/backpack summary.
 - Confirm the MiniMap still opens MapOverlay through the existing command path.
 - Confirm InventoryPanel and GroundLootPanel still open, show snapshot data, and route pickup/drop through CommandBus.
 - Trigger or inspect Event, Chest/Search, Monster, Exit, loot, extract, and result states when reachable; confirm EventOptionPanel, LootResultPanel, ExtractConfirmPanel, ResultPanel, TutorialPopup, and Pause overlay still use existing routes and are hosted above the surface.
+- Confirm EventOptionPanel, LootResultPanel, and ExtractConfirmPanel have clearer dark-panel hierarchy, titles, risk/reward text, and button layering without changing the decisions they trigger.
+- Confirm the scanner legend distinguishes current, unknown, flagged, dangerous, event, reward, and exit markers using existing MiniMap data only.
+- Confirm bottom action buttons show readable enabled/disabled state and tooltip reasons, and that disabled buttons do not introduce new actions.
+- Confirm the right protocol rail makes protocol, pressure, danger, room state, search state, recent event, loot, and command feedback easier to scan.
 - Confirm the surface buttons do not introduce new gameplay rules and only call the existing run scene orchestration paths.
 - Confirm no visible text, button, or panel clips at the G13 fixed tiers before any runtime PASS claim.
 - Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.

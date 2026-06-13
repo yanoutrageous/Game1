@@ -27,6 +27,7 @@ var resource_backdrop: PanelContainer
 var scanner_title_label: Label
 var scanner_summary_label: Label
 var scanner_legend_label: Label
+var scanner_detail_label: Label
 var room_title_label: Label
 var room_body_label: Label
 var objective_label: Label
@@ -37,6 +38,7 @@ var event_label: Label
 var reward_label: Label
 var command_feedback_label: Label
 var layout_label: Label
+var action_hint_label: Label
 var action_bar: HBoxContainer
 var action_buttons: Dictionary = {}
 var built := false
@@ -60,6 +62,8 @@ func build() -> void:
 	scanner_summary_label = _add_label("LegacyScannerSummary", "扫描器：等待数据", 13, PresentationTheme.text_color())
 	scanner_legend_label = _add_label("LegacyScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
+	scanner_detail_label = _add_label("LegacyScannerDetail", "图例：只显示已公开扫描信息。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+
 	minimap_panel = MiniMapScene.instantiate() as MiniMapPanel
 	minimap_panel.name = "LegacyScannerMiniMap"
 	minimap_panel.open_map_requested.connect(func() -> void: map_requested.emit(&"surface_minimap"))
@@ -77,6 +81,8 @@ func build() -> void:
 	reward_label = _add_label("LegacyRewardSummary", "奖励：等待记录。", 12, PresentationTheme.color_for_key(&"ui.muted"))
 	command_feedback_label = _add_label("LegacyCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
 	layout_label = _add_label("LegacyLayoutProfileStatus", "Layout: desktop", 11, PresentationTheme.color_for_key(&"ui.muted"))
+
+	action_hint_label = _add_label("LegacyActionHint", "行动提示：可用按钮高亮，灰显按钮保留原因提示。", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 	action_bar = HBoxContainer.new()
 	action_bar.name = "LegacyBottomActionButtons"
@@ -102,6 +108,8 @@ func build() -> void:
 func apply_surface_model(model: Dictionary) -> void:
 	if not built:
 		build()
+	scanner_legend_label.text = _lines_text(model.get("scanner_legend_lines", []), "P 当前 | ? 未知 | F 标记 | X 撤离")
+	scanner_detail_label.text = String(model.get("scanner_detail", "图例：只显示已公开扫描信息。"))
 	scanner_summary_label.text = String(model.get("scanner_summary", "扫描器：等待公开地图数据。"))
 	room_title_label.text = "%s | %s" % [String(model.get("room_title", "当前房间")), String(model.get("room_coordinate", "(0,0)"))]
 	room_body_label.text = String(model.get("room_summary", "等待 run snapshot。"))
@@ -118,6 +126,13 @@ func apply_surface_model(model: Dictionary) -> void:
 	event_label.text = String(model.get("event_summary", "事件：无待处理事件。"))
 	reward_label.text = String(model.get("reward_summary", "奖励：等待记录。"))
 	command_feedback_label.text = String(model.get("command_feedback", "操作反馈：等待输入。"))
+
+	var status_text := _lines_text(model.get("status_lines", []), "")
+	if status_text != "":
+		right_body_label.text = status_text
+	event_label.text = String(model.get("event_panel_summary", model.get("event_summary", event_label.text)))
+	reward_label.text = String(model.get("loot_panel_summary", model.get("reward_summary", reward_label.text)))
+	action_hint_label.text = String(model.get("action_hint", "行动提示：可用按钮高亮，灰显按钮保留原因提示。"))
 
 	var profile: Dictionary = model.get("layout_profile", {})
 	layout_label.text = "Layout: %s / %s" % [
@@ -145,6 +160,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var center_left := left_width + margin
 	var center_right := width - right_width - margin
 	var center_width := max(360.0, center_right - center_left)
+	var scanner_map_height := min(240.0 if is_low else 276.0, height * 0.34)
+	var scanner_legend_top := margin + 84.0 + scanner_map_height
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(width - right_width, 0, right_width, height))
@@ -154,8 +171,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 
 	_set_rect(scanner_title_label, Rect2(margin, margin, left_width - margin * 2.0, 28))
 	_set_rect(scanner_summary_label, Rect2(margin, margin + 30.0, left_width - margin * 2.0, 42))
-	_set_rect(minimap_panel, Rect2(margin, margin + 78.0, left_width - margin * 2.0, min(260.0, height * 0.36)))
-	_set_rect(scanner_legend_label, Rect2(margin, margin + 350.0, left_width - margin * 2.0, 46))
+	_set_rect(minimap_panel, Rect2(margin, margin + 78.0, left_width - margin * 2.0, scanner_map_height))
+	_set_rect(scanner_legend_label, Rect2(margin, scanner_legend_top, left_width - margin * 2.0, 62))
+	_set_rect(scanner_detail_label, Rect2(margin, scanner_legend_top + 66.0, left_width - margin * 2.0, 86))
 
 	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 12.0, center_width - 36.0, 34))
 	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 52.0, center_width - 36.0, 62))
@@ -169,6 +187,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(command_feedback_label, Rect2(width - right_width + margin, height - 122.0, right_width - margin * 2.0, 66))
 	_set_rect(layout_label, Rect2(width - right_width + margin, height - 46.0, right_width - margin * 2.0, 24))
 
+	_set_rect(action_hint_label, Rect2(center_left + 18.0, height - bottom_height - margin - 30.0, center_width - 36.0, 24))
 	_set_rect(action_bar, Rect2(center_left + 14.0, height - bottom_height - margin + 13.0, center_width - 28.0, bottom_height - 22.0))
 	_set_rect(feedback_slot, Rect2(0, 0, width, height))
 	_set_rect(overlay_slot, Rect2(0, 0, width, height))
@@ -219,22 +238,25 @@ func get_feedback_slot() -> Control:
 	return feedback_slot
 
 
+func apply_legacy_modal_style(panel: PanelContainer, theme_key: StringName = &"ui.accent") -> void:
+	if panel == null:
+		return
+	var accent := PresentationTheme.color_for_key(theme_key, PresentationTheme.color_for_key(&"ui.accent"))
+	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.015, 0.028, 0.032, 0.96), accent, 2))
+	_style_modal_children(panel)
+
+
+func apply_legacy_button_style(button: Button, tone: StringName = &"secondary") -> void:
+	if button == null:
+		return
+	_apply_action_button_style(button, tone, not button.disabled)
+
+
 func _add_panel(node_name: String, color: Color, border_color: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.name = node_name
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
-	style.bg_color = color
-	style.border_color = border_color
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
-	panel.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", _panel_style(color, border_color, 1))
 	add_child(panel)
 	return panel
 
@@ -258,6 +280,7 @@ func _add_action_button(action_id: StringName, label: String, callback: Callable
 	button.custom_minimum_size = Vector2(96, 34)
 	button.pressed.connect(callback)
 	button.add_theme_font_size_override("font_size", 13)
+	_apply_action_button_style(button, &"secondary", true)
 	action_bar.add_child(button)
 	action_buttons[action_id] = button
 
@@ -283,8 +306,75 @@ func _apply_actions(actions: Variant) -> void:
 			continue
 		var button: Button = action_buttons[action_id]
 		button.text = String(action_data.get("label", button.text))
-		button.disabled = not bool(action_data.get("enabled", true))
-		button.tooltip_text = String(action_data.get("description", ""))
+		var enabled := bool(action_data.get("enabled", true))
+		var description := String(action_data.get("description", ""))
+		var disabled_reason := String(action_data.get("disabled_reason", ""))
+		button.disabled = not enabled
+		button.tooltip_text = description if enabled or disabled_reason == "" else "%s\n禁用：%s" % [description, disabled_reason]
+		_apply_action_button_style(button, StringName(action_data.get("tone", &"secondary")), enabled)
+
+
+func _panel_style(color: Color, border_color: Color, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.border_color = border_color
+	style.border_width_left = border_width
+	style.border_width_top = border_width
+	style.border_width_right = border_width
+	style.border_width_bottom = border_width
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	return style
+
+
+func _apply_action_button_style(button: Button, tone: StringName, enabled: bool) -> void:
+	var accent := _tone_color(tone)
+	button.add_theme_color_override("font_color", PresentationTheme.text_color())
+	button.add_theme_color_override("font_disabled_color", PresentationTheme.color_for_key(&"ui.muted"))
+	button.add_theme_stylebox_override("normal", _panel_style(Color(0.035, 0.06, 0.064, 0.92), accent, 1))
+	button.add_theme_stylebox_override("hover", _panel_style(Color(0.055, 0.09, 0.092, 0.98), accent, 1))
+	button.add_theme_stylebox_override("pressed", _panel_style(Color(0.02, 0.04, 0.045, 0.98), accent, 2))
+	button.add_theme_stylebox_override("disabled", _panel_style(Color(0.025, 0.032, 0.034, 0.72), PresentationTheme.color_for_key(&"ui.muted"), 1))
+	button.modulate = Color(1, 1, 1, 1) if enabled else Color(0.74, 0.78, 0.76, 1)
+
+
+func _tone_color(tone: StringName) -> Color:
+	match tone:
+		&"primary":
+			return PresentationTheme.color_for_key(&"ui.accent")
+		&"danger":
+			return PresentationTheme.color_for_key(&"ui.danger")
+		&"warning":
+			return PresentationTheme.color_for_key(&"ui.warning")
+		_:
+			return PresentationTheme.color_for_key(&"ui.muted")
+
+
+func _style_modal_children(node: Node) -> void:
+	if node is Label:
+		var label := node as Label
+		label.add_theme_color_override("font_color", PresentationTheme.text_color())
+	elif node is Button:
+		var button := node as Button
+		_apply_action_button_style(button, &"secondary", not button.disabled)
+	for child in node.get_children():
+		_style_modal_children(child)
+
+
+func _lines_text(lines: Variant, fallback: String) -> String:
+	if not (lines is Array):
+		return fallback
+	var typed_lines: Array = lines
+	if typed_lines.is_empty():
+		return fallback
+	var text := ""
+	for index in range(typed_lines.size()):
+		if index > 0:
+			text += "\n"
+		text += String(typed_lines[index])
+	return text
 
 
 func _set_rect(control: Control, rect: Rect2) -> void:

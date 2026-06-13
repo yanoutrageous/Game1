@@ -31,6 +31,15 @@
 - Protective stash remains expected and must not be touched: `stash@{0}: On godot/g7-lua-ux-flow-parity-p2: pre-sync generated dirty before aligning to G13 closeout main`.
 - Remaining dirty is allowed only when it is the existing whitelist: tracked `project.godot`, tracked/untracked `asset_manifest.*.translation`, and untracked `*.gd.uid`.
 
+## R4 Surface Presentation Record
+
+- Baseline before R4: `39b51f165b548cc28fef072675f846413513f2ed` (`docs: record G14 run surface acceptance follow-up`).
+- R4 refines only the display surface: scanner legend/detail, right-side protocol/danger/status lines, bottom action hint, button visual states, and legacy-style modal chrome.
+- R4 adds display-only fields to `RunSurfaceModel`; it still consumes only snapshot, `MiniMapViewModel`, layout profile, and latest command result data.
+- R4 keeps event, loot, and extract decisions in the existing `run_scene.gd` paths. It only changes modal presentation text and styling.
+- R4 does not change CommandBus semantics, screen routing, snapshot schema, TruthMap, RunRuleService, Ledger, AssetLedger, RunContext private state, rules, resources, fonts, import products, or project metadata.
+- R4 must not stage or commit the existing Godot dirty whitelist.
+
 ## Safety Event Record
 
 - During G14-R3 execution, two temporary script files were mistakenly created outside `D:\AGAME2\repo\Game1`.
@@ -50,6 +59,7 @@ git diff --check
 git status --short
 rg -n "RunSurface|RunSurfaceModel|RunMainLayout|run_scene|CommandBus|TruthMap|UILayoutProfile|MapOverlay|Inventory|GroundLoot|ResultPanel" Godot/GraytailGodot/scripts docs Godot/GraytailGodot/docs
 rg -n "TruthMap|RunRuleService|RunAssetLedger|AssetLedger|CommandBus\\.dispatch" Godot/GraytailGodot/scripts/ui/run_surface Godot/GraytailGodot/scripts/ui/shell/run_ui_view_model.gd
+rg -n "RunSurface|RunSurfaceModel|CommandBus|TruthMap|RunRuleService|Ledger|AssetLedger|MapOverlay|Inventory|GroundLoot|ResultPanel|extract|loot|event" Godot/GraytailGodot/scripts docs Godot/GraytailGodot/docs
 ```
 
 Expected static result:
@@ -58,13 +68,16 @@ Expected static result:
 - `RunSurface` does not call `CommandBus.dispatch`.
 - `RunSurface` and `RunSurfaceModel` do not directly read `TruthMap`, `RunRuleService`, `RunAssetLedger`, `AssetLedger`, or private rule state.
 - Existing panel APIs remain snapshot/ViewModel based.
+- Event, loot, and extract modals keep existing command and routing decisions in `run_scene.gd`.
 - Existing Godot dirty whitelist must not be staged or committed.
+- No outside-repository temporary scripts, files, logs, caches, or generated outputs are created.
 
 ## Runtime Status
 
 - Godot/editor/game/import was not run during this static implementation pass.
 - This validation record does not claim runtime PASS.
 - Manual runtime verification is still required before claiming visual or interaction PASS.
+- G14-R4 defaults to no Godot/editor/game/import run; if it is not run, do not claim runtime PASS.
 
 ## Manual Checklist Summary
 

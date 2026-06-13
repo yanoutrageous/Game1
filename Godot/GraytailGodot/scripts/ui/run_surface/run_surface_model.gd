@@ -16,6 +16,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 	var command_feedback := RunUIViewModel.command_result_text(last_command_result)
 	if command_feedback == "":
 		command_feedback = _player_message(last_message)
+	var action_data := _action_buttons(snapshot, search_data, event_state, room_type)
 
 	return {
 		"room_title": _room_label(room_type),
@@ -35,8 +36,15 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"resource_summary": _resource_summary(snapshot),
 		"command_feedback": command_feedback,
 		"scanner_summary": _scanner_summary(minimap_view_model, position),
+		"scanner_legend_lines": _scanner_legend_lines(minimap_view_model),
+		"scanner_detail": _scanner_detail(minimap_view_model),
 		"scanner_markers": _scanner_markers(minimap_view_model),
-		"action_buttons": _action_buttons(snapshot, search_data, event_state, room_type),
+		"status_lines": _status_lines(snapshot, room_type, adjacent_mines, search_data),
+		"event_panel_summary": event_modal_text(event_state),
+		"loot_panel_summary": loot_modal_text(reward, last_message),
+		"extract_summary": extract_modal_text(snapshot),
+		"action_hint": _action_hint(action_data),
+		"action_buttons": action_data,
 		"layout_profile": layout_profile.duplicate(true),
 	}
 
@@ -64,7 +72,61 @@ static func _action(action_id: StringName, label: String, enabled: bool, descrip
 		"label": label,
 		"enabled": enabled,
 		"description": description,
+		"disabled_reason": "" if enabled else description,
+		"tone": _action_tone(action_id),
 	}
+
+
+static func _action_tone(action_id: StringName) -> StringName:
+	match action_id:
+		&"interact":
+			return &"primary"
+		&"combat":
+			return &"danger"
+		&"extract":
+			return &"danger"
+		&"ground_loot":
+			return &"warning"
+		_:
+			return &"secondary"
+
+
+static func event_modal_text(event_state: Dictionary) -> String:
+	if event_state.is_empty():
+		return "事件通道：暂无待处理事件。\n提示：事件判定仍由现有 run_scene / CommandBus 路径处理。"
+	var event_type := String(event_state.get("event_type", event_state.get("type", "event")))
+	var options: Array = _array_variant(event_state.get("options", []))
+	var lines: Array[String] = []
+	lines.append("事件通道：%s" % event_type)
+	lines.append("状态：等待选择处理方式；完成后不会重复结算奖励。")
+	lines.append("可选项：%s" % options.size())
+	for option_variant in options:
+		if not (option_variant is Dictionary):
+			continue
+		var option: Dictionary = option_variant
+		var option_label := String(option.get("label", option.get("id", "option")))
+		var enabled_text := "可执行" if bool(option.get("enabled", true)) else "暂不可用"
+		lines.append("- %s [%s]" % [option_label, enabled_text])
+	lines.append("边界：这里只展示事件表层，规则分支不在 UI 中判定。")
+	return _join_lines(lines)
+
+
+static func loot_modal_text(reward: Dictionary, last_message: String = "") -> String:
+	var reward_text := RunUIViewModel.reward_text(reward, last_message)
+	if reward_text == "":
+		reward_text = "暂无新的回收记录。"
+	return "回收记录\n%s\n\n提示：拾取、丢弃和容量检查仍通过现有背包/地面物品路径。" % reward_text
+
+
+static func extract_modal_text(snapshot: Dictionary) -> String:
+	var lines: Array[String] = []
+	lines.append("撤离协议：等待最终确认")
+	lines.append("待结算黑币：%s" % snapshot.get("black_coin", snapshot.get("pending_gold", 0)))
+	lines.append("安全金币：%s" % snapshot.get("gold_coin", snapshot.get("safe_gold", 0)))
+	lines.append("背包：%s/%s" % [snapshot.get("backpack_used", 0), snapshot.get("backpack_capacity", 0)])
+	lines.append("当前房间地面遗留：%s" % snapshot.get("room_floor_item_count", 0))
+	lines.append("确认后进入既有结算路径；取消会返回当前 run。")
+	return _join_lines(lines)
 
 
 static func _room_summary(snapshot: Dictionary, room_type: StringName, adjacent_mines: int) -> String:
@@ -147,6 +209,64 @@ static func _resource_summary(snapshot: Dictionary) -> String:
 	]
 
 
+static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary) -> Array[String]:
+	return [
+		"协议：%s | 压力：%s/100" % [snapshot.get("protocol_level", 5), snapshot.get("pressure", 0)],
+		"危险：%s | 周边雷险：%s" % [_danger_label(room_type, adjacent_mines), adjacent_mines],
+		"房间状态：%s | 阶段：%s" % [String(snapshot.get("outcome", "Running")), String(snapshot.get("phase", &"running"))],
+		"%s" % _search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
+	]
+
+
+static func _scanner_legend_lines(minimap_view_model: MiniMapViewModel) -> Array[String]:
+	if minimap_view_model == null:
+		return ["P 当前 | ? 未知", "F 标记 | ! 危险", "E 事件 | $ 奖励 | X 撤离"]
+	var flagged := 0
+	var hidden := 0
+	var danger := 0
+	var event_count := 0
+	var reward := 0
+	var exit_count := 0
+	for marker_variant in minimap_view_model.room_markers:
+		if not (marker_variant is Dictionary):
+			continue
+		var marker: Dictionary = marker_variant
+		var room_type := StringName(marker.get("room_type", &"Unknown"))
+		if bool(marker.get("flagged", false)):
+			flagged += 1
+		if not bool(marker.get("revealed", false)) and StringName(marker.get("state", &"hidden")) == &"hidden":
+			hidden += 1
+		if room_type == &"Mine" or room_type == &"Monster" or int(marker.get("adjacent_mines", -1)) >= 3:
+			danger += 1
+		if room_type == &"Event":
+			event_count += 1
+		if room_type == &"Chest":
+			reward += 1
+		if room_type == &"Exit":
+			exit_count += 1
+	return [
+		"P 当前 | ? 未知 %s | F 标记 %s" % [hidden, flagged],
+		"! 危险 %s | E 事件 %s | $ 奖励 %s" % [danger, event_count, reward],
+		"X 撤离 %s | 点击扫描器可打开大地图" % exit_count,
+	]
+
+
+static func _scanner_detail(minimap_view_model: MiniMapViewModel) -> String:
+	if minimap_view_model == null:
+		return "图例：等待 MiniMapViewModel；不会触发额外扫描或规则计算。"
+	return "图例只反映已公开 MiniMap 数据；未知、标记、危险、事件、奖励、撤离均不改变地图规则。"
+
+
+static func _action_hint(actions: Array[Dictionary]) -> String:
+	for action in actions:
+		if bool(action.get("enabled", true)):
+			continue
+		var reason := String(action.get("disabled_reason", ""))
+		if reason != "":
+			return "行动提示：%s 暂不可用：%s" % [String(action.get("label", "行动")), reason]
+	return "行动提示：高亮按钮可执行；灰显按钮保留禁用原因，仍走既有命令路径。"
+
+
 static func _scanner_summary(minimap_view_model: MiniMapViewModel, position: Vector2i) -> String:
 	if minimap_view_model == null:
 		return "扫描器：等待公开地图数据。"
@@ -204,6 +324,12 @@ static func _player_message(message: String) -> String:
 
 static func _array_from(source: Dictionary, key: String) -> Array:
 	var raw: Variant = source.get(key, [])
+	if raw is Array:
+		return (raw as Array).duplicate(true)
+	return []
+
+
+static func _array_variant(raw: Variant) -> Array:
 	if raw is Array:
 		return (raw as Array).duplicate(true)
 	return []

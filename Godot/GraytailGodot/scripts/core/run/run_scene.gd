@@ -301,6 +301,9 @@ func _build_runtime_modals() -> void:
 	event_content.add_child(event_options_box)
 	_add_menu_button(event_content, "关闭", func() -> void: event_panel.visible = false)
 
+	if run_surface != null:
+		run_surface.apply_legacy_modal_style(event_panel, &"mini.event")
+
 	loot_panel = _new_modal_panel("LootResultPanel", Rect2(430, 160, 430, 300))
 	var loot_content := VBoxContainer.new()
 	loot_content.name = "LootResultContent"
@@ -315,6 +318,9 @@ func _build_runtime_modals() -> void:
 	loot_body_label.custom_minimum_size = Vector2(390, 180)
 	loot_content.add_child(loot_body_label)
 	_add_menu_button(loot_content, "关闭", func() -> void: loot_panel.visible = false)
+
+	if run_surface != null:
+		run_surface.apply_legacy_modal_style(loot_panel, &"mini.chest")
 
 	extract_panel = _new_modal_panel("ExtractConfirmPanel", Rect2(430, 180, 430, 260))
 	var extract_content := VBoxContainer.new()
@@ -333,6 +339,9 @@ func _build_runtime_modals() -> void:
 	extract_content.add_child(extract_buttons)
 	_add_menu_button(extract_buttons, "确认", func() -> void: _confirm_extract_from_ui())
 	_add_menu_button(extract_buttons, "取消", func() -> void: _cancel_extract_from_ui())
+
+	if run_surface != null:
+		run_surface.apply_legacy_modal_style(extract_panel, &"mini.exit")
 
 	pause_panel = _new_modal_panel("PauseSettingsOverlayPanel", Rect2(440, 146, 400, 270))
 	var pause_content := VBoxContainer.new()
@@ -590,6 +599,7 @@ func _show_event_panel(event_state: Dictionary) -> void:
 		return
 	event_title_label.text = "事件：%s" % _event_type_label(StringName(event_state.get("event_type", &"event")))
 	event_body_label.text = "选择处理方式。事件完成后不会重复结算奖励。"
+	event_body_label.text = RunSurfaceModel.event_modal_text(event_state)
 	for child in event_options_box.get_children():
 		child.queue_free()
 	var options: Array = event_state.get("options", [])
@@ -598,6 +608,9 @@ func _show_event_panel(event_state: Dictionary) -> void:
 		var option_label: String = String(option.get("label", String(option_id)))
 		var button := _add_menu_button(event_options_box, option_label, func() -> void: _select_event_option(option_id))
 		button.disabled = not bool(option.get("enabled", true))
+		button.tooltip_text = "事件选项：仍通过既有 select_event_option 命令处理。"
+		if run_surface != null:
+			run_surface.apply_legacy_button_style(button, &"primary" if not button.disabled else &"secondary")
 	event_panel.visible = true
 
 
@@ -630,6 +643,9 @@ func _show_extract_panel(snapshot: Dictionary) -> void:
 		snapshot.get("backpack_capacity", 0),
 		snapshot.get("room_floor_item_count", 0),
 	]
+	extract_body_label.text = RunSurfaceModel.extract_modal_text(snapshot)
+	if run_surface != null:
+		run_surface.apply_legacy_modal_style(extract_panel, &"mini.exit")
 	extract_panel.visible = true
 
 
@@ -647,7 +663,9 @@ func _show_loot_panel(title: String, reward: Dictionary) -> void:
 	if loot_panel == null:
 		return
 	loot_title_label.text = title
-	loot_body_label.text = RunUIViewModel.reward_text(reward, String(run_context.last_message))
+	loot_body_label.text = RunSurfaceModel.loot_modal_text(reward, String(run_context.last_message))
+	if run_surface != null:
+		run_surface.apply_legacy_modal_style(loot_panel, &"mini.chest")
 	loot_panel.visible = true
 	_refresh_view_models()
 
