@@ -2,24 +2,25 @@
 
 ## Stage
 
-G12 Legacy Demo Core Loop, Chinese Readability & Typography Parity. This is a lightweight current-main alignment stage for core-loop feel, Chinese visible text, local typography/readability, and manual validation. G10 and G11 are complete and closed; G12 is not G13.
+G12 Legacy Demo Core Loop, Chinese Readability & Typography Parity closeout. G12-R3 is complete, verified, committed, and pushed; G12-R4 is docs-only closeout. G10 and G11 are complete and closed; G13 is not started.
 
 ## Time
 
-`2026-06-12`
+`2026-06-13`
 
 ## Repository State
 
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current main HEAD: `4be0010dd68abe1b0e74966775db64f736d78e15`
-- Current remote live main HEAD: `4be0010dd68abe1b0e74966775db64f736d78e15`
+- Current main HEAD: `2855ca9889e394fb79d22c468b1355cd3871fd39`
+- Current remote live main HEAD: `2855ca9889e394fb79d22c468b1355cd3871fd39`
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout follow-up commit: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
 - G11-R3 commit: `e261ac7 fix(godot): improve G11 mainline UX readability`
 - G11 closeout commit: `4be0010 docs: close G11 mainline UX readability pass`
+- G12-R3 commit: `2855ca9 fix(godot): align G12 core loop readability with legacy demo`
 - Current fact source: `docs/PROJECT_BASELINE.md`
 - Next-chat entry: `docs/NEXT_HANDOFF.md`
 - Docs navigation: `docs/DOCS_INDEX.md`
@@ -127,21 +128,27 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G11 validation checklist: `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`.
 - G11 handoff: `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`.
 - G12 validation checklist: `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`.
+- G12 handoff: `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`.
 
 ## Implemented In G11
 
 - G11-R3 is complete and pushed at `e261ac7d8671b59e7e72750122e6581af6ea6644`.
-- Current fact-source documents are calibrated to main `e261ac7d8671b59e7e72750122e6581af6ea6644`.
+- During G11-R3, fact-source documents were calibrated to main `e261ac7d8671b59e7e72750122e6581af6ea6644`.
 - Manual playtest guidance covers MiniMap click-to-map, MapOverlay feedback, Inventory/GroundLoot, ResultPanel return routes, Pause/Settings overlay, and hidden dev diagnostics.
 - UI readability changes are limited to text, tooltip, empty-state, disabled-reason, and return-path wording.
 - G11-R4 is docs-only closeout. It does not continue UI repair and does not modify runtime/UI/resource files.
 
-## Active In G12
+## Implemented In G12
 
-- G12 aligns the current Godot main with the old Demo core-loop skeleton through lightweight readable UI feedback only.
-- G12 targets Chinese visible text, MiniMap/MapOverlay scan feedback, HUD protocol/pressure wording, Inventory/GroundLoot capacity and loot explanations, ResultPanel settlement readability, and manual checklist coverage.
-- G12 uses existing theme, color, tooltip, autowrap, local font size, and line-spacing overrides only. It does not add, download, copy, or commit font files.
-- G12 is not a 1:1 legacy Demo remake, not G13, and not a new gameplay/system/persistence/art-migration stage.
+- G12-R3 is complete and pushed at `2855ca9889e394fb79d22c468b1355cd3871fd39`.
+- G12 updated current fact-source docs, G12 validation, and manual playtest guidance.
+- G12 improved player-visible text, Chinese readability, local typography/readability settings, MiniMap/MapOverlay scan feedback, HUD protocol/pressure wording, Inventory/GroundLoot capacity and loot explanations, ResultPanel settlement readability, and presentation mapping.
+- G12-R3 did not run Godot/editor/game/import.
+- G12-R3 did not add, download, copy, or commit font files.
+- G12-R3 did not add resources or import products.
+- G12-R3 did not modify `run_scene.gd`.
+- G12-R3 did not commit the existing Godot dirty whitelist.
+- G12 is complete, pushed, and closed. It is not a 1:1 legacy Demo remake, not G13, and not a new gameplay/system/persistence/art-migration stage.
 
 ## Not Implemented
 
@@ -206,7 +213,7 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 
 ## Follow-Up Boundary
 
-G12 is active as a bounded lightweight readability/parity pass. Any G13 work or broader UI/system branch requires separate approval.
+G12 is closed as a bounded lightweight readability/parity pass. Any G13 work, runtime smoke, broader UI/system branch, or gameplay/system expansion requires separate approval.
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 

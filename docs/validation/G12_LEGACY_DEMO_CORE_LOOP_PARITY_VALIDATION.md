@@ -3,6 +3,9 @@
 - Date: 2026-06-13
 - Stage: G12 Legacy Demo Core Loop, Chinese Readability & Typography Parity
 - Main baseline before G12-R3: `4be0010dd68abe1b0e74966775db64f736d78e15`
+- Main HEAD after G12-R3: `2855ca9889e394fb79d22c468b1355cd3871fd39`
+- Remote live main after G12-R3: `2855ca9889e394fb79d22c468b1355cd3871fd39`
+- G12-R3 commit: `2855ca9 fix(godot): align G12 core loop readability with legacy demo`
 - G11 closeout commit: `4be0010dd68abe1b0e74966775db64f736d78e15`
 - G11-R3 commit: `e261ac7d8671b59e7e72750122e6581af6ea6644`
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
@@ -13,6 +16,24 @@
 - G12 is not G10 or G11 continuation, and it does not start G13.
 - G12 does not add new gameplay, new systems, full event library, persistence, action combat, full art migration, full UI rewrite, complete settings, complete diagnostics, or complete font system.
 - G12 does not download, copy, add, or commit font files. Typography changes must use existing theme/color/font-size/line-spacing/tooltip/autowrap settings only.
+- G12 is complete, pushed, and closed after R4 docs-only closeout.
+
+## G12-R3 Execution Record
+
+- G12-R3 completed current fact-source and G12 validation updates.
+- G12-R3 updated manual playtest guidance.
+- G12-R3 changed only player-visible text, Chinese readability, local typography/readability settings, MapOverlay/MiniMap feedback, HUD wording, Inventory/GroundLoot wording, ResultPanel wording, and presentation mapping.
+- G12-R3 did not run Godot/editor/game/import.
+- G12-R3 did not add font files, resources, or import products.
+- G12-R3 did not modify `run_scene.gd`.
+- G12-R3 did not submit the existing dirty whitelist.
+
+## G12-R4 Closeout Record
+
+- G12-R4 is docs-only closeout for status, validation, and handoff records.
+- G12-R4 does not continue UI repair or function development.
+- G12-R4 does not modify Godot runtime/UI code, resources, import products, or font files.
+- Remaining dirty is expected to stay limited to tracked `project.godot`, tracked/untracked `asset_manifest.*.translation`, and untracked `*.gd.uid`.
 
 ## Static Checks
 
@@ -23,7 +44,7 @@ git diff --stat
 git diff --check
 git diff --name-only
 git status --short
-rg -n "4be0010|e261ac7|G12|G11|G10" docs Godot/GraytailGodot/docs
+rg -n "2855ca9|4be0010|e261ac7|G12|G11|G10|runtime PASS|Godot/editor/game/import|font|字体|legacy demo|旧 Demo" docs Godot/GraytailGodot/docs
 rg -n "锛|鍑|鐨|鏈|绯|�|Ã|Click to open|Flagged cell|Unknown cell|Adjacent mines|Pressure:|Pending Gold|Last Action|Search complete|Monster cleared" Godot/GraytailGodot/scripts Godot/GraytailGodot/scenes
 rg -n "MapOverlay|MiniMap|Inventory|GroundLoot|ResultPanel|protocol|danger|threat|reward|loot|settlement|font|theme|LabelSettings|tooltip" Godot/GraytailGodot/scripts Godot/GraytailGodot/docs docs
 ```
@@ -44,6 +65,7 @@ Do not mark PASS unless a human or explicitly authorized runtime smoke actually 
 
 ## Runtime / Import Record
 
-- Godot/editor/game/import was not run during this static planning record.
+- Godot/editor/game/import was not run during this static validation and closeout record.
+- Godot/editor/game/import was not run during G12-R3 implementation or G12-R4 docs-only closeout.
 - Do not claim runtime PASS unless a later authorized runtime/manual smoke records it.
 - Known dirty whitelist: tracked `project.godot`, tracked/untracked `asset_manifest.*.translation`, and untracked `*.gd.uid`.

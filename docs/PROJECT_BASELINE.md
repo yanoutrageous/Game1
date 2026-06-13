@@ -2,18 +2,19 @@
 
 ## Current Authority
 
-- Stage: G12 Legacy Demo Core Loop, Chinese Readability & Typography Parity.
+- Stage: G12 Legacy Demo Core Loop, Chinese Readability & Typography Parity closeout complete.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current main HEAD: `4be0010dd68abe1b0e74966775db64f736d78e15`.
-- Current remote live main HEAD: `4be0010dd68abe1b0e74966775db64f736d78e15`.
+- Current main HEAD: `2855ca9889e394fb79d22c468b1355cd3871fd39`.
+- Current remote live main HEAD: `2855ca9889e394fb79d22c468b1355cd3871fd39`.
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout status: complete, merged to main, and closed.
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout follow-up commit: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
 - G11-R3 commit: `e261ac7 fix(godot): improve G11 mainline UX readability`.
 - G11 closeout commit: `4be0010 docs: close G11 mainline UX readability pass`.
+- G12-R3 commit: `2855ca9 fix(godot): align G12 core loop readability with legacy demo`.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
 
@@ -31,7 +32,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G10 Progress & Art Smoke Foundation is complete and in `main`.
 - G10 added bounded progress整理, interaction fixes, dev-only diagnostics gating, art smoke registry/fallback checks, and responsive layout contracts on top of the G9 UI core flow baseline.
 - G11-R3 completed the narrow mainline testability and UX readability repair for current UI text, tooltips, hand-test coverage, and status documentation.
-- G12 is active for lightweight legacy Demo core-loop feel, Chinese readability, typography/readability, and current UI feedback alignment on existing systems.
+- G12 is complete and closed for lightweight legacy Demo core-loop feel, Chinese readability, typography/readability, and current UI feedback alignment on existing systems.
 
 ## Current Validation Chain
 
@@ -84,13 +85,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Use G12 only for lightweight current-main alignment: manual core-loop checks, Chinese text readability, existing MiniMap/MapOverlay/HUD/Inventory/GroundLoot/ResultPanel feedback, and local typography/readability tuning. Keep future branch or fix-batch handoff files current.
+G12 is closed. Choose a separately approved next phase before doing runtime smoke, MetaProgress, Deploy persistence, gameplay deepening, or a more complete legacy Demo experience pass. Keep future branch or fix-batch handoff files current.
 
 ## G12 Boundary
 
-G12 covers lightweight legacy Demo core-loop parity on top of current Godot main: main menu/deploy/tutorial path readability, room scan/map feedback, room/event/search/reward feedback, Inventory/GroundLoot/ResultPanel readability, Chinese-visible text cleanup, and local typography/readability tweaks using existing theme/color/font-size/tooltip/autowrap settings.
+G12 covered lightweight legacy Demo core-loop parity on top of current Godot main: main menu/deploy/tutorial path readability, room scan/map feedback, room/event/search/reward feedback, Inventory/GroundLoot/ResultPanel readability, Chinese-visible text cleanup, and local typography/readability tweaks using existing theme/color/font-size/tooltip/autowrap settings.
 
-G12 must not cover 1:1 legacy Demo remake, complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, new levels, new enemies, new economy systems, full event library, full art migration, complete final UI, complete settings, complete diagnostics, complete font system, downloaded/copied/source-unknown fonts, broad theme rewrite, broad architecture reshaping, or broad formatting.
+G12 is complete, pushed, and closed. It did not run Godot/editor/game/import, did not add font files/resources/import products, did not modify `run_scene.gd`, and did not commit the existing Godot dirty whitelist.
+
+G12 must not be read as 1:1 legacy Demo remake, complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, new levels, new enemies, new economy systems, full event library, full art migration, complete final UI, complete settings, complete diagnostics, complete font system, downloaded/copied/source-unknown fonts, broad theme rewrite, broad architecture reshaping, or broad formatting.
 
 ## G11 Boundary
 
@@ -100,11 +103,13 @@ G11 must not cover complete MetaProgress, Deploy persistence, complete long-term
 
 ## Next Stage Candidates
 
+- Runtime smoke / playable verification.
 - MetaProgress / long-term progression systems.
 - Deploy persistence / save and deployment continuity.
 - Main gameplay deepening.
+- More complete legacy Demo experience reproduction.
 
-These are candidates only. They require separate approval and are not part of G12.
+These are candidates only. They require separate approval, are not part of G12, and do not start G13.
 
 ## G10 Boundary
 
