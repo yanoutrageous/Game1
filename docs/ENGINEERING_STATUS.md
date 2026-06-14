@@ -2,7 +2,7 @@
 
 ## Stage
 
-G14 Legacy Demo UI Surface Sprint is active. G14-R3 completed the minimal `RunSurface` / `RunSurfaceModel` cut and first low-fidelity legacy Demo-style run surface. G10, G11, G12, and G13 are complete and closed.
+G14 Legacy Demo UI Surface Sprint is complete and in R5 docs-only closeout. G14-R3 completed the minimal `RunSurface` / `RunSurfaceModel` cut, G14-R4 completed the second-wave presentation refinement, and the G14 hotfix resolved the `RunSurface` parser type inference issue. G10, G11, G12, and G13 are complete and closed.
 
 ## Time
 
@@ -13,8 +13,8 @@ G14 Legacy Demo UI Surface Sprint is active. G14-R3 completed the minimal `RunSu
 - Current repository path: `D:\AGAME2\repo\Game1`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`
-- Current remote live main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`
+- Current main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`
+- Current remote live main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`
 - G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
@@ -27,6 +27,9 @@ G14 Legacy Demo UI Surface Sprint is active. G14-R3 completed the minimal `RunSu
 - G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`
 - G13 closeout commit: `8878bd3 docs: close G13 resolution layout adaptation pass`
 - G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`
+- G14-R3 follow-up commit: `39b51f1 docs: record G14 run surface acceptance follow-up`
+- G14-R4 commit: `cc652e5 feat(godot): refine legacy demo run surface presentation`
+- G14 parser hotfix commit: `fc2b86b fix(godot): resolve RunSurface parser type inference`
 - Current fact source: `docs/PROJECT_BASELINE.md`
 - Next-chat entry: `docs/NEXT_HANDOFF.md`
 - Docs navigation: `docs/DOCS_INDEX.md`
@@ -138,6 +141,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G13 validation checklist: `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`.
 - G13 handoff: `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`.
 - G14 validation checklist: `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`.
+- G14 handoff: `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`.
 
 ## Implemented In G11
 
@@ -179,9 +183,14 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - Existing HUD, MiniMap, MapOverlay, Inventory, GroundLoot, ResultPanel, TutorialPopup, event, loot, extract, pause, and diagnostics paths remain reusable.
 - G14-R3 does not run Godot/editor/game/import and does not claim runtime PASS.
 - G14-R3 is complete, committed, and pushed at `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`.
+- G14-R3 acceptance follow-up is complete, committed, and pushed at `39b51f165b548cc28fef072675f846413513f2ed`.
+- G14-R4 is complete, committed, and pushed at `cc652e5a616359d7d6857c87da5f76c6aca25c28`. It refines scanner legend/detail, right-side protocol/danger/status lines, bottom action hints, button visual states, legacy-style modal chrome, and event / loot / extract display text without moving decisions out of `run_scene.gd`.
+- G14 parser hotfix is complete, committed, and pushed at `fc2b86b6b6b2af9a6c249230621482617b594775`. It only resolves GDScript type inference in `run_surface.gd`.
+- G14-R5 is docs-only closeout / handoff / status alignment and does not modify Godot runtime/UI code.
 - `RunSurface` is UI surface composition only, and `RunSurfaceModel` is display-only.
 - `RunSurface` and `RunSurfaceModel` do not directly read `TruthMap`, `RunRuleService`, Ledger, or `AssetLedger` private state, do not dispatch CommandBus, and do not add rules.
-- G14-R3 does not change rules, snapshot schema, CommandBus semantics, TruthMap, Ledger, AssetLedger, MetaProgress, Deploy persistence, resources, fonts, import products, or project metadata.
+- G14 does not change rules, snapshot schema, CommandBus semantics, TruthMap, Ledger, AssetLedger, MetaProgress, Deploy persistence, resources, fonts, import products, or project metadata.
+- G14 did not run Godot/editor/game/import and does not claim runtime PASS.
 
 ## G14-R3 Safety Event Record
 
@@ -256,12 +265,15 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 - `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
 - `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
 - `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
+- `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
 
 ## Follow-Up Boundary
 
-G14 is active as a bounded legacy Demo run surface UI sprint. R4 may refine surface presentation and modal/feedback readability; R5 should close out with handoff/status alignment.
+G14 is complete and closed as a bounded legacy Demo run surface UI sprint. R5 only records closeout, handoff, status, validation, and next-stage boundaries.
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
+
+Future candidate work includes runtime smoke / playable verification, old Demo UI manual acceptance, UI-line surface continuation, rules-line main-loop semantics audit, and an explicit UI / rules parallel branch strategy. The next stage is not started here, and G15 is not started. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.
 
 ## Validation
 

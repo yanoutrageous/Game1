@@ -2,12 +2,12 @@
 
 ## Current Authority
 
-- Stage: G14 Legacy Demo UI Surface Sprint active; R3 completed the minimal run surface cut and first visible legacy Demo-style shell.
+- Stage: G14 Legacy Demo UI Surface Sprint complete; R5 docs-only closeout is recording final handoff/status.
 - Repository path: `D:\AGAME2\repo\Game1`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`.
-- Current remote live main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`.
+- Current main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`.
+- Current remote live main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`.
 - G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout status: complete, merged to main, and closed.
@@ -21,6 +21,9 @@
 - G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`.
 - G13 closeout commit: `8878bd3 docs: close G13 resolution layout adaptation pass`.
 - G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`.
+- G14-R3 follow-up commit: `39b51f1 docs: record G14 run surface acceptance follow-up`.
+- G14-R4 commit: `cc652e5 feat(godot): refine legacy demo run surface presentation`.
+- G14 parser hotfix commit: `fc2b86b fix(godot): resolve RunSurface parser type inference`.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
 
@@ -40,7 +43,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G11-R3 completed the narrow mainline testability and UX readability repair for current UI text, tooltips, hand-test coverage, and status documentation.
 - G12 is complete and closed for lightweight legacy Demo core-loop feel, Chinese readability, typography/readability, and current UI feedback alignment on existing systems.
 - G13-R3 is complete, pushed, and statically validated for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and bounded layout adaptation. G13-R5 is docs-only closeout/handoff/status alignment.
-- G14-R3 is complete, committed, and pushed. It adds a minimal `RunSurface` / `RunSurfaceModel` cut for the first legacy Demo-style run screen surface while preserving existing panel, command, and routing paths.
+- G14 is complete, committed, pushed, and in R5 closeout. G14 adds a minimal `RunSurface` / `RunSurfaceModel` cut, second-wave presentation refinement, and a parser hotfix for the first legacy Demo-style run screen surface while preserving existing panel, command, and routing paths.
 
 ## Current Validation Chain
 
@@ -93,19 +96,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Continue G14 as a bounded UI sprint: R3 now covers the first run surface shell, R4 may refine event/loot/extract presentation and spacing, and R5 should close out with handoff/status updates.
+G14 is closed by R5 documentation. Candidate next work is runtime smoke / playable verification, old Demo UI manual acceptance, a later UI surface continuation, a rules-line main-loop semantics audit, or a UI / rules parallel branch strategy. The next stage is not started here, and G15 is not started.
 
 ## G14 Boundary
 
-G14 is the legacy Demo visible run UI surface sprint. R3 is limited to `RunSurface`, `RunSurfaceModel`, a low-fidelity left scanner / center room / right protocol / bottom action / resource pocket shell, and validation/manual checklist updates.
+G14 is the legacy Demo visible run UI surface sprint. It is complete and closed after R5 docs-only closeout.
 
-G14-R3 does not change rules, CommandBus semantics, snapshot schema, TruthMap, Ledger, AssetLedger private logic, MetaProgress, Deploy persistence, resources, fonts, import products, project metadata, or gameplay systems. Event, loot, and extract command decisions stay in `run_scene.gd`; the surface only provides slots and display entry points.
+G14-R3 adds `RunSurface`, `RunSurfaceModel`, a low-fidelity left scanner / center room / right protocol / bottom action / resource pocket shell, overlay slot, modal slot, feedback slot, and validation/manual checklist updates. G14-R4 refines scanner legend, action hints, button enabled/disabled visuals, dark modal/button style helpers, event / loot / extract display text, and right-rail status/feedback hierarchy. G14 hotfix `fc2b86b` fixes `run_surface.gd` GDScript type inference for parser compatibility.
 
-G14-R3 acceptance fact: `RunSurface` only composes UI surface regions, and `RunSurfaceModel` is display-only. They do not directly read `TruthMap`, `RunRuleService`, Ledger, or `AssetLedger` private state, do not dispatch CommandBus, and do not add rules. G14-R3 did not run Godot/editor/game/import and does not claim runtime PASS.
+G14 does not change rules, CommandBus semantics, snapshot schema, TruthMap, Ledger, AssetLedger private logic, MetaProgress, Deploy persistence, resources, fonts, import products, project metadata, or gameplay systems. Event, loot, and extract command decisions stay in `run_scene.gd`; the surface only provides slots and display entry points.
+
+G14 acceptance fact: `RunSurface` only composes UI surface regions, and `RunSurfaceModel` is display-only. They do not directly read `TruthMap`, `RunRuleService`, Ledger, or `AssetLedger` private state, do not dispatch CommandBus, and do not add rules. G14 did not run Godot/editor/game/import and does not claim runtime PASS.
 
 G14-R3 safety event record: execution reported that two temporary script files were mistakenly created outside `D:\AGAME2\repo\Game1` during R3 and then cleaned as necessary deletion. This repository commit contains no outside-repository path. Future CodeX work must keep explicitly forbidding outside-repository temporary files. This fact source does not authorize scanning or cleaning outside-repository paths; if residue confirmation is required, the user must provide the exact path and explicit authorization.
 
 G14 is not complete 1:1 legacy Demo reproduction, complete final UI, complete action combat, complete talent/card systems, full event library, full art migration, broad architecture rewrite, G10/G11/G12/G13 continuation, or G15.
+
+If later UI and rules work proceed in parallel, branch from latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rule private state. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.
 
 ## G13 Boundary
 
@@ -137,10 +144,13 @@ G11 must not cover complete MetaProgress, Deploy persistence, complete long-term
 - MetaProgress / long-term progression systems.
 - Deploy persistence / save and deployment continuity.
 - Main gameplay deepening.
-- G14-R4 second-wave run surface refinement after R3 review.
 - Runtime smoke / playable verification after explicit authorization.
+- Old Demo UI manual acceptance.
+- UI line continuing visible surface reproduction.
+- Rules line starting main-loop semantics audit.
+- UI / rules parallel branch strategy.
 
-These are candidates only. G14-R3 does not start G15 and does not close G14.
+These are candidates only. G14-R5 does not start G15 or any next-stage implementation.
 
 ## G10 Boundary
 

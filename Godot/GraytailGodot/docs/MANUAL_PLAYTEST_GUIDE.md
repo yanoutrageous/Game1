@@ -6,9 +6,9 @@ This guide treats the older G4-G7 routes as historical foundations and points ma
 
 Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
 
-Current baseline smoke should cover the three-page shell, the G14 run surface shell, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, local typography/readability, and the five supported fixed 16:9 resolution tiers. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, or runtime PASS.
+Current baseline smoke should cover the three-page shell, the G14 run surface shell and R4 surface refinements, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, local typography/readability, and the five supported fixed 16:9 resolution tiers. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G15, or runtime PASS.
 
-G14-R3 acceptance fact: current main is `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5` (`1d33c89 feat(godot): add legacy demo run surface shell`). G14-R3 was not run in Godot/editor/game/import and is not runtime PASS. `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf` is only the G13 closeout / G14-R3 baseline history.
+G14 closeout fact: current main before G14-R5 docs closeout is `fc2b86b6b6b2af9a6c249230621482617b594775` (`fc2b86b fix(godot): resolve RunSurface parser type inference`). G14-R4 is `cc652e5 feat(godot): refine legacy demo run surface presentation`, G14-R3 follow-up is `39b51f1 docs: record G14 run surface acceptance follow-up`, and G14-R3 feature work is `1d33c89 feat(godot): add legacy demo run surface shell`. G14 was not run in Godot/editor/game/import and is not runtime PASS. `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf` is only the G13 closeout / G14-R3 baseline history.
 
 ## Main Menu / Deploy Shell
 
@@ -143,6 +143,8 @@ Use this route for G14 only after a human or explicitly authorized runtime smoke
 
 - G14-R3 static acceptance says `RunSurface` is UI surface composition only and `RunSurfaceModel` is display-only.
 - G14-R4 static acceptance adds only display/presentation refinement; it does not prove runtime PASS.
+- G14 hotfix static acceptance only resolves a `run_surface.gd` parser type inference issue; it does not prove runtime PASS.
+- G14-R5 closes documentation, handoff, status, and validation only; it does not run Godot/editor/game/import.
 - Confirm runtime behavior only after explicit authorization; static docs do not prove visual PASS.
 - Start tutorial and standard runs through the existing shell routes.
 - Confirm the run screen has a clear old Demo-style information hierarchy: left region scanner, center current room/objective, right protocol/danger/status, bottom action bar, and lower-left resource/backpack summary.
@@ -158,6 +160,8 @@ Use this route for G14 only after a human or explicitly authorized runtime smoke
 - Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.
 
 Safety note for future manual or CodeX follow-up: do not create temporary scripts, logs, caches, or derived files outside `D:\AGAME2\repo\Game1`. G14-R3 execution reported an outside-repository temporary-script incident that was cleaned as necessary deletion; do not scan outside-repository paths unless the user provides a concrete path and explicit authorization.
+
+If later UI and rules work proceed in parallel, branch from latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. Rules-line work must not directly modify UI surface code, and UI-line work must not directly read rules private state. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.
 
 ## Known limits
 

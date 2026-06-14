@@ -6,57 +6,48 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME2\repo\Game1`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Current main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`
-- Current remote live main HEAD: `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`
-- G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
 - Current branch: `main`
-- Current milestone: G14 Legacy Demo UI Surface Sprint is active; G14-R3 is complete, committed, and pushed. G10, G11, G12, and G13 are complete, pushed, and closed.
-- G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
-- G10 closeout follow-up commit: `53a4e122376998d2f6d0a2a617b753a3d382b2f0`
-- G11-R3 commit: `e261ac7 fix(godot): improve G11 mainline UX readability`
-- G11 closeout commit: `4be0010 docs: close G11 mainline UX readability pass`
-- G12-R3 commit: `2855ca9 fix(godot): align G12 core loop readability with legacy demo`
-- G12 closeout commit: `e90bd27 docs: close G12 legacy demo parity pass`
-- G13 baseline commit: `e90bd27 docs: close G12 legacy demo parity pass`
-- G13-R3 commit: `5afdb05 feat(godot): add fixed resolution layout support`
+- Current main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`
+- Current remote live main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`
+- Current commit: `fc2b86b fix(godot): resolve RunSurface parser type inference`
+- G14-R4 commit: `cc652e5 feat(godot): refine legacy demo run surface presentation`
+- G14-R3 follow-up commit: `39b51f1 docs: record G14 run surface acceptance follow-up`
+- G14-R3 feature commit: `1d33c89 feat(godot): add legacy demo run surface shell`
 - G13 closeout commit: `8878bd3 docs: close G13 resolution layout adaptation pass`
-- G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`
+- Current milestone: G14 Legacy Demo UI Surface Sprint is complete, committed, pushed, and in R5 closeout. G10, G11, G12, and G13 are complete, pushed, and closed. G15 is not started.
 
 ## What Main Can Do
 
-Main contains playable flow, asset ledger and settlement rules, architecture hardening, kernel protocol baseline, runtime parse hotfix, UI presentation layering contracts, and G9 UI core flow baseline.
+Main contains playable flow, asset ledger and settlement rules, architecture hardening, kernel protocol baseline, runtime parse hotfixes, UI presentation layering contracts, and the G9 UI core flow baseline.
 
-The UI baseline includes a three-page shell, InventoryPanel, GroundLootPanel, pickup/drop through CommandBus, blocked reason display, and ResultPanel settlement explanation.
+The UI baseline includes a three-page shell, InventoryPanel, GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, and ResultPanel settlement/return routes.
 
-Main also contains the completed G10 bounded player-flow fixes, MiniMap click-to-map, dev-only diagnostics gating, manifest/fallback art smoke, responsive layout contracts, and updated bug/backlog documentation. It also contains the completed G11 mainline readability pass and the completed G12 legacy Demo readability/typography pass. G13 added fixed 16:9 resolution tiers, runtime-only display selection, resize locking, a minimal settings-page selector, fixed-tier `UILayoutProfile` fields, and bounded layout adaptation on existing UI surfaces. G14-R3 starts the legacy Demo visible run surface by adding `RunSurface` and `RunSurfaceModel` without moving rules or CommandBus decisions into UI.
+G13 added fixed 16:9 resolution tiers, runtime-only display selection, resize locking, a minimal settings-page selector, fixed-tier `UILayoutProfile` fields, and bounded layout adaptation on existing UI surfaces.
 
-G14-R3 acceptance fact: `RunSurface` is UI surface composition only, and `RunSurfaceModel` is display-only. They do not directly read `TruthMap`, `RunRuleService`, Ledger, or `AssetLedger` private state, do not dispatch CommandBus, and do not add rules. `run_scene.gd` keeps CommandBus dispatch, screen routing, and event / loot / extract decisions.
+G14 adds the first legacy Demo-style run surface pass. `RunSurface` composes the left scanner, center room/objective panel, right protocol/danger/status rail, bottom action bar, lower-left resource/backpack summary, overlay slot, modal slot, and feedback slot. `RunSurfaceModel` is display-only and adapts public snapshot, `MiniMapViewModel`, `UILayoutProfile`, and latest command result data.
+
+G14-R4 refined the low-fidelity presentation layer: scanner legend, action hints, button enabled/disabled visuals, dark modal/button style helpers, event / loot / extract display text, and right-rail status/feedback hierarchy. The hotfix at `fc2b86b` resolves a GDScript parser type inference error in `run_surface.gd`.
+
+`run_scene.gd` remains the orchestration owner. CommandBus dispatch, screen routing, and event / loot / extract command result decisions stay in the existing run scene paths.
 
 ## What Main Does Not Mean
 
-It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, or complete long-term system completion.
-
 G14 does not mean complete 1:1 legacy Demo reproduction, complete final UI, action combat, full event library, talent/card systems, MetaProgress, Deploy persistence, new gameplay, full art migration, broad architecture rewrite, G15, or runtime PASS.
 
-## G10 Boundary
-
-G10 is closed. Its completed area was current progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning.
-
-Do not treat G10 as permission for complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping.
+G14 did not run Godot/editor/game/import and must not be reported as runtime PASS. Runtime smoke, playable verification, five-tier visual checks, and old Demo UI manual acceptance remain future verification candidates.
 
 ## Minimum Reading
 
 1. `docs/PROJECT_BASELINE.md`
-2. `docs/DOCS_INDEX.md`
-3. `docs/MILESTONES.md`
+2. `docs/NEXT_HANDOFF.md`
+3. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
 4. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
-5. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
-6. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
-7. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-8. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-9. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-9. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-10. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+5. `docs/DOCS_INDEX.md`
+6. `docs/MILESTONES.md`
+7. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
+8. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+9. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+10. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
 11. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff
 
 ## Safety And Dirty Rules
@@ -64,7 +55,7 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 - Do not modify old UE/Game.git.
 - Do not modify `lua-prototype-main`.
 - Do not force push.
-- Do not use `git rebase`, `git reset`, `git clean`, or `git stash`.
+- Do not use `git pull`, `git fetch`, `git rebase`, `git reset`, `git clean`, or `git stash` unless a later user instruction explicitly permits the exact operation.
 - Do not run Godot/editor/game/import unless the user explicitly authorizes it.
 - Do not create temporary scripts, logs, caches, or derived files outside `D:\AGAME2\repo\Game1`.
 - Do not scan or clean paths outside `D:\AGAME2\repo\Game1` unless the user provides an explicit path and authorization.
@@ -72,33 +63,33 @@ Do not treat G10 as permission for complete MetaProgress, Deploy persistence, co
 - Protective stash must remain untouched: `stash@{0}: On godot/g7-lua-ux-flow-parity-p2: pre-sync generated dirty before aligning to G13 closeout main`.
 - If unknown dirty appears, stop and report.
 
+## Safety Event
+
+G14-R3 execution reported that two temporary script files were mistakenly created outside `D:\AGAME2\repo\Game1`. The execution frame reported that they were cleaned as necessary deletion, and no repository commit contains an outside-repository path. Future CodeX instructions must continue to explicitly forbid outside-repository temporary files. Do not independently scan outside-repository paths; if residue confirmation is needed, the user must provide the exact path and authorization.
+
 ## First Thing To Know
 
-The next conversation should know:
-
-- G14-R3 started from `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`, the G13 closeout main.
-- G14-R3 is complete, committed, and pushed at `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5` (`1d33c89 feat(godot): add legacy demo run surface shell`).
-- G12 is complete and closed as a lightweight legacy Demo core-loop, Chinese readability, and typography/readability alignment stage.
-- G13 is complete, pushed, and closed for fixed resolution tiers and bounded layout adaptation.
-- G13 supported tiers are `1280x720`, `1366x768`, `1600x900`, `1920x1080`, and `2560x1440`.
-- G13-R3 did not run Godot/editor/game/import, did not submit `project.godot`, did not submit resources/import products/font files, and did not submit the existing dirty whitelist.
-- G13 closeout is static-validation only; DisplayServer window behavior, five-tier runtime behavior, settings-page apply/reset behavior, resize locking, and visual clipping still need later runtime smoke or manual verification before any PASS claim.
-- G10 closeout remains `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
-- G10 closeout follow-up remains `53a4e122376998d2f6d0a2a617b753a3d382b2f0`.
-- G11 is closed at `4be0010dd68abe1b0e74966775db64f736d78e15`.
-- G12-R3 did not run Godot/editor/game/import, did not add font files/resources/import products, did not modify `run_scene.gd`, and did not commit the existing Godot dirty whitelist.
-- G14-R3 did not run Godot/editor/game/import and does not claim runtime PASS.
-- G14-R3 execution reported one safety incident: two temporary script files were mistakenly created outside the repository and then cleaned as necessary deletion. The repository commit contains no outside-repository path. Future CodeX instructions must keep explicitly forbidding outside-repository temporary files. Do not independently scan outside-repository paths; if residue confirmation is needed, the user must provide the exact path and authorization.
-- G14-R3 is not a G10/G11/G12/G13 continuation, not G15, not a full UI remake, not new gameplay, and not runtime PASS.
+- G14 is complete and closed by R5 docs-only closeout.
+- G14 started from `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`, the G13 closeout main.
+- G14-R3 is complete, committed, and pushed at `1d33c894b6b2c948bf2c7f9c5a55387dce717fc5`.
+- G14-R3 follow-up is complete, committed, and pushed at `39b51f165b548cc28fef072675f846413513f2ed`.
+- G14-R4 is complete, committed, and pushed at `cc652e5a616359d7d6857c87da5f76c6aca25c28`.
+- G14 hotfix is complete, committed, and pushed at `fc2b86b6b6b2af9a6c249230621482617b594775`.
+- `RunSurface` is UI surface composition only, and `RunSurfaceModel` is display-only.
+- They do not directly read `TruthMap`, `RunRuleService`, Ledger, or `AssetLedger` private state, do not dispatch CommandBus, and do not add rules.
+- G14 did not run Godot/editor/game/import and does not claim runtime PASS.
+- The protective stash remains expected and must not be apply/pop/drop.
 
 ## Next Stage Candidates
 
 - Runtime smoke / playable verification.
-- Five-tier resolution manual smoke.
-- DisplayServer window behavior verification.
-- MetaProgress / long-term progression systems.
-- Deploy persistence / save and deployment continuity.
-- Main gameplay deepening after G12 validation.
-- G14-R4 second-wave run surface refinement.
+- Old Demo UI manual acceptance.
+- UI line continuing visible surface reproduction.
+- Rules line starting main-loop semantics audit.
+- UI / rules parallel branch strategy.
 
-These are candidates only. G14-R3 does not start G15 and does not close G14.
+These are candidates only. The next stage is not started, and G15 is not started in G14-R5.
+
+If UI and rules work proceed in parallel, branch from the latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. The rules line must not directly modify the UI surface, and the UI line must not directly read rules private state.
+
+High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.
