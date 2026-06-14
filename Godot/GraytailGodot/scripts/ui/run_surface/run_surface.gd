@@ -148,20 +148,20 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var supported_size: Vector2i = profile.get("supported_size", Vector2i(1280, 720))
 	if supported_size.x <= 0 or supported_size.y <= 0:
 		supported_size = Vector2i(1280, 720)
-	var is_low := bool(profile.get("is_low_resolution", false))
-	var is_high := bool(profile.get("is_high_resolution", false))
-	var width := float(supported_size.x)
-	var height := float(supported_size.y)
-	var margin := 16.0 if is_low else 20.0
-	var left_width := 352.0 if is_low else (420.0 if is_high else 380.0)
-	var right_width := 268.0 if is_low else (330.0 if is_high else 296.0)
-	var bottom_height := 62.0 if is_low else 70.0
-	var pocket_height := 118.0 if is_low else 128.0
-	var center_left := left_width + margin
-	var center_right := width - right_width - margin
-	var center_width := max(360.0, center_right - center_left)
-	var scanner_map_height := min(240.0 if is_low else 276.0, height * 0.34)
-	var scanner_legend_top := margin + 84.0 + scanner_map_height
+	var is_low: bool = bool(profile.get("is_low_resolution", false))
+	var is_high: bool = bool(profile.get("is_high_resolution", false))
+	var width: float = float(supported_size.x)
+	var height: float = float(supported_size.y)
+	var margin: float = 16.0 if is_low else 20.0
+	var left_width: float = 352.0 if is_low else (420.0 if is_high else 380.0)
+	var right_width: float = 268.0 if is_low else (330.0 if is_high else 296.0)
+	var bottom_height: float = 62.0 if is_low else 70.0
+	var pocket_height: float = 118.0 if is_low else 128.0
+	var center_left: float = left_width + margin
+	var center_right: float = width - right_width - margin
+	var center_width: float = max(360.0, center_right - center_left)
+	var scanner_map_height: float = min(240.0 if is_low else 276.0, height * 0.34)
+	var scanner_legend_top: float = margin + 84.0 + scanner_map_height
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(width - right_width, 0, right_width, height))
