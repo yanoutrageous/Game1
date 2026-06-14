@@ -18,6 +18,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G12 | Legacy Demo Core Loop, Chinese Readability & Typography Parity | Complete; R3 at `2855ca9889e394fb79d22c468b1355cd3871fd39`, closeout at `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f` |
 | G13 | Fixed Resolution Layout Adaptation | Complete and closed at `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`; static validation only, no runtime PASS |
 | G14 | Legacy Demo UI Surface Sprint | Complete and closed through parser hotfix at `fc2b86b6b6b2af9a6c249230621482617b594775`; R5 docs-only closeout records handoff/status |
+| G15 | Encounter Contract Foundation | Active on branch `godot/g15-encounter-contract-foundation`; R3 adds rules-layer public encounter contract from baseline `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` |
 
 ## Naming Rule
 
@@ -27,11 +28,13 @@ Example: `Legacy Demo UI Surface Sprint (G14)`.
 
 ## Current Mainline
 
-Current main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`.
+Current main HEAD / G15 baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
 
-Current remote live main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`.
+Current remote live main HEAD before G15-R3: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
 
-Current commit: `fc2b86b fix(godot): resolve RunSurface parser type inference`.
+Current branch: `godot/g15-encounter-contract-foundation`.
+
+Current main commit before G15-R3: `d6c03c6 docs: close G14 legacy demo UI surface pass`.
 
 G14-R4 commit: `cc652e5 feat(godot): refine legacy demo run surface presentation`.
 
@@ -41,20 +44,21 @@ G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`.
 
 G14-R3 baseline before implementation and G13 closeout commit: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
-The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, and the completed G14 run surface sprint. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G15, or runtime PASS.
+The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, and the completed G14 run surface sprint. G15-R3 is branch work for the encounter contract foundation. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G16, or runtime PASS.
 
-G11, G12, G13, and G14 are complete and closed. G14 acceptance records that `RunSurface` is UI-only composition, `RunSurfaceModel` is display-only, CommandBus dispatch and event / loot / extract decisions stay in `run_scene.gd`, and the outside-repository temporary-script incident was reported as cleaned without repository commit residue.
+G11, G12, G13, and G14 are complete and closed. G15 is active and limited to a rules-layer Encounter contract foundation. `select_encounter_option` is additive only, and search/event/extract command semantics remain unchanged.
 
-G14 did not run Godot/editor/game/import and does not claim runtime PASS.
+G15-R3 does not run Godot/editor/game/import and does not claim runtime PASS.
 
 ## Next Stage Candidates
 
+- G15-R4 UI EncounterSlot / integration audit after R3 contract commit is pushed.
 - Runtime smoke / playable verification.
-- Old Demo UI manual acceptance.
-- UI line continuing visible surface reproduction.
-- Rules line starting main-loop semantics audit.
-- UI / rules parallel branch strategy.
+- Rules-line main-loop semantics audit.
+- Later battle encounter stage.
+- Later out-of-run progression stage.
+- Later lottery / unique collectible / appearance stage after progression, warehouse, codex, appearance library, and record systems.
 
-These are candidates only. The next stage is not started here, and G15 is not started in G14-R5.
+These are candidates only. G15-R3 does not start G16.
 
 If UI and rules work proceed in parallel, branch from latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rule private state. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.

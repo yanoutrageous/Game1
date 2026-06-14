@@ -55,6 +55,8 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = teleport_to_explored(command_payload.get("pos", Vector2i.ZERO))
 		&"select_event_option":
 			action_result = select_event_option(StringName(command_payload.get("option_id", &"default")))
+		&"select_encounter_option":
+			action_result = select_encounter_option(StringName(command_payload.get("option_id", &"default")))
 		&"pickup_ground_item":
 			action_result = pickup_ground_item(String(command_payload.get("instance_id", "")))
 		&"drop_inventory_item":
@@ -217,6 +219,23 @@ func select_event_option(option_id: StringName = &"default") -> Dictionary:
 	if context.failed:
 		result_available.emit(context.result_snapshot)
 	return result
+
+
+func select_encounter_option(option_id: StringName = &"default") -> Dictionary:
+	if not _can_accept_command():
+		return _blocked(&"blocked", _current_blocked_reason())
+	if context == null:
+		return _blocked(&"not_ready", "not_ready")
+	match context.current_room_type:
+		&"Normal", &"Chest":
+			if option_id in [&"default", &"search", &"open_chest"]:
+				return search_current_room()
+		&"Event":
+			return select_event_option(option_id)
+	context.blocked_reason = "encounter_option_unavailable"
+	context.last_message = "Encounter option unavailable."
+	_emit_state()
+	return _blocked(&"encounter_option_unavailable", "encounter_option_unavailable")
 
 
 func pickup_ground_item(instance_id: String = "") -> Dictionary:

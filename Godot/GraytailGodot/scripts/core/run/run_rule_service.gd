@@ -44,30 +44,7 @@ static func make_effect_spec(effect_type: StringName, source: String, target: Va
 
 
 static func encounter_for_room(context: RunContext, room_type: StringName, pos: Vector2i) -> Dictionary:
-	var encounter_type: StringName = StringName(String(room_type).to_lower())
-	var tags: Array = []
-	match room_type:
-		&"Event":
-			encounter_type = EventService.get_event_type(context, pos)
-			tags = [&"event_like", encounter_type]
-		&"Chest":
-			encounter_type = &"chest_basic"
-			tags = [&"loot", &"container"]
-		&"Monster":
-			encounter_type = &"monster_basic"
-			tags = [&"combat", &"loot"]
-		&"Exit":
-			encounter_type = &"exit_beacon"
-			tags = [&"settlement", &"extract"]
-		&"Mine":
-			encounter_type = &"mine_trap"
-			tags = [&"hazard"]
-		&"Normal":
-			encounter_type = &"search_basic"
-			tags = [&"search", &"loot"]
-		_:
-			tags = [&"room"]
-	return {"encounter_type": encounter_type, "encounter_tags": tags}
+	return EncounterResolver.get_encounter_identity(context, room_type, pos)
 
 
 static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_mines: int, is_chest: bool) -> Dictionary:

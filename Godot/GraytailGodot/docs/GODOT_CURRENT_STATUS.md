@@ -6,11 +6,11 @@
 
 ## Branch
 
-Current stage: G14 Legacy Demo UI Surface Sprint complete; R5 docs-only closeout records handoff/status.
+Current stage: G15 Encounter Contract Foundation active; R3 implements the rules-layer public encounter contract on branch `godot/g15-encounter-contract-foundation`.
 
-Current main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`.
+Current main HEAD / G15 baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
 
-Current remote live main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`.
+Current remote live main HEAD before G15-R3: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
 
 G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
@@ -41,6 +41,8 @@ G14-R3 follow-up commit: `39b51f1 docs: record G14 run surface acceptance follow
 G14-R4 commit: `cc652e5 feat(godot): refine legacy demo run surface presentation`.
 
 G14 parser hotfix commit: `fc2b86b fix(godot): resolve RunSurface parser type inference`.
+
+G14 closeout commit: `d6c03c6 docs: close G14 legacy demo UI surface pass`.
 
 Current fact source: `docs/PROJECT_BASELINE.md`.
 
@@ -116,11 +118,12 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G11-R3 improves mainline testability and UX readability through manual playtest coverage, clearer MapOverlay feedback, inventory/ground-loot hints, result return tooltips, and Pause/Settings wording. G11-R4 is docs-only closeout and does not continue UI repair.
 - G12-R3 aligned the current UI with legacy Demo core-loop feel through Chinese readability, scan/map feedback, protocol/pressure text, loot/settlement wording, and local typography/readability tweaks on existing UI only.
 - G13-R3 completed fixed 16:9 resolution tiers, runtime-only display selection, manual apply/reset, resize locking, fixed-tier `UILayoutProfile` fields, and bounded layout adaptation.
-- G14 is complete, committed, pushed, and in R5 closeout. G14-R3 adds `RunSurfaceModel` and `RunSurface` for the first low-fidelity legacy Demo-style run surface while preserving existing panel, routing, and CommandBus paths.
+- G14 is complete, committed, pushed, and closed by R5. G14-R3 adds `RunSurfaceModel` and `RunSurface` for the first low-fidelity legacy Demo-style run surface while preserving existing panel, routing, and CommandBus paths.
 - G14-R4 refines the display surface only: scanner legend/detail, right-side protocol/danger/status lines, bottom action hints, button visual states, legacy-style modal chrome, event / loot / extract display text, and feedback hierarchy.
 - G14 parser hotfix `fc2b86b` resolves a `run_surface.gd` GDScript type inference parser error without changing UI behavior or rules.
+- G15-R3 adds a rules-layer Encounter contract foundation: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, and additive `select_encounter_option` for search/chest/event only.
 
-Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, and completed G14 run surface work. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, G15, or runtime PASS.
+Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, and completed G14 run surface work. G15-R3 is branch work. It is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, G16, or runtime PASS.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
@@ -142,6 +145,8 @@ Future UI work should consume:
 G14 UI work consumes ViewModel/snapshot data, `MiniMapViewModel`, latest command result data, and existing `UILayoutProfile` data. It must not directly read or write `RunAssetLedger`, `TruthMap`, `RunRuleService`, Ledger private state, or private run-rule state. G14 does not start G15 or any new gameplay/system branch.
 
 If future UI and rules work proceed in parallel, branch from latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rules private state. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.
+
+G15 UI boundary: UI should wait for the R3 contract commit before consuming `encounter_view_model`. UI may later add an EncounterSlot in R4, but must not read `TruthMap`, `RunRuleService`, Ledger, `AssetLedger`, or any private rule state, and must not bypass CommandBus.
 
 Presentation work should map semantic ids into ThemeProfile, PresentationLayerEntry, CharacterPresentationConfig, panel skins, and fallback asset ids. Core gameplay should not directly build image paths.
 
@@ -167,7 +172,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_g10_progress_art_smoke.ps1
 ```
 
-G14-R3, G14-R4, the G14 parser hotfix, G14-R5, G13-R3, and G13-R5 did not run Godot/editor/game/import and must not be reported as runtime PASS unless a later authorized runtime/manual smoke records it. G14 did not submit `project.godot`, resources, import products, font files, or the existing Godot dirty whitelist. Do not use Godot/editor/game/import for broad resource import, persistence work, full font pipeline, or full art migration.
+G15-R3, G14-R3, G14-R4, the G14 parser hotfix, G14-R5, G13-R3, and G13-R5 did not run Godot/editor/game/import and must not be reported as runtime PASS unless a later authorized runtime/manual smoke records it. G15-R3 did not submit `project.godot`, resources, import products, font files, or the existing Godot dirty whitelist. Do not use Godot/editor/game/import for broad resource import, persistence work, full font pipeline, or full art migration.
+
+## G15 Boundary
+
+G15 is limited to the Encounter Contract Foundation. R3 adds public/display dictionaries for encounter type, state, options, result summaries, effect summaries, and log entries. The first adapters cover search/chest and existing event options only.
+
+G15-R3 does not migrate event / loot / extract decisions, does not implement full combat rooms or action combat, does not implement out-of-run progression, and does not implement lottery. `lottery` may exist only as a reserved encounter type name until progression, warehouse, codex, appearance library, and record systems exist.
+
+G15-R3 keeps existing command semantics. `select_encounter_option` is additive and delegates to existing `search_current_room()` or `select_event_option()` paths. Existing `request_extract` and `confirm_extract` are unchanged.
 
 G14-R3 safety event record: execution reported that two temporary script files were mistakenly created outside `D:\AGAME2\repo\Game1` and were then cleaned as necessary deletion. The repository commit contains no outside-repository path. Future CodeX work must forbid outside-repository temporary files, and must not scan or clean outside-repository directories unless the user provides the exact path and explicit authorization.
 

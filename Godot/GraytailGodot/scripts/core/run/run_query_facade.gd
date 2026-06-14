@@ -97,6 +97,8 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"adjacent_mines": context.current_adjacent_mines,
 		"search_state": get_search_state_label(context),
 		"search_state_data": get_search_state_data(context),
+		"encounter_view_model": get_encounter_view_model(context),
+		"encounter_result_summary": get_encounter_result_summary(context),
 		"event_state": context.event_state.duplicate(true),
 		"enemy_state": context.enemy_state.duplicate(true),
 		"last_message": context.last_message,
@@ -153,12 +155,17 @@ func get_inventory_summary(context: RunContext) -> Dictionary:
 func get_encounter_summary(context: RunContext) -> Dictionary:
 	if context == null:
 		return {"encounter_type": &"none", "encounter_tags": []}
-	return {
-		"encounter_type": context.encounter_type,
-		"encounter_tags": context.encounter_tags.duplicate(true),
-		"current_room": context.current_room_type,
-		"blocked_reason": context.blocked_reason,
-	}
+	var identity: Dictionary = EncounterResolver.get_encounter_identity(context, context.current_room_type, context.get_current_pos())
+	identity["blocked_reason"] = context.blocked_reason
+	return identity
+
+
+func get_encounter_view_model(context: RunContext) -> Dictionary:
+	return EncounterResolver.build_view_model(context)
+
+
+func get_encounter_result_summary(context: RunContext) -> Dictionary:
+	return EncounterResolver.build_result_summary(context)
 
 
 func get_search_state_label(context: RunContext) -> String:

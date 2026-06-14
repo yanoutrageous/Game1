@@ -2,7 +2,7 @@
 
 ## Stage
 
-G14 Legacy Demo UI Surface Sprint is complete and in R5 docs-only closeout. G14-R3 completed the minimal `RunSurface` / `RunSurfaceModel` cut, G14-R4 completed the second-wave presentation refinement, and the G14 hotfix resolved the `RunSurface` parser type inference issue. G10, G11, G12, and G13 are complete and closed.
+G15 Encounter Contract Foundation is active on branch `godot/g15-encounter-contract-foundation`. G15-R3 adds the rules-layer public encounter contract foundation. G10, G11, G12, G13, and G14 are complete and closed.
 
 ## Time
 
@@ -13,8 +13,9 @@ G14 Legacy Demo UI Surface Sprint is complete and in R5 docs-only closeout. G14-
 - Current repository path: `D:\AGAME2\repo\Game1`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`
-- Current remote live main HEAD before G14-R5 docs closeout: `fc2b86b6b6b2af9a6c249230621482617b594775`
+- Current working branch: `godot/g15-encounter-contract-foundation`
+- Current main HEAD / G15 branch baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`
+- Current remote live main HEAD before G15-R3: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`
 - G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
@@ -30,6 +31,7 @@ G14 Legacy Demo UI Surface Sprint is complete and in R5 docs-only closeout. G14-
 - G14-R3 follow-up commit: `39b51f1 docs: record G14 run surface acceptance follow-up`
 - G14-R4 commit: `cc652e5 feat(godot): refine legacy demo run surface presentation`
 - G14 parser hotfix commit: `fc2b86b fix(godot): resolve RunSurface parser type inference`
+- G14 closeout commit: `d6c03c6 docs: close G14 legacy demo UI surface pass`
 - Current fact source: `docs/PROJECT_BASELINE.md`
 - Next-chat entry: `docs/NEXT_HANDOFF.md`
 - Docs navigation: `docs/DOCS_INDEX.md`
@@ -142,6 +144,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G13 handoff: `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`.
 - G14 validation checklist: `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`.
 - G14 handoff: `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`.
+- G15 validation checklist: `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`.
 
 ## Implemented In G11
 
@@ -200,6 +203,17 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - Future CodeX instructions must keep explicitly forbidding outside-repository temporary scripts, logs, caches, or derived files.
 - If outside-repository residue confirmation is required, the user must provide the exact path and explicit authorization; CodeX must not independently search parent, sibling, user, system, or other repository directories.
 - Protective stash remains expected and must not be apply/pop/drop: `stash@{0}: On godot/g7-lua-ux-flow-parity-p2: pre-sync generated dirty before aligning to G13 closeout main`.
+
+## Implemented In G15
+
+- G15-R3 adds `EncounterContract` and `EncounterResolver` as rules-layer public/display helpers.
+- G15-R3 exposes `encounter_view_model` and `encounter_result_summary` through `RunQueryFacade`.
+- G15-R3 adds additive CommandBus command `select_encounter_option`, which delegates search/chest to existing `search_current_room()` and event options to existing `select_event_option()`.
+- G15-R3 keeps `run_scene.gd`, `RunSurface`, `RunSurfaceModel`, and `presentation_mapping.gd` unchanged.
+- G15-R3 does not change old `search_current_room`, `select_event_option`, `request_extract`, or `confirm_extract` semantics.
+- G15-R3 does not implement full combat rooms, action combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, unique collectibles, warehouse, codex, appearance library, or record systems.
+- `lottery` is reserved only as a later encounter type name and remains deferred.
+- G15-R3 does not run Godot/editor/game/import and does not claim runtime PASS.
 
 ## Not Implemented
 
@@ -266,14 +280,15 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 - `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
 - `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
 - `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
+- `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
 
 ## Follow-Up Boundary
 
-G14 is complete and closed as a bounded legacy Demo run surface UI sprint. R5 only records closeout, handoff, status, validation, and next-stage boundaries.
+G15 is active as a bounded rules-layer Encounter contract stage. R3 defines public contract and rule bridge only; R4 may let the UI line consume `encounter_view_model`; R5 should close out G15.
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 
-Future candidate work includes runtime smoke / playable verification, old Demo UI manual acceptance, UI-line surface continuation, rules-line main-loop semantics audit, and an explicit UI / rules parallel branch strategy. The next stage is not started here, and G15 is not started. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.
+Future candidate work includes G15-R4 UI EncounterSlot / integration audit, runtime smoke / playable verification, rules-line main-loop semantics audit, later battle encounter stage, later out-of-run progression, and later lottery / unique collectible / appearance systems. G16 is not started. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
 
 ## Validation
 
