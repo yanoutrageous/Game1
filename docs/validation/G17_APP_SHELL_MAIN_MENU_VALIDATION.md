@@ -55,7 +55,7 @@ G17-R3 只做验收、Godot headless project-load/parser smoke、docs-only close
 - smoke 命令退出成功，输出不含 parser / compile / load script error。
 - smoke 前后 `git status --short` 均为空。
 - 未产生 `project.godot`、`.uid`、`.translation`、import metadata、资源、字体或导入产物 dirty。
-- G17 branch remains separate from main; no mainline integration was performed in R3.
+- G17-R3 itself did not perform mainline integration; G17 final later fast-forward merged the branch to `main`.
 - No G18 work began in R3.
 
 ## Runtime 边界

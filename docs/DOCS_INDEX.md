@@ -85,7 +85,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md` records the G15 encounter framework handoff, R3/R4/R5 commit chain, static validation boundary, non-goals, fast-forward main merge status, and next-stage candidates.
 - `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md` records the G16 combat encounter foundation closeout, completed R3/R4/R5 scope, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and next-stage candidates.
 - `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` records the imported Post-G16 architecture direction baseline: keep G15/G16, split top-level app shell next, and route G17 toward `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
-- `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md` records the G17 AppShell / MainMenuShell branch closeout, R2 implementation boundary, R3 acceptance, and Godot headless project-load/parser smoke PASS.
+- `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md` records the G17 AppShell / MainMenuShell closeout, R2 implementation boundary, R3 acceptance, Godot headless project-load/parser smoke PASS, and fast-forward main merge status.
 
 ## Branch Change Records
 
@@ -120,4 +120,4 @@ G11, G12, G13, and G14 are complete and closed. G15 R3/R4/R5 are complete and fa
 
 Post-G16 architecture direction baseline recommends G17 as `AppShell / NavigationIntent / PageRouter / MainMenuShell`. The next structural risk is not Encounter/Combat, but top-level application ownership: main menu, expedition prep, long-term systems, settings, and RunScene should be routed through an app shell instead of accumulating inside `run_scene.gd` or a temporary shell.
 
-G17 branch work on `godot/g17-app-shell-main-menu` now has R2 implementation and R3 acceptance/docs closeout. The branch remains separate from main until a separate integration decision. It does not implement full main menu, formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS.
+G17 branch work on `godot/g17-app-shell-main-menu` has R2 implementation, R3 acceptance/docs closeout, Godot headless project-load/parser smoke PASS, and is fast-forward merged to `main`. It does not implement full main menu, formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS.

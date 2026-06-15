@@ -2,7 +2,7 @@
 
 ## Stage
 
-G16 Combat Encounter Foundation is complete, parser-smoke checked, and merged to `main`. Post-G16 architecture direction baseline has been imported as docs-only guidance for G17. G17-R2 implementation and G17-R3 acceptance / Godot headless project-load/parser smoke / docs-only closeout are complete on branch `godot/g17-app-shell-main-menu`. G15-R3 rules-layer contract work, G15-R4 UI EncounterSlot adapter work, and G15-R5 docs closeout are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
+G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and merged to `main`. Post-G16 architecture direction baseline has been imported as docs-only guidance for G17. G17-R2 implementation and G17-R3 acceptance / Godot headless project-load/parser smoke / docs-only closeout are complete. G16 Combat Encounter Foundation and G15 Encounter Contract Foundation are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
 
 ## Time
 
@@ -13,8 +13,12 @@ G16 Combat Encounter Foundation is complete, parser-smoke checked, and merged to
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current working branch for this handoff: `godot/g17-app-shell-main-menu`
-- Source branch: `main`
+- Current working branch for this handoff: `main`
+- Source branch for G17: `godot/g17-app-shell-main-menu`
+- G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`
+- G17-R3 closeout commit: `baa57fa41167c86ad226b5b8be4d540ff114269f docs: close G17 app shell main menu foundation`
+- G17 merged to main: yes, by fast-forward
+- Main HEAD after G17 fast-forward and before this post-merge status commit: `baa57fa41167c86ad226b5b8be4d540ff114269f`
 - Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`
 - G16-R3 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`
 - G16-R3 branch: `godot/g16-combat-encounter-foundation`
@@ -345,9 +349,9 @@ G15 final integration closes the bounded Encounter Contract Foundation stage on 
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 
-G16 final merges the first Monster combat option foundation to `main` after Godot headless project-load/parser smoke PASS. Recommended next stage is G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`: first audit and plan app-level shell/routing, then implement a minimal AppShell + MainMenuShell slice if authorized. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
+G16 final merged the first Monster combat option foundation to `main` after Godot headless project-load/parser smoke PASS. G17 then established `AppShell / NavigationIntent / PageRouter / MainMenuShell` and is fast-forward merged to `main`. Any next stage requires separate authorization. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
 
-G17 branch work adds a formal AppShell, NavigationIntent, PageRouter, MainMenuShell, and static MainMenuModel while keeping expedition, long-term, and settings pages as placeholder routes. G17-R3 acceptance and Godot headless project-load/parser smoke PASS are complete on the branch. It does not implement formal DeployConfig, LongTermSnapshot, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS. No G18 work began.
+G17 adds a formal AppShell, NavigationIntent, PageRouter, MainMenuShell, and static MainMenuModel while keeping expedition, long-term, and settings pages as placeholder routes. G17-R3 acceptance and Godot headless project-load/parser smoke PASS are complete, and G17 is fast-forward merged to `main`. It does not implement formal DeployConfig, LongTermSnapshot, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS. No G18 work began.
 
 ## Validation
 

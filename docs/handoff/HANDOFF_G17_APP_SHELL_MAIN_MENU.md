@@ -19,7 +19,8 @@ G17 是 `AppShell / NavigationIntent / PageRouter / MainMenuShell` 基础阶段�
 - 分支：`godot/g17-app-shell-main-menu`
 - G17-R2 commit：`368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`
 - G17 baseline main：`80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`
-- G17 branch remains separate from main; no mainline integration was performed in this closeout.
+- G17 merged to main: yes, by fast-forward during G17 final integration.
+- Main HEAD after G17 fast-forward and before the post-merge status commit: `baa57fa41167c86ad226b5b8be4d540ff114269f`
 - No G18 work began in this closeout.
 
 ## G17-R2 完成内容
@@ -77,7 +78,7 @@ G17 未实现：
 
 ## 下一步建议
 
-下一步应先做 mainline integration 决策：是否将 `godot/g17-app-shell-main-menu` 作为独立分支纳入 main。
+G17 final already fast-forward merged `godot/g17-app-shell-main-menu` into `main`. The next stage still requires separate authorization.
 
 如进入后续阶段，应从最新 main 派生，并继续保持：
 

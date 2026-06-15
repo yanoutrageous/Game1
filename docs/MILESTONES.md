@@ -21,7 +21,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G15 | Encounter Contract Foundation | R3/R4/R5 complete and fast-forward merged to `main`; branch closeout commit `e72d3a5dc4a57122d42f881f391f2b47389fcdad`; no runtime PASS |
 | G16 | Combat Encounter Foundation | R3 complete at `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a`; R4 accepted; R5 docs-only branch closeout; parser blocker fix `4637e8f`; fast-forward merged to main after headless project-load/parser smoke PASS |
 | Post-G16 direction | Architecture Direction Baseline | Docs-only imported direction baseline; recommends G17 as `AppShell / NavigationIntent / PageRouter / MainMenuShell` |
-| G17 | AppShell / NavigationIntent / PageRouter / MainMenuShell | R2 implementation complete at `368a7be5c2fb919db47421a026ddf417df9c1b1c`; R3 acceptance, Godot headless project-load/parser smoke, and docs-only closeout complete on branch |
+| G17 | AppShell / NavigationIntent / PageRouter / MainMenuShell | R2 implementation complete at `368a7be5c2fb919db47421a026ddf417df9c1b1c`; R3 acceptance, Godot headless project-load/parser smoke, docs-only closeout, and fast-forward main merge complete |
 
 ## Naming Rule
 
@@ -31,7 +31,7 @@ Example: `Legacy Demo UI Surface Sprint (G14)`.
 
 ## Current Mainline
 
-Current main HEAD before G16 post-merge status commit: `4637e8fa0eeec6859df4eab26d5a961868e4c071`.
+Current main HEAD before G17 post-merge status commit: `baa57fa41167c86ad226b5b8be4d540ff114269f`.
 
 G16 baseline main HEAD before R3: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
 
@@ -69,7 +69,7 @@ G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`.
 
 G14-R3 baseline before implementation and G13 closeout commit: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
-The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, the completed G14 run surface sprint, G15 Encounter Contract Foundation, and G16 combat encounter foundation. G16 adds only the first `combat_basic` / `monster_basic` encounter foundation; it does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, Boss, action combat, real-time combat, complete gameplay runtime PASS, or manual playtest PASS.
+The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, the completed G14 run surface sprint, G15 Encounter Contract Foundation, G16 combat encounter foundation, and G17 AppShell / MainMenuShell foundation. G17 does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, formal expedition prep, full long-term systems, Boss, action combat, real-time combat, complete gameplay runtime PASS, or manual playtest PASS.
 
 G11, G12, G13, and G14 are complete and closed. G15 R3/R4/R5 are complete and merged to main. G16 keeps `select_encounter_option` additive and extends only Monster `attack_basic` routing to existing deterministic `fight_current_enemy`; search/event/extract command semantics remain unchanged.
 
@@ -77,11 +77,12 @@ G15-R3/R4/R5 did not run Godot/editor/game/import and do not claim runtime PASS.
 
 ## Next Stage Candidates
 
-- Current next-stage branch: G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
+- Latest integrated stage: G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 - G17-R1 audit and planning is complete.
 - G17-R2 implements minimal AppShell + MainMenuShell with placeholder routes only on `godot/g17-app-shell-main-menu`.
-- G17-R3 acceptance, docs closeout, and Godot headless project-load/parser smoke are complete on the branch.
+- G17-R3 acceptance, docs closeout, and Godot headless project-load/parser smoke are complete.
+- G17 is fast-forward merged to main.
 
-G17 remains branch work until a separate integration decision. It does not start Boss, action combat, out-of-run progression, lottery, MetaProgress, Deploy persistence, or any G18+ implementation.
+G17 does not start Boss, action combat, out-of-run progression, lottery, MetaProgress, Deploy persistence, or any G18+ implementation.
 
 If UI and rules work proceed in parallel, branch from latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rule private state. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.
