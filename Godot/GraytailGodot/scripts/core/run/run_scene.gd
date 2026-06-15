@@ -10,6 +10,8 @@ const TutorialPopupScene := preload("res://scenes/ui/tutorial/tutorial_popup_pan
 const RoomScene := preload("res://scenes/room/room_scene.tscn")
 const PlayerScene := preload("res://scenes/player/player.tscn")
 const G9ShellPanelScript := preload("res://scripts/ui/shell/g9_shell_panel.gd")
+const AppShellScript := preload("res://scripts/ui/app_shell/app_shell.gd")
+const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const InventoryPanelScript := preload("res://scripts/ui/inventory/inventory_panel.gd")
 const GroundLootPanelScript := preload("res://scripts/ui/ground_loot/ground_loot_panel.gd")
 const DevDiagnosticsPanelScript := preload("res://scripts/ui/dev/dev_diagnostics_panel.gd")
@@ -178,16 +180,11 @@ func _build_accessible_ui() -> void:
 
 
 func _build_shell_pages() -> void:
-	ui_shell = G9ShellPanelScript.new() as Control
-	ui_shell.name = "G9ShellPanel"
+	ui_shell = AppShellScript.new() as Control
+	ui_shell.name = "AppShell"
 	ui_root.add_child(ui_shell)
 	ui_shell.call("build")
-	ui_shell.connect("main_entry_requested", _on_main_entry_requested)
-	ui_shell.connect("deploy_entry_requested", _on_deploy_entry_requested)
-	ui_shell.connect("long_term_entry_requested", _on_long_term_entry_requested)
-	ui_shell.connect("start_tutorial_requested", _start_tutorial_from_ui)
-	ui_shell.connect("start_standard_requested", _start_standard_from_ui)
-	ui_shell.connect("dev_diagnostics_requested", _show_dev_diagnostics_panel)
+	ui_shell.connect("host_route_requested", _on_app_shell_host_route_requested)
 	main_menu_panel = ui_shell.call("get_main_page") as Control
 	deploy_shell_panel = ui_shell.call("get_deploy_page") as Control
 	long_term_shell_panel = ui_shell.call("get_long_term_page") as Control
@@ -469,6 +466,15 @@ func _normalize_deploy_tab(tab_id: StringName) -> StringName:
 			return &"settings"
 		_:
 			return tab_id
+
+
+func _on_app_shell_host_route_requested(intent: Dictionary) -> void:
+	var target := NavigationIntentScript.target(intent)
+	match target:
+		NavigationIntentScript.TARGET_RUN:
+			_show_run_screen()
+		_:
+			_show_main_menu()
 
 
 func _on_main_entry_requested(entry_id: StringName) -> void:

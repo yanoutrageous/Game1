@@ -21,18 +21,19 @@ Read these first in a new Codex or ChatGPT conversation:
 4. `docs/DOCS_INDEX.md`
 5. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
 6. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
-7. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-8. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-9. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
-10. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
-11. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-12. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
-13. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
-14. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-15. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-16. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-17. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-18. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+7. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
+8. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+9. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+10. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
+11. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
+12. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+13. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
+14. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+15. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
+16. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+17. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+18. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+19. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
@@ -65,6 +66,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md` records the G14 run surface validation checklist, R3 shell, R4 surface refinement, hotfix, closeout boundary, no-runtime-PASS status, and outside-repository temporary-script safety event record.
 - `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md` records the G15 encounter contract foundation validation checklist, R3 rules contract, R4 EncounterSlot adapter, R5 docs-only closeout boundary, deferred lottery boundary, fast-forward main merge status, and no-runtime-PASS status.
 - `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md` records the G16 combat/monster encounter foundation static validation, Monster `attack_basic` bridge, public summary/risk/reward fields, R5 docs-only closeout, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and no-complete-gameplay-runtime-PASS status.
+- `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md` records the G17 AppShell / MainMenuShell static validation boundary: main menu emits NavigationIntent only, AppShell/PageRouter own page routing, placeholder routes do not start RunScene, and no full gameplay runtime PASS is claimed.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -82,6 +84,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md` records the G15 encounter framework handoff, R3/R4/R5 commit chain, static validation boundary, non-goals, fast-forward main merge status, and next-stage candidates.
 - `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md` records the G16 combat encounter foundation closeout, completed R3/R4/R5 scope, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and next-stage candidates.
 - `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` records the imported Post-G16 architecture direction baseline: keep G15/G16, split top-level app shell next, and route G17 toward `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
+- G17-R2 runs on `godot/g17-app-shell-main-menu` and is not a main merge or closeout record until a later authorized G17-R3.
 
 ## Branch Change Records
 

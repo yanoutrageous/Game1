@@ -6,7 +6,7 @@
 
 ## Branch
 
-Current stage: G16 Combat Encounter Foundation is complete, parser-smoke checked, and fast-forward merged to `main`. Post-G16 architecture direction baseline has been imported as docs-only guidance for G17. G15-R3, G15-R4, and G15-R5 are complete and fast-forward merged to `main`.
+Current stage: G16 Combat Encounter Foundation is complete, parser-smoke checked, and fast-forward merged to `main`. Post-G16 architecture direction baseline has been imported as docs-only guidance for G17. G17-R2 is active on branch `godot/g17-app-shell-main-menu` for minimal AppShell / MainMenuShell implementation. G15-R3, G15-R4, and G15-R5 are complete and fast-forward merged to `main`.
 
 Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`.
 
@@ -160,6 +160,8 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, G15 Encounter Contract Foundation, and G16 Combat Encounter Foundation. G16 is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, not Boss, not action combat, and not complete gameplay runtime PASS or manual playtest PASS.
 
 Recommended next structural direction is G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`. Main menu should only navigate and present atmosphere/light hints; it must not directly start or continue RunScene. Expedition prep should later output `RunStartConfig / DeployConfig`; long-term systems should later output `PlayerProfileSnapshot / LongTermSnapshot / UnlockSnapshot`; settlement should later return through `RunResultSummary / SettlementAdapter`.
+
+G17-R2 establishes the first AppShell / NavigationIntent / PageRouter / MainMenuShell slice. The formal main menu exposes only `出发探索`, `长期系统`, `设置`, and `退出游戏`; expedition, long-term, and settings are placeholder routes in this slice, and exit uses a confirm layer. G17-R2 does not implement formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, or full settings.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
