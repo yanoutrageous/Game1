@@ -8,11 +8,11 @@ Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
 
 Current baseline smoke should cover the three-page shell, the G14 run surface shell and R4 surface refinements, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, local typography/readability, the five supported fixed 16:9 resolution tiers, the G15 public encounter contract / EncounterSlot fields, and G16 Monster `attack_basic` encounter fields. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, Boss/action combat, complete gameplay runtime PASS, or manual playtest PASS.
 
-G17-R2 branch note: `godot/g17-app-shell-main-menu` adds a formal AppShell / NavigationIntent / PageRouter / MainMenuShell slice. G17 manual validation must confirm the main menu only navigates to placeholder routes and does not directly start or continue RunScene. Do not mark this as runtime PASS unless a later authorized smoke actually runs.
+G17 branch note: `godot/g17-app-shell-main-menu` adds a formal AppShell / NavigationIntent / PageRouter / MainMenuShell slice. G17-R3 ran Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. Manual validation must still confirm the main menu only navigates to placeholder routes and does not directly start or continue RunScene.
 
 ## G17 AppShell / MainMenu Static Checklist
 
-Use this checklist for G17-R2 static review. It is not full gameplay runtime PASS and not manual playtest PASS.
+Use this checklist for G17 static/manual review. G17-R3 already has parser smoke PASS, but this checklist is not full gameplay runtime PASS and not manual playtest PASS.
 
 - Confirm the formal main menu shows exactly four main entries: `出发探索`, `长期系统`, `设置`, `退出游戏`.
 - Confirm `出发探索`, `长期系统`, and `设置` enter placeholder pages only.
@@ -21,8 +21,8 @@ Use this checklist for G17-R2 static review. It is not full gameplay runtime PAS
 - Confirm `退出游戏` opens a confirmation layer and does not offer abandon-run behavior.
 - Confirm MainMenuShell only emits `NavigationIntent`; AppShell / PageRouter decide page switching.
 - Confirm MainMenuShell and AppShell do not dispatch CommandBus and do not read RunContext, Encounter, Combat, Ledger, TruthMap, or RunRuleService private state.
-- Confirm G17-R2 does not implement formal DeployConfig, LongTermSnapshot, warehouse, codex, lottery, MetaProgress, Deploy persistence, or full settings.
-- Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.
+- Confirm G17 does not implement formal DeployConfig, LongTermSnapshot, warehouse, codex, lottery, MetaProgress, Deploy persistence, or full settings.
+- Record whether full manual gameplay testing was run. Parser smoke alone must not be recorded as manual playtest PASS.
 
 G14 closeout fact: G14 is closed at `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` (`d6c03c6 docs: close G14 legacy demo UI surface pass`). G14 hotfix is `fc2b86b fix(godot): resolve RunSurface parser type inference`, G14-R4 is `cc652e5 feat(godot): refine legacy demo run surface presentation`, G14-R3 follow-up is `39b51f1 docs: record G14 run surface acceptance follow-up`, and G14-R3 feature work is `1d33c89 feat(godot): add legacy demo run surface shell`. G14 was not run in Godot/editor/game/import and is not runtime PASS. `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf` is only the G13 closeout / G14-R3 baseline history.
 

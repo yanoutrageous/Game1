@@ -6,10 +6,13 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Current branch: `main`
+- Current branch for this handoff: `godot/g17-app-shell-main-menu`
+- Base branch: `main`
 - G17-R2 branch: `godot/g17-app-shell-main-menu`
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`
-- G17-R2 status: active branch implementation of the minimal AppShell / MainMenuShell slice; not closeout and not merged to main.
+- G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`
+- G17-R3 status: acceptance, Godot headless project-load/parser smoke, and docs-only closeout complete on the G17 branch.
+- G17 branch remains separate from main; no mainline integration was performed in R3.
 - Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`
 - Source branch for G16: `godot/g16-combat-encounter-foundation`
 - G16 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763 docs: mark G15 merged to main`
@@ -25,6 +28,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - Current milestone: G16 combat encounter foundation is complete, pushed, parser-smoke checked, and fast-forward merged to `main`. G15 is complete, pushed, merged to main, and closed. G10, G11, G12, G13, and G14 are complete, pushed, and closed.
 - Post-G16 architecture direction baseline: `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`.
 - G17 validation draft: `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`.
+- G17 handoff: `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`.
 
 ## What Main Can Do
 
@@ -40,7 +44,7 @@ The parser blocker fix `4637e8f` makes G15/G16 encounter helper references parse
 
 Post-G16 architecture direction import records the next structural recommendation: G17 should be `AppShell / NavigationIntent / PageRouter / MainMenuShell`, not a plain main-menu implementation. The point is to split app-level navigation from run-level orchestration before expanding main menu, expedition prep, long-term systems, lottery, or profile/save work.
 
-G17-R2 starts that split on branch `godot/g17-app-shell-main-menu`: it adds `NavigationIntent`, `PageRouter`, `AppShell`, `MainMenuShell`, and a static `MainMenuModel`. `run_scene.gd` only mounts the AppShell and keeps existing run orchestration. G17-R2 does not implement formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, or full settings.
+G17-R2 starts that split on branch `godot/g17-app-shell-main-menu`: it adds `NavigationIntent`, `PageRouter`, `AppShell`, `MainMenuShell`, and a static `MainMenuModel`. `run_scene.gd` only mounts the AppShell and keeps existing run orchestration. G17-R3 acceptance and Godot headless project-load/parser smoke passed. G17 does not implement formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, or full settings.
 
 ## What G16 Does Not Mean
 
@@ -53,16 +57,18 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 1. `docs/PROJECT_BASELINE.md`
 2. `docs/NEXT_HANDOFF.md`
 3. `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`
-4. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-5. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
-6. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-7. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
-8. `docs/DOCS_INDEX.md`
-9. `docs/MILESTONES.md`
-10. `docs/ENGINEERING_STATUS.md`
-11. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
-12. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-13. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
+4. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
+5. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
+6. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+7. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
+8. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+9. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
+10. `docs/DOCS_INDEX.md`
+11. `docs/MILESTONES.md`
+12. `docs/ENGINEERING_STATUS.md`
+13. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
+14. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+15. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
 
 ## Safety And Dirty Rules
 
@@ -93,9 +99,10 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 ## Next Stage Candidates
 
-- Current branch stage: G17-R2 `AppShell / NavigationIntent / PageRouter / MainMenuShell` minimal implementation.
+- Current branch stage: G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell` branch acceptance and closeout is complete.
 - G17-R1 audit and planning is complete.
 - G17-R2 implements minimal AppShell + MainMenuShell with expedition and long-term placeholder routes only.
-- Suggested G17-R3: acceptance, docs closeout, and Godot headless parser smoke only if explicitly authorized.
+- G17-R3 acceptance, docs closeout, and Godot headless project-load/parser smoke are complete.
+- Suggested next decision: decide whether to integrate the G17 branch into main.
 
-This handoff records G17-R2 as the active branch stage and does not claim complete gameplay runtime PASS or manual playtest PASS.
+This handoff records G17 branch closeout status and does not claim complete gameplay runtime PASS or manual playtest PASS. No G18 work began.

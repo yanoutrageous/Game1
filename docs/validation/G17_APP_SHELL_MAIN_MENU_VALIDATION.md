@@ -2,7 +2,7 @@
 
 ## 定位
 
-本文件记录 G17-R2 `AppShell / NavigationIntent / PageRouter / MainMenuShell` 最小切片的静态验证边界。
+本文件记录 G17-R2 `AppShell / NavigationIntent / PageRouter / MainMenuShell` 最小切片的静态验证边界，以及 G17-R3 验收 / parser smoke 结果。
 
 G17-R2 只建立顶层应用壳和主菜单导航协议：
 
@@ -46,8 +46,18 @@ rg -n "_show_main_menu|_show_deploy_shell|_show_long_term_shell|_show_settings_s
 - 不声明 manual playtest PASS。
 - 不启动 G18 / G19 / G20。
 
+## G17-R3 验收记录
+
+G17-R3 只做验收、Godot headless project-load/parser smoke、docs-only closeout，不修改业务代码，不实现新功能。
+
+- 验收结果：通过。
+- Godot smoke：`Godot headless project-load/parser smoke PASS`。
+- smoke 命令退出成功，输出不含 parser / compile / load script error。
+- smoke 前后 `git status --short` 均为空。
+- 未产生 `project.godot`、`.uid`、`.translation`、import metadata、资源、字体或导入产物 dirty。
+- G17 branch remains separate from main; no mainline integration was performed in R3.
+- No G18 work began in R3.
+
 ## Runtime 边界
 
-G17-R2 默认不运行 Godot/editor/game/import。
-
-如果后续用户授权 G17-R3 smoke，只能记录为 Godot headless project-load/parser smoke，不得写成完整 gameplay runtime PASS 或 manual playtest PASS。
+G17-R3 的 smoke 只能记录为 Godot headless project-load/parser smoke，不得写成完整 gameplay runtime PASS 或 manual playtest PASS。

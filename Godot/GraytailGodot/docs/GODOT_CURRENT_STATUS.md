@@ -6,7 +6,7 @@
 
 ## Branch
 
-Current stage: G16 Combat Encounter Foundation is complete, parser-smoke checked, and fast-forward merged to `main`. Post-G16 architecture direction baseline has been imported as docs-only guidance for G17. G17-R2 is active on branch `godot/g17-app-shell-main-menu` for minimal AppShell / MainMenuShell implementation. G15-R3, G15-R4, and G15-R5 are complete and fast-forward merged to `main`.
+Current stage: G16 Combat Encounter Foundation is complete, parser-smoke checked, and fast-forward merged to `main`. Post-G16 architecture direction baseline has been imported as docs-only guidance for G17. G17-R2 implementation and G17-R3 acceptance / Godot headless project-load/parser smoke / docs-only closeout are complete on branch `godot/g17-app-shell-main-menu`. G15-R3, G15-R4, and G15-R5 are complete and fast-forward merged to `main`.
 
 Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`.
 
@@ -161,7 +161,7 @@ Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 m
 
 Recommended next structural direction is G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`. Main menu should only navigate and present atmosphere/light hints; it must not directly start or continue RunScene. Expedition prep should later output `RunStartConfig / DeployConfig`; long-term systems should later output `PlayerProfileSnapshot / LongTermSnapshot / UnlockSnapshot`; settlement should later return through `RunResultSummary / SettlementAdapter`.
 
-G17-R2 establishes the first AppShell / NavigationIntent / PageRouter / MainMenuShell slice. The formal main menu exposes only `出发探索`, `长期系统`, `设置`, and `退出游戏`; expedition, long-term, and settings are placeholder routes in this slice, and exit uses a confirm layer. G17-R2 does not implement formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, or full settings.
+G17 establishes the first AppShell / NavigationIntent / PageRouter / MainMenuShell slice. The formal main menu exposes only `出发探索`, `长期系统`, `设置`, and `退出游戏`; expedition, long-term, and settings are placeholder routes in this slice, and exit uses a confirm layer. G17-R3 acceptance and Godot headless project-load/parser smoke PASS are complete on the branch. G17 does not implement formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS. No G18 work began.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 

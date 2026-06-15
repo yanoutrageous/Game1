@@ -22,18 +22,19 @@ Read these first in a new Codex or ChatGPT conversation:
 5. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
 6. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
 7. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
-8. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-9. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-10. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
-11. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
-12. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-13. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
-14. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
-15. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-16. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-17. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-18. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-19. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+8. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
+9. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+10. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+11. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
+12. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
+13. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+14. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
+15. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+16. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
+17. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+18. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+19. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+20. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
@@ -66,7 +67,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md` records the G14 run surface validation checklist, R3 shell, R4 surface refinement, hotfix, closeout boundary, no-runtime-PASS status, and outside-repository temporary-script safety event record.
 - `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md` records the G15 encounter contract foundation validation checklist, R3 rules contract, R4 EncounterSlot adapter, R5 docs-only closeout boundary, deferred lottery boundary, fast-forward main merge status, and no-runtime-PASS status.
 - `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md` records the G16 combat/monster encounter foundation static validation, Monster `attack_basic` bridge, public summary/risk/reward fields, R5 docs-only closeout, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and no-complete-gameplay-runtime-PASS status.
-- `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md` records the G17 AppShell / MainMenuShell static validation boundary: main menu emits NavigationIntent only, AppShell/PageRouter own page routing, placeholder routes do not start RunScene, and no full gameplay runtime PASS is claimed.
+- `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md` records the G17 AppShell / MainMenuShell validation boundary and R3 Godot headless project-load/parser smoke PASS; no complete gameplay runtime PASS is claimed.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -84,7 +85,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md` records the G15 encounter framework handoff, R3/R4/R5 commit chain, static validation boundary, non-goals, fast-forward main merge status, and next-stage candidates.
 - `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md` records the G16 combat encounter foundation closeout, completed R3/R4/R5 scope, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and next-stage candidates.
 - `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` records the imported Post-G16 architecture direction baseline: keep G15/G16, split top-level app shell next, and route G17 toward `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
-- G17-R2 runs on `godot/g17-app-shell-main-menu` and is not a main merge or closeout record until a later authorized G17-R3.
+- `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md` records the G17 AppShell / MainMenuShell branch closeout, R2 implementation boundary, R3 acceptance, and Godot headless project-load/parser smoke PASS.
 
 ## Branch Change Records
 
@@ -118,3 +119,5 @@ G10 is complete, merged to main, and closed. It was limited to progress整理, s
 G11, G12, G13, and G14 are complete and closed. G15 R3/R4/R5 are complete and fast-forward merged to main. G16 is complete and fast-forward merged to main, bounded to the first `combat_basic` / `monster_basic` encounter foundation: public Monster summary, `attack_basic` option, deterministic risk/reward preview, combat result summary, and a bridge through existing `select_encounter_option` to `fight_current_enemy`. G16 is not Boss, not action combat, not real-time combat, not out-of-run progression, not lottery, not Deploy persistence, and not complete gameplay runtime PASS or manual playtest PASS. Future UI / rules parallel work must use separate branches from latest `main`; two computers must not push directly to `main` in parallel.
 
 Post-G16 architecture direction baseline recommends G17 as `AppShell / NavigationIntent / PageRouter / MainMenuShell`. The next structural risk is not Encounter/Combat, but top-level application ownership: main menu, expedition prep, long-term systems, settings, and RunScene should be routed through an app shell instead of accumulating inside `run_scene.gd` or a temporary shell.
+
+G17 branch work on `godot/g17-app-shell-main-menu` now has R2 implementation and R3 acceptance/docs closeout. The branch remains separate from main until a separate integration decision. It does not implement full main menu, formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS.

@@ -3,12 +3,15 @@
 ## Current Authority
 
 - Stage: G16 Combat Encounter Foundation is complete, parser-smoke checked, and merged to `main`.
-- Active follow-up branch: G17-R2 `godot/g17-app-shell-main-menu` for minimal `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
+- Active follow-up branch: G17 `godot/g17-app-shell-main-menu` for minimal `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`.
+- G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`.
+- G17-R3 status: acceptance, Godot headless project-load/parser smoke, and docs-only closeout complete on the branch.
+- G17 branch remains separate from main; no mainline integration was performed in R3.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current working branch: `main`.
+- Current working branch for this handoff: `godot/g17-app-shell-main-menu`.
 - Source branch: `main`.
 - Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`.
 - G16-R3 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
@@ -126,7 +129,7 @@ Recommended next step by explicit authorization: G17 `AppShell / NavigationInten
 
 G17 should not be treated as a plain main-menu implementation. It should first establish app-level shell/routing ownership so main menu, expedition prep, long-term systems, settings, and RunScene do not continue accumulating inside `run_scene.gd` or a temporary shell.
 
-G17-R1 audit and planning is complete. G17-R2 implements the minimal AppShell + MainMenuShell slice on `godot/g17-app-shell-main-menu`: fixed four-entry main menu, placeholder routes for expedition / long-term / settings, exit confirmation, and no direct start / continue run from the main menu. G17-R3 may perform acceptance, docs closeout, and authorized Godot headless parser smoke. Do not expand this next step into Boss, action combat, multi-monster, skills, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems.
+G17-R1 audit and planning is complete. G17-R2 implements the minimal AppShell + MainMenuShell slice on `godot/g17-app-shell-main-menu`: fixed four-entry main menu, placeholder routes for expedition / long-term / settings, exit confirmation, and no direct start / continue run from the main menu. G17-R3 acceptance and Godot headless project-load/parser smoke passed, followed by docs-only closeout. Do not expand this next step into Boss, action combat, multi-monster, skills, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems. No G18 work began.
 
 ## G15 Boundary
 
