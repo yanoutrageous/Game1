@@ -2,10 +2,14 @@
 
 ## Scope
 
-- Stage: G16-R3 combat_basic / monster_basic encounter foundation.
+- Stage: G16 combat_basic / monster_basic encounter foundation.
 - Branch: `godot/g16-combat-encounter-foundation`.
 - Baseline main: `a28ae4c0c96f0b964602fd6fe7b88fa254354763 docs: mark G15 merged to main`.
+- R3 commit: `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a feat(godot): add combat encounter foundation`.
+- R4 status: accepted.
+- R5 status: docs-only closeout / handoff / status calibration.
 - G15 status: complete, merged to `main`, and closed.
+- G16 branch merged to main: no.
 - Godot/editor/game/import: not run.
 - Runtime/parser PASS: not claimed.
 
@@ -55,3 +59,34 @@ git diff --cached --name-only
 - No `RunSurface` or `run_scene.gd` modification is required for G16-R3.
 - No `project.godot`, resources, fonts, import products, `.uid`, `.translation`, or local user planning docs are staged or committed.
 - Godot/editor/game/import remains not run; runtime PASS remains unclaimed.
+
+## R5 Closeout Record
+
+- G16-R1: battle room / monster encounter audit and architecture boundary review.
+- G16-R2: `combat_basic` / `monster_basic` execution plan.
+- G16-R3: implementation and push at `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a`.
+- G16-R4: acceptance passed.
+- G16-R5: current docs-only branch closeout; no business code, runtime/UI/rule code, resource, font, import product, `.uid`, `.translation`, or `project.godot` changes.
+- Remote main remains `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
+- The branch is not merged to `main`.
+- Local user planning docs remain untracked and uncommitted: `docs/主菜单策划案.md`, `docs/战斗房与怪物遭遇通用规则策划案.md`, and `docs/出发探索界面与出勤准备规则策划案.md`.
+
+## R5 Static Validation Commands
+
+Run from repository root:
+
+```powershell
+git diff --stat
+git diff --check
+git status --short
+git diff --name-only
+rg -n "G16|combat_basic|monster_basic|attack_basic|runtime PASS|parser PASS|Godot/editor/game/import|main|merged|Boss|boss|elite|skill|action combat|real-time combat|lottery|MetaProgress|Deploy persistence" docs Godot/GraytailGodot/docs
+```
+
+Expected R5 static result:
+
+- Diff is docs-only.
+- No runtime/parser PASS is claimed.
+- G17 is not started.
+- Boss, elite, multi-monster combat, skills, passive systems, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, and Deploy persistence remain unimplemented.
+- G16 remains a branch-level closeout until a later authorized branch-to-main integration.

@@ -12,7 +12,7 @@ G14 closeout fact: G14 is closed at `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` (
 
 G15 fact: G15-R3 starts from `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` (`d6c03c6 docs: close G14 legacy demo UI surface pass`) on branch `godot/g15-encounter-contract-foundation`. G15-R3 completed the rules-layer public encounter contract at `aca5b958a588879a16da97616484424da795da7f`; G15-R4 completed the UI EncounterSlot adapter at `1887385af81624ebcd84342ca765d75e6fbf20eb`; G15-R5 closed the branch at `e72d3a5dc4a57122d42f881f391f2b47389fcdad`. G15 is now fast-forward merged to main, and Godot/editor/game/import was not run, so this is not runtime PASS.
 
-G16 fact: G16-R3 starts from `a28ae4c0c96f0b964602fd6fe7b88fa254354763` (`a28ae4c docs: mark G15 merged to main`) on branch `godot/g16-combat-encounter-foundation`. G16-R3 is limited to Monster `monster_basic` / `combat_basic` public encounter data, `attack_basic` option data, deterministic risk/reward preview, and combat result summary. Godot/editor/game/import was not run during implementation unless a later record explicitly says otherwise, so this is not runtime PASS.
+G16 fact: G16-R3 starts from `a28ae4c0c96f0b964602fd6fe7b88fa254354763` (`a28ae4c docs: mark G15 merged to main`) on branch `godot/g16-combat-encounter-foundation`. G16-R3 is complete at `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a` and is limited to Monster `monster_basic` / `combat_basic` public encounter data, `attack_basic` option data, deterministic risk/reward preview, and combat result summary. G16-R4 acceptance passed. G16-R5 is docs-only branch closeout. G16 is not merged to main. Godot/editor/game/import was not run during implementation or closeout unless a later record explicitly says otherwise, so this is not runtime/parser PASS.
 
 ## Main Menu / Deploy Shell
 
@@ -188,6 +188,9 @@ Use this checklist for G15-R3/G15-R5 static review. It is not runtime PASS.
 ## G16 Combat Encounter Foundation Checklist
 
 Use this route only after a human or explicitly authorized runtime smoke starts the game. Do not mark PASS from static inspection alone.
+
+- Static closeout fact: G16-R5 only updates docs/handoff/status/validation and does not run Godot/editor/game/import.
+- Confirm branch status before testing: `godot/g16-combat-encounter-foundation` is not merged to `main`.
 
 - Reach or seed a Monster room and confirm EncounterSlot shows a Monster / combat encounter rather than a reserved-only placeholder.
 - Confirm the slot displays Monster target name, player power, enemy/current/base power, risk summary, reward preview, and `attack_basic`.
