@@ -9,6 +9,7 @@ This file is the document navigation and historical index. It is not the fact so
 - `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md` - Godot-specific current status.
 - `docs/MILESTONES.md` - historical G-number to formal milestone mapping.
 - `docs/bugs/G10_BASELINE_BUG_BACKLOG.md` - G10 baseline bug and remaining-scope backlog evidence.
+- `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` - Post-G16 architecture direction baseline and G17 route recommendation.
 
 ## Next Conversation Minimum Reading
 
@@ -16,21 +17,22 @@ Read these first in a new Codex or ChatGPT conversation:
 
 1. `docs/NEXT_HANDOFF.md`
 2. `docs/PROJECT_BASELINE.md`
-3. `docs/DOCS_INDEX.md`
-4. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
-5. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
-6. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-7. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-8. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
-9. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
-10. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-11. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
-12. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
-13. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-14. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-15. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-16. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-17. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+3. `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`
+4. `docs/DOCS_INDEX.md`
+5. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
+6. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
+7. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+8. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+9. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
+10. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
+11. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+12. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
+13. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+14. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
+15. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+16. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+17. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+18. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
@@ -79,6 +81,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md` records the G14 legacy Demo run surface sprint closeout, handoff, validation boundary, and next-stage candidates.
 - `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md` records the G15 encounter framework handoff, R3/R4/R5 commit chain, static validation boundary, non-goals, fast-forward main merge status, and next-stage candidates.
 - `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md` records the G16 combat encounter foundation closeout, completed R3/R4/R5 scope, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and next-stage candidates.
+- `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` records the imported Post-G16 architecture direction baseline: keep G15/G16, split top-level app shell next, and route G17 toward `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 
 ## Branch Change Records
 
@@ -110,3 +113,5 @@ Safety note: G14-R3 execution reported an outside-repository temporary-script in
 G10 is complete, merged to main, and closed. It was limited to progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning. It is not complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
 G11, G12, G13, and G14 are complete and closed. G15 R3/R4/R5 are complete and fast-forward merged to main. G16 is complete and fast-forward merged to main, bounded to the first `combat_basic` / `monster_basic` encounter foundation: public Monster summary, `attack_basic` option, deterministic risk/reward preview, combat result summary, and a bridge through existing `select_encounter_option` to `fight_current_enemy`. G16 is not Boss, not action combat, not real-time combat, not out-of-run progression, not lottery, not Deploy persistence, and not complete gameplay runtime PASS or manual playtest PASS. Future UI / rules parallel work must use separate branches from latest `main`; two computers must not push directly to `main` in parallel.
+
+Post-G16 architecture direction baseline recommends G17 as `AppShell / NavigationIntent / PageRouter / MainMenuShell`. The next structural risk is not Encounter/Combat, but top-level application ownership: main menu, expedition prep, long-term systems, settings, and RunScene should be routed through an app shell instead of accumulating inside `run_scene.gd` or a temporary shell.

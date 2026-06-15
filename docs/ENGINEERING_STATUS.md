@@ -2,7 +2,7 @@
 
 ## Stage
 
-G16 Combat Encounter Foundation is complete, parser-smoke checked, and merged to `main`. G15-R3 rules-layer contract work, G15-R4 UI EncounterSlot adapter work, and G15-R5 docs closeout are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
+G16 Combat Encounter Foundation is complete, parser-smoke checked, and merged to `main`. Post-G16 architecture direction baseline has been imported as docs-only guidance for G17. G15-R3 rules-layer contract work, G15-R4 UI EncounterSlot adapter work, and G15-R5 docs closeout are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
 
 ## Time
 
@@ -15,6 +15,7 @@ G16 Combat Encounter Foundation is complete, parser-smoke checked, and merged to
 - Base branch: `main`
 - Current working branch: `main`
 - Source branch: `main`
+- Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`
 - G16-R3 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`
 - G16-R3 branch: `godot/g16-combat-encounter-foundation`
 - G16-R3 commit: `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a feat(godot): add combat encounter foundation`
@@ -166,6 +167,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G15 handoff: `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`.
 - G16 validation checklist: `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`.
 - G16 handoff: `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`.
+- Post-G16 architecture direction baseline: `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`.
 
 ## Implemented In G11
 
@@ -253,7 +255,18 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G16-R3 does not change `CombatState.fight_enemy()`, `RoomResolver.fight_current_enemy()`, or `RunRuleService.apply_combat_reward()` settlement semantics.
 - G16-R3 does not modify `RunSurface` or `run_scene.gd`; UI changes are limited to `RunSurfaceModel` display-only mapping.
 - G16 does not implement Boss, elite, multi-monster combat, skills, passive systems, leave confirmation, teleport restriction, combat animation, full drop economy, codex, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, complete gameplay runtime PASS, or manual playtest PASS.
-- G16 remains unmerged to `main` until a later authorized integration pass.
+- G16 is merged to `main`. Later work must branch from the latest `main`.
+
+## Post-G16 Architecture Direction
+
+- Current architecture has not lost control.
+- G15/G16 in-run Encounter / Combat foundations should be retained and extended additively only.
+- The next structural pressure is top-level app ownership, not more run-level encounter work.
+- G17 should be `AppShell / NavigationIntent / PageRouter / MainMenuShell`, not a plain main-menu implementation.
+- Main menu should only provide navigation, atmosphere, light notices, and shortcuts. It must not directly start or continue RunScene.
+- Expedition prep should output `RunStartConfig / DeployConfig`.
+- Long-term systems should output `PlayerProfileSnapshot / LongTermSnapshot / UnlockSnapshot`.
+- Run should consume deploy config only, and settlement should return through `RunResultSummary / SettlementAdapter`.
 
 ## Not Implemented
 
@@ -330,7 +343,7 @@ G15 final integration closes the bounded Encounter Contract Foundation stage on 
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 
-G16 final merges the first Monster combat option foundation to `main` after Godot headless project-load/parser smoke PASS. Future candidate work includes later combat-room enhancement, later deploy / expedition-prep or main-menu planning, later out-of-run progression, and later lottery / unique collectible / appearance systems. G17 is not started by this status update. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
+G16 final merges the first Monster combat option foundation to `main` after Godot headless project-load/parser smoke PASS. Recommended next stage is G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`: first audit and plan app-level shell/routing, then implement a minimal AppShell + MainMenuShell slice if authorized. G17 is not started by this status update. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
 
 ## Validation
 

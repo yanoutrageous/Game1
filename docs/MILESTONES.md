@@ -20,6 +20,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G14 | Legacy Demo UI Surface Sprint | Complete and closed through parser hotfix at `fc2b86b6b6b2af9a6c249230621482617b594775`; R5 docs-only closeout records handoff/status |
 | G15 | Encounter Contract Foundation | R3/R4/R5 complete and fast-forward merged to `main`; branch closeout commit `e72d3a5dc4a57122d42f881f391f2b47389fcdad`; no runtime PASS |
 | G16 | Combat Encounter Foundation | R3 complete at `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a`; R4 accepted; R5 docs-only branch closeout; parser blocker fix `4637e8f`; fast-forward merged to main after headless project-load/parser smoke PASS |
+| Post-G16 direction | Architecture Direction Baseline | Docs-only imported direction baseline; recommends G17 as `AppShell / NavigationIntent / PageRouter / MainMenuShell` |
 
 ## Naming Rule
 
@@ -47,6 +48,8 @@ G16 parser blocker fix: `4637e8f fix(godot): expose encounter parser classes`.
 
 G16 merged to main: yes, by fast-forward.
 
+Post-G16 architecture direction baseline: `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`.
+
 Current G15 branch HEAD before R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`.
 
 Current main commit before G15-R3: `d6c03c6 docs: close G14 legacy demo UI surface pass`.
@@ -73,10 +76,11 @@ G15-R3/R4/R5 did not run Godot/editor/game/import and do not claim runtime PASS.
 
 ## Next Stage Candidates
 
-- Further encounter content adapter planning.
-- Later out-of-run progression stage.
-- Later lottery / unique collectible / appearance stage after progression, warehouse, codex, appearance library, and record systems.
+- Recommended next stage: G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
+- G17-R1 should audit and plan app-level shell/routing before implementation.
+- G17-R2 may implement minimal AppShell + MainMenuShell with placeholder routes only if authorized.
+- G17-R3 may perform acceptance, docs closeout, and Godot headless parser smoke if authorized.
 
-These are candidates only. G16 final does not start G17, Boss, action combat, out-of-run progression, lottery, MetaProgress, or Deploy persistence.
+These are candidates only. Post-G16 direction import does not start G17, Boss, action combat, out-of-run progression, lottery, MetaProgress, or Deploy persistence.
 
 If UI and rules work proceed in parallel, branch from latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rule private state. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.

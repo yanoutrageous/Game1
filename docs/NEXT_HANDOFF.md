@@ -7,6 +7,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
 - Current branch: `main`
+- Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`
 - Source branch for G16: `godot/g16-combat-encounter-foundation`
 - G16 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763 docs: mark G15 merged to main`
 - G16-R3 commit: `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a feat(godot): add combat encounter foundation`
@@ -19,6 +20,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G15-R4 commit: `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`
 - G15-R3 commit: `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`
 - Current milestone: G16 combat encounter foundation is complete, pushed, parser-smoke checked, and fast-forward merged to `main`. G15 is complete, pushed, merged to main, and closed. G10, G11, G12, G13, and G14 are complete, pushed, and closed.
+- Post-G16 architecture direction baseline: `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`.
 
 ## What Main Can Do
 
@@ -32,6 +34,8 @@ G16-R3 adds the first combat encounter foundation on top of the G15 public encou
 
 The parser blocker fix `4637e8f` makes G15/G16 encounter helper references parser-safe. Final integration ran Godot headless project-load/parser smoke successfully before fast-forwarding G16 into `main`. This is not a complete gameplay runtime PASS or manual playtest PASS.
 
+Post-G16 architecture direction import records the next structural recommendation: G17 should be `AppShell / NavigationIntent / PageRouter / MainMenuShell`, not a plain main-menu implementation. The point is to split app-level navigation from run-level orchestration before expanding main menu, expedition prep, long-term systems, lottery, or profile/save work.
+
 ## What G16 Does Not Mean
 
 G16 does not implement Boss, elite, multi-monster combat, skills, passive systems, leave confirmation, teleport restrictions, combat animation, full drop economy, codex, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full event library.
@@ -42,16 +46,17 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 1. `docs/PROJECT_BASELINE.md`
 2. `docs/NEXT_HANDOFF.md`
-3. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-4. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
-5. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-6. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
-7. `docs/DOCS_INDEX.md`
-8. `docs/MILESTONES.md`
-9. `docs/ENGINEERING_STATUS.md`
-10. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
-11. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-12. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
+3. `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`
+4. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+5. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
+6. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+7. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
+8. `docs/DOCS_INDEX.md`
+9. `docs/MILESTONES.md`
+10. `docs/ENGINEERING_STATUS.md`
+11. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
+12. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+13. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
 
 ## Safety And Dirty Rules
 
@@ -82,8 +87,9 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 ## Next Stage Candidates
 
-- Later combat-room enhancement stage.
-- Later deploy / expedition-prep or main-menu planning.
-- Further encounter content adapter planning.
+- Recommended next stage: G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
+- Suggested G17-R1: audit existing shell/routing and plan AppShell, NavigationIntent, PageRouter/SceneRouter, and MainMenuShell.
+- Suggested G17-R2: minimal AppShell + MainMenuShell execution with expedition and long-term placeholder routes only.
+- Suggested G17-R3: acceptance, docs closeout, and Godot headless parser smoke only if explicitly authorized.
 
-These are candidates only. G16 final does not start G17 and does not claim complete gameplay runtime PASS or manual playtest PASS.
+These are candidates only. This handoff does not start G17 and does not claim complete gameplay runtime PASS or manual playtest PASS.

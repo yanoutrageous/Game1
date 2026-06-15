@@ -6,7 +6,9 @@
 
 ## Branch
 
-Current stage: G16 Combat Encounter Foundation is complete, parser-smoke checked, and fast-forward merged to `main`. G15-R3, G15-R4, and G15-R5 are complete and fast-forward merged to `main`.
+Current stage: G16 Combat Encounter Foundation is complete, parser-smoke checked, and fast-forward merged to `main`. Post-G16 architecture direction baseline has been imported as docs-only guidance for G17. G15-R3, G15-R4, and G15-R5 are complete and fast-forward merged to `main`.
+
+Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`.
 
 Current main HEAD after G16 fast-forward and before this post-merge status commit: `4637e8fa0eeec6859df4eab26d5a961868e4c071`.
 
@@ -153,8 +155,11 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G15-R4 adds a UI EncounterSlot surface adapter: `RunSurfaceModel` consumes only public encounter snapshot fields, `RunSurface` displays options and emits public option signals, and `run_scene.gd` performs minimal CommandBus wiring for `select_encounter_option`.
 - G16-R3 adds the first combat encounter foundation: Monster rooms expose `monster_basic` / `combat_basic` public encounter data, `attack_basic` option data, monster summary, risk/reward preview, and combat result summary. `attack_basic` routes through `select_encounter_option` into the existing deterministic `fight_current_enemy` chain.
 - G16-R5 closes branch docs/status; parser blocker fix `4637e8f` makes encounter helper references parser-safe.
+- Post-G16 architecture direction baseline records that current architecture has not lost control, G15/G16 Encounter / Combat foundations should be retained, and G17 should focus on `AppShell / NavigationIntent / PageRouter / MainMenuShell` rather than plain main-menu implementation.
 
 Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, G15 Encounter Contract Foundation, and G16 Combat Encounter Foundation. G16 is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, not Boss, not action combat, and not complete gameplay runtime PASS or manual playtest PASS.
+
+Recommended next structural direction is G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`. Main menu should only navigate and present atmosphere/light hints; it must not directly start or continue RunScene. Expedition prep should later output `RunStartConfig / DeployConfig`; long-term systems should later output `PlayerProfileSnapshot / LongTermSnapshot / UnlockSnapshot`; settlement should later return through `RunResultSummary / SettlementAdapter`.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 

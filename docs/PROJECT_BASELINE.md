@@ -8,6 +8,7 @@
 - Main branch: `main`.
 - Current working branch: `main`.
 - Source branch: `main`.
+- Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`.
 - G16-R3 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
 - G16-R3 branch: `godot/g16-combat-encounter-foundation`.
 - G16-R3 commit: `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a feat(godot): add combat encounter foundation`.
@@ -66,6 +67,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G14 is complete, committed, pushed, and closed. G14 adds a minimal `RunSurface` / `RunSurfaceModel` cut, second-wave presentation refinement, and a parser hotfix for the first legacy Demo-style run screen surface while preserving existing panel, command, and routing paths.
 - G15-R3/R4/R5 are complete, pushed, and merged to `main`. G15 includes the rules-layer Encounter contract foundation plus the first UI EncounterSlot adapter: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, additive `select_encounter_option` bridge for search/chest/event, `RunSurfaceModel` display-only section, `RunSurface` EncounterSlot, and minimal `run_scene.gd` wiring.
 - G16 is the first combat encounter foundation slice and is merged to `main`. It adds `combat_basic` / `monster_basic` public encounter data for Monster rooms, a public `attack_basic` option, monster summary, deterministic risk/reward preview, and combat result summary. `attack_basic` routes through `select_encounter_option` into the existing deterministic `fight_current_enemy` chain. The final integration passed Godot headless project-load/parser smoke, which is not complete gameplay runtime PASS or manual playtest PASS.
+- Post-G16 architecture direction baseline is recorded in `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`. It concludes that current architecture has not lost control, G15/G16 Encounter / Combat foundations should be retained, and the next structural step should split top-level app navigation into `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 
 ## Current Validation Chain
 
@@ -118,7 +120,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Choose a separate next step by explicit authorization: later combat-room enhancement, later deploy / expedition-prep / main-menu planning, or further encounter content adapter planning. Do not expand G16 closeout into Boss, action combat, multi-monster, skills, lottery, out-of-run progression, MetaProgress, or Deploy persistence.
+Recommended next step by explicit authorization: G17 `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
+
+G17 should not be treated as a plain main-menu implementation. It should first establish app-level shell/routing ownership so main menu, expedition prep, long-term systems, settings, and RunScene do not continue accumulating inside `run_scene.gd` or a temporary shell.
+
+G17-R1 should audit and plan; G17-R2 may implement the minimal AppShell + MainMenuShell slice; G17-R3 may perform acceptance, docs closeout, and authorized Godot headless parser smoke. Do not expand this next step into Boss, action combat, multi-monster, skills, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems.
 
 ## G15 Boundary
 
