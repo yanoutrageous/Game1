@@ -10,7 +10,7 @@
 - R5 status: docs-only closeout / handoff / status calibration.
 - Merged to main: yes, by fast-forward during G15 final integration.
 - G14, G13, G12, G11, and G10 are complete and closed.
-- G16 is not started.
+- At G15 closeout time, G16 was not started; later G16-R3 status is tracked in `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`.
 
 ## R3 Implementation Record
 
@@ -151,7 +151,7 @@ Expected R4 static result:
   - validation and manual checklist updates.
 - G15 still does not implement full combat rooms, action combat, out-of-run progression, lottery systems, unique collectibles, warehouse/codex/appearance library systems, MetaProgress, Deploy persistence, full event libraries, or runtime PASS.
 - Godot/editor/game/import was not run during G15-R5, and this document does not claim runtime PASS.
-- G16 is not started.
+- At G15-R5 closeout time, G16 was not started; later G16-R3 status is tracked separately.
 
 ## R5 Static Validation Commands
 
@@ -169,5 +169,5 @@ Expected R5 static result:
 - Current docs state G15 R3/R4 are complete and R5 is closeout.
 - Current docs do not state that G15 is merged to main.
 - Current docs do not state runtime PASS.
-- G16, combat rooms, lottery, out-of-run progression, MetaProgress, Deploy persistence, and full event libraries remain future candidates or explicit non-goals.
+- At G15-R5 closeout time, G16 and combat rooms remained future candidates. Later G16-R3 is limited to `combat_basic` / `monster_basic` encounter foundation and still does not implement lottery, out-of-run progression, MetaProgress, Deploy persistence, or full event libraries.
 - No Godot runtime/UI code, rules code, `project.godot`, resources, fonts, import products, `.uid`, or `.translation` files are modified by R5.

@@ -61,11 +61,14 @@ static func _encounter_section(snapshot: Dictionary) -> Dictionary:
 	var state_id := StringName(state.get("state", &"unavailable"))
 	var title := _encounter_title(String(state.get("title", "遭遇槽")))
 	var description := _encounter_description(String(state.get("description", "当前遭遇无公开信息。")))
+	var monster_summary := _dict_variant(view_model.get("monster_summary", {}))
 	var options := _encounter_options(_array_variant(view_model.get("options", [])))
 	var body_lines: Array[String] = [
 		"类型：%s | 状态：%s" % [_encounter_type_label(encounter_type), _encounter_state_label(state_id)],
 		description,
 	]
+	if not monster_summary.is_empty():
+		body_lines.append(_monster_summary_text(monster_summary))
 	if options.is_empty():
 		body_lines.append(_encounter_empty_options_text(encounter_type, state_id))
 	return {
@@ -146,8 +149,8 @@ static func _encounter_empty_options_text(encounter_type: StringName, state_id: 
 	if state_id == &"completed":
 		return "当前遭遇已处理完成。"
 	match encounter_type:
-		&"combat", &"monster_basic":
-			return "战斗遭遇只显示状态，本轮不接入战斗房。"
+		&"combat", &"combat_basic", &"monster_basic":
+			return "战斗遭遇当前没有可执行攻击选项；可能已清理或命令被阻止。"
 		&"extract", &"exit_beacon":
 			return "撤离仍走既有撤离按钮和确认路径。"
 		_:
@@ -162,8 +165,12 @@ static func _encounter_type_label(encounter_type: StringName) -> String:
 			return "物资箱"
 		&"event":
 			return "事件"
-		&"combat", &"monster_basic":
-			return "战斗预留"
+		&"combat":
+			return "战斗"
+		&"combat_basic":
+			return "基础战斗"
+		&"monster_basic":
+			return "怪物遭遇"
 		&"extract", &"exit_beacon":
 			return "撤离"
 		&"lottery":
@@ -194,6 +201,10 @@ static func _option_title(raw_title: String) -> String:
 			return "搜索房间"
 		"Open chest":
 			return "开启物资箱"
+		"Basic attack":
+			return "基础攻击"
+		"Attack monster":
+			return "基础攻击"
 		"Close":
 			return "关闭遭遇"
 		_:
@@ -226,6 +237,12 @@ static func _effect_summary(effect_summary: Dictionary) -> String:
 		if value != 0:
 			var sign := "+" if value > 0 else ""
 			parts.append("%s%s%s" % [String(fields[key_variant]), sign, value])
+	var room_state_delta := _dict_variant(effect_summary.get("room_state_delta", {}))
+	if not room_state_delta.is_empty():
+		parts.append("房间：%s" % _dict_summary(room_state_delta, "无"))
+	var encounter_state_delta := _dict_variant(effect_summary.get("encounter_state_delta", {}))
+	if not encounter_state_delta.is_empty():
+		parts.append("遭遇：%s" % _dict_summary(encounter_state_delta, "无"))
 	if parts.is_empty():
 		return "无直接数值变化"
 	return _join_parts(parts, "，")
@@ -243,6 +260,26 @@ static func _field_label(key: String) -> String:
 			return "状态"
 		"adjacent_danger":
 			return "周围危险"
+		"enemy_power":
+			return "敌方战斗力"
+		"player_power":
+			return "我方战斗力"
+		"base_power":
+			return "基础战斗力"
+		"current_power":
+			return "当前战斗力"
+		"power_gain":
+			return "力量成长"
+		"blocked_if_defeated":
+			return "失败无奖励"
+		"cleared":
+			return "已清理"
+		"fought":
+			return "已交战"
+		"player_win":
+			return "玩家胜利"
+		"codex_ref":
+			return "图鉴接口"
 		"black_coin_loss":
 			return "黑币损失"
 		"hp_loss":
@@ -262,7 +299,9 @@ static func _encounter_title(raw_title: String) -> String:
 		"Reward encounter":
 			return "物资遭遇"
 		"Combat encounter":
-			return "战斗遭遇（预留）"
+			return "战斗遭遇"
+		"Monster combat encounter":
+			return "怪物遭遇"
 		"Extraction encounter":
 			return "撤离遭遇"
 		"No encounter":
@@ -287,6 +326,8 @@ static func _encounter_description(raw_description: String) -> String:
 			return "选择事件选项；结算仍由现有事件规则处理。"
 		"Combat is reserved for a later combat encounter stage.":
 			return "战斗遭遇预留到后续战斗阶段。"
+		"Resolve the monster through the existing deterministic combat command path.":
+			return "通过现有确定性战斗命令处理当前怪物遭遇。"
 		"Extraction remains on existing request/confirm extract commands.":
 			return "撤离仍走现有请求/确认撤离命令。"
 		_:
@@ -308,8 +349,14 @@ static func _value_label(value: Variant) -> String:
 				return "力量决定"
 			"sell_best_inventory_item":
 				return "出售背包最高价值物品"
+			"none":
+				return "无"
+			"future_codex_monster_basic":
+				return "后续图鉴接口预留"
 			_:
 				return String(value)
+	if value is bool:
+		return "是" if bool(value) else "否"
 	return String(value)
 
 
@@ -333,6 +380,8 @@ static func _reason_label(reason: String) -> String:
 			return "生命不足"
 		"event_option_unavailable":
 			return "事件选项暂不可用"
+		"monster_cleared":
+			return "当前怪物已清理"
 		"missing_option_payload":
 			return "缺少公开 option payload"
 		_:
@@ -497,6 +546,24 @@ static func _resource_summary(snapshot: Dictionary) -> String:
 		snapshot.get("hp", 0),
 		snapshot.get("max_hp", 0),
 	]
+
+
+static func _monster_summary_text(monster_summary: Dictionary) -> String:
+	var display_name := String(monster_summary.get("display_name", "Anomaly"))
+	var lines: Array[String] = [
+		"目标：%s | 状态：%s" % [display_name, "已清理" if bool(monster_summary.get("cleared", false)) else "接触中"],
+		"战力：我方 %s / 敌方 %s（基础 %s）" % [
+			monster_summary.get("player_power", 0),
+			monster_summary.get("current_power", monster_summary.get("enemy_power", 0)),
+			monster_summary.get("base_power", 0),
+		],
+		"预期奖励：%s" % _dict_summary(_dict_variant(monster_summary.get("reward_preview", {})), "无"),
+		"风险预估：%s" % _dict_summary(_dict_variant(monster_summary.get("risk_summary", {})), "低"),
+	]
+	var codex_ref := String(monster_summary.get("codex_ref", ""))
+	if codex_ref != "":
+		lines.append("图鉴：%s" % _value_label(codex_ref))
+	return _join_lines(lines)
 
 
 static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary) -> Array[String]:

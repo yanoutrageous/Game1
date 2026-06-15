@@ -2,12 +2,15 @@
 
 ## Current Authority
 
-- Stage: G15 Encounter Contract Foundation R3/R4/R5 are complete and fast-forward merged to `main`; this is post-merge status calibration.
+- Stage: G16 Combat Encounter Foundation R3 is active on a branch; G15 is complete and merged to `main`.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current working branch: `main`.
-- Source branch: `godot/g15-encounter-contract-foundation`.
+- Current working branch: `godot/g16-combat-encounter-foundation`.
+- Source branch: `main`.
+- G16-R3 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
+- G16-R3 branch: `godot/g16-combat-encounter-foundation`.
+- G15 post-merge status commit: `a28ae4c0c96f0b964602fd6fe7b88fa254354763 docs: mark G15 merged to main`.
 - Current branch HEAD before G15-R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`.
 - G15 branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`.
 - Main HEAD after G15 fast-forward and before post-merge status commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad`.
@@ -53,7 +56,8 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G12 is complete and closed for lightweight legacy Demo core-loop feel, Chinese readability, typography/readability, and current UI feedback alignment on existing systems.
 - G13-R3 is complete, pushed, and statically validated for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and bounded layout adaptation. G13-R5 is docs-only closeout/handoff/status alignment.
 - G14 is complete, committed, pushed, and closed. G14 adds a minimal `RunSurface` / `RunSurfaceModel` cut, second-wave presentation refinement, and a parser hotfix for the first legacy Demo-style run screen surface while preserving existing panel, command, and routing paths.
-- G15-R3/R4 are complete and pushed on the branch. G15 now includes the rules-layer Encounter contract foundation plus the first UI EncounterSlot adapter: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, additive `select_encounter_option` bridge for search/chest/event, `RunSurfaceModel` display-only section, `RunSurface` EncounterSlot, and minimal `run_scene.gd` wiring.
+- G15-R3/R4/R5 are complete, pushed, and merged to `main`. G15 includes the rules-layer Encounter contract foundation plus the first UI EncounterSlot adapter: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, additive `select_encounter_option` bridge for search/chest/event, `RunSurfaceModel` display-only section, `RunSurface` EncounterSlot, and minimal `run_scene.gd` wiring.
+- G16-R3 is the first combat encounter foundation slice. It adds `combat_basic` / `monster_basic` public encounter data for Monster rooms, a public `attack_basic` option, monster summary, deterministic risk/reward preview, and combat result summary. `attack_basic` routes through `select_encounter_option` into the existing deterministic `fight_current_enemy` chain.
 
 ## Current Validation Chain
 
@@ -106,7 +110,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Complete post-merge status calibration, then choose a separate next step by explicit authorization: runtime smoke/parser check, G16 battle room planning, or further encounter content adapter planning. Do not start G16 in the G15 final integration pass.
+Complete G16-R3 static validation, commit, and push the branch. Runtime smoke/parser check remains a separate later authorization. Do not expand G16-R3 into Boss, action combat, multi-monster, skills, lottery, out-of-run progression, MetaProgress, or Deploy persistence.
 
 ## G15 Boundary
 
@@ -119,6 +123,12 @@ G15-R4 adds `RunSurfaceModel` display-only encounter section construction, `RunS
 G15-R5 is docs-only closeout. G15 has now been fast-forward merged to main, and G15 still does not claim runtime PASS because Godot/editor/game/import was not run.
 
 抽奖 / lottery remains deferred. G15 may reserve `lottery` as an encounter type name only; it does not implement probability, pity, pools, unique collectibles, warehouse, codex, appearance library, duplicate compensation, MetaProgress, or Deploy persistence. G15 also does not implement full combat rooms, action combat, out-of-run progression, full event libraries, or G16.
+
+## G16 Boundary
+
+G16-R3 is limited to a minimal `combat_basic` / `monster_basic` encounter foundation on top of the G15 public encounter framework. It may add public Monster summary, `attack_basic` option data, deterministic risk/reward preview, combat result summary, and a `select_encounter_option` bridge to the existing `fight_current_enemy` command path.
+
+G16-R3 must not change `CombatState.fight_enemy()`, `RoomResolver.fight_current_enemy()`, or `RunRuleService.apply_combat_reward()` settlement semantics. It does not implement Boss, elite, multi-monster encounters, skills, passive systems, leave confirmation, teleport restriction, combat animation, full drop economy, codex, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, or runtime PASS.
 
 If UI and rules work proceed in parallel, use separate branches from latest `main`; do not push directly to `main` from two computers in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rule private state.
 

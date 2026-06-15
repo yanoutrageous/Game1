@@ -2,15 +2,17 @@
 
 ## Scope
 
-This guide treats the older G4-G7 routes as historical foundations and points manual smoke toward the current mainline G14 legacy Demo run surface baseline plus the G15 encounter contract branch. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
+This guide treats the older G4-G7 routes as historical foundations and points manual smoke toward the current mainline G14 legacy Demo run surface baseline, the G15 encounter contract foundation, and the G16 combat encounter foundation branch. Do not run Godot unless the user explicitly authorizes editor/runtime execution.
 
 Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
 
-Current baseline smoke should cover the three-page shell, the G14 run surface shell and R4 surface refinements, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, local typography/readability, the five supported fixed 16:9 resolution tiers, and the G15 public encounter contract / EncounterSlot branch fields when the branch is under review. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G16, or runtime PASS.
+Current baseline smoke should cover the three-page shell, the G14 run surface shell and R4 surface refinements, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, local typography/readability, the five supported fixed 16:9 resolution tiers, the G15 public encounter contract / EncounterSlot fields, and G16 Monster `attack_basic` encounter fields when the branch is under review. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, Boss/action combat, or runtime PASS.
 
 G14 closeout fact: G14 is closed at `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` (`d6c03c6 docs: close G14 legacy demo UI surface pass`). G14 hotfix is `fc2b86b fix(godot): resolve RunSurface parser type inference`, G14-R4 is `cc652e5 feat(godot): refine legacy demo run surface presentation`, G14-R3 follow-up is `39b51f1 docs: record G14 run surface acceptance follow-up`, and G14-R3 feature work is `1d33c89 feat(godot): add legacy demo run surface shell`. G14 was not run in Godot/editor/game/import and is not runtime PASS. `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf` is only the G13 closeout / G14-R3 baseline history.
 
 G15 fact: G15-R3 starts from `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` (`d6c03c6 docs: close G14 legacy demo UI surface pass`) on branch `godot/g15-encounter-contract-foundation`. G15-R3 completed the rules-layer public encounter contract at `aca5b958a588879a16da97616484424da795da7f`; G15-R4 completed the UI EncounterSlot adapter at `1887385af81624ebcd84342ca765d75e6fbf20eb`; G15-R5 closed the branch at `e72d3a5dc4a57122d42f881f391f2b47389fcdad`. G15 is now fast-forward merged to main, and Godot/editor/game/import was not run, so this is not runtime PASS.
+
+G16 fact: G16-R3 starts from `a28ae4c0c96f0b964602fd6fe7b88fa254354763` (`a28ae4c docs: mark G15 merged to main`) on branch `godot/g16-combat-encounter-foundation`. G16-R3 is limited to Monster `monster_basic` / `combat_basic` public encounter data, `attack_basic` option data, deterministic risk/reward preview, and combat result summary. Godot/editor/game/import was not run during implementation unless a later record explicitly says otherwise, so this is not runtime PASS.
 
 ## Main Menu / Deploy Shell
 
@@ -178,6 +180,23 @@ Use this checklist for G15-R3/G15-R5 static review. It is not runtime PASS.
 - Confirm Godot/editor/game/import was not run; if not run, record "not run" and do not claim runtime PASS.
 
 ## G15-R4 EncounterSlot UI Checklist
+
+- Confirm Monster rooms still use public `encounter_view_model` / `encounter_result_summary` and do not expose private rule objects.
+- Confirm disabled EncounterSlot options remain disabled and show `disabled_reason`.
+- Confirm `requires_confirm` remains display-only unless a later stage explicitly adds a confirmation flow.
+
+## G16 Combat Encounter Foundation Checklist
+
+Use this route only after a human or explicitly authorized runtime smoke starts the game. Do not mark PASS from static inspection alone.
+
+- Reach or seed a Monster room and confirm EncounterSlot shows a Monster / combat encounter rather than a reserved-only placeholder.
+- Confirm the slot displays Monster target name, player power, enemy/current/base power, risk summary, reward preview, and `attack_basic`.
+- Confirm `attack_basic` uses public `select_encounter_option` data and does not expose `TruthMap`, `RunRuleService`, Ledger, AssetLedger, RunAssetLedger, or RunContext private state.
+- Trigger `attack_basic` only during an authorized runtime smoke and confirm it follows the existing deterministic `fight_current_enemy` result path.
+- Confirm result text summarizes damage, black coin reward, clear state, and player win/loss without claiming action combat.
+- Confirm cleared Monster rooms show completed/disabled state and do not offer repeat reward farming.
+- Confirm Boss, elite, multi-monster, skills, passive systems, leave confirmation, teleport restrictions, combat animation, full drop economy, codex, action combat, real-time combat, lottery, MetaProgress, and Deploy persistence are not present.
+- Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.
 
 Use this checklist only after G15-R4 UI adapter changes are present. It is not runtime PASS unless a later authorized runtime smoke actually starts the game.
 

@@ -232,6 +232,9 @@ func select_encounter_option(option_id: StringName = &"default") -> Dictionary:
 				return search_current_room()
 		&"Event":
 			return select_event_option(option_id)
+		&"Monster":
+			if option_id in [&"default", EncounterContract.OPTION_ATTACK_BASIC]:
+				return fight_current_enemy()
 	context.blocked_reason = "encounter_option_unavailable"
 	context.last_message = "Encounter option unavailable."
 	_emit_state()

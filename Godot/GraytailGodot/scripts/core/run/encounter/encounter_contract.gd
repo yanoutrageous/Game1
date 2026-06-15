@@ -9,8 +9,12 @@ const TYPE_SEARCH := &"search_basic"
 const TYPE_CHEST := &"chest_basic"
 const TYPE_EVENT := &"event"
 const TYPE_COMBAT := &"combat"
+const TYPE_COMBAT_BASIC := &"combat_basic"
+const TYPE_MONSTER_BASIC := &"monster_basic"
 const TYPE_EXTRACT := &"extract"
 const TYPE_LOTTERY := &"lottery"
+
+const OPTION_ATTACK_BASIC := &"attack_basic"
 
 const STATE_UNAVAILABLE := &"unavailable"
 const STATE_AVAILABLE := &"available"
@@ -121,6 +125,83 @@ static func make_log_entry(entry_type: StringName, message: String, payload: Dic
 	}
 
 
+static func make_monster_summary(
+	monster_id: String,
+	display_name: String,
+	tags: Array,
+	base_power: int,
+	current_power: int,
+	player_power: int,
+	cleared: bool,
+	reward_preview: Dictionary = {},
+	risk_summary: Dictionary = {},
+	codex_ref: String = ""
+) -> Dictionary:
+	return {
+		"monster_id": monster_id,
+		"display_name": display_name,
+		"tags": tags.duplicate(true),
+		"base_power": base_power,
+		"current_power": current_power,
+		"enemy_power": current_power,
+		"player_power": player_power,
+		"cleared": cleared,
+		"alive": not cleared,
+		"reward_preview": reward_preview.duplicate(true),
+		"risk_summary": risk_summary.duplicate(true),
+		"codex_ref": codex_ref,
+	}
+
+
+static func make_combat_result_summary(
+	action_result: Dictionary,
+	encounter_type: StringName = TYPE_MONSTER_BASIC,
+	option_id: StringName = OPTION_ATTACK_BASIC
+) -> Dictionary:
+	if action_result.is_empty():
+		return make_result(false, encounter_type, option_id, make_effect_summary(), [], [], "")
+	var damage := int(action_result.get("damage", 0))
+	var cleared := bool(action_result.get("cleared", false))
+	var player_win := bool(action_result.get("player_win", cleared))
+	var black_coin_delta := int(action_result.get("black_coin_delta", action_result.get("reward_gold", 0)))
+	var effect_summary := make_effect_summary(
+		black_coin_delta,
+		0,
+		0,
+		0,
+		[],
+		-damage,
+		0,
+		{"cleared": cleared},
+		{
+			"fought": bool(action_result.get("fought", false)),
+			"player_win": player_win,
+			"enemy_power": int(action_result.get("enemy_power", 0)),
+			"player_power": int(action_result.get("player_power", 0)),
+			"power_gain": int(action_result.get("power_gain", 0)),
+		},
+		{}
+	)
+	var messages: Array = []
+	var message := String(action_result.get("message", ""))
+	if message != "":
+		messages.append(message)
+	elif bool(action_result.get("fought", false)):
+		messages.append("Combat resolved: damage %d, reward +%d black coin." % [damage, black_coin_delta])
+	var log_entries: Array = [
+		make_log_entry(&"combat", "Combat resolved through deterministic command combat.", action_result)
+	]
+	return make_result(
+		bool(action_result.get("ok", false)),
+		encounter_type,
+		option_id,
+		effect_summary,
+		log_entries,
+		messages,
+		String(action_result.get("blocked_reason", action_result.get("reason", "")))
+	)
+
+
 static func make_view_model(
 	encounter_id: String,
 	encounter_type: StringName,
@@ -144,6 +225,8 @@ static func make_view_model(
 static func summarize_action_result(action_result: Dictionary) -> Dictionary:
 	if action_result.is_empty():
 		return make_result(false, TYPE_NONE, &"", make_effect_summary(), [], [], "")
+	if bool(action_result.get("fought", false)):
+		return make_combat_result_summary(action_result)
 	var messages: Array = []
 	var message: String = String(action_result.get("message", ""))
 	if message != "":

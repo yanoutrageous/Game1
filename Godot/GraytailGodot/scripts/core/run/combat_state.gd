@@ -49,7 +49,7 @@ static func fight_enemy(context: RunContext, pos: Vector2i, adjacent_mines: int)
 			"reward_gold": 0,
 			"black_coin_delta": 0,
 		}
-	var reward_gold: int = absi((pos.x * 13 + pos.y * 7 + context.seed_value) % 4)
+	var reward_gold: int = preview_reward_gold(context, pos)
 	var reward_result := RunRuleService.apply_combat_reward(context, pos, reward_gold)
 	context.run_stats["monsters_defeated"] = int(context.run_stats.get("monsters_defeated", 0)) + 1
 	context.run_stats["combat_damage"] = int(context.run_stats.get("combat_damage", 0)) + damage
@@ -81,4 +81,59 @@ static func build_enemy_state(context: RunContext, pos: Vector2i, adjacent_mines
 		"player_power": context.power,
 		"alive": true,
 		"cleared": context.truth_map != null and context.truth_map.is_cleared(pos),
+	}
+
+
+static func preview_reward_gold(context: RunContext, pos: Vector2i) -> int:
+	if context == null:
+		return 0
+	return absi((pos.x * 13 + pos.y * 7 + context.seed_value) % 4)
+
+
+static func build_monster_summary(context: RunContext, pos: Vector2i, adjacent_mines: int) -> Dictionary:
+	if context == null:
+		return {}
+	var enemy_state := build_enemy_state(context, pos, adjacent_mines)
+	var enemy_power := int(enemy_state.get("enemy_power", 0))
+	var player_power := int(enemy_state.get("player_power", 0))
+	var expected_damage := maxi(0, enemy_power - player_power)
+	var survives := context.hp > expected_damage
+	var cleared := bool(enemy_state.get("cleared", false))
+	var power_gain_available := int(context.run_stats.get("monster_power_bonus", 0)) < 5 and not cleared and survives
+	return {
+		"monster_id": "monster_%d_%d" % [pos.x, pos.y],
+		"display_name": String(enemy_state.get("enemy_name", "Anomaly")),
+		"tags": [&"monster_basic", &"combat_basic", &"melee_basic"],
+		"base_power": 4 + adjacent_mines,
+		"current_power": enemy_power,
+		"enemy_power": enemy_power,
+		"player_power": player_power,
+		"cleared": cleared,
+		"alive": not cleared,
+		"reward_preview": build_combat_reward_preview(context, pos, power_gain_available, survives),
+		"risk_summary": build_combat_risk_summary(context, pos, adjacent_mines),
+		"codex_ref": "future_codex_monster_basic",
+	}
+
+
+static func build_combat_reward_preview(context: RunContext, pos: Vector2i, power_gain_available: bool = false, reward_available: bool = true) -> Dictionary:
+	return {
+		"black_coin": preview_reward_gold(context, pos) if reward_available else 0,
+		"items": "none",
+		"power_gain": 1 if power_gain_available else 0,
+		"blocked_if_defeated": not reward_available,
+	}
+
+
+static func build_combat_risk_summary(context: RunContext, pos: Vector2i, adjacent_mines: int) -> Dictionary:
+	if context == null:
+		return {}
+	var enemy_state := build_enemy_state(context, pos, adjacent_mines)
+	var enemy_power := int(enemy_state.get("enemy_power", 0))
+	var player_power := int(enemy_state.get("player_power", 0))
+	return {
+		"hp_loss": maxi(0, enemy_power - player_power),
+		"enemy_power": enemy_power,
+		"player_power": player_power,
+		"adjacent_danger": adjacent_mines,
 	}

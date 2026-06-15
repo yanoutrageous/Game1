@@ -6,11 +6,15 @@
 
 ## Branch
 
-Current stage: G15 Encounter Contract Foundation final integration. G15-R3, G15-R4, and G15-R5 are complete and fast-forward merged to `main`; G16 is not started.
+Current stage: G16 Combat Encounter Foundation R3 is active on `godot/g16-combat-encounter-foundation`. G15-R3, G15-R4, and G15-R5 are complete and fast-forward merged to `main`.
 
-Current main HEAD / G15 baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
+Current main HEAD / G16-R3 baseline: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
 
-Current remote live main HEAD before G15-R3: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
+Current remote live main HEAD before G16-R3: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
+
+G16-R3 branch: `godot/g16-combat-encounter-foundation`.
+
+G15 post-merge status commit: `a28ae4c0c96f0b964602fd6fe7b88fa254354763 docs: mark G15 merged to main`.
 
 Current G15 branch HEAD before R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`.
 
@@ -135,8 +139,9 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G14 parser hotfix `fc2b86b` resolves a `run_surface.gd` GDScript type inference parser error without changing UI behavior or rules.
 - G15-R3 adds a rules-layer Encounter contract foundation: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, and additive `select_encounter_option` for search/chest/event only.
 - G15-R4 adds a UI EncounterSlot surface adapter: `RunSurfaceModel` consumes only public encounter snapshot fields, `RunSurface` displays options and emits public option signals, and `run_scene.gd` performs minimal CommandBus wiring for `select_encounter_option`.
+- G16-R3 adds the first combat encounter foundation: Monster rooms expose `monster_basic` / `combat_basic` public encounter data, `attack_basic` option data, monster summary, risk/reward preview, and combat result summary. `attack_basic` routes through `select_encounter_option` into the existing deterministic `fight_current_enemy` chain.
 
-Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, and G15 Encounter Contract Foundation. G15 is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, not G16, and not runtime PASS.
+Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, and G15 Encounter Contract Foundation. G16-R3 is branch work and is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, not Boss, not action combat, and not runtime PASS.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
@@ -185,7 +190,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\validate_g10_progress_art_smoke.ps1
 ```
 
-G15-R3, G15-R4, G15-R5, G14-R3, G14-R4, the G14 parser hotfix, G14-R5, G13-R3, and G13-R5 did not run Godot/editor/game/import and must not be reported as runtime PASS unless a later authorized runtime/manual smoke records it. G15 did not submit `project.godot`, resources, import products, font files, `.uid`, `.translation`, or the existing Godot dirty whitelist. Do not use Godot/editor/game/import for broad resource import, persistence work, full font pipeline, or full art migration.
+G16-R3, G15-R3, G15-R4, G15-R5, G14-R3, G14-R4, the G14 parser hotfix, G14-R5, G13-R3, and G13-R5 did not run Godot/editor/game/import and must not be reported as runtime PASS unless a later authorized runtime/manual smoke records it. G16-R3 did not submit `project.godot`, resources, import products, font files, `.uid`, `.translation`, or the existing Godot dirty whitelist. Do not use Godot/editor/game/import for broad resource import, persistence work, full font pipeline, or full art migration.
 
 ## G15 Boundary
 
@@ -194,6 +199,14 @@ G15 is limited to the Encounter Contract Foundation. R3 adds public/display dict
 G15-R3/R4 do not migrate event / loot / extract decisions, do not implement full combat rooms or action combat, do not implement out-of-run progression, and do not implement lottery. `lottery` may exist only as a reserved encounter type name until progression, warehouse, codex, appearance library, and record systems exist.
 
 G15-R3 keeps existing command semantics. `select_encounter_option` is additive and delegates to existing `search_current_room()` or `select_event_option()` paths. G15-R4 routes UI option clicks to that bridge without direct rule-state reads. Existing `request_extract` and `confirm_extract` are unchanged.
+
+## G16 Boundary
+
+G16-R3 is limited to the first `combat_basic` / `monster_basic` encounter foundation on top of the G15 public encounter framework. Monster rooms expose public `monster_summary`, `combat_encounter_state`, `attack_basic` option data, deterministic risk/reward preview, and combat result summary. `select_encounter_option` routes Monster `attack_basic` to existing deterministic `fight_current_enemy`.
+
+G16-R3 does not change `CombatState.fight_enemy()`, `RoomResolver.fight_current_enemy()`, or `RunRuleService.apply_combat_reward()` settlement semantics. G16-R3 does not modify `RunSurface` or `run_scene.gd`; UI changes are display-only through `RunSurfaceModel`.
+
+G16-R3 does not implement Boss, elite, multi-monster combat, skills, passive systems, leave confirmation, teleport restriction, combat animation, full drop economy, codex, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, full event library, or runtime PASS.
 
 G14-R3 safety event record: execution reported that two temporary script files were mistakenly created outside the then-active Game1 worktree and were then cleaned as necessary deletion. The repository commit contains no outside-repository path. Current computer-two G15 worktree safety scope is `D:\AGAME1\_repo_cache\Game1_work`; future CodeX work must forbid outside-repository temporary files and must not scan or clean outside-repository directories unless the user provides the exact path and explicit authorization.
 

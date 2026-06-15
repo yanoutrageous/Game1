@@ -16,8 +16,8 @@ static func get_encounter_identity(context: RunContext, room_type: StringName, p
 			encounter_type = EncounterContract.TYPE_CHEST
 			tags = [&"loot", &"container"]
 		&"Monster":
-			encounter_type = &"monster_basic"
-			tags = [EncounterContract.TYPE_COMBAT, &"loot"]
+			encounter_type = EncounterContract.TYPE_MONSTER_BASIC
+			tags = [EncounterContract.TYPE_COMBAT_BASIC, EncounterContract.TYPE_COMBAT, &"monster", &"melee_basic", &"loot"]
 		&"Exit":
 			encounter_type = &"exit_beacon"
 			tags = [&"settlement", EncounterContract.TYPE_EXTRACT]
@@ -65,7 +65,7 @@ static func build_view_model(context: RunContext) -> Dictionary:
 		completed,
 		tags
 	)
-	return EncounterContract.make_view_model(
+	var view_model := EncounterContract.make_view_model(
 		"%s_%d_%d" % [String(encounter_type), pos.x, pos.y],
 		encounter_type,
 		room_type,
@@ -74,6 +74,16 @@ static func build_view_model(context: RunContext) -> Dictionary:
 		options,
 		build_result_summary(context)
 	)
+	if room_type == &"Monster":
+		view_model["monster_summary"] = _monster_summary(context, pos)
+		view_model["combat_encounter_state"] = {
+			"combat_type": EncounterContract.TYPE_COMBAT_BASIC,
+			"monster_type": EncounterContract.TYPE_MONSTER_BASIC,
+			"attack_option": EncounterContract.OPTION_ATTACK_BASIC,
+			"deterministic": true,
+			"melee_only": true,
+		}
+	return view_model
 
 
 static func build_result_summary(context: RunContext) -> Dictionary:
@@ -90,6 +100,8 @@ static func _build_options(context: RunContext, room_type: StringName, encounter
 			return [_build_search_option(context, pos, true)]
 		&"Event":
 			return _build_event_options(context, pos, encounter_type)
+		&"Monster":
+			return _build_monster_options(context, pos)
 	return []
 
 
@@ -147,6 +159,43 @@ static func _build_event_options(context: RunContext, pos: Vector2i, encounter_t
 	return options
 
 
+static func _build_monster_options(context: RunContext, pos: Vector2i) -> Array:
+	var monster_summary := _monster_summary(context, pos)
+	if monster_summary.is_empty():
+		return [EncounterContract.make_option(
+			EncounterContract.OPTION_ATTACK_BASIC,
+			"Basic attack",
+			{},
+			{},
+			{},
+			true,
+			true,
+			true,
+			"not_ready",
+			&"select_encounter_option",
+			{"option_id": EncounterContract.OPTION_ATTACK_BASIC, "encounter_type": EncounterContract.TYPE_MONSTER_BASIC}
+		)]
+	var cleared := bool(monster_summary.get("cleared", false))
+	var disabled_reason := "monster_cleared" if cleared else ""
+	return [EncounterContract.make_option(
+		EncounterContract.OPTION_ATTACK_BASIC,
+		"Basic attack",
+		{},
+		_dictionary_from(monster_summary, "reward_preview"),
+		_dictionary_from(monster_summary, "risk_summary"),
+		true,
+		true,
+		cleared,
+		disabled_reason,
+		&"select_encounter_option",
+		{
+			"option_id": EncounterContract.OPTION_ATTACK_BASIC,
+			"encounter_type": EncounterContract.TYPE_MONSTER_BASIC,
+			"combat_type": EncounterContract.TYPE_COMBAT_BASIC,
+		}
+	)]
+
+
 static func _search_disabled_reason(context: RunContext, pos: Vector2i, is_chest: bool) -> String:
 	if context == null:
 		return "not_ready"
@@ -169,6 +218,8 @@ static func _is_completed(context: RunContext, room_type: StringName, pos: Vecto
 			return context.searched_cells.has(key)
 		&"Event":
 			return context.interacted_cells.has(key)
+		&"Monster":
+			return context.truth_map != null and context.truth_map.is_cleared(pos)
 	return false
 
 
@@ -181,7 +232,7 @@ static func _title_for(room_type: StringName, encounter_type: StringName) -> Str
 		&"Event":
 			return "Event encounter: %s" % String(encounter_type)
 		&"Monster":
-			return "Combat encounter"
+			return "Monster combat encounter"
 		&"Exit":
 			return "Extraction encounter"
 	return "%s encounter" % String(room_type)
@@ -198,7 +249,7 @@ static func _description_for(context: RunContext, room_type: StringName, encount
 		&"Event":
 			return "Choose an event option. Resolution stays in existing event rules."
 		&"Monster":
-			return "Combat is reserved for a later combat encounter stage."
+			return "Resolve the monster through the existing deterministic combat command path."
 		&"Exit":
 			return "Extraction remains on existing request/confirm extract commands."
 	return "No active encounter option for %s." % String(encounter_type)
@@ -257,4 +308,38 @@ static func _event_risk(encounter_type: StringName, option_id: StringName) -> Di
 		&"trap":
 			if option_id == &"disarm":
 				return {"hp_loss": 1, "pressure": 5}
+	return {}
+
+
+static func _monster_summary(context: RunContext, pos: Vector2i) -> Dictionary:
+	if context == null:
+		return {}
+	var raw_summary := CombatState.build_monster_summary(context, pos, context.current_adjacent_mines)
+	if raw_summary.is_empty():
+		return {}
+	return EncounterContract.make_monster_summary(
+		String(raw_summary.get("monster_id", "")),
+		String(raw_summary.get("display_name", "Anomaly")),
+		_array_from(raw_summary, "tags"),
+		int(raw_summary.get("base_power", 0)),
+		int(raw_summary.get("current_power", raw_summary.get("enemy_power", 0))),
+		int(raw_summary.get("player_power", 0)),
+		bool(raw_summary.get("cleared", false)),
+		_dictionary_from(raw_summary, "reward_preview"),
+		_dictionary_from(raw_summary, "risk_summary"),
+		String(raw_summary.get("codex_ref", ""))
+	)
+
+
+static func _array_from(source: Dictionary, key: String) -> Array:
+	var raw: Variant = source.get(key, [])
+	if raw is Array:
+		return (raw as Array).duplicate(true)
+	return []
+
+
+static func _dictionary_from(source: Dictionary, key: String) -> Dictionary:
+	var raw: Variant = source.get(key, {})
+	if raw is Dictionary:
+		return (raw as Dictionary).duplicate(true)
 	return {}

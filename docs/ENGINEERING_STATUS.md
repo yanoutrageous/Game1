@@ -2,7 +2,7 @@
 
 ## Stage
 
-G15 Encounter Contract Foundation R3/R4/R5 is complete and fast-forward merged to `main`. G15-R3 rules-layer contract work, G15-R4 UI EncounterSlot adapter work, and G15-R5 docs closeout are complete and pushed; this pass is post-merge status calibration. G10, G11, G12, G13, and G14 are complete and closed. G16 is not started.
+G16 Combat Encounter Foundation R3 is active on `godot/g16-combat-encounter-foundation`. G15-R3 rules-layer contract work, G15-R4 UI EncounterSlot adapter work, and G15-R5 docs closeout are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
 
 ## Time
 
@@ -13,8 +13,11 @@ G15 Encounter Contract Foundation R3/R4/R5 is complete and fast-forward merged t
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current working branch: `main`
-- Source branch: `godot/g15-encounter-contract-foundation`
+- Current working branch: `godot/g16-combat-encounter-foundation`
+- Source branch: `main`
+- G16-R3 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`
+- G16-R3 branch: `godot/g16-combat-encounter-foundation`
+- G15 post-merge status commit: `a28ae4c0c96f0b964602fd6fe7b88fa254354763 docs: mark G15 merged to main`
 - Current branch HEAD before G15-R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`
 - G15 branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`
 - Main HEAD after G15 fast-forward and before post-merge status commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad`
@@ -153,6 +156,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G14 handoff: `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`.
 - G15 validation checklist: `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`.
 - G15 handoff: `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`.
+- G16 validation checklist: `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`.
 
 ## Implemented In G11
 
@@ -226,6 +230,16 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G15-R3/R4/R5 do not run Godot/editor/game/import and do not claim runtime PASS.
 - G15 is fast-forward merged to main.
 
+## Implemented In G16-R3
+
+- G16-R3 starts from `main @ a28ae4c0c96f0b964602fd6fe7b88fa254354763` on `godot/g16-combat-encounter-foundation`.
+- G16-R3 adds the first `combat_basic` / `monster_basic` public encounter foundation on top of the G15 encounter contract.
+- Monster rooms expose a public `monster_summary`, `combat_encounter_state`, `attack_basic` option, deterministic risk summary, reward preview, and combat result summary.
+- `select_encounter_option` delegates Monster `attack_basic` to the existing deterministic `fight_current_enemy` command path.
+- G16-R3 does not change `CombatState.fight_enemy()`, `RoomResolver.fight_current_enemy()`, or `RunRuleService.apply_combat_reward()` settlement semantics.
+- G16-R3 does not modify `RunSurface` or `run_scene.gd`; UI changes are limited to `RunSurfaceModel` display-only mapping.
+- G16-R3 does not implement Boss, elite, multi-monster combat, skills, passive systems, leave confirmation, teleport restriction, combat animation, full drop economy, codex, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, or runtime PASS.
+
 ## Not Implemented
 
 - Full MetaProgress persistence.
@@ -292,14 +306,15 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 - `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
 - `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
 - `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
+- `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
 
 ## Follow-Up Boundary
 
-G15 final integration closes the bounded Encounter Contract Foundation stage on main. R3 defines the public contract and rule bridge; R4 adds the first UI EncounterSlot adapter; R5 is docs-only closeout; post-merge status calibration does not start G16.
+G15 final integration closes the bounded Encounter Contract Foundation stage on main. R3 defines the public contract and rule bridge; R4 adds the first UI EncounterSlot adapter; R5 is docs-only closeout. G16-R3 is now active as a separate branch from latest main.
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 
-G15 final integration updates documentation only after the fast-forward merge. Future candidate work includes runtime smoke / parser check, G16 battle room / combat encounter planning, further encounter content adapters, later out-of-run progression, and later lottery / unique collectible / appearance systems. G16 is not started. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
+G16-R3 updates the encounter framework with the first Monster combat option only. Future candidate work includes runtime smoke / parser check, branch integration, Boss / richer combat encounter planning, further encounter content adapters, later out-of-run progression, and later lottery / unique collectible / appearance systems. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
 
 ## Validation
 
