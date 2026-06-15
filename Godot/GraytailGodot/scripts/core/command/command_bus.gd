@@ -11,6 +11,7 @@ const DEFAULT_ACTOR_ID := &"player"
 const REJECTION_EVENT_OPTION_UNAVAILABLE := "event_option_unavailable"
 const REJECTION_CANNOT_EXTRACT := "cannot_extract"
 const REJECTION_NO_EXTRACT_REQUEST := "no_extract_request"
+const EncounterContractScript := preload("res://scripts/core/run/encounter/encounter_contract.gd")
 
 var context: RunContext
 var room_resolver: RoomResolver = RoomResolver.new()
@@ -233,7 +234,7 @@ func select_encounter_option(option_id: StringName = &"default") -> Dictionary:
 		&"Event":
 			return select_event_option(option_id)
 		&"Monster":
-			if option_id in [&"default", EncounterContract.OPTION_ATTACK_BASIC]:
+			if option_id in [&"default", EncounterContractScript.OPTION_ATTACK_BASIC]:
 				return fight_current_enemy()
 	context.blocked_reason = "encounter_option_unavailable"
 	context.last_message = "Encounter option unavailable."

@@ -56,7 +56,7 @@ var main_menu_panel: Control
 var deploy_shell_panel: Control
 var long_term_shell_panel: Control
 var run_overlay_root: Control
-var run_surface: RunSurface
+var run_surface
 var room_badge: Label
 var protocol_badge: Label
 var command_result_label: Label
@@ -199,7 +199,7 @@ func _build_run_overlay() -> void:
 	run_overlay_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	ui_root.add_child(run_overlay_root)
 
-	run_surface = RunSurfaceScript.new() as RunSurface
+	run_surface = RunSurfaceScript.new()
 	run_surface.name = "RunSurface"
 	run_surface.build()
 	run_surface.interact_requested.connect(_handle_interact_pressed)
@@ -214,7 +214,7 @@ func _build_run_overlay() -> void:
 
 	hud = run_surface.get_hud()
 	minimap_panel = run_surface.get_minimap_panel()
-	var surface_overlay_slot := run_surface.get_overlay_slot()
+	var surface_overlay_slot: Control = run_surface.get_overlay_slot()
 
 	debug_toggle_button = _add_button(run_overlay_root, "DebugToggleButton", Rect2(1010, 226, 170, 34), "Dev Debug", func() -> void: _toggle_debug_panel())
 	debug_toggle_button.visible = G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED

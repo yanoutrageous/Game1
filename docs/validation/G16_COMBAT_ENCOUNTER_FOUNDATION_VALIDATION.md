@@ -90,3 +90,21 @@ Expected R5 static result:
 - G17 is not started.
 - Boss, elite, multi-monster combat, skills, passive systems, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, and Deploy persistence remain unimplemented.
 - G16 remains a branch-level closeout until a later authorized branch-to-main integration.
+
+## Parser Blocker Fix Record
+
+- Blocker: Godot headless project-load/parser smoke reported parser-visible class reference failures for `EncounterContract`, `EncounterResolver`, and `RunSurface`.
+- Fix scope: parser-safe class visibility only.
+- Code semantics: no combat settlement, damage, reward, room-clearing, stats, CommandBus routing, encounter field semantics, UI behavior, resource, or project setting changes.
+- Fix details:
+  - `command_bus.gd`, `run_query_facade.gd`, `run_rule_service.gd`, and `encounter_resolver.gd` now use explicit preload aliases for G15/G16 encounter helper scripts.
+  - `run_scene.gd` no longer depends on the `RunSurface` global class name for parser type resolution; it still instantiates the same `RunSurfaceScript`.
+- Smoke command:
+
+```powershell
+D:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe --headless --path D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot --quit
+```
+
+- Result: Godot headless project-load/parser smoke PASS.
+- This is not a complete gameplay runtime PASS and not a manual playtest PASS.
+- Smoke produced no new dirty files; `project.godot`, resources, fonts, import products, `.uid`, and `.translation` remain untouched.

@@ -5,6 +5,7 @@ class_name RunRuleService
 # RuleResult dictionaries describe outcomes; EffectSpec dictionaries describe asset mutations.
 
 const DEFAULT_ACTOR_ID := &"player"
+const EncounterResolverScript := preload("res://scripts/core/run/encounter/encounter_resolver.gd")
 
 
 static func make_rule_result(ok: bool, status: StringName, actor_id: StringName = DEFAULT_ACTOR_ID, reason: String = "", effects: Array = [], messages: Array[String] = [], snapshot_delta: Dictionary = {}, settlement_log_entry: Dictionary = {}, rule_request_id: String = "", produced_events: Array = [], produced_transactions: Array = []) -> Dictionary:
@@ -44,7 +45,7 @@ static func make_effect_spec(effect_type: StringName, source: String, target: Va
 
 
 static func encounter_for_room(context: RunContext, room_type: StringName, pos: Vector2i) -> Dictionary:
-	return EncounterResolver.get_encounter_identity(context, room_type, pos)
+	return EncounterResolverScript.get_encounter_identity(context, room_type, pos)
 
 
 static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_mines: int, is_chest: bool) -> Dictionary:

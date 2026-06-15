@@ -4,6 +4,8 @@ class_name RunQueryFacade
 # Read-only query and snapshot boundary for run state.
 # UI and presentation code should consume these snapshots instead of private run state.
 
+const EncounterResolverScript := preload("res://scripts/core/run/encounter/encounter_resolver.gd")
+
 
 func build_result_snapshot(context: RunContext) -> Dictionary:
 	var ledger_snapshot: Dictionary = get_asset_snapshot(context)
@@ -155,17 +157,17 @@ func get_inventory_summary(context: RunContext) -> Dictionary:
 func get_encounter_summary(context: RunContext) -> Dictionary:
 	if context == null:
 		return {"encounter_type": &"none", "encounter_tags": []}
-	var identity: Dictionary = EncounterResolver.get_encounter_identity(context, context.current_room_type, context.get_current_pos())
+	var identity: Dictionary = EncounterResolverScript.get_encounter_identity(context, context.current_room_type, context.get_current_pos())
 	identity["blocked_reason"] = context.blocked_reason
 	return identity
 
 
 func get_encounter_view_model(context: RunContext) -> Dictionary:
-	return EncounterResolver.build_view_model(context)
+	return EncounterResolverScript.build_view_model(context)
 
 
 func get_encounter_result_summary(context: RunContext) -> Dictionary:
-	return EncounterResolver.build_result_summary(context)
+	return EncounterResolverScript.build_result_summary(context)
 
 
 func get_search_state_label(context: RunContext) -> String:

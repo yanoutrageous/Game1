@@ -4,6 +4,8 @@ class_name EncounterResolver
 # Read-only encounter adapter for G15. It builds public display/command data
 # from RunContext and delegates actual rule resolution to existing commands.
 
+const EncounterContractScript := preload("res://scripts/core/run/encounter/encounter_contract.gd")
+
 
 static func get_encounter_identity(context: RunContext, room_type: StringName, pos: Vector2i) -> Dictionary:
 	var encounter_type: StringName = StringName(String(room_type).to_lower())
@@ -13,19 +15,19 @@ static func get_encounter_identity(context: RunContext, room_type: StringName, p
 			encounter_type = EventService.get_event_type(context, pos)
 			tags = [&"event_like", encounter_type]
 		&"Chest":
-			encounter_type = EncounterContract.TYPE_CHEST
+			encounter_type = EncounterContractScript.TYPE_CHEST
 			tags = [&"loot", &"container"]
 		&"Monster":
-			encounter_type = EncounterContract.TYPE_MONSTER_BASIC
-			tags = [EncounterContract.TYPE_COMBAT_BASIC, EncounterContract.TYPE_COMBAT, &"monster", &"melee_basic", &"loot"]
+			encounter_type = EncounterContractScript.TYPE_MONSTER_BASIC
+			tags = [EncounterContractScript.TYPE_COMBAT_BASIC, EncounterContractScript.TYPE_COMBAT, &"monster", &"melee_basic", &"loot"]
 		&"Exit":
 			encounter_type = &"exit_beacon"
-			tags = [&"settlement", EncounterContract.TYPE_EXTRACT]
+			tags = [&"settlement", EncounterContractScript.TYPE_EXTRACT]
 		&"Mine":
 			encounter_type = &"mine_trap"
 			tags = [&"hazard"]
 		&"Normal":
-			encounter_type = EncounterContract.TYPE_SEARCH
+			encounter_type = EncounterContractScript.TYPE_SEARCH
 			tags = [&"search", &"loot"]
 		_:
 			tags = [&"room"]
@@ -39,25 +41,25 @@ static func get_encounter_identity(context: RunContext, room_type: StringName, p
 
 static func build_view_model(context: RunContext) -> Dictionary:
 	if context == null:
-		return EncounterContract.make_view_model(
+		return EncounterContractScript.make_view_model(
 			"",
-			EncounterContract.TYPE_NONE,
+			EncounterContractScript.TYPE_NONE,
 			&"Unknown",
 			Vector2i.ZERO,
-			EncounterContract.make_state(EncounterContract.TYPE_NONE, EncounterContract.STATE_UNAVAILABLE, "No encounter", "No active run."),
+			EncounterContractScript.make_state(EncounterContractScript.TYPE_NONE, EncounterContractScript.STATE_UNAVAILABLE, "No encounter", "No active run."),
 			[]
 		)
 	var pos: Vector2i = context.get_current_pos()
 	var room_type: StringName = context.current_room_type
 	var identity: Dictionary = get_encounter_identity(context, room_type, pos)
-	var encounter_type: StringName = StringName(identity.get("encounter_type", EncounterContract.TYPE_NONE))
+	var encounter_type: StringName = StringName(identity.get("encounter_type", EncounterContractScript.TYPE_NONE))
 	var tags: Array = identity.get("encounter_tags", [])
 	var options: Array = _build_options(context, room_type, encounter_type, pos)
 	var completed: bool = _is_completed(context, room_type, pos)
-	var state_id: StringName = EncounterContract.STATE_COMPLETED if completed else EncounterContract.STATE_AVAILABLE
+	var state_id: StringName = EncounterContractScript.STATE_COMPLETED if completed else EncounterContractScript.STATE_AVAILABLE
 	if options.is_empty() and not completed:
-		state_id = EncounterContract.STATE_RESERVED if room_type in [&"Monster", &"Exit"] else EncounterContract.STATE_UNAVAILABLE
-	var state: Dictionary = EncounterContract.make_state(
+		state_id = EncounterContractScript.STATE_RESERVED if room_type in [&"Monster", &"Exit"] else EncounterContractScript.STATE_UNAVAILABLE
+	var state: Dictionary = EncounterContractScript.make_state(
 		encounter_type,
 		state_id,
 		_title_for(room_type, encounter_type),
@@ -65,7 +67,7 @@ static func build_view_model(context: RunContext) -> Dictionary:
 		completed,
 		tags
 	)
-	var view_model := EncounterContract.make_view_model(
+	var view_model := EncounterContractScript.make_view_model(
 		"%s_%d_%d" % [String(encounter_type), pos.x, pos.y],
 		encounter_type,
 		room_type,
@@ -77,9 +79,9 @@ static func build_view_model(context: RunContext) -> Dictionary:
 	if room_type == &"Monster":
 		view_model["monster_summary"] = _monster_summary(context, pos)
 		view_model["combat_encounter_state"] = {
-			"combat_type": EncounterContract.TYPE_COMBAT_BASIC,
-			"monster_type": EncounterContract.TYPE_MONSTER_BASIC,
-			"attack_option": EncounterContract.OPTION_ATTACK_BASIC,
+			"combat_type": EncounterContractScript.TYPE_COMBAT_BASIC,
+			"monster_type": EncounterContractScript.TYPE_MONSTER_BASIC,
+			"attack_option": EncounterContractScript.OPTION_ATTACK_BASIC,
 			"deterministic": true,
 			"melee_only": true,
 		}
@@ -88,8 +90,8 @@ static func build_view_model(context: RunContext) -> Dictionary:
 
 static func build_result_summary(context: RunContext) -> Dictionary:
 	if context == null or context.last_reward.is_empty():
-		return EncounterContract.make_result(false, EncounterContract.TYPE_NONE)
-	return EncounterContract.summarize_action_result(context.last_reward)
+		return EncounterContractScript.make_result(false, EncounterContractScript.TYPE_NONE)
+	return EncounterContractScript.summarize_action_result(context.last_reward)
 
 
 static func _build_options(context: RunContext, room_type: StringName, encounter_type: StringName, pos: Vector2i) -> Array:
@@ -113,7 +115,7 @@ static func _build_search_option(context: RunContext, pos: Vector2i, is_chest: b
 	var expected_black_coin: int = 0
 	if not disabled:
 		expected_black_coin = RunRuleContent.default_search_black_coin(context, pos, context.current_adjacent_mines, is_chest)
-	return EncounterContract.make_option(
+	return EncounterContractScript.make_option(
 		option_id,
 		title,
 		{},
@@ -141,7 +143,7 @@ static func _build_event_options(context: RunContext, pos: Vector2i, encounter_t
 		var option_id: StringName = StringName(raw_option.get("id", &""))
 		var enabled: bool = bool(raw_option.get("enabled", true))
 		var disabled_reason: String = "" if enabled else _event_disabled_reason(context, encounter_type, option_id)
-		options.append(EncounterContract.make_option(
+		options.append(EncounterContractScript.make_option(
 			option_id,
 			String(raw_option.get("label", option_id)),
 			_event_cost(context, encounter_type, option_id),
@@ -155,15 +157,15 @@ static func _build_event_options(context: RunContext, pos: Vector2i, encounter_t
 			{"option_id": option_id}
 		))
 	if completed and options.is_empty():
-		options.append(EncounterContract.make_option(&"leave", "Close", {}, {}, {}, false, false, false, "", &"select_encounter_option", {"option_id": &"leave"}))
+		options.append(EncounterContractScript.make_option(&"leave", "Close", {}, {}, {}, false, false, false, "", &"select_encounter_option", {"option_id": &"leave"}))
 	return options
 
 
 static func _build_monster_options(context: RunContext, pos: Vector2i) -> Array:
 	var monster_summary := _monster_summary(context, pos)
 	if monster_summary.is_empty():
-		return [EncounterContract.make_option(
-			EncounterContract.OPTION_ATTACK_BASIC,
+		return [EncounterContractScript.make_option(
+			EncounterContractScript.OPTION_ATTACK_BASIC,
 			"Basic attack",
 			{},
 			{},
@@ -173,12 +175,12 @@ static func _build_monster_options(context: RunContext, pos: Vector2i) -> Array:
 			true,
 			"not_ready",
 			&"select_encounter_option",
-			{"option_id": EncounterContract.OPTION_ATTACK_BASIC, "encounter_type": EncounterContract.TYPE_MONSTER_BASIC}
+			{"option_id": EncounterContractScript.OPTION_ATTACK_BASIC, "encounter_type": EncounterContractScript.TYPE_MONSTER_BASIC}
 		)]
 	var cleared := bool(monster_summary.get("cleared", false))
 	var disabled_reason := "monster_cleared" if cleared else ""
-	return [EncounterContract.make_option(
-		EncounterContract.OPTION_ATTACK_BASIC,
+	return [EncounterContractScript.make_option(
+		EncounterContractScript.OPTION_ATTACK_BASIC,
 		"Basic attack",
 		{},
 		_dictionary_from(monster_summary, "reward_preview"),
@@ -189,9 +191,9 @@ static func _build_monster_options(context: RunContext, pos: Vector2i) -> Array:
 		disabled_reason,
 		&"select_encounter_option",
 		{
-			"option_id": EncounterContract.OPTION_ATTACK_BASIC,
-			"encounter_type": EncounterContract.TYPE_MONSTER_BASIC,
-			"combat_type": EncounterContract.TYPE_COMBAT_BASIC,
+			"option_id": EncounterContractScript.OPTION_ATTACK_BASIC,
+			"encounter_type": EncounterContractScript.TYPE_MONSTER_BASIC,
+			"combat_type": EncounterContractScript.TYPE_COMBAT_BASIC,
 		}
 	)]
 
@@ -317,7 +319,7 @@ static func _monster_summary(context: RunContext, pos: Vector2i) -> Dictionary:
 	var raw_summary := CombatState.build_monster_summary(context, pos, context.current_adjacent_mines)
 	if raw_summary.is_empty():
 		return {}
-	return EncounterContract.make_monster_summary(
+	return EncounterContractScript.make_monster_summary(
 		String(raw_summary.get("monster_id", "")),
 		String(raw_summary.get("display_name", "Anomaly")),
 		_array_from(raw_summary, "tags"),
