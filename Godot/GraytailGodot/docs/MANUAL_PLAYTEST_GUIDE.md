@@ -177,6 +177,21 @@ Use this checklist for G15-R3 static review. It is not runtime PASS.
 - Confirm `lottery` is only a deferred encounter type name; no probability, pity, pool, unique collectible, warehouse, codex, appearance library, duplicate compensation, MetaProgress, or Deploy persistence is implemented.
 - Confirm Godot/editor/game/import was not run; if not run, record "not run" and do not claim runtime PASS.
 
+## G15-R4 EncounterSlot UI Checklist
+
+Use this checklist only after G15-R4 UI adapter changes are present. It is not runtime PASS unless a later authorized runtime smoke actually starts the game.
+
+- Confirm RunSurface shows an EncounterSlot inside the existing run surface, without replacing EventOptionPanel, LootResultPanel, ExtractConfirmPanel, Inventory, GroundLoot, ResultPanel, or MapOverlay routes.
+- Confirm EncounterSlot displays the public encounter title, type/state, short description, option list, option title, cost, expected reward, risk, disabled state, disabled reason, requires-confirm marker, and recent result summary.
+- Confirm enabled EncounterSlot options emit only the public option id and public `command_payload`, then run_scene routes through CommandBus `select_encounter_option`.
+- Confirm disabled options remain visible with disabled reason and cannot dispatch a selection.
+- Confirm `requires_confirm` is only a visible marker in G15-R4; no new confirmation modal or new rule branch is introduced.
+- Confirm search and chest encounter options still resolve through existing search/current-room behavior and show existing loot feedback when rewards are produced.
+- Confirm event encounter options still resolve through existing event rules; old EventOptionPanel behavior remains available through the existing interaction path.
+- Confirm Monster/combat, extract-only, lottery, out-of-run progression, MetaProgress, Deploy persistence, and action combat remain deferred or out of scope.
+- Confirm UI code does not read `TruthMap`, `RunRuleService`, Ledger, `AssetLedger`, `RunAssetLedger`, or `RunContext` private rule objects.
+- Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.
+
 ## Known limits
 
 - No Godot import/runtime smoke is part of the static G5 validation.

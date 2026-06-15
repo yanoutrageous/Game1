@@ -87,3 +87,43 @@ Expected static result:
 - Godot/editor/game/import is not run for G15-R3 by default.
 - This validation does not claim runtime PASS.
 - Manual or runtime verification requires explicit later authorization.
+
+## R4 UI EncounterSlot Adapter Record
+
+- Adds the first UI consumer for public `encounter_view_model` and `encounter_result_summary`.
+- `RunSurfaceModel` builds a display-only encounter section from snapshot public fields only.
+- `RunSurface` renders a lightweight EncounterSlot inside the existing run surface and emits `encounter_option_selected(option_id, command_payload)`.
+- Disabled options stay visible with `disabled_reason` and do not dispatch.
+- `requires_confirm` is display-only in G15-R4; no new confirmation modal is added.
+- `run_scene.gd` only wires the RunSurface signal to `_dispatch_command(&"select_encounter_option", payload)` and adds `source: "ui"`.
+- Encounter rewards continue to use the existing loot feedback path when `last_reward` is present.
+- Existing EventOptionPanel, LootResultPanel, ExtractConfirmPanel, Inventory, GroundLoot, ResultPanel, MapOverlay, screen routing, and old command semantics are not migrated or replaced.
+
+## R4 Boundaries
+
+- UI consumes only public snapshot fields and public option payloads.
+- UI does not read `TruthMap`, `RunRuleService`, Ledger, `AssetLedger`, `RunAssetLedger`, or `RunContext` private rule objects.
+- UI does not bypass CommandBus and does not decide rule outcomes.
+- G15-R4 does not implement combat rooms, action combat, lottery systems, out-of-run progression, MetaProgress, Deploy persistence, full event libraries, unique collectibles, warehouse, codex, appearance library, or duplicate compensation.
+- G15-R4 does not modify `project.godot`, resources, fonts, import products, `.uid`, or `.translation` files.
+- Godot/editor/game/import was not run for this static validation; do not claim runtime PASS.
+
+## R4 Static Validation Commands
+
+Run from repository root:
+
+```powershell
+git diff --stat
+git diff --check
+git status --short
+rg -n "encounter_view_model|encounter_result_summary|encounter_option_selected|select_encounter_option|TruthMap|RunRuleService|RunAssetLedger|AssetLedger|CommandBus\\.dispatch" Godot/GraytailGodot/scripts/ui Godot/GraytailGodot/scripts/core/run/run_scene.gd
+rg -n "lottery|pity|pool|unique collectible|warehouse|codex|appearance|MetaProgress|Deploy persistence|action combat" Godot/GraytailGodot/scripts docs Godot/GraytailGodot/docs
+```
+
+Expected R4 static result:
+
+- `RunSurfaceModel` references `encounter_view_model` and `encounter_result_summary` only as public snapshot fields.
+- `RunSurface` owns EncounterSlot rendering and the public option-selected signal only.
+- `run_scene.gd` dispatches only `select_encounter_option` for EncounterSlot selections.
+- Disabled option UI has no dispatch path.
+- Runtime PASS remains unclaimed until later explicit runtime smoke or manual test.

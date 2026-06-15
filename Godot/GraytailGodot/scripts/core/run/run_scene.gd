@@ -209,6 +209,7 @@ func _build_run_overlay() -> void:
 	run_surface.combat_requested.connect(_fight_and_show_result)
 	run_surface.extract_requested.connect(_request_extract_from_ui)
 	run_surface.pause_requested.connect(_show_pause_panel)
+	run_surface.encounter_option_selected.connect(_on_encounter_option_selected)
 	run_overlay_root.add_child(run_surface)
 
 	hud = run_surface.get_hud()
@@ -621,6 +622,27 @@ func _select_event_option(option_id: StringName) -> void:
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
 		_show_loot_panel("事件结果", reward)
+	else:
+		_show_command_feedback(result)
+
+
+func _on_encounter_option_selected(_option_id: StringName, command_payload: Dictionary) -> void:
+	var payload := command_payload.duplicate(true)
+	if not payload.has("option_id"):
+		_show_command_feedback({
+			"ok": false,
+			"accepted": false,
+			"reason_code": &"encounter_option_payload_missing",
+			"message_key": &"ui.encounter.option_payload_missing",
+			"command_id": &"select_encounter_option",
+		})
+		return
+	payload["source"] = "ui"
+	var result := _dispatch_command(&"select_encounter_option", payload)
+	var snapshot := run_context.get_status_snapshot()
+	var reward: Dictionary = snapshot.get("last_reward", {})
+	if not reward.is_empty():
+		_show_loot_panel("遭遇结果", reward)
 	else:
 		_show_command_feedback(result)
 

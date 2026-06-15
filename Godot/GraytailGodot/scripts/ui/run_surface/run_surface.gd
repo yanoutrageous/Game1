@@ -12,6 +12,7 @@ signal map_requested(source: StringName)
 signal combat_requested
 signal extract_requested
 signal pause_requested
+signal encounter_option_selected(option_id: StringName, command_payload: Dictionary)
 
 var hud: Hud
 var minimap_panel: MiniMapPanel
@@ -21,6 +22,7 @@ var feedback_slot: Control
 
 var left_backdrop: PanelContainer
 var center_backdrop: PanelContainer
+var encounter_backdrop: PanelContainer
 var right_backdrop: PanelContainer
 var bottom_backdrop: PanelContainer
 var resource_backdrop: PanelContainer
@@ -31,6 +33,9 @@ var scanner_detail_label: Label
 var room_title_label: Label
 var room_body_label: Label
 var objective_label: Label
+var encounter_title_label: Label
+var encounter_body_label: Label
+var encounter_result_label: Label
 var resource_label: Label
 var right_title_label: Label
 var right_body_label: Label
@@ -39,8 +44,10 @@ var reward_label: Label
 var command_feedback_label: Label
 var layout_label: Label
 var action_hint_label: Label
+var encounter_options_box: VBoxContainer
 var action_bar: HBoxContainer
 var action_buttons: Dictionary = {}
+var encounter_option_buttons: Array[Button] = []
 var built := false
 
 
@@ -54,6 +61,7 @@ func build() -> void:
 
 	left_backdrop = _add_panel("LegacyScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	center_backdrop = _add_panel("LegacyRoomMainPanel", Color(0.025, 0.045, 0.05, 0.78), PresentationTheme.color_for_key(&"mini.normal"))
+	encounter_backdrop = _add_panel("LegacyEncounterSlot", Color(0.018, 0.034, 0.038, 0.88), PresentationTheme.color_for_key(&"ui.warning"))
 	right_backdrop = _add_panel("LegacyProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
 	bottom_backdrop = _add_panel("LegacyActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	resource_backdrop = _add_panel("LegacyResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
@@ -72,6 +80,15 @@ func build() -> void:
 	room_title_label = _add_label("LegacyRoomTitle", "当前房间", 24, PresentationTheme.color_for_key(&"ui.accent"))
 	room_body_label = _add_label("LegacyRoomBody", "等待 run snapshot。", 15, PresentationTheme.text_color())
 	objective_label = _add_label("LegacyObjectiveLine", "目标：等待输入。", 15, PresentationTheme.color_for_key(&"ui.warning"))
+
+	encounter_title_label = _add_label("LegacyEncounterTitle", "遭遇槽", 18, PresentationTheme.color_for_key(&"ui.warning"))
+	encounter_body_label = _add_label("LegacyEncounterBody", "等待遭遇公开信息。", 13, PresentationTheme.text_color())
+	encounter_result_label = _add_label("LegacyEncounterResult", "最近结果：暂无遭遇结果。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	encounter_options_box = VBoxContainer.new()
+	encounter_options_box.name = "LegacyEncounterOptions"
+	encounter_options_box.add_theme_constant_override("separation", 6)
+	encounter_options_box.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(encounter_options_box)
 
 	resource_label = _add_label("LegacyResourceSummary", "资源：等待数据", 13, PresentationTheme.text_color())
 
@@ -140,6 +157,7 @@ func apply_surface_model(model: Dictionary) -> void:
 		String(profile.get("resolution_id", "unknown")),
 	]
 	_apply_actions(model.get("action_buttons", []))
+	_apply_encounter_section(model.get("encounter_section", {}))
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
@@ -162,10 +180,14 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var center_width: float = max(360.0, center_right - center_left)
 	var scanner_map_height: float = min(240.0 if is_low else 276.0, height * 0.34)
 	var scanner_legend_top: float = margin + 84.0 + scanner_map_height
+	var encounter_top: float = margin + (152.0 if is_low else 170.0)
+	var encounter_bottom: float = height - bottom_height - margin - 44.0
+	var encounter_height: float = max(250.0 if is_low else 300.0, encounter_bottom - encounter_top)
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(width - right_width, 0, right_width, height))
 	_set_rect(center_backdrop, Rect2(center_left, margin, center_width, 132.0 if is_low else 150.0))
+	_set_rect(encounter_backdrop, Rect2(center_left, encounter_top, center_width, encounter_height))
 	_set_rect(bottom_backdrop, Rect2(center_left, height - bottom_height - margin, center_width, bottom_height))
 	_set_rect(resource_backdrop, Rect2(margin, height - pocket_height - margin, left_width - margin * 2.0, pocket_height))
 
@@ -178,6 +200,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 12.0, center_width - 36.0, 34))
 	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 52.0, center_width - 36.0, 62))
 	_set_rect(objective_label, Rect2(center_left + 18.0, margin + 112.0, center_width - 36.0, 30))
+	_set_rect(encounter_title_label, Rect2(center_left + 18.0, encounter_top + 12.0, center_width - 36.0, 28))
+	_set_rect(encounter_body_label, Rect2(center_left + 18.0, encounter_top + 46.0, center_width - 36.0, 78.0 if is_low else 90.0))
+	_set_rect(encounter_options_box, Rect2(center_left + 18.0, encounter_top + (130.0 if is_low else 144.0), center_width - 36.0, max(78.0, encounter_height - (206.0 if is_low else 230.0))))
+	_set_rect(encounter_result_label, Rect2(center_left + 18.0, encounter_top + encounter_height - (68.0 if is_low else 78.0), center_width - 36.0, 56.0 if is_low else 66.0))
 	_set_rect(resource_label, Rect2(margin * 1.5, height - pocket_height + 2.0, left_width - margin * 3.0, pocket_height - 28.0))
 
 	_set_rect(right_title_label, Rect2(width - right_width + margin, margin, right_width - margin * 2.0, 30))
@@ -312,6 +338,79 @@ func _apply_actions(actions: Variant) -> void:
 		button.disabled = not enabled
 		button.tooltip_text = description if enabled or disabled_reason == "" else "%s\n禁用：%s" % [description, disabled_reason]
 		_apply_action_button_style(button, StringName(action_data.get("tone", &"secondary")), enabled)
+
+
+func _apply_encounter_section(section_variant: Variant) -> void:
+	var section := _dict_variant(section_variant)
+	encounter_title_label.text = String(section.get("title", "遭遇槽"))
+	encounter_body_label.text = String(section.get("body", "当前遭遇无公开信息。"))
+	encounter_result_label.text = String(section.get("result_summary", "最近结果：暂无遭遇结果。"))
+	_clear_encounter_option_buttons()
+	var options := _array_variant(section.get("options", []))
+	for option_variant in options:
+		if not (option_variant is Dictionary):
+			continue
+		var option: Dictionary = option_variant
+		var button := Button.new()
+		var option_id := StringName(option.get("id", &""))
+		var disabled := bool(option.get("disabled", false))
+		var requires_confirm := bool(option.get("requires_confirm", false))
+		var title := String(option.get("title", String(option_id)))
+		button.name = "LegacyEncounterOption_%s" % String(option_id)
+		button.text = "%s%s" % [title, "  [需确认]" if requires_confirm else ""]
+		button.custom_minimum_size = Vector2(240, 32)
+		button.disabled = disabled
+		button.tooltip_text = _encounter_option_tooltip(option)
+		button.add_theme_font_size_override("font_size", 12)
+		_apply_action_button_style(button, &"primary" if not disabled else &"secondary", not disabled)
+		if not disabled:
+			var payload := _dict_variant(option.get("command_payload", {}))
+			button.pressed.connect(_on_encounter_option_pressed.bind(option_id, payload))
+		encounter_options_box.add_child(button)
+		encounter_option_buttons.append(button)
+	if encounter_option_buttons.is_empty():
+		var placeholder := Label.new()
+		placeholder.name = "LegacyEncounterOptionPlaceholder"
+		placeholder.text = "暂无可执行遭遇选项。"
+		placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		placeholder.add_theme_font_size_override("font_size", 12)
+		placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
+		encounter_options_box.add_child(placeholder)
+
+
+func _encounter_option_tooltip(option: Dictionary) -> String:
+	var summary := String(option.get("summary", ""))
+	var disabled := bool(option.get("disabled", false))
+	if disabled:
+		var reason := String(option.get("disabled_reason", ""))
+		if reason != "":
+			return "%s\n禁用：%s" % [summary, reason]
+	return summary
+
+
+func _on_encounter_option_pressed(option_id: StringName, command_payload: Dictionary) -> void:
+	if option_id == &"" or not command_payload.has("option_id"):
+		return
+	encounter_option_selected.emit(option_id, command_payload.duplicate(true))
+
+
+func _clear_encounter_option_buttons() -> void:
+	for child in encounter_options_box.get_children():
+		encounter_options_box.remove_child(child)
+		child.queue_free()
+	encounter_option_buttons.clear()
+
+
+func _array_variant(raw: Variant) -> Array:
+	if raw is Array:
+		return (raw as Array).duplicate(true)
+	return []
+
+
+func _dict_variant(raw: Variant) -> Dictionary:
+	if raw is Dictionary:
+		return (raw as Dictionary).duplicate(true)
+	return {}
 
 
 func _panel_style(color: Color, border_color: Color, border_width: int) -> StyleBoxFlat:

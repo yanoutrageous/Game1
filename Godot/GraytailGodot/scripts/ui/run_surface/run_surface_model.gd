@@ -12,6 +12,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 	var event_state: Dictionary = _dict_from(snapshot, "event_state")
 	var search_data: Dictionary = _dict_from(snapshot, "search_state_data")
 	var reward: Dictionary = _dict_from(snapshot, "last_reward")
+	var encounter_section := _encounter_section(snapshot)
 	var last_message := String(snapshot.get("last_message", ""))
 	var command_feedback := RunUIViewModel.command_result_text(last_command_result)
 	if command_feedback == "":
@@ -35,6 +36,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"backpack_summary": _backpack_summary(snapshot),
 		"resource_summary": _resource_summary(snapshot),
 		"command_feedback": command_feedback,
+		"encounter_section": encounter_section,
 		"scanner_summary": _scanner_summary(minimap_view_model, position),
 		"scanner_legend_lines": _scanner_legend_lines(minimap_view_model),
 		"scanner_detail": _scanner_detail(minimap_view_model),
@@ -47,6 +49,294 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"action_buttons": action_data,
 		"layout_profile": layout_profile.duplicate(true),
 	}
+
+
+static func _encounter_section(snapshot: Dictionary) -> Dictionary:
+	var view_model: Dictionary = _dict_from(snapshot, "encounter_view_model")
+	var result_summary: Dictionary = _dict_from(snapshot, "encounter_result_summary")
+	if result_summary.is_empty():
+		result_summary = _dict_variant(view_model.get("result_summary", {}))
+	var state: Dictionary = _dict_variant(view_model.get("state", {}))
+	var encounter_type := StringName(view_model.get("encounter_type", state.get("encounter_type", &"none")))
+	var state_id := StringName(state.get("state", &"unavailable"))
+	var title := _encounter_title(String(state.get("title", "遭遇槽")))
+	var description := _encounter_description(String(state.get("description", "当前遭遇无公开信息。")))
+	var options := _encounter_options(_array_variant(view_model.get("options", [])))
+	var body_lines: Array[String] = [
+		"类型：%s | 状态：%s" % [_encounter_type_label(encounter_type), _encounter_state_label(state_id)],
+		description,
+	]
+	if options.is_empty():
+		body_lines.append(_encounter_empty_options_text(encounter_type, state_id))
+	return {
+		"title": title,
+		"body": _join_lines(body_lines),
+		"options": options,
+		"result_summary": _encounter_result_text(result_summary),
+	}
+
+
+static func _encounter_options(raw_options: Array) -> Array[Dictionary]:
+	var options: Array[Dictionary] = []
+	for option_variant in raw_options:
+		if not (option_variant is Dictionary):
+			continue
+		var option: Dictionary = option_variant
+		var option_id := StringName(option.get("id", &""))
+		var command_payload := _dict_variant(option.get("command_payload", {}))
+		var command_name := StringName(option.get("command_name", &"select_encounter_option"))
+		var disabled := bool(option.get("disabled", false))
+		var disabled_reason := String(option.get("disabled_reason", ""))
+		if command_name != &"select_encounter_option":
+			disabled = true
+			disabled_reason = "unsupported_command:%s" % String(command_name)
+		elif not command_payload.has("option_id"):
+			disabled = true
+			disabled_reason = "missing_option_payload"
+		var requires_confirm := bool(option.get("requires_confirm", false))
+		var summary_lines: Array[String] = [
+			"花费：%s" % _dict_summary(_dict_variant(option.get("cost", {})), "无"),
+			"预期：%s" % _dict_summary(_dict_variant(option.get("expected_reward", {})), "待定"),
+			"风险：%s" % _dict_summary(_dict_variant(option.get("risk", {})), "低"),
+		]
+		if requires_confirm:
+			summary_lines.append("标记：需确认")
+		if disabled:
+			summary_lines.append("禁用：%s" % _reason_label(disabled_reason))
+		options.append({
+			"id": option_id,
+			"title": _option_title(String(option.get("title", option_id))),
+			"summary": _join_lines(summary_lines),
+			"disabled": disabled,
+			"disabled_reason": _reason_label(disabled_reason),
+			"requires_confirm": requires_confirm,
+			"command_payload": command_payload.duplicate(true),
+		})
+	return options
+
+
+static func _encounter_result_text(result_summary: Dictionary) -> String:
+	if result_summary.is_empty():
+		return "最近结果：暂无遭遇结果。"
+	var encounter_type := StringName(result_summary.get("encounter_type", &"none"))
+	var option_id := StringName(result_summary.get("option_id", &""))
+	if encounter_type == &"none" and option_id == &"":
+		return "最近结果：暂无遭遇结果。"
+	var ok := bool(result_summary.get("ok", false))
+	var lines: Array[String] = [
+		"最近结果：%s | 类型：%s" % ["成功" if ok else "未完成", _encounter_type_label(encounter_type)],
+	]
+	if option_id != &"":
+		lines.append("选项：%s" % String(option_id))
+	var blocked_reason := String(result_summary.get("blocked_reason", ""))
+	if blocked_reason != "":
+		lines.append("阻止原因：%s" % _reason_label(blocked_reason))
+	var effect_summary := _dict_variant(result_summary.get("effect_summary", {}))
+	if not effect_summary.is_empty():
+		lines.append("影响：%s" % _effect_summary(effect_summary))
+	var messages := _array_variant(result_summary.get("messages", []))
+	if not messages.is_empty():
+		lines.append("记录：%s" % String(messages[0]))
+	return _join_lines(lines)
+
+
+static func _encounter_empty_options_text(encounter_type: StringName, state_id: StringName) -> String:
+	if state_id == &"reserved":
+		return "当前遭遇为后续阶段预留，暂无可执行选项。"
+	if state_id == &"completed":
+		return "当前遭遇已处理完成。"
+	match encounter_type:
+		&"combat", &"monster_basic":
+			return "战斗遭遇只显示状态，本轮不接入战斗房。"
+		&"extract", &"exit_beacon":
+			return "撤离仍走既有撤离按钮和确认路径。"
+		_:
+			return "当前遭遇无可用选项。"
+
+
+static func _encounter_type_label(encounter_type: StringName) -> String:
+	match encounter_type:
+		&"search_basic":
+			return "搜索"
+		&"chest_basic":
+			return "物资箱"
+		&"event":
+			return "事件"
+		&"combat", &"monster_basic":
+			return "战斗预留"
+		&"extract", &"exit_beacon":
+			return "撤离"
+		&"lottery":
+			return "抽奖预留"
+		&"none":
+			return "无"
+		_:
+			return String(encounter_type)
+
+
+static func _encounter_state_label(state_id: StringName) -> String:
+	match state_id:
+		&"available":
+			return "可处理"
+		&"completed":
+			return "已完成"
+		&"reserved":
+			return "预留"
+		&"unavailable":
+			return "不可用"
+		_:
+			return String(state_id)
+
+
+static func _option_title(raw_title: String) -> String:
+	match raw_title:
+		"Search room":
+			return "搜索房间"
+		"Open chest":
+			return "开启物资箱"
+		"Close":
+			return "关闭遭遇"
+		_:
+			return raw_title
+
+
+static func _dict_summary(data: Dictionary, fallback: String) -> String:
+	if data.is_empty():
+		return fallback
+	var parts: Array[String] = []
+	for key_variant in data.keys():
+		var key := String(key_variant)
+		parts.append("%s=%s" % [_field_label(key), _value_label(data[key_variant])])
+	return _join_parts(parts, "，")
+
+
+static func _effect_summary(effect_summary: Dictionary) -> String:
+	var parts: Array[String] = []
+	var fields := {
+		"black_coin_delta": "黑币",
+		"gold_coin_delta": "金币",
+		"item_delta": "物品",
+		"backpack_delta": "背包",
+		"hp_delta": "生命",
+		"pressure_delta": "压力",
+	}
+	for key_variant in fields.keys():
+		var key := String(key_variant)
+		var value := int(effect_summary.get(key, 0))
+		if value != 0:
+			var sign := "+" if value > 0 else ""
+			parts.append("%s%s%s" % [String(fields[key_variant]), sign, value])
+	if parts.is_empty():
+		return "无直接数值变化"
+	return _join_parts(parts, "，")
+
+
+static func _field_label(key: String) -> String:
+	match key:
+		"black_coin":
+			return "黑币"
+		"gold_coin":
+			return "金币"
+		"items":
+			return "物品"
+		"status_effects":
+			return "状态"
+		"adjacent_danger":
+			return "周围危险"
+		"black_coin_loss":
+			return "黑币损失"
+		"hp_loss":
+			return "生命损失"
+		"pressure":
+			return "压力"
+		"hp":
+			return "生命"
+		_:
+			return key
+
+
+static func _encounter_title(raw_title: String) -> String:
+	match raw_title:
+		"Search encounter":
+			return "搜索遭遇"
+		"Reward encounter":
+			return "物资遭遇"
+		"Combat encounter":
+			return "战斗遭遇（预留）"
+		"Extraction encounter":
+			return "撤离遭遇"
+		"No encounter":
+			return "无遭遇"
+		_:
+			if raw_title.begins_with("Event encounter: "):
+				return "事件遭遇：%s" % raw_title.substr("Event encounter: ".length())
+			return raw_title
+
+
+static func _encounter_description(raw_description: String) -> String:
+	match raw_description:
+		"No active run.":
+			return "当前没有运行中的探索。"
+		"This encounter has already been resolved.":
+			return "当前遭遇已处理完成。"
+		"Search the room through the existing search command path.":
+			return "通过现有搜索命令处理当前房间。"
+		"Open the reward container through the existing search command path.":
+			return "通过现有搜索命令开启物资箱。"
+		"Choose an event option. Resolution stays in existing event rules.":
+			return "选择事件选项；结算仍由现有事件规则处理。"
+		"Combat is reserved for a later combat encounter stage.":
+			return "战斗遭遇预留到后续战斗阶段。"
+		"Extraction remains on existing request/confirm extract commands.":
+			return "撤离仍走现有请求/确认撤离命令。"
+		_:
+			if raw_description.begins_with("No active encounter option for "):
+				return "当前类型暂无可执行遭遇选项。"
+			return raw_description
+
+
+static func _value_label(value: Variant) -> String:
+	if value is StringName:
+		return String(value)
+	if value is String:
+		match String(value):
+			"possible":
+				return "可能获得"
+			"roll_dependent":
+				return "掷骰决定"
+			"power_dependent":
+				return "力量决定"
+			"sell_best_inventory_item":
+				return "出售背包最高价值物品"
+			_:
+				return String(value)
+	return String(value)
+
+
+static func _reason_label(reason: String) -> String:
+	match reason:
+		"":
+			return "无"
+		"searched":
+			return "该房间已搜索"
+		"not_chest":
+			return "当前不是物资箱房间"
+		"not_search_room":
+			return "当前不是可搜索房间"
+		"not_ready":
+			return "遭遇尚未准备"
+		"no_inventory_item":
+			return "背包没有可用物品"
+		"not_enough_black_coin":
+			return "黑币不足"
+		"not_enough_hp":
+			return "生命不足"
+		"event_option_unavailable":
+			return "事件选项暂不可用"
+		"missing_option_payload":
+			return "缺少公开 option payload"
+		_:
+			return reason
 
 
 static func _action_buttons(snapshot: Dictionary, search_data: Dictionary, event_state: Dictionary, room_type: StringName) -> Array[Dictionary]:
@@ -340,6 +630,21 @@ static func _dict_from(source: Dictionary, key: String) -> Dictionary:
 	if raw is Dictionary:
 		return (raw as Dictionary).duplicate(true)
 	return {}
+
+
+static func _dict_variant(raw: Variant) -> Dictionary:
+	if raw is Dictionary:
+		return (raw as Dictionary).duplicate(true)
+	return {}
+
+
+static func _join_parts(parts: Array[String], separator: String) -> String:
+	var text := ""
+	for index in range(parts.size()):
+		if index > 0:
+			text += separator
+		text += parts[index]
+	return text
 
 
 static func _join_lines(lines: Array[String]) -> String:
