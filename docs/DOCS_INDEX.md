@@ -18,16 +18,17 @@ Read these first in a new Codex or ChatGPT conversation:
 2. `docs/PROJECT_BASELINE.md`
 3. `docs/DOCS_INDEX.md`
 4. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
-5. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
-6. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
-7. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-8. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
-9. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
-10. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-11. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-12. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-13. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-14. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+5. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+6. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
+7. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
+8. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+9. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
+10. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+11. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
+12. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+13. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+14. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+15. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
@@ -58,7 +59,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md` records the G12 lightweight legacy Demo core-loop, Chinese readability, typography/readability validation checklist, R3 implementation record, and R4 docs-only closeout notes.
 - `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md` records the G13 fixed resolution tier and layout adaptation validation checklist, R3 static validation, and R5 closeout boundary.
 - `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md` records the G14 run surface validation checklist, R3 shell, R4 surface refinement, hotfix, closeout boundary, no-runtime-PASS status, and outside-repository temporary-script safety event record.
-- `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md` records the G15 encounter contract foundation validation checklist, R3 branch boundary, public contract fields, additive CommandBus bridge, deferred lottery boundary, and no-runtime-PASS status.
+- `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md` records the G15 encounter contract foundation validation checklist, R3 rules contract, R4 EncounterSlot adapter, R5 docs-only closeout boundary, deferred lottery boundary, branch-not-merged status, and no-runtime-PASS status.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -73,6 +74,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md` records the G12 legacy Demo core-loop readability and typography parity pass closeout.
 - `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md` records the G13 fixed resolution tier and layout adaptation closeout.
 - `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md` records the G14 legacy Demo run surface sprint closeout, handoff, validation boundary, and next-stage candidates.
+- `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md` records the G15 encounter framework branch handoff, R3/R4 commit chain, static validation boundary, non-goals, branch-not-merged status, and next-stage candidates.
 
 ## Branch Change Records
 
@@ -93,7 +95,7 @@ Root-level handoff files, old G2-G7 notes, Lua audit docs, UE docs, and early fe
 
 ## Current Boundary
 
-Current main HEAD and remote live main HEAD before G15-R3 are `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` after G14 closeout (`d6c03c6 docs: close G14 legacy demo UI surface pass`). G15-R3 work happens on branch `godot/g15-encounter-contract-foundation`.
+Current main HEAD and remote live main HEAD before G15-R3 are `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` after G14 closeout (`d6c03c6 docs: close G14 legacy demo UI surface pass`). G15 branch work happens on `godot/g15-encounter-contract-foundation`; branch HEAD before G15-R5 closeout is `1887385af81624ebcd84342ca765d75e6fbf20eb`.
 
 G14 adds the first legacy Demo-style run surface shell, second-wave surface presentation refinement, and parser hotfix on top of completed G10, G11, G12, and G13 work. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G15, or runtime PASS.
 
@@ -103,4 +105,4 @@ Safety note: G14-R3 execution reported an outside-repository temporary-script in
 
 G10 is complete, merged to main, and closed. It was limited to progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning. It is not complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
-G11, G12, G13, and G14 are complete and closed. G15 is active and bounded to rules-layer Encounter contract work: public `EncounterViewModel`, `EncounterOption`, `EncounterResult` summary, and an additive `select_encounter_option` bridge. G15 is not G16, not combat room implementation, not out-of-run progression, not lottery, and not runtime PASS. Future UI / rules parallel work must use separate branches from latest `main`; two computers must not push directly to `main` in parallel.
+G11, G12, G13, and G14 are complete and closed. G15 R3/R4 are complete and R5 is docs-only closeout on the branch. G15 is bounded to the encounter public/display contract, additive `select_encounter_option` bridge, and first EncounterSlot UI adapter. G15 is not merged to main, not G16, not combat room implementation, not out-of-run progression, not lottery, and not runtime PASS. Future UI / rules parallel work must use separate branches from latest `main`; two computers must not push directly to `main` in parallel.

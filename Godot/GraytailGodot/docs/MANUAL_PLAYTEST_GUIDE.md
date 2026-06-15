@@ -6,11 +6,11 @@ This guide treats the older G4-G7 routes as historical foundations and points ma
 
 Legacy static validation aliases: `Start Tutorial 5x5`, `Start Standard 10x10`.
 
-Current baseline smoke should cover the three-page shell, the G14 run surface shell and R4 surface refinements, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, local typography/readability, the five supported fixed 16:9 resolution tiers, and the G15 public encounter contract fields when the branch is under review. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G16, or runtime PASS.
+Current baseline smoke should cover the three-page shell, the G14 run surface shell and R4 surface refinements, formal InventoryPanel, formal GroundLootPanel, pickup/drop through CommandBus, blocked reason display, MiniMap click-to-map, MapOverlay feedback, Pause/Settings overlay, dev-only diagnostics hiding, ResultPanel settlement/return routes, Chinese readable text, local typography/readability, the five supported fixed 16:9 resolution tiers, and the G15 public encounter contract / EncounterSlot branch fields when the branch is under review. The current baseline is not a complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G16, or runtime PASS.
 
 G14 closeout fact: G14 is closed at `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` (`d6c03c6 docs: close G14 legacy demo UI surface pass`). G14 hotfix is `fc2b86b fix(godot): resolve RunSurface parser type inference`, G14-R4 is `cc652e5 feat(godot): refine legacy demo run surface presentation`, G14-R3 follow-up is `39b51f1 docs: record G14 run surface acceptance follow-up`, and G14-R3 feature work is `1d33c89 feat(godot): add legacy demo run surface shell`. G14 was not run in Godot/editor/game/import and is not runtime PASS. `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf` is only the G13 closeout / G14-R3 baseline history.
 
-G15 branch fact: G15-R3 starts from `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` (`d6c03c6 docs: close G14 legacy demo UI surface pass`) on branch `godot/g15-encounter-contract-foundation`. It adds rules-layer public encounter contract fields only and does not run Godot/editor/game/import.
+G15 branch fact: G15-R3 starts from `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` (`d6c03c6 docs: close G14 legacy demo UI surface pass`) on branch `godot/g15-encounter-contract-foundation`. G15-R3 completed the rules-layer public encounter contract at `aca5b958a588879a16da97616484424da795da7f`; G15-R4 completed the UI EncounterSlot adapter at `1887385af81624ebcd84342ca765d75e6fbf20eb`. G15-R5 is docs-only closeout, the branch is not merged to main, and Godot/editor/game/import was not run, so this is not runtime PASS.
 
 ## Main Menu / Deploy Shell
 
@@ -161,13 +161,13 @@ Use this route for G14 only after a human or explicitly authorized runtime smoke
 - Confirm no visible text, button, or panel clips at the G13 fixed tiers before any runtime PASS claim.
 - Record whether Godot/editor/game/import was run. If it was not run, write "not run" and do not claim runtime PASS.
 
-Safety note for future manual or CodeX follow-up: do not create temporary scripts, logs, caches, or derived files outside `D:\AGAME2\repo\Game1`. G14-R3 execution reported an outside-repository temporary-script incident that was cleaned as necessary deletion; do not scan outside-repository paths unless the user provides a concrete path and explicit authorization.
+Safety note for future manual or CodeX follow-up: do not create temporary scripts, logs, caches, or derived files outside `D:\AGAME1\_repo_cache\Game1_work` for the current computer-two Game1 worktree. G14-R3 execution reported an outside-repository temporary-script incident that was cleaned as necessary deletion; do not scan outside-repository paths unless the user provides a concrete path and explicit authorization.
 
 If later UI and rules work proceed in parallel, branch from latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. Rules-line work must not directly modify UI surface code, and UI-line work must not directly read rules private state. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.
 
 ## G15 Encounter Contract Static Checklist
 
-Use this checklist for G15-R3 static review. It is not runtime PASS.
+Use this checklist for G15-R3/G15-R5 static review. It is not runtime PASS.
 
 - Confirm `encounter_view_model` and `encounter_result_summary` are exposed from `RunQueryFacade` snapshots.
 - Confirm options include `id`, `title`, `cost`, `expected_reward`, `risk`, `one_shot`, `requires_confirm`, `disabled`, `disabled_reason`, `command_name`, and `command_payload`.

@@ -2,13 +2,17 @@
 
 ## Current Authority
 
-- Stage: G15 Encounter Contract Foundation active; R3 implements the rules-layer public encounter contract on branch `godot/g15-encounter-contract-foundation`.
-- Repository path: `D:\AGAME2\repo\Game1`.
+- Stage: G15 Encounter Contract Foundation R3/R4 are complete on branch `godot/g15-encounter-contract-foundation`; R5 is docs-only closeout / handoff / status calibration.
+- Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
 - Current working branch: `godot/g15-encounter-contract-foundation`.
+- Current branch HEAD before G15-R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`.
 - Current main HEAD / G15 branch baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
 - Current remote live main HEAD before G15-R3: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
+- G15-R3 commit: `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`.
+- G15-R4 commit: `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`.
+- G15 merged to main: no.
 - G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout status: complete, merged to main, and closed.
@@ -46,7 +50,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G12 is complete and closed for lightweight legacy Demo core-loop feel, Chinese readability, typography/readability, and current UI feedback alignment on existing systems.
 - G13-R3 is complete, pushed, and statically validated for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and bounded layout adaptation. G13-R5 is docs-only closeout/handoff/status alignment.
 - G14 is complete, committed, pushed, and closed. G14 adds a minimal `RunSurface` / `RunSurfaceModel` cut, second-wave presentation refinement, and a parser hotfix for the first legacy Demo-style run screen surface while preserving existing panel, command, and routing paths.
-- G15-R3 adds the rules-layer Encounter contract foundation: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, and additive `select_encounter_option` bridge for search/chest/event only.
+- G15-R3/R4 are complete and pushed on the branch. G15 now includes the rules-layer Encounter contract foundation plus the first UI EncounterSlot adapter: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, additive `select_encounter_option` bridge for search/chest/event, `RunSurfaceModel` display-only section, `RunSurface` EncounterSlot, and minimal `run_scene.gd` wiring.
 
 ## Current Validation Chain
 
@@ -99,17 +103,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Continue G15 as a bounded rules-layer encounter contract stage. R3 defines the minimum contract; R4 may let the UI line consume `encounter_view_model`; R5 should close out G15. Do not start G16.
+Close out G15 on the branch with docs-only handoff/status records, then choose a separate next step by explicit authorization: runtime smoke/parser check, branch-to-main integration audit, G16 battle room planning, or further encounter content adapter planning. Do not start G16 in G15-R5.
 
 ## G15 Boundary
 
-G15 is the Encounter Contract Foundation stage. R3 adds a rules-layer public/display contract for current room encounters without moving existing search, event, loot, extract, combat, or settlement decisions into UI.
+G15 is the Encounter Contract Foundation stage. R3 adds a rules-layer public/display contract for current room encounters without moving existing search, event, loot, extract, combat, or settlement decisions into UI. R4 adds a first UI EncounterSlot adapter that consumes public snapshot data only.
 
 G15-R3 adds `EncounterContract` and `EncounterResolver` under `scripts/core/run/encounter/`, exposes `encounter_view_model` and `encounter_result_summary` through `RunQueryFacade`, and adds `select_encounter_option` as an additive CommandBus bridge. That bridge delegates search/chest to existing `search_current_room()` and event options to existing `select_event_option()`.
 
-G15-R3 does not modify `run_scene.gd`, `RunSurface`, `RunSurfaceModel`, `presentation_mapping.gd`, resources, fonts, import products, `project.godot`, or UI surface code. It does not change existing `search_current_room`, `select_event_option`, `request_extract`, or `confirm_extract` semantics.
+G15-R4 adds `RunSurfaceModel` display-only encounter section construction, `RunSurface` EncounterSlot display/signals, and minimal `run_scene.gd` wiring to `_dispatch_command(&"select_encounter_option", payload)`. It does not change existing `search_current_room`, `select_event_option`, `request_extract`, or `confirm_extract` semantics.
 
-抽奖 / lottery remains deferred. G15 may reserve `lottery` as an encounter type name only; it does not implement probability, pity, pools, unique collectibles, warehouse, codex, appearance library, duplicate compensation, MetaProgress, or Deploy persistence.
+G15-R5 is docs-only closeout. G15 branch is not merged to main, and G15 does not claim runtime PASS because Godot/editor/game/import was not run.
+
+抽奖 / lottery remains deferred. G15 may reserve `lottery` as an encounter type name only; it does not implement probability, pity, pools, unique collectibles, warehouse, codex, appearance library, duplicate compensation, MetaProgress, or Deploy persistence. G15 also does not implement full combat rooms, action combat, out-of-run progression, full event libraries, or G16.
 
 If UI and rules work proceed in parallel, use separate branches from latest `main`; do not push directly to `main` from two computers in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rule private state.
 
@@ -165,7 +171,7 @@ G11 must not cover complete MetaProgress, Deploy persistence, complete long-term
 - Rules line starting main-loop semantics audit.
 - UI / rules parallel branch strategy.
 
-These are candidates only. G15-R3 does not start G16 or any next-stage implementation.
+These are candidates only. G15-R5 does not start G16 or any next-stage implementation.
 
 ## G10 Boundary
 
@@ -176,12 +182,12 @@ G10 is complete, merged to main, and closed. It must not be continued as complet
 ## Safety Boundary Summary
 
 - Only operate in the current Game1 repository.
-- Do not create temporary scripts, logs, caches, or derived files outside `D:\AGAME2\repo\Game1`.
-- Do not scan or clean paths outside `D:\AGAME2\repo\Game1` unless the user provides an explicit path and authorization.
+- Do not create temporary scripts, logs, caches, or derived files outside `D:\AGAME1\_repo_cache\Game1_work`.
+- Do not scan or clean paths outside `D:\AGAME1\_repo_cache\Game1_work` unless the user provides an explicit path and authorization.
 - Do not modify old UE/Game.git.
 - Do not modify `lua-prototype-main`.
 - Do not force push.
 - Do not run `git rebase`, `git reset`, `git clean`, or `git stash`.
 - Do not run Godot/editor/game/import unless separately authorized.
 - Dirty handling whitelist: tracked `project.godot`, tracked or untracked `asset_manifest.*.translation`, and untracked `*.gd.uid` only.
-- Protective stash remains expected and must not be apply/pop/drop: `stash@{0}: On godot/g7-lua-ux-flow-parity-p2: pre-sync generated dirty before aligning to G13 closeout main`.
+- Protective stash remains expected and must not be apply/pop/drop/delete: `stash@{0}: On main: pre-sync generated dirty before aligning to G15 encounter branch on computer two`.

@@ -3,8 +3,12 @@
 ## Scope
 
 - Stage: G15 Encounter Contract Foundation.
-- R3 branch: `godot/g15-encounter-contract-foundation`.
+- Branch: `godot/g15-encounter-contract-foundation`.
 - Baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a` (`docs: close G14 legacy demo UI surface pass`).
+- R3 commit: `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`.
+- R4 commit: `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`.
+- R5 status: docs-only closeout / handoff / status calibration.
+- Merged to main: no.
 - G14, G13, G12, G11, and G10 are complete and closed.
 - G16 is not started.
 
@@ -127,3 +131,42 @@ Expected R4 static result:
 - `run_scene.gd` dispatches only `select_encounter_option` for EncounterSlot selections.
 - Disabled option UI has no dispatch path.
 - Runtime PASS remains unclaimed until later explicit runtime smoke or manual test.
+
+## R5 Closeout Record
+
+- G15-R5 is docs-only closeout / handoff / status calibration.
+- R3 and R4 are complete, committed, and pushed on `godot/g15-encounter-contract-foundation`.
+- Branch HEAD before R5 closeout execution: `1887385af81624ebcd84342ca765d75e6fbf20eb`.
+- Current branch is not merged to `main`.
+- G15 completed the first encounter framework foundation only:
+  - rules-layer public/display contract;
+  - `EncounterResolver` public/display adapter;
+  - public `encounter_view_model`;
+  - public `encounter_result_summary`;
+  - additive `select_encounter_option` bridge;
+  - `RunSurfaceModel` display-only adapter;
+  - `RunSurface` EncounterSlot;
+  - minimal `run_scene.gd` wiring;
+  - validation and manual checklist updates.
+- G15 still does not implement full combat rooms, action combat, out-of-run progression, lottery systems, unique collectibles, warehouse/codex/appearance library systems, MetaProgress, Deploy persistence, full event libraries, or mainline promotion.
+- Godot/editor/game/import was not run during G15-R5, and this document does not claim runtime PASS.
+- G16 is not started.
+
+## R5 Static Validation Commands
+
+Run from repository root:
+
+```powershell
+git diff --stat
+git diff --check
+git status --short
+rg -n "G15|Encounter|EncounterSlot|runtime PASS|Godot/editor/game/import|G16|combat|lottery|MetaProgress|Deploy persistence" docs Godot/GraytailGodot/docs
+```
+
+Expected R5 static result:
+
+- Current docs state G15 R3/R4 are complete and R5 is closeout.
+- Current docs do not state that G15 is merged to main.
+- Current docs do not state runtime PASS.
+- G16, combat rooms, lottery, out-of-run progression, MetaProgress, Deploy persistence, and full event libraries remain future candidates or explicit non-goals.
+- No Godot runtime/UI code, rules code, `project.godot`, resources, fonts, import products, `.uid`, or `.translation` files are modified by R5.
