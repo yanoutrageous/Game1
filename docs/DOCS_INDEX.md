@@ -62,7 +62,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md` records the G13 fixed resolution tier and layout adaptation validation checklist, R3 static validation, and R5 closeout boundary.
 - `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md` records the G14 run surface validation checklist, R3 shell, R4 surface refinement, hotfix, closeout boundary, no-runtime-PASS status, and outside-repository temporary-script safety event record.
 - `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md` records the G15 encounter contract foundation validation checklist, R3 rules contract, R4 EncounterSlot adapter, R5 docs-only closeout boundary, deferred lottery boundary, fast-forward main merge status, and no-runtime-PASS status.
-- `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md` records the G16 combat/monster encounter foundation static validation, Monster `attack_basic` bridge, public summary/risk/reward fields, R5 docs-only closeout, branch-not-merged status, and no-runtime/parser-PASS status.
+- `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md` records the G16 combat/monster encounter foundation static validation, Monster `attack_basic` bridge, public summary/risk/reward fields, R5 docs-only closeout, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and no-complete-gameplay-runtime-PASS status.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -78,7 +78,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md` records the G13 fixed resolution tier and layout adaptation closeout.
 - `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md` records the G14 legacy Demo run surface sprint closeout, handoff, validation boundary, and next-stage candidates.
 - `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md` records the G15 encounter framework handoff, R3/R4/R5 commit chain, static validation boundary, non-goals, fast-forward main merge status, and next-stage candidates.
-- `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md` records the G16 combat encounter foundation branch closeout, completed R3/R4/R5 scope, no-runtime/parser-PASS status, branch-not-merged status, and next-stage candidates.
+- `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md` records the G16 combat encounter foundation closeout, completed R3/R4/R5 scope, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and next-stage candidates.
 
 ## Branch Change Records
 
@@ -99,7 +99,7 @@ Root-level handoff files, old G2-G7 notes, Lua audit docs, UE docs, and early fe
 
 ## Current Boundary
 
-Current G16-R3 baseline main HEAD and remote live main HEAD are `a28ae4c0c96f0b964602fd6fe7b88fa254354763` after G15 post-merge status calibration (`a28ae4c docs: mark G15 merged to main`). G16 branch work happens on `godot/g16-combat-encounter-foundation`; R3 is pushed at `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a`, R4 acceptance passed, and R5 is docs-only branch closeout.
+Current G16 baseline main HEAD was `a28ae4c0c96f0b964602fd6fe7b88fa254354763` after G15 post-merge status calibration (`a28ae4c docs: mark G15 merged to main`). G16 branch work happened on `godot/g16-combat-encounter-foundation`; R3 is pushed at `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a`, R4 acceptance passed, R5 is docs-only branch closeout, parser blocker fix is `4637e8fa0eeec6859df4eab26d5a961868e4c071`, and G16 is fast-forward merged to `main` after headless project-load/parser smoke PASS.
 
 G14 adds the first legacy Demo-style run surface shell, second-wave surface presentation refinement, and parser hotfix on top of completed G10, G11, G12, and G13 work. It does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G15, or runtime PASS.
 
@@ -109,4 +109,4 @@ Safety note: G14-R3 execution reported an outside-repository temporary-script in
 
 G10 is complete, merged to main, and closed. It was limited to progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning. It is not complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
-G11, G12, G13, and G14 are complete and closed. G15 R3/R4/R5 are complete and fast-forward merged to main. G16 is complete at branch level and bounded to the first `combat_basic` / `monster_basic` encounter foundation: public Monster summary, `attack_basic` option, deterministic risk/reward preview, combat result summary, and a bridge through existing `select_encounter_option` to `fight_current_enemy`. G16 is not merged to main, not Boss, not action combat, not real-time combat, not out-of-run progression, not lottery, not Deploy persistence, and not runtime/parser PASS. Future UI / rules parallel work must use separate branches from latest `main`; two computers must not push directly to `main` in parallel.
+G11, G12, G13, and G14 are complete and closed. G15 R3/R4/R5 are complete and fast-forward merged to main. G16 is complete and fast-forward merged to main, bounded to the first `combat_basic` / `monster_basic` encounter foundation: public Monster summary, `attack_basic` option, deterministic risk/reward preview, combat result summary, and a bridge through existing `select_encounter_option` to `fight_current_enemy`. G16 is not Boss, not action combat, not real-time combat, not out-of-run progression, not lottery, not Deploy persistence, and not complete gameplay runtime PASS or manual playtest PASS. Future UI / rules parallel work must use separate branches from latest `main`; two computers must not push directly to `main` in parallel.

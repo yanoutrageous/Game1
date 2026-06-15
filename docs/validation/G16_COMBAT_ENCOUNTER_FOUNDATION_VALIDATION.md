@@ -8,10 +8,12 @@
 - R3 commit: `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a feat(godot): add combat encounter foundation`.
 - R4 status: accepted.
 - R5 status: docs-only closeout / handoff / status calibration.
+- Parser blocker fix commit: `4637e8fa0eeec6859df4eab26d5a961868e4c071 fix(godot): expose encounter parser classes`.
 - G15 status: complete, merged to `main`, and closed.
-- G16 branch merged to main: no.
-- Godot/editor/game/import: not run.
-- Runtime/parser PASS: not claimed.
+- G16 branch merged to main: yes, by fast-forward.
+- Godot headless project-load/parser smoke: PASS.
+- Complete gameplay runtime PASS: not claimed.
+- Manual playtest PASS: not claimed.
 
 ## Implementation Record
 
@@ -33,8 +35,9 @@
 
 ## Explicit Non-Goals
 
-- No Boss, elite, multi-monster combat, skills, passive systems, leave confirmation, teleport restriction, combat animation, full drop economy, codex, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, full event library, runtime PASS, or main merge is included in G16-R3.
-- Local user planning docs are not part of this commit: `docs/主菜单策划案.md`, `docs/战斗房与怪物遭遇通用规则策划案.md`, and `docs/出发探索界面与出勤准备规则策划案.md`.
+- No Boss, elite, multi-monster combat, skills, passive systems, leave confirmation, teleport restriction, combat animation, full drop economy, codex, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full event library is implemented by G16.
+- G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
+- Planning source files now live under `D:\AGAME1\Base Docs` and are not part of this repository commit.
 
 ## Static Validation Commands
 
@@ -56,9 +59,7 @@ git diff --cached --name-only
 - `attack_basic` appears only as an encounter option routed through `select_encounter_option`.
 - Monster combat option resolution reaches existing deterministic `fight_current_enemy`.
 - No UI file references private rule objects or private run state.
-- No `RunSurface` or `run_scene.gd` modification is required for G16-R3.
-- No `project.godot`, resources, fonts, import products, `.uid`, `.translation`, or local user planning docs are staged or committed.
-- Godot/editor/game/import remains not run; runtime PASS remains unclaimed.
+- No `project.godot`, resources, fonts, import products, `.uid`, `.translation`, or planning docs are staged or committed.
 
 ## R5 Closeout Record
 
@@ -66,30 +67,7 @@ git diff --cached --name-only
 - G16-R2: `combat_basic` / `monster_basic` execution plan.
 - G16-R3: implementation and push at `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a`.
 - G16-R4: acceptance passed.
-- G16-R5: current docs-only branch closeout; no business code, runtime/UI/rule code, resource, font, import product, `.uid`, `.translation`, or `project.godot` changes.
-- Remote main remains `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
-- The branch is not merged to `main`.
-- Local user planning docs remain untracked and uncommitted: `docs/主菜单策划案.md`, `docs/战斗房与怪物遭遇通用规则策划案.md`, and `docs/出发探索界面与出勤准备规则策划案.md`.
-
-## R5 Static Validation Commands
-
-Run from repository root:
-
-```powershell
-git diff --stat
-git diff --check
-git status --short
-git diff --name-only
-rg -n "G16|combat_basic|monster_basic|attack_basic|runtime PASS|parser PASS|Godot/editor/game/import|main|merged|Boss|boss|elite|skill|action combat|real-time combat|lottery|MetaProgress|Deploy persistence" docs Godot/GraytailGodot/docs
-```
-
-Expected R5 static result:
-
-- Diff is docs-only.
-- No runtime/parser PASS is claimed.
-- G17 is not started.
-- Boss, elite, multi-monster combat, skills, passive systems, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, and Deploy persistence remain unimplemented.
-- G16 remains a branch-level closeout until a later authorized branch-to-main integration.
+- G16-R5: docs-only branch closeout; no business code, runtime/UI/rule code, resource, font, import product, `.uid`, `.translation`, or `project.godot` changes.
 
 ## Parser Blocker Fix Record
 
@@ -97,7 +75,7 @@ Expected R5 static result:
 - Fix scope: parser-safe class visibility only.
 - Code semantics: no combat settlement, damage, reward, room-clearing, stats, CommandBus routing, encounter field semantics, UI behavior, resource, or project setting changes.
 - Fix details:
-  - `command_bus.gd`, `run_query_facade.gd`, `run_rule_service.gd`, and `encounter_resolver.gd` now use explicit preload aliases for G15/G16 encounter helper scripts.
+  - `command_bus.gd`, `run_query_facade.gd`, `run_rule_service.gd`, and `encounter_resolver.gd` use explicit preload aliases for G15/G16 encounter helper scripts.
   - `run_scene.gd` no longer depends on the `RunSurface` global class name for parser type resolution; it still instantiates the same `RunSurfaceScript`.
 - Smoke command:
 
@@ -108,3 +86,13 @@ D:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe --headless --path D:\
 - Result: Godot headless project-load/parser smoke PASS.
 - This is not a complete gameplay runtime PASS and not a manual playtest PASS.
 - Smoke produced no new dirty files; `project.godot`, resources, fonts, import products, `.uid`, and `.translation` remain untouched.
+
+## Main Integration Record
+
+- G16 was fast-forward merged to `main` after the parser smoke passed.
+- Main now contains:
+  - `fb18aa0 feat(godot): add combat encounter foundation`
+  - `8a0e0c3 docs: close G16 combat encounter foundation`
+  - `4637e8f fix(godot): expose encounter parser classes`
+- `docs/可行性判断.md` and `docs/难度判断.md` were moved by the user to `D:\AGAME1\Base Docs`; their repository deletions are authorized docs relocation deletions.
+- G17 is not started.

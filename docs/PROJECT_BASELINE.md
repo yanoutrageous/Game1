@@ -2,19 +2,21 @@
 
 ## Current Authority
 
-- Stage: G16 Combat Encounter Foundation is complete at branch level and in docs-only closeout; G15 is complete and merged to `main`.
+- Stage: G16 Combat Encounter Foundation is complete, parser-smoke checked, and merged to `main`.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current working branch: `godot/g16-combat-encounter-foundation`.
+- Current working branch: `main`.
 - Source branch: `main`.
 - G16-R3 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
 - G16-R3 branch: `godot/g16-combat-encounter-foundation`.
 - G16-R3 commit: `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a feat(godot): add combat encounter foundation`.
 - G16-R4 status: accepted.
 - G16-R5 status: docs-only branch closeout.
-- G16 merged to main: no.
-- Current remote main during G16-R5 precheck: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
+- G16 parser blocker fix commit: `4637e8fa0eeec6859df4eab26d5a961868e4c071 fix(godot): expose encounter parser classes`.
+- G16 merged to main: yes, by fast-forward.
+- Main HEAD after G16 fast-forward and before this post-merge status commit: `4637e8fa0eeec6859df4eab26d5a961868e4c071`.
+- Current remote main before G16 final push: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
 - G15 post-merge status commit: `a28ae4c0c96f0b964602fd6fe7b88fa254354763 docs: mark G15 merged to main`.
 - Current branch HEAD before G15-R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`.
 - G15 branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`.
@@ -43,6 +45,7 @@
 - G14 closeout commit: `d6c03c6 docs: close G14 legacy demo UI surface pass`.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
+- Planning source files now live under `D:\AGAME1\Base Docs`; `docs/可行性判断.md` and `docs/难度判断.md` were moved there by the user and their repository deletions are authorized docs relocation deletions.
 
 This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for the shortest next-chat context and `docs/DOCS_INDEX.md` for document navigation.
 
@@ -62,7 +65,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G13-R3 is complete, pushed, and statically validated for fixed 16:9 resolution tiers, runtime-only display selection, resize locking, and bounded layout adaptation. G13-R5 is docs-only closeout/handoff/status alignment.
 - G14 is complete, committed, pushed, and closed. G14 adds a minimal `RunSurface` / `RunSurfaceModel` cut, second-wave presentation refinement, and a parser hotfix for the first legacy Demo-style run screen surface while preserving existing panel, command, and routing paths.
 - G15-R3/R4/R5 are complete, pushed, and merged to `main`. G15 includes the rules-layer Encounter contract foundation plus the first UI EncounterSlot adapter: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, additive `select_encounter_option` bridge for search/chest/event, `RunSurfaceModel` display-only section, `RunSurface` EncounterSlot, and minimal `run_scene.gd` wiring.
-- G16-R3 is the first combat encounter foundation slice and is complete on the branch. It adds `combat_basic` / `monster_basic` public encounter data for Monster rooms, a public `attack_basic` option, monster summary, deterministic risk/reward preview, and combat result summary. `attack_basic` routes through `select_encounter_option` into the existing deterministic `fight_current_enemy` chain.
+- G16 is the first combat encounter foundation slice and is merged to `main`. It adds `combat_basic` / `monster_basic` public encounter data for Monster rooms, a public `attack_basic` option, monster summary, deterministic risk/reward preview, and combat result summary. `attack_basic` routes through `select_encounter_option` into the existing deterministic `fight_current_enemy` chain. The final integration passed Godot headless project-load/parser smoke, which is not complete gameplay runtime PASS or manual playtest PASS.
 
 ## Current Validation Chain
 
@@ -115,7 +118,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Choose a separate next step by explicit authorization: G16 branch-to-main integration, runtime/parser smoke, later combat-room enhancement, or later deploy / expedition-prep / main-menu planning. Do not expand G16 closeout into Boss, action combat, multi-monster, skills, lottery, out-of-run progression, MetaProgress, or Deploy persistence.
+Choose a separate next step by explicit authorization: later combat-room enhancement, later deploy / expedition-prep / main-menu planning, or further encounter content adapter planning. Do not expand G16 closeout into Boss, action combat, multi-monster, skills, lottery, out-of-run progression, MetaProgress, or Deploy persistence.
 
 ## G15 Boundary
 
@@ -133,9 +136,9 @@ G15-R5 is docs-only closeout. G15 has now been fast-forward merged to main, and 
 
 G16-R3 is limited to a minimal `combat_basic` / `monster_basic` encounter foundation on top of the G15 public encounter framework. It adds public Monster summary, `attack_basic` option data, deterministic risk/reward preview, combat result summary, and a `select_encounter_option` bridge to the existing `fight_current_enemy` command path.
 
-G16-R3 must not change `CombatState.fight_enemy()`, `RoomResolver.fight_current_enemy()`, or `RunRuleService.apply_combat_reward()` settlement semantics. It does not implement Boss, elite, multi-monster encounters, skills, passive systems, leave confirmation, teleport restriction, combat animation, full drop economy, codex, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, or runtime PASS.
+G16-R3 must not change `CombatState.fight_enemy()`, `RoomResolver.fight_current_enemy()`, or `RunRuleService.apply_combat_reward()` settlement semantics. It does not implement Boss, elite, multi-monster encounters, skills, passive systems, leave confirmation, teleport restriction, combat animation, full drop economy, codex, action combat, real-time combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, complete gameplay runtime PASS, or manual playtest PASS.
 
-G16-R5 is docs-only branch closeout. It records that G16-R1 audit/architecture, G16-R2 planning, G16-R3 implementation/push, and G16-R4 acceptance are complete. G16 remains unmerged to `main` until a later authorized integration pass.
+G16-R5 is docs-only branch closeout. It records that G16-R1 audit/architecture, G16-R2 planning, G16-R3 implementation/push, and G16-R4 acceptance are complete. Parser blocker fix `4637e8f` followed, and G16 is now fast-forward merged to `main` after Godot headless project-load/parser smoke PASS.
 
 If UI and rules work proceed in parallel, use separate branches from latest `main`; do not push directly to `main` from two computers in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rule private state.
 
