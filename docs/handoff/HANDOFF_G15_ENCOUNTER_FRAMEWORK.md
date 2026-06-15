@@ -7,18 +7,23 @@
 - Chinese name: 遭遇房通用框架基础
 - Branch: `godot/g15-encounter-contract-foundation`
 - Branch HEAD before R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`
-- Merged to main: no
+- Branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad`
+- Merged to main: yes, by fast-forward into `main` during G15 final integration
 - Corresponding main baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`
 
 ## Current Fact Source
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Current branch: `godot/g15-encounter-contract-foundation`
+- Current branch after final integration: `main`
+- Source branch: `godot/g15-encounter-contract-foundation`
 - Branch commits:
   - `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`
   - `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`
-- Main HEAD: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`
+- Branch closeout commit:
+  - `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`
+- Main HEAD after fast-forward and before post-merge status commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad`
+- Post-merge status commit: `docs: mark G15 merged to main`
 - Worktree status before R5 planning/execution: clean, staged empty
 - Validation chain status: static docs/code grep only; no Godot/editor/game/import run
 - Primary docs to read next:
@@ -41,7 +46,7 @@
 
 ## Explicitly Not Done
 
-- G15 is not merged to `main`.
+- G15 has been fast-forward merged into `main`.
 - No runtime PASS is claimed.
 - Godot/editor/game/import was not run.
 - No full combat room, action combat, lottery system, out-of-run progression, MetaProgress, Deploy persistence, full event library, unique collectible system, warehouse, codex, appearance library, duplicate compensation, or record system was implemented.
@@ -58,23 +63,23 @@
   - Runtime parser/load behavior for the branch after R4.
   - EncounterSlot visual behavior in actual Godot runtime.
   - End-to-end click behavior for search/chest/event options.
-  - Branch-to-main integration state.
+  - Post-merge runtime parser/load behavior.
 
 ## Risks And Debt
 
 - `run_scene.gd`, `RunSurfaceModel`, and global status docs remain high-conflict files for future UI/rules work.
 - Existing event modal and new EncounterSlot can both expose event-related actions; runtime smoke should confirm player-facing flow remains understandable.
 - G15 has no runtime PASS until explicitly authorized runtime or manual testing records it.
-- Mainline promotion still requires a separate integration audit or merge plan.
+- Mainline promotion was completed by fast-forward only; runtime smoke and playable verification remain separate future work.
 
 ## Next Handoff Guide
 
 - Recommended next step: choose one of these with explicit user authorization:
   - runtime smoke / parser check;
-  - branch-to-main integration audit;
+  - post-merge runtime smoke / parser check;
   - G16 battle room / combat encounter planning;
   - further encounter content adapter planning.
-- Not recommended next step: directly merge to main without checking remote/main state and branch integration risk.
+- Not recommended next step: treating the fast-forward merge as runtime PASS without an authorized smoke or manual test.
 - Files or systems to inspect first:
   - `Godot/GraytailGodot/scripts/core/run/encounter/`
   - `Godot/GraytailGodot/scripts/core/command/command_bus.gd`
@@ -83,7 +88,7 @@
   - `Godot/GraytailGodot/scripts/core/run/run_scene.gd`
 - Decisions that need user approval:
   - whether to run Godot/editor/runtime smoke;
-  - whether to audit and merge the branch to main;
+  - whether to run post-merge Godot/editor/runtime smoke;
   - whether G16 starts with combat room planning or another encounter/content path.
 
 ## Safety Boundaries

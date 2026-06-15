@@ -8,7 +8,7 @@
 - R3 commit: `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`.
 - R4 commit: `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`.
 - R5 status: docs-only closeout / handoff / status calibration.
-- Merged to main: no.
+- Merged to main: yes, by fast-forward during G15 final integration.
 - G14, G13, G12, G11, and G10 are complete and closed.
 - G16 is not started.
 
@@ -137,7 +137,8 @@ Expected R4 static result:
 - G15-R5 is docs-only closeout / handoff / status calibration.
 - R3 and R4 are complete, committed, and pushed on `godot/g15-encounter-contract-foundation`.
 - Branch HEAD before R5 closeout execution: `1887385af81624ebcd84342ca765d75e6fbf20eb`.
-- Current branch is not merged to `main`.
+- Branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad`.
+- G15 is now fast-forward merged to `main`.
 - G15 completed the first encounter framework foundation only:
   - rules-layer public/display contract;
   - `EncounterResolver` public/display adapter;
@@ -148,7 +149,7 @@ Expected R4 static result:
   - `RunSurface` EncounterSlot;
   - minimal `run_scene.gd` wiring;
   - validation and manual checklist updates.
-- G15 still does not implement full combat rooms, action combat, out-of-run progression, lottery systems, unique collectibles, warehouse/codex/appearance library systems, MetaProgress, Deploy persistence, full event libraries, or mainline promotion.
+- G15 still does not implement full combat rooms, action combat, out-of-run progression, lottery systems, unique collectibles, warehouse/codex/appearance library systems, MetaProgress, Deploy persistence, full event libraries, or runtime PASS.
 - Godot/editor/game/import was not run during G15-R5, and this document does not claim runtime PASS.
 - G16 is not started.
 

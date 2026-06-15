@@ -2,17 +2,20 @@
 
 ## Current Authority
 
-- Stage: G15 Encounter Contract Foundation R3/R4 are complete on branch `godot/g15-encounter-contract-foundation`; R5 is docs-only closeout / handoff / status calibration.
+- Stage: G15 Encounter Contract Foundation R3/R4/R5 are complete and fast-forward merged to `main`; this is post-merge status calibration.
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current working branch: `godot/g15-encounter-contract-foundation`.
+- Current working branch: `main`.
+- Source branch: `godot/g15-encounter-contract-foundation`.
 - Current branch HEAD before G15-R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`.
+- G15 branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`.
+- Main HEAD after G15 fast-forward and before post-merge status commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad`.
 - Current main HEAD / G15 branch baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
 - Current remote live main HEAD before G15-R3: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
 - G15-R3 commit: `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`.
 - G15-R4 commit: `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`.
-- G15 merged to main: no.
+- G15 merged to main: yes, by fast-forward.
 - G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`.
 - G10 closeout status: complete, merged to main, and closed.
@@ -103,7 +106,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Close out G15 on the branch with docs-only handoff/status records, then choose a separate next step by explicit authorization: runtime smoke/parser check, branch-to-main integration audit, G16 battle room planning, or further encounter content adapter planning. Do not start G16 in G15-R5.
+Complete post-merge status calibration, then choose a separate next step by explicit authorization: runtime smoke/parser check, G16 battle room planning, or further encounter content adapter planning. Do not start G16 in the G15 final integration pass.
 
 ## G15 Boundary
 
@@ -113,7 +116,7 @@ G15-R3 adds `EncounterContract` and `EncounterResolver` under `scripts/core/run/
 
 G15-R4 adds `RunSurfaceModel` display-only encounter section construction, `RunSurface` EncounterSlot display/signals, and minimal `run_scene.gd` wiring to `_dispatch_command(&"select_encounter_option", payload)`. It does not change existing `search_current_room`, `select_event_option`, `request_extract`, or `confirm_extract` semantics.
 
-G15-R5 is docs-only closeout. G15 branch is not merged to main, and G15 does not claim runtime PASS because Godot/editor/game/import was not run.
+G15-R5 is docs-only closeout. G15 has now been fast-forward merged to main, and G15 still does not claim runtime PASS because Godot/editor/game/import was not run.
 
 抽奖 / lottery remains deferred. G15 may reserve `lottery` as an encounter type name only; it does not implement probability, pity, pools, unique collectibles, warehouse, codex, appearance library, duplicate compensation, MetaProgress, or Deploy persistence. G15 also does not implement full combat rooms, action combat, out-of-run progression, full event libraries, or G16.
 
@@ -171,7 +174,7 @@ G11 must not cover complete MetaProgress, Deploy persistence, complete long-term
 - Rules line starting main-loop semantics audit.
 - UI / rules parallel branch strategy.
 
-These are candidates only. G15-R5 does not start G16 or any next-stage implementation.
+These are candidates only. G15 final integration does not start G16 or any next-stage implementation.
 
 ## G10 Boundary
 
@@ -191,3 +194,4 @@ G10 is complete, merged to main, and closed. It must not be continued as complet
 - Do not run Godot/editor/game/import unless separately authorized.
 - Dirty handling whitelist: tracked `project.godot`, tracked or untracked `asset_manifest.*.translation`, and untracked `*.gd.uid` only.
 - Protective stash remains expected and must not be apply/pop/drop/delete: `stash@{0}: On main: pre-sync generated dirty before aligning to G15 encounter branch on computer two`.
+- Local user planning docs may remain untracked and are not part of G15 implementation or this post-merge commit: `docs/主菜单策划案.md`, `docs/战斗房与怪物遭遇通用规则策划案.md`.

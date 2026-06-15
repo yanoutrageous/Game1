@@ -18,7 +18,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G12 | Legacy Demo Core Loop, Chinese Readability & Typography Parity | Complete; R3 at `2855ca9889e394fb79d22c468b1355cd3871fd39`, closeout at `e90bd271ad2fc747051c9a49ff6a50c64e8fa49f` |
 | G13 | Fixed Resolution Layout Adaptation | Complete and closed at `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`; static validation only, no runtime PASS |
 | G14 | Legacy Demo UI Surface Sprint | Complete and closed through parser hotfix at `fc2b86b6b6b2af9a6c249230621482617b594775`; R5 docs-only closeout records handoff/status |
-| G15 | Encounter Contract Foundation | R3/R4 complete on branch `godot/g15-encounter-contract-foundation`; R5 docs-only closeout from branch head `1887385af81624ebcd84342ca765d75e6fbf20eb`; not merged to main; no runtime PASS |
+| G15 | Encounter Contract Foundation | R3/R4/R5 complete and fast-forward merged to `main`; branch closeout commit `e72d3a5dc4a57122d42f881f391f2b47389fcdad`; no runtime PASS |
 
 ## Naming Rule
 
@@ -38,6 +38,8 @@ Current G15 branch HEAD before R5 closeout: `1887385af81624ebcd84342ca765d75e6fb
 
 Current main commit before G15-R3: `d6c03c6 docs: close G14 legacy demo UI surface pass`.
 
+G15-R5 branch closeout commit: `e72d3a5 docs: close G15 encounter framework foundation`.
+
 G15-R4 commit: `1887385 feat(godot): add encounter slot surface adapter`.
 
 G15-R3 commit: `aca5b95 feat(godot): add encounter contract foundation`.
@@ -50,7 +52,7 @@ G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`.
 
 G14-R3 baseline before implementation and G13 closeout commit: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
-The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, and the completed G14 run surface sprint. G15 R3/R4 are branch work for the encounter contract foundation and EncounterSlot adapter. G15 is not merged to main and does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G16, or runtime PASS.
+The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, the completed G14 run surface sprint, and G15 Encounter Contract Foundation. G15 R3/R4/R5 are fast-forward merged to main and do not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, G16, or runtime PASS.
 
 G11, G12, G13, and G14 are complete and closed. G15 R3/R4 are complete and R5 is docs-only closeout. `select_encounter_option` is additive only, and search/event/extract command semantics remain unchanged.
 

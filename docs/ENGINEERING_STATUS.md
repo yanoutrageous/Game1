@@ -2,7 +2,7 @@
 
 ## Stage
 
-G15 Encounter Contract Foundation is in R5 docs-only closeout on branch `godot/g15-encounter-contract-foundation`. G15-R3 rules-layer contract work and G15-R4 UI EncounterSlot adapter work are complete and pushed. G10, G11, G12, G13, and G14 are complete and closed. G16 is not started.
+G15 Encounter Contract Foundation R3/R4/R5 is complete and fast-forward merged to `main`. G15-R3 rules-layer contract work, G15-R4 UI EncounterSlot adapter work, and G15-R5 docs closeout are complete and pushed; this pass is post-merge status calibration. G10, G11, G12, G13, and G14 are complete and closed. G16 is not started.
 
 ## Time
 
@@ -13,13 +13,16 @@ G15 Encounter Contract Foundation is in R5 docs-only closeout on branch `godot/g
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current working branch: `godot/g15-encounter-contract-foundation`
+- Current working branch: `main`
+- Source branch: `godot/g15-encounter-contract-foundation`
 - Current branch HEAD before G15-R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`
+- G15 branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`
+- Main HEAD after G15 fast-forward and before post-merge status commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad`
 - Current main HEAD / G15 branch baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`
 - Current remote live main HEAD before G15-R3: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`
 - G15-R3 commit: `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`
 - G15-R4 commit: `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`
-- G15 merged to main: no
+- G15 merged to main: yes, by fast-forward
 - G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`
 - Closed G10 branch: `godot/g10-progress-art-smoke-foundation` at `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
 - G10 closeout commit: `aa19db2f1989c6ebfc22676d84b83da5c6977f64`
@@ -221,7 +224,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - G15-R3/R4 do not implement full combat rooms, action combat, lottery, out-of-run progression, MetaProgress, Deploy persistence, unique collectibles, warehouse, codex, appearance library, or record systems.
 - `lottery` is reserved only as a later encounter type name and remains deferred.
 - G15-R3/R4/R5 do not run Godot/editor/game/import and do not claim runtime PASS.
-- G15 branch is not merged to main.
+- G15 is fast-forward merged to main.
 
 ## Not Implemented
 
@@ -292,11 +295,11 @@ G10 art work is smoke/foundation only: no loose assets, no direct core resource-
 
 ## Follow-Up Boundary
 
-G15-R5 closes the bounded Encounter Contract Foundation branch. R3 defines the public contract and rule bridge; R4 adds the first UI EncounterSlot adapter; R5 is docs-only closeout and does not start G16.
+G15 final integration closes the bounded Encounter Contract Foundation stage on main. R3 defines the public contract and rule bridge; R4 adds the first UI EncounterSlot adapter; R5 is docs-only closeout; post-merge status calibration does not start G16.
 
 Any future UI branch should only consume ViewModel/snapshot outputs and dispatch CommandBus commands. It should use `PresentationLayerContracts` and future ThemeProfile/CharacterPresentationConfig data to resolve visual layers. It must not directly read or write `RunAssetLedger`, `TruthMap`, or private rule state.
 
-G15-R5 closes the branch documentation only. Future candidate work includes runtime smoke / parser check, branch-to-main integration audit, G16 battle room / combat encounter planning, further encounter content adapters, later out-of-run progression, and later lottery / unique collectible / appearance systems. G16 is not started. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
+G15 final integration updates documentation only after the fast-forward merge. Future candidate work includes runtime smoke / parser check, G16 battle room / combat encounter planning, further encounter content adapters, later out-of-run progression, and later lottery / unique collectible / appearance systems. G16 is not started. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
 
 ## Validation
 

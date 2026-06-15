@@ -6,7 +6,7 @@
 
 ## Branch
 
-Current stage: G15 Encounter Contract Foundation R5 docs-only closeout. G15-R3 and G15-R4 are complete and pushed on branch `godot/g15-encounter-contract-foundation`; G16 is not started.
+Current stage: G15 Encounter Contract Foundation final integration. G15-R3, G15-R4, and G15-R5 are complete and fast-forward merged to `main`; G16 is not started.
 
 Current main HEAD / G15 baseline: `d6c03c6ff8ca9884f992a61e27728bdddf3a637a`.
 
@@ -14,11 +14,15 @@ Current remote live main HEAD before G15-R3: `d6c03c6ff8ca9884f992a61e27728bdddf
 
 Current G15 branch HEAD before R5 closeout: `1887385af81624ebcd84342ca765d75e6fbf20eb`.
 
+G15 branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`.
+
+Main HEAD after G15 fast-forward and before post-merge status commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad`.
+
 G15-R3 commit: `aca5b95 feat(godot): add encounter contract foundation`.
 
 G15-R4 commit: `1887385 feat(godot): add encounter slot surface adapter`.
 
-G15 branch merged to main: no.
+G15 branch merged to main: yes, by fast-forward.
 
 G14-R3 baseline before implementation: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
@@ -132,7 +136,7 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G15-R3 adds a rules-layer Encounter contract foundation: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, and additive `select_encounter_option` for search/chest/event only.
 - G15-R4 adds a UI EncounterSlot surface adapter: `RunSurfaceModel` consumes only public encounter snapshot fields, `RunSurface` displays options and emits public option signals, and `run_scene.gd` performs minimal CommandBus wiring for `select_encounter_option`.
 
-Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, and completed G14 run surface work. G15-R3 and G15-R4 are branch work and are not merged to main. They are not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, not G16, and not runtime PASS.
+Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, and G15 Encounter Contract Foundation. G15 is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, not G16, and not runtime PASS.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 

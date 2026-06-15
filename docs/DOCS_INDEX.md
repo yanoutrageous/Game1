@@ -59,7 +59,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md` records the G12 lightweight legacy Demo core-loop, Chinese readability, typography/readability validation checklist, R3 implementation record, and R4 docs-only closeout notes.
 - `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md` records the G13 fixed resolution tier and layout adaptation validation checklist, R3 static validation, and R5 closeout boundary.
 - `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md` records the G14 run surface validation checklist, R3 shell, R4 surface refinement, hotfix, closeout boundary, no-runtime-PASS status, and outside-repository temporary-script safety event record.
-- `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md` records the G15 encounter contract foundation validation checklist, R3 rules contract, R4 EncounterSlot adapter, R5 docs-only closeout boundary, deferred lottery boundary, branch-not-merged status, and no-runtime-PASS status.
+- `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md` records the G15 encounter contract foundation validation checklist, R3 rules contract, R4 EncounterSlot adapter, R5 docs-only closeout boundary, deferred lottery boundary, fast-forward main merge status, and no-runtime-PASS status.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -74,7 +74,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md` records the G12 legacy Demo core-loop readability and typography parity pass closeout.
 - `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md` records the G13 fixed resolution tier and layout adaptation closeout.
 - `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md` records the G14 legacy Demo run surface sprint closeout, handoff, validation boundary, and next-stage candidates.
-- `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md` records the G15 encounter framework branch handoff, R3/R4 commit chain, static validation boundary, non-goals, branch-not-merged status, and next-stage candidates.
+- `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md` records the G15 encounter framework handoff, R3/R4/R5 commit chain, static validation boundary, non-goals, fast-forward main merge status, and next-stage candidates.
 
 ## Branch Change Records
 
@@ -105,4 +105,4 @@ Safety note: G14-R3 execution reported an outside-repository temporary-script in
 
 G10 is complete, merged to main, and closed. It was limited to progress整理, stability/BUG fixes, UI interaction optimization, dev-only diagnostics, art intake smoke, responsive/mobile reservation, and future content planning. It is not complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
-G11, G12, G13, and G14 are complete and closed. G15 R3/R4 are complete and R5 is docs-only closeout on the branch. G15 is bounded to the encounter public/display contract, additive `select_encounter_option` bridge, and first EncounterSlot UI adapter. G15 is not merged to main, not G16, not combat room implementation, not out-of-run progression, not lottery, and not runtime PASS. Future UI / rules parallel work must use separate branches from latest `main`; two computers must not push directly to `main` in parallel.
+G11, G12, G13, and G14 are complete and closed. G15 R3/R4/R5 are complete and fast-forward merged to main. G15 is bounded to the encounter public/display contract, additive `select_encounter_option` bridge, and first EncounterSlot UI adapter. G15 is not G16, not combat room implementation, not out-of-run progression, not lottery, and not runtime PASS. Future UI / rules parallel work must use separate branches from latest `main`; two computers must not push directly to `main` in parallel.
