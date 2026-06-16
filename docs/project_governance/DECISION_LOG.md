@@ -133,3 +133,14 @@
 - `evidence`: `docs/route_analysis/ROADMAP_G20_PLUS.md`; `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`; `docs/PROJECT_BASELINE.md`; `docs/NEXT_HANDOFF.md`。
 - `follow_up`: 下一执行建议进入 G18-align 计划模式；任何 G22 都必须在 G18-align 后重新审计和计划。
 - `status`: active / recorded in G21-R5。
+## DL-G18ALIGN-002
+
+- `id`: DL-G18ALIGN-002
+- `stage`: G18-align final
+- `decision`: Fast-forward merge `godot/g18-align-deploy-prep-asset-view` into `main`, then record post-merge docs calibration only.
+- `reason`: G18-align-R3 passed Godot headless project-load/parser smoke and R4B closeout was complete; main needed the pre-G22 DeployPrep asset attendance alignment facts.
+- `impact`: First `main` commit containing G18-align is `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`; R2 implementation is `55a048e7419a890cc899bdbd7fae4db4431ddacf`; R4B closeout is `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- `non_goals`: No G22 start, no Godot run in final, no GDScript change in final, no complete deploy prep, no complete warehouse, no real asset writes, no event bus, no reward grant, no persistence, no real RunScene start / continue / abandon logic, no gameplay runtime PASS, and no manual playtest PASS.
+- `evidence`: `docs/validation/G18_ALIGN_DEPLOY_PREP_ASSET_VIEW_VALIDATION.md`; `docs/handoff/HANDOFF_G18_ALIGN_DEPLOY_PREP_ASSET_VIEW.md`; `docs/PROJECT_BASELINE.md`.
+- `follow_up`: Prepare final handoff整理 / new-conversation handoff before any separately authorized next stage.
+- `status`: active / merged to main.

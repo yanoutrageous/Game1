@@ -96,3 +96,6 @@ G15-R3/R4/R5 did not run Godot/editor/game/import and do not claim runtime PASS.
 G18 accepts the foundation only. It does not start Boss, action combat, true RunScene launch, real maps, warehouse/requisition/permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, Deploy persistence, or any G19+ implementation.
 
 If UI and rules work proceed in parallel, branch from latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rule private state. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.
+## G18-align Final Main Merge
+
+G18-align Deploy Prep Asset Attendance Alignment is fast-forward merged to `main`. First `main` commit containing the slice: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`. R2 implementation: `55a048e7419a890cc899bdbd7fae4db4431ddacf`. R4B closeout: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`. R3 recorded Godot headless project-load/parser smoke PASS only; no gameplay runtime PASS or manual playtest PASS is claimed. G22 has not started.

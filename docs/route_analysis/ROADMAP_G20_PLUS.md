@@ -64,3 +64,13 @@ G18-align-R2 is complete at `55a048e7419a890cc899bdbd7fae4db4431ddacf`, and G18-
 ## G18-align-R2 Execution Update
 
 G18-align-R2 is now the active pre-G22 implementation slice on `godot/g18-align-deploy-prep-asset-view`. It narrows the next route to Deploy Prep asset attendance view alignment: secondary labels, card details, right-side summary, and start/continue/abandon strong-confirmation preview. It does not start G22 and does not implement complete warehouse, real asset writing, event bus, reward claim, persistence, or real exploration execution.
+## G18-align Final Main Merge Calibration
+
+- G18-align has been fast-forward merged to `main`.
+- First `main` commit containing G18-align: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- G18-align-R2 implementation commit: `55a048e7419a890cc899bdbd7fae4db4431ddacf`.
+- G18-align-R4B closeout commit: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- G18-align-R3 recorded Godot headless project-load/parser smoke PASS only.
+- This is not gameplay runtime PASS and not manual playtest PASS.
+- G22 remains not started; do not infer G22 start from this merge.
+- The next step remains closeout / new-conversation handoff unless a later user instruction starts a new stage.

@@ -110,3 +110,13 @@ G18-align-R2 does not run Godot. Because it changes GDScript, a later acceptance
 ```
 
 That future result, if passed, may only be recorded as `Godot headless project-load/parser smoke PASS`. It must not be recorded as complete gameplay runtime PASS or manual playtest PASS.
+## G18-align Final Main Merge Calibration
+
+- G18-align has been fast-forward merged to `main`.
+- First `main` commit containing G18-align: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- G18-align-R2 implementation commit: `55a048e7419a890cc899bdbd7fae4db4431ddacf`.
+- G18-align-R4B closeout commit: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- G18-align-R3 recorded Godot headless project-load/parser smoke PASS only.
+- This is not gameplay runtime PASS and not manual playtest PASS.
+- G22 has not started.
+- Next work remains closeout / new-conversation handoff preparation unless a later user authorization starts a new stage.

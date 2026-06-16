@@ -231,3 +231,13 @@ G17 branch work on `godot/g17-app-shell-main-menu` has R2 implementation, R3 acc
 G18 work on `godot/g18-deploy-prep-foundation` is limited to formal expedition prep foundation: DeployPrepShell, five placeholder tabs, public DeployConfig / RunStartConfig preview, validation/manual checklist updates, R4 acceptance, and Godot headless project-load/parser smoke PASS. It is fast-forward merged to `main` and does not implement true run start, real maps, warehouse, requisition, work permits, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence.
 
 G19 work on `godot/g19-long-term-shell-foundation` is limited to LongTermShell foundation: six fixed modules, placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19-R4B records Godot headless project-load/parser smoke PASS on the branch, with no complete gameplay runtime PASS and no manual playtest PASS. G19 is fast-forward merged to `main` at `04e14865f4d5eff7b16398d5730054273ccd0823`. G20 docs-only governance is fast-forward merged to `main` at `ae689b7464fd6ea81a763110cd89813abcfb6665` and does not implement real long-term systems, item or asset systems, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, private run-state reads, Asset Contract, Warehouse, gameplay runtime PASS, or manual playtest PASS.
+## G18-align Final Main Merge Evidence
+
+- G18-align is fast-forward merged to `main`.
+- First `main` commit containing G18-align: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- R2 implementation: `55a048e7419a890cc899bdbd7fae4db4431ddacf`.
+- R4B closeout: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- Validation evidence: `docs/validation/G18_ALIGN_DEPLOY_PREP_ASSET_VIEW_VALIDATION.md`.
+- Handoff evidence: `docs/handoff/HANDOFF_G18_ALIGN_DEPLOY_PREP_ASSET_VIEW.md`.
+- Godot headless project-load/parser smoke PASS is recorded for R3 only; gameplay runtime PASS and manual playtest PASS are not claimed.
+- G22 has not started.

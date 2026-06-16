@@ -285,3 +285,14 @@ G10 is complete, merged to main, and closed. It must not be continued as complet
 - Dirty handling whitelist: tracked `project.godot`, tracked or untracked `asset_manifest.*.translation`, and untracked `*.gd.uid` only.
 - Protective stash remains expected and must not be apply/pop/drop/delete: `stash@{0}: On main: pre-sync generated dirty before aligning to G15 encounter branch on computer two`.
 - Local user planning docs may remain untracked and are not part of G15 implementation or this post-merge commit: `docs/主菜单策划案.md`, `docs/战斗房与怪物遭遇通用规则策划案.md`.
+## G18-align Final Main Merge Status
+
+- G18-align has been fast-forward merged to `main`.
+- First `main` commit containing G18-align: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- G18-align-R2 implementation commit: `55a048e7419a890cc899bdbd7fae4db4431ddacf`.
+- G18-align-R4B closeout commit: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- G18-align-R3 validation recorded Godot headless project-load/parser smoke PASS only.
+- This remains deploy prep asset attendance view alignment: secondary labels, card/detail preview, right-side summary, and start / continue / abandon strong-confirmation preview.
+- It is not complete deploy prep, not complete warehouse, not real asset writes, not event bus, not reward grant, not persistence, and not real RunScene start / continue / abandon logic.
+- No gameplay runtime PASS or manual playtest PASS is claimed.
+- G22 has not started.

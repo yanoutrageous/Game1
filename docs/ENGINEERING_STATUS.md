@@ -447,3 +447,8 @@ G10 runtime smoke is limited to parser/project launch and bounded UI sanity chec
 ## G18 R4 Acceptance Note
 
 G18-R4 accepted the branch foundation on `godot/g18-deploy-prep-foundation` and ran Godot headless project-load/parser smoke PASS. This is not complete gameplay runtime PASS and not manual playtest PASS. G18 is fast-forward merged to main. G19 is also fast-forward merged to main as LongTermShell foundation only; neither stage starts RunScene, dispatches run CommandBus, modifies RunContext, generates real maps, implements warehouse/requisition/permit rules, implements settlement reports/history, or writes persistence.
+## G18-align Final Main Merge Status
+
+G18-align is fast-forward merged to `main`. The first `main` commit containing the slice is `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`; the R2 implementation commit is `55a048e7419a890cc899bdbd7fae4db4431ddacf`; the R4B closeout commit is `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+
+G18-align-R3 recorded Godot headless project-load/parser smoke PASS only. This is not gameplay runtime PASS and not manual playtest PASS. G22 has not started, and the next step remains closeout / new-conversation handoff unless separately authorized.

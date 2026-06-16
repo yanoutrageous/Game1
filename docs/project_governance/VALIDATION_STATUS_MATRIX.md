@@ -41,3 +41,8 @@
 - `not run` means the execution did not run that validation class.
 - `not claimed` means no PASS claim is made even if related docs or checklists exist.
 - `unknown` means R3d1 did not find enough evidence to classify the status.
+## G18-align Final Validation Row
+
+| stage | static_validation | godot_parser_smoke | manual_playtest | full_gameplay_runtime | merged_to_main | evidence_sources | unverified_scope | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| G18-align | static validation recorded | Godot headless project-load/parser smoke PASS | not claimed | not claimed | yes | `docs/validation/G18_ALIGN_DEPLOY_PREP_ASSET_VIEW_VALIDATION.md`; `docs/handoff/HANDOFF_G18_ALIGN_DEPLOY_PREP_ASSET_VIEW.md`; first main commit `70d3735a3ed49dec31ce5a6de73cfdf0829885eb` | manual playtest PASS; full gameplay runtime; complete deploy prep; complete warehouse; real asset writes; real RunScene execution | R2 implementation `55a048e7419a890cc899bdbd7fae4db4431ddacf`; R4B closeout `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`; G22 not started. |

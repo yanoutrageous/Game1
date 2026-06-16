@@ -309,3 +309,8 @@ Use this checklist only after G15-R4 UI adapter changes are present. It is not r
 - No arbitrary aspect-ratio responsiveness, mobile support, ultrawide support, 4K support, full DPI parity, complete settings system, full MetaProgress, persistence-backed Deploy economy, action combat, video, music, or font migration.
 - No complete 1:1 legacy Demo reproduction, full event library, full talent/card system, full art migration, full combat room, lottery, out-of-run progression, or G16 scope.
 - Some migrated icons remain internal placeholders until final art approval.
+## G18-align Final Main Merge Note
+
+G18-align has been fast-forward merged to `main` at first-containing commit `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`. R2 implementation is `55a048e7419a890cc899bdbd7fae4db4431ddacf`; R4B closeout is `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+
+G18-align-R3 recorded Godot headless project-load/parser smoke PASS only. This is not gameplay runtime PASS and not manual playtest PASS. The final merge round did not run Godot. G22 has not started.

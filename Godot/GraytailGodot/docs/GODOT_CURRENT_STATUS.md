@@ -355,3 +355,8 @@ G12 did not run Godot/editor/game/import, did not add font files/resources/impor
 G10 was reserved for stability analysis, BUG fixes, UI readability optimization, interaction blocker triage, validation-chain trust checks, code convergence, documentation clarity, and future content planning.
 
 G10 is now closed. It does not include complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, large real-art migration, or broad architecture reshaping unless a later separately approved plan changes that boundary.
+## G18-align Final Main Merge Status
+
+G18-align is fast-forward merged to `main`. First `main` commit containing G18-align: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`. G18-align-R2 implementation: `55a048e7419a890cc899bdbd7fae4db4431ddacf`. G18-align-R4B closeout: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+
+G18-align-R3 recorded Godot headless project-load/parser smoke PASS only. The final merge round did not run Godot. This is not gameplay runtime PASS and not manual playtest PASS. G22 has not started.

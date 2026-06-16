@@ -76,3 +76,14 @@ Godot was not run in R2. Parser smoke is deferred to the next acceptance round.
 ## Next Step
 
 Recommended next step is G18-align acceptance / parser-smoke round, not G22 and not main merge. G22 remains not started.
+## G18-align Final Main Merge Calibration
+
+G18-align is now fast-forward merged to `main`. The first `main` commit containing this slice is `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+
+Implementation and closeout anchors:
+
+- G18-align-R2 implementation: `55a048e7419a890cc899bdbd7fae4db4431ddacf`.
+- G18-align-R4B branch closeout: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+- G18-align-R3 validation: Godot headless project-load/parser smoke PASS only.
+
+This does not claim gameplay runtime PASS or manual playtest PASS. G22 has not started, and the next step is still final handoff整理 / new conversation handoff unless the user explicitly authorizes another stage.

@@ -170,3 +170,8 @@ G18-align-R3 parser smoke passed for the DeployPrep alignment slice. The boundar
 ## G18-align-R2 Boundary Update
 
 G18-align-R2 keeps DeployPrep inside the UI preview boundary. It may consume G21 `AssetProjectionSchema` as a read-only deploy prep projection shape, but it must not call asset runtime systems, write asset events, mutate warehouse state, grant rewards, persist state, or start / continue / abandon real exploration.
+## G18-align Final Main Merge Boundary
+
+G18-align is now included in `main` at `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`. Its implementation commit is `55a048e7419a890cc899bdbd7fae4db4431ddacf`, and its R4B closeout commit is `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
+
+Boundary remains unchanged: DeployPrep now has an aligned asset-attendance view, secondary labels, card/detail preview, right-side summary, and start / continue / abandon strong-confirmation preview. It does not implement complete warehouse, real asset writes, event bus, reward grant, persistence, or real RunScene start / continue / abandon logic. Godot headless project-load/parser smoke PASS is recorded only for R3; gameplay runtime PASS and manual playtest PASS are not claimed. G22 has not started.
