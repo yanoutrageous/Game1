@@ -6,7 +6,9 @@ G21-R3 adds an asset and item flow contract foundation only.
 
 G21-R3 commit: `29a68e7b093ae653be212e32eb97042c0a7c0a4c`.
 
-G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects. G21-R4B is docs-only closeout on `godot/g21-asset-item-flow-contract`; G21 is not merged to `main` in this document.
+G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects. G21-R4B closeout commit is `fdadd78ccdf1d61378ac93a74cfe26449e47c411`.
+
+G21 is fast-forward merged to `main`. The first main commit that contains G21 is `fdadd78ccdf1d61378ac93a74cfe26449e47c411`. G22 has not started.
 
 Implemented code files:
 

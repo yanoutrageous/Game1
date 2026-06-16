@@ -6,17 +6,19 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- G21 branch: `godot/g21-asset-item-flow-contract`.
+- G21 branch: `godot/g21-asset-item-flow-contract`; fast-forward merged to `main`.
 - G21-R3 baseline main HEAD: `4bb4594fc23b846da9c15003a86c71cf08003830`.
 - G21-R3 commit: `29a68e7b093ae653be212e32eb97042c0a7c0a4c`.
+- G21-R4B closeout commit / first main commit containing G21: `fdadd78ccdf1d61378ac93a74cfe26449e47c411`.
 - G21-R3 scope: Asset & Item Flow Contract Foundation only: schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema.
 - G21-R3 added `AssetContract`, `ItemSchema`, `AssetEventSchema`, and `AssetProjectionSchema` under `Godot/GraytailGodot/scripts/core/asset/`.
 - G21-R3 is not a real asset system, not a warehouse, not a real event bus, not reward granting, not persistence, not gacha, not settlement/history, not red dot, and not a Policy / Tag rule engine.
 - G21-R3 does not modify DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, `.uid`, `.translation`, or Base Docs.
 - G21-R4 validation: Godot headless project-load/parser smoke PASS; smoke left the working tree clean with no dirty side effects.
-- G21-R4B status: docs-only branch closeout in progress/complete on `godot/g21-asset-item-flow-contract`; G21 is not merged to `main`.
+- G21 final status: fast-forward merged to `main`; post-merge docs calibration is in progress/complete in this batch.
 - This is not complete gameplay runtime PASS and not manual playtest PASS.
-- Current branch for this handoff: `godot/g21-asset-item-flow-contract`
+- G22 status: not started.
+- Current branch for this handoff: `main`
 - Base branch: `main`
 - Current G18 branch: `godot/g18-deploy-prep-foundation`
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
@@ -47,11 +49,11 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G20-R4A read-only acceptance: passed; blocker fix commit `82e2b1c6bec8311a144b42dd69950e4bfd500d9c`.
 - G20-R4B closeout executed: yes, docs-only.
 - G20 final executed: yes.
-- G21-R3 complete: yes, commit `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS; G21-R4B docs-only closeout is branch-only and not merged to main.
+- G21 complete: yes, R3 commit `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; R4 acceptance passed with Godot headless project-load/parser smoke PASS; R4B closeout / first main commit `fdadd78ccdf1d61378ac93a74cfe26449e47c411`; fast-forward merged to main.
 - Godot run for G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final: no; no Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed.
 - G20-R3c stage summary index: `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`.
 - G20-R3c route analysis: `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`.
-- G20-R3c route recommendation: `docs/route_analysis/ROADMAP_G20_PLUS.md`; this is a recommendation only and does not start G21.
+- G20-R3c route recommendation: `docs/route_analysis/ROADMAP_G20_PLUS.md`; G21 later completed separately and is now merged to main.
 - G20-R3d1 branch inventory: `docs/project_governance/BRANCH_INVENTORY.md`.
 - G20-R3d1 commit milestone map: `docs/project_governance/COMMIT_MILESTONE_MAP.md`.
 - G20-R3d1 validation status matrix: `docs/project_governance/VALIDATION_STATUS_MATRIX.md`.
@@ -180,7 +182,7 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 - Latest integrated stage: G20 `Project Knowledge Governance`.
 - G20 is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`; post-merge docs commit hash is pending until commit.
-- G21-R3 is complete on `godot/g21-asset-item-flow-contract` as Asset & Item Flow Contract Foundation only. G21-R4 validation passed with Godot headless project-load/parser smoke PASS, and G21-R4B docs-only closeout prepares the branch for a separate final main merge decision.
+- G21 is complete and fast-forward merged to `main` as Asset & Item Flow Contract Foundation only. G21-R4 validation passed with Godot headless project-load/parser smoke PASS. G22 has not started.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
-This handoff records G20 mainline integration and post-merge docs calibration plus G21 branch closeout facts. Godot headless project-load/parser smoke PASS is recorded for G19-R4B and G21-R4, but complete gameplay runtime PASS and manual playtest PASS are not claimed for G19, G20, or G21. G20 did not run Godot and does not claim parser smoke PASS.
+This handoff records G20 mainline integration and G21 mainline integration. Godot headless project-load/parser smoke PASS is recorded for G19-R4B and G21-R4, but complete gameplay runtime PASS and manual playtest PASS are not claimed for G19, G20, or G21. G20 did not run Godot and does not claim parser smoke PASS.

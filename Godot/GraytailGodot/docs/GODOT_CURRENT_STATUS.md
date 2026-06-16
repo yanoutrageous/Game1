@@ -12,11 +12,13 @@ G21-R3 baseline main HEAD: `4bb4594fc23b846da9c15003a86c71cf08003830`.
 
 G21-R3 commit: `29a68e7b093ae653be212e32eb97042c0a7c0a4c`.
 
+G21-R4B closeout commit / first main commit containing G21: `fdadd78ccdf1d61378ac93a74cfe26449e47c411`.
+
 G21-R3 adds Asset & Item Flow Contract Foundation under `Godot/GraytailGodot/scripts/core/asset/`: `AssetContract`, `ItemSchema`, `AssetEventSchema`, and `AssetProjectionSchema`. It is schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema only.
 
 G21 does not implement real asset systems, warehouse, inventory, event bus, reward grant, persistence, gacha, settlement/history, red dot state, or Policy / Tag rule engine. It does not modify DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, `.uid`, `.translation`, or Base Docs.
 
-G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects. This is not complete gameplay runtime PASS and not manual playtest PASS. G21-R4B is docs-only closeout and G21 is not merged to main.
+G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects. This is not complete gameplay runtime PASS and not manual playtest PASS. G21 is fast-forward merged to main. G22 has not started.
 
 Current stage: G20 Project Knowledge Governance is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20 does not run Godot and does not claim Godot parser smoke PASS, gameplay runtime PASS, or manual playtest PASS.
 
@@ -44,7 +46,7 @@ G19-R4B status: self-check PASS, Godot headless project-load/parser smoke PASS, 
 
 G19 merged to main: yes, by fast-forward. First main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823`.
 
-G20 docs-only governance branch: `godot/g20-project-knowledge-governance`. R3a imported authorized text design source copies under `docs/design_sources/`; Base Docs originals were not modified; PNG files were not imported and remain `external_reference` / `pending_user_authorization`; R3b adds project governance maps and design source indexes; R3c adds G10-G19 stage summaries, route analysis, system boundary map, and stage dependency map; R3d1 adds branch, commit, and validation governance matrices under `docs/project_governance/`; R3d2 adds decision log, glossary, and temporary / deprecated inventory under `docs/project_governance/`; R4A read-only acceptance passed; R4B docs-only closeout is complete. G20 is fast-forward merged to main, G20 final has executed, G21-R3 has started separately, and no Godot project, scene, resource, font, import product, `.uid`, or `.translation` change is part of R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final.
+G20 docs-only governance branch: `godot/g20-project-knowledge-governance`. R3a imported authorized text design source copies under `docs/design_sources/`; Base Docs originals were not modified; PNG files were not imported and remain `external_reference` / `pending_user_authorization`; R3b adds project governance maps and design source indexes; R3c adds G10-G19 stage summaries, route analysis, system boundary map, and stage dependency map; R3d1 adds branch, commit, and validation governance matrices under `docs/project_governance/`; R3d2 adds decision log, glossary, and temporary / deprecated inventory under `docs/project_governance/`; R4A read-only acceptance passed; R4B docs-only closeout is complete. G20 is fast-forward merged to main, G20 final has executed, G21 completed separately and is now merged to main, and no Godot project, scene, resource, font, import product, `.uid`, or `.translation` change is part of G20 R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final.
 
 G20-R4B closeout commit / first main merge baseline: `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20 final post-merge docs commit: pending until commit.
 
@@ -209,7 +211,7 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G16-R5 closes branch docs/status; parser blocker fix `4637e8f` makes encounter helper references parser-safe.
 - Post-G16 architecture direction baseline records that current architecture has not lost control, G15/G16 Encounter / Combat foundations should be retained, and G17 should focus on `AppShell / NavigationIntent / PageRouter / MainMenuShell` rather than plain main-menu implementation.
 
-Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, G15 Encounter Contract Foundation, G16 Combat Encounter Foundation, G17 AppShell / MainMenuShell foundation, G18 DeployPrepShell / DeployConfig / RunStartConfig foundation, G19 LongTermShell foundation, and G20 Project Knowledge Governance docs-only artifacts. G20 is not Asset Contract, not Warehouse, not gameplay implementation, not Godot parser smoke PASS, not gameplay runtime PASS, and not manual playtest PASS.
+Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, G15 Encounter Contract Foundation, G16 Combat Encounter Foundation, G17 AppShell / MainMenuShell foundation, G18 DeployPrepShell / DeployConfig / RunStartConfig foundation, G19 LongTermShell foundation, G20 Project Knowledge Governance docs-only artifacts, and G21 Asset & Item Flow Contract Foundation. G21 is not Warehouse, not gameplay implementation, not gameplay runtime PASS, and not manual playtest PASS.
 
 Post-G17 next structural work requires separate authorization. Main menu should only navigate and present atmosphere/light hints; it must not directly start or continue RunScene. Expedition prep should later output `RunStartConfig / DeployConfig`; long-term systems should later output `PlayerProfileSnapshot / LongTermSnapshot / UnlockSnapshot`; settlement should later return through `RunResultSummary / SettlementAdapter`.
 

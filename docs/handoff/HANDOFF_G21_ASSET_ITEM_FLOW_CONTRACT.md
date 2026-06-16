@@ -6,7 +6,11 @@ G21-R3 implements the Asset & Item Flow Contract Foundation on branch `godot/g21
 
 G21-R3 commit: `29a68e7b093ae653be212e32eb97042c0a7c0a4c`.
 
-G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects. G21-R4B is docs-only closeout for the branch and does not merge `main`.
+G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects.
+
+G21-R4B closeout commit and first main commit containing G21: `fdadd78ccdf1d61378ac93a74cfe26449e47c411`.
+
+G21 is fast-forward merged to `main`. G22 has not started.
 
 This is a contract foundation only. It provides schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema.
 

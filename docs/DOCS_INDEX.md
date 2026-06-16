@@ -4,11 +4,11 @@ This file is the document navigation and historical index. It is not the fact so
 
 ## G20 Governance Branch Status
 
-G20 docs-only project knowledge governance is fast-forward merged to `main` at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20-R3a 已完成 Base Docs Markdown / TXT design source 文本副本入库且 Base Docs 原件未修改；PNG 未入库，仅登记为 `external_reference` / `pending_user_authorization`；G20-R3b 已完成 project governance 与 design source index；G20-R3c 已完成 G10-G19 stage summaries 与 route analysis；G20-R3d1 已完成 branch / commit / validation governance matrices；G20-R3d2 新增 decision log / glossary / deprecated inventory；G20-R4A 只读验收通过；G20-R4B docs-only closeout 已完成；G20 final 已执行。post-merge docs commit hash pending until commit。G21-R3 已在独立分支完成 Asset & Item Flow Contract Foundation，G21-R4 已通过 Godot headless project-load/parser smoke PASS，G21-R4B 是 docs-only closeout，尚未合并 main。G20 是 docs-only，不声明 Godot smoke，不声明 gameplay runtime PASS，不声明 manual playtest PASS。
+G20 docs-only project knowledge governance is fast-forward merged to `main` at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20-R3a 已完成 Base Docs Markdown / TXT design source 文本副本入库且 Base Docs 原件未修改；PNG 未入库，仅登记为 `external_reference` / `pending_user_authorization`；G20-R3b 已完成 project governance 与 design source index；G20-R3c 已完成 G10-G19 stage summaries 与 route analysis；G20-R3d1 已完成 branch / commit / validation governance matrices；G20-R3d2 新增 decision log / glossary / deprecated inventory；G20-R4A 只读验收通过；G20-R4B docs-only closeout 已完成；G20 final 已执行。post-merge docs commit hash pending until commit。G21-R3 已完成 Asset & Item Flow Contract Foundation，G21-R4 已通过 Godot headless project-load/parser smoke PASS，G21-R4B closeout / first main commit 为 `fdadd78ccdf1d61378ac93a74cfe26449e47c411`，G21 已 fast-forward 合并 main。G20 是 docs-only，不声明 Godot smoke，不声明 gameplay runtime PASS，不声明 manual playtest PASS。G22 尚未启动。
 
 ## G21 Branch Status
 
-G21-R3 is complete on `godot/g21-asset-item-flow-contract` from `main@4bb4594fc23b846da9c15003a86c71cf08003830` at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`. It adds Asset & Item Flow Contract Foundation only: schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema. It does not implement real asset systems, warehouse, event bus, reward grant, persistence, gacha, settlement/history, red dot state, or Policy / Tag rule engine. G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS and no dirty side effects. This is not gameplay runtime PASS or manual playtest PASS. G21-R4B is docs-only closeout and is not merged to main.
+G21-R3 is complete on `godot/g21-asset-item-flow-contract` from `main@4bb4594fc23b846da9c15003a86c71cf08003830` at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`. G21-R4B closeout / first main commit containing G21 is `fdadd78ccdf1d61378ac93a74cfe26449e47c411`. It adds Asset & Item Flow Contract Foundation only: schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema. It does not implement real asset systems, warehouse, event bus, reward grant, persistence, gacha, settlement/history, red dot state, or Policy / Tag rule engine. G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS and no dirty side effects. This is not gameplay runtime PASS or manual playtest PASS. G21 is fast-forward merged to main. G22 has not started.
 
 ## Current Fact Sources
 
@@ -33,7 +33,7 @@ G21-R3 is complete on `godot/g21-asset-item-flow-contract` from `main@4bb4594fc2
 - `docs/project_governance/EXECUTION_ENVIRONMENT.md` - Local execution path and PATCH_MODE safety rules.
 - `docs/stage_summaries/STAGE_SUMMARY_INDEX.md` - G10-G19 stage summary index added by G20-R3c.
 - `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md` - G10-G19 route analysis added by G20-R3c.
-- `docs/route_analysis/ROADMAP_G20_PLUS.md` - G20 route recommendation for G21+ work; G21 has since completed branch R3/R4 validation and is awaiting final main merge decision.
+- `docs/route_analysis/ROADMAP_G20_PLUS.md` - G20 route recommendation for G21+ work; G21 has since completed R3/R4 validation and is merged to main. G22 has not started.
 - `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md` - Current/future system boundary map added by G20-R3c.
 - `docs/route_analysis/STAGE_DEPENDENCY_MAP.md` - Stage dependency map added by G20-R3c.
 - `docs/bugs/G10_BASELINE_BUG_BACKLOG.md` - G10 baseline bug and remaining-scope backlog evidence.
@@ -112,7 +112,7 @@ Do not start by reading every old audit, branch change, or design file unless th
 - `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
 - `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
 
-These files summarize G10-G19 and recommend a possible G20+ route. G21 later started and completed branch R3/R4 validation separately; these route files still do not claim gameplay runtime PASS or manual playtest PASS for G20 or G21.
+These files summarize G10-G19 and recommend a possible G20+ route. G21 later completed R3/R4 validation and merged to main separately; these route files still do not claim gameplay runtime PASS or manual playtest PASS for G20 or G21.
 
 ## G20-R3d1 Governance Matrices
 

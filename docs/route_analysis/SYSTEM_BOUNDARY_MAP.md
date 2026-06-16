@@ -106,8 +106,8 @@ flowchart LR
 - 不读取什么：UI shell private internals、external Base Docs originals。
 - 输出什么：Asset/Item/Event/Projection public schema contract。
 - 不能直接调用什么：RunScene startup、LongTerm reward claim、warehouse mutation without contract。
-- 当前实现状态：G21-R3 complete at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4 Godot headless project-load/parser smoke PASS; G21-R4B docs-only branch closeout; not merged main.
-- 后续承接阶段：G21 final main merge decision, then possible G22 Warehouse / Asset Page Shell Foundation.
+- 当前实现状态：G21-R3 complete at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4 Godot headless project-load/parser smoke PASS; G21-R4B / first main commit `fdadd78ccdf1d61378ac93a74cfe26449e47c411`; merged main.
+- 后续承接阶段：possible G22 Warehouse / Asset Page Shell Foundation; G22 has not started.
 
 ## future Warehouse
 
