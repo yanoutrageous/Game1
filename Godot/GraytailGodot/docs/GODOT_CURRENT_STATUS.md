@@ -10,11 +10,13 @@ Current G21 branch: `godot/g21-asset-item-flow-contract`.
 
 G21-R3 baseline main HEAD: `4bb4594fc23b846da9c15003a86c71cf08003830`.
 
+G21-R3 commit: `29a68e7b093ae653be212e32eb97042c0a7c0a4c`.
+
 G21-R3 adds Asset & Item Flow Contract Foundation under `Godot/GraytailGodot/scripts/core/asset/`: `AssetContract`, `ItemSchema`, `AssetEventSchema`, and `AssetProjectionSchema`. It is schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema only.
 
-G21-R3 does not implement real asset systems, warehouse, inventory, event bus, reward grant, persistence, gacha, settlement/history, red dot state, or Policy / Tag rule engine. It does not modify DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, `.uid`, `.translation`, or Base Docs.
+G21 does not implement real asset systems, warehouse, inventory, event bus, reward grant, persistence, gacha, settlement/history, red dot state, or Policy / Tag rule engine. It does not modify DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, `.uid`, `.translation`, or Base Docs.
 
-G21-R3 Godot run status: not run. G21-R4 may run headless project-load/parser smoke if authorized. Do not report G21-R3 as complete gameplay runtime PASS or manual playtest PASS.
+G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects. This is not complete gameplay runtime PASS and not manual playtest PASS. G21-R4B is docs-only closeout and G21 is not merged to main.
 
 Current stage: G20 Project Knowledge Governance is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20 does not run Godot and does not claim Godot parser smoke PASS, gameplay runtime PASS, or manual playtest PASS.
 

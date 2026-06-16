@@ -4,6 +4,10 @@
 
 G21-R3 adds an asset and item flow contract foundation only.
 
+G21-R3 commit: `29a68e7b093ae653be212e32eb97042c0a7c0a4c`.
+
+G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects. G21-R4B is docs-only closeout on `godot/g21-asset-item-flow-contract`; G21 is not merged to `main` in this document.
+
 Implemented code files:
 
 - `Godot/GraytailGodot/scripts/core/asset/asset_contract.gd`
@@ -35,7 +39,7 @@ Policy fields describe rule choices. Tag fields are metadata for display, filter
 
 ## Explicit Non-Goals
 
-G21-R3 does not implement:
+G21 does not implement:
 
 - real warehouse
 - real inventory
@@ -60,9 +64,9 @@ G21-R3 does not implement:
 - real ItemInstance persistence
 - real Policy / Tag rule engine
 
-G21-R3 does not start RunScene, does not dispatch CommandBus, and does not read RunContext / Encounter / Combat / Ledger / TruthMap private state.
+G21 does not start RunScene, does not dispatch CommandBus, and does not read RunContext / Encounter / Combat / Ledger / TruthMap private state.
 
-G21-R3 does not modify DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, import products, `.uid`, `.translation`, or Base Docs.
+G21-R4B does not modify DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, import products, `.uid`, `.translation`, or Base Docs.
 
 ## Static Validation Commands
 
@@ -83,9 +87,9 @@ Negative grep hits in docs are allowed only when they state non-goals or boundar
 
 ## Godot Runtime Boundary
 
-G21-R3 does not run Godot.
+G21-R3 did not run Godot.
 
-If G21-R4 is authorized, run Godot headless project-load/parser smoke with:
+G21-R4 ran Godot headless project-load/parser smoke with:
 
 ```text
 D:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe
@@ -97,4 +101,6 @@ Project path:
 D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot
 ```
 
-Any future G21-R4 smoke may only be recorded as Godot headless project-load/parser smoke PASS. It must not be recorded as complete gameplay runtime PASS or manual playtest PASS.
+G21-R4 result: Godot headless project-load/parser smoke PASS.
+
+This is not complete gameplay runtime PASS and not manual playtest PASS.

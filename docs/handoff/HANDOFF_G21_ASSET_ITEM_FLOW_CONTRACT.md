@@ -4,6 +4,10 @@
 
 G21-R3 implements the Asset & Item Flow Contract Foundation on branch `godot/g21-asset-item-flow-contract`.
 
+G21-R3 commit: `29a68e7b093ae653be212e32eb97042c0a7c0a4c`.
+
+G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects. G21-R4B is docs-only closeout for the branch and does not merge `main`.
+
 This is a contract foundation only. It provides schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema.
 
 ## Added Code
@@ -69,19 +73,19 @@ These projections describe future read boundaries. They do not implement future 
 
 ## Non-Goals
 
-G21-R3 does not implement real warehouse, inventory, sell, equip, gacha, probability, settlement report, history storage, objective reward, red dot state, reward claim, persistence, MetaProgress, item content tables, numeric balance, art references, event bus, RewardBundle grant, AssetEvent write, ItemInstance persistence, or Policy / Tag rule engine.
+G21 does not implement real warehouse, inventory, sell, equip, gacha, probability, settlement report, history storage, objective reward, red dot state, reward claim, persistence, MetaProgress, item content tables, numeric balance, art references, event bus, RewardBundle grant, AssetEvent write, ItemInstance persistence, or Policy / Tag rule engine.
 
-G21-R3 does not start RunScene, dispatch CommandBus, or read RunContext / Encounter / Combat / Ledger / TruthMap private state.
+G21 does not start RunScene, dispatch CommandBus, or read RunContext / Encounter / Combat / Ledger / TruthMap private state.
 
-G21-R3 does not modify project.godot, scenes, resources, fonts, import products, `.uid`, `.translation`, Base Docs, or the wrong external Godot path.
+G21-R4B does not modify project.godot, scenes, resources, fonts, import products, `.uid`, `.translation`, Base Docs, or the wrong external Godot path.
 
 ## Validation
 
 Use `docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md`.
 
-G21-R3 does not run Godot. Godot headless project-load/parser smoke is deferred to G21-R4 if authorized.
+G21-R3 did not run Godot. G21-R4 ran Godot headless project-load/parser smoke and recorded PASS.
 
-Do not claim full gameplay runtime PASS or manual playtest PASS for G21-R3.
+Do not claim full gameplay runtime PASS or manual playtest PASS for G21.
 
 ## PATCH_MODE
 

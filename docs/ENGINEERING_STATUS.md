@@ -2,7 +2,7 @@
 
 ## Stage
 
-G21 Asset & Item Flow Contract Foundation is in progress on branch `godot/g21-asset-item-flow-contract` from `main@4bb4594fc23b846da9c15003a86c71cf08003830`. G21-R3 adds contract-only schema files under `Godot/GraytailGodot/scripts/core/asset/` for `AssetContract`, `ItemSchema`, `AssetEventSchema`, and `AssetProjectionSchema`. It defines schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema only. It does not implement a real asset system, warehouse, event bus, reward grant, persistence, gacha, settlement/history, red dot system, or Policy / Tag rule engine. It does not run Godot; G21-R4 parser smoke remains deferred.
+G21 Asset & Item Flow Contract Foundation is in R4B docs-only closeout on branch `godot/g21-asset-item-flow-contract` from `main@4bb4594fc23b846da9c15003a86c71cf08003830`. G21-R3 is complete at `29a68e7b093ae653be212e32eb97042c0a7c0a4c` and adds contract-only schema files under `Godot/GraytailGodot/scripts/core/asset/` for `AssetContract`, `ItemSchema`, `AssetEventSchema`, and `AssetProjectionSchema`. It defines schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema only. It does not implement a real asset system, warehouse, event bus, reward grant, persistence, gacha, settlement/history, red dot system, or Policy / Tag rule engine. G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS; smoke left the working tree clean with no dirty side effects. This is not complete gameplay runtime PASS and not manual playtest PASS.
 
 G20 Project Knowledge Governance is a docs-only stage and is fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20-R3a imported authorized Base Docs Markdown / TXT text design source copies; Base Docs originals were not modified; PNG files were not imported and remain `external_reference` / `pending_user_authorization`. G20-R3b added project governance maps and design source index, G20-R3c added G10-G19 stage summaries and route analysis, G20-R3d1 added branch / commit / validation governance matrices, G20-R3d2 added decision log / glossary / deprecated inventory, G20-R4A read-only acceptance passed, and G20-R4B docs-only closeout is complete. G20 final executed; post-merge docs commit hash is pending until commit. G21-R3 has now started as a separate branch-only contract foundation, and G20 does not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
@@ -17,8 +17,11 @@ G20 Project Knowledge Governance is a docs-only stage and is fast-forward merged
 - Base branch: `main`
 - G21 branch: `godot/g21-asset-item-flow-contract`
 - G21-R3 baseline main HEAD: `4bb4594fc23b846da9c15003a86c71cf08003830`
-- G21-R3 status: Asset & Item Flow Contract Foundation implementation in this branch; no Godot run
-- Current working branch for this handoff: `main`
+- G21-R3 commit: `29a68e7b093ae653be212e32eb97042c0a7c0a4c`
+- G21-R3 status: Asset & Item Flow Contract Foundation implementation complete in this branch
+- G21-R4 status: acceptance passed, Godot headless project-load/parser smoke PASS, no dirty side effects
+- G21-R4B status: docs-only closeout; branch not merged to main
+- Current working branch for this handoff: `godot/g21-asset-item-flow-contract`
 - G19 branch: `godot/g19-long-term-shell-foundation`
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`
 - G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`
@@ -47,7 +50,7 @@ G20 Project Knowledge Governance is a docs-only stage and is fast-forward merged
 - G20 final executed: yes
 - G20 final post-merge docs commit: pending until commit
 - G20-R3d2 executed: yes
-- G21-R3 started: yes, branch-only; not merged to main
+- G21-R3 complete: yes, branch-only at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4 acceptance passed; G21-R4B docs-only closeout is not merged to main
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`
 - G18 closeout / merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`

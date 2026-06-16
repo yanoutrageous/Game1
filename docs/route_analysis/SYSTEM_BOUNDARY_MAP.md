@@ -98,16 +98,16 @@ flowchart LR
 - 当前实现状态：G16 foundation 已并入 main。
 - 后续承接阶段：future combat expansion 需独立阶段。
 
-## future Asset Contract
+## G21 Asset Contract
 
 - 负责什么：资产、物品、奖励、标签、策略的最小 public contract。
 - 不负责什么：完整 warehouse UI、完整 economy、gacha、settlement history。
 - 读取什么：设计源和现有 ledger public boundaries。
 - 不读取什么：UI shell private internals、external Base Docs originals。
-- 输出什么：Asset/Item/Reward public snapshot contract。
+- 输出什么：Asset/Item/Event/Projection public schema contract。
 - 不能直接调用什么：RunScene startup、LongTerm reward claim、warehouse mutation without contract。
-- 当前实现状态：未启动。
-- 后续承接阶段：建议 G21。
+- 当前实现状态：G21-R3 complete at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4 Godot headless project-load/parser smoke PASS; G21-R4B docs-only branch closeout; not merged main.
+- 后续承接阶段：G21 final main merge decision, then possible G22 Warehouse / Asset Page Shell Foundation.
 
 ## future Warehouse
 
