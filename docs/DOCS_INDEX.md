@@ -2,12 +2,21 @@
 
 This file is the document navigation and historical index. It is not the fact source itself; use `docs/PROJECT_BASELINE.md` for current facts and `docs/NEXT_HANDOFF.md` for the minimum next-chat entry.
 
+## G20 Governance Branch Status
+
+G20 docs-only project knowledge governance is in progress on `godot/g20-project-knowledge-governance`. G20-R3a imported the authorized Base Docs Markdown / TXT design source copies into `docs/design_sources/`; G20-R3b adds project_governance and design_sources index entries. G20 is not merged to `main`, G20-R3c/R3d are not executed, G21 is not started, and no Godot smoke, gameplay runtime PASS, or manual playtest PASS is claimed for R3a/R3b.
+
 ## Current Fact Sources
 
 - `docs/PROJECT_BASELINE.md` - current engineering fact source.
 - `docs/ENGINEERING_STATUS.md` - broader engineering status and validation list.
 - `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md` - Godot-specific current status.
 - `docs/MILESTONES.md` - historical G-number to formal milestone mapping.
+- `docs/project_governance/SOURCE_OF_TRUTH_POLICY.md` - Source of Truth priority for current facts, design sources, handoffs, validation, route analysis, and external Base Docs originals.
+- `docs/project_governance/SOURCE_REGISTRY.md` - Registry for active fact sources, imported design sources, external references, and planned R3c/R3d governance artifacts.
+- `docs/project_governance/DOCUMENT_LIFECYCLE.md` - Lifecycle rules for source_design, current_status, handoff, validation, stage_summary, route_analysis, project_governance, archive, deprecated, and temporary files.
+- `docs/project_governance/NAMING_CONVENTIONS.md` - Stage prefix and needs review naming rules.
+- `docs/project_governance/EXECUTION_ENVIRONMENT.md` - Local execution path and PATCH_MODE safety rules.
 - `docs/bugs/G10_BASELINE_BUG_BACKLOG.md` - G10 baseline bug and remaining-scope backlog evidence.
 - `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` - Post-G16 architecture direction baseline and G17 route recommendation.
 
@@ -43,6 +52,8 @@ Do not start by reading every old audit, branch change, or design file unless th
 
 ## Design Documents
 
+- `docs/design_sources/README.md`
+- `docs/design_sources/DESIGN_SOURCE_INDEX.md`
 - `docs/design/G8_ASSET_LEDGER_INVENTORY_SETTLEMENT_CORE_PLAN.md`
 - `docs/design/G9_UI_PRESENTATION_LAYERING_ARCHITECTURE.md`
 - `docs/design/G10_FUTURE_CONTENT_PLANNING.md`
@@ -131,4 +142,4 @@ G17 branch work on `godot/g17-app-shell-main-menu` has R2 implementation, R3 acc
 
 G18 work on `godot/g18-deploy-prep-foundation` is limited to formal expedition prep foundation: DeployPrepShell, five placeholder tabs, public DeployConfig / RunStartConfig preview, validation/manual checklist updates, R4 acceptance, and Godot headless project-load/parser smoke PASS. It is fast-forward merged to `main` and does not implement true run start, real maps, warehouse, requisition, work permits, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence.
 
-G19 work on `godot/g19-long-term-shell-foundation` is limited to LongTermShell foundation: six fixed modules, placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19-R4B records Godot headless project-load/parser smoke PASS on the branch, with no complete gameplay runtime PASS and no manual playtest PASS. G19 is fast-forward merged to `main` at `04e14865f4d5eff7b16398d5730054273ccd0823`; G20 has not started. It does not implement real long-term systems, item or asset systems, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
+G19 work on `godot/g19-long-term-shell-foundation` is limited to LongTermShell foundation: six fixed modules, placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19-R4B records Godot headless project-load/parser smoke PASS on the branch, with no complete gameplay runtime PASS and no manual playtest PASS. G19 is fast-forward merged to `main` at `04e14865f4d5eff7b16398d5730054273ccd0823`; G20 docs-only governance is in progress on `godot/g20-project-knowledge-governance` and is not merged to `main`. It does not implement real long-term systems, item or asset systems, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.

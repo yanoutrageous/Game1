@@ -6,7 +6,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Current branch for this handoff: `main`
+- Current branch for this handoff: `godot/g20-project-knowledge-governance`
 - Base branch: `main`
 - Current G18 branch: `godot/g18-deploy-prep-foundation`
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
@@ -22,7 +22,13 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G19-R4B closeout commit / first main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823 docs: close G19 long term shell foundation`.
 - G19 scope: LongTermShell foundation, six module placeholder, and display-only interface preview only.
 - G19 merged to main: yes, by fast-forward.
-- G20 started: no.
+- G20 docs-only governance branch: `godot/g20-project-knowledge-governance`.
+- G20-R3a commit: `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7 docs: import design sources for G20 governance`; pushed to the G20 branch.
+- G20-R3b scope: project governance documents and design source index structure.
+- G20 merged to main: no.
+- G20-R3c/R3d executed: no.
+- G21 started: no.
+- Godot run for G20-R3a/R3b: no; no Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed.
 - G19 validation draft: `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`.
 - G19 handoff: `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`.
 - G17-R2 branch: `godot/g17-app-shell-main-menu`
@@ -106,7 +112,7 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 - Do not run Godot/editor/game/import unless the user explicitly authorizes it.
 - Do not create temporary scripts, logs, caches, or derived files outside `D:\AGAME1\_repo_cache\Game1_work`.
 - Do not scan or clean paths outside `D:\AGAME1\_repo_cache\Game1_work` unless the user provides an explicit path and authorization.
-- Planning source files now live under `D:\AGAME1\Base Docs` and are not part of repository commits.
+- Planning source originals still live under `D:\AGAME1\Base Docs`; G20-R3a imported authorized Markdown / TXT copies into `docs/design_sources/`. External Base Docs originals and PNG references were not modified by R3b.
 - `docs/可行性判断.md` and `docs/难度判断.md` were moved by the user to `D:\AGAME1\Base Docs`; their repository deletions are authorized docs relocation deletions.
 - Protective stash must remain untouched: `stash@{0}: On main: pre-sync generated dirty before aligning to G15 encounter branch on computer two`.
 - If unknown dirty appears, stop and report.
@@ -128,7 +134,7 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 - Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
 - Latest integrated stage: G19 `LongTermShell foundation`.
-- G19-R4B self-check and Godot headless project-load/parser smoke passed on the branch before fast-forward merge to main. G20 has not started and requires separate authorization.
+- G19-R4B self-check and Godot headless project-load/parser smoke passed on the branch before fast-forward merge to main. G20 docs-only governance is now in progress on `godot/g20-project-knowledge-governance`; it requires separate authorization for each R3 batch and does not start G21.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
 This handoff records G19 mainline integration and post-merge docs calibration. Godot headless project-load/parser smoke PASS is recorded for G19-R4B, but complete gameplay runtime PASS and manual playtest PASS are not claimed.

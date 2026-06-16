@@ -17,7 +17,8 @@
 - G19 scope: `LongTermShell foundation + 6 module placeholder + interface preview only`.
 - G19 modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
 - G19 merged to main: yes, by fast-forward.
-- G20 has not started.
+- G20 docs-only governance branch is in progress on `godot/g20-project-knowledge-governance`; R3a imported authorized text design source copies and R3b adds project_governance and design_sources index structure. G20 is not merged to main.
+- G20-R3c/R3d have not executed, G21 has not started, and G20-R3a/R3b do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 - G19-R4B smoke is not complete gameplay runtime PASS and not manual playtest PASS.
 - Integrated G17 branch: `godot/g17-app-shell-main-menu`.
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`.
@@ -28,7 +29,7 @@
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current working branch for this handoff: `godot/g19-long-term-shell-foundation`.
+- Current working branch for this handoff: `godot/g20-project-knowledge-governance`.
 - Source branch for G17: `godot/g17-app-shell-main-menu`.
 - Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`.
 - G16-R3 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
@@ -68,7 +69,7 @@
 - G14 closeout commit: `d6c03c6 docs: close G14 legacy demo UI surface pass`.
 - Old UE repository `Game.git`: read-only reference only.
 - `lua-prototype-main`: read-only historical prototype baseline.
-- Planning source files now live under `D:\AGAME1\Base Docs`; `docs/可行性判断.md` and `docs/难度判断.md` were moved there by the user and their repository deletions are authorized docs relocation deletions.
+- Planning source originals still live under `D:\AGAME1\Base Docs`; `docs/可行性判断.md` and `docs/难度判断.md` were moved there by the user and their repository deletions are authorized docs relocation deletions. G20-R3a imported authorized Markdown / TXT copies into `docs/design_sources/`; external Base Docs originals and PNG references were not modified by R3b.
 
 This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for the shortest next-chat context and `docs/DOCS_INDEX.md` for document navigation.
 
@@ -146,7 +147,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Recommended next step requires a separate G20 authorization and fresh execution calibration. G20 has not started.
+Recommended next G20 step after R3b is a separately authorized R3c or R3d execution frame. G20 docs-only governance is in progress on its branch and is not merged to main.
 
 G18 should not be treated as complete expedition prep. G18-R3 is only the minimal foundation for `DeployPrepShell / DeployConfig / RunStartConfig` preview. Do not expand it into Boss, action combat, true run start, real maps, warehouse economy, requisition economy, work permit rules, settlement reports/history, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems without explicit authorization.
 

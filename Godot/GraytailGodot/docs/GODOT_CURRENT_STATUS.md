@@ -32,7 +32,9 @@ G19-R4B status: self-check PASS, Godot headless project-load/parser smoke PASS, 
 
 G19 merged to main: yes, by fast-forward. First main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823`.
 
-G20 started: no.
+G20 docs-only governance branch: `godot/g20-project-knowledge-governance`. R3a imported authorized text design source copies under `docs/design_sources/`; R3b adds project governance maps and design source indexes. G20 is not merged to main, G21 has not started, and no Godot project, scene, resource, font, import product, `.uid`, or `.translation` change is part of R3a/R3b.
+
+G20-R3a/R3b Godot run status: not run. No Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed for these docs-only batches.
 
 G19 modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
 
@@ -110,7 +112,7 @@ Docs index: `docs/DOCS_INDEX.md`.
 
 Milestone map: `docs/MILESTONES.md`.
 
-Planning source files now live under `D:\AGAME1\Base Docs`; `docs/可行性判断.md` and `docs/难度判断.md` were moved there by the user and their repository deletions are authorized docs relocation deletions.
+Planning source originals still live under `D:\AGAME1\Base Docs`; `docs/可行性判断.md` and `docs/难度判断.md` were moved there by the user and their repository deletions are authorized docs relocation deletions. G20-R3a imported authorized Markdown / TXT copies into `docs/design_sources/`; external Base Docs originals and PNG references were not modified by R3b.
 
 G9 UI final integration branch: `godot/g9-ui-final-integration`.
 

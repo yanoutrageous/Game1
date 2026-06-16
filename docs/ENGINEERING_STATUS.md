@@ -2,7 +2,7 @@
 
 ## Stage
 
-G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 has not started, and the smoke is not complete gameplay runtime PASS or manual playtest PASS.
+G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 docs-only governance branch is in progress on `godot/g20-project-knowledge-governance`: R3a imported authorized text design source copies and R3b adds project governance maps. G20 is not merged to main, G21 has not started, and R3a/R3b do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
 ## Time
 
@@ -13,7 +13,7 @@ G19 LongTermShell foundation is fast-forward merged to main with R4B self-check 
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current working branch for this handoff: `godot/g19-long-term-shell-foundation`
+- Current working branch for this handoff: `godot/g20-project-knowledge-governance`
 - G19 branch: `godot/g19-long-term-shell-foundation`
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`
 - G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`
@@ -21,6 +21,13 @@ G19 LongTermShell foundation is fast-forward merged to main with R4B self-check 
 - G19-R4B closeout commit / first main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823 docs: close G19 long term shell foundation`
 - G19 merged to main: yes, by fast-forward
 - G19 scope: LongTermShell foundation, six module placeholder, and display-only interface preview only
+- G20 branch: `godot/g20-project-knowledge-governance`
+- G20-R3a commit: `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7 docs: import design sources for G20 governance`
+- G20-R3a status: Base Docs Markdown / TXT design source copies imported under `docs/design_sources/`
+- G20-R3b status: project_governance and design_sources index structure added in this batch
+- G20 merged to main: no
+- G20-R3c/R3d executed: no
+- G21 started: no
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`
 - G18 closeout / merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`
@@ -69,7 +76,7 @@ G19 LongTermShell foundation is fast-forward merged to main with R4B self-check 
 - Current fact source: `docs/PROJECT_BASELINE.md`
 - Next-chat entry: `docs/NEXT_HANDOFF.md`
 - Docs navigation: `docs/DOCS_INDEX.md`
-- Planning source files now live under `D:\AGAME1\Base Docs`; `docs/可行性判断.md` and `docs/难度判断.md` were moved there by the user and their repository deletions are authorized docs relocation deletions.
+- Planning source originals still live under `D:\AGAME1\Base Docs`; `docs/可行性判断.md` and `docs/难度判断.md` were moved there by the user and their repository deletions are authorized docs relocation deletions. G20-R3a imported authorized Markdown / TXT copies into `docs/design_sources/`; external Base Docs originals and PNG references were not modified by R3b.
 - G8 branch: `godot/g8-rules-asset-ledger-core`
 - G8.1 branch: `godot/g8-1-architecture-hardening`
 - G8.2 branch: `godot/g8-2-kernel-protocol-hardening`
