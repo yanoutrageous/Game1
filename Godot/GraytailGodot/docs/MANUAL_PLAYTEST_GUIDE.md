@@ -10,6 +10,22 @@ Current baseline smoke should cover the three-page shell, the G14 run surface sh
 
 G17 mainline note: `godot/g17-app-shell-main-menu` added a formal AppShell / NavigationIntent / PageRouter / MainMenuShell slice and has been fast-forward merged to `main`. G17-R3 ran Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. Manual validation must still confirm the main menu only navigates to placeholder routes and does not directly start or continue RunScene.
 
+G18 branch note: `godot/g18-deploy-prep-foundation` adds a formal DeployPrepShell foundation only. G18-R3 does not run Godot/editor/game/import and does not claim parser PASS, complete gameplay runtime PASS, or manual playtest PASS.
+
+## G18 DeployPrep Foundation Static Checklist
+
+Use this checklist for G18-R3 static/manual review after explicit runtime authorization. Static inspection alone is not runtime PASS.
+
+- Confirm the AppShell deploy route opens DeployPrepShell rather than the old deploy placeholder.
+- Confirm DeployPrepShell shows exactly five tabs: `地图`, `仓库`, `申领`, `出勤配置`, `作业许可`.
+- Confirm each tab is placeholder-only and does not generate a real map, read real warehouse data, perform requisition transactions, or apply work permit rules.
+- Confirm the right side shows `摘要`, `配置`, `效果`, and `风险` sections from public preview data.
+- Confirm `开始探索` only generates DeployConfig / RunStartConfig preview or `deploy_start_intent`; it must not start or continue RunScene.
+- Confirm `继续探索` and `放弃探索` remain disabled / placeholder and do not perform settlement.
+- Confirm DeployPrepShell does not dispatch CommandBus and does not read private run state.
+- Confirm no `project.godot`, `.tscn`, resources, fonts, import products, `.uid`, or `.translation` files changed.
+- Record whether Godot/editor/game/import was run. If not run, write "not run" and do not claim parser PASS, complete gameplay runtime PASS, or manual playtest PASS.
+
 ## G17 AppShell / MainMenu Static Checklist
 
 Use this checklist for G17 static/manual review. G17-R3 already has parser smoke PASS, but this checklist is not full gameplay runtime PASS and not manual playtest PASS.

@@ -4,6 +4,7 @@ class_name AppShell
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const PageRouterScript := preload("res://scripts/ui/app_shell/page_router.gd")
 const MainMenuShellScript := preload("res://scripts/ui/main_menu/main_menu_shell.gd")
+const DeployPrepShellScript := preload("res://scripts/ui/deploy_prep/deploy_prep_shell.gd")
 
 signal host_route_requested(intent: Dictionary)
 
@@ -20,11 +21,7 @@ func build() -> void:
 	_clear_children()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build_main_menu()
-	deploy_page = _build_placeholder_page(
-		"DeployPlaceholderPage",
-		"出发探索",
-		"出发探索页将在后续阶段接入地图、仓库、申领、出勤配置和开始/继续探索。\n\nG17 只建立导航 route，不直接开始或继续 RunScene。"
-	)
+	_build_deploy_prep()
 	long_term_page = _build_placeholder_page(
 		"LongTermPlaceholderPage",
 		"长期系统",
@@ -41,6 +38,8 @@ func build() -> void:
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	current_snapshot = snapshot.duplicate(true)
+	if deploy_page != null and deploy_page.has_method("apply_snapshot"):
+		deploy_page.call("apply_snapshot", current_snapshot)
 	_refresh_exit_confirm_text()
 
 
@@ -51,6 +50,8 @@ func show_main() -> void:
 
 func show_deploy(_tab_id: StringName = &"overview") -> void:
 	_set_page_visible(deploy_page)
+	if deploy_page != null and deploy_page.has_method("show_tab"):
+		deploy_page.call("show_tab", _tab_id)
 	_hide_exit_confirm()
 
 
@@ -88,6 +89,15 @@ func _build_main_menu() -> void:
 	add_child(main_menu_shell)
 	main_menu_shell.call("build")
 	main_menu_shell.connect("navigation_intent_requested", _on_navigation_intent_requested)
+
+
+func _build_deploy_prep() -> void:
+	deploy_page = DeployPrepShellScript.new() as Control
+	deploy_page.name = "DeployPrepShell"
+	add_child(deploy_page)
+	deploy_page.call("build")
+	if deploy_page.has_signal("deploy_start_intent_requested"):
+		deploy_page.connect("deploy_start_intent_requested", _on_deploy_start_intent_requested)
 
 
 func _build_placeholder_page(page_name: String, title: String, body: String) -> Control:
@@ -155,6 +165,11 @@ func _on_navigation_intent_requested(intent: Dictionary) -> void:
 			host_route_requested.emit(intent)
 		_:
 			show_main()
+
+
+func _on_deploy_start_intent_requested(_intent: Dictionary) -> void:
+	# G18-R3 keeps deploy start as a preview-only public intent.
+	pass
 
 
 func _set_page_visible(active_page: Control) -> void:

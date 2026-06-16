@@ -2,7 +2,7 @@
 
 ## Stage
 
-G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and merged to `main`. Post-G16 architecture direction baseline has been imported as docs-only guidance for G17. G17-R2 implementation and G17-R3 acceptance / Godot headless project-load/parser smoke / docs-only closeout are complete. G16 Combat Encounter Foundation and G15 Encounter Contract Foundation are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
+G18 DeployPrepShell / DeployConfig / RunStartConfig foundation is active on branch `godot/g18-deploy-prep-foundation`. G18-R3 is limited to deploy prep placeholder tabs, right-side summary, and public config preview; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and merged to `main`. G16 Combat Encounter Foundation and G15 Encounter Contract Foundation are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
 
 ## Time
 
@@ -13,7 +13,9 @@ G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is compl
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current working branch for this handoff: `main`
+- Current working branch for this handoff: `godot/g18-deploy-prep-foundation`
+- G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
+- G18 validation checklist: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
 - Source branch for G17: `godot/g17-app-shell-main-menu`
 - G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`
 - G17-R3 closeout commit: `baa57fa41167c86ad226b5b8be4d540ff114269f docs: close G17 app shell main menu foundation`
@@ -174,6 +176,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - Post-G16 architecture direction baseline: `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`.
 - G17 validation checklist: `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`.
 - G17 handoff: `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`.
+- G18 validation checklist: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`.
 
 ## Implemented In G11
 
@@ -351,7 +354,9 @@ Any future UI branch should only consume ViewModel/snapshot outputs and dispatch
 
 G16 final merged the first Monster combat option foundation to `main` after Godot headless project-load/parser smoke PASS. G17 then established `AppShell / NavigationIntent / PageRouter / MainMenuShell` and is fast-forward merged to `main`. Any next stage requires separate authorization. If UI and rules work proceed in parallel, branch from the latest `main` into separate branches and do not push directly to `main` from two computers in parallel. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, `RunSurfaceModel`, and global status / handoff / validation docs.
 
-G17 adds a formal AppShell, NavigationIntent, PageRouter, MainMenuShell, and static MainMenuModel while keeping expedition, long-term, and settings pages as placeholder routes. G17-R3 acceptance and Godot headless project-load/parser smoke PASS are complete, and G17 is fast-forward merged to `main`. It does not implement formal DeployConfig, LongTermSnapshot, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS. No G18 work began.
+G17 adds a formal AppShell, NavigationIntent, PageRouter, MainMenuShell, and static MainMenuModel while keeping expedition, long-term, and settings pages as placeholder routes. G17-R3 acceptance and Godot headless project-load/parser smoke PASS are complete, and G17 is fast-forward merged to `main`. It does not implement formal DeployConfig, LongTermSnapshot, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS.
+
+G18-R3 adds the first DeployPrepShell foundation on a branch. It is not a full expedition-prep implementation: it only provides five placeholder tabs, right-side summary sections, and public DeployConfig / RunStartConfig preview dictionaries. It does not dispatch CommandBus, start or continue RunScene, modify run state, generate real maps, implement warehouse/requisition/permit rules, settlement reports/history, MetaProgress, Deploy persistence, parser PASS, complete gameplay runtime PASS, or manual playtest PASS.
 
 ## Validation
 

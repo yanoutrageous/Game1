@@ -34,6 +34,18 @@ static func make(
 	}
 
 
+static func make_deploy(source: StringName = &"unknown", payload: Dictionary = {}) -> Dictionary:
+	var deploy_payload := {
+		"tab": StringName(payload.get("tab", &"map")),
+		"source_page": StringName(payload.get("source_page", source)),
+		"preview_only": bool(payload.get("preview_only", true)),
+	}
+	for key in payload.keys():
+		if not deploy_payload.has(key):
+			deploy_payload[key] = payload[key]
+	return make(TARGET_DEPLOY, source, deploy_payload)
+
+
 static func target(intent: Dictionary) -> StringName:
 	return StringName(intent.get("target", TARGET_MAIN_MENU))
 
