@@ -22,7 +22,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G16 | Combat Encounter Foundation | R3 complete at `fb18aa06c1850b9e2c627285382e82b8bc7c5d3a`; R4 accepted; R5 docs-only branch closeout; parser blocker fix `4637e8f`; fast-forward merged to main after headless project-load/parser smoke PASS |
 | Post-G16 direction | Architecture Direction Baseline | Docs-only imported direction baseline; recommends G17 as `AppShell / NavigationIntent / PageRouter / MainMenuShell` |
 | G17 | AppShell / NavigationIntent / PageRouter / MainMenuShell | R2 implementation complete at `368a7be5c2fb919db47421a026ddf417df9c1b1c`; R3 acceptance, Godot headless project-load/parser smoke, docs-only closeout, and fast-forward main merge complete |
-| G18 | DeployPrepShell / DeployConfig / RunStartConfig Foundation | R3 active on `godot/g18-deploy-prep-foundation`; minimal deploy prep shell and config preview only, no parser/runtime PASS |
+| G18 | DeployPrepShell / DeployConfig / RunStartConfig Foundation | R4 accepted on `godot/g18-deploy-prep-foundation`; Godot headless project-load/parser smoke PASS; not merged to main; no gameplay runtime PASS or manual playtest PASS |
 
 ## Naming Rule
 
@@ -84,6 +84,6 @@ G15-R3/R4/R5 did not run Godot/editor/game/import and do not claim runtime PASS.
 - G17-R3 acceptance, docs closeout, and Godot headless project-load/parser smoke are complete.
 - G17 is fast-forward merged to main.
 
-G18-R3 does not start Boss, action combat, true RunScene launch, real maps, warehouse/requisition/permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, Deploy persistence, or any G19+ implementation.
+G18-R4 accepts the branch foundation only. G18 does not start Boss, action combat, true RunScene launch, real maps, warehouse/requisition/permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, Deploy persistence, or any G19+ implementation.
 
 If UI and rules work proceed in parallel, branch from latest `main` into separate branches. Do not have two computers push directly to `main` in parallel. The rules line must not directly modify UI surface code, and the UI line must not directly read rule private state. High-conflict ownership is required for `run_scene.gd`, `run_ui_view_model.gd`, `presentation_mapping.gd`, and global status / handoff / validation docs.

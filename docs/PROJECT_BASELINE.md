@@ -2,10 +2,10 @@
 
 ## Current Authority
 
-- Stage: G18 DeployPrepShell / DeployConfig / RunStartConfig foundation is active on branch `godot/g18-deploy-prep-foundation`.
+- Stage: G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance and docs-only closeout complete on branch `godot/g18-deploy-prep-foundation`; it is not merged to main.
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`.
-- G18-R3 target: minimal deploy prep shell, five placeholder tabs, right-side summary, and public DeployConfig / RunStartConfig preview only.
-- G18-R3 does not run Godot/editor/game/import and does not claim parser PASS, gameplay runtime PASS, or manual playtest PASS.
+- G18 scope: minimal deploy prep shell, five placeholder tabs, right-side summary, and public DeployConfig / RunStartConfig preview only.
+- G18-R4 ran Godot headless project-load/parser smoke PASS on the branch; this is not complete gameplay runtime PASS and not manual playtest PASS.
 - Integrated G17 branch: `godot/g17-app-shell-main-menu`.
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`.
 - G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`.
@@ -77,7 +77,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G15-R3/R4/R5 are complete, pushed, and merged to `main`. G15 includes the rules-layer Encounter contract foundation plus the first UI EncounterSlot adapter: `EncounterContract`, `EncounterResolver`, public `encounter_view_model`, public `encounter_result_summary`, additive `select_encounter_option` bridge for search/chest/event, `RunSurfaceModel` display-only section, `RunSurface` EncounterSlot, and minimal `run_scene.gd` wiring.
 - G16 is the first combat encounter foundation slice and is merged to `main`. It adds `combat_basic` / `monster_basic` public encounter data for Monster rooms, a public `attack_basic` option, monster summary, deterministic risk/reward preview, and combat result summary. `attack_basic` routes through `select_encounter_option` into the existing deterministic `fight_current_enemy` chain. The final integration passed Godot headless project-load/parser smoke, which is not complete gameplay runtime PASS or manual playtest PASS.
 - G17 is merged to `main`. It adds the first AppShell / NavigationIntent / PageRouter / MainMenuShell foundation, keeps expedition / long-term / settings as placeholder or legacy routes, and keeps the main menu from directly starting or continuing RunScene. G17-R3 passed Godot headless project-load/parser smoke before integration, which is not complete gameplay runtime PASS or manual playtest PASS.
-- G18-R3 starts the formal expedition prep foundation on top of G17 AppShell. It adds a deploy prep shell and public config preview only. It does not start RunScene, dispatch run CommandBus, modify RunContext, generate real maps, implement warehouse/requisition/permit rules, implement settlement reports/history, or write persistence.
+- G18-R4 accepts the formal expedition prep foundation on top of G17 AppShell. It adds a deploy prep shell and public config preview only. It does not start RunScene, dispatch run CommandBus, modify RunContext, generate real maps, implement warehouse/requisition/permit rules, implement settlement reports/history, or write persistence.
 - Post-G16 architecture direction baseline is recorded in `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`. It concludes that current architecture has not lost control, G15/G16 Encounter / Combat foundations should be retained, and the next structural step should split top-level app navigation into `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 
 ## Current Validation Chain

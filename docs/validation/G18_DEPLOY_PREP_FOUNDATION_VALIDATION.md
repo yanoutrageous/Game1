@@ -1,4 +1,17 @@
 # G18 DeployPrep Foundation Validation
+## R4 Acceptance Update
+
+G18-R4 已完成对 G18-R3 `DeployPrepShell / DeployConfig / RunStartConfig foundation` 的只读验收、Godot headless project-load/parser smoke 和 docs-only closeout。
+
+- Branch: `godot/g18-deploy-prep-foundation`
+- Accepted implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`
+- Baseline main: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
+- Smoke result: Godot headless project-load/parser smoke PASS.
+- Smoke scope: project-load/parser only; not complete gameplay runtime PASS and not manual playtest PASS.
+- G18 remains unmerged to main after R4.
+- G19 has not started.
+- Base Docs were not modified.
+- Closeout note: in environments where `apply_patch` resolves from `D:\AGAME1`, patch paths for this repository must be prefixed with `_repo_cache/Game1_work/`; this is an execution-path safety note, not a gameplay fact.
 
 本文件记录 G18-R3 `DeployPrepShell / DeployConfig / RunStartConfig foundation` 的静态验证边界。
 
@@ -44,5 +57,6 @@ rg -n "project.godot|\\.tscn|\\.uid|\\.translation" .
 - `DeployConfig` must remain a public dictionary helper, not a Node, Resource, save object, or UI control wrapper.
 - History metadata is only an opening-config summary for later SettlementAdapter / report work.
 - Godot/editor/game/import was not run in G18-R3.
-- This record does not claim parser PASS, complete gameplay runtime PASS, or manual playtest PASS.
-- G18 is not closeout in R3; later acceptance / smoke / closeout requires separate authorization.
+- G18-R4 later ran Godot headless project-load/parser smoke PASS during acceptance.
+- This record does not claim complete gameplay runtime PASS or manual playtest PASS.
+- G18-R4 is docs-only branch closeout and is not a main merge.

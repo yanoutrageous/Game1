@@ -10,8 +10,8 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - Base branch: `main`
 - Current G18 branch: `godot/g18-deploy-prep-foundation`
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
-- G18-R3 status: active implementation branch for `DeployPrepShell / DeployConfig / RunStartConfig foundation`; not merged to main.
-- G18 validation draft: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`.
+- G18-R4 status: acceptance, Godot headless project-load/parser smoke, and docs-only closeout complete on `godot/g18-deploy-prep-foundation`; not merged to main.
+- G18 validation and closeout record: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`.
 - G17-R2 branch: `godot/g17-app-shell-main-menu`
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`
 - G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`
@@ -51,7 +51,7 @@ Post-G16 architecture direction import records the next structural recommendatio
 
 G17 is now in `main`. G17-R2 started the top-level split on branch `godot/g17-app-shell-main-menu`: it adds `NavigationIntent`, `PageRouter`, `AppShell`, `MainMenuShell`, and a static `MainMenuModel`. `run_scene.gd` only mounts the AppShell and keeps existing run orchestration. G17-R3 acceptance and Godot headless project-load/parser smoke passed before mainline integration. G17 does not implement formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, or full settings.
 
-G18-R3 is the first formal expedition prep foundation branch. It adds `DeployPrepShell`, `DeployConfig`, `RunStartConfig` preview helpers, five placeholder tabs, and a right-side summary. It must not start RunScene, dispatch run CommandBus, modify RunContext, generate a real map, implement warehouse/requisition/permit rules, or claim runtime/parser PASS.
+G18-R4 has accepted the first formal expedition prep foundation branch. It adds `DeployPrepShell`, `DeployConfig`, `RunStartConfig` preview helpers, five placeholder tabs, and a right-side summary. Godot headless project-load/parser smoke PASS is recorded, but this is not complete gameplay runtime PASS or manual playtest PASS. G18 is not merged to main and must not start RunScene, dispatch run CommandBus, modify RunContext, generate a real map, or implement warehouse/requisition/permit rules.
 
 ## What G16 Does Not Mean
 
@@ -75,7 +75,8 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 12. `docs/ENGINEERING_STATUS.md`
 13. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
 14. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-15. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
+15. `docs/handoff/HANDOFF_G18_DEPLOY_PREP_FOUNDATION.md`
+16. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
 
 ## Safety And Dirty Rules
 
@@ -107,7 +108,7 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 ## Next Stage Candidates
 
 - Current branch stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation` is active on `godot/g18-deploy-prep-foundation`.
-- G18-R3 is a minimal foundation slice only; G18-R4 should handle acceptance and any separately authorized Godot headless project-load/parser smoke.
+- G18-R4 acceptance and Godot headless project-load/parser smoke are complete on the branch. Next step is main merge decision, not more G18 feature work.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
-This handoff records G18 active branch status and does not claim parser PASS, complete gameplay runtime PASS, or manual playtest PASS.
+This handoff records G18 branch acceptance and docs-only closeout status. Godot headless project-load/parser smoke PASS is recorded for G18-R4, but complete gameplay runtime PASS and manual playtest PASS are not claimed.

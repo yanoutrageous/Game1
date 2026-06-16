@@ -2,11 +2,11 @@
 
 ## Updated
 
-`2026-06-15`
+`2026-06-16`
 
 ## Branch
 
-Current stage: G18 DeployPrepShell / DeployConfig / RunStartConfig foundation is active on branch `godot/g18-deploy-prep-foundation`. G18-R3 is limited to deploy prep placeholder tabs, right-side summary, and public config preview; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and fast-forward merged to `main`.
+Current stage: G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance, Godot headless project-load/parser smoke PASS, and docs-only closeout complete on branch `godot/g18-deploy-prep-foundation`; it is not merged to main. Scope remains deploy prep placeholder tabs, right-side summary, and public config preview; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and fast-forward merged to `main`.
 
 Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`.
 
@@ -171,7 +171,7 @@ Post-G17 next structural work requires separate authorization. Main menu should 
 
 G17 establishes the first AppShell / NavigationIntent / PageRouter / MainMenuShell slice and is fast-forward merged to main. The formal main menu exposes only `出发探索`, `长期系统`, `设置`, and `退出游戏`; expedition, long-term, and settings are placeholder routes in this slice, and exit uses a confirm layer. G17-R3 acceptance and Godot headless project-load/parser smoke PASS are complete. G17 does not implement formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS.
 
-G18-R3 begins formal expedition prep foundation. It adds `DeployPrepShell`, `DeployConfig`, and `RunStartConfig` preview support only. The deploy page has five placeholder tabs, right-side summary/config/effect/risk sections, and preview-only start intent. G18-R3 does not start or continue RunScene, dispatch run CommandBus, generate real maps, implement warehouse/requisition/work permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, Deploy persistence, parser PASS, complete gameplay runtime PASS, or manual playtest PASS.
+G18-R4 accepts the formal expedition prep foundation. It adds `DeployPrepShell`, `DeployConfig`, and `RunStartConfig` preview support only. The deploy page has five placeholder tabs, right-side summary/config/effect/risk sections, and preview-only start intent. Godot headless project-load/parser smoke PASS is recorded, but this is not complete gameplay runtime PASS or manual playtest PASS. G18 does not start or continue RunScene, dispatch run CommandBus, generate real maps, implement warehouse/requisition/work permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 

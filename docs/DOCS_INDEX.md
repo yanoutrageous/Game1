@@ -69,7 +69,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md` records the G15 encounter contract foundation validation checklist, R3 rules contract, R4 EncounterSlot adapter, R5 docs-only closeout boundary, deferred lottery boundary, fast-forward main merge status, and no-runtime-PASS status.
 - `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md` records the G16 combat/monster encounter foundation static validation, Monster `attack_basic` bridge, public summary/risk/reward fields, R5 docs-only closeout, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and no-complete-gameplay-runtime-PASS status.
 - `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md` records the G17 AppShell / MainMenuShell validation boundary and R3 Godot headless project-load/parser smoke PASS; no complete gameplay runtime PASS is claimed.
-- `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md` records the G18 DeployPrepShell / DeployConfig / RunStartConfig foundation boundary. G18-R3 is static only and does not claim parser PASS, complete gameplay runtime PASS, or manual playtest PASS.
+- `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md` records the G18 DeployPrepShell / DeployConfig / RunStartConfig foundation boundary, R4 acceptance, and Godot headless project-load/parser smoke PASS. It does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -88,6 +88,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md` records the G16 combat encounter foundation closeout, completed R3/R4/R5 scope, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and next-stage candidates.
 - `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` records the imported Post-G16 architecture direction baseline: keep G15/G16, split top-level app shell next, and route G17 toward `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 - `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md` records the G17 AppShell / MainMenuShell closeout, R2 implementation boundary, R3 acceptance, Godot headless project-load/parser smoke PASS, and fast-forward main merge status.
+- `docs/handoff/HANDOFF_G18_DEPLOY_PREP_FOUNDATION.md` records the G18 DeployPrepShell / DeployConfig / RunStartConfig branch handoff, R4 acceptance, parser smoke PASS, non-goals, and main-merge-pending status.
 
 ## Branch Change Records
 
@@ -124,4 +125,4 @@ Post-G16 architecture direction baseline recommends G17 as `AppShell / Navigatio
 
 G17 branch work on `godot/g17-app-shell-main-menu` has R2 implementation, R3 acceptance/docs closeout, Godot headless project-load/parser smoke PASS, and is fast-forward merged to `main`. It does not implement full main menu, formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS.
 
-G18 branch work on `godot/g18-deploy-prep-foundation` is limited to formal expedition prep foundation: DeployPrepShell, five placeholder tabs, public DeployConfig / RunStartConfig preview, and validation/manual checklist updates. It does not implement true run start, real maps, warehouse, requisition, work permits, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence.
+G18 branch work on `godot/g18-deploy-prep-foundation` is limited to formal expedition prep foundation: DeployPrepShell, five placeholder tabs, public DeployConfig / RunStartConfig preview, validation/manual checklist updates, R4 acceptance, and Godot headless project-load/parser smoke PASS. It is not merged to main and does not implement true run start, real maps, warehouse, requisition, work permits, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence.

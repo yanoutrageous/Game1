@@ -2,7 +2,7 @@
 
 ## Stage
 
-G18 DeployPrepShell / DeployConfig / RunStartConfig foundation is active on branch `godot/g18-deploy-prep-foundation`. G18-R3 is limited to deploy prep placeholder tabs, right-side summary, and public config preview; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and merged to `main`. G16 Combat Encounter Foundation and G15 Encounter Contract Foundation are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
+G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance, Godot headless project-load/parser smoke PASS, and docs-only closeout complete on branch `godot/g18-deploy-prep-foundation`; it is not merged to main. The scope remains deploy prep placeholder tabs, right-side summary, and public config preview; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and merged to `main`. G16 Combat Encounter Foundation and G15 Encounter Contract Foundation are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
 
 ## Time
 
@@ -15,7 +15,7 @@ G18 DeployPrepShell / DeployConfig / RunStartConfig foundation is active on bran
 - Base branch: `main`
 - Current working branch for this handoff: `godot/g18-deploy-prep-foundation`
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
-- G18 validation checklist: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
+- G18 validation and closeout record: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
 - Source branch for G17: `godot/g17-app-shell-main-menu`
 - G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`
 - G17-R3 closeout commit: `baa57fa41167c86ad226b5b8be4d540ff114269f docs: close G17 app shell main menu foundation`
@@ -176,7 +176,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - Post-G16 architecture direction baseline: `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`.
 - G17 validation checklist: `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`.
 - G17 handoff: `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`.
-- G18 validation checklist: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`.
+- G18 validation and closeout record: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`.
 
 ## Implemented In G11
 
@@ -377,3 +377,7 @@ Expected local static validations:
 - `validate_g10_progress_art_smoke.ps1`
 
 G10 runtime smoke is limited to parser/project launch and bounded UI sanity checks. Do not use it for broad resource import, persistence work, or full art migration without separate authorization.
+
+## G18 R4 Acceptance Note
+
+G18-R4 accepted the branch foundation on `godot/g18-deploy-prep-foundation` and ran Godot headless project-load/parser smoke PASS. This is not complete gameplay runtime PASS and not manual playtest PASS. G18 remains unmerged to main, G19 has not started, and the branch still does not start RunScene, dispatch run CommandBus, modify RunContext, generate real maps, implement warehouse/requisition/permit rules, implement settlement reports/history, or write persistence.
