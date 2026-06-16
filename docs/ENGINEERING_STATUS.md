@@ -2,7 +2,7 @@
 
 ## Stage
 
-G19 LongTermShell foundation branch work is in progress on top of G18 mainline. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance, Godot headless project-load/parser smoke PASS, docs-only closeout, fast-forward main merge, and post-merge docs calibration complete.
+G19 LongTermShell foundation branch work has R4B self-check and Godot headless project-load/parser smoke PASS on top of G18 mainline. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G19 is not merged to main, G20 has not started, and the smoke is not complete gameplay runtime PASS or manual playtest PASS.
 
 ## Time
 
@@ -16,6 +16,8 @@ G19 LongTermShell foundation branch work is in progress on top of G18 mainline. 
 - Current working branch for this handoff: `godot/g19-long-term-shell-foundation`
 - G19 branch: `godot/g19-long-term-shell-foundation`
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`
+- G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`
+- G19-R4B status: self-check PASS, Godot headless project-load/parser smoke PASS, docs-only closeout complete on branch
 - G19 scope: LongTermShell foundation, six module placeholder, and display-only interface preview only
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`

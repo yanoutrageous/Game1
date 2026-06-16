@@ -17,7 +17,11 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G18 validation and closeout record: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`.
 - G19 branch: `godot/g19-long-term-shell-foundation`
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`
+- G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`
+- G19-R4B status: execution-frame self-check PASS, Godot headless project-load/parser smoke PASS, docs-only closeout complete on the G19 branch.
 - G19 scope: LongTermShell foundation, six module placeholder, and display-only interface preview only.
+- G19 merged to main: no.
+- G20 started: no.
 - G19 validation draft: `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`.
 - G19 handoff: `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`.
 - G17-R2 branch: `godot/g17-app-shell-main-menu`
@@ -62,6 +66,8 @@ G17 is now in `main`. G17-R2 started the top-level split on branch `godot/g17-ap
 G18 is now in `main`. G18-R3 adds the first formal expedition prep foundation: `DeployPrepShell`, `DeployConfig`, `RunStartConfig` preview helpers, five placeholder tabs, right-side summary sections, and AppShell deploy route integration. G18-R4 recorded Godot headless project-load/parser smoke PASS before mainline integration, but this is not complete gameplay runtime PASS or manual playtest PASS. G18 still must not be read as RunScene startup, run CommandBus dispatch, RunContext mutation, real map generation, warehouse/requisition/permit rules, settlement report/history, long-term system, lottery, MetaProgress, or Deploy persistence implementation.
 
 G19 branch work adds the first LongTermShell foundation only. It replaces the old AppShell long-term placeholder with a six-module shell: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观. The shell displays placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19 does not implement real long-term systems, real asset or item systems, real gacha, real history storage, real rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
+
+G19-R4B accepted the branch with Godot headless project-load/parser smoke PASS. This is not complete gameplay runtime PASS and not manual playtest PASS.
 
 ## What G16 Does Not Mean
 
@@ -121,7 +127,7 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 - Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
 - Current branch work: G19 `LongTermShell foundation`.
-- G19-R3 should remain bounded to the six-module shell and display-only preview fields. G19-R4 should run Godot headless project-load/parser smoke only after explicit validation authorization.
+- G19-R4B self-check and Godot headless project-load/parser smoke passed on the branch. Next decision is mainline promotion; do not start G20 before that decision.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
 This handoff records G18 mainline integration and post-merge docs calibration. Godot headless project-load/parser smoke PASS is recorded for G18-R4, but complete gameplay runtime PASS and manual playtest PASS are not claimed.

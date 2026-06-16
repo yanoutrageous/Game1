@@ -2,7 +2,7 @@
 
 ## Current Authority
 
-- Stage: G19 LongTermShell foundation branch work is in progress on top of G18 mainline. G19 is limited to six-module long-term shell placeholders and display-only interface preview fields.
+- Stage: G19 LongTermShell foundation branch work has R4B self-check and Godot headless project-load/parser smoke PASS on top of G18 mainline. G19 is limited to six-module long-term shell placeholders and display-only interface preview fields.
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`.
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`.
 - G18 closeout / merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`.
@@ -11,9 +11,12 @@
 - G18-R4 ran Godot headless project-load/parser smoke PASS on the branch; this is not complete gameplay runtime PASS and not manual playtest PASS.
 - G19 branch: `godot/g19-long-term-shell-foundation`.
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`.
+- G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`.
+- G19-R4B status: self-check PASS, Godot headless project-load/parser smoke PASS, docs-only closeout complete on branch.
 - G19 scope: `LongTermShell foundation + 6 module placeholder + interface preview only`.
 - G19 modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
-- G19-R3 does not run Godot and does not claim headless project-load/parser smoke, complete gameplay runtime PASS, or manual playtest PASS.
+- G19 is not merged to main and G20 has not started.
+- G19-R4B smoke is not complete gameplay runtime PASS and not manual playtest PASS.
 - Integrated G17 branch: `godot/g17-app-shell-main-menu`.
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`.
 - G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`.
@@ -87,6 +90,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G17 is merged to `main`. It adds the first AppShell / NavigationIntent / PageRouter / MainMenuShell foundation, keeps expedition / long-term / settings as placeholder or legacy routes, and keeps the main menu from directly starting or continuing RunScene. G17-R3 passed Godot headless project-load/parser smoke before integration, which is not complete gameplay runtime PASS or manual playtest PASS.
 - G18 is merged to `main`. It adds the formal expedition prep foundation on top of G17 AppShell: `DeployPrepShell`, public `DeployConfig` / `RunStartConfig` preview helpers, five placeholder tabs, right-side summary/config/effect/risk sections, and preview-only deploy start intent. It does not start RunScene, dispatch run CommandBus, modify RunContext, generate real maps, implement warehouse/requisition/permit rules, implement settlement reports/history, or write persistence.
 - G19 branch work adds the first `LongTermShell` foundation on top of G17/G18 AppShell routing. It exposes six fixed top-level modules, child preview groups for goals and profile, and display-only snapshot/interface previews. It does not implement real long-term systems, real asset or item systems, real gacha, real history storage, real rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
+- G19-R4B produced no project, scene, resource, import, `.uid`, or `.translation` dirty and did not modify Base Docs.
 - Post-G16 architecture direction baseline is recorded in `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`. It concludes that current architecture has not lost control, G15/G16 Encounter / Combat foundations should be retained, and the next structural step should split top-level app navigation into `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 
 ## Current Validation Chain

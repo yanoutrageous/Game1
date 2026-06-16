@@ -4,6 +4,8 @@
 
 G19-R3 implements only `LongTermShell foundation + 6 module placeholder + interface preview only`.
 
+G19-R4B closeout records execution-frame self-check, Godot headless project-load/parser smoke PASS, and docs-only closeout on branch `godot/g19-long-term-shell-foundation`. G19 is not merged to main, G20 has not started, and Base Docs were not modified.
+
 The six top-level modules are fixed:
 
 - `goals` / 目标
@@ -47,11 +49,17 @@ The negative grep is intentionally code-only. Documentation may mention forbidde
 
 ## Godot Smoke
 
-G19-R3 does not run Godot, editor, import, or project-load/parser smoke. Godot headless project-load/parser smoke belongs to G19-R4 validation using:
+G19-R3 did not run Godot, editor, import, or project-load/parser smoke. G19-R4B ran Godot headless project-load/parser smoke using:
 
 ```text
 D:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe
 D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot
 ```
 
-Do not record full gameplay runtime PASS or manual playtest PASS unless those validations are explicitly run later.
+Result: Godot headless project-load/parser smoke PASS.
+
+Smoke before/after `git status --short` remained clean. No `project.godot`, `.tscn`, resource, font, import product, `.uid`, or `.translation` dirty was produced.
+
+This is not complete gameplay runtime PASS and not manual playtest PASS. G19 still does not implement real goals, codex data, research, profile progression, history storage, gacha, collection / appearance equipment, warehouse, asset systems, item models, ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent, RewardBundle / Policy / Tag, red-dot state machine, inventory projection, gacha result, profile/unlock/history persistence, RunScene startup, CommandBus dispatch, or RunContext / Encounter / Combat / Ledger / TruthMap reads.
+
+PATCH_MODE remains `AGAME1_ROOT`; future `apply_patch` paths must use the `_repo_cache/Game1_work/` prefix.

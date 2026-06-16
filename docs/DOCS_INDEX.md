@@ -72,7 +72,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md` records the G16 combat/monster encounter foundation static validation, Monster `attack_basic` bridge, public summary/risk/reward fields, R5 docs-only closeout, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and no-complete-gameplay-runtime-PASS status.
 - `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md` records the G17 AppShell / MainMenuShell validation boundary and R3 Godot headless project-load/parser smoke PASS; no complete gameplay runtime PASS is claimed.
 - `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md` records the G18 DeployPrepShell / DeployConfig / RunStartConfig foundation boundary, R4 acceptance, Godot headless project-load/parser smoke PASS, and fast-forward main merge status. It does not claim complete gameplay runtime PASS or manual playtest PASS.
-- `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md` records the G19 LongTermShell foundation boundary, six-module placeholder plan, static validation commands, and no-Godot-smoke R3 boundary.
+- `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md` records the G19 LongTermShell foundation boundary, six-module placeholder plan, static validation commands, R4B Godot headless project-load/parser smoke PASS, and no-runtime/manual-PASS boundary.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -92,7 +92,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` records the imported Post-G16 architecture direction baseline: keep G15/G16, split top-level app shell next, and route G17 toward `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 - `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md` records the G17 AppShell / MainMenuShell closeout, R2 implementation boundary, R3 acceptance, Godot headless project-load/parser smoke PASS, and fast-forward main merge status.
 - `docs/handoff/HANDOFF_G18_DEPLOY_PREP_FOUNDATION.md` records the G18 DeployPrepShell / DeployConfig / RunStartConfig handoff, R4 acceptance, parser smoke PASS, non-goals, fast-forward main merge status, and post-G18 next-dialog calibration requirement.
-- `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md` records the G19 LongTermShell foundation branch handoff, six-module IA, display-only interface preview boundary, and G19-R4 validation next step.
+- `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md` records the G19 LongTermShell foundation branch handoff, six-module IA, display-only interface preview boundary, R4B smoke PASS, and main-merge decision next step.
 
 ## Branch Change Records
 
@@ -131,4 +131,4 @@ G17 branch work on `godot/g17-app-shell-main-menu` has R2 implementation, R3 acc
 
 G18 work on `godot/g18-deploy-prep-foundation` is limited to formal expedition prep foundation: DeployPrepShell, five placeholder tabs, public DeployConfig / RunStartConfig preview, validation/manual checklist updates, R4 acceptance, and Godot headless project-load/parser smoke PASS. It is fast-forward merged to `main` and does not implement true run start, real maps, warehouse, requisition, work permits, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence.
 
-G19 branch work on `godot/g19-long-term-shell-foundation` is limited to LongTermShell foundation: six fixed modules, placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. It does not implement real long-term systems, item or asset systems, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
+G19 branch work on `godot/g19-long-term-shell-foundation` is limited to LongTermShell foundation: six fixed modules, placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19-R4B records Godot headless project-load/parser smoke PASS on the branch, with no complete gameplay runtime PASS and no manual playtest PASS. G19 is not merged to main and G20 has not started. It does not implement real long-term systems, item or asset systems, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.

@@ -6,7 +6,7 @@
 
 ## Branch
 
-Current stage: G19 LongTermShell foundation branch work is in progress on top of G18 mainline. Scope is limited to six fixed long-term modules, placeholder / preview / disabled states, and display-only interface preview fields. G19-R3 does not run Godot, does not claim headless project-load/parser smoke, does not claim complete gameplay runtime PASS, and does not claim manual playtest PASS.
+Current stage: G19 LongTermShell foundation branch work has R4B self-check and Godot headless project-load/parser smoke PASS on top of G18 mainline. Scope is limited to six fixed long-term modules, placeholder / preview / disabled states, and display-only interface preview fields. This is not complete gameplay runtime PASS and not manual playtest PASS.
 
 G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance, Godot headless project-load/parser smoke PASS, docs-only closeout, fast-forward main merge, and post-merge docs calibration complete. Scope remains deploy prep placeholder tabs, right-side summary, public config preview, and AppShell deploy route integration; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and fast-forward merged to `main`.
 
@@ -25,6 +25,12 @@ G18 merged to main: yes, by fast-forward.
 G19 branch: `godot/g19-long-term-shell-foundation`.
 
 G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`.
+
+G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`.
+
+G19-R4B status: self-check PASS, Godot headless project-load/parser smoke PASS, docs-only closeout complete on branch.
+
+G19 merged to main: no. G20 started: no.
 
 G19 modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
 
@@ -188,6 +194,8 @@ G17 establishes the first AppShell / NavigationIntent / PageRouter / MainMenuShe
 G18 is fast-forward merged to main. It adds `DeployPrepShell`, `DeployConfig`, and `RunStartConfig` preview support only. The deploy page has five placeholder tabs, right-side summary/config/effect/risk sections, AppShell deploy route integration, and preview-only start intent. Godot headless project-load/parser smoke PASS is recorded, but this is not complete gameplay runtime PASS or manual playtest PASS. G18 does not start or continue RunScene, dispatch run CommandBus, generate real maps, implement warehouse/requisition/work permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence. G19 has not started and should begin only in a new CodeX execution conversation after workspace/root, shell cwd, git root, apply_patch root, patch-root probe, probe deletion, and clean status calibration.
 
 G19 branch work replaces the old long-term placeholder route with `LongTermShell`. It does not implement real goals, task progress, achievement checks, commission acceptance, codex data, research, profile progression, history storage, gacha, collection / appearance equipment, warehouse, asset events, item models, RewardBundle, Policy / Tag rules, red-dot clearing, reward claiming, persistence, MetaProgress, RunScene startup, CommandBus dispatch, or private RunContext / Encounter / Combat / Ledger / TruthMap reads.
+
+G19-R4B smoke produced no `project.godot`, `.tscn`, resource, font, import product, `.uid`, or `.translation` dirty and did not modify Base Docs.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 
