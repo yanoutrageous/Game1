@@ -2,7 +2,7 @@
 
 ## Stage
 
-G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 docs-only governance branch is in progress on `godot/g20-project-knowledge-governance`: R3a imported authorized text design source copies, R3b adds project governance maps, R3c adds G10-G19 stage summaries plus route analysis, and R3d1 adds branch / commit / validation governance matrices. G20 is not merged to main, G20-R3d2 has not executed, G21 has not started, and R3a/R3b/R3c/R3d1 do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
+G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 docs-only governance branch is in progress on `godot/g20-project-knowledge-governance`: R3a 已完成 authorized text design source copies 入库，R3b 已完成 project governance maps 与 design source index，R3c 已完成 G10-G19 stage summaries 与 route analysis，R3d1 已完成 branch / commit / validation governance matrices，R3d2 新增 decision log / glossary / deprecated inventory。G20 is not merged to main, G20 closeout has not executed, G21 has not started, and R3a/R3b/R3c/R3d1/R3d2 do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
 ## Time
 
@@ -31,8 +31,13 @@ G19 LongTermShell foundation is fast-forward merged to main with R4B self-check 
 - G20-R3d1 branch inventory: `docs/project_governance/BRANCH_INVENTORY.md`
 - G20-R3d1 commit milestone map: `docs/project_governance/COMMIT_MILESTONE_MAP.md`
 - G20-R3d1 validation status matrix: `docs/project_governance/VALIDATION_STATUS_MATRIX.md`
+- G20-R3d2 status: decision log, glossary, temporary / deprecated inventory, SOURCE_REGISTRY minimal status update, and navigation references added in this batch
+- G20-R3d2 decision log: `docs/project_governance/DECISION_LOG.md`
+- G20-R3d2 glossary: `docs/project_governance/GLOSSARY.md`
+- G20-R3d2 temporary / deprecated inventory: `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`
 - G20 merged to main: no
-- G20-R3d2 executed: no
+- G20 closeout executed: no
+- G20-R3d2 executed: yes
 - G21 started: no
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`
@@ -185,6 +190,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - `docs/stage_summaries/STAGE_SUMMARY_INDEX.md` and `docs/stage_summaries/G10_SUMMARY.md` through `docs/stage_summaries/G19_SUMMARY.md` summarize G10-G19.
 - `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`, `docs/route_analysis/ROADMAP_G20_PLUS.md`, `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`, and `docs/route_analysis/STAGE_DEPENDENCY_MAP.md` record G20-R3c route analysis and boundary maps.
 - `docs/project_governance/BRANCH_INVENTORY.md`, `docs/project_governance/COMMIT_MILESTONE_MAP.md`, and `docs/project_governance/VALIDATION_STATUS_MATRIX.md` record G20-R3d1 branch, commit, and validation governance matrices.
+- `docs/project_governance/DECISION_LOG.md`, `docs/project_governance/GLOSSARY.md`, and `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md` record G20-R3d2 decisions, glossary terms, and temporary / deprecated candidates; they only register facts and candidates.
 - `docs/handoff/HANDOFF_TEMPLATE.md` is required for future branch, closure, promotion, BUG-fix, and runtime-smoke handoffs.
 - G11 documents must keep `PROJECT_BASELINE.md`, `NEXT_HANDOFF.md`, `DOCS_INDEX.md`, `MILESTONES.md`, `ENGINEERING_STATUS.md`, and `GODOT_CURRENT_STATUS.md` aligned with the actual main and remote live status.
 - G11 validation checklist: `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`.

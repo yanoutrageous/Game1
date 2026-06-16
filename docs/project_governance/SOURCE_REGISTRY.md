@@ -52,6 +52,6 @@ This registry records active sources, imported design sources, external referenc
 | `docs/project_governance/BRANCH_INVENTORY.md` | project_governance | G20-R3d | planned |
 | `docs/project_governance/COMMIT_MILESTONE_MAP.md` | project_governance | G20-R3d | planned |
 | `docs/project_governance/VALIDATION_STATUS_MATRIX.md` | project_governance | G20-R3d | planned |
-| `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md` | project_governance | G20-R3d | planned |
-| `docs/project_governance/DECISION_LOG.md` | project_governance | G20-R3d | planned |
-| `docs/project_governance/GLOSSARY.md` | project_governance | G20-R3d | planned |
+| `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md` | project_governance | G20-R3d2 | active / added in G20-R3d2 |
+| `docs/project_governance/DECISION_LOG.md` | project_governance | G20-R3d2 | active / added in G20-R3d2 |
+| `docs/project_governance/GLOSSARY.md` | project_governance | G20-R3d2 | active / added in G20-R3d2 |
