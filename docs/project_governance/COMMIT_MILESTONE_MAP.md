@@ -6,7 +6,7 @@
 
 - `merged_to_main` 表示该提交或阶段在当前事实源中是否已经进入 mainline；它不是分支删除授权。
 - G20 当前仍在 `godot/g20-project-knowledge-governance`，尚未合并 main。
-- R3d1 自身提交在写入本文件时尚未创建，因此记录为 `pending until commit`。
+- G20-R3d1 和 G20-R3d2 的已知提交 hash 已在本文件记录；后续批次不得预写尚未创建的提交 hash。
 - 不足或不确定项必须写 `unknown` 或 `not recorded in this map yet`，不得补猜。
 
 ## Map
@@ -47,7 +47,8 @@
 | G20-R3a | `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7` | `caaf3c5` | `docs: import design sources for G20 governance` | design source text import | `godot/g20-project-knowledge-governance` | no | `git show`; `docs/NEXT_HANDOFF.md` | Base Docs Markdown / TXT copies imported under `docs/design_sources/`; originals not modified. |
 | G20-R3b | `81513bdbf10cf4f774a9bda5c3ce3e2d3b1302dc` | `81513bd` | `docs: add project governance maps` | governance maps and indexes | `godot/g20-project-knowledge-governance` | no | `git show`; `docs/ENGINEERING_STATUS.md` | Project governance and design source index structure. |
 | G20-R3c | `10a2dd3ea2d71879b66f5d1c20177fb7bed2a6f1` | `10a2dd3` | `docs: add G10-G19 stage summaries and route analysis` | stage summaries and route analysis | `godot/g20-project-knowledge-governance` | no | `git show`; precheck G20 HEAD | Current G20 HEAD before R3d1. |
-| G20-R3d1 | `pending until commit` | `pending until commit` | `docs: add branch commit and validation governance matrices` | branch / commit / validation governance matrices | `godot/g20-project-knowledge-governance` | no | this R3d1 execution | Final hash must be filled only after commit exists; do not prewrite a guessed hash. |
+| G20-R3d1 | `493a5649ea114609abbf28bc07d3e25582fca7ae` | `493a564` | `docs: add branch commit and validation governance matrices` | branch / commit / validation governance matrices | `godot/g20-project-knowledge-governance` | no | G20-R3d1 commit | Final hash filled after commit existed. |
+| G20-R3d2 | `ef30741902f0cf9e9984e20de3ceef696b30523a` | `ef307419` | `docs: add decision glossary and deprecated inventories` | decision log / glossary / temporary deprecated inventory | `godot/g20-project-knowledge-governance` | no | G20-R3d2 commit | Docs-only R3d2 governance inventory batch. |
 
 ## Explicit Non-Claims
 

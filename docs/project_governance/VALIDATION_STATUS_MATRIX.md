@@ -27,7 +27,7 @@
 | G20-R3b | docs-only static inventory | not run | not run / not claimed | not claimed | no | `docs/NEXT_HANDOFF.md`; `docs/ENGINEERING_STATUS.md`; `git show 81513bd` | Godot parser smoke; manual playtest; full gameplay runtime | Governance maps and indexes only. |
 | G20-R3c | docs-only static inventory | not run | not run / not claimed | not claimed | no | `docs/DOCS_INDEX.md`; `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`; `git show 10a2dd3` | Godot parser smoke; manual playtest; full gameplay runtime | Stage summaries and route analysis only; G21 not started. |
 | G20-R3d1 | docs-only git/diff validation in this execution | not run | not run / not claimed | not claimed | no | `docs/project_governance/BRANCH_INVENTORY.md`; `docs/project_governance/COMMIT_MILESTONE_MAP.md`; this file | Godot parser smoke; manual playtest; full gameplay runtime | R3d1 adds branch, commit, and validation matrices only. |
-| G20-R3d2 | not executed | not run | not run / not claimed | not claimed | no | current G20 navigation docs | all R3d2 scope | R3d2 is intentionally left for a later separately authorized batch. |
+| G20-R3d2 | docs-only executed / completed; commit `ef30741902f0cf9e9984e20de3ceef696b30523a` | not run | not run / not claimed | not claimed | no | R3d2 governance docs; `git show ef307419` | Godot parser smoke; manual playtest; full gameplay runtime | R3d2 completed docs-only; Godot not run; parser smoke PASS, manual playtest PASS, and full gameplay runtime PASS are not claimed. |
 
 ## Required Distinctions
 
