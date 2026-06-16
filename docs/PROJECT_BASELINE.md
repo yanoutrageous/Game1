@@ -2,7 +2,7 @@
 
 ## Current Authority
 
-- Stage: G19 LongTermShell foundation branch work has R4B self-check and Godot headless project-load/parser smoke PASS on top of G18 mainline. G19 is limited to six-module long-term shell placeholders and display-only interface preview fields.
+- Stage: G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to six-module long-term shell placeholders and display-only interface preview fields.
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`.
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`.
 - G18 closeout / merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`.
@@ -13,9 +13,11 @@
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`.
 - G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`.
 - G19-R4B status: self-check PASS, Godot headless project-load/parser smoke PASS, docs-only closeout complete on branch.
+- G19-R4B closeout commit / first main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823 docs: close G19 long term shell foundation`.
 - G19 scope: `LongTermShell foundation + 6 module placeholder + interface preview only`.
 - G19 modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
-- G19 is not merged to main and G20 has not started.
+- G19 merged to main: yes, by fast-forward.
+- G20 has not started.
 - G19-R4B smoke is not complete gameplay runtime PASS and not manual playtest PASS.
 - Integrated G17 branch: `godot/g17-app-shell-main-menu`.
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`.
@@ -144,7 +146,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Recommended next step requires a new CodeX execution conversation and separate G19 authorization. The first G19 step must calibrate workspace/root folder, shell cwd, git root, apply_patch root, run and delete a safe patch-root probe, and confirm a clean worktree before planning or auditing.
+Recommended next step requires a separate G20 authorization and fresh execution calibration. G20 has not started.
 
 G18 should not be treated as complete expedition prep. G18-R3 is only the minimal foundation for `DeployPrepShell / DeployConfig / RunStartConfig` preview. Do not expand it into Boss, action combat, true run start, real maps, warehouse economy, requisition economy, work permit rules, settlement reports/history, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems without explicit authorization.
 

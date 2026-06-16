@@ -4,7 +4,7 @@
 
 G19-R3 implements only `LongTermShell foundation + 6 module placeholder + interface preview only`.
 
-G19-R4B closeout records execution-frame self-check, Godot headless project-load/parser smoke PASS, and docs-only closeout on branch `godot/g19-long-term-shell-foundation`. G19 is not merged to main, G20 has not started, and Base Docs were not modified.
+G19-R4B closeout records execution-frame self-check, Godot headless project-load/parser smoke PASS, and docs-only closeout on branch `godot/g19-long-term-shell-foundation`. G19 was fast-forward merged to `main`; the first main merge baseline is `04e14865f4d5eff7b16398d5730054273ccd0823`. G20 has not started, and Base Docs were not modified.
 
 The six top-level modules are fixed:
 
@@ -63,3 +63,10 @@ Smoke before/after `git status --short` remained clean. No `project.godot`, `.ts
 This is not complete gameplay runtime PASS and not manual playtest PASS. G19 still does not implement real goals, codex data, research, profile progression, history storage, gacha, collection / appearance equipment, warehouse, asset systems, item models, ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent, RewardBundle / Policy / Tag, red-dot state machine, inventory projection, gacha result, profile/unlock/history persistence, RunScene startup, CommandBus dispatch, or RunContext / Encounter / Combat / Ledger / TruthMap reads.
 
 PATCH_MODE remains `AGAME1_ROOT`; future `apply_patch` paths must use the `_repo_cache/Game1_work/` prefix.
+
+## Post-Merge Calibration
+
+- G19-R3 implementation commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`.
+- G19-R4B closeout commit and first main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823 docs: close G19 long term shell foundation`.
+- G19 merged to main: yes, by fast-forward.
+- G20 started: no.

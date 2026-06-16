@@ -6,7 +6,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Current branch for this handoff: `godot/g19-long-term-shell-foundation`
+- Current branch for this handoff: `main`
 - Base branch: `main`
 - Current G18 branch: `godot/g18-deploy-prep-foundation`
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
@@ -19,8 +19,9 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`
 - G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`
 - G19-R4B status: execution-frame self-check PASS, Godot headless project-load/parser smoke PASS, docs-only closeout complete on the G19 branch.
+- G19-R4B closeout commit / first main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823 docs: close G19 long term shell foundation`.
 - G19 scope: LongTermShell foundation, six module placeholder, and display-only interface preview only.
-- G19 merged to main: no.
+- G19 merged to main: yes, by fast-forward.
 - G20 started: no.
 - G19 validation draft: `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`.
 - G19 handoff: `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`.
@@ -42,7 +43,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G15 branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`
 - G15-R4 commit: `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`
 - G15-R3 commit: `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`
-- Current milestone: G18 DeployPrepShell / DeployConfig / RunStartConfig foundation is complete, pushed, parser-smoke checked, and fast-forward merged to `main`. G17 AppShell / MainMenuShell foundation, G16 combat encounter foundation, and G15 Encounter Contract Foundation are complete, pushed, merged to main, and closed. G10, G11, G12, G13, and G14 are complete, pushed, and closed.
+- Current milestone: G19 LongTermShell foundation is complete, pushed, parser-smoke checked, and fast-forward merged to `main`. G18 DeployPrepShell / DeployConfig / RunStartConfig foundation, G17 AppShell / MainMenuShell foundation, G16 combat encounter foundation, and G15 Encounter Contract Foundation are complete, pushed, merged to main, and closed. G10, G11, G12, G13, and G14 are complete, pushed, and closed.
 - Post-G16 architecture direction baseline: `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`.
 - G17 validation draft: `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`.
 - G17 handoff: `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`.
@@ -65,7 +66,7 @@ G17 is now in `main`. G17-R2 started the top-level split on branch `godot/g17-ap
 
 G18 is now in `main`. G18-R3 adds the first formal expedition prep foundation: `DeployPrepShell`, `DeployConfig`, `RunStartConfig` preview helpers, five placeholder tabs, right-side summary sections, and AppShell deploy route integration. G18-R4 recorded Godot headless project-load/parser smoke PASS before mainline integration, but this is not complete gameplay runtime PASS or manual playtest PASS. G18 still must not be read as RunScene startup, run CommandBus dispatch, RunContext mutation, real map generation, warehouse/requisition/permit rules, settlement report/history, long-term system, lottery, MetaProgress, or Deploy persistence implementation.
 
-G19 branch work adds the first LongTermShell foundation only. It replaces the old AppShell long-term placeholder with a six-module shell: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观. The shell displays placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19 does not implement real long-term systems, real asset or item systems, real gacha, real history storage, real rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
+G19 is now in `main`. It adds the first LongTermShell foundation only and replaces the old AppShell long-term placeholder with a six-module shell: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观. The shell displays placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19 does not implement real long-term systems, real asset or item systems, real gacha, real history storage, real rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
 
 G19-R4B accepted the branch with Godot headless project-load/parser smoke PASS. This is not complete gameplay runtime PASS and not manual playtest PASS.
 
@@ -126,8 +127,8 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 ## Next Stage Candidates
 
 - Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
-- Current branch work: G19 `LongTermShell foundation`.
-- G19-R4B self-check and Godot headless project-load/parser smoke passed on the branch. Next decision is mainline promotion; do not start G20 before that decision.
+- Latest integrated stage: G19 `LongTermShell foundation`.
+- G19-R4B self-check and Godot headless project-load/parser smoke passed on the branch before fast-forward merge to main. G20 has not started and requires separate authorization.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
-This handoff records G18 mainline integration and post-merge docs calibration. Godot headless project-load/parser smoke PASS is recorded for G18-R4, but complete gameplay runtime PASS and manual playtest PASS are not claimed.
+This handoff records G19 mainline integration and post-merge docs calibration. Godot headless project-load/parser smoke PASS is recorded for G19-R4B, but complete gameplay runtime PASS and manual playtest PASS are not claimed.

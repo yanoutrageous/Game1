@@ -12,7 +12,7 @@ G17 mainline note: `godot/g17-app-shell-main-menu` added a formal AppShell / Nav
 
 G18 mainline note: `godot/g18-deploy-prep-foundation` added a formal DeployPrepShell foundation only and has been fast-forward merged to `main`. G18-R4 ran Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. Manual validation must still confirm DeployPrep only previews config / deploy_start_intent and does not start or continue RunScene.
 
-G19 branch note: `godot/g19-long-term-shell-foundation` adds a LongTermShell foundation only. It exposes six modules: `目标`, `图鉴`, `研究`, `个人资历`, `抽奖`, and `收藏 / 外观`. G19-R4B records Godot headless project-load/parser smoke PASS on the branch, but this is not complete gameplay runtime PASS and not manual playtest PASS. G19 is not merged to main and G20 has not started.
+G19 mainline note: `godot/g19-long-term-shell-foundation` has been fast-forward merged to `main` and adds a LongTermShell foundation only. It exposes six modules: `目标`, `图鉴`, `研究`, `个人资历`, `抽奖`, and `收藏 / 外观`. G19-R4B records Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. G20 has not started.
 
 ## G19 LongTermShell Foundation Static Checklist
 

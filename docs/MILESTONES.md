@@ -23,7 +23,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | Post-G16 direction | Architecture Direction Baseline | Docs-only imported direction baseline; recommends G17 as `AppShell / NavigationIntent / PageRouter / MainMenuShell` |
 | G17 | AppShell / NavigationIntent / PageRouter / MainMenuShell | R2 implementation complete at `368a7be5c2fb919db47421a026ddf417df9c1b1c`; R3 acceptance, Godot headless project-load/parser smoke, docs-only closeout, and fast-forward main merge complete |
 | G18 | DeployPrepShell / DeployConfig / RunStartConfig Foundation | R3 complete at `59ea57caf1baa977e727da2697cac014cbd7429e`; R4 closeout at `285695cda0141322b0672d65998f3d3f9aa32654`; Godot headless project-load/parser smoke PASS; fast-forward merged to main; no gameplay runtime PASS or manual playtest PASS |
-| G19 | LongTermShell Foundation | Branch `godot/g19-long-term-shell-foundation`; R3 complete at `4eeb345daef5f8263b325db2ab5607e6c78f6d36`; R4B self-check and Godot headless project-load/parser smoke PASS on branch; not merged to main; no complete gameplay runtime PASS or manual playtest PASS |
+| G19 | LongTermShell Foundation | R3 complete at `4eeb345daef5f8263b325db2ab5607e6c78f6d36`; R4B closeout / first main merge baseline at `04e14865f4d5eff7b16398d5730054273ccd0823`; fast-forward merged to main; no complete gameplay runtime PASS or manual playtest PASS |
 
 ## Naming Rule
 
@@ -71,7 +71,7 @@ G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`.
 
 G14-R3 baseline before implementation and G13 closeout commit: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
-The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, the completed G14 run surface sprint, G15 Encounter Contract Foundation, G16 combat encounter foundation, G17 AppShell / MainMenuShell foundation, and G18 DeployPrepShell / DeployConfig / RunStartConfig foundation. G18 does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete 1:1 legacy Demo reproduction, true RunScene startup, real maps, warehouse/requisition/permit rules, Boss, action combat, real-time combat, complete gameplay runtime PASS, or manual playtest PASS.
+The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, the completed G14 run surface sprint, G15 Encounter Contract Foundation, G16 combat encounter foundation, G17 AppShell / MainMenuShell foundation, G18 DeployPrepShell / DeployConfig / RunStartConfig foundation, and G19 LongTermShell foundation. G19 does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete asset systems, true RunScene startup, real maps, warehouse/requisition/permit rules, Boss, action combat, real-time combat, complete gameplay runtime PASS, or manual playtest PASS.
 
 G11, G12, G13, and G14 are complete and closed. G15 R3/R4/R5 are complete and merged to main. G16 keeps `select_encounter_option` additive and extends only Monster `attack_basic` routing to existing deterministic `fight_current_enemy`; search/event/extract command semantics remain unchanged.
 
@@ -80,8 +80,8 @@ G15-R3/R4/R5 did not run Godot/editor/game/import and do not claim runtime PASS.
 ## Next Stage Candidates
 
 - Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
-- Current branch work: G19 `LongTermShell foundation`.
-- G19-R4B has passed self-check and Godot headless project-load/parser smoke on the branch. Next decision is mainline promotion; G20 has not started.
+- Latest integrated stage: G19 `LongTermShell foundation`.
+- G19-R4B passed self-check and Godot headless project-load/parser smoke before fast-forward merge to main. G20 has not started.
 
 G18 accepts the foundation only. It does not start Boss, action combat, true RunScene launch, real maps, warehouse/requisition/permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, Deploy persistence, or any G19+ implementation.
 

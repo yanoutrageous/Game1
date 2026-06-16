@@ -2,7 +2,7 @@
 
 ## Stage
 
-G19 LongTermShell foundation branch work has R4B self-check and Godot headless project-load/parser smoke PASS on top of G18 mainline. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G19 is not merged to main, G20 has not started, and the smoke is not complete gameplay runtime PASS or manual playtest PASS.
+G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 has not started, and the smoke is not complete gameplay runtime PASS or manual playtest PASS.
 
 ## Time
 
@@ -18,6 +18,8 @@ G19 LongTermShell foundation branch work has R4B self-check and Godot headless p
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`
 - G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`
 - G19-R4B status: self-check PASS, Godot headless project-load/parser smoke PASS, docs-only closeout complete on branch
+- G19-R4B closeout commit / first main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823 docs: close G19 long term shell foundation`
+- G19 merged to main: yes, by fast-forward
 - G19 scope: LongTermShell foundation, six module placeholder, and display-only interface preview only
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`
@@ -388,4 +390,4 @@ G10 runtime smoke is limited to parser/project launch and bounded UI sanity chec
 
 ## G18 R4 Acceptance Note
 
-G18-R4 accepted the branch foundation on `godot/g18-deploy-prep-foundation` and ran Godot headless project-load/parser smoke PASS. This is not complete gameplay runtime PASS and not manual playtest PASS. G18 is now fast-forward merged to main, G19 has not started, and the stage still does not start RunScene, dispatch run CommandBus, modify RunContext, generate real maps, implement warehouse/requisition/permit rules, implement settlement reports/history, or write persistence.
+G18-R4 accepted the branch foundation on `godot/g18-deploy-prep-foundation` and ran Godot headless project-load/parser smoke PASS. This is not complete gameplay runtime PASS and not manual playtest PASS. G18 is fast-forward merged to main. G19 is also fast-forward merged to main as LongTermShell foundation only; neither stage starts RunScene, dispatches run CommandBus, modifies RunContext, generates real maps, implements warehouse/requisition/permit rules, implements settlement reports/history, or writes persistence.

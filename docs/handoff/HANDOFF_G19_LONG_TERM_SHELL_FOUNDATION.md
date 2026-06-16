@@ -8,8 +8,10 @@
 - Scope: `LongTermShell foundation + 6 module placeholder + interface preview only`.
 - G19 uses six top-level modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
 - G19-R3 implementation commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`.
+- G19-R4B closeout commit: `04e14865f4d5eff7b16398d5730054273ccd0823 docs: close G19 long term shell foundation`.
 - G19-R4B status: execution-frame self-check PASS, Godot headless project-load/parser smoke PASS, docs-only closeout complete on the G19 branch.
-- G19 is not merged to main.
+- G19 merged to main: yes, by fast-forward.
+- First main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823`.
 - G20 has not started.
 
 ## Completed In R3
@@ -37,4 +39,4 @@ G19 does not implement real long-term systems, real goals, real task progress, r
 
 ## Next Step
 
-Use the G19 branch for main-merge decision. Do not start G20 until G19 mainline promotion is explicitly decided.
+G19 is now on `main`. Use this handoff for post-merge context and do not start G20 until the next stage is explicitly authorized.
