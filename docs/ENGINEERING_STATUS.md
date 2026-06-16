@@ -2,7 +2,7 @@
 
 ## Stage
 
-G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance, Godot headless project-load/parser smoke PASS, docs-only closeout, fast-forward main merge, and post-merge docs calibration complete. The scope remains deploy prep placeholder tabs, right-side summary, and public config preview; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and merged to `main`. G16 Combat Encounter Foundation and G15 Encounter Contract Foundation are complete, pushed, and merged to `main`. G10, G11, G12, G13, and G14 are complete and closed.
+G19 LongTermShell foundation branch work is in progress on top of G18 mainline. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance, Godot headless project-load/parser smoke PASS, docs-only closeout, fast-forward main merge, and post-merge docs calibration complete.
 
 ## Time
 
@@ -13,7 +13,10 @@ G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current working branch for this handoff: `main`
+- Current working branch for this handoff: `godot/g19-long-term-shell-foundation`
+- G19 branch: `godot/g19-long-term-shell-foundation`
+- G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`
+- G19 scope: LongTermShell foundation, six module placeholder, and display-only interface preview only
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`
 - G18 closeout / merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`

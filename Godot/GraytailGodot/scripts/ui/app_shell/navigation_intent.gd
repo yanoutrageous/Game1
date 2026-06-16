@@ -46,6 +46,19 @@ static func make_deploy(source: StringName = &"unknown", payload: Dictionary = {
 	return make(TARGET_DEPLOY, source, deploy_payload)
 
 
+static func make_long_term(source: StringName = &"unknown", module_id: StringName = &"goals", payload: Dictionary = {}) -> Dictionary:
+	var long_term_payload := {
+		"module_id": module_id,
+		"entry_id": module_id,
+		"source_page": StringName(payload.get("source_page", source)),
+		"preview_only": bool(payload.get("preview_only", true)),
+	}
+	for key in payload.keys():
+		if not long_term_payload.has(key):
+			long_term_payload[key] = payload[key]
+	return make(TARGET_LONG_TERM, source, long_term_payload)
+
+
 static func target(intent: Dictionary) -> StringName:
 	return StringName(intent.get("target", TARGET_MAIN_MENU))
 

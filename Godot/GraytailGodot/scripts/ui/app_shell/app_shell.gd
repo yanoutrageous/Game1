@@ -5,6 +5,7 @@ const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_i
 const PageRouterScript := preload("res://scripts/ui/app_shell/page_router.gd")
 const MainMenuShellScript := preload("res://scripts/ui/main_menu/main_menu_shell.gd")
 const DeployPrepShellScript := preload("res://scripts/ui/deploy_prep/deploy_prep_shell.gd")
+const LongTermShellScript := preload("res://scripts/ui/long_term/long_term_shell.gd")
 
 signal host_route_requested(intent: Dictionary)
 
@@ -22,11 +23,7 @@ func build() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build_main_menu()
 	_build_deploy_prep()
-	long_term_page = _build_placeholder_page(
-		"LongTermPlaceholderPage",
-		"长期系统",
-		"长期系统页将在后续阶段接入任务、图鉴、成就、研究、收藏和外观。\n\nG17 不实现长期成长、仓库经济、抽奖或 MetaProgress。"
-	)
+	_build_long_term()
 	settings_page = _build_placeholder_page(
 		"SettingsPlaceholderPage",
 		"设置",
@@ -40,6 +37,8 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	current_snapshot = snapshot.duplicate(true)
 	if deploy_page != null and deploy_page.has_method("apply_snapshot"):
 		deploy_page.call("apply_snapshot", current_snapshot)
+	if long_term_page != null and long_term_page.has_method("apply_snapshot"):
+		long_term_page.call("apply_snapshot", current_snapshot)
 	_refresh_exit_confirm_text()
 
 
@@ -57,6 +56,8 @@ func show_deploy(_tab_id: StringName = &"overview") -> void:
 
 func show_long_term(_entry_id: StringName = &"overview") -> void:
 	_set_page_visible(long_term_page)
+	if long_term_page != null and long_term_page.has_method("show_module"):
+		long_term_page.call("show_module", _entry_id)
 	_hide_exit_confirm()
 
 
@@ -98,6 +99,13 @@ func _build_deploy_prep() -> void:
 	deploy_page.call("build")
 	if deploy_page.has_signal("deploy_start_intent_requested"):
 		deploy_page.connect("deploy_start_intent_requested", _on_deploy_start_intent_requested)
+
+
+func _build_long_term() -> void:
+	long_term_page = LongTermShellScript.new() as Control
+	long_term_page.name = "LongTermShell"
+	add_child(long_term_page)
+	long_term_page.call("build")
 
 
 func _build_placeholder_page(page_name: String, title: String, body: String) -> Control:
@@ -154,9 +162,9 @@ func _on_navigation_intent_requested(intent: Dictionary) -> void:
 		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER:
 			var deploy_payload := NavigationIntentScript.payload(intent)
 			show_deploy(StringName(deploy_payload.get("tab", &"overview")))
-		PageRouterScript.PAGE_LONG_TERM_PLACEHOLDER:
+		PageRouterScript.PAGE_LONG_TERM:
 			var long_term_payload := NavigationIntentScript.payload(intent)
-			show_long_term(StringName(long_term_payload.get("entry_id", &"overview")))
+			show_long_term(StringName(long_term_payload.get("module_id", long_term_payload.get("entry_id", &"goals"))))
 		PageRouterScript.PAGE_SETTINGS_PLACEHOLDER:
 			show_settings()
 		PageRouterScript.PAGE_EXIT_CONFIRM:

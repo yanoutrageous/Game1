@@ -23,6 +23,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | Post-G16 direction | Architecture Direction Baseline | Docs-only imported direction baseline; recommends G17 as `AppShell / NavigationIntent / PageRouter / MainMenuShell` |
 | G17 | AppShell / NavigationIntent / PageRouter / MainMenuShell | R2 implementation complete at `368a7be5c2fb919db47421a026ddf417df9c1b1c`; R3 acceptance, Godot headless project-load/parser smoke, docs-only closeout, and fast-forward main merge complete |
 | G18 | DeployPrepShell / DeployConfig / RunStartConfig Foundation | R3 complete at `59ea57caf1baa977e727da2697cac014cbd7429e`; R4 closeout at `285695cda0141322b0672d65998f3d3f9aa32654`; Godot headless project-load/parser smoke PASS; fast-forward merged to main; no gameplay runtime PASS or manual playtest PASS |
+| G19 | LongTermShell Foundation | Branch `godot/g19-long-term-shell-foundation`; six top-level modules, placeholder / preview / disabled states, and display-only interface preview only; R3 does not run Godot and does not claim runtime or manual PASS |
 
 ## Naming Rule
 
@@ -79,8 +80,8 @@ G15-R3/R4/R5 did not run Godot/editor/game/import and do not claim runtime PASS.
 ## Next Stage Candidates
 
 - Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
-- G18-R3 implementation, G18-R4 acceptance/docs closeout, Godot headless project-load/parser smoke, and fast-forward main merge are complete.
-- G19 has not started. Start G19 only in a new CodeX execution conversation after workspace/root folder, shell cwd, git root, apply_patch root, safety probe, probe deletion, and clean worktree calibration.
+- Current branch work: G19 `LongTermShell foundation`.
+- G19-R3 remains bounded to LongTermShell, six module placeholders, and display-only interface preview. Godot headless project-load/parser smoke belongs to G19-R4.
 
 G18 accepts the foundation only. It does not start Boss, action combat, true RunScene launch, real maps, warehouse/requisition/permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, Deploy persistence, or any G19+ implementation.
 

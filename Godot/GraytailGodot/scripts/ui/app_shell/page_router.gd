@@ -6,7 +6,8 @@ const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_i
 const PAGE_MAIN_MENU := &"main_menu"
 const PAGE_DEPLOY_PREP := &"deploy_prep"
 const PAGE_DEPLOY_PLACEHOLDER := PAGE_DEPLOY_PREP
-const PAGE_LONG_TERM_PLACEHOLDER := &"long_term_placeholder"
+const PAGE_LONG_TERM := &"long_term"
+const PAGE_LONG_TERM_PLACEHOLDER := PAGE_LONG_TERM
 const PAGE_SETTINGS_PLACEHOLDER := &"settings_placeholder"
 const PAGE_EXIT_CONFIRM := &"exit_confirm"
 const PAGE_RUN := &"run"
@@ -18,7 +19,7 @@ static func route_for_intent(intent: Dictionary) -> Dictionary:
 		NavigationIntentScript.TARGET_DEPLOY:
 			return _route(PAGE_DEPLOY_PREP, intent)
 		NavigationIntentScript.TARGET_LONG_TERM:
-			return _route(PAGE_LONG_TERM_PLACEHOLDER, intent)
+			return _route(PAGE_LONG_TERM, intent)
 		NavigationIntentScript.TARGET_SETTINGS:
 			return _route(PAGE_SETTINGS_PLACEHOLDER, intent)
 		NavigationIntentScript.TARGET_EXIT:

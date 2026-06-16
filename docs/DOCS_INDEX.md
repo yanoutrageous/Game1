@@ -23,19 +23,21 @@ Read these first in a new Codex or ChatGPT conversation:
 6. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
 7. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
 8. `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
-9. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
-10. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-11. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-12. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
-13. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
-14. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-15. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
-16. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
-17. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-18. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-19. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-20. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-21. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+9. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
+10. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
+11. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
+12. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+13. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+14. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
+15. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
+16. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+17. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
+18. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+19. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
+20. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+21. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+22. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+23. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
@@ -70,6 +72,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md` records the G16 combat/monster encounter foundation static validation, Monster `attack_basic` bridge, public summary/risk/reward fields, R5 docs-only closeout, parser blocker fix, headless project-load/parser smoke PASS, fast-forward main merge status, and no-complete-gameplay-runtime-PASS status.
 - `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md` records the G17 AppShell / MainMenuShell validation boundary and R3 Godot headless project-load/parser smoke PASS; no complete gameplay runtime PASS is claimed.
 - `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md` records the G18 DeployPrepShell / DeployConfig / RunStartConfig foundation boundary, R4 acceptance, Godot headless project-load/parser smoke PASS, and fast-forward main merge status. It does not claim complete gameplay runtime PASS or manual playtest PASS.
+- `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md` records the G19 LongTermShell foundation boundary, six-module placeholder plan, static validation commands, and no-Godot-smoke R3 boundary.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -89,6 +92,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` records the imported Post-G16 architecture direction baseline: keep G15/G16, split top-level app shell next, and route G17 toward `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 - `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md` records the G17 AppShell / MainMenuShell closeout, R2 implementation boundary, R3 acceptance, Godot headless project-load/parser smoke PASS, and fast-forward main merge status.
 - `docs/handoff/HANDOFF_G18_DEPLOY_PREP_FOUNDATION.md` records the G18 DeployPrepShell / DeployConfig / RunStartConfig handoff, R4 acceptance, parser smoke PASS, non-goals, fast-forward main merge status, and post-G18 next-dialog calibration requirement.
+- `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md` records the G19 LongTermShell foundation branch handoff, six-module IA, display-only interface preview boundary, and G19-R4 validation next step.
 
 ## Branch Change Records
 
@@ -125,4 +129,6 @@ Post-G16 architecture direction baseline recommends G17 as `AppShell / Navigatio
 
 G17 branch work on `godot/g17-app-shell-main-menu` has R2 implementation, R3 acceptance/docs closeout, Godot headless project-load/parser smoke PASS, and is fast-forward merged to `main`. It does not implement full main menu, formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS.
 
-G18 work on `godot/g18-deploy-prep-foundation` is limited to formal expedition prep foundation: DeployPrepShell, five placeholder tabs, public DeployConfig / RunStartConfig preview, validation/manual checklist updates, R4 acceptance, and Godot headless project-load/parser smoke PASS. It is fast-forward merged to `main` and does not implement true run start, real maps, warehouse, requisition, work permits, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence. G19 has not started; use a new CodeX execution conversation and run workspace / shell cwd / git root / apply_patch root calibration before planning or auditing G19.
+G18 work on `godot/g18-deploy-prep-foundation` is limited to formal expedition prep foundation: DeployPrepShell, five placeholder tabs, public DeployConfig / RunStartConfig preview, validation/manual checklist updates, R4 acceptance, and Godot headless project-load/parser smoke PASS. It is fast-forward merged to `main` and does not implement true run start, real maps, warehouse, requisition, work permits, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence.
+
+G19 branch work on `godot/g19-long-term-shell-foundation` is limited to LongTermShell foundation: six fixed modules, placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. It does not implement real long-term systems, item or asset systems, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
