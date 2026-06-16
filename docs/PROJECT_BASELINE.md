@@ -1,5 +1,14 @@
 # Project Baseline
 
+## G18-align-R2 Branch Status
+
+- Branch: `godot/g18-align-deploy-prep-asset-view`.
+- Baseline main HEAD: `dab8e9eacb009a6e51d84cb7ab7d0f5cac4f1690`.
+- Purpose: align the existing G18 DeployPrep foundation with the deploy-prep design source for asset attendance view.
+- Implemented in this branch: secondary labels, asset attendance cards/details, warehouse attendance draft actions, requisition preview, loadout preview, permit preview, right-side summary/config/effect/risk preview, start/continue/abandon strong-confirmation preview, and display-only G21 deploy prep projection shape.
+- Boundary: still foundation alignment only. It is not complete deploy prep, not a complete warehouse, not real asset writing, not event bus, not reward grant, not persistence, not real run start/continue/abandon, and not G22.
+- Godot is not run in G18-align-R2. Parser smoke is deferred to a later acceptance round.
+
 ## Current Authority
 
 - Stage: G21 Asset & Item Flow Contract Foundation is fast-forward merged to `main`.

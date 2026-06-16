@@ -1,5 +1,9 @@
 # Milestones
 
+## G18-align Current Branch
+
+`godot/g18-align-deploy-prep-asset-view` aligns DeployPrep foundation with asset attendance view, secondary labels, card details, right summary, and start/continue/abandon strong-confirmation preview. It is not complete warehouse, not real asset writes, not G22, and does not run Godot in R2.
+
 This file maps the historical G-number labels to stable milestone names. It does not rename branches, rewrite Git history, or remove historical labels.
 
 | Historical label | Formal name | Status |

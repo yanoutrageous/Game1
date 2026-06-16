@@ -11,13 +11,22 @@ signal deploy_start_intent_requested(intent: Dictionary)
 var current_model: Dictionary = {}
 var current_snapshot: Dictionary = {}
 var tab_buttons: Dictionary = {}
+var filter_buttons: Array[Button] = []
+var card_buttons: Array[Button] = []
 var tab_title_label: Label
 var tab_body_label: Label
+var filter_heading_label: Label
+var card_heading_label: Label
+var detail_label: Label
 var summary_label: Label
 var config_label: Label
 var effect_label: Label
 var risk_label: Label
 var preview_label: Label
+var action_message_label: Label
+var start_button: Button
+var continue_button: Button
+var abandon_button: Button
 
 
 func build(model: Dictionary = {}) -> void:
@@ -55,13 +64,22 @@ func _clear_children() -> void:
 		remove_child(child)
 		child.queue_free()
 	tab_buttons.clear()
+	filter_buttons.clear()
+	card_buttons.clear()
 	tab_title_label = null
 	tab_body_label = null
+	filter_heading_label = null
+	card_heading_label = null
+	detail_label = null
 	summary_label = null
 	config_label = null
 	effect_label = null
 	risk_label = null
 	preview_label = null
+	action_message_label = null
+	start_button = null
+	continue_button = null
+	abandon_button = null
 
 
 func _build_backdrop() -> void:
@@ -88,7 +106,8 @@ func _build_tab_panel() -> void:
 			button.offset_top = y
 			button.offset_right = 316.0
 			button.offset_bottom = y + 42.0
-			button.pressed.connect(func() -> void: show_tab(tab_id))
+			var captured_tab := tab_id
+			button.pressed.connect(func() -> void: show_tab(captured_tab))
 			add_child(button)
 			tab_buttons[tab_id] = button
 			y += 52.0
@@ -96,55 +115,147 @@ func _build_tab_panel() -> void:
 
 
 func _build_content_panel() -> void:
-	tab_title_label = _add_label(self, "DeployTabTitle", Rect2(404, 112, 416, 36), "", 24, PresentationTheme.color_for_key(&"ui.accent"))
-	tab_body_label = _add_label(self, "DeployTabBody", Rect2(406, 168, 414, 254), "", 17, PresentationTheme.text_color())
-	_add_label(self, "DeployConfigPreviewHeading", Rect2(406, 450, 390, 24), "RunStartConfig preview", 16, PresentationTheme.color_for_key(&"ui.warning"))
-	preview_label = _add_label(self, "DeployConfigPreview", Rect2(406, 482, 420, 116), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
+	tab_title_label = _add_label(self, "DeployTabTitle", Rect2(404, 104, 416, 34), "", 23, PresentationTheme.color_for_key(&"ui.accent"))
+	tab_body_label = _add_label(self, "DeployTabBody", Rect2(406, 144, 414, 92), "", 14, PresentationTheme.text_color())
+	filter_heading_label = _add_label(self, "DeployFilterHeading", Rect2(406, 246, 420, 24), "二级标签", 15, PresentationTheme.color_for_key(&"ui.warning"))
+	card_heading_label = _add_label(self, "DeployCardHeading", Rect2(406, 320, 420, 24), "出勤卡片", 15, PresentationTheme.color_for_key(&"ui.warning"))
+	detail_label = _add_label(self, "DeployCardDetail", Rect2(622, 350, 214, 174), "", 13, PresentationTheme.text_color())
+	_add_label(self, "DeployConfigPreviewHeading", Rect2(406, 538, 390, 24), "RunStartConfig draft", 15, PresentationTheme.color_for_key(&"ui.warning"))
+	preview_label = _add_label(self, "DeployConfigPreview", Rect2(406, 566, 420, 42), "", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 
 func _build_summary_panel() -> void:
 	_add_label(self, "DeploySummaryHeading", Rect2(930, 106, 240, 30), "右侧出勤准备", 20, PresentationTheme.color_for_key(&"ui.accent"))
-	summary_label = _add_label(self, "DeploySummaryText", Rect2(930, 154, 250, 82), "", 14, PresentationTheme.text_color())
-	config_label = _add_label(self, "DeployConfigText", Rect2(930, 250, 250, 88), "", 14, PresentationTheme.text_color())
-	effect_label = _add_label(self, "DeployEffectText", Rect2(930, 352, 250, 88), "", 14, PresentationTheme.text_color())
-	risk_label = _add_label(self, "DeployRiskText", Rect2(930, 454, 250, 104), "", 14, PresentationTheme.text_color())
+	summary_label = _add_label(self, "DeploySummaryText", Rect2(930, 146, 250, 92), "", 13, PresentationTheme.text_color())
+	config_label = _add_label(self, "DeployConfigText", Rect2(930, 248, 250, 92), "", 13, PresentationTheme.text_color())
+	effect_label = _add_label(self, "DeployEffectText", Rect2(930, 350, 250, 92), "", 13, PresentationTheme.text_color())
+	risk_label = _add_label(self, "DeployRiskText", Rect2(930, 452, 250, 104), "", 13, PresentationTheme.text_color())
 
 
 func _build_action_panel() -> void:
-	var start_action := _action("start")
-	var start_button := _add_button(self, "DeployStartPreviewButton", Rect2(930, 574, 254, 38), String(start_action.get("label", "生成出勤预览")), _on_start_preview_pressed)
-	start_button.tooltip_text = String(start_action.get("tooltip", ""))
-	var continue_button := _add_button(self, "DeployContinuePlaceholderButton", Rect2(930, 620, 122, 36), "继续探索", _on_placeholder_action_pressed)
-	continue_button.disabled = true
-	continue_button.tooltip_text = "继续探索后置，当前仅预留入口。"
-	var abandon_button := _add_button(self, "DeployAbandonPlaceholderButton", Rect2(1062, 620, 122, 36), "放弃探索", _on_placeholder_action_pressed)
-	abandon_button.disabled = true
-	abandon_button.tooltip_text = "放弃探索结算后置，当前不执行。"
+	start_button = _add_button(self, "DeployStartPreviewButton", Rect2(930, 568, 254, 34), "生成出勤 preview", _on_start_preview_pressed)
+	continue_button = _add_button(self, "DeployContinuePreviewButton", Rect2(930, 610, 122, 34), "继续探索", _on_continue_preview_pressed)
+	abandon_button = _add_button(self, "DeployAbandonPreviewButton", Rect2(1062, 610, 122, 34), "放弃探索", _on_abandon_preview_pressed)
+	action_message_label = _add_label(self, "DeployActionMessage", Rect2(930, 652, 254, 42), "", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 
 func _refresh_view() -> void:
 	if current_model.is_empty() or tab_title_label == null:
 		return
 	var active_tab := StringName(current_model.get("active_tab", DeployTabModelScript.DEFAULT_TAB))
-	var tab := DeployTabModelScript.find_tab(active_tab)
+	var tab := _dictionary_from(current_model.get("active_tab_data", DeployTabModelScript.find_tab(active_tab)))
 	for tab_id in tab_buttons.keys():
 		var button := tab_buttons[tab_id] as Button
 		if button != null:
 			button.disabled = StringName(tab_id) == active_tab
 	tab_title_label.text = "%s / %s" % [String(tab.get("label", active_tab)), String(tab.get("subtitle", ""))]
 	tab_body_label.text = _lines_text(_array_from(tab, "lines"))
+	_refresh_filter_buttons(tab)
+	_refresh_card_buttons()
+	_refresh_detail()
 	var preview := _preview()
 	summary_label.text = _section_text("摘要", _array_from(preview, "summary"))
 	config_label.text = _section_text("配置", _array_from(preview, "config"))
 	effect_label.text = _section_text("效果", _array_from(preview, "effect"))
 	risk_label.text = _section_text("风险", _array_from(preview, "risk"))
-	preview_label.text = JSON.stringify(DeployConfigScript.build_run_start_config(_config()), "\t")
+	preview_label.text = _run_start_preview_text(DeployConfigScript.build_run_start_config(_config()))
+	_refresh_actions()
+
+
+func _refresh_filter_buttons(tab: Dictionary) -> void:
+	for button in filter_buttons:
+		if button != null:
+			remove_child(button)
+			button.queue_free()
+	filter_buttons.clear()
+	var x := 406.0
+	var y := 276.0
+	var selected_filter := StringName(current_model.get("selected_filter", DeployTabModelScript.FILTER_ALL))
+	for raw_filter in _array_from(tab, "secondary_filters"):
+		if raw_filter is Dictionary:
+			var filter := raw_filter as Dictionary
+			var filter_id := StringName(filter.get("id", DeployTabModelScript.FILTER_ALL))
+			var captured_filter := filter_id
+			var button := _add_button(self, "DeployFilter_%s" % String(filter_id), Rect2(x, y, 92, 28), String(filter.get("label", filter_id)), func() -> void: _on_filter_pressed(captured_filter))
+			button.disabled = filter_id == selected_filter
+			filter_buttons.append(button)
+			x += 98.0
+			if x > 760.0:
+				x = 406.0
+				y += 32.0
+
+
+func _refresh_card_buttons() -> void:
+	for button in card_buttons:
+		if button != null:
+			remove_child(button)
+			button.queue_free()
+	card_buttons.clear()
+	var y := 350.0
+	var selected_card := StringName(current_model.get("selected_card", &""))
+	for raw_card in _array_from(current_model, "visible_cards"):
+		if raw_card is Dictionary:
+			var card := raw_card as Dictionary
+			var card_id := StringName(card.get("id", &""))
+			var label := "%s\n%s / %s" % [String(card.get("title", card_id)), String(card.get("category", "")), String(card.get("state", &"preview"))]
+			var captured_card := card_id
+			var button := _add_button(self, "DeployCard_%s" % String(card_id), Rect2(406, y, 198, 46), label, func() -> void: _on_card_pressed(captured_card))
+			button.disabled = card_id == selected_card
+			card_buttons.append(button)
+			y += 52.0
+
+
+func _refresh_detail() -> void:
+	var detail := _dictionary_from(current_model.get("selected_card_detail", {}))
+	if detail.is_empty():
+		detail_label.text = "卡片详情\n- 当前筛选下没有可显示卡片。"
+		return
+	var lines := [
+		String(detail.get("summary", "")),
+		String(detail.get("detail", "")),
+	]
+	for line in _array_from(detail, "lines"):
+		lines.append(String(line))
+	var links := _array_from(detail, "link_preview")
+	if not links.is_empty():
+		lines.append("只读跳转：%s" % _join_array(links, "无"))
+	detail_label.text = _section_text("卡片详情", lines)
+
+
+func _refresh_actions() -> void:
+	var start_action := _action("start")
+	var continue_action := _action("continue")
+	var abandon_action := _action("abandon")
+	start_button.text = String(start_action.get("label", "生成出勤 preview"))
+	start_button.disabled = bool(start_action.get("disabled", false))
+	start_button.tooltip_text = String(start_action.get("tooltip", ""))
+	continue_button.text = String(continue_action.get("label", "继续探索"))
+	continue_button.disabled = bool(continue_action.get("disabled", true))
+	continue_button.tooltip_text = String(continue_action.get("tooltip", ""))
+	abandon_button.text = String(abandon_action.get("label", "放弃探索"))
+	abandon_button.disabled = bool(abandon_action.get("disabled", true))
+	abandon_button.tooltip_text = String(abandon_action.get("tooltip", ""))
+	var message := String(current_model.get("action_message", ""))
+	if bool(current_model.get("abandon_confirm_visible", false)):
+		message = "强确认 preview：再次点击只会关闭提示，不执行放弃。"
+	action_message_label.text = message
+
+
+func _on_filter_pressed(filter_id: StringName) -> void:
+	current_model = DeployPrepModelScript.model_with_filter(current_model, filter_id)
+	_refresh_view()
+
+
+func _on_card_pressed(card_id: StringName) -> void:
+	current_model = DeployPrepModelScript.model_with_card(current_model, card_id)
+	_refresh_view()
 
 
 func _on_start_preview_pressed() -> void:
 	var config := _config()
 	current_model["run_start_config"] = DeployConfigScript.build_run_start_config(config)
 	current_model["preview_lines"] = DeployConfigScript.build_preview_lines(config)
+	current_model["action_message"] = "已刷新出勤 preview；不会启动探索。"
 	_refresh_view()
 	var intent := NavigationIntentScript.make_deploy(
 		&"deploy_prep",
@@ -157,8 +268,17 @@ func _on_start_preview_pressed() -> void:
 	deploy_start_intent_requested.emit(intent)
 
 
-func _on_placeholder_action_pressed() -> void:
-	pass
+func _on_continue_preview_pressed() -> void:
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, "继续探索入口仅为 preview；真实继续流程后置。")
+	_refresh_view()
+
+
+func _on_abandon_preview_pressed() -> void:
+	if bool(current_model.get("abandon_confirm_visible", false)):
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "已关闭放弃强确认 preview；没有执行放弃。", false)
+	else:
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "放弃当前探索需要强确认；本轮不执行真实放弃。", true)
+	_refresh_view()
 
 
 func _config() -> Dictionary:
@@ -195,11 +315,35 @@ func _lines_text(lines: Array) -> String:
 	return "\n".join(parts)
 
 
+func _run_start_preview_text(run_start: Dictionary) -> String:
+	return "id=%s  bag=%d/%d  projection=%s" % [
+		String(run_start.get("config_id", "")),
+		int(run_start.get("bag_used", 0)),
+		int(run_start.get("bag_limit", 0)),
+		String((_dictionary_from(run_start.get("deploy_prep_projection", {}))).get("projection_type", &"")),
+	]
+
+
 func _array_from(source: Dictionary, key: String) -> Array:
 	var raw: Variant = source.get(key, [])
 	if raw is Array:
 		return (raw as Array).duplicate(true)
 	return []
+
+
+func _dictionary_from(value: Variant) -> Dictionary:
+	if value is Dictionary:
+		return (value as Dictionary).duplicate(true)
+	return {}
+
+
+func _join_array(items: Array, fallback: String) -> String:
+	if items.is_empty():
+		return fallback
+	var parts := []
+	for item in items:
+		parts.append(String(item))
+	return "、".join(parts)
 
 
 func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, callback: Callable) -> Button:

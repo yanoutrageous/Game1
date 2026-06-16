@@ -1,5 +1,14 @@
 # Next Handoff
 
+## G18-align-R2 Branch Note
+
+- Active branch for this batch: `godot/g18-align-deploy-prep-asset-view`.
+- Baseline main HEAD: `dab8e9eacb009a6e51d84cb7ab7d0f5cac4f1690`.
+- Scope: DeployPrep asset attendance view alignment only.
+- G18-align-R2 adds five fixed primary tabs wording, secondary labels, card list/detail preview, right-side summary/config/effect/risk preview, start/continue/abandon strong-confirmation preview, and read-only G21 deploy prep projection shape usage.
+- This is not complete deploy prep, not complete warehouse, not real asset writes, not event bus, not reward grant, not persistence, not real run start/continue/abandon, and not G22.
+- Godot is not run in G18-align-R2; parser smoke is deferred to acceptance.
+
 Read this first in the next Codex or ChatGPT conversation. This is the minimum next-chat entry, not a full historical archive.
 
 ## Current Baseline

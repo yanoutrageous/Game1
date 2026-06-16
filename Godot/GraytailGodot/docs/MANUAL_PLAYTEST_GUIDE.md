@@ -1,5 +1,18 @@
 # Manual Playtest Guide
 
+## G18-align Deploy Prep Static Checklist
+
+Use this checklist after G18-align-R2 is explicitly accepted for manual or parser-smoke review. R2 itself does not run Godot.
+
+- Confirm DeployPrep shows five primary tabs: 地图 / 仓库 / 申领 / 出勤配置 / 作业许可.
+- Confirm each tab has secondary labels and that those labels are filters, not separate top-level systems.
+- Confirm the warehouse tab is an asset attendance view only and shows draft actions such as 加入出勤 / 移出出勤 / 穿戴 / 卸下 without real warehouse writes.
+- Confirm requisition shows 补给 / 服务 / 情报 / 基础装备 preview and does not act as a shop or reward-claim system.
+- Confirm loadout and permit summaries remain RunStartConfig / DeployConfig draft preview only.
+- Confirm the right side shows 摘要 / 配置 / 效果 / 风险.
+- Confirm start only generates preview intent, continue is preview-only, and abandon requires strong-confirmation preview without executing real abandon.
+- Confirm no G22, real asset writes, event bus, reward grant, persistence, or real exploration execution is added.
+
 ## Scope
 
 This guide treats the older G4-G7 routes as historical foundations and points manual smoke toward the current mainline G14 legacy Demo run surface baseline, the G15 encounter contract foundation, and the G16 combat encounter foundation now merged to main. Do not run Godot unless the user explicitly authorizes editor/runtime execution.

@@ -1,5 +1,13 @@
 # GODOT_CURRENT_STATUS
 
+## G18-align-R2 Current Batch
+
+Branch: `godot/g18-align-deploy-prep-asset-view`.
+
+G18-align-R2 updates only the DeployPrep foundation UI/model/config layer. It adds asset attendance view wording, secondary labels, card list/detail preview, right-side summary/config/effect/risk preview, start/continue/abandon strong-confirmation preview, and read-only deploy prep projection shape from G21.
+
+This is not complete deploy prep, not complete warehouse, not real asset writes, not event bus, not reward grant, not persistence, not real exploration start/continue/abandon, and not G22. Godot is not run in R2; parser smoke is deferred to acceptance.
+
 ## Updated
 
 `2026-06-16`

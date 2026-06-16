@@ -163,3 +163,6 @@ flowchart LR
 - 不能直接调用什么：real currency cost、persistence writes、reward grant without contract。
 - 当前实现状态：未启动。
 - 后续承接阶段：建议 G25。
+## G18-align-R2 Boundary Update
+
+G18-align-R2 keeps DeployPrep inside the UI preview boundary. It may consume G21 `AssetProjectionSchema` as a read-only deploy prep projection shape, but it must not call asset runtime systems, write asset events, mutate warehouse state, grant rewards, persist state, or start / continue / abandon real exploration.

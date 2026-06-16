@@ -1,5 +1,12 @@
 # Docs Index
 
+## G18-align Documents
+
+- `docs/validation/G18_ALIGN_DEPLOY_PREP_ASSET_VIEW_VALIDATION.md` - validation boundary for DeployPrep asset attendance view alignment.
+- `docs/handoff/HANDOFF_G18_ALIGN_DEPLOY_PREP_ASSET_VIEW.md` - branch handoff for G18-align-R2.
+
+G18-align is a pre-G22 alignment slice. It updates DeployPrep foundation semantics for asset attendance view and does not start G22 or implement complete warehouse / real asset systems.
+
 This file is the document navigation and historical index. It is not the fact source itself; use `docs/PROJECT_BASELINE.md` for current facts and `docs/NEXT_HANDOFF.md` for the minimum next-chat entry.
 
 ## G20 Governance Branch Status

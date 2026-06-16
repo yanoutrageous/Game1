@@ -1,5 +1,13 @@
 # ENGINEERING_STATUS
 
+## G18-align-R2 Current Batch
+
+Current working branch: `godot/g18-align-deploy-prep-asset-view` from `main@dab8e9eacb009a6e51d84cb7ab7d0f5cac4f1690`.
+
+This batch aligns DeployPrep with the Base Docs deploy-prep direction as a small foundation correction: asset attendance view, secondary labels, card detail preview, right-side summary/config/effect/risk, and start/continue/abandon strong-confirmation preview. It also uses G21 `AssetProjectionSchema` only as a read-only deploy prep projection shape.
+
+It does not implement complete deploy prep, warehouse, real asset writes, event bus, reward grant, persistence, gacha, settlement/history, red dot, real run start/continue/abandon, or G22. Godot is not run in this batch.
+
 ## Stage
 
 G21 Asset & Item Flow Contract Foundation is fast-forward merged to `main`. G21-R3 is complete at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4B closeout / first main commit is `fdadd78ccdf1d61378ac93a74cfe26449e47c411`. G21 adds contract-only schema files under `Godot/GraytailGodot/scripts/core/asset/` for `AssetContract`, `ItemSchema`, `AssetEventSchema`, and `AssetProjectionSchema`. It defines schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema only. It does not implement a real asset system, warehouse, event bus, reward grant, persistence, gacha, settlement/history, red dot system, or Policy / Tag rule engine. G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS; smoke left the working tree clean with no dirty side effects. This is not complete gameplay runtime PASS and not manual playtest PASS. G22 has not started.
