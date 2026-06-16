@@ -2,6 +2,11 @@
 
 ## Current Authority
 
+- Stage: G21 Asset & Item Flow Contract Foundation is in progress on branch `godot/g21-asset-item-flow-contract` from `main@4bb4594fc23b846da9c15003a86c71cf08003830`.
+- G21-R3 adds contract-only schema files under `Godot/GraytailGodot/scripts/core/asset/`: `AssetContract`, `ItemSchema`, `AssetEventSchema`, and `AssetProjectionSchema`.
+- G21-R3 scope is schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema only. It is not a real asset system, warehouse, event bus, reward grant, persistence, gacha, settlement/history, red dot system, or Policy / Tag rule engine.
+- G21-R3 does not modify DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, `.uid`, `.translation`, or Base Docs.
+- G21-R3 does not run Godot; parser smoke is deferred to G21-R4 if authorized and must not be reported as complete gameplay runtime PASS or manual playtest PASS.
 - Stage: G20 Project Knowledge Governance is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`.
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`.
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`.
@@ -20,7 +25,7 @@
 - G20 docs-only governance branch `godot/g20-project-knowledge-governance` is fast-forward merged to main. R3a 已完成 authorized Base Docs Markdown / TXT text design source copies 入库，Base Docs 原件未修改，PNG 未入库且仅登记为 `external_reference` / `pending_user_authorization`；R3b 已完成 project_governance 与 design_sources index structure；R3c 已完成 G10-G19 stage summaries 与 route analysis；R3d1 已完成 branch / commit / validation governance matrices；R3d2 新增 decision log / glossary / deprecated inventory；G20-R4A 只读验收通过；G20-R4B docs-only closeout 已完成。G20 first main merge baseline / R4B closeout commit is `ae689b7464fd6ea81a763110cd89813abcfb6665`; post-merge docs commit hash is pending until commit.
 - G20-R3d1 matrix docs: `docs/project_governance/BRANCH_INVENTORY.md`, `docs/project_governance/COMMIT_MILESTONE_MAP.md`, and `docs/project_governance/VALIDATION_STATUS_MATRIX.md`.
 - G20-R3d2 docs: `docs/project_governance/DECISION_LOG.md`, `docs/project_governance/GLOSSARY.md`, and `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`.
-- G21 has not started, and G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
+- G21-R3 has started on `godot/g21-asset-item-flow-contract`, and G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 - G19-R4B smoke is not complete gameplay runtime PASS and not manual playtest PASS.
 - Integrated G17 branch: `godot/g17-app-shell-main-menu`.
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`.
@@ -150,11 +155,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-G20-R4A read-only acceptance passed, G20-R4B docs-only closeout is complete, and G20 final has fast-forward merged the branch into main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. The post-merge docs commit hash is pending until commit. G21 is not started.
+G20-R4A read-only acceptance passed, G20-R4B docs-only closeout is complete, and G20 final has fast-forward merged the branch into main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. The post-merge docs commit hash is pending until commit. G21-R3 has started on `godot/g21-asset-item-flow-contract`.
 
 G20-R3c added `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`, `docs/stage_summaries/G10_SUMMARY.md` through `docs/stage_summaries/G19_SUMMARY.md`, and route analysis under `docs/route_analysis/`. G20-R3d1 added branch / commit / validation matrices under `docs/project_governance/`. G20-R3d2 added `DECISION_LOG.md`, `GLOSSARY.md`, and `TEMP_AND_DEPRECATED_INVENTORY.md`. G20-R4B added `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md` and `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md`. These are docs-only governance artifacts and do not implement Asset Contract, Warehouse, gameplay, Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
-G21 candidate direction is Asset Contract Foundation, but it must be independently audited, planned, executed, and validated.
+G21 direction is Asset & Item Flow Contract Foundation. G21-R3 implements only the contract foundation and still requires independent G21-R4 validation before any main merge decision.
 
 G18 should not be treated as complete expedition prep. G18-R3 is only the minimal foundation for `DeployPrepShell / DeployConfig / RunStartConfig` preview. Do not expand it into Boss, action combat, true run start, real maps, warehouse economy, requisition economy, work permit rules, settlement reports/history, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems without explicit authorization.
 

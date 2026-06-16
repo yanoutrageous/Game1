@@ -6,6 +6,13 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
+- G21 branch: `godot/g21-asset-item-flow-contract`.
+- G21-R3 baseline main HEAD: `4bb4594fc23b846da9c15003a86c71cf08003830`.
+- G21-R3 scope: Asset & Item Flow Contract Foundation only: schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema.
+- G21-R3 added `AssetContract`, `ItemSchema`, `AssetEventSchema`, and `AssetProjectionSchema` under `Godot/GraytailGodot/scripts/core/asset/`.
+- G21-R3 is not a real asset system, not a warehouse, not a real event bus, not reward granting, not persistence, not gacha, not settlement/history, not red dot, and not a Policy / Tag rule engine.
+- G21-R3 does not modify DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, `.uid`, `.translation`, or Base Docs.
+- G21-R3 Godot run status: not run. Godot headless project-load/parser smoke is deferred to G21-R4 if authorized.
 - Current branch for this handoff: `main`
 - Base branch: `main`
 - Current G18 branch: `godot/g18-deploy-prep-foundation`
@@ -37,7 +44,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G20-R4A read-only acceptance: passed; blocker fix commit `82e2b1c6bec8311a144b42dd69950e4bfd500d9c`.
 - G20-R4B closeout executed: yes, docs-only.
 - G20 final executed: yes.
-- G21 started: no.
+- G21-R3 started: yes, on `godot/g21-asset-item-flow-contract`; not merged to main in this implementation batch.
 - Godot run for G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final: no; no Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed.
 - G20-R3c stage summary index: `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`.
 - G20-R3c route analysis: `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`.
@@ -117,25 +124,27 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 10. `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`
 11. `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md`
 12. `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md`
-13. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
-14. `docs/route_analysis/ROADMAP_G20_PLUS.md`
-15. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
-16. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
-17. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
-18. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
-19. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-20. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
-21. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-22. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
-23. `docs/DOCS_INDEX.md`
-24. `docs/MILESTONES.md`
-25. `docs/ENGINEERING_STATUS.md`
-26. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
-27. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-28. `docs/handoff/HANDOFF_G18_DEPLOY_PREP_FOUNDATION.md`
-29. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
-30. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
-31. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
+13. `docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md`
+14. `docs/handoff/HANDOFF_G21_ASSET_ITEM_FLOW_CONTRACT.md`
+15. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
+16. `docs/route_analysis/ROADMAP_G20_PLUS.md`
+17. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
+18. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
+19. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
+20. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
+21. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+22. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
+23. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+24. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
+25. `docs/DOCS_INDEX.md`
+26. `docs/MILESTONES.md`
+27. `docs/ENGINEERING_STATUS.md`
+28. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
+29. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+30. `docs/handoff/HANDOFF_G18_DEPLOY_PREP_FOUNDATION.md`
+31. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
+32. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
+33. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
 
 ## Safety And Dirty Rules
 
@@ -168,7 +177,7 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 - Latest integrated stage: G20 `Project Knowledge Governance`.
 - G20 is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`; post-merge docs commit hash is pending until commit.
-- G21 has not started. Candidate direction: Asset Contract Foundation, requiring independent audit, plan, execution, and validation.
+- G21-R3 has started on `godot/g21-asset-item-flow-contract` as Asset & Item Flow Contract Foundation only. It still requires independent G21-R4 validation before any main merge decision.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
 This handoff records G20 mainline integration and post-merge docs calibration. Godot headless project-load/parser smoke PASS is recorded for G19-R4B, but complete gameplay runtime PASS and manual playtest PASS are not claimed for G19 or G20. G20 did not run Godot and does not claim parser smoke PASS.

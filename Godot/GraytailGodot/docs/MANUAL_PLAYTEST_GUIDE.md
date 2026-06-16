@@ -14,7 +14,24 @@ G18 mainline note: `godot/g18-deploy-prep-foundation` added a formal DeployPrepS
 
 G19 mainline note: `godot/g19-long-term-shell-foundation` has been fast-forward merged to `main` and adds a LongTermShell foundation only. It exposes six modules: `目标`, `图鉴`, `研究`, `个人资历`, `抽奖`, and `收藏 / 外观`. G19-R4B records Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. G20 docs-only governance is fast-forward merged to `main`; R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final do not require manual playtest and do not claim runtime PASS.
 
-G20 docs-only note: R3a imported authorized text design source copies, R3b adds project governance/index documents, R3c adds G10-G19 stage summaries plus route analysis, R3d1 adds branch / commit / validation governance matrices, R3d2 adds decision log / glossary / temporary-deprecated inventory, R4A read-only acceptance passed, R4B docs-only closeout is complete, and G20 final merged main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. Do not record these docs-only batches as `Godot headless project-load/parser smoke PASS`, `gameplay runtime PASS`, or `manual playtest PASS`. G21 has not started; Asset Contract Foundation is only a candidate and requires separate authorization and its own validation record.
+G20 docs-only note: R3a imported authorized text design source copies, R3b adds project governance/index documents, R3c adds G10-G19 stage summaries plus route analysis, R3d1 adds branch / commit / validation governance matrices, R3d2 adds decision log / glossary / temporary-deprecated inventory, R4A read-only acceptance passed, R4B docs-only closeout is complete, and G20 final merged main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. Do not record these docs-only batches as `Godot headless project-load/parser smoke PASS`, `gameplay runtime PASS`, or `manual playtest PASS`. G21-R3 has now started separately as Asset & Item Flow Contract Foundation and requires its own validation record.
+
+G21-R3 branch note: `godot/g21-asset-item-flow-contract` adds Asset & Item Flow Contract Foundation only. It adds contract schema/default/normalize/validate/projection helpers under `Godot/GraytailGodot/scripts/core/asset/`. It does not implement real warehouse, inventory, event bus, reward grant, persistence, gacha, settlement/history, red dot state, or Policy / Tag rule engine. G21-R3 does not run Godot; headless project-load/parser smoke is deferred to G21-R4 if authorized.
+
+## G21 Asset & Item Flow Contract Static Checklist
+
+Use this checklist for G21-R3 static review. Static inspection alone is not runtime PASS.
+
+- Confirm `AssetContract` defines the four asset categories: resource, item, cosmetic unlock, and record/function unlock.
+- Confirm `ItemSchema` defines entity item main types only as equipment, consumable, collectible, and special.
+- Confirm unique is represented as collectible rarity or special kind, not a main type.
+- Confirm cosmetic unlocks, codex records, and research unlocks are not item main types.
+- Confirm `AssetEventSchema` is a schema helper only and does not write events.
+- Confirm `AssetProjectionSchema` exposes read-only projection schemas only.
+- Confirm helpers are default / normalize / validate only.
+- Confirm no real warehouse, inventory, reward, gacha, settlement, history, red dot, or persistence behavior was added.
+- Confirm DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, `.uid`, and `.translation` were not modified.
+- Record whether Godot/editor/game/import was run. For G21-R3 the expected record is "not run".
 
 ## G19 LongTermShell Foundation Static Checklist
 

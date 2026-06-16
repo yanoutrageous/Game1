@@ -4,7 +4,11 @@ This file is the document navigation and historical index. It is not the fact so
 
 ## G20 Governance Branch Status
 
-G20 docs-only project knowledge governance is fast-forward merged to `main` at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20-R3a 已完成 Base Docs Markdown / TXT design source 文本副本入库且 Base Docs 原件未修改；PNG 未入库，仅登记为 `external_reference` / `pending_user_authorization`；G20-R3b 已完成 project governance 与 design source index；G20-R3c 已完成 G10-G19 stage summaries 与 route analysis；G20-R3d1 已完成 branch / commit / validation governance matrices；G20-R3d2 新增 decision log / glossary / deprecated inventory；G20-R4A 只读验收通过；G20-R4B docs-only closeout 已完成；G20 final 已执行。post-merge docs commit hash pending until commit。G21 未启动，候选方向为 Asset Contract Foundation 且必须独立审计、计划、执行、验收。G20 是 docs-only，本轮不运行 Godot，不声明 Godot smoke，不声明 gameplay runtime PASS，不声明 manual playtest PASS。
+G20 docs-only project knowledge governance is fast-forward merged to `main` at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20-R3a 已完成 Base Docs Markdown / TXT design source 文本副本入库且 Base Docs 原件未修改；PNG 未入库，仅登记为 `external_reference` / `pending_user_authorization`；G20-R3b 已完成 project governance 与 design source index；G20-R3c 已完成 G10-G19 stage summaries 与 route analysis；G20-R3d1 已完成 branch / commit / validation governance matrices；G20-R3d2 新增 decision log / glossary / deprecated inventory；G20-R4A 只读验收通过；G20-R4B docs-only closeout 已完成；G20 final 已执行。post-merge docs commit hash pending until commit。G21-R3 已在独立分支启动为 Asset & Item Flow Contract Foundation，尚未合并 main。G20 是 docs-only，本轮不运行 Godot，不声明 Godot smoke，不声明 gameplay runtime PASS，不声明 manual playtest PASS。
+
+## G21 Branch Status
+
+G21-R3 is in progress on `godot/g21-asset-item-flow-contract` from `main@4bb4594fc23b846da9c15003a86c71cf08003830`. It adds Asset & Item Flow Contract Foundation only: schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema. It does not implement real asset systems, warehouse, event bus, reward grant, persistence, gacha, settlement/history, red dot state, or Policy / Tag rule engine. It does not run Godot; parser smoke is deferred to G21-R4 if authorized.
 
 ## Current Fact Sources
 
@@ -22,6 +26,8 @@ G20 docs-only project knowledge governance is fast-forward merged to `main` at `
 - `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md` - G20-R3d2 临时 / 过期候选登记；只登记，不处理。
 - `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md` - G20-R4A 只读验收与 G20-R4B docs-only closeout validation 记录。
 - `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md` - G20 项目知识治理 docs-only closeout handoff。
+- `docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md` - G21 Asset & Item Flow Contract Foundation validation boundary, static commands, non-goals, and deferred Godot smoke plan.
+- `docs/handoff/HANDOFF_G21_ASSET_ITEM_FLOW_CONTRACT.md` - G21 Asset & Item Flow Contract Foundation handoff for contract schema, projection schema, and system boundaries.
 - `docs/project_governance/DOCUMENT_LIFECYCLE.md` - Lifecycle rules for source_design, current_status, handoff, validation, stage_summary, route_analysis, project_governance, archive, deprecated, and temporary files.
 - `docs/project_governance/NAMING_CONVENTIONS.md` - Stage prefix and needs review naming rules.
 - `docs/project_governance/EXECUTION_ENVIRONMENT.md` - Local execution path and PATCH_MODE safety rules.
@@ -50,29 +56,31 @@ Read these first in a new Codex or ChatGPT conversation:
 11. `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`
 12. `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md`
 13. `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md`
-14. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
-15. `docs/route_analysis/ROADMAP_G20_PLUS.md`
-16. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
-17. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
-18. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
-19. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
-20. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
-21. `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
-22. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
-23. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
-24. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
-25. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-26. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-27. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
-28. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
-29. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-30. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
-31. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
-32. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-33. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-34. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-35. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-36. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+14. `docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md`
+15. `docs/handoff/HANDOFF_G21_ASSET_ITEM_FLOW_CONTRACT.md`
+16. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
+17. `docs/route_analysis/ROADMAP_G20_PLUS.md`
+18. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
+19. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
+20. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
+21. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
+22. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
+23. `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
+24. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
+25. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
+26. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
+27. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+28. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+29. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
+30. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
+31. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+32. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
+33. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+34. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
+35. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+36. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+37. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+38. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
