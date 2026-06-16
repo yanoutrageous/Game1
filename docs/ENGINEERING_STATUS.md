@@ -2,7 +2,7 @@
 
 ## Stage
 
-G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 docs-only governance branch is in closeout on `godot/g20-project-knowledge-governance`: R3a 已完成 authorized text design source copies 入库，R3b 已完成 project governance maps 与 design source index，R3c 已完成 G10-G19 stage summaries 与 route analysis，R3d1 已完成 branch / commit / validation governance matrices，R3d2 新增 decision log / glossary / deprecated inventory，G20-R4A 只读验收通过，G20-R4B docs-only closeout 已完成。G20 is not merged to main, G20 final has not executed, G21 has not started, and R3a/R3b/R3c/R3d1/R3d2/R4A/R4B do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
+G20 Project Knowledge Governance is a docs-only stage and is fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20-R3a imported authorized Base Docs Markdown / TXT text design source copies; Base Docs originals were not modified; PNG files were not imported and remain `external_reference` / `pending_user_authorization`. G20-R3b added project governance maps and design source index, G20-R3c added G10-G19 stage summaries and route analysis, G20-R3d1 added branch / commit / validation governance matrices, G20-R3d2 added decision log / glossary / deprecated inventory, G20-R4A read-only acceptance passed, and G20-R4B docs-only closeout is complete. G20 final executed; post-merge docs commit hash is pending until commit. G21 has not started, and G20 does not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
 ## Time
 
@@ -13,7 +13,7 @@ G19 LongTermShell foundation is fast-forward merged to main with R4B self-check 
 - Current repository path: `D:\AGAME1\_repo_cache\Game1_work`
 - Current remote: `https://github.com/yanoutrageous/Game1.git`
 - Base branch: `main`
-- Current working branch for this handoff: `godot/g20-project-knowledge-governance`
+- Current working branch for this handoff: `main`
 - G19 branch: `godot/g19-long-term-shell-foundation`
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`
 - G19-R3 commit: `4eeb345daef5f8263b325db2ab5607e6c78f6d36 feat(godot): add long term shell foundation`
@@ -35,10 +35,12 @@ G19 LongTermShell foundation is fast-forward merged to main with R4B self-check 
 - G20-R3d2 decision log: `docs/project_governance/DECISION_LOG.md`
 - G20-R3d2 glossary: `docs/project_governance/GLOSSARY.md`
 - G20-R3d2 temporary / deprecated inventory: `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`
-- G20 merged to main: no
+- G20-R4B closeout commit / first main merge baseline: `ae689b7464fd6ea81a763110cd89813abcfb6665`
+- G20 merged to main: yes, by fast-forward
 - G20-R4A read-only acceptance: passed; blocker fix commit `82e2b1c6bec8311a144b42dd69950e4bfd500d9c`
 - G20-R4B closeout executed: yes, docs-only
-- G20 final executed: no
+- G20 final executed: yes
+- G20 final post-merge docs commit: pending until commit
 - G20-R3d2 executed: yes
 - G21 started: no
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`

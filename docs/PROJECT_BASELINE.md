@@ -2,7 +2,7 @@
 
 ## Current Authority
 
-- Stage: G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to six-module long-term shell placeholders and display-only interface preview fields.
+- Stage: G20 Project Knowledge Governance is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`.
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`.
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`.
 - G18 closeout / merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`.
@@ -17,10 +17,10 @@
 - G19 scope: `LongTermShell foundation + 6 module placeholder + interface preview only`.
 - G19 modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
 - G19 merged to main: yes, by fast-forward.
-- G20 docs-only governance branch is in closeout on `godot/g20-project-knowledge-governance`; R3a 已完成 authorized text design source copies 入库，R3b 已完成 project_governance 与 design_sources index structure，R3c 已完成 G10-G19 stage summaries 与 route analysis，R3d1 已完成 branch / commit / validation governance matrices，R3d2 新增 decision log / glossary / deprecated inventory，G20-R4A 只读验收通过，G20-R4B docs-only closeout 已完成。G20 is not merged to main, and G20 final has not executed.
+- G20 docs-only governance branch `godot/g20-project-knowledge-governance` is fast-forward merged to main. R3a 已完成 authorized Base Docs Markdown / TXT text design source copies 入库，Base Docs 原件未修改，PNG 未入库且仅登记为 `external_reference` / `pending_user_authorization`；R3b 已完成 project_governance 与 design_sources index structure；R3c 已完成 G10-G19 stage summaries 与 route analysis；R3d1 已完成 branch / commit / validation governance matrices；R3d2 新增 decision log / glossary / deprecated inventory；G20-R4A 只读验收通过；G20-R4B docs-only closeout 已完成。G20 first main merge baseline / R4B closeout commit is `ae689b7464fd6ea81a763110cd89813abcfb6665`; post-merge docs commit hash is pending until commit.
 - G20-R3d1 matrix docs: `docs/project_governance/BRANCH_INVENTORY.md`, `docs/project_governance/COMMIT_MILESTONE_MAP.md`, and `docs/project_governance/VALIDATION_STATUS_MATRIX.md`.
 - G20-R3d2 docs: `docs/project_governance/DECISION_LOG.md`, `docs/project_governance/GLOSSARY.md`, and `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`.
-- G21 has not started, and G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
+- G21 has not started, and G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 - G19-R4B smoke is not complete gameplay runtime PASS and not manual playtest PASS.
 - Integrated G17 branch: `godot/g17-app-shell-main-menu`.
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`.
@@ -31,7 +31,7 @@
 - Repository path: `D:\AGAME1\_repo_cache\Game1_work`.
 - Remote: `https://github.com/yanoutrageous/Game1.git`.
 - Main branch: `main`.
-- Current working branch for this handoff: `godot/g20-project-knowledge-governance`.
+- Current working branch for this handoff: `main`.
 - Source branch for G17: `godot/g17-app-shell-main-menu`.
 - Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`.
 - G16-R3 baseline main HEAD: `a28ae4c0c96f0b964602fd6fe7b88fa254354763`.
@@ -96,6 +96,7 @@ This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for
 - G18 is merged to `main`. It adds the formal expedition prep foundation on top of G17 AppShell: `DeployPrepShell`, public `DeployConfig` / `RunStartConfig` preview helpers, five placeholder tabs, right-side summary/config/effect/risk sections, and preview-only deploy start intent. It does not start RunScene, dispatch run CommandBus, modify RunContext, generate real maps, implement warehouse/requisition/permit rules, implement settlement reports/history, or write persistence.
 - G19 branch work adds the first `LongTermShell` foundation on top of G17/G18 AppShell routing. It exposes six fixed top-level modules, child preview groups for goals and profile, and display-only snapshot/interface previews. It does not implement real long-term systems, real asset or item systems, real gacha, real history storage, real rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
 - G19-R4B produced no project, scene, resource, import, `.uid`, or `.translation` dirty and did not modify Base Docs.
+- G20 is merged to `main` as docs-only project knowledge governance. It adds authorized text design source copies, project_governance, design_sources index, stage summaries, route analysis, branch/commit/validation matrices, decision log, glossary, and temp/deprecated inventory. It does not modify business code, Godot project/scene/resource/uid/translation, Base Docs originals, or PNG files, and it does not claim Godot smoke, gameplay runtime PASS, or manual playtest PASS.
 - Post-G16 architecture direction baseline is recorded in `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`. It concludes that current architecture has not lost control, G15/G16 Encounter / Combat foundations should be retained, and the next structural step should split top-level app navigation into `AppShell / NavigationIntent / PageRouter / MainMenuShell`.
 
 ## Current Validation Chain
@@ -149,9 +150,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-G20-R4A read-only acceptance passed and G20-R4B docs-only closeout is complete. G20 docs-only governance remains on its branch, is not merged to main, and G20 final has not executed. G21 is not started.
+G20-R4A read-only acceptance passed, G20-R4B docs-only closeout is complete, and G20 final has fast-forward merged the branch into main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. The post-merge docs commit hash is pending until commit. G21 is not started.
 
 G20-R3c added `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`, `docs/stage_summaries/G10_SUMMARY.md` through `docs/stage_summaries/G19_SUMMARY.md`, and route analysis under `docs/route_analysis/`. G20-R3d1 added branch / commit / validation matrices under `docs/project_governance/`. G20-R3d2 added `DECISION_LOG.md`, `GLOSSARY.md`, and `TEMP_AND_DEPRECATED_INVENTORY.md`. G20-R4B added `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md` and `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md`. These are docs-only governance artifacts and do not implement Asset Contract, Warehouse, gameplay, Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
+
+G21 candidate direction is Asset Contract Foundation, but it must be independently audited, planned, executed, and validated.
 
 G18 should not be treated as complete expedition prep. G18-R3 is only the minimal foundation for `DeployPrepShell / DeployConfig / RunStartConfig` preview. Do not expand it into Boss, action combat, true run start, real maps, warehouse economy, requisition economy, work permit rules, settlement reports/history, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems without explicit authorization.
 

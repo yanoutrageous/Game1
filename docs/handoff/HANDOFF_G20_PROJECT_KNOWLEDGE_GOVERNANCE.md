@@ -3,12 +3,14 @@
 ## 当前状态
 
 - 仓库：`D:\AGAME1\_repo_cache\Game1_work`
-- 分支：`godot/g20-project-knowledge-governance`
+- 当前分支：`main`
+- G20 源分支：`godot/g20-project-knowledge-governance`
 - G20-R4B closeout 写入前分支 HEAD：`82e2b1c6bec8311a144b42dd69950e4bfd500d9c`
-- G20-R4B closeout 提交后，分支 HEAD 应更新为本轮 commit hash；该 hash 以最终执行输出和远端分支确认为准。
-- `main` 仍为 `ef362dc01bb4303408e86c2441cf9ae8b4379e1d`
-- G20 尚未合并 `main`。
-- G20 final 尚未执行。
+- G20-R4B closeout commit / first main merge baseline：`ae689b7464fd6ea81a763110cd89813abcfb6665`
+- `main` 已通过 fast-forward 首次合并到 `ae689b7464fd6ea81a763110cd89813abcfb6665`
+- G20 已合并 `main`。
+- G20 final 已执行。
+- 本轮 post-merge docs commit hash：pending until commit。
 - G21 尚未启动。
 
 ## G20 产物概览
@@ -35,7 +37,7 @@
 
 ## 后续决策
 
-G20-R4B closeout 后的下一步是 G20 final：fast-forward merge main 与 post-merge docs calibration。该步骤必须单独决策、单独执行、单独验收；本 handoff 不合并 `main`，不 push `main`。
+G20 final 已完成 fast-forward merge main 与 post-merge docs calibration。最终 docs commit hash 在本轮提交后由执行输出确认；本文不预写 hash。
 
 G21 尚未启动。后续 G21 候选方向为 Asset Contract Foundation，但必须单独审计、计划、执行、验收，不能由 G20-R4B 自动承接。
 

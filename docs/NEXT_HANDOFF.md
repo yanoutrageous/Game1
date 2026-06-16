@@ -6,7 +6,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
-- Current branch for this handoff: `godot/g20-project-knowledge-governance`
+- Current branch for this handoff: `main`
 - Base branch: `main`
 - Current G18 branch: `godot/g18-deploy-prep-foundation`
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
@@ -28,15 +28,17 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G20-R3c scope: G10-G19 stage summaries, stage summary index, route analysis, future route recommendation, system boundary map, stage dependency map, and current navigation document updates.
 - G20-R3d1 scope: branch inventory, commit milestone map, validation status matrix, and current navigation document updates.
 - G20-R3d2 scope: decision log, glossary, temporary / deprecated inventory, SOURCE_REGISTRY minimal status update, and current navigation document updates.
-- G20 merged to main: no.
+- G20-R4B closeout commit / first main merge baseline: `ae689b7464fd6ea81a763110cd89813abcfb6665 docs: close G20 project knowledge governance`.
+- G20 merged to main: yes, by fast-forward.
+- G20 final post-merge docs commit: pending until commit.
 - G20-R3c executed: yes, in the current docs-only G20 branch batch.
 - G20-R3d1 executed: yes, docs-only.
 - G20-R3d2 executed: yes, docs-only.
 - G20-R4A read-only acceptance: passed; blocker fix commit `82e2b1c6bec8311a144b42dd69950e4bfd500d9c`.
 - G20-R4B closeout executed: yes, docs-only.
-- G20 final executed: no.
+- G20 final executed: yes.
 - G21 started: no.
-- Godot run for G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B: no; no Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed.
+- Godot run for G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final: no; no Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed.
 - G20-R3c stage summary index: `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`.
 - G20-R3c route analysis: `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`.
 - G20-R3c route recommendation: `docs/route_analysis/ROADMAP_G20_PLUS.md`; this is a recommendation only and does not start G21.
@@ -66,7 +68,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G15 branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`
 - G15-R4 commit: `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`
 - G15-R3 commit: `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`
-- Current milestone: G19 LongTermShell foundation is complete, pushed, parser-smoke checked, and fast-forward merged to `main`. G18 DeployPrepShell / DeployConfig / RunStartConfig foundation, G17 AppShell / MainMenuShell foundation, G16 combat encounter foundation, and G15 Encounter Contract Foundation are complete, pushed, merged to main, and closed. G10, G11, G12, G13, and G14 are complete, pushed, and closed.
+- Current milestone: G20 Project Knowledge Governance is docs-only, pushed, fast-forward merged to `main`, and in post-merge docs calibration. G19 LongTermShell foundation, G18 DeployPrepShell / DeployConfig / RunStartConfig foundation, G17 AppShell / MainMenuShell foundation, G16 combat encounter foundation, and G15 Encounter Contract Foundation are complete, pushed, merged to main, and closed. G10, G11, G12, G13, and G14 are complete, pushed, and closed.
 - Post-G16 architecture direction baseline: `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`.
 - G17 validation draft: `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`.
 - G17 handoff: `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`.
@@ -92,6 +94,8 @@ G18 is now in `main`. G18-R3 adds the first formal expedition prep foundation: `
 G19 is now in `main`. It adds the first LongTermShell foundation only and replaces the old AppShell long-term placeholder with a six-module shell: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观. The shell displays placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19 does not implement real long-term systems, real asset or item systems, real gacha, real history storage, real rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
 
 G19-R4B accepted the branch with Godot headless project-load/parser smoke PASS. This is not complete gameplay runtime PASS and not manual playtest PASS.
+
+G20 is now in `main` as a docs-only project knowledge governance stage. It imports authorized Base Docs Markdown / TXT text design source copies under `docs/design_sources/`, keeps Base Docs originals unchanged, keeps PNG as `external_reference` / `pending_user_authorization`, and adds project_governance, design_sources index, stage summaries, route analysis, branch/commit/validation matrices, decision log, glossary, and temp/deprecated inventory. G20 did not run Godot and does not claim Godot parser smoke PASS, gameplay runtime PASS, or manual playtest PASS.
 
 ## What G16 Does Not Mean
 
@@ -162,9 +166,9 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 ## Next Stage Candidates
 
-- Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
-- Latest integrated stage: G19 `LongTermShell foundation`.
-- G19-R4B self-check and Godot headless project-load/parser smoke passed on the branch before fast-forward merge to main. G20 docs-only governance remains on `godot/g20-project-knowledge-governance`; R3a/R3b/R3c/R3d1/R3d2 are complete, G20-R4A read-only acceptance passed, G20-R4B docs-only closeout is complete, G20 is not merged to main, G20 final is not executed, and G21 is not started.
+- Latest integrated stage: G20 `Project Knowledge Governance`.
+- G20 is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`; post-merge docs commit hash is pending until commit.
+- G21 has not started. Candidate direction: Asset Contract Foundation, requiring independent audit, plan, execution, and validation.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
-This handoff records G19 mainline integration, post-merge docs calibration, and G20-R3a/R3b/R3c/R3d1/R3d2 plus G20-R4A/R4B docs-only governance closeout progress. Godot headless project-load/parser smoke PASS is recorded for G19-R4B, but complete gameplay runtime PASS and manual playtest PASS are not claimed for G19 or G20. G20 did not run Godot and does not claim parser smoke PASS.
+This handoff records G20 mainline integration and post-merge docs calibration. Godot headless project-load/parser smoke PASS is recorded for G19-R4B, but complete gameplay runtime PASS and manual playtest PASS are not claimed for G19 or G20. G20 did not run Godot and does not claim parser smoke PASS.

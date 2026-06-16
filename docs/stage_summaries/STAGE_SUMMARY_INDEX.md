@@ -4,8 +4,8 @@
 
 - 本索引覆盖 G10-G19，不覆盖 G20。
 - G20-R3c 只新增阶段总结、路线分析、系统边界和阶段依赖图，并更新当前导航文档。
-- G20 尚未合并 main。
-- G20-R3d 尚未执行。
+- G20 已通过 fast-forward 合并 main，first main merge baseline 为 `ae689b7464fd6ea81a763110cd89813abcfb6665`。
+- G20-R3d1/R3d2、R4A、R4B 与 final post-merge docs calibration 已执行；post-merge docs commit hash pending until commit。
 - G21 未启动。
 - 本索引不登记完整分支库存、提交矩阵、验证矩阵、临时/过期文件清单；这些保留给 R3d。
 

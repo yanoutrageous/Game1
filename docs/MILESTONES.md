@@ -24,7 +24,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G17 | AppShell / NavigationIntent / PageRouter / MainMenuShell | R2 implementation complete at `368a7be5c2fb919db47421a026ddf417df9c1b1c`; R3 acceptance, Godot headless project-load/parser smoke, docs-only closeout, and fast-forward main merge complete |
 | G18 | DeployPrepShell / DeployConfig / RunStartConfig Foundation | R3 complete at `59ea57caf1baa977e727da2697cac014cbd7429e`; R4 closeout at `285695cda0141322b0672d65998f3d3f9aa32654`; Godot headless project-load/parser smoke PASS; fast-forward merged to main; no gameplay runtime PASS or manual playtest PASS |
 | G19 | LongTermShell Foundation | R3 complete at `4eeb345daef5f8263b325db2ab5607e6c78f6d36`; R4B closeout / first main merge baseline at `04e14865f4d5eff7b16398d5730054273ccd0823`; fast-forward merged to main; no complete gameplay runtime PASS or manual playtest PASS |
-| G20 | Project Knowledge Governance | Docs-only governance branch in closeout on `godot/g20-project-knowledge-governance`; R3a imported authorized text design source copies at `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7`; R3b adds governance maps and indexes at `81513bdbf10cf4f774a9bda5c3ce3e2d3b1302dc`; R3c adds G10-G19 stage summaries and route analysis at `10a2dd3ea2d71879b66f5d1c20177fb7bed2a6f1`; R3d1 adds branch / commit / validation governance matrices; R3d2 adds decision log / glossary / deprecated inventory; R4A read-only acceptance passed; R4B docs-only closeout complete; not merged to main; G20 final not executed; G21 not started; no Godot run |
+| G20 | Project Knowledge Governance | Docs-only governance branch `godot/g20-project-knowledge-governance`; R3a imported authorized text design source copies at `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7`; R3b adds governance maps and indexes at `81513bdbf10cf4f774a9bda5c3ce3e2d3b1302dc`; R3c adds G10-G19 stage summaries and route analysis at `10a2dd3ea2d71879b66f5d1c20177fb7bed2a6f1`; R3d1 adds branch / commit / validation governance matrices; R3d2 adds decision log / glossary / deprecated inventory; R4A read-only acceptance passed; R4B docs-only closeout / first main merge baseline at `ae689b7464fd6ea81a763110cd89813abcfb6665`; fast-forward merged to main; post-merge docs commit hash pending until commit; G21 not started; no Godot run |
 
 ## Naming Rule
 
@@ -72,7 +72,7 @@ G14-R3 commit: `1d33c89 feat(godot): add legacy demo run surface shell`.
 
 G14-R3 baseline before implementation and G13 closeout commit: `8878bd3bb15a4eddcdf0ac87d98b2aebb964fabf`.
 
-The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, the completed G14 run surface sprint, G15 Encounter Contract Foundation, G16 combat encounter foundation, G17 AppShell / MainMenuShell foundation, G18 DeployPrepShell / DeployConfig / RunStartConfig foundation, and G19 LongTermShell foundation. G19 does not represent complete final UI, complete MetaProgress, complete Deploy persistence, complete long-term system completion, complete asset systems, true RunScene startup, real maps, warehouse/requisition/permit rules, Boss, action combat, real-time combat, complete gameplay runtime PASS, or manual playtest PASS.
+The current mainline includes G10 Progress & Art Smoke Foundation, the G10 closeout follow-up, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 legacy Demo readability/typography parity pass, G13 fixed resolution layout support and closeout, the completed G14 run surface sprint, G15 Encounter Contract Foundation, G16 combat encounter foundation, G17 AppShell / MainMenuShell foundation, G18 DeployPrepShell / DeployConfig / RunStartConfig foundation, G19 LongTermShell foundation, and G20 Project Knowledge Governance docs-only artifacts. G20 does not represent Asset Contract, Warehouse, gameplay implementation, Godot parser smoke PASS, complete gameplay runtime PASS, or manual playtest PASS.
 
 G11, G12, G13, and G14 are complete and closed. G15 R3/R4/R5 are complete and merged to main. G16 keeps `select_encounter_option` additive and extends only Monster `attack_basic` routing to existing deterministic `fight_current_enemy`; search/event/extract command semantics remain unchanged.
 
@@ -80,9 +80,8 @@ G15-R3/R4/R5 did not run Godot/editor/game/import and do not claim runtime PASS.
 
 ## Next Stage Candidates
 
-- Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
-- Latest integrated stage: G19 `LongTermShell foundation`.
-- G19-R4B passed self-check and Godot headless project-load/parser smoke before fast-forward merge to main. G20 docs-only governance branch completed R4A read-only acceptance and R4B docs-only closeout; G20 is not merged to main, G20 final has not executed, G21 has not started, R3d1 added branch / commit / validation matrices, R3d2 added decision log / glossary / deprecated inventory, and R3a/R3b/R3c/R3d1/R3d2/R4A/R4B do not claim Godot smoke, gameplay runtime PASS, or manual playtest PASS.
+- Latest integrated stage: G20 `Project Knowledge Governance`.
+- G20 docs-only governance completed R4A read-only acceptance, R4B docs-only closeout, fast-forward main merge, and post-merge docs calibration. G21 has not started. Candidate direction: Asset Contract Foundation, requiring independent audit, plan, execution, and validation.
 
 G18 accepts the foundation only. It does not start Boss, action combat, true RunScene launch, real maps, warehouse/requisition/permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, Deploy persistence, or any G19+ implementation.
 

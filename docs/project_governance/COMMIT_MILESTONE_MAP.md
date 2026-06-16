@@ -5,8 +5,8 @@
 本文件是 G20-R3d1 的提交到阶段映射。它根据 `git show`, `git log`, 当前状态文档、handoff 与 validation 文档整理 G10-G20 的关键提交，不改写历史，不新增最终 R3d1 hash。
 
 - `merged_to_main` 表示该提交或阶段在当前事实源中是否已经进入 mainline；它不是分支删除授权。
-- G20 当前仍在 `godot/g20-project-knowledge-governance`，尚未合并 main。
-- G20-R3d1 和 G20-R3d2 的已知提交 hash 已在本文件记录；后续批次不得预写尚未创建的提交 hash。
+- G20 已通过 fast-forward 合并 main；first main merge baseline 为 `ae689b7464fd6ea81a763110cd89813abcfb6665`。
+- G20-R3d1、G20-R3d2、G20-R4A blocker fix 和 G20-R4B closeout 的已知提交 hash 已在本文件记录；post-merge docs commit hash 保留 pending until commit，不得补猜。
 - 不足或不确定项必须写 `unknown` 或 `not recorded in this map yet`，不得补猜。
 
 ## Map
@@ -44,15 +44,19 @@
 | G19 | `4eeb345daef5f8263b325db2ab5607e6c78f6d36` | `4eeb345` | `feat(godot): add long term shell foundation` | implementation | `godot/g19-long-term-shell-foundation` | yes | `git show`; `docs/stage_summaries/G19_SUMMARY.md` | G19 LongTermShell foundation. |
 | G19 | `04e14865f4d5eff7b16398d5730054273ccd0823` | `04e1486` | `docs: close G19 long term shell foundation` | branch closeout / first main merge baseline | `godot/g19-long-term-shell-foundation` | yes | `git show`; `docs/MILESTONES.md` | G19 closeout and mainline baseline. |
 | G19 | `ef362dc01bb4303408e86c2441cf9ae8b4379e1d` | `ef362dc` | `docs: mark G19 merged to main` | post-merge docs calibration | `main` | yes | `git show`; precheck `origin/main` | Current main / origin/main fact source. |
-| G20-R3a | `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7` | `caaf3c5` | `docs: import design sources for G20 governance` | design source text import | `godot/g20-project-knowledge-governance` | no | `git show`; `docs/NEXT_HANDOFF.md` | Base Docs Markdown / TXT copies imported under `docs/design_sources/`; originals not modified. |
-| G20-R3b | `81513bdbf10cf4f774a9bda5c3ce3e2d3b1302dc` | `81513bd` | `docs: add project governance maps` | governance maps and indexes | `godot/g20-project-knowledge-governance` | no | `git show`; `docs/ENGINEERING_STATUS.md` | Project governance and design source index structure. |
-| G20-R3c | `10a2dd3ea2d71879b66f5d1c20177fb7bed2a6f1` | `10a2dd3` | `docs: add G10-G19 stage summaries and route analysis` | stage summaries and route analysis | `godot/g20-project-knowledge-governance` | no | `git show`; precheck G20 HEAD | Current G20 HEAD before R3d1. |
-| G20-R3d1 | `493a5649ea114609abbf28bc07d3e25582fca7ae` | `493a564` | `docs: add branch commit and validation governance matrices` | branch / commit / validation governance matrices | `godot/g20-project-knowledge-governance` | no | G20-R3d1 commit | Final hash filled after commit existed. |
-| G20-R3d2 | `ef30741902f0cf9e9984e20de3ceef696b30523a` | `ef307419` | `docs: add decision glossary and deprecated inventories` | decision log / glossary / temporary deprecated inventory | `godot/g20-project-knowledge-governance` | no | G20-R3d2 commit | Docs-only R3d2 governance inventory batch. |
+| G20-R3a | `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7` | `caaf3c5` | `docs: import design sources for G20 governance` | design source text import | `godot/g20-project-knowledge-governance` | yes | `git show`; `docs/NEXT_HANDOFF.md` | Base Docs Markdown / TXT copies imported under `docs/design_sources/`; originals not modified. |
+| G20-R3b | `81513bdbf10cf4f774a9bda5c3ce3e2d3b1302dc` | `81513bd` | `docs: add project governance maps` | governance maps and indexes | `godot/g20-project-knowledge-governance` | yes | `git show`; `docs/ENGINEERING_STATUS.md` | Project governance and design source index structure. |
+| G20-R3c | `10a2dd3ea2d71879b66f5d1c20177fb7bed2a6f1` | `10a2dd3` | `docs: add G10-G19 stage summaries and route analysis` | stage summaries and route analysis | `godot/g20-project-knowledge-governance` | yes | `git show`; precheck G20 HEAD | Stage summaries and route analysis. |
+| G20-R3d1 | `493a5649ea114609abbf28bc07d3e25582fca7ae` | `493a564` | `docs: add branch commit and validation governance matrices` | branch / commit / validation governance matrices | `godot/g20-project-knowledge-governance` | yes | G20-R3d1 commit | Final hash filled after commit existed. |
+| G20-R3d2 | `ef30741902f0cf9e9984e20de3ceef696b30523a` | `ef307419` | `docs: add decision glossary and deprecated inventories` | decision log / glossary / temporary deprecated inventory | `godot/g20-project-knowledge-governance` | yes | G20-R3d2 commit | Docs-only R3d2 governance inventory batch. |
+| G20-R4A | `82e2b1c6bec8311a144b42dd69950e4bfd500d9c` | `82e2b1c` | `docs: fix G20 R3d2 validation status` | read-only acceptance blocker fix | `godot/g20-project-knowledge-governance` | yes | `git show`; G20 validation | R4A blocker fix; docs-only. |
+| G20-R4B | `ae689b7464fd6ea81a763110cd89813abcfb6665` | `ae689b7` | `docs: close G20 project knowledge governance` | branch closeout / first main merge baseline | `godot/g20-project-knowledge-governance` | yes | `git show`; first main merge precheck | G20 docs-only closeout; no Godot run. |
+| G20-final-post-merge | pending until commit | pending | `docs: mark G20 merged to main` | post-merge docs calibration | `main` | yes after final merge | this execution | G20 final post-merge docs commit hash pending until commit. |
 
 ## Explicit Non-Claims
 
-- G20 is not merged to main.
+- G20 is merged to main.
+- G20 final post-merge docs commit hash is pending until commit.
 - G21 is not started.
 - R3d1 does not create or fill R3d2 files.
 - Parser smoke, manual playtest, and full gameplay runtime status are tracked separately in `docs/project_governance/VALIDATION_STATUS_MATRIX.md`.
