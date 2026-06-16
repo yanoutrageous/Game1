@@ -4,7 +4,7 @@ This file is the document navigation and historical index. It is not the fact so
 
 ## G20 Governance Branch Status
 
-G20 docs-only project knowledge governance is in progress on `godot/g20-project-knowledge-governance`. G20-R3a imported the authorized Base Docs Markdown / TXT design source copies into `docs/design_sources/`; G20-R3b added project_governance and design_sources index entries; G20-R3c adds G10-G19 stage summaries, route analysis, system boundary map, and stage dependency map. G20 is not merged to `main`, G20-R3d is not executed, G21 is not started, and no Godot smoke, gameplay runtime PASS, or manual playtest PASS is claimed for R3a/R3b/R3c.
+G20 docs-only project knowledge governance is in progress on `godot/g20-project-knowledge-governance`. G20-R3a imported the authorized Base Docs Markdown / TXT design source copies into `docs/design_sources/`; G20-R3b added project_governance and design_sources index entries; G20-R3c adds G10-G19 stage summaries, route analysis, system boundary map, and stage dependency map; G20-R3d1 adds branch, commit, and validation governance matrices. G20-R3d2 is not executed. G20 is not merged to `main`, G21 is not started, and no Godot smoke, gameplay runtime PASS, or manual playtest PASS is claimed for R3a/R3b/R3c/R3d1.
 
 ## Current Fact Sources
 
@@ -14,6 +14,9 @@ G20 docs-only project knowledge governance is in progress on `godot/g20-project-
 - `docs/MILESTONES.md` - historical G-number to formal milestone mapping.
 - `docs/project_governance/SOURCE_OF_TRUTH_POLICY.md` - Source of Truth priority for current facts, design sources, handoffs, validation, route analysis, and external Base Docs originals.
 - `docs/project_governance/SOURCE_REGISTRY.md` - Registry for active fact sources, imported design sources, external references, and planned R3c/R3d governance artifacts.
+- `docs/project_governance/BRANCH_INVENTORY.md` - G20-R3d1 branch inventory, including live remote evidence, G9 local/remote mismatch, and do-not-touch stash status.
+- `docs/project_governance/COMMIT_MILESTONE_MAP.md` - G20-R3d1 G10-G20 commit-to-milestone map.
+- `docs/project_governance/VALIDATION_STATUS_MATRIX.md` - G20-R3d1 validation matrix that separates parser smoke, manual playtest, and full gameplay runtime status.
 - `docs/project_governance/DOCUMENT_LIFECYCLE.md` - Lifecycle rules for source_design, current_status, handoff, validation, stage_summary, route_analysis, project_governance, archive, deprecated, and temporary files.
 - `docs/project_governance/NAMING_CONVENTIONS.md` - Stage prefix and needs review naming rules.
 - `docs/project_governance/EXECUTION_ENVIRONMENT.md` - Local execution path and PATCH_MODE safety rules.
@@ -34,29 +37,32 @@ Read these first in a new Codex or ChatGPT conversation:
 3. `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`
 4. `docs/DOCS_INDEX.md`
 5. `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`
-6. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
-7. `docs/route_analysis/ROADMAP_G20_PLUS.md`
-8. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
-9. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
-10. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
-11. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
-12. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
-13. `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
-14. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
-15. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
-16. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
-17. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-18. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-19. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
-20. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
-21. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-22. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
-23. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
-24. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-25. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-26. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-27. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-28. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+6. `docs/project_governance/BRANCH_INVENTORY.md`
+7. `docs/project_governance/COMMIT_MILESTONE_MAP.md`
+8. `docs/project_governance/VALIDATION_STATUS_MATRIX.md`
+9. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
+10. `docs/route_analysis/ROADMAP_G20_PLUS.md`
+11. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
+12. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
+13. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
+14. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
+15. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
+16. `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
+17. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
+18. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
+19. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
+20. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+21. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+22. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
+23. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
+24. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+25. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
+26. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+27. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
+28. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+29. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+30. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+31. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
@@ -89,6 +95,14 @@ Do not start by reading every old audit, branch change, or design file unless th
 - `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
 
 These files summarize G10-G19 and recommend a possible G20+ route. They do not start G21 and do not claim Godot smoke, gameplay runtime PASS, or manual playtest PASS for G20.
+
+## G20-R3d1 Governance Matrices
+
+- `docs/project_governance/BRANCH_INVENTORY.md`
+- `docs/project_governance/COMMIT_MILESTONE_MAP.md`
+- `docs/project_governance/VALIDATION_STATUS_MATRIX.md`
+
+These files inventory branches, commits, and validation states only. They do not delete branches, authorize remote cleanup, start G20-R3d2, start G21, run Godot, or claim gameplay runtime PASS / manual playtest PASS.
 
 ## Audit Evidence
 
