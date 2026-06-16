@@ -2,11 +2,11 @@
 
 ## Stage
 
-G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 docs-only governance branch is in progress on `godot/g20-project-knowledge-governance`: R3a 已完成 authorized text design source copies 入库，R3b 已完成 project governance maps 与 design source index，R3c 已完成 G10-G19 stage summaries 与 route analysis，R3d1 已完成 branch / commit / validation governance matrices，R3d2 新增 decision log / glossary / deprecated inventory。G20 is not merged to main, G20 closeout has not executed, G21 has not started, and R3a/R3b/R3c/R3d1/R3d2 do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
+G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 docs-only governance branch is in closeout on `godot/g20-project-knowledge-governance`: R3a 已完成 authorized text design source copies 入库，R3b 已完成 project governance maps 与 design source index，R3c 已完成 G10-G19 stage summaries 与 route analysis，R3d1 已完成 branch / commit / validation governance matrices，R3d2 新增 decision log / glossary / deprecated inventory，G20-R4A 只读验收通过，G20-R4B docs-only closeout 已完成。G20 is not merged to main, G20 final has not executed, G21 has not started, and R3a/R3b/R3c/R3d1/R3d2/R4A/R4B do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
 ## Time
 
-`2026-06-15`
+`2026-06-16`
 
 ## Repository State
 
@@ -36,7 +36,9 @@ G19 LongTermShell foundation is fast-forward merged to main with R4B self-check 
 - G20-R3d2 glossary: `docs/project_governance/GLOSSARY.md`
 - G20-R3d2 temporary / deprecated inventory: `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`
 - G20 merged to main: no
-- G20 closeout executed: no
+- G20-R4A read-only acceptance: passed; blocker fix commit `82e2b1c6bec8311a144b42dd69950e4bfd500d9c`
+- G20-R4B closeout executed: yes, docs-only
+- G20 final executed: no
 - G20-R3d2 executed: yes
 - G21 started: no
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
@@ -191,6 +193,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`, `docs/route_analysis/ROADMAP_G20_PLUS.md`, `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`, and `docs/route_analysis/STAGE_DEPENDENCY_MAP.md` record G20-R3c route analysis and boundary maps.
 - `docs/project_governance/BRANCH_INVENTORY.md`, `docs/project_governance/COMMIT_MILESTONE_MAP.md`, and `docs/project_governance/VALIDATION_STATUS_MATRIX.md` record G20-R3d1 branch, commit, and validation governance matrices.
 - `docs/project_governance/DECISION_LOG.md`, `docs/project_governance/GLOSSARY.md`, and `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md` record G20-R3d2 decisions, glossary terms, and temporary / deprecated candidates; they only register facts and candidates.
+- `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md` and `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md` record G20-R4A read-only acceptance and G20-R4B docs-only closeout.
 - `docs/handoff/HANDOFF_TEMPLATE.md` is required for future branch, closure, promotion, BUG-fix, and runtime-smoke handoffs.
 - G11 documents must keep `PROJECT_BASELINE.md`, `NEXT_HANDOFF.md`, `DOCS_INDEX.md`, `MILESTONES.md`, `ENGINEERING_STATUS.md`, and `GODOT_CURRENT_STATUS.md` aligned with the actual main and remote live status.
 - G11 validation checklist: `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`.

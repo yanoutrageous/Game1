@@ -32,9 +32,11 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G20-R3c executed: yes, in the current docs-only G20 branch batch.
 - G20-R3d1 executed: yes, docs-only.
 - G20-R3d2 executed: yes, docs-only.
-- G20 closeout executed: no.
+- G20-R4A read-only acceptance: passed; blocker fix commit `82e2b1c6bec8311a144b42dd69950e4bfd500d9c`.
+- G20-R4B closeout executed: yes, docs-only.
+- G20 final executed: no.
 - G21 started: no.
-- Godot run for G20-R3a/R3b/R3c/R3d1/R3d2: no; no Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed.
+- Godot run for G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B: no; no Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed.
 - G20-R3c stage summary index: `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`.
 - G20-R3c route analysis: `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`.
 - G20-R3c route recommendation: `docs/route_analysis/ROADMAP_G20_PLUS.md`; this is a recommendation only and does not start G21.
@@ -109,25 +111,27 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 8. `docs/project_governance/DECISION_LOG.md`
 9. `docs/project_governance/GLOSSARY.md`
 10. `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`
-11. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
-12. `docs/route_analysis/ROADMAP_G20_PLUS.md`
-13. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
-14. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
-15. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
-16. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
-17. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-18. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
-19. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-20. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
-21. `docs/DOCS_INDEX.md`
-22. `docs/MILESTONES.md`
-23. `docs/ENGINEERING_STATUS.md`
-24. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
-25. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-26. `docs/handoff/HANDOFF_G18_DEPLOY_PREP_FOUNDATION.md`
-27. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
-28. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
-29. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
+11. `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md`
+12. `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md`
+13. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
+14. `docs/route_analysis/ROADMAP_G20_PLUS.md`
+15. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
+16. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
+17. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
+18. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
+19. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+20. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
+21. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+22. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
+23. `docs/DOCS_INDEX.md`
+24. `docs/MILESTONES.md`
+25. `docs/ENGINEERING_STATUS.md`
+26. `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
+27. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+28. `docs/handoff/HANDOFF_G18_DEPLOY_PREP_FOUNDATION.md`
+29. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
+30. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
+31. `docs/handoff/HANDOFF_TEMPLATE.md` before writing a new handoff.
 
 ## Safety And Dirty Rules
 
@@ -160,7 +164,7 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 - Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
 - Latest integrated stage: G19 `LongTermShell foundation`.
-- G19-R4B self-check and Godot headless project-load/parser smoke passed on the branch before fast-forward merge to main. G20 docs-only governance is now in progress on `godot/g20-project-knowledge-governance`; R3a/R3b/R3c/R3d1/R3d2 are docs-only, G20 is not merged to main, G20 closeout is not executed, and G21 is not started.
+- G19-R4B self-check and Godot headless project-load/parser smoke passed on the branch before fast-forward merge to main. G20 docs-only governance remains on `godot/g20-project-knowledge-governance`; R3a/R3b/R3c/R3d1/R3d2 are complete, G20-R4A read-only acceptance passed, G20-R4B docs-only closeout is complete, G20 is not merged to main, G20 final is not executed, and G21 is not started.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
-This handoff records G19 mainline integration, post-merge docs calibration, and G20-R3a/R3b/R3c/R3d1/R3d2 docs-only governance progress. Godot headless project-load/parser smoke PASS is recorded for G19-R4B, but complete gameplay runtime PASS and manual playtest PASS are not claimed for G19 or G20.
+This handoff records G19 mainline integration, post-merge docs calibration, and G20-R3a/R3b/R3c/R3d1/R3d2 plus G20-R4A/R4B docs-only governance closeout progress. Godot headless project-load/parser smoke PASS is recorded for G19-R4B, but complete gameplay runtime PASS and manual playtest PASS are not claimed for G19 or G20. G20 did not run Godot and does not claim parser smoke PASS.

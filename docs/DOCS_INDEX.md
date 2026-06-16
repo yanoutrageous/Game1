@@ -4,7 +4,7 @@ This file is the document navigation and historical index. It is not the fact so
 
 ## G20 Governance Branch Status
 
-G20 docs-only project knowledge governance is in progress on `godot/g20-project-knowledge-governance`. G20-R3a 已完成 Base Docs Markdown / TXT design source 文本副本入库；G20-R3b 已完成 project governance 与 design source index；G20-R3c 已完成 G10-G19 stage summaries 与 route analysis；G20-R3d1 已完成 branch / commit / validation governance matrices；G20-R3d2 新增 decision log / glossary / deprecated inventory。G20 尚未合并 `main`，G20 closeout 尚未执行，G21 未启动。G20 是 docs-only，本轮不运行 Godot，不声明 Godot smoke，不声明 gameplay runtime PASS，不声明 manual playtest PASS。
+G20 docs-only project knowledge governance is in closeout on `godot/g20-project-knowledge-governance`. G20-R3a 已完成 Base Docs Markdown / TXT design source 文本副本入库；G20-R3b 已完成 project governance 与 design source index；G20-R3c 已完成 G10-G19 stage summaries 与 route analysis；G20-R3d1 已完成 branch / commit / validation governance matrices；G20-R3d2 新增 decision log / glossary / deprecated inventory；G20-R4A 只读验收通过；G20-R4B docs-only closeout 已完成。G20 尚未合并 `main`，G20 final 尚未执行，G21 未启动。G20 是 docs-only，本轮不运行 Godot，不声明 Godot smoke，不声明 gameplay runtime PASS，不声明 manual playtest PASS。
 
 ## Current Fact Sources
 
@@ -20,6 +20,8 @@ G20 docs-only project knowledge governance is in progress on `godot/g20-project-
 - `docs/project_governance/DECISION_LOG.md` - G20-R3d2 决策记录，覆盖 G17-G20 路线、Base Docs、PNG、PATCH_MODE、执行框和分支处理边界。
 - `docs/project_governance/GLOSSARY.md` - G20-R3d2 术语表，解释 shell、foundation、preview、contract、snapshot、source、asset、validation 和状态术语。
 - `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md` - G20-R3d2 临时 / 过期候选登记；只登记，不处理。
+- `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md` - G20-R4A 只读验收与 G20-R4B docs-only closeout validation 记录。
+- `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md` - G20 项目知识治理 docs-only closeout handoff。
 - `docs/project_governance/DOCUMENT_LIFECYCLE.md` - Lifecycle rules for source_design, current_status, handoff, validation, stage_summary, route_analysis, project_governance, archive, deprecated, and temporary files.
 - `docs/project_governance/NAMING_CONVENTIONS.md` - Stage prefix and needs review naming rules.
 - `docs/project_governance/EXECUTION_ENVIRONMENT.md` - Local execution path and PATCH_MODE safety rules.
@@ -46,29 +48,31 @@ Read these first in a new Codex or ChatGPT conversation:
 9. `docs/project_governance/DECISION_LOG.md`
 10. `docs/project_governance/GLOSSARY.md`
 11. `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`
-12. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
-13. `docs/route_analysis/ROADMAP_G20_PLUS.md`
-14. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
-15. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
-16. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
-17. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
-18. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
-19. `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
-20. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
-21. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
-22. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
-23. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
-24. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
-25. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
-26. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
-27. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
-28. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
-29. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
-30. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
-31. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
-32. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
-33. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
-34. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
+12. `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md`
+13. `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md`
+14. `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`
+15. `docs/route_analysis/ROADMAP_G20_PLUS.md`
+16. `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`
+17. `docs/route_analysis/STAGE_DEPENDENCY_MAP.md`
+18. `docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md`
+19. `docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md`
+20. `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`
+21. `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`
+22. `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md`
+23. `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md`
+24. `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`
+25. `docs/handoff/HANDOFF_G16_COMBAT_ENCOUNTER_FOUNDATION.md`
+26. `docs/handoff/HANDOFF_G15_ENCOUNTER_FRAMEWORK.md`
+27. `docs/handoff/HANDOFF_G14_LEGACY_DEMO_UI_SURFACE.md`
+28. `docs/validation/G14_LEGACY_DEMO_UI_SURFACE_VALIDATION.md`
+29. `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md`
+30. `docs/validation/G13_RESOLUTION_LAYOUT_ADAPTATION_VALIDATION.md`
+31. `docs/handoff/HANDOFF_G13_RESOLUTION_LAYOUT_ADAPTATION.md`
+32. `docs/handoff/HANDOFF_G12_LEGACY_DEMO_CORE_LOOP_PARITY.md`
+33. `docs/validation/G12_LEGACY_DEMO_CORE_LOOP_PARITY_VALIDATION.md`
+34. `docs/handoff/HANDOFF_G11_MAINLINE_UX_READABILITY.md`
+35. `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`
+36. `docs/handoff/HANDOFF_TEMPLATE.md` when creating a new branch or closure report
 
 Do not start by reading every old audit, branch change, or design file unless the task needs historical detail.
 
@@ -142,6 +146,7 @@ Current and recent audit files live under `docs/audits/`.
 - `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md` records the G17 AppShell / MainMenuShell validation boundary and R3 Godot headless project-load/parser smoke PASS; no complete gameplay runtime PASS is claimed.
 - `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md` records the G18 DeployPrepShell / DeployConfig / RunStartConfig foundation boundary, R4 acceptance, Godot headless project-load/parser smoke PASS, and fast-forward main merge status. It does not claim complete gameplay runtime PASS or manual playtest PASS.
 - `docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md` records the G19 LongTermShell foundation boundary, six-module placeholder plan, static validation commands, R4B Godot headless project-load/parser smoke PASS, and no-runtime/manual-PASS boundary.
+- `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md` records the G20-R4A read-only acceptance, R4A blocker fix `82e2b1c6bec8311a144b42dd69950e4bfd500d9c`, G20-R4B docs-only closeout, no-Godot-run boundary, no-parser-smoke-PASS boundary, no-gameplay-runtime-PASS boundary, and no-manual-playtest-PASS boundary.
 
 Older audits remain useful for traceability but are not the first source for current state.
 
@@ -162,6 +167,7 @@ Current handoffs live under `docs/handoff/`.
 - `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md` records the G17 AppShell / MainMenuShell closeout, R2 implementation boundary, R3 acceptance, Godot headless project-load/parser smoke PASS, and fast-forward main merge status.
 - `docs/handoff/HANDOFF_G18_DEPLOY_PREP_FOUNDATION.md` records the G18 DeployPrepShell / DeployConfig / RunStartConfig handoff, R4 acceptance, parser smoke PASS, non-goals, fast-forward main merge status, and post-G18 next-dialog calibration requirement.
 - `docs/handoff/HANDOFF_G19_LONG_TERM_SHELL_FOUNDATION.md` records the G19 LongTermShell foundation branch handoff, six-module IA, display-only interface preview boundary, R4B smoke PASS, and main-merge decision next step.
+- `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md` records the G20 project knowledge governance docs-only closeout, branch/main status, safety boundaries, and next G20 final decision boundary.
 
 ## Branch Change Records
 
@@ -200,4 +206,4 @@ G17 branch work on `godot/g17-app-shell-main-menu` has R2 implementation, R3 acc
 
 G18 work on `godot/g18-deploy-prep-foundation` is limited to formal expedition prep foundation: DeployPrepShell, five placeholder tabs, public DeployConfig / RunStartConfig preview, validation/manual checklist updates, R4 acceptance, and Godot headless project-load/parser smoke PASS. It is fast-forward merged to `main` and does not implement true run start, real maps, warehouse, requisition, work permits, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence.
 
-G19 work on `godot/g19-long-term-shell-foundation` is limited to LongTermShell foundation: six fixed modules, placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19-R4B records Godot headless project-load/parser smoke PASS on the branch, with no complete gameplay runtime PASS and no manual playtest PASS. G19 is fast-forward merged to `main` at `04e14865f4d5eff7b16398d5730054273ccd0823`; G20 docs-only governance is in progress on `godot/g20-project-knowledge-governance` and is not merged to `main`. It does not implement real long-term systems, item or asset systems, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.
+G19 work on `godot/g19-long-term-shell-foundation` is limited to LongTermShell foundation: six fixed modules, placeholder / preview / disabled state, child preview groups, and display-only interface preview fields. G19-R4B records Godot headless project-load/parser smoke PASS on the branch, with no complete gameplay runtime PASS and no manual playtest PASS. G19 is fast-forward merged to `main` at `04e14865f4d5eff7b16398d5730054273ccd0823`; G20 docs-only governance is in closeout on `godot/g20-project-knowledge-governance`, R4B closeout is complete, G20 is not merged to `main`, and G20 final is not executed. It does not implement real long-term systems, item or asset systems, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads.

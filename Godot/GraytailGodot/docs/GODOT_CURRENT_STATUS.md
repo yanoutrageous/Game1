@@ -32,9 +32,9 @@ G19-R4B status: self-check PASS, Godot headless project-load/parser smoke PASS, 
 
 G19 merged to main: yes, by fast-forward. First main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823`.
 
-G20 docs-only governance branch: `godot/g20-project-knowledge-governance`. R3a imported authorized text design source copies under `docs/design_sources/`; R3b adds project governance maps and design source indexes; R3c adds G10-G19 stage summaries, route analysis, system boundary map, and stage dependency map; R3d1 adds branch, commit, and validation governance matrices under `docs/project_governance/`; R3d2 adds decision log, glossary, and temporary / deprecated inventory under `docs/project_governance/`. G20 is not merged to main, G20 closeout has not executed, G21 has not started, and no Godot project, scene, resource, font, import product, `.uid`, or `.translation` change is part of R3a/R3b/R3c/R3d1/R3d2.
+G20 docs-only governance branch: `godot/g20-project-knowledge-governance`. R3a imported authorized text design source copies under `docs/design_sources/`; R3b adds project governance maps and design source indexes; R3c adds G10-G19 stage summaries, route analysis, system boundary map, and stage dependency map; R3d1 adds branch, commit, and validation governance matrices under `docs/project_governance/`; R3d2 adds decision log, glossary, and temporary / deprecated inventory under `docs/project_governance/`; R4A read-only acceptance passed; R4B docs-only closeout is complete. G20 is not merged to main, G20 final has not executed, G21 has not started, and no Godot project, scene, resource, font, import product, `.uid`, or `.translation` change is part of R3a/R3b/R3c/R3d1/R3d2/R4A/R4B.
 
-G20-R3a/R3b/R3c/R3d1/R3d2 Godot run status: not run. No Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed for these docs-only batches.
+G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B Godot run status: not run. No Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed for these docs-only batches.
 
 G19 modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
 
@@ -115,6 +115,8 @@ Milestone map: `docs/MILESTONES.md`.
 G20-R3d1 governance matrices: `docs/project_governance/BRANCH_INVENTORY.md`, `docs/project_governance/COMMIT_MILESTONE_MAP.md`, and `docs/project_governance/VALIDATION_STATUS_MATRIX.md`.
 
 G20-R3d2 governance documents: `docs/project_governance/DECISION_LOG.md`, `docs/project_governance/GLOSSARY.md`, and `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`.
+
+G20-R4B closeout documents: `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md` and `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md`.
 
 Planning source originals still live under `D:\AGAME1\Base Docs`; `docs/可行性判断.md` and `docs/难度判断.md` were moved there by the user and their repository deletions are authorized docs relocation deletions. G20-R3a imported authorized Markdown / TXT copies into `docs/design_sources/`; external Base Docs originals and PNG references were not modified by R3b.
 
