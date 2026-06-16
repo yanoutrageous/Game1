@@ -6,13 +6,19 @@
 
 ## Branch
 
-Current stage: G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance, Godot headless project-load/parser smoke PASS, and docs-only closeout complete on branch `godot/g18-deploy-prep-foundation`; it is not merged to main. Scope remains deploy prep placeholder tabs, right-side summary, and public config preview; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and fast-forward merged to `main`.
+Current stage: G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance, Godot headless project-load/parser smoke PASS, docs-only closeout, fast-forward main merge, and post-merge docs calibration complete. Scope remains deploy prep placeholder tabs, right-side summary, public config preview, and AppShell deploy route integration; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and fast-forward merged to `main`.
 
 Main HEAD at start of Post-G16 architecture direction import: `9af74aeefd3a28b6b417fa0667532737cddc916b docs: mark G16 merged to main`.
 
 Current main HEAD after G17 fast-forward and before this post-merge status commit: `baa57fa41167c86ad226b5b8be4d540ff114269f`.
 
 G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`.
+
+G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`.
+
+G18 closeout / merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`.
+
+G18 merged to main: yes, by fast-forward.
 
 G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`.
 
@@ -165,13 +171,13 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - G16-R5 closes branch docs/status; parser blocker fix `4637e8f` makes encounter helper references parser-safe.
 - Post-G16 architecture direction baseline records that current architecture has not lost control, G15/G16 Encounter / Combat foundations should be retained, and G17 should focus on `AppShell / NavigationIntent / PageRouter / MainMenuShell` rather than plain main-menu implementation.
 
-Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, G15 Encounter Contract Foundation, G16 Combat Encounter Foundation, and G17 AppShell / MainMenuShell foundation. G17 is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, not formal expedition prep, not full long-term systems, not Boss, not action combat, and not complete gameplay runtime PASS or manual playtest PASS.
+Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, G15 Encounter Contract Foundation, G16 Combat Encounter Foundation, G17 AppShell / MainMenuShell foundation, and G18 DeployPrepShell / DeployConfig / RunStartConfig foundation. G18 is not a complete final UI, not complete MetaProgress, not complete Deploy persistence, not complete long-term system completion, not complete 1:1 legacy Demo reproduction, not true RunScene launch, not real maps, not warehouse/requisition/work permit rules, not settlement report/history, not Boss, not action combat, and not complete gameplay runtime PASS or manual playtest PASS.
 
 Post-G17 next structural work requires separate authorization. Main menu should only navigate and present atmosphere/light hints; it must not directly start or continue RunScene. Expedition prep should later output `RunStartConfig / DeployConfig`; long-term systems should later output `PlayerProfileSnapshot / LongTermSnapshot / UnlockSnapshot`; settlement should later return through `RunResultSummary / SettlementAdapter`.
 
 G17 establishes the first AppShell / NavigationIntent / PageRouter / MainMenuShell slice and is fast-forward merged to main. The formal main menu exposes only `出发探索`, `长期系统`, `设置`, and `退出游戏`; expedition, long-term, and settings are placeholder routes in this slice, and exit uses a confirm layer. G17-R3 acceptance and Godot headless project-load/parser smoke PASS are complete. G17 does not implement formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, full settings, complete gameplay runtime PASS, or manual playtest PASS.
 
-G18-R4 accepts the formal expedition prep foundation. It adds `DeployPrepShell`, `DeployConfig`, and `RunStartConfig` preview support only. The deploy page has five placeholder tabs, right-side summary/config/effect/risk sections, and preview-only start intent. Godot headless project-load/parser smoke PASS is recorded, but this is not complete gameplay runtime PASS or manual playtest PASS. G18 does not start or continue RunScene, dispatch run CommandBus, generate real maps, implement warehouse/requisition/work permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence.
+G18 is fast-forward merged to main. It adds `DeployPrepShell`, `DeployConfig`, and `RunStartConfig` preview support only. The deploy page has five placeholder tabs, right-side summary/config/effect/risk sections, AppShell deploy route integration, and preview-only start intent. Godot headless project-load/parser smoke PASS is recorded, but this is not complete gameplay runtime PASS or manual playtest PASS. G18 does not start or continue RunScene, dispatch run CommandBus, generate real maps, implement warehouse/requisition/work permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, or Deploy persistence. G19 has not started and should begin only in a new CodeX execution conversation after workspace/root, shell cwd, git root, apply_patch root, patch-root probe, probe deletion, and clean status calibration.
 
 G10 was a bounded stabilization and smoke-foundation stage. It is complete, merged to main, and closed. It does not represent complete MetaProgress, Deploy persistence, complete long-term systems, action combat, new gameplay, full art replacement, or broad architecture reshaping.
 

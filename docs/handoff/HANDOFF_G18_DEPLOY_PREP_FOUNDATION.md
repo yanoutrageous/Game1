@@ -1,5 +1,19 @@
 # Handoff G18 DeployPrep Foundation
 
+## Post-Merge Main Calibration
+
+- G18 has been fast-forward merged to `main`.
+- Main merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`.
+- G18 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`.
+- G18 closeout commit: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`.
+- G18-R4 Godot headless project-load/parser smoke PASS remains valid.
+- This is not complete gameplay runtime PASS and not manual playtest PASS.
+- G18 completed only the DeployPrepShell foundation, public DeployConfig / RunStartConfig preview, five placeholder tabs, right-side summary/config/effect/risk sections, and AppShell deploy route integration.
+- Start exploration still only creates config preview / `deploy_start_intent`.
+- Continue exploration and abandon exploration remain disabled / placeholder.
+- G18 does not implement real maps, warehouse, requisition, work permits, RunScene startup handoff, RunBootstrapper, settlement reports, history records, long-term systems, lottery, MetaProgress, or Deploy persistence.
+- G19 has not started. Start G19 only in a new CodeX execution conversation after checking workspace/root folder, shell cwd, git root, apply_patch root, a safe patch-root probe, probe deletion, and clean worktree status.
+
 ## 阶段事实
 
 - 阶段：G18 DeployPrepShell / DeployConfig / RunStartConfig Foundation
@@ -7,7 +21,7 @@
 - 基线 main：`eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
 - G18-R3 实现提交：`59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`
 - G18-R4 状态：验收通过，Godot headless project-load/parser smoke PASS，docs-only closeout 已完成在当前分支。
-- G18 是否合并 main：否。
+- G18 是否合并 main：是，已 fast-forward merged to main at `285695cda0141322b0672d65998f3d3f9aa32654`。
 - G19 是否启动：否。
 
 ## 完成内容
@@ -39,7 +53,7 @@ G18 未修改 `run_scene.gd`，未修改 G15/G16 encounter/combat 规则语义�
 
 ## 下一步建议
 
-下一步应进入 main 合并前决策。若合并，应只做 fast-forward/merge 决策与必要 post-merge 文档校准；不要在 G18 分支继续追加新功能。G19 不应启动，除非用户另行明确授权。
+G18 已完成 main 合并与 post-merge 文档校准。不要在 G18 分支继续追加新功能。G19 不应在本对话框启动；若进入 G19，应更换新的 CodeX 执行对话框，并先做执行环境校准。
 
 ## 安全边界
 

@@ -10,7 +10,7 @@ Current baseline smoke should cover the three-page shell, the G14 run surface sh
 
 G17 mainline note: `godot/g17-app-shell-main-menu` added a formal AppShell / NavigationIntent / PageRouter / MainMenuShell slice and has been fast-forward merged to `main`. G17-R3 ran Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. Manual validation must still confirm the main menu only navigates to placeholder routes and does not directly start or continue RunScene.
 
-G18 branch note: `godot/g18-deploy-prep-foundation` adds a formal DeployPrepShell foundation only. G18-R4 ran Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. G18 is not merged to main.
+G18 mainline note: `godot/g18-deploy-prep-foundation` added a formal DeployPrepShell foundation only and has been fast-forward merged to `main`. G18-R4 ran Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. Manual validation must still confirm DeployPrep only previews config / deploy_start_intent and does not start or continue RunScene.
 
 ## G18 DeployPrep Foundation Static Checklist
 

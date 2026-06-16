@@ -6,9 +6,10 @@ G18-R4 已完成对 G18-R3 `DeployPrepShell / DeployConfig / RunStartConfig foun
 - Branch: `godot/g18-deploy-prep-foundation`
 - Accepted implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`
 - Baseline main: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
+- Closeout / merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`
 - Smoke result: Godot headless project-load/parser smoke PASS.
 - Smoke scope: project-load/parser only; not complete gameplay runtime PASS and not manual playtest PASS.
-- G18 remains unmerged to main after R4.
+- G18 final fast-forward merged the branch to main after R4 acceptance.
 - G19 has not started.
 - Base Docs were not modified.
 - Closeout note: in environments where `apply_patch` resolves from `D:\AGAME1`, patch paths for this repository must be prefixed with `_repo_cache/Game1_work/`; this is an execution-path safety note, not a gameplay fact.
@@ -59,4 +60,4 @@ rg -n "project.godot|\\.tscn|\\.uid|\\.translation" .
 - Godot/editor/game/import was not run in G18-R3.
 - G18-R4 later ran Godot headless project-load/parser smoke PASS during acceptance.
 - This record does not claim complete gameplay runtime PASS or manual playtest PASS.
-- G18-R4 is docs-only branch closeout and is not a main merge.
+- G18-R4 is docs-only branch closeout; G18 final records the later fast-forward main merge and post-merge docs calibration.

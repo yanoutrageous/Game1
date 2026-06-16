@@ -10,7 +10,10 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - Base branch: `main`
 - Current G18 branch: `godot/g18-deploy-prep-foundation`
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
-- G18-R4 status: acceptance, Godot headless project-load/parser smoke, and docs-only closeout complete on `godot/g18-deploy-prep-foundation`; not merged to main.
+- G18-R4 status: acceptance, Godot headless project-load/parser smoke, docs-only closeout, fast-forward main merge, and post-merge docs calibration complete.
+- G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`.
+- G18 closeout / merge baseline: `285695cda0141322b0672d65998f3d3f9aa32654 docs: close G18 deploy prep foundation`.
+- G18 merged to main: yes, by fast-forward.
 - G18 validation and closeout record: `docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md`.
 - G17-R2 branch: `godot/g17-app-shell-main-menu`
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`
@@ -30,7 +33,7 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G15 branch closeout commit: `e72d3a5dc4a57122d42f881f391f2b47389fcdad docs: close G15 encounter framework foundation`
 - G15-R4 commit: `1887385af81624ebcd84342ca765d75e6fbf20eb feat(godot): add encounter slot surface adapter`
 - G15-R3 commit: `aca5b958a588879a16da97616484424da795da7f feat(godot): add encounter contract foundation`
-- Current milestone: G18 DeployPrepShell / DeployConfig / RunStartConfig foundation is active on branch `godot/g18-deploy-prep-foundation`. G17 AppShell / MainMenuShell foundation is complete, pushed, parser-smoke checked, and fast-forward merged to `main`. G16 combat encounter foundation and G15 Encounter Contract Foundation are complete, pushed, merged to main, and closed. G10, G11, G12, G13, and G14 are complete, pushed, and closed.
+- Current milestone: G18 DeployPrepShell / DeployConfig / RunStartConfig foundation is complete, pushed, parser-smoke checked, and fast-forward merged to `main`. G17 AppShell / MainMenuShell foundation, G16 combat encounter foundation, and G15 Encounter Contract Foundation are complete, pushed, merged to main, and closed. G10, G11, G12, G13, and G14 are complete, pushed, and closed.
 - Post-G16 architecture direction baseline: `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md`.
 - G17 validation draft: `docs/validation/G17_APP_SHELL_MAIN_MENU_VALIDATION.md`.
 - G17 handoff: `docs/handoff/HANDOFF_G17_APP_SHELL_MAIN_MENU.md`.
@@ -51,7 +54,7 @@ Post-G16 architecture direction import records the next structural recommendatio
 
 G17 is now in `main`. G17-R2 started the top-level split on branch `godot/g17-app-shell-main-menu`: it adds `NavigationIntent`, `PageRouter`, `AppShell`, `MainMenuShell`, and a static `MainMenuModel`. `run_scene.gd` only mounts the AppShell and keeps existing run orchestration. G17-R3 acceptance and Godot headless project-load/parser smoke passed before mainline integration. G17 does not implement formal expedition prep, long-term systems, warehouse, codex, lottery, MetaProgress, Deploy persistence, or full settings.
 
-G18-R4 has accepted the first formal expedition prep foundation branch. It adds `DeployPrepShell`, `DeployConfig`, `RunStartConfig` preview helpers, five placeholder tabs, and a right-side summary. Godot headless project-load/parser smoke PASS is recorded, but this is not complete gameplay runtime PASS or manual playtest PASS. G18 is not merged to main and must not start RunScene, dispatch run CommandBus, modify RunContext, generate a real map, or implement warehouse/requisition/permit rules.
+G18 is now in `main`. G18-R3 adds the first formal expedition prep foundation: `DeployPrepShell`, `DeployConfig`, `RunStartConfig` preview helpers, five placeholder tabs, right-side summary sections, and AppShell deploy route integration. G18-R4 recorded Godot headless project-load/parser smoke PASS before mainline integration, but this is not complete gameplay runtime PASS or manual playtest PASS. G18 still must not be read as RunScene startup, run CommandBus dispatch, RunContext mutation, real map generation, warehouse/requisition/permit rules, settlement report/history, long-term system, lottery, MetaProgress, or Deploy persistence implementation.
 
 ## What G16 Does Not Mean
 
@@ -107,8 +110,9 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 ## Next Stage Candidates
 
-- Current branch stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation` is active on `godot/g18-deploy-prep-foundation`.
-- G18-R4 acceptance and Godot headless project-load/parser smoke are complete on the branch. Next step is main merge decision, not more G18 feature work.
+- Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
+- G18-R4 acceptance and Godot headless project-load/parser smoke are complete, and G18 has been fast-forward merged to `main`.
+- G19 has not started. Begin G19 only in a new CodeX execution conversation after environment calibration: confirm workspace/root folder, shell cwd, git root, apply_patch root, run a safe patch-root probe, delete the probe, confirm clean status, then enter G19 planning or audit.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
-This handoff records G18 branch acceptance and docs-only closeout status. Godot headless project-load/parser smoke PASS is recorded for G18-R4, but complete gameplay runtime PASS and manual playtest PASS are not claimed.
+This handoff records G18 mainline integration and post-merge docs calibration. Godot headless project-load/parser smoke PASS is recorded for G18-R4, but complete gameplay runtime PASS and manual playtest PASS are not claimed.
