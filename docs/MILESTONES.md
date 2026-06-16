@@ -24,7 +24,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G17 | AppShell / NavigationIntent / PageRouter / MainMenuShell | R2 implementation complete at `368a7be5c2fb919db47421a026ddf417df9c1b1c`; R3 acceptance, Godot headless project-load/parser smoke, docs-only closeout, and fast-forward main merge complete |
 | G18 | DeployPrepShell / DeployConfig / RunStartConfig Foundation | R3 complete at `59ea57caf1baa977e727da2697cac014cbd7429e`; R4 closeout at `285695cda0141322b0672d65998f3d3f9aa32654`; Godot headless project-load/parser smoke PASS; fast-forward merged to main; no gameplay runtime PASS or manual playtest PASS |
 | G19 | LongTermShell Foundation | R3 complete at `4eeb345daef5f8263b325db2ab5607e6c78f6d36`; R4B closeout / first main merge baseline at `04e14865f4d5eff7b16398d5730054273ccd0823`; fast-forward merged to main; no complete gameplay runtime PASS or manual playtest PASS |
-| G20 | Project Knowledge Governance | Docs-only governance branch in progress on `godot/g20-project-knowledge-governance`; R3a imported authorized text design source copies at `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7`; R3b adds governance maps and indexes; not merged to main |
+| G20 | Project Knowledge Governance | Docs-only governance branch in progress on `godot/g20-project-knowledge-governance`; R3a imported authorized text design source copies at `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7`; R3b adds governance maps and indexes at `81513bdbf10cf4f774a9bda5c3ce3e2d3b1302dc`; R3c adds G10-G19 stage summaries and route analysis; not merged to main; R3d not executed |
 
 ## Naming Rule
 
@@ -82,7 +82,7 @@ G15-R3/R4/R5 did not run Godot/editor/game/import and do not claim runtime PASS.
 
 - Latest integrated stage: G18 `DeployPrepShell / DeployConfig / RunStartConfig foundation`.
 - Latest integrated stage: G19 `LongTermShell foundation`.
-- G19-R4B passed self-check and Godot headless project-load/parser smoke before fast-forward merge to main. G20 docs-only governance branch is in progress; G20 is not merged to main, G21 has not started, and R3a/R3b do not claim Godot smoke, gameplay runtime PASS, or manual playtest PASS.
+- G19-R4B passed self-check and Godot headless project-load/parser smoke before fast-forward merge to main. G20 docs-only governance branch is in progress; G20 is not merged to main, G21 has not started, R3d has not executed, and R3a/R3b/R3c do not claim Godot smoke, gameplay runtime PASS, or manual playtest PASS.
 
 G18 accepts the foundation only. It does not start Boss, action combat, true RunScene launch, real maps, warehouse/requisition/permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, Deploy persistence, or any G19+ implementation.
 

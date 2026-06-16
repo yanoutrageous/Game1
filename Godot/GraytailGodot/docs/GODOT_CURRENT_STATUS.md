@@ -32,9 +32,9 @@ G19-R4B status: self-check PASS, Godot headless project-load/parser smoke PASS, 
 
 G19 merged to main: yes, by fast-forward. First main merge baseline: `04e14865f4d5eff7b16398d5730054273ccd0823`.
 
-G20 docs-only governance branch: `godot/g20-project-knowledge-governance`. R3a imported authorized text design source copies under `docs/design_sources/`; R3b adds project governance maps and design source indexes. G20 is not merged to main, G21 has not started, and no Godot project, scene, resource, font, import product, `.uid`, or `.translation` change is part of R3a/R3b.
+G20 docs-only governance branch: `godot/g20-project-knowledge-governance`. R3a imported authorized text design source copies under `docs/design_sources/`; R3b adds project governance maps and design source indexes; R3c adds G10-G19 stage summaries, route analysis, system boundary map, and stage dependency map. G20 is not merged to main, G20-R3d has not executed, G21 has not started, and no Godot project, scene, resource, font, import product, `.uid`, or `.translation` change is part of R3a/R3b/R3c.
 
-G20-R3a/R3b Godot run status: not run. No Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed for these docs-only batches.
+G20-R3a/R3b/R3c Godot run status: not run. No Godot headless project-load/parser smoke PASS, gameplay runtime PASS, or manual playtest PASS is claimed for these docs-only batches.
 
 G19 modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
 

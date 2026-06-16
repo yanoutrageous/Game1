@@ -17,8 +17,8 @@
 - G19 scope: `LongTermShell foundation + 6 module placeholder + interface preview only`.
 - G19 modules: 目标、图鉴、研究、个人资历、抽奖、收藏 / 外观.
 - G19 merged to main: yes, by fast-forward.
-- G20 docs-only governance branch is in progress on `godot/g20-project-knowledge-governance`; R3a imported authorized text design source copies and R3b adds project_governance and design_sources index structure. G20 is not merged to main.
-- G20-R3c/R3d have not executed, G21 has not started, and G20-R3a/R3b do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
+- G20 docs-only governance branch is in progress on `godot/g20-project-knowledge-governance`; R3a imported authorized text design source copies, R3b adds project_governance and design_sources index structure, and R3c adds G10-G19 stage summaries plus route analysis. G20 is not merged to main.
+- G20-R3d has not executed, G21 has not started, and G20-R3a/R3b/R3c do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 - G19-R4B smoke is not complete gameplay runtime PASS and not manual playtest PASS.
 - Integrated G17 branch: `godot/g17-app-shell-main-menu`.
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`.
@@ -147,7 +147,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Godot\GraytailGodot\tools\
 
 ## Recommended Next Step
 
-Recommended next G20 step after R3b is a separately authorized R3c or R3d execution frame. G20 docs-only governance is in progress on its branch and is not merged to main.
+Recommended next G20 step after R3c is a separately authorized R3d execution frame. G20 docs-only governance is in progress on its branch and is not merged to main. G21 is not started.
+
+G20-R3c added `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`, `docs/stage_summaries/G10_SUMMARY.md` through `docs/stage_summaries/G19_SUMMARY.md`, and route analysis under `docs/route_analysis/`. These are docs-only governance artifacts and do not implement Asset Contract, Warehouse, gameplay, Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
 G18 should not be treated as complete expedition prep. G18-R3 is only the minimal foundation for `DeployPrepShell / DeployConfig / RunStartConfig` preview. Do not expand it into Boss, action combat, true run start, real maps, warehouse economy, requisition economy, work permit rules, settlement reports/history, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems without explicit authorization.
 

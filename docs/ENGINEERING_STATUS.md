@@ -2,7 +2,7 @@
 
 ## Stage
 
-G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 docs-only governance branch is in progress on `godot/g20-project-knowledge-governance`: R3a imported authorized text design source copies and R3b adds project governance maps. G20 is not merged to main, G21 has not started, and R3a/R3b do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
+G19 LongTermShell foundation is fast-forward merged to main with R4B self-check and Godot headless project-load/parser smoke PASS. G19 is limited to a six-module long-term shell, placeholder / preview / disabled states, and display-only interface preview fields; it does not implement real long-term systems, asset systems, item models, gacha, history storage, rewards, red-dot clearing, persistence, RunScene startup, CommandBus dispatch, or private run-state reads. G20 docs-only governance branch is in progress on `godot/g20-project-knowledge-governance`: R3a imported authorized text design source copies, R3b adds project governance maps, and R3c adds G10-G19 stage summaries plus route analysis. G20 is not merged to main, G20-R3d has not executed, G21 has not started, and R3a/R3b/R3c do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
 ## Time
 
@@ -24,9 +24,11 @@ G19 LongTermShell foundation is fast-forward merged to main with R4B self-check 
 - G20 branch: `godot/g20-project-knowledge-governance`
 - G20-R3a commit: `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7 docs: import design sources for G20 governance`
 - G20-R3a status: Base Docs Markdown / TXT design source copies imported under `docs/design_sources/`
+- G20-R3b commit: `81513bdbf10cf4f774a9bda5c3ce3e2d3b1302dc docs: add project governance maps`
 - G20-R3b status: project_governance and design_sources index structure added in this batch
+- G20-R3c status: G10-G19 stage summaries, stage summary index, route analysis, route recommendation, system boundary map, stage dependency map, and navigation references added in this batch
 - G20 merged to main: no
-- G20-R3c/R3d executed: no
+- G20-R3d executed: no
 - G21 started: no
 - G18-R3 baseline main HEAD: `eeffe5800864c05f8b000e406609fa7ca3323cb5 docs: mark G17 merged to main`
 - G18-R3 implementation commit: `59ea57caf1baa977e727da2697cac014cbd7429e feat(godot): add deploy prep shell foundation`
@@ -176,6 +178,8 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 - `docs/NEXT_HANDOFF.md` is the minimum next Codex/ChatGPT context entry.
 - `docs/DOCS_INDEX.md` is the document navigation and historical index.
 - `docs/MILESTONES.md` maps historical G labels to stable milestone names.
+- `docs/stage_summaries/STAGE_SUMMARY_INDEX.md` and `docs/stage_summaries/G10_SUMMARY.md` through `docs/stage_summaries/G19_SUMMARY.md` summarize G10-G19.
+- `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`, `docs/route_analysis/ROADMAP_G20_PLUS.md`, `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`, and `docs/route_analysis/STAGE_DEPENDENCY_MAP.md` record G20-R3c route analysis and boundary maps.
 - `docs/handoff/HANDOFF_TEMPLATE.md` is required for future branch, closure, promotion, BUG-fix, and runtime-smoke handoffs.
 - G11 documents must keep `PROJECT_BASELINE.md`, `NEXT_HANDOFF.md`, `DOCS_INDEX.md`, `MILESTONES.md`, `ENGINEERING_STATUS.md`, and `GODOT_CURRENT_STATUS.md` aligned with the actual main and remote live status.
 - G11 validation checklist: `docs/validation/G11_MAINLINE_UX_READABILITY_VALIDATION.md`.

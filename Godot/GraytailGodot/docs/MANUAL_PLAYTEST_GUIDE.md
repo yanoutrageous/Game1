@@ -12,9 +12,9 @@ G17 mainline note: `godot/g17-app-shell-main-menu` added a formal AppShell / Nav
 
 G18 mainline note: `godot/g18-deploy-prep-foundation` added a formal DeployPrepShell foundation only and has been fast-forward merged to `main`. G18-R4 ran Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. Manual validation must still confirm DeployPrep only previews config / deploy_start_intent and does not start or continue RunScene.
 
-G19 mainline note: `godot/g19-long-term-shell-foundation` has been fast-forward merged to `main` and adds a LongTermShell foundation only. It exposes six modules: `目标`, `图鉴`, `研究`, `个人资历`, `抽奖`, and `收藏 / 外观`. G19-R4B records Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. G20 docs-only governance is in progress on `godot/g20-project-knowledge-governance`; R3a/R3b do not require manual playtest and do not claim runtime PASS.
+G19 mainline note: `godot/g19-long-term-shell-foundation` has been fast-forward merged to `main` and adds a LongTermShell foundation only. It exposes six modules: `目标`, `图鉴`, `研究`, `个人资历`, `抽奖`, and `收藏 / 外观`. G19-R4B records Godot headless project-load/parser smoke PASS, but this is not complete gameplay runtime PASS and not manual playtest PASS. G20 docs-only governance is in progress on `godot/g20-project-knowledge-governance`; R3a/R3b/R3c do not require manual playtest and do not claim runtime PASS.
 
-G20 docs-only note: R3a imported authorized text design source copies and R3b adds project governance/index documents. Do not record these docs-only batches as `Godot headless project-load/parser smoke PASS`, `gameplay runtime PASS`, or `manual playtest PASS`. Any G21+ work requires separate authorization and its own validation record.
+G20 docs-only note: R3a imported authorized text design source copies, R3b adds project governance/index documents, and R3c adds G10-G19 stage summaries plus route analysis. Do not record these docs-only batches as `Godot headless project-load/parser smoke PASS`, `gameplay runtime PASS`, or `manual playtest PASS`. G20 is not merged to main, R3d has not executed, and any G21+ work requires separate authorization and its own validation record.
 
 ## G19 LongTermShell Foundation Static Checklist
 
