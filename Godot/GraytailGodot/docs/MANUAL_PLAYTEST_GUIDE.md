@@ -1,5 +1,11 @@
 # Manual Playtest Guide
 
+## G18-align-R4B Validation Note
+
+G18-align-R3 passed Godot headless project-load/parser smoke PASS for the DeployPrep asset attendance alignment slice. This is parser/project-load validation only. It is not gameplay runtime PASS and not manual playtest PASS.
+
+Do not use this result to claim complete deploy prep, complete warehouse, real asset writes, event bus, reward grant, persistence, or real exploration start / continue / abandon logic. G22 has not started.
+
 ## G18-align Deploy Prep Static Checklist
 
 Use this checklist after G18-align-R2 is explicitly accepted for manual or parser-smoke review. R2 itself does not run Godot.

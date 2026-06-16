@@ -1,5 +1,17 @@
 # G18-align Deploy Prep Asset Attendance View Validation
 
+## R4B Closeout
+
+- G18-align-R2 commit: `55a048e7419a890cc899bdbd7fae4db4431ddacf`.
+- G18-align-R3 acceptance: passed.
+- Godot headless project-load/parser smoke PASS.
+- Working tree stayed clean after Godot smoke, with no dirty side effects.
+- This stage only completed consistency alignment for deploy prep asset attendance view, right-side summary, and start / continue / abandon strong-confirmation preview.
+- This stage did not implement complete deploy prep, complete warehouse, real asset writes, event bus, reward grant, persistence, or real RunScene start / continue / abandon logic.
+- This stage did not declare gameplay runtime PASS.
+- This stage did not declare manual playtest PASS.
+- G22 has not started.
+
 ## Stage
 
 G18-align-R2 aligns the existing DeployPrep foundation with the Base Docs deploy-prep design direction.

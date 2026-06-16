@@ -1,5 +1,15 @@
 # Project Baseline
 
+## G18-align-R4B Closeout Status
+
+- G18-align-R2 commit: `55a048e7419a890cc899bdbd7fae4db4431ddacf`.
+- G18-align-R3 acceptance: passed.
+- Godot headless project-load/parser smoke PASS, with the working tree clean afterward and no dirty side effects.
+- Completed scope: deploy prep asset attendance view, right-side summary, and start / continue / abandon strong-confirmation preview consistency alignment.
+- Not completed: complete deploy prep, complete warehouse, real asset writes, event bus, reward grant, persistence, real RunScene start / continue / abandon logic.
+- No gameplay runtime PASS and no manual playtest PASS are claimed.
+- G22 has not started.
+
 ## G18-align-R2 Branch Status
 
 - Branch: `godot/g18-align-deploy-prep-asset-view`.

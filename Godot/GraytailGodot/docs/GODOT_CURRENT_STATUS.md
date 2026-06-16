@@ -1,5 +1,13 @@
 # GODOT_CURRENT_STATUS
 
+## G18-align-R4B Closeout
+
+G18-align-R2 commit: `55a048e7419a890cc899bdbd7fae4db4431ddacf`.
+
+G18-align-R3 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects.
+
+This stage only aligns DeployPrep asset attendance view, right-side summary, and start / continue / abandon strong-confirmation preview. It does not implement complete deploy prep, complete warehouse, real asset writes, event bus, reward grant, persistence, or real exploration start / continue / abandon logic. It does not claim gameplay runtime PASS or manual playtest PASS. G22 has not started.
+
 ## G18-align-R2 Current Batch
 
 Branch: `godot/g18-align-deploy-prep-asset-view`.

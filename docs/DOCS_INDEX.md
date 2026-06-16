@@ -1,5 +1,12 @@
 # Docs Index
 
+## G18-align Closeout Evidence
+
+- `docs/validation/G18_ALIGN_DEPLOY_PREP_ASSET_VIEW_VALIDATION.md` records G18-align-R3 acceptance and R4B closeout.
+- `docs/handoff/HANDOFF_G18_ALIGN_DEPLOY_PREP_ASSET_VIEW.md` records the branch handoff and closeout boundary.
+
+G18-align-R3 passed Godot headless project-load/parser smoke only. It is not gameplay runtime PASS, not manual playtest PASS, and not G22 start.
+
 ## G18-align Documents
 
 - `docs/validation/G18_ALIGN_DEPLOY_PREP_ASSET_VIEW_VALIDATION.md` - validation boundary for DeployPrep asset attendance view alignment.

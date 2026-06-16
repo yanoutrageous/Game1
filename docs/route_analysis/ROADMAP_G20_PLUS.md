@@ -57,6 +57,10 @@ G20 是 docs-only knowledge governance，不实现 Asset Contract、Warehouse、
 - G18-align 不代表真实仓库、真实出发消耗、真实结算历史或 RunScene 启动。
 - G19 LongTermShell 不代表真实长期系统、资产系统、MetaProgress 或 gacha。
 - 任何 `Godot headless project-load/parser smoke PASS` 都不能写成 complete gameplay runtime PASS 或 manual playtest PASS。
+## G18-align-R4B Closeout Update
+
+G18-align-R2 is complete at `55a048e7419a890cc899bdbd7fae4db4431ddacf`, and G18-align-R3 acceptance passed with Godot headless project-load/parser smoke PASS. This validates only the pre-G22 deploy prep alignment slice: asset attendance view, right-side summary, and start / continue / abandon strong-confirmation preview. It does not start G22 and does not implement complete deploy prep, complete warehouse, real asset writes, event bus, reward grant, persistence, or real RunScene start / continue / abandon logic.
+
 ## G18-align-R2 Execution Update
 
 G18-align-R2 is now the active pre-G22 implementation slice on `godot/g18-align-deploy-prep-asset-view`. It narrows the next route to Deploy Prep asset attendance view alignment: secondary labels, card details, right-side summary, and start/continue/abandon strong-confirmation preview. It does not start G22 and does not implement complete warehouse, real asset writing, event bus, reward claim, persistence, or real exploration execution.

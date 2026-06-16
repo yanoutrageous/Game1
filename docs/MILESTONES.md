@@ -1,5 +1,9 @@
 # Milestones
 
+## G18-align Closeout
+
+G18-align-R2 is complete at `55a048e7419a890cc899bdbd7fae4db4431ddacf`; G18-align-R3 acceptance passed with Godot headless project-load/parser smoke PASS. The scope remains deploy prep asset attendance view, right-side summary, and start / continue / abandon strong-confirmation preview only. It is not complete warehouse, not real asset writes, not gameplay runtime PASS, not manual playtest PASS, and not G22.
+
 ## G18-align Current Branch
 
 `godot/g18-align-deploy-prep-asset-view` aligns DeployPrep foundation with asset attendance view, secondary labels, card details, right summary, and start/continue/abandon strong-confirmation preview. It is not complete warehouse, not real asset writes, not G22, and does not run Godot in R2.
