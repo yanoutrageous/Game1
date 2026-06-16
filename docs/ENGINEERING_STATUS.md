@@ -4,6 +4,8 @@
 
 G21 Asset & Item Flow Contract Foundation is fast-forward merged to `main`. G21-R3 is complete at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4B closeout / first main commit is `fdadd78ccdf1d61378ac93a74cfe26449e47c411`. G21 adds contract-only schema files under `Godot/GraytailGodot/scripts/core/asset/` for `AssetContract`, `ItemSchema`, `AssetEventSchema`, and `AssetProjectionSchema`. It defines schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema only. It does not implement a real asset system, warehouse, event bus, reward grant, persistence, gacha, settlement/history, red dot system, or Policy / Tag rule engine. G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS; smoke left the working tree clean with no dirty side effects. This is not complete gameplay runtime PASS and not manual playtest PASS. G22 has not started.
 
+G21-R5 Design Alignment Calibration is docs-only. The full Base Docs consistency audit is complete and found no P0, but it identified P1/P2 wording and foundation-completeness gaps: G17 main menu, G18 deploy prep, G19 long-term shell, and G21 asset contract must remain labeled as foundations. The next recommended stage is G18-align / 出发探索资产出勤视角 before any functional G22. Do not directly enter complete warehouse, long-term expansion, gacha, reward claim, settlement history, or G22 implementation.
+
 G20 Project Knowledge Governance is a docs-only stage and is fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20-R3a imported authorized Base Docs Markdown / TXT text design source copies; Base Docs originals were not modified; PNG files were not imported and remain `external_reference` / `pending_user_authorization`. G20-R3b added project governance maps and design source index, G20-R3c added G10-G19 stage summaries and route analysis, G20-R3d1 added branch / commit / validation governance matrices, G20-R3d2 added decision log / glossary / deprecated inventory, G20-R4A read-only acceptance passed, and G20-R4B docs-only closeout is complete. G20 final executed; post-merge docs commit hash is pending until commit. G21 is now fast-forward merged to main as a separate contract foundation, and G20 does not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
 ## Time
@@ -23,6 +25,8 @@ G20 Project Knowledge Governance is a docs-only stage and is fast-forward merged
 - G21-R4B closeout / first main commit: `fdadd78ccdf1d61378ac93a74cfe26449e47c411`
 - G21 final status: fast-forward merged to main
 - G22 status: not started
+- G21-R5 status: design alignment docs-only calibration; no code, no Godot run
+- Next recommended planning: G18-align / 出发探索资产出勤视角, not full Warehouse / Asset Page Shell
 - Current working branch for this handoff: `main`
 - G19 branch: `godot/g19-long-term-shell-foundation`
 - G19 baseline main HEAD: `0e44c261f399a197d6e6eec277eb51ce72e1ba8c docs: mark G18 merged to main`

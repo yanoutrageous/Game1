@@ -18,6 +18,11 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G21 final status: fast-forward merged to `main`; post-merge docs calibration is in progress/complete in this batch.
 - This is not complete gameplay runtime PASS and not manual playtest PASS.
 - G22 status: not started.
+- G21-R5 design alignment calibration records the full Base Docs consistency audit: no P0 was found, but P1/P2 wording and foundation-completeness gaps remain.
+- Do not enter functional G22 directly from the old Warehouse / Asset Page Shell wording. The next recommended planning step is G18-align / 出发探索资产出勤视角 before any G22 implementation.
+- G22 priority, if later authorized, should align Deploy Prep full module semantics: 出发探索资产出勤视角, 二级标签, 卡片详情, 深层跳转, and strong confirmation for start / continue / abandon.
+- Historical wording to treat as superseded: old long-term seven-module structure, old "天赋" tab wording, and old G21/G22 ordering. Current long-term modules are 目标 / 图鉴 / 研究 / 个人资历 / 抽奖 / 收藏外观; current 出发探索 tabs are 地图 / 仓库 / 申领 / 出勤配置 / 作业许可.
+- G21 AssetEvent future action vocabulary is design-level only: 获得, 消耗, 丢失, 转化, 出售, 入仓, 清空, 抢救, 装备, 卸下, 加入出勤, 移出出勤, 解锁, 完成, 记录. This does not mean G21 implemented event writes or an event bus.
 - Current branch for this handoff: `main`
 - Base branch: `main`
 - Current G18 branch: `godot/g18-deploy-prep-foundation`
@@ -183,6 +188,7 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 - Latest integrated stage: G20 `Project Knowledge Governance`.
 - G20 is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`; post-merge docs commit hash is pending until commit.
 - G21 is complete and fast-forward merged to `main` as Asset & Item Flow Contract Foundation only. G21-R4 validation passed with Godot headless project-load/parser smoke PASS. G22 has not started.
+- G21-R5 design alignment calibration says the immediate next stage should be G18-align / 出发探索资产出勤视角 planning, not complete warehouse, long-term expansion, gacha, reward claiming, settlement history, or G22 feature implementation.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
 This handoff records G20 mainline integration and G21 mainline integration. Godot headless project-load/parser smoke PASS is recorded for G19-R4B and G21-R4, but complete gameplay runtime PASS and manual playtest PASS are not claimed for G19, G20, or G21. G20 did not run Godot and does not claim parser smoke PASS.

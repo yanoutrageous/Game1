@@ -20,6 +20,8 @@ G21 does not implement real asset systems, warehouse, inventory, event bus, rewa
 
 G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS. The smoke run left the working tree clean with no dirty side effects. This is not complete gameplay runtime PASS and not manual playtest PASS. G21 is fast-forward merged to main. G22 has not started.
 
+G21-R5 Design Alignment Calibration is docs-only. The full Base Docs consistency audit is complete and found no P0, but P1/P2 design wording and foundation-completeness issues remain. G17 main menu is still foundation / partial fit, G18 DeployPrep is still foundation rather than complete 出发探索, G19 LongTermShell is six-module display-only shell rather than complete long-term system, and G21 Asset Contract is not a real asset system. The next recommended planning step is G18-align / 出发探索资产出勤视角 before G22; G22 has not started.
+
 Current stage: G20 Project Knowledge Governance is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`. G20 does not run Godot and does not claim Godot parser smoke PASS, gameplay runtime PASS, or manual playtest PASS.
 
 G18 DeployPrepShell / DeployConfig / RunStartConfig foundation has R4 acceptance, Godot headless project-load/parser smoke PASS, docs-only closeout, fast-forward main merge, and post-merge docs calibration complete. Scope remains deploy prep placeholder tabs, right-side summary, public config preview, and AppShell deploy route integration; it does not start RunScene or write persistence. G17 AppShell / NavigationIntent / PageRouter / MainMenuShell foundation is complete, parser-smoke checked, and fast-forward merged to `main`.
@@ -212,6 +214,8 @@ G8 documentation closure commit: `717728087eea2bdabd3a9c031b0f2698cdb5737e`.
 - Post-G16 architecture direction baseline records that current architecture has not lost control, G15/G16 Encounter / Combat foundations should be retained, and G17 should focus on `AppShell / NavigationIntent / PageRouter / MainMenuShell` rather than plain main-menu implementation.
 
 Current `main` includes G10 Progress & Art Smoke Foundation, the completed G11 mainline UX readability pass, G11 closeout, the completed G12 lightweight legacy Demo readability/typography pass, G13 fixed resolution layout support and closeout, completed G14 run surface work, G15 Encounter Contract Foundation, G16 Combat Encounter Foundation, G17 AppShell / MainMenuShell foundation, G18 DeployPrepShell / DeployConfig / RunStartConfig foundation, G19 LongTermShell foundation, G20 Project Knowledge Governance docs-only artifacts, and G21 Asset & Item Flow Contract Foundation. G21 is not Warehouse, not gameplay implementation, not gameplay runtime PASS, and not manual playtest PASS.
+
+Design alignment note: old long-term seven-module wording, old "天赋" tab wording, and old G21/G22 ordering are historical references. Current long-term modules are 目标 / 图鉴 / 研究 / 个人资历 / 抽奖 / 收藏外观. Current 出发探索 tab vocabulary is 地图 / 仓库 / 申领 / 出勤配置 / 作业许可.
 
 Post-G17 next structural work requires separate authorization. Main menu should only navigate and present atmosphere/light hints; it must not directly start or continue RunScene. Expedition prep should later output `RunStartConfig / DeployConfig`; long-term systems should later output `PlayerProfileSnapshot / LongTermSnapshot / UnlockSnapshot`; settlement should later return through `RunResultSummary / SettlementAdapter`.
 

@@ -121,3 +121,15 @@
 - `evidence`: `docs/project_governance/BRANCH_INVENTORY.md`; `docs/project_governance/COMMIT_MILESTONE_MAP.md`; `docs/project_governance/VALIDATION_STATUS_MATRIX.md`; `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`。
 - `follow_up`: 任何分支清理都需要用户后续明确授权，并且不得由 G20-R3d2 执行。
 - `status`: active / recorded in G20-R3d2。
+
+## DL-G21-005
+
+- `id`: DL-G21-005
+- `stage`: G21-R5
+- `decision`: 在进入 G22 前先做 docs-only Design Alignment Calibration，并将下一阶段校准为 G18-align / 出发探索资产出勤视角。
+- `reason`: Base Docs 全量一致性审计完成后未发现 P0，但发现 P1/P2 设计口径与 foundation 完成度问题：G18 出发探索仍是 foundation，结算报告 / 历史战绩仍缺快照系统，主菜单存在 warehouse 快捷入口口径风险，G21 AssetEvent 动作口径偏最小，旧长期七模块、旧“天赋”页签和旧 G21/G22 排序需要标注为历史参考。
+- `impact`: G22 不再直接按旧 Warehouse / Asset Page Shell 口径启动；G22 前应先规划 G18-align，包括出发探索资产出勤视角、二级标签、卡片详情、深层跳转、开始/继续/放弃强确认口径。
+- `non_goals`: 不实现真实仓库、长期系统扩展、抽奖、奖励领取、结算历史、AssetEvent 写入、事件总线、存档或 gameplay；不修改代码、不运行 Godot、不修改 Base Docs 原件、不进入 G22。
+- `evidence`: `docs/route_analysis/ROADMAP_G20_PLUS.md`; `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`; `docs/PROJECT_BASELINE.md`; `docs/NEXT_HANDOFF.md`。
+- `follow_up`: 下一执行建议进入 G18-align 计划模式；任何 G22 都必须在 G18-align 后重新审计和计划。
+- `status`: active / recorded in G21-R5。

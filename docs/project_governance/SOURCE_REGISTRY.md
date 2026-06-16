@@ -13,6 +13,18 @@ This registry records active sources, imported design sources, external referenc
 | `docs/MILESTONES.md` | project_governance | active | milestone map | Historical G-number to formal milestone mapping. |
 | `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md` | current_status | active | Godot status | Godot-specific current status. |
 | `Godot/GraytailGodot/docs/MANUAL_PLAYTEST_GUIDE.md` | validation | active | manual validation | Manual/static validation guidance. |
+| `docs/route_analysis/ROADMAP_G20_PLUS.md` | route_analysis | active | route governance | Calibrated by G21-R5; next recommended planning is G18-align before G22. |
+| `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md` | route_analysis | active | boundary governance | Calibrated by G21-R5 for Deploy Prep / AssetEvent / Warehouse boundaries. |
+| `docs/project_governance/DECISION_LOG.md` | project_governance | active | decision register | Includes G21-R5 design alignment decision. |
+| `docs/project_governance/VALIDATION_STATUS_MATRIX.md` | project_governance | active | validation register | Includes G21 and G21-R5 validation rows. |
+
+## G21-R5 Design Alignment Audit Status
+
+- Base Docs 全量一致性审计已完成，未发现 P0。
+- P1/P2 设计口径与 foundation 完成度问题已登记到 current status、handoff、route analysis、decision log、glossary 和 validation matrix。
+- 外部 `D:\AGAME1\Base Docs` 原件未修改、未复制、未移动、未删除。
+- G21-R5 不创建新设计源，不运行 Godot，不修改代码，不进入 G22。
+- 当前下一阶段建议：先做 G18-align / 出发探索资产出勤视角 planning，再决定 G22。
 
 ## Imported Design Sources
 

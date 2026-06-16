@@ -29,6 +29,10 @@
 - G20-R3d2 docs: `docs/project_governance/DECISION_LOG.md`, `docs/project_governance/GLOSSARY.md`, and `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`.
 - G21-R3 is complete on `godot/g21-asset-item-flow-contract` at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS; G21-R4B closeout / first main commit is `fdadd78ccdf1d61378ac93a74cfe26449e47c411`; G21 is fast-forward merged to main. G22 has not started. G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 - G19-R4B smoke is not complete gameplay runtime PASS and not manual playtest PASS.
+- G21-R5 design alignment calibration: Base Docs 全量一致性审计已完成，未发现 P0；存在 P1/P2 设计口径与 foundation 完成度问题，因此不得直接进入功能化 G22。
+- Foundation boundaries after the audit: G17 主菜单 = foundation / 部分符合，不等于完整主菜单内容；G18 出发探索 = foundation，不等于完整出发探索模块内容；G19 长期系统 = 六模块 display-only shell，不等于完整长期系统；G21 资产契约 = contract foundation，不等于真实资产系统。
+- Superseded wording: old long-term seven-module structure is historical and covered by the newer six-module integration plan; old "天赋" or old UI tab wording is historical; old G21/G22 ordering is historical and must defer to the calibrated G20+ roadmap.
+- Next route guard: before G22, plan G18-align / 出发探索资产出勤视角, including 二级标签, 卡片详情, 深层跳转, and strong confirmation wording for 开始 / 继续 / 放弃. Do not start complete warehouse, long-term expansion, gacha, reward claim, settlement history, or G22 feature implementation.
 - Integrated G17 branch: `godot/g17-app-shell-main-menu`.
 - G17-R2 baseline main HEAD: `80c0d0653db0ec486c1b8f97b4787d8107dd2a0f docs: add post-G16 architecture direction baseline`.
 - G17-R2 commit: `368a7be5c2fb919db47421a026ddf417df9c1b1c feat(godot): add app shell main menu foundation`.
@@ -161,9 +165,11 @@ G20-R4A read-only acceptance passed, G20-R4B docs-only closeout is complete, and
 
 G20-R3c added `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`, `docs/stage_summaries/G10_SUMMARY.md` through `docs/stage_summaries/G19_SUMMARY.md`, and route analysis under `docs/route_analysis/`. G20-R3d1 added branch / commit / validation matrices under `docs/project_governance/`. G20-R3d2 added `DECISION_LOG.md`, `GLOSSARY.md`, and `TEMP_AND_DEPRECATED_INVENTORY.md`. G20-R4B added `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md` and `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md`. These are docs-only governance artifacts and do not implement Asset Contract, Warehouse, gameplay, Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
-G21 direction is Asset & Item Flow Contract Foundation. G21-R3 implements only the contract foundation, G21-R4 validation passed with Godot headless project-load/parser smoke PASS, and G21 final fast-forward merged the branch to main. G22 has not started.
+G21 direction is Asset & Item Flow Contract Foundation. G21-R3 implements only the contract foundation, G21-R4 validation passed with Godot headless project-load/parser smoke PASS, and G21 final fast-forward merged the branch to main. G21-R5 then calibrated design alignment before G22. G22 has not started.
 
 G18 should not be treated as complete expedition prep. G18-R3 is only the minimal foundation for `DeployPrepShell / DeployConfig / RunStartConfig` preview. Do not expand it into Boss, action combat, true run start, real maps, warehouse economy, requisition economy, work permit rules, settlement reports/history, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems without explicit authorization.
+
+The next recommended planning stage is G18-align / 出发探索资产出勤视角 rather than complete Warehouse / Asset Page Shell. The alignment must keep the current tab vocabulary as 地图 / 仓库 / 申领 / 出勤配置 / 作业许可 and keep settlement report / history as snapshot work still missing.
 
 ## G15 Boundary
 

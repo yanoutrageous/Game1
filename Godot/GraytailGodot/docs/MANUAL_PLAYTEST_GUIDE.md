@@ -18,6 +18,8 @@ G20 docs-only note: R3a imported authorized text design source copies, R3b adds 
 
 G21 mainline note: `godot/g21-asset-item-flow-contract` adds Asset & Item Flow Contract Foundation only at G21-R3 commit `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4B closeout / first main commit is `fdadd78ccdf1d61378ac93a74cfe26449e47c411`. It adds contract schema/default/normalize/validate/projection helpers under `Godot/GraytailGodot/scripts/core/asset/`. It does not implement real warehouse, inventory, event bus, reward grant, persistence, gacha, settlement/history, red dot state, or Policy / Tag rule engine. G21-R4 records Godot headless project-load/parser smoke PASS with no dirty side effects; this is not gameplay runtime PASS or manual playtest PASS. G21 is fast-forward merged to main. G22 has not started.
 
+G21-R5 design alignment note: Base Docs full consistency audit found no P0, but it records P1/P2 route and foundation wording gaps. Do not use manual checklist wording to imply complete 主菜单, complete 出发探索, complete 长期系统, complete asset system, settlement/history snapshot implementation, or G22 start. The next recommended planning step is G18-align / 出发探索资产出勤视角, not full warehouse implementation.
+
 ## G21 Asset & Item Flow Contract Static Checklist
 
 Use this checklist for G21-R3/R4B static review. Static inspection and parser smoke alone are not gameplay runtime PASS.
@@ -30,6 +32,7 @@ Use this checklist for G21-R3/R4B static review. Static inspection and parser sm
 - Confirm `AssetProjectionSchema` exposes read-only projection schemas only.
 - Confirm helpers are default / normalize / validate only.
 - Confirm no real warehouse, inventory, reward, gacha, settlement, history, red dot, or persistence behavior was added.
+- Confirm AssetEvent future action words are documentation-only alignment terms: 获得, 消耗, 丢失, 转化, 出售, 入仓, 清空, 抢救, 装备, 卸下, 加入出勤, 移出出勤, 解锁, 完成, 记录.
 - Confirm DeployPrepShell, DeployConfig, LongTermShell, LongTermSnapshot, RunAssetLedger, AssetCatalog, run_scene, CommandBus, project.godot, scenes, resources, `.uid`, and `.translation` were not modified.
 - Record whether Godot/editor/game/import was run. For G21-R3 the expected record is "not run"; for G21-R4 the expected record is "Godot headless project-load/parser smoke PASS only, no dirty side effects".
 

@@ -26,6 +26,7 @@ This file maps the historical G-number labels to stable milestone names. It does
 | G19 | LongTermShell Foundation | R3 complete at `4eeb345daef5f8263b325db2ab5607e6c78f6d36`; R4B closeout / first main merge baseline at `04e14865f4d5eff7b16398d5730054273ccd0823`; fast-forward merged to main; no complete gameplay runtime PASS or manual playtest PASS |
 | G20 | Project Knowledge Governance | Docs-only governance branch `godot/g20-project-knowledge-governance`; R3a imported authorized text design source copies at `caaf3c5eb0559a395b9940dacd05dc5810bcd1d7`; R3b adds governance maps and indexes at `81513bdbf10cf4f774a9bda5c3ce3e2d3b1302dc`; R3c adds G10-G19 stage summaries and route analysis at `10a2dd3ea2d71879b66f5d1c20177fb7bed2a6f1`; R3d1 adds branch / commit / validation governance matrices; R3d2 adds decision log / glossary / deprecated inventory; R4A read-only acceptance passed; R4B docs-only closeout / first main merge baseline at `ae689b7464fd6ea81a763110cd89813abcfb6665`; fast-forward merged to main; post-merge docs commit hash pending until commit; G21-R3/R4 later completed branch validation separately; no Godot run for G20 |
 | G21 | Asset & Item Flow Contract Foundation | R3 complete on `godot/g21-asset-item-flow-contract` at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; baseline main HEAD `4bb4594fc23b846da9c15003a86c71cf08003830`; R4B closeout / first main commit `fdadd78ccdf1d61378ac93a74cfe26449e47c411`; fast-forward merged to main; adds contract-only schema/default/normalize/validate/projection helpers; G21-R4 Godot headless project-load/parser smoke PASS; no real asset system, no gameplay runtime PASS, no manual playtest PASS |
+| G21-R5 | Design Alignment Calibration | Docs-only design consistency calibration after full Base Docs audit; no P0 found; P1/P2 route/foundation wording gaps recorded; next recommended stage is G18-align / 出发探索资产出勤视角 before G22; no code and no Godot run |
 
 ## Naming Rule
 
@@ -82,7 +83,7 @@ G15-R3/R4/R5 did not run Godot/editor/game/import and do not claim runtime PASS.
 ## Next Stage Candidates
 
 - Latest integrated stage: G20 `Project Knowledge Governance`.
-- G20 docs-only governance completed R4A read-only acceptance, R4B docs-only closeout, fast-forward main merge, and post-merge docs calibration. G21 Asset & Item Flow Contract Foundation is now fast-forward merged to main at `fdadd78ccdf1d61378ac93a74cfe26449e47c411`. G22 has not started.
+- G20 docs-only governance completed R4A read-only acceptance, R4B docs-only closeout, fast-forward main merge, and post-merge docs calibration. G21 Asset & Item Flow Contract Foundation is now fast-forward merged to main at `fdadd78ccdf1d61378ac93a74cfe26449e47c411`. G21-R5 calibrates design alignment before G22. G22 has not started.
 
 G18 accepts the foundation only. It does not start Boss, action combat, true RunScene launch, real maps, warehouse/requisition/permit rules, settlement reports/history, long-term systems, lottery, MetaProgress, Deploy persistence, or any G19+ implementation.
 

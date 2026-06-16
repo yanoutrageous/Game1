@@ -5,13 +5,16 @@
 | term | definition | scope | not_meaning | related_files |
 | --- | --- | --- | --- | --- |
 | Shell | 顶层或模块级 UI / 路由容器，用来承载页面、placeholder、preview、disabled state 或后续模块入口。 | G17 AppShell、G18 DeployPrepShell、G19 LongTermShell。 | 不等于完整业务系统，不等于已接入真实数据、持久化或完整玩法。 | `docs/stage_summaries/G17_SUMMARY.md`; `docs/stage_summaries/G18_SUMMARY.md`; `docs/stage_summaries/G19_SUMMARY.md` |
-| Foundation | 阶段性基础切片，建立最小接口、页面位置、数据形状或验证边界。 | G10-G19 各 foundation 阶段。 | 不等于完整系统，不等于最终 UI，不等于完整 gameplay。 | `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`; `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md` |
+| Foundation | 阶段性基础切片，建立最小接口、页面位置、数据形状或验证边界。 | G10-G21 各 foundation 阶段；G17 主菜单、G18 出发探索、G19 长期系统、G21 资产契约。 | 不等于完整系统，不等于最终 UI，不等于完整 gameplay；G18 foundation 不等于完整出发探索模块。 | `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`; `docs/route_analysis/ROADMAP_G20_PLUS.md` |
 | Preview | 只读或 display-only 的展示数据，用来说明未来信息结构或输出形状。 | DeployConfig preview、RunStartConfig preview、LongTerm interface preview、reward preview。 | 不等于真实执行，不等于资源消耗，不等于持久化写入。 | `docs/stage_summaries/G18_SUMMARY.md`; `docs/stage_summaries/G19_SUMMARY.md` |
 | Contract | 模块之间稳定的公开数据/命令边界。 | EncounterContract、DeployConfig、RunStartConfig、G21 Asset Contract。 | 不等于完整实现，不等于私有状态暴露。 | `docs/stage_summaries/G15_SUMMARY.md`; `docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md` |
 | Snapshot | 某一时刻的公开只读状态视图。 | RunContext status snapshot、RunQueryFacade snapshots、LongTermSnapshot 建议。 | 不等于状态 owner，不等于可写接口，不等于真实存档。 | `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`; `docs/project_governance/VALIDATION_STATUS_MATRIX.md` |
 | Source of Truth | 当前事实判断的优先来源。 | 当前状态、handoff、validation、governance 文件之间的优先级。 | 不等于所有历史文档都同等有效。 | `docs/project_governance/SOURCE_OF_TRUTH_POLICY.md`; `docs/project_governance/SOURCE_REGISTRY.md` |
 | Base Docs | 用户外部设计原件目录 `D:\AGAME1\Base Docs`。 | 外部原件引用和 G20-R3a 文本设计源来源。 | 不等于本轮可修改路径，不等于仓库内实现清单。 | `docs/project_governance/SOURCE_REGISTRY.md`; `docs/design_sources/DESIGN_SOURCE_INDEX.md` |
 | Design Source | 设计依据或设计源副本。 | `docs/design_sources/**` 中的 G20-R3a imported_text_copy。 | 不等于代码实现清单，不等于功能已完成证明。 | `docs/design_sources/README.md`; `docs/design_sources/DESIGN_SOURCE_INDEX.md` |
+| Design Alignment Calibration | 将全量设计源审计结论同步到路线、handoff、status 和 governance 文档的 docs-only 校准。 | G21-R5。 | 不等于实现新功能，不等于进入 G22，不等于修改 Base Docs 原件。 | `docs/route_analysis/ROADMAP_G20_PLUS.md`; `docs/project_governance/DECISION_LOG.md` |
+| G18-align | G22 前置的出发探索资产出勤视角校准阶段。 | 出发探索资产出勤视角、二级标签、卡片详情、深层跳转、开始/继续/放弃强确认口径。 | 不等于完整仓库，不等于真实出发消耗，不等于结算历史实现，不等于 RunScene 启动。 | `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md`; `docs/PROJECT_BASELINE.md` |
+| Superseded Design Wording | 被新设计源或校准路线覆盖的旧案表述。 | 旧长期七模块、旧“天赋”页签、旧 G21/G22 排序。 | 不等于删除旧文档；旧文档仍是历史参考，但不作为当前路线依据。 | `docs/route_analysis/ROADMAP_G20_PLUS.md`; `docs/project_governance/DECISION_LOG.md` |
 | Active Source | 当前仍应优先阅读的事实源或导航源。 | `PROJECT_BASELINE`、`NEXT_HANDOFF`、`ENGINEERING_STATUS`、`GODOT_CURRENT_STATUS` 等。 | 不等于历史资料自动失效，也不等于路线建议已启动。 | `docs/project_governance/SOURCE_REGISTRY.md`; `docs/DOCS_INDEX.md` |
 | Historical Reference | 仍可追溯但不是当前事实源的历史文档。 | 旧 handoff、旧 branch_change、旧 audit、早期 UE/Lua/G5-G9 文档。 | 不等于可以删除，不等于当前实现状态。 | `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md` |
 | Deprecated | 相对当前事实源或阶段命名已经过时的文档、术语或路径。 | 旧命名、旧路线、旧阶段报告候选。 | 不等于已授权删除，不等于文件内容全错。 | `docs/project_governance/DOCUMENT_LIFECYCLE.md`; `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md` |
@@ -23,6 +26,7 @@
 | ItemInstance | 物品实例层，描述一次掉落、持有或结算中的具体实例状态。 | G8 item instance reference / G21 Asset Contract schema。 | 不等于静态定义，不等于堆叠总量，不等于已持久化玩家物品。 | `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`; `docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md` |
 | ItemStack | 同类物品按数量聚合后的显示或存储形态。 | G21 Asset Contract schema、future warehouse、inventory、reward display。 | 不等于所有物品都能无损合并，不等于实例状态消失，不等于真实仓库实现。 | `docs/design_sources/asset_model/item_asset_model_mapping.md`; `docs/handoff/HANDOFF_G21_ASSET_ITEM_FLOW_CONTRACT.md` |
 | AssetEvent | 资产变化事件，记录获得、消耗、转换、入仓、丢失、补偿等事实。 | G21 Asset Contract schema / future Settlement / History。 | 不等于 UI 提示文本，不等于直接修改状态的许可，不等于事件总线已实现。 | `docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md`; `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md` |
+| AssetEvent Action Vocabulary | 后续 AssetEvent / 出发探索 / 结算历史需要对齐的动作词。 | 获得、消耗、丢失、转化、出售、入仓、清空、抢救、装备、卸下、加入出勤、移出出勤、解锁、完成、记录。 | 不等于 G21 已实现真实事件写入、事件总线、仓库 mutation 或奖励发放。 | `docs/route_analysis/ROADMAP_G20_PLUS.md`; `docs/PROJECT_BASELINE.md` |
 | RewardBundle | 奖励包，聚合货币、物品、经验、解锁、标签或后续事件。 | future Objective / Settlement / LongTerm systems。 | 不等于已实现奖励系统，不等于真实发奖执行。 | `docs/route_analysis/ROADMAP_G20_PLUS.md`; `docs/design_sources/long_term/long_term_integration_asset_interface.md` |
 | Policy | 可配置规则策略，用来描述限制、掉落、结算、可见性、出售、保底等规则。 | future Asset Contract、Warehouse、Gacha、LongTerm。 | 不等于当前代码已经有完整策略引擎。 | `docs/design_sources/asset_model/item_asset_model_mapping.md`; `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md` |
 | Tag | 语义标签，用来给物品、遭遇、奖励、目标或模块提供分类与过滤依据。 | future content definition / asset model。 | 不等于 UI 文案，不等于唯一规则来源。 | `docs/design_sources/asset_model/item_asset_model_mapping.md`; `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md` |

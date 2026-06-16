@@ -109,16 +109,27 @@ flowchart LR
 - 当前实现状态：G21-R3 complete at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4 Godot headless project-load/parser smoke PASS; G21-R4B / first main commit `fdadd78ccdf1d61378ac93a74cfe26449e47c411`; merged main.
 - 后续承接阶段：possible G22 Warehouse / Asset Page Shell Foundation; G22 has not started.
 
+## G18-align Deploy Prep Asset Attendance
+
+- 负责什么：出发探索资产出勤视角、二级标签、卡片详情、深层跳转、开始/继续/放弃强确认口径。
+- 不负责什么：完整仓库、真实出发消耗、真实结算历史、长期系统扩展、抽奖、奖励领取、RunScene 启动。
+- 读取什么：G18 DeployConfig / RunStartConfig preview boundary、G21 Asset Contract schema、Base Docs consistency audit conclusion。
+- 不读取什么：Base Docs 原件、RunContext / Encounter / Combat / Ledger / TruthMap private state。
+- 输出什么：G22 前置路线与 Deploy Prep module alignment plan。
+- 不能直接调用什么：CommandBus dispatch、warehouse mutation、AssetEvent write、RewardBundle grant、persistence。
+- 当前实现状态：未启动；G21-R5 只做 docs-only route calibration。
+- 后续承接阶段：G18-align planning before G22.
+
 ## future Warehouse
 
-- 负责什么：仓库/资产页 shell，消费 Asset Contract snapshot。
+- 负责什么：仓库/资产页 shell，消费 Asset Contract snapshot；必须等待 G18-align 后再重新确认。
 - 不负责什么：完整 economy、consignment、insurance、full drag/drop。
 - 读取什么：future Asset Contract public snapshot。
 - 不读取什么：ledger private mutation internals。
 - 输出什么：warehouse/asset page view model 和 user intents。
 - 不能直接调用什么：private ledger writes、MetaProgress writes without adapter。
 - 当前实现状态：未启动。
-- 后续承接阶段：建议 G22。
+- 后续承接阶段：G18-align 后再决定 G22；不得直接按旧 roadmap 启动完整 Warehouse / Asset Page Shell。
 
 ## future Settlement / History
 

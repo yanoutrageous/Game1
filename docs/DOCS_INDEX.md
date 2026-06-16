@@ -10,6 +10,8 @@ G20 docs-only project knowledge governance is fast-forward merged to `main` at `
 
 G21-R3 is complete on `godot/g21-asset-item-flow-contract` from `main@4bb4594fc23b846da9c15003a86c71cf08003830` at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`. G21-R4B closeout / first main commit containing G21 is `fdadd78ccdf1d61378ac93a74cfe26449e47c411`. It adds Asset & Item Flow Contract Foundation only: schema, constants, default helpers, normalize helpers, validate helpers, and read-only projection schema. It does not implement real asset systems, warehouse, event bus, reward grant, persistence, gacha, settlement/history, red dot state, or Policy / Tag rule engine. G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS and no dirty side effects. This is not gameplay runtime PASS or manual playtest PASS. G21 is fast-forward merged to main. G22 has not started.
 
+G21-R5 design alignment calibration records the full Base Docs consistency audit. No P0 was found. P1/P2 issues remain around route wording, foundation completeness, settlement/history snapshots, main-menu warehouse shortcut wording, and G21 AssetEvent action vocabulary. Route and governance docs now treat old seven-module long-term structure, old "天赋" tab wording, and old G21/G22 order as historical reference.
+
 ## Current Fact Sources
 
 - `docs/PROJECT_BASELINE.md` - current engineering fact source.
@@ -33,8 +35,8 @@ G21-R3 is complete on `godot/g21-asset-item-flow-contract` from `main@4bb4594fc2
 - `docs/project_governance/EXECUTION_ENVIRONMENT.md` - Local execution path and PATCH_MODE safety rules.
 - `docs/stage_summaries/STAGE_SUMMARY_INDEX.md` - G10-G19 stage summary index added by G20-R3c.
 - `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md` - G10-G19 route analysis added by G20-R3c.
-- `docs/route_analysis/ROADMAP_G20_PLUS.md` - G20 route recommendation for G21+ work; G21 has since completed R3/R4 validation and is merged to main. G22 has not started.
-- `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md` - Current/future system boundary map added by G20-R3c.
+- `docs/route_analysis/ROADMAP_G20_PLUS.md` - G20 route recommendation for G21+ work; after G21-R5 it routes next planning toward G18-align / 出发探索资产出勤视角 before G22. G22 has not started.
+- `docs/route_analysis/SYSTEM_BOUNDARY_MAP.md` - Current/future system boundary map added by G20-R3c and calibrated by G21-R5 for Deploy Prep / AssetEvent / Warehouse boundaries.
 - `docs/route_analysis/STAGE_DEPENDENCY_MAP.md` - Stage dependency map added by G20-R3c.
 - `docs/bugs/G10_BASELINE_BUG_BACKLOG.md` - G10 baseline bug and remaining-scope backlog evidence.
 - `docs/handoff/HANDOFF_POST_G16_ARCHITECTURE_DIRECTION.md` - Post-G16 architecture direction baseline and G17 route recommendation.
