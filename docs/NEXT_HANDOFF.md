@@ -1,3 +1,16 @@
+# G23 Final Main Merge Note
+
+- G23 has been fast-forward merged to `main`.
+- G23 branch: `godot/g23-settlement-history-snapshot-foundation`.
+- G23 implementation commit: `f20ddf60513f17ef72afe8e5c99a4e1a22fccd0e`.
+- G23 closeout docs commit: `85bf697d09147c7d92268dee4d4b6f51643155a7`.
+- First `main` commit containing G23: `85bf697d09147c7d92268dee4d4b6f51643155a7`.
+- G23-R3 static validation PASS.
+- G23-R3 Godot headless project-load/parser smoke PASS.
+- Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
+- Manual playtest was not run, and no manual playtest PASS is claimed.
+- G23 remains settlement/history snapshot foundation only: no real settlement, history persistence, reward grant, asset write, event bus, SaveManager, RunScene ending flow, complete LongTerm, Warehouse, or Gacha.
+
 # G23-R3 Closeout Note
 
 - G23 branch: `godot/g23-settlement-history-snapshot-foundation`.
