@@ -1,3 +1,17 @@
+# G25 Final Main Merge Note
+
+- G25 has been fast-forward merged to `main`.
+- G25 branch: `godot/g25-ui-structure-playable-route`.
+- G25 implementation commit: `ae6f2ab6abd50b51c6f8f600cb8f5cda1cda7462`.
+- G25 closeout docs commit: `022d3f74e9982fffae62e174df04b8f8f55a8958`.
+- First `main` commit containing G25: `022d3f74e9982fffae62e174df04b8f8f55a8958`.
+- `main` now contains the G25 implementation and closeout docs.
+- G25-R3b static validation PASS.
+- G25-R3b Godot headless project-load/parser smoke PASS.
+- Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
+- Manual playtest was not run, and no manual playtest PASS is claimed.
+- Next recommended step: G25 audit evaluation or G26 original audit.
+
 # G25-R3b Closeout Note
 
 - G25 stage: UI Structure Stabilization & Playable Route Recovery.
