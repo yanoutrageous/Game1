@@ -8,13 +8,27 @@ static func build() -> Dictionary:
 	return {
 		"title": "灰尾回收",
 		"subtitle": "基地门厅 / 中控入口",
-		"scene_hint": "主菜单只负责导航、氛围和轻量提示；开始或继续探索属于后续出发探索页。",
+		"scene_hint": "主菜单提供当前可玩探索入口；出发探索页仍是配置 preview，不承担真实出发配置启动。",
 		"role_hint": "当前角色展示占位：外观和穿搭入口后续归入长期系统。",
 		"entries": [
 			{
+				"id": &"quick_start_demo",
+				"label": "快速开始 / Demo Run",
+				"description": "进入当前可玩探索路线；复用已有 RunScene start path，不改出发配置、奖励、结算或存档规则。",
+				"target": NavigationIntentScript.TARGET_RUN,
+				"payload": {
+					"entry_id": &"quick_start_demo",
+					"entry_label": "当前可玩探索",
+					"playable_route": true,
+					"route_mode": &"demo_run",
+				},
+				"requires_confirm": false,
+				"has_badge": true,
+			},
+			{
 				"id": &"deploy",
 				"label": "出发探索",
-				"description": "进入出发探索页；开始/继续探索不在主菜单执行。",
+				"description": "进入出发探索页查看资产出勤 preview；完整出发配置启动未接入。",
 				"target": NavigationIntentScript.TARGET_DEPLOY,
 				"requires_confirm": false,
 				"has_badge": false,
@@ -45,8 +59,8 @@ static func build() -> Dictionary:
 			},
 		],
 		"notices": [
-			"公司公告：今日回收作业按固定流程登记。",
-			"提示：资源、任务进度和仓库容量只在对应功能页显示。",
+			"公司公告：当前可从快速开始进入可玩探索路线。",
+			"提示：出发探索、长期系统和设置仍按 preview / display-only 边界展示。",
 			"安全说明：退出游戏不会在主菜单中放弃进行中的探索。",
 		],
 		"shortcuts": [

@@ -27,7 +27,7 @@ func build() -> void:
 	settings_page = _build_placeholder_page(
 		"SettingsPlaceholderPage",
 		"设置",
-		"设置页 route 已建立；完整设置系统后置。\n\n当前固定分辨率设置仍由既有 G13 设置链路保留，G17 不迁移偏好持久化。"
+		"当前仅为设置入口占位，完整设置系统未实现。\n\n本页不读取配置、不写入偏好、不改变分辨率。"
 	)
 	_build_exit_confirm_layer()
 	show_main()
@@ -116,7 +116,7 @@ func _build_placeholder_page(page_name: String, title: String, body: String) -> 
 	_add_color_rect(page, "%sBackdrop" % page_name, Rect2(0, 0, 1280, 720), Color(0.020, 0.040, 0.048, 1.0))
 	_add_label(page, "%sTitle" % page_name, Rect2(80, 86, 620, 52), title, 34, PresentationTheme.color_for_key(&"ui.accent"))
 	_add_label(page, "%sBody" % page_name, Rect2(84, 166, 720, 180), body, 18, PresentationTheme.text_color())
-	_add_label(page, "%sBoundary" % page_name, Rect2(84, 382, 820, 110), "边界：本页目前只验证 AppShell / NavigationIntent / PageRouter 路径。具体配置、资源、长期数据和开局行为后置。", 15, PresentationTheme.color_for_key(&"ui.muted"))
+	_add_label(page, "%sBoundary" % page_name, Rect2(84, 382, 820, 110), "边界：设置入口只保留 route 占位。真实设置系统、持久化、资源配置和偏好保存后置。", 15, PresentationTheme.color_for_key(&"ui.muted"))
 	_add_button(page, "%sBackButton" % page_name, Rect2(84, 548, 180, 44), "返回主菜单", func() -> void: show_main())
 	return page
 
@@ -176,7 +176,7 @@ func _on_navigation_intent_requested(intent: Dictionary) -> void:
 
 
 func _on_deploy_start_intent_requested(_intent: Dictionary) -> void:
-	# G18-R3 keeps deploy start as a preview-only public intent.
+	# DeployPrep remains preview-only; use main menu quick start for the current playable route.
 	pass
 
 
@@ -238,6 +238,7 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.offset_right = rect.position.x + rect.size.x
 	label.offset_bottom = rect.position.y + rect.size.y
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", font_size)
 	parent.add_child(label)

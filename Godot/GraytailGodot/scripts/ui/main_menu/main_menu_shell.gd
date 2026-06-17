@@ -50,7 +50,7 @@ func _build_menu_panel() -> void:
 	panel.offset_bottom = 430.0
 	panel.add_theme_constant_override("separation", 12)
 	add_child(panel)
-	_add_section_label(panel, "固定入口")
+	_add_section_label(panel, "当前可玩入口 / 固定入口")
 	for raw_entry in _array_from(current_model, "entries"):
 		if raw_entry is Dictionary:
 			var entry: Dictionary = (raw_entry as Dictionary).duplicate(true)
@@ -107,7 +107,7 @@ func _emit_entry(entry: Dictionary) -> void:
 	var raw_payload: Variant = entry.get("payload", {})
 	if raw_payload is Dictionary:
 		payload = (raw_payload as Dictionary).duplicate(true)
-	var intent := NavigationIntentScript.make(
+	var intent := NavigationIntentScript.make_run(&"main_menu", payload) if target == NavigationIntentScript.TARGET_RUN else NavigationIntentScript.make(
 		target,
 		&"main_menu",
 		payload,

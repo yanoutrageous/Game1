@@ -59,6 +59,20 @@ static func make_long_term(source: StringName = &"unknown", module_id: StringNam
 	return make(TARGET_LONG_TERM, source, long_term_payload)
 
 
+static func make_run(source: StringName = &"unknown", payload: Dictionary = {}) -> Dictionary:
+	var run_payload := {
+		"entry_id": StringName(payload.get("entry_id", &"quick_start_demo")),
+		"entry_label": String(payload.get("entry_label", "快速开始 / Demo Run")),
+		"source_page": StringName(payload.get("source_page", source)),
+		"playable_route": true,
+		"preview_only": false,
+	}
+	for key in payload.keys():
+		if not run_payload.has(key):
+			run_payload[key] = payload[key]
+	return make(TARGET_RUN, source, run_payload)
+
+
 static func target(intent: Dictionary) -> StringName:
 	return StringName(intent.get("target", TARGET_MAIN_MENU))
 

@@ -93,7 +93,7 @@ static func _actions(run_active: bool) -> Dictionary:
 	return {
 		"start": {
 			"label": "开始探索 preview",
-			"tooltip": "只刷新 DeployConfig / RunStartConfig preview；真实开始探索未接入。",
+			"tooltip": "只刷新 DeployConfig / RunStartConfig preview；完整出发配置启动未接入。当前可玩探索请从主菜单快速开始进入。",
 			"disabled": run_active,
 			"preview": true,
 			"display_only": true,

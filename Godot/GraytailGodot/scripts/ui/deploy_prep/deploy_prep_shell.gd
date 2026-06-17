@@ -17,6 +17,8 @@ var tab_title_label: Label
 var tab_body_label: Label
 var filter_heading_label: Label
 var card_heading_label: Label
+var card_scroll: ScrollContainer
+var card_list_container: VBoxContainer
 var detail_label: Label
 var summary_label: Label
 var config_label: Label
@@ -70,6 +72,8 @@ func _clear_children() -> void:
 	tab_body_label = null
 	filter_heading_label = null
 	card_heading_label = null
+	card_scroll = null
+	card_list_container = null
 	detail_label = null
 	summary_label = null
 	config_label = null
@@ -119,7 +123,19 @@ func _build_content_panel() -> void:
 	tab_body_label = _add_label(self, "DeployTabBody", Rect2(406, 144, 414, 92), "", 14, PresentationTheme.text_color())
 	filter_heading_label = _add_label(self, "DeployFilterHeading", Rect2(406, 246, 420, 24), "二级标签 / 筛选 preview", 15, PresentationTheme.color_for_key(&"ui.warning"))
 	card_heading_label = _add_label(self, "DeployCardHeading", Rect2(406, 320, 420, 24), "出勤内容卡片 preview", 15, PresentationTheme.color_for_key(&"ui.warning"))
-	detail_label = _add_label(self, "DeployCardDetail", Rect2(622, 350, 214, 174), "", 13, PresentationTheme.text_color())
+	card_scroll = ScrollContainer.new()
+	card_scroll.name = "DeployCardScroll"
+	card_scroll.offset_left = 406.0
+	card_scroll.offset_top = 350.0
+	card_scroll.offset_right = 604.0
+	card_scroll.offset_bottom = 520.0
+	card_scroll.clip_contents = true
+	add_child(card_scroll)
+	card_list_container = VBoxContainer.new()
+	card_list_container.name = "DeployCardList"
+	card_list_container.add_theme_constant_override("separation", 6)
+	card_scroll.add_child(card_list_container)
+	detail_label = _add_label(self, "DeployCardDetail", Rect2(622, 350, 214, 170), "", 13, PresentationTheme.text_color())
 	_add_label(self, "DeployConfigPreviewHeading", Rect2(406, 538, 390, 24), "RunStartConfig draft / read_only", 15, PresentationTheme.color_for_key(&"ui.warning"))
 	preview_label = _add_label(self, "DeployConfigPreview", Rect2(406, 566, 420, 42), "", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
@@ -154,10 +170,10 @@ func _refresh_view() -> void:
 	_refresh_card_buttons()
 	_refresh_detail()
 	var preview := _preview()
-	summary_label.text = _section_text("摘要", _array_from(preview, "summary"))
-	config_label.text = _section_text("配置", _array_from(preview, "config"))
-	effect_label.text = _section_text("效果", _array_from(preview, "effect"))
-	risk_label.text = _section_text("风险", _array_from(preview, "risk"))
+	summary_label.text = _section_text("摘要", _array_from(preview, "summary"), 3)
+	config_label.text = _section_text("配置", _array_from(preview, "config"), 3)
+	effect_label.text = _section_text("效果", _array_from(preview, "effect"), 3)
+	risk_label.text = _section_text("风险", _array_from(preview, "risk"), 4)
 	preview_label.text = _run_start_preview_text(DeployConfigScript.build_run_start_config(_config()))
 	_refresh_actions()
 
@@ -188,10 +204,12 @@ func _refresh_filter_buttons(tab: Dictionary) -> void:
 func _refresh_card_buttons() -> void:
 	for button in card_buttons:
 		if button != null:
-			remove_child(button)
+			if button.get_parent() != null:
+				button.get_parent().remove_child(button)
 			button.queue_free()
 	card_buttons.clear()
-	var y := 350.0
+	if card_list_container == null:
+		return
 	var selected_card := StringName(current_model.get("selected_card", &""))
 	for raw_card in _array_from(current_model, "visible_cards"):
 		if raw_card is Dictionary:
@@ -199,10 +217,16 @@ func _refresh_card_buttons() -> void:
 			var card_id := StringName(card.get("id", &""))
 			var label := "%s\n%s / %s" % [String(card.get("title", card_id)), String(card.get("category", "")), String(card.get("state", &"preview"))]
 			var captured_card := card_id
-			var button := _add_button(self, "DeployCard_%s" % String(card_id), Rect2(406, y, 198, 46), label, func() -> void: _on_card_pressed(captured_card))
+			var button := Button.new()
+			button.name = "DeployCard_%s" % String(card_id)
+			button.text = label
+			button.tooltip_text = String(card.get("summary", ""))
+			button.custom_minimum_size = Vector2(180, 44)
+			button.clip_text = true
+			button.pressed.connect(func() -> void: _on_card_pressed(captured_card))
+			card_list_container.add_child(button)
 			button.disabled = card_id == selected_card
 			card_buttons.append(button)
-			y += 52.0
 
 
 func _refresh_detail() -> void:
@@ -225,7 +249,7 @@ func _refresh_detail() -> void:
 	var links := _array_from(detail, "link_preview")
 	if not links.is_empty():
 		lines.append("只读跳转：%s" % _join_array(links, "无"))
-	detail_label.text = _section_text("卡片详情", lines)
+	detail_label.text = _section_text("卡片详情", lines, 6)
 
 
 func _refresh_actions() -> void:
@@ -261,7 +285,7 @@ func _on_start_preview_pressed() -> void:
 	var config := _config()
 	current_model["run_start_config"] = DeployConfigScript.build_run_start_config(config)
 	current_model["preview_lines"] = DeployConfigScript.build_preview_lines(config)
-	current_model["action_message"] = "开始探索 preview 已刷新；真实开始未接入，不会进入探索。"
+	current_model["action_message"] = "开始探索 preview 已刷新；完整出发配置启动未接入。请从主菜单“快速开始 / Demo Run”进入当前可玩探索。"
 	_refresh_view()
 	var intent := NavigationIntentScript.make_deploy(
 		&"deploy_prep",
@@ -310,14 +334,17 @@ func _action(action_id: String) -> Dictionary:
 	return {}
 
 
-func _section_text(title: String, lines: Array) -> String:
-	return "%s\n%s" % [title, _lines_text(lines)]
+func _section_text(title: String, lines: Array, max_lines: int = 4) -> String:
+	return "%s\n%s" % [title, _lines_text(lines, max_lines)]
 
 
-func _lines_text(lines: Array) -> String:
+func _lines_text(lines: Array, max_lines: int = 6) -> String:
 	var parts := []
-	for line in lines:
+	var visible := lines.slice(0, max_lines)
+	for line in visible:
 		parts.append("- %s" % String(line))
+	if lines.size() > visible.size():
+		parts.append("- 还有 %d 项 preview 已收起" % (lines.size() - visible.size()))
 	return "\n".join(parts)
 
 
@@ -375,6 +402,7 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.offset_right = rect.position.x + rect.size.x
 	label.offset_bottom = rect.position.y + rect.size.y
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", font_size)
 	parent.add_child(label)

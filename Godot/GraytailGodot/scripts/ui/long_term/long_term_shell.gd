@@ -102,7 +102,7 @@ func _refresh_from_model() -> void:
 	module_state_label.text = "状态：%s" % String(panel.get("state", "preview"))
 	module_body_label.text = "%s\n\n摘要：\n%s\n\n内容框架：%s" % [
 		String(panel.get("description", "")),
-		_format_dictionary(panel.get("summary", {})),
+		_format_summary_dictionary(panel.get("summary", {})),
 		_format_detail_preview(content_preview.get("detail_preview", {})),
 	]
 	module_reason_label.text = "边界：%s" % String(panel.get("reason", ""))
@@ -145,10 +145,16 @@ func _refresh_tab_buttons() -> void:
 
 func _format_child_groups(groups: Array) -> String:
 	var lines := []
-	for group: Dictionary in groups:
+	var visible_groups := groups.slice(0, 4)
+	for group: Dictionary in visible_groups:
 		lines.append("[%s]" % String(group.get("title", "")))
-		for item in group.get("items", []):
+		var items: Array = group.get("items", [])
+		for item in items.slice(0, 2):
 			lines.append("- %s" % String(item))
+		if items.size() > 2:
+			lines.append("- 还有 %d 项 preview" % (items.size() - 2))
+	if groups.size() > visible_groups.size():
+		lines.append("还有 %d 个二级分组已收起" % (groups.size() - visible_groups.size()))
 	return "\n".join(lines)
 
 
@@ -219,10 +225,26 @@ func _format_history_preview(history_preview: Dictionary) -> String:
 	]
 
 
-func _format_dictionary(value: Variant) -> String:
+func _format_summary_dictionary(value: Variant) -> String:
 	if value is Dictionary:
-		return JSON.stringify(value, "\t")
-	return String(value)
+		var summary: Dictionary = value
+		var lines := []
+		for key in summary.keys().slice(0, 5):
+			lines.append("- %s: %s" % [_safe_display_text(key), _safe_display_text(summary.get(key, ""))])
+		if summary.size() > lines.size():
+			lines.append("- 还有 %d 项 key preview 已收起" % (summary.size() - lines.size()))
+		return "\n".join(lines)
+	return _safe_display_text(value)
+
+
+func _safe_display_text(value: Variant) -> String:
+	if value == null:
+		return "-"
+	if value is Dictionary:
+		return "Dictionary(%d)" % (value as Dictionary).size()
+	if value is Array:
+		return "Array(%d)" % (value as Array).size()
+	return str(value)
 
 
 func _clear_children() -> void:
@@ -253,6 +275,7 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.offset_right = rect.position.x + rect.size.x
 	label.offset_bottom = rect.position.y + rect.size.y
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", font_size)
 	parent.add_child(label)
