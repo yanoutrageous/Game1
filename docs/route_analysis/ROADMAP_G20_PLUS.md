@@ -15,7 +15,7 @@ G20 是 docs-only knowledge governance，不实现 Asset Contract、Warehouse、
 | G18-align | Deploy Prep Asset Attendance Alignment | 校准出发探索资产出勤视角、二级标签、卡片详情、深层跳转、开始/继续/放弃强确认口径 | 建议作为 G22 前置；未启动 |
 | G22 | Deploy Prep Full Module Alignment / Warehouse later | G18-align 后再决定是否进入仓库/资产页 shell；不得直接实现完整仓库或长期系统扩展 | 未启动 |
 | G23 | Settlement / History Snapshot Foundation | 建立结算结果与历史快照 foundation，连接 run result summary 与长期展示 | 未启动 |
-| G24 | Objective / Reward Event Contract | 建立目标、奖励事件、claimable/reward bundle 合同，不做完整任务系统 | 未启动 |
+| G24 | LongTerm Content Framework Foundation | 建立长期系统六模块内容框架、二级分组、preview cards、Objective / Reward / Gacha / Collection preview slots 与 UI/art/data key reservation | R2 implementation complete at `02c2e577787a49ce4cbed173482a7acc31fa2bc9`; R3 static validation PASS; Godot headless project-load/parser smoke PASS |
 | G25 | Gacha / Unique Collectible Preview Foundation | 建立抽奖与唯一藏品 preview foundation，不做真实概率、保底、消耗或持久化 | 未启动 |
 
 ## 阶段门禁
@@ -110,5 +110,17 @@ G18-align-R2 is now the active pre-G22 implementation slice on `godot/g18-align-
 - G23-R3 Godot headless project-load/parser smoke PASS.
 - G23 adds settlement/history snapshot schema and LongTerm personal profile / history display-only preview consumption.
 - G23 does not implement real settlement, real history persistence, reward grant, asset mutation, resource economy, event bus, SaveManager, RunScene ending flow, complete LongTerm, complete Warehouse, or complete Gacha.
+- Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
+- Manual playtest was not run, and no manual playtest PASS is claimed.
+
+## G24-R3 Closeout Update
+
+- G24 LongTerm Content Framework Foundation is complete on branch `godot/g24-long-term-content-framework-foundation`.
+- G24 implementation commit: `02c2e577787a49ce4cbed173482a7acc31fa2bc9`.
+- G24-R3 static validation PASS.
+- G24-R3 Godot headless project-load/parser smoke PASS.
+- `D:\AGAME1\Connection\Program\G24_LongTerm_Content_Framework_Art_Request.md` was written as an external program-to-art request and was not committed.
+- G24 remains foundation-only: six-module content framework, secondary groups, preview cards, Objective / Reward / Gacha / Collection preview slots, and UI / art / data key reservation.
+- G24 is not complete LongTerm, real targets, real rewards, real gacha, real red dots, real SaveManager, real asset writes, complete Warehouse, or complete Gacha.
 - Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
 - Manual playtest was not run, and no manual playtest PASS is claimed.

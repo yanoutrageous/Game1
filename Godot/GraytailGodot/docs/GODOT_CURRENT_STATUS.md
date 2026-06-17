@@ -1,3 +1,16 @@
+# G24-R3 Closeout Status
+
+G24 LongTerm Content Framework Foundation is complete on branch `godot/g24-long-term-content-framework-foundation`.
+
+- G24 implementation commit: `02c2e577787a49ce4cbed173482a7acc31fa2bc9`.
+- G24-R3 static validation PASS.
+- G24-R3 Godot headless project-load/parser smoke PASS.
+- `git diff --check` had no whitespace error; LF/CRLF warnings only.
+- Godot smoke produced no new dirty side effects.
+- `D:\AGAME1\Connection\Program\G24_LongTerm_Content_Framework_Art_Request.md` was written as an external program-to-art request and was not committed.
+
+G24 adds LongTerm six-module content framework, secondary groups, preview cards, Objective / Reward / Gacha / Collection preview slots, and UI / art / data key reservation. It remains preview-only / display-only / read-only and does not implement real task systems, achievements, commissions, reward claiming, claim, red dot clearing, gacha probability / pity / cost / result grant, cosmetic configuration, unique collectible acquisition, codex unlock, research unlock, profile progression, history writes, SaveManager, event bus, asset writes, complete LongTerm, complete Warehouse, or complete Gacha. Gameplay runtime and manual playtest were not run and are not claimed as PASS.
+
 # G23 Final Main Merge Status
 
 G23 Settlement / History Snapshot Foundation has been fast-forward merged to `main`.
