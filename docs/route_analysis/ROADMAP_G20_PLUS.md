@@ -74,3 +74,17 @@ G18-align-R2 is now the active pre-G22 implementation slice on `godot/g18-align-
 - This is not gameplay runtime PASS and not manual playtest PASS.
 - G22 remains not started; do not infer G22 start from this merge.
 - The next step remains closeout / new-conversation handoff unless a later user instruction starts a new stage.
+
+## G22 Final Main Merge Calibration
+
+- G22 Deploy Prep Full Module Content Preview has been fast-forward merged to `main`.
+- G22 branch: `godot/g22-deploy-prep-full-module-content-preview`.
+- G22 implementation commit: `bd1ce6373c4332d04d7262474ed6055a24698096`.
+- G22 closeout docs commit: `a4fb21e618d348161aa46e2099fa5a1c0f95da4f`.
+- First `main` commit containing G22: `a4fb21e618d348161aa46e2099fa5a1c0f95da4f`.
+- G22-R3 static validation PASS.
+- G22-R3 Godot headless project-load/parser smoke PASS.
+- Final merge did not run a new Godot smoke; it keeps the G22-R3 smoke record.
+- Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
+- Manual playtest was not run, and no manual playtest PASS is claimed.
+- G22 remains preview-only / display-only / read-only and is not a real warehouse, real asset system, real claim purchase, real RunScene start / continue / abandon, real map generation, real settlement, real persistence, real reward grant, real gacha, or a complete long-term system.

@@ -1,5 +1,20 @@
 # Project Baseline
 
+## G22 Final Main Merge Status
+
+- G22 has been fast-forward merged to `main`.
+- G22 branch: `godot/g22-deploy-prep-full-module-content-preview`.
+- G22 implementation commit: `bd1ce6373c4332d04d7262474ed6055a24698096`.
+- G22 closeout docs commit: `a4fb21e618d348161aa46e2099fa5a1c0f95da4f`.
+- First `main` commit containing G22: `a4fb21e618d348161aa46e2099fa5a1c0f95da4f`.
+- G22-R3 static validation PASS.
+- G22-R3 Godot headless project-load/parser smoke PASS.
+- A new Godot smoke was not run during final merge; the G22-R3 smoke record is retained.
+- Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
+- Manual playtest was not run, and no manual playtest PASS is claimed.
+- G22 remains Deploy Prep Full Module Content Preview only.
+- G22 is not a real warehouse, real asset system, real claim purchase system, real RunScene start / continue / abandon implementation, real map generation, real settlement, real persistence, real reward grant, real gacha, or a complete long-term system.
+
 ## G18-align-R4B Closeout Status
 
 - G18-align-R2 commit: `55a048e7419a890cc899bdbd7fae4db4431ddacf`.
