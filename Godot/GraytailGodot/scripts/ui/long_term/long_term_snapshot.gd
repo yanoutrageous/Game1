@@ -1,10 +1,15 @@
 extends RefCounted
 class_name LongTermSnapshot
 
+const SettlementHistoryPreviewScript := preload("res://scripts/core/settlement/settlement_history_preview.gd")
+
 const SCHEMA_VERSION := 1
 
 
 static func default_snapshot(module_summaries: Dictionary = {}, source: StringName = &"long_term_shell") -> Dictionary:
+	var settlement_history_preview: Dictionary = SettlementHistoryPreviewScript.default_preview()
+	var history_record_preview: Dictionary = settlement_history_preview.get("history_record_snapshot_preview", {})
+	var long_term_history_preview: Dictionary = settlement_history_preview.get("long_term_history_preview", {})
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"profile_snapshot": {
@@ -30,6 +35,18 @@ static func default_snapshot(module_summaries: Dictionary = {}, source: StringNa
 				"当前仅展示历史战绩入口与字段预览。",
 				"不读取记录，不生成新记录。",
 			],
+		},
+		"settlement_snapshot_preview": settlement_history_preview.get("settlement_snapshot_preview", {}).duplicate(true),
+		"history_record_snapshot_preview": history_record_preview.duplicate(true),
+		"history_timeline_preview": {
+			"title": "历史战绩 timeline preview",
+			"module": "个人资历",
+			"state": "display_only",
+			"records": [long_term_history_preview.duplicate(true)],
+			"message": "SettlementSnapshot -> HistoryRecordSnapshot -> LongTerm history preview only.",
+			"read_only": true,
+			"display_only": true,
+			"preview": true,
 		},
 		"overview_summary": {
 			"title": "长期系统总览",

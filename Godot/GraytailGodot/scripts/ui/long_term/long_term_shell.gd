@@ -15,6 +15,7 @@ var module_reason_label: Label
 var child_preview_label: Label
 var snapshot_label: Label
 var interface_preview_label: Label
+var history_preview_label: Label
 var next_stage_label: Label
 
 
@@ -57,7 +58,8 @@ func _build_static_layout() -> void:
 	child_preview_label = _add_label(self, "LongTermChildPreview", Rect2(610, 268, 290, 294), "", 14, PresentationTheme.text_color())
 	snapshot_label = _add_label(self, "LongTermSnapshotPreview", Rect2(930, 146, 270, 220), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
 	interface_preview_label = _add_label(self, "LongTermInterfacePreview", Rect2(930, 384, 270, 162), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
-	next_stage_label = _add_label(self, "LongTermNextStage", Rect2(64, 582, 1136, 72), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
+	history_preview_label = _add_label(self, "LongTermHistoryPreview", Rect2(930, 552, 270, 58), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
+	next_stage_label = _add_label(self, "LongTermNextStage", Rect2(64, 616, 1136, 34), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
 	_add_button(self, "LongTermBackButton", Rect2(64, 656, 170, 40), "返回主菜单", Callable(self, "_request_back_to_main"))
 
 
@@ -115,6 +117,8 @@ func _refresh_from_model() -> void:
 		_format_preview_line(snapshot, "reward_preview"),
 		_format_preview_line(snapshot, "red_dot_preview"),
 	]
+	var history_preview: Dictionary = current_model.get("history_preview_panel", {})
+	history_preview_label.text = _format_history_preview(history_preview)
 	next_stage_label.text = "链接 preview：%s / %s / %s\n下一阶段：%s" % [
 		_format_preview_line(snapshot, "inventory_link_preview"),
 		_format_preview_line(snapshot, "codex_link_preview"),
@@ -149,6 +153,16 @@ func _format_snapshot_section(raw_section: Variant) -> String:
 func _format_preview_line(snapshot: Dictionary, key: String) -> String:
 	var section: Dictionary = snapshot.get(key, {})
 	return "%s：%s" % [String(section.get("title", key)), String(section.get("message", ""))]
+
+
+func _format_history_preview(history_preview: Dictionary) -> String:
+	if history_preview.is_empty():
+		return "历史战绩 preview: display_only / read_only"
+	return "历史战绩 preview\n%s\n%s / %s" % [
+		String(history_preview.get("summary", "")),
+		String(history_preview.get("history_card_icon_key", "")),
+		String(history_preview.get("art_placeholder_id", "")),
+	]
 
 
 func _format_dictionary(value: Variant) -> String:
