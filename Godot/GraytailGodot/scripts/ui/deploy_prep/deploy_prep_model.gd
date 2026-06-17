@@ -68,8 +68,8 @@ static func _build_model(
 	var preview := DeployConfigScript.build_preview_lines(config)
 	return {
 		"title": "出发探索",
-		"subtitle": "本局出发准备中心 / 资产出勤视角 preview",
-		"boundary": "G18-align 只校准出发探索资产出勤视角、二级标签、右侧摘要和开始/继续/放弃强确认 preview；不实现完整仓库、真实资产写入或真实探索执行。",
+		"subtitle": "本局准备中心 / 五模块内容 preview / display_only",
+		"boundary": "G22-R2 只补全地图、仓库、申领、出勤配置、作业许可的内容 preview；不实现完整出发探索、真实仓库、真实资产写入、真实扣费、真实探索执行或真实记录。",
 		"tabs": DeployTabModelScript.build_tabs(),
 		"active_tab": active_tab,
 		"selected_filter": selected_filter,
@@ -83,27 +83,40 @@ static func _build_model(
 		"abandon_confirm_visible": confirm_visible,
 		"action_message": action_message,
 		"actions": _actions(run_active),
+		"preview": true,
+		"display_only": true,
+		"read_only": true,
 	}
 
 
 static func _actions(run_active: bool) -> Dictionary:
 	return {
 		"start": {
-			"label": "生成出勤 preview",
-			"tooltip": "只刷新 DeployConfig / RunStartConfig preview，不启动探索。",
+			"label": "开始探索 preview",
+			"tooltip": "只刷新 DeployConfig / RunStartConfig preview；真实开始探索未接入。",
 			"disabled": run_active,
+			"preview": true,
+			"display_only": true,
+			"read_only": true,
 		},
 		"continue": {
-			"label": "继续探索",
-			"tooltip": "继续入口只保留 preview；真实继续流程后置。",
+			"label": "继续探索 preview",
+			"tooltip": "继续入口只保留 read_only preview；真实继续流程后置。",
 			"disabled": not run_active,
 			"has_active_run": run_active,
+			"preview": true,
+			"display_only": true,
+			"read_only": true,
 		},
 		"abandon": {
-			"label": "放弃探索",
-			"tooltip": "放弃必须强确认；本页只显示确认 preview，不执行。",
+			"label": "放弃探索 preview",
+			"tooltip": "放弃必须强确认；本页只显示强确认 preview，不执行放弃。",
 			"disabled": not run_active,
 			"requires_confirm": run_active,
+			"confirm_copy": "强确认 preview：放弃当前探索会在真实系统中损失本局状态，但本轮不执行。",
+			"preview": true,
+			"display_only": true,
+			"read_only": true,
 		},
 	}
 

@@ -117,15 +117,15 @@ func _build_tab_panel() -> void:
 func _build_content_panel() -> void:
 	tab_title_label = _add_label(self, "DeployTabTitle", Rect2(404, 104, 416, 34), "", 23, PresentationTheme.color_for_key(&"ui.accent"))
 	tab_body_label = _add_label(self, "DeployTabBody", Rect2(406, 144, 414, 92), "", 14, PresentationTheme.text_color())
-	filter_heading_label = _add_label(self, "DeployFilterHeading", Rect2(406, 246, 420, 24), "二级标签", 15, PresentationTheme.color_for_key(&"ui.warning"))
-	card_heading_label = _add_label(self, "DeployCardHeading", Rect2(406, 320, 420, 24), "出勤卡片", 15, PresentationTheme.color_for_key(&"ui.warning"))
+	filter_heading_label = _add_label(self, "DeployFilterHeading", Rect2(406, 246, 420, 24), "二级标签 / 筛选 preview", 15, PresentationTheme.color_for_key(&"ui.warning"))
+	card_heading_label = _add_label(self, "DeployCardHeading", Rect2(406, 320, 420, 24), "出勤内容卡片 preview", 15, PresentationTheme.color_for_key(&"ui.warning"))
 	detail_label = _add_label(self, "DeployCardDetail", Rect2(622, 350, 214, 174), "", 13, PresentationTheme.text_color())
-	_add_label(self, "DeployConfigPreviewHeading", Rect2(406, 538, 390, 24), "RunStartConfig draft", 15, PresentationTheme.color_for_key(&"ui.warning"))
+	_add_label(self, "DeployConfigPreviewHeading", Rect2(406, 538, 390, 24), "RunStartConfig draft / read_only", 15, PresentationTheme.color_for_key(&"ui.warning"))
 	preview_label = _add_label(self, "DeployConfigPreview", Rect2(406, 566, 420, 42), "", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 
 func _build_summary_panel() -> void:
-	_add_label(self, "DeploySummaryHeading", Rect2(930, 106, 240, 30), "右侧出勤准备", 20, PresentationTheme.color_for_key(&"ui.accent"))
+	_add_label(self, "DeploySummaryHeading", Rect2(930, 106, 240, 30), "右侧摘要 / 配置 / 效果 / 风险", 20, PresentationTheme.color_for_key(&"ui.accent"))
 	summary_label = _add_label(self, "DeploySummaryText", Rect2(930, 146, 250, 92), "", 13, PresentationTheme.text_color())
 	config_label = _add_label(self, "DeployConfigText", Rect2(930, 248, 250, 92), "", 13, PresentationTheme.text_color())
 	effect_label = _add_label(self, "DeployEffectText", Rect2(930, 350, 250, 92), "", 13, PresentationTheme.text_color())
@@ -133,9 +133,9 @@ func _build_summary_panel() -> void:
 
 
 func _build_action_panel() -> void:
-	start_button = _add_button(self, "DeployStartPreviewButton", Rect2(930, 568, 254, 34), "生成出勤 preview", _on_start_preview_pressed)
-	continue_button = _add_button(self, "DeployContinuePreviewButton", Rect2(930, 610, 122, 34), "继续探索", _on_continue_preview_pressed)
-	abandon_button = _add_button(self, "DeployAbandonPreviewButton", Rect2(1062, 610, 122, 34), "放弃探索", _on_abandon_preview_pressed)
+	start_button = _add_button(self, "DeployStartPreviewButton", Rect2(930, 568, 254, 34), "开始探索 preview", _on_start_preview_pressed)
+	continue_button = _add_button(self, "DeployContinuePreviewButton", Rect2(930, 610, 122, 34), "继续 preview", _on_continue_preview_pressed)
+	abandon_button = _add_button(self, "DeployAbandonPreviewButton", Rect2(1062, 610, 122, 34), "放弃 preview", _on_abandon_preview_pressed)
 	action_message_label = _add_label(self, "DeployActionMessage", Rect2(930, 652, 254, 42), "", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 
@@ -211,6 +211,12 @@ func _refresh_detail() -> void:
 		detail_label.text = "卡片详情\n- 当前筛选下没有可显示卡片。"
 		return
 	var lines := [
+		"状态：%s / preview=%s / display_only=%s / read_only=%s" % [
+			String(detail.get("state", "preview")),
+			str(bool(detail.get("preview", true))),
+			str(bool(detail.get("display_only", true))),
+			str(bool(detail.get("read_only", true))),
+		],
 		String(detail.get("summary", "")),
 		String(detail.get("detail", "")),
 	]
@@ -237,7 +243,7 @@ func _refresh_actions() -> void:
 	abandon_button.tooltip_text = String(abandon_action.get("tooltip", ""))
 	var message := String(current_model.get("action_message", ""))
 	if bool(current_model.get("abandon_confirm_visible", false)):
-		message = "强确认 preview：再次点击只会关闭提示，不执行放弃。"
+		message = String(abandon_action.get("confirm_copy", "强确认 preview：再次点击只会关闭提示，不执行放弃。"))
 	action_message_label.text = message
 
 
@@ -255,7 +261,7 @@ func _on_start_preview_pressed() -> void:
 	var config := _config()
 	current_model["run_start_config"] = DeployConfigScript.build_run_start_config(config)
 	current_model["preview_lines"] = DeployConfigScript.build_preview_lines(config)
-	current_model["action_message"] = "已刷新出勤 preview；不会启动探索。"
+	current_model["action_message"] = "开始探索 preview 已刷新；真实开始未接入，不会进入探索。"
 	_refresh_view()
 	var intent := NavigationIntentScript.make_deploy(
 		&"deploy_prep",
@@ -269,7 +275,7 @@ func _on_start_preview_pressed() -> void:
 
 
 func _on_continue_preview_pressed() -> void:
-	current_model = DeployPrepModelScript.model_with_action_message(current_model, "继续探索入口仅为 preview；真实继续流程后置。")
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, "继续探索入口仅为 preview / read_only；真实继续流程后置。")
 	_refresh_view()
 
 
@@ -277,7 +283,7 @@ func _on_abandon_preview_pressed() -> void:
 	if bool(current_model.get("abandon_confirm_visible", false)):
 		current_model = DeployPrepModelScript.model_with_action_message(current_model, "已关闭放弃强确认 preview；没有执行放弃。", false)
 	else:
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, "放弃当前探索需要强确认；本轮不执行真实放弃。", true)
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "放弃当前探索需要强确认 preview；本轮不执行真实放弃。", true)
 	_refresh_view()
 
 
@@ -316,10 +322,11 @@ func _lines_text(lines: Array) -> String:
 
 
 func _run_start_preview_text(run_start: Dictionary) -> String:
-	return "id=%s  bag=%d/%d  projection=%s" % [
+	return "id=%s  bag=%d/%d  seed=%s  projection=%s" % [
 		String(run_start.get("config_id", "")),
 		int(run_start.get("bag_used", 0)),
 		int(run_start.get("bag_limit", 0)),
+		String(run_start.get("seed_policy", "")),
 		String((_dictionary_from(run_start.get("deploy_prep_projection", {}))).get("projection_type", &"")),
 	]
 

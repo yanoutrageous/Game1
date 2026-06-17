@@ -3,11 +3,11 @@ class_name DeployConfig
 
 const AssetProjectionSchemaScript := preload("res://scripts/core/asset/asset_projection_schema.gd")
 
-const CONFIG_VERSION := 2
+const CONFIG_VERSION := 3
 const START_MODE_STANDARD_PREVIEW := &"standard_preview"
-const MAP_MODE_PLACEHOLDER := &"map_placeholder"
+const MAP_MODE_CLASSIC_PREVIEW := &"classic_minesweeper_preview"
 const DIFFICULTY_NORMAL := &"normal"
-const REGION_PLACEHOLDER := &"region_unassigned"
+const REGION_GRAYTAIL_EDGE := &"graytail_edge_preview"
 const SEED_POLICY_DEFER := &"defer_until_run_start"
 const RUN_ORIGIN_PREVIEW := &"deploy_prep_preview"
 
@@ -17,25 +17,28 @@ static func default_config(sequence: int = 1) -> Dictionary:
 		"config_id": "deploy_preview_%04d" % max(sequence, 1),
 		"config_version": CONFIG_VERSION,
 		"start_mode": START_MODE_STANDARD_PREVIEW,
-		"map_mode": MAP_MODE_PLACEHOLDER,
+		"map_mode": MAP_MODE_CLASSIC_PREVIEW,
+		"map_mode_label": "常规扫雷",
 		"difficulty": DIFFICULTY_NORMAL,
-		"region_id": REGION_PLACEHOLDER,
+		"difficulty_label": "普通",
+		"region_id": REGION_GRAYTAIL_EDGE,
+		"region_label": "灰尾外围",
 		"seed_policy": SEED_POLICY_DEFER,
-		"selected_loadout": ["field_knife"],
-		"carried_consumables": ["first_aid"],
+		"selected_loadout": ["field_knife", "patched_vest"],
+		"carried_consumables": ["first_aid", "flare_pack"],
 		"enabled_claims": [],
 		"enabled_services": [],
-		"enabled_work_permits": ["permit_basic"],
+		"enabled_work_permits": ["permit_explore_basic"],
 		"enabled_intel_flags": [],
-		"bag_used": 2,
+		"bag_used": 3,
 		"bag_limit": 12,
 		"source_page": &"deploy_prep",
 		"created_at_or_sequence": max(sequence, 1),
 		"run_origin": RUN_ORIGIN_PREVIEW,
-		"deploy_summary": "出发探索准备 preview：只展示本局出勤草案，不启动探索。",
-		"selected_map_summary": "地图：灰尾外围占位；真实地图生成后置。",
+		"deploy_summary": "出发探索准备中心 preview：只展示本局出勤草案，不启动探索。",
+		"selected_map_summary": "地图：常规扫雷 / 普通 / 灰尾外围；真实地图生成后置。",
 		"selected_difficulty": DIFFICULTY_NORMAL,
-		"selected_permits": ["permit_basic"],
+		"selected_permits": ["permit_explore_basic"],
 		"selected_services": [],
 		"profile_snapshot_ref": &"placeholder_profile_snapshot",
 		"unlock_snapshot_ref": &"placeholder_unlock_snapshot",
@@ -46,6 +49,9 @@ static func default_config(sequence: int = 1) -> Dictionary:
 		"permit_preview": _permit_preview(),
 		"active_run_preview": active_run_preview(false),
 		"deploy_prep_projection": deploy_prep_projection_preview(),
+		"preview": true,
+		"display_only": true,
+		"read_only": true,
 	}
 	config["initial_bag_summary"] = {
 		"used": int(config.get("bag_used", 0)),
@@ -90,9 +96,12 @@ static func build_run_start_config(config: Dictionary) -> Dictionary:
 		"config_id": String(source.get("config_id", "")),
 		"config_version": int(source.get("config_version", CONFIG_VERSION)),
 		"start_mode": StringName(source.get("start_mode", START_MODE_STANDARD_PREVIEW)),
-		"map_mode": StringName(source.get("map_mode", MAP_MODE_PLACEHOLDER)),
+		"map_mode": StringName(source.get("map_mode", MAP_MODE_CLASSIC_PREVIEW)),
+		"map_mode_label": String(source.get("map_mode_label", "常规扫雷")),
 		"difficulty": StringName(source.get("difficulty", DIFFICULTY_NORMAL)),
-		"region_id": StringName(source.get("region_id", REGION_PLACEHOLDER)),
+		"difficulty_label": String(source.get("difficulty_label", "普通")),
+		"region_id": StringName(source.get("region_id", REGION_GRAYTAIL_EDGE)),
+		"region_label": String(source.get("region_label", "灰尾外围")),
 		"seed_policy": StringName(source.get("seed_policy", SEED_POLICY_DEFER)),
 		"selected_loadout": _array_copy(source.get("selected_loadout", [])),
 		"carried_consumables": _array_copy(source.get("carried_consumables", [])),
@@ -126,6 +135,9 @@ static func build_run_start_config(config: Dictionary) -> Dictionary:
 		"history_metadata": history_metadata_for(source),
 		"profile_snapshot_ref": source.get("profile_snapshot_ref", &"placeholder_profile_snapshot"),
 		"unlock_snapshot_ref": source.get("unlock_snapshot_ref", &"placeholder_unlock_snapshot"),
+		"preview": true,
+		"display_only": true,
+		"read_only": true,
 	}
 
 
@@ -146,29 +158,39 @@ static func right_summary_preview(config: Dictionary) -> Dictionary:
 	var permit := _dictionary_copy(config.get("permit_preview", _permit_preview()))
 	var warehouse := _dictionary_copy(config.get("warehouse_attendance_preview", _warehouse_attendance_preview()))
 	var claim := _dictionary_copy(config.get("claim_preview", _claim_preview()))
+	var bag := _dictionary_copy(config.get("initial_bag_summary", {}))
 	return {
 		"summary": [
 			String(config.get("deploy_summary", "")),
-			String(config.get("selected_map_summary", "")),
-			"出勤资产视角：%s" % String(warehouse.get("label", "仓库出勤 preview")),
-			"当前探索状态：%s" % String(active_run.get("label", "无进行中探索")),
+			"当前地图模式 / 难度 / 区域：%s / %s / %s" % [String(config.get("map_mode_label", "常规扫雷")), String(config.get("difficulty_label", "普通")), String(config.get("region_label", "灰尾外围"))],
+			"当前出勤包概览：%s；%s；%s" % [_join_array(loadout.get("equipped", []), "未选择装备"), _join_array(loadout.get("carried_consumables", []), "未携带消耗品"), String(bag.get("label", "背包占用未计算"))],
+			"进行中探索 preview：%s" % String(active_run.get("label", "无进行中探索")),
+			"真实开始未接入：这里只生成出勤 preview 和 display_only 数据。",
 		],
 		"config": [
-			"已穿戴：%s" % _join_array(loadout.get("equipped", []), "未选择"),
-			"携带消耗品：%s" % _join_array(loadout.get("carried_consumables", []), "未选择"),
-			"已启用许可：%s" % _join_array(permit.get("enabled", []), "未启用"),
+			"已穿戴装备：%s" % _join_array(loadout.get("equipped", []), "未选择"),
+			"本局携带消耗品：%s" % _join_array(loadout.get("carried_consumables", []), "未选择"),
+			"启用服务：%s" % _join_array(loadout.get("enabled_services", []), "未启用"),
+			"启用情报：%s" % _join_array(loadout.get("enabled_intel", []), "未启用"),
+			"启用许可：%s" % _join_array(permit.get("enabled", []), "未启用"),
 			"背包占用：%d / %d" % [int(config.get("bag_used", 0)), int(config.get("bag_limit", 12))],
+			"本局携带消耗品将在本局结束后默认清空。",
 		],
 		"effect": [
-			"仓库动作：加入/移出出勤、穿戴/卸下均为 draft preview。",
-			"申领入口：%s" % String(claim.get("label", "补给 / 服务 / 情报 preview")),
-			"作业许可：只显示容量和效果摘要，不应用真实规则。",
-			"G21 projection：只读 display-only schema shape。",
+			"探索效果 preview：地图模式、区域和侦察能力只影响说明文案。",
+			"战斗效果 preview：战斗许可仅显示摘要，不修改战斗系统。",
+			"背包效果 preview：容量变化只显示在右侧摘要，不写真实背包。",
+			"撤离效果 preview：撤离点位置不披露，失败保护未实现。",
+			"事件 / 情报效果 preview：事件倾向和 Boss 侦察边界只读显示。",
+			"申领入口：%s" % String(claim.get("label", "补给 / 情报 / 服务 / 基础装备 preview")),
+			"仓库视角：%s" % String(warehouse.get("label", "仓库出勤 preview")),
 		],
 		"risk": [
-			"真实地图、仓库、申领、许可和容量规则尚未接入。",
-			"当前不会产生资源、事件、记录或持久状态。",
-			"若已有探索，配置入口应弱化；放弃必须强确认。",
+			"真实地图未生成；Boss / 撤离点 / 房间内容未探明。",
+			"服务缺口：侦察、后勤和医疗服务仍是 preview。",
+			"本局携带消耗品将在本局结束后默认清空。",
+			"真实资产 / 存档 / 结算未接入，不会写入仓库或历史。",
+			"如已有进行中探索，配置入口应弱化；放弃必须强确认 preview。",
 		],
 	}
 
@@ -181,9 +203,12 @@ static func active_run_preview(has_active_run: bool) -> Dictionary:
 			"start_disabled": true,
 			"continue_disabled": false,
 			"abandon_disabled": false,
-			"config_lock_note": "已有探索时配置应锁定或弱化，当前只显示 preview。",
+			"config_lock_note": "已有探索时配置应锁定或弱化；当前只显示 preview，不执行继续。",
 			"abandon_requires_confirm": true,
 			"abandon_confirm_text": "放弃当前探索需要强确认；本轮不执行真实放弃。",
+			"preview": true,
+			"display_only": true,
+			"read_only": true,
 		}
 	return {
 		"has_active_run": false,
@@ -194,6 +219,9 @@ static func active_run_preview(has_active_run: bool) -> Dictionary:
 		"config_lock_note": "未开始探索时允许编辑出勤草案 preview。",
 		"abandon_requires_confirm": false,
 		"abandon_confirm_text": "没有可放弃的探索。",
+		"preview": true,
+		"display_only": true,
+		"read_only": true,
 	}
 
 
@@ -201,11 +229,13 @@ static func deploy_prep_projection_preview() -> Dictionary:
 	var projection := AssetProjectionSchemaScript.default_deploy_prep_projection()
 	projection["source_system"] = &"deploy_prep"
 	projection["summary"] = {
-		"label": "Deploy Prep asset attendance projection preview",
+		"label": "Deploy Prep full module content preview",
 		"read_only_note": "只描述出发前资产出勤视角，不写入资产状态。",
+		"seed_policy": SEED_POLICY_DEFER,
 	}
 	projection["asset_refs"] = [
 		{"asset_id": "field_knife", "definition_id": "field_knife", "asset_type": &"entity_item"},
+		{"asset_id": "patched_vest", "definition_id": "patched_vest", "asset_type": &"entity_item"},
 		{"asset_id": "first_aid", "definition_id": "first_aid", "asset_type": &"entity_item"},
 		{"asset_id": "sealed_relic", "definition_id": "sealed_relic", "asset_type": &"entity_item"},
 	]
@@ -215,8 +245,10 @@ static func deploy_prep_projection_preview() -> Dictionary:
 		{"target": &"long_term", "label": "前往长期系统说明", "preview_only": true},
 	]
 	projection["extra"] = {
-		"draft_actions": ["加入出勤", "移出出勤", "穿戴", "卸下"],
-		"non_goals": ["不出售", "不整理仓库", "不发放奖励"],
+		"draft_actions": ["加入出勤", "移出出勤", "穿戴", "卸下", "领取", "购买", "购买并加入出勤", "启用服务"],
+		"non_goals": ["不出售", "不整理仓库", "不发放奖励", "不扣金币", "不写领取记录"],
+		"display_only": true,
+		"read_only": true,
 	}
 	return AssetProjectionSchemaScript.normalize_projection(projection)
 
@@ -226,9 +258,9 @@ static func history_metadata_for(config: Dictionary) -> Dictionary:
 		"config_id": String(config.get("config_id", "")),
 		"config_version": int(config.get("config_version", CONFIG_VERSION)),
 		"start_mode": StringName(config.get("start_mode", START_MODE_STANDARD_PREVIEW)),
-		"map_mode": StringName(config.get("map_mode", MAP_MODE_PLACEHOLDER)),
+		"map_mode": StringName(config.get("map_mode", MAP_MODE_CLASSIC_PREVIEW)),
 		"difficulty": StringName(config.get("difficulty", DIFFICULTY_NORMAL)),
-		"region_id": StringName(config.get("region_id", REGION_PLACEHOLDER)),
+		"region_id": StringName(config.get("region_id", REGION_GRAYTAIL_EDGE)),
 		"seed_policy": StringName(config.get("seed_policy", SEED_POLICY_DEFER)),
 		"selected_difficulty": StringName(config.get("selected_difficulty", config.get("difficulty", DIFFICULTY_NORMAL))),
 		"selected_permits": _array_copy(config.get("selected_permits", [])),
@@ -245,45 +277,65 @@ static func _asset_attendance_preview() -> Dictionary:
 	return {
 		"label": "出发探索资产出勤视角",
 		"primary_tabs": ["地图", "仓库", "申领", "出勤配置", "作业许可"],
-		"draft_actions": ["加入出勤", "移出出勤", "穿戴", "卸下"],
+		"draft_actions": ["加入出勤", "移出出勤", "穿戴", "卸下", "领取", "购买", "购买并加入出勤", "启用服务"],
 		"display_only": true,
+		"read_only": true,
 	}
 
 
 static func _warehouse_attendance_preview() -> Dictionary:
 	return {
 		"label": "仓库出勤 preview",
-		"categories": ["装备", "消耗品", "藏品", "特殊物", "未判断价值"],
+		"main_item_types": ["装备", "消耗品", "藏品", "特殊物"],
+		"metadata_only": ["唯一", "外观", "抽奖物", "任务物", "委托物", "样本", "未判断价值", "图鉴条目", "研究解锁"],
+		"consumable_note": "本局携带消耗品将在本局结束后默认清空。",
 		"allowed_draft_actions": ["加入出勤", "移出出勤", "穿戴", "卸下", "查看详情", "只读跳转"],
 		"blocked_actions": ["出售", "批量整理", "真实仓库写入"],
+		"display_only": true,
+		"read_only": true,
 	}
 
 
 static func _claim_preview() -> Dictionary:
 	return {
-		"label": "补给 / 服务 / 情报 / 基础装备 preview",
-		"groups": ["补给", "服务", "情报", "基础装备"],
-		"blocked_actions": ["商店交易", "奖励领取", "资源发放"],
+		"label": "补给 / 情报 / 服务 / 基础装备 preview",
+		"groups": ["补给", "情报", "服务", "基础装备"],
+		"preview_actions": ["领取", "购买", "购买并加入出勤", "启用服务"],
+		"cost_labels": ["金币", "凭证", "服务券"],
+		"blocked_actions": ["真实扣费", "奖励领取", "资源发放", "资产入仓", "领取记录写入"],
+		"display_only": true,
+		"read_only": true,
 	}
 
 
 static func _loadout_preview() -> Dictionary:
 	return {
-		"equipped": ["野外短刀"],
-		"carried_consumables": ["简易急救包 x2"],
-		"enabled_permits": ["基础作业许可"],
-		"service_interfaces": [],
+		"equipped": ["野外短刀", "补丁防护背心"],
+		"carried_consumables": ["简易急救包 x2", "照明棒组 x1"],
+		"enabled_services": [],
+		"enabled_intel": [],
+		"enabled_permits": ["基础探索许可"],
+		"bag_summary": "背包占用 3 / 12",
 		"preset_note": "预设、清空、重置只保留 preview 口径。",
+		"consumable_note": "本局携带消耗品将在本局结束后默认清空。",
+		"display_only": true,
+		"read_only": true,
 	}
 
 
 static func _permit_preview() -> Dictionary:
 	return {
-		"unlocked": ["基础作业许可"],
-		"locked": ["深层作业许可"],
-		"enabled": ["基础作业许可"],
+		"categories": ["探索", "战斗", "背包", "撤离", "事件", "情报"],
+		"unlocked": ["基础探索许可", "背包扩容许可"],
+		"locked": ["战斗准备许可", "撤离侦察许可", "Boss 侦察许可"],
+		"enabled": ["基础探索许可"],
 		"capacity": {"used": 1, "limit": 2},
-		"effect_summary": ["许可效果只进入右侧摘要，不应用真实规则。"],
+		"effect_summary": [
+			"探索效果、战斗效果、背包效果、撤离效果、事件 / 情报效果都只进入 preview 摘要。",
+			"Boss 侦察只表达边界，不实现 Boss 情报档案。",
+		],
+		"display_only": true,
+		"read_only": true,
 	}
 
 
