@@ -1,12 +1,16 @@
 extends RefCounted
 class_name LongTermSnapshot
 
+const LongTermContentFrameworkScript := preload("res://scripts/ui/long_term/long_term_content_framework.gd")
+const LongTermContentSlotModelScript := preload("res://scripts/ui/long_term/long_term_content_slot_model.gd")
 const SettlementHistoryPreviewScript := preload("res://scripts/core/settlement/settlement_history_preview.gd")
 
 const SCHEMA_VERSION := 1
 
 
 static func default_snapshot(module_summaries: Dictionary = {}, source: StringName = &"long_term_shell") -> Dictionary:
+	var content_framework_modules: Array = LongTermContentFrameworkScript.build_modules()
+	var content_preview_slots: Array = LongTermContentSlotModelScript.build_all_preview_slots()
 	var settlement_history_preview: Dictionary = SettlementHistoryPreviewScript.default_preview()
 	var history_record_preview: Dictionary = settlement_history_preview.get("history_record_snapshot_preview", {})
 	var long_term_history_preview: Dictionary = settlement_history_preview.get("long_term_history_preview", {})
@@ -48,11 +52,59 @@ static func default_snapshot(module_summaries: Dictionary = {}, source: StringNa
 			"display_only": true,
 			"preview": true,
 		},
+		"content_framework_preview": {
+			"title": "G24 长期系统内容框架 preview",
+			"state": "framework",
+			"module_count": content_framework_modules.size(),
+			"module_summaries": LongTermContentFrameworkScript.module_summaries(content_framework_modules),
+			"message": "只记录六模块内容框架、二级分组、卡片和 slot 预留，不实现真实长期系统。",
+			"read_only": true,
+			"display_only": true,
+			"preview": true,
+		},
+		"content_slot_preview": {
+			"title": "G24 preview slot 汇总",
+			"state": "display_only",
+			"slots": content_preview_slots.duplicate(true),
+			"message": "objective / reward / claimable / red dot / codex / research / gacha / collection / history / asset event slots only.",
+			"read_only": true,
+			"display_only": true,
+			"preview": true,
+		},
+		"art_slot_preview": {
+			"title": "G24 美术 slot 预留",
+			"state": "display_only",
+			"message": "程序当前只消费 key 与 placeholder id，不接真实 Texture2D 或导入资源。",
+			"module_icon_key": "long_term.module_icon",
+			"tab_icon_key": "long_term.tab_icon",
+			"group_icon_key": "long_term.group_icon",
+			"card_icon_key": "long_term.card_icon",
+			"reward_icon_key": "long_term.reward_icon",
+			"rarity_frame_key": "long_term.rarity_frame",
+			"gacha_pool_art_key": "long_term.gacha_pool_art",
+			"collection_slot_art_key": "long_term.collection_slot_art",
+			"art_placeholder_id": "placeholder.long_term.content_framework",
+			"read_only": true,
+			"display_only": true,
+			"preview": true,
+		},
+		"data_key_preview": {
+			"title": "G24 数据 key 预留",
+			"state": "display_only",
+			"localization_key": "ui.long_term.module.title",
+			"description_key": "ui.long_term.module.description",
+			"ui_group_key": "long_term.module",
+			"future_data_ref": "future.long_term.content_framework",
+			"data_source_ref": "preview.long_term.content_framework",
+			"read_only": true,
+			"display_only": true,
+			"preview": true,
+		},
 		"overview_summary": {
 			"title": "长期系统总览",
 			"state": "preview",
 			"module_count": module_summaries.size(),
-			"message": "G19 只建立长期系统壳层、六个一级模块和只读接口预览。",
+			"message": "G24 只建立长期系统内容框架、preview slot 和只读 key 预留。",
 		},
 		"module_summaries": module_summaries.duplicate(true),
 		"asset_projection_preview": {

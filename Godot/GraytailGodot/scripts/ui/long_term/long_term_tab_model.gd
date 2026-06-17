@@ -1,6 +1,8 @@
 extends RefCounted
 class_name LongTermTabModel
 
+const LongTermContentFrameworkScript := preload("res://scripts/ui/long_term/long_term_content_framework.gd")
+
 const STATE_PREVIEW := &"preview"
 const STATE_DISABLED := &"disabled"
 
@@ -168,6 +170,11 @@ static func _module(
 	link_preview: Dictionary,
 	next_stage_note: String
 ) -> Dictionary:
+	var content_preview: Dictionary = LongTermContentFrameworkScript.find_module(id)
+	var merged_summary := summary.duplicate(true)
+	merged_summary["content_framework_state"] = content_preview.get("preview_state", STATE_PREVIEW)
+	merged_summary["content_card_count"] = (content_preview.get("cards", []) as Array).size()
+	merged_summary["content_slot_count"] = (content_preview.get("event_slots_preview", []) as Array).size()
 	return {
 		"id": id,
 		"title": title,
@@ -175,10 +182,27 @@ static func _module(
 		"description": subtitle,
 		"state": state,
 		"reason": reason,
-		"summary": summary.duplicate(true),
+		"summary": merged_summary,
 		"child_preview_groups": child_preview_groups.duplicate(true),
 		"link_preview": link_preview.duplicate(true),
 		"next_stage_note": next_stage_note,
+		"module_icon_key": content_preview.get("module_icon_key", ""),
+		"module_banner_key": content_preview.get("module_banner_key", ""),
+		"tab_icon_key": content_preview.get("tab_icon_key", ""),
+		"description_key": content_preview.get("description_key", ""),
+		"localization_key": content_preview.get("localization_key", ""),
+		"ui_group_key": content_preview.get("ui_group_key", ""),
+		"secondary_groups": (content_preview.get("secondary_groups", []) as Array).duplicate(true),
+		"content_cards": (content_preview.get("cards", []) as Array).duplicate(true),
+		"detail_preview": (content_preview.get("detail_preview", {}) as Dictionary).duplicate(true),
+		"cross_links_preview": (content_preview.get("cross_links_preview", []) as Array).duplicate(true),
+		"event_slots_preview": (content_preview.get("event_slots_preview", []) as Array).duplicate(true),
+		"art_slots_preview": (content_preview.get("art_slots_preview", []) as Array).duplicate(true),
+		"future_data_ref": content_preview.get("future_data_ref", ""),
+		"data_source_ref": content_preview.get("data_source_ref", ""),
+		"display_only": true,
+		"read_only": true,
+		"preview": true,
 	}
 
 

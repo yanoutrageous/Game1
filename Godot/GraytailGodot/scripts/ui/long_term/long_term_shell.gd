@@ -48,7 +48,7 @@ func get_selected_module_id() -> StringName:
 func _build_static_layout() -> void:
 	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.018, 0.032, 0.038, 1.0))
 	_add_label(self, "LongTermTitle", Rect2(64, 42, 520, 42), "长期系统", 31, PresentationTheme.color_for_key(&"ui.accent"))
-	_add_label(self, "LongTermSubtitle", Rect2(66, 84, 760, 42), "G19 foundation：六个一级模块、placeholder 状态和只读接口预览。", 15, PresentationTheme.color_for_key(&"ui.muted"))
+	_add_label(self, "LongTermSubtitle", Rect2(66, 84, 760, 42), "G24 foundation：六模块内容框架、preview cards、slot 与美术 key 预留。", 15, PresentationTheme.color_for_key(&"ui.muted"))
 	overview_label = _add_label(self, "LongTermOverview", Rect2(64, 132, 1120, 72), "", 15, PresentationTheme.text_color())
 	_build_tab_buttons()
 	module_title_label = _add_label(self, "LongTermModuleTitle", Rect2(64, 268, 400, 34), "", 24, PresentationTheme.color_for_key(&"ui.warning"))
@@ -92,38 +92,46 @@ func _refresh_from_model() -> void:
 	selected_module_id = StringName(current_model.get("selected_module_id", selected_module_id))
 	var overview: Dictionary = current_model.get("overview_summary", {})
 	overview_label.text = "%s\n%s\n模块：%s" % [
-		String(overview.get("title", "长期系统壳层")),
+		String(overview.get("title", "长期系统内容框架")),
 		String(overview.get("message", "")),
 		", ".join(overview.get("modules", []) as Array),
 	]
 	var panel: Dictionary = current_model.get("placeholder_panel", {})
+	var content_preview: Dictionary = current_model.get("current_content_preview", panel.get("content_preview", {}))
 	module_title_label.text = String(panel.get("title", ""))
 	module_state_label.text = "状态：%s" % String(panel.get("state", "preview"))
-	module_body_label.text = "%s\n\n摘要：\n%s" % [
+	module_body_label.text = "%s\n\n摘要：\n%s\n\n内容框架：%s" % [
 		String(panel.get("description", "")),
 		_format_dictionary(panel.get("summary", {})),
+		_format_detail_preview(content_preview.get("detail_preview", {})),
 	]
 	module_reason_label.text = "边界：%s" % String(panel.get("reason", ""))
-	child_preview_label.text = "内部 preview\n\n%s" % _format_child_groups(panel.get("child_preview_groups", []) as Array)
+	child_preview_label.text = "内部 preview\n\n%s\n\nG24 二级分组\n%s\n\nPreview cards\n%s" % [
+		_format_child_groups(panel.get("child_preview_groups", []) as Array),
+		_format_secondary_groups(content_preview.get("secondary_groups", []) as Array),
+		_format_cards(content_preview.get("cards", []) as Array),
+	]
 	var snapshot: Dictionary = current_model.get("snapshot_preview", {})
 	snapshot_label.text = "只读快照预览\n\n%s\n%s\n%s" % [
 		_format_snapshot_section(snapshot.get("profile_snapshot", {})),
 		_format_snapshot_section(snapshot.get("unlock_snapshot", {})),
 		_format_snapshot_section(snapshot.get("history_snapshot", {})),
 	]
-	interface_preview_label.text = "接口 preview\n\n%s\n%s\n%s\n%s" % [
+	interface_preview_label.text = "接口 / slot preview\n\n%s\n%s\n%s\n%s\n%s" % [
 		_format_preview_line(snapshot, "asset_projection_preview"),
 		_format_preview_line(snapshot, "event_flow_preview"),
 		_format_preview_line(snapshot, "reward_preview"),
 		_format_preview_line(snapshot, "red_dot_preview"),
+		_format_slots(content_preview.get("event_slots_preview", []) as Array),
 	]
 	var history_preview: Dictionary = current_model.get("history_preview_panel", {})
 	history_preview_label.text = _format_history_preview(history_preview)
-	next_stage_label.text = "链接 preview：%s / %s / %s\n下一阶段：%s" % [
+	next_stage_label.text = "链接 preview：%s / %s / %s\nG24 cross-link：%s\nart slot：%s" % [
 		_format_preview_line(snapshot, "inventory_link_preview"),
 		_format_preview_line(snapshot, "codex_link_preview"),
 		_format_preview_line(snapshot, "history_link_preview"),
-		String(panel.get("next_stage_note", "")),
+		_format_cross_links(content_preview.get("cross_links_preview", []) as Array),
+		_format_art_slots(content_preview.get("art_slots_preview", []) as Array),
 	]
 	_refresh_tab_buttons()
 
@@ -142,6 +150,52 @@ func _format_child_groups(groups: Array) -> String:
 		for item in group.get("items", []):
 			lines.append("- %s" % String(item))
 	return "\n".join(lines)
+
+
+func _format_secondary_groups(groups: Array) -> String:
+	var lines := []
+	for group: Dictionary in groups:
+		lines.append("[%s] %s" % [String(group.get("title", "")), String(group.get("group_icon_key", ""))])
+		var items: Array = group.get("items", [])
+		for item: Dictionary in items.slice(0, 2):
+			lines.append("- %s" % String(item.get("title", "")))
+	return "\n".join(lines) if not lines.is_empty() else "secondary_groups: display_only / read_only / preview"
+
+
+func _format_cards(cards: Array) -> String:
+	var lines := []
+	for card: Dictionary in cards.slice(0, 4):
+		lines.append("- %s (%s)" % [String(card.get("title", "")), String(card.get("preview_slot", ""))])
+	return "\n".join(lines) if not lines.is_empty() else "cards: display_only / read_only / preview"
+
+
+func _format_detail_preview(detail: Variant) -> String:
+	var preview: Dictionary = detail if detail is Dictionary else {}
+	return "%s / %s" % [
+		String(preview.get("title", "detail_preview")),
+		String(preview.get("message", "display_only / read_only / preview")),
+	]
+
+
+func _format_slots(slots: Array) -> String:
+	var lines := []
+	for slot: Dictionary in slots.slice(0, 5):
+		lines.append("- %s: %s" % [String(slot.get("slot_id", "")), String(slot.get("display_name", ""))])
+	return "\n".join(lines) if not lines.is_empty() else "event_slots_preview: display_only / read_only"
+
+
+func _format_cross_links(links: Array) -> String:
+	var labels := []
+	for link: Dictionary in links:
+		labels.append(String(link.get("target", "")))
+	return ", ".join(labels) if not labels.is_empty() else "display_only"
+
+
+func _format_art_slots(slots: Array) -> String:
+	var labels := []
+	for slot: Dictionary in slots:
+		labels.append(String(slot.get("art_key", "")))
+	return ", ".join(labels.slice(0, 3)) if not labels.is_empty() else "art_placeholder_id"
 
 
 func _format_snapshot_section(raw_section: Variant) -> String:
