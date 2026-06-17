@@ -1,5 +1,18 @@
 # Project Baseline
 
+## G23-R3 Closeout Status
+
+- G23 branch: `godot/g23-settlement-history-snapshot-foundation`.
+- G23 implementation commit: `f20ddf60513f17ef72afe8e5c99a4e1a22fccd0e`.
+- G23-R3 static validation PASS.
+- G23-R3 Godot headless project-load/parser smoke PASS.
+- `git diff --check` had no whitespace error; LF/CRLF warnings only.
+- Godot smoke produced no new dirty side effects.
+- G23 is Settlement / History Snapshot Foundation with LongTerm personal profile / history display-only preview consumer.
+- G23 does not implement real settlement report UI, reward grant, asset return/loss/conversion, gold or black coin economy, consumable clearing, history persistence, profile progression, red dots, event bus, SaveManager, RunScene ending flow, complete LongTerm, complete Warehouse, or complete Gacha.
+- Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
+- Manual playtest was not run, and no manual playtest PASS is claimed.
+
 ## G22 Final Main Merge Status
 
 - G22 has been fast-forward merged to `main`.
