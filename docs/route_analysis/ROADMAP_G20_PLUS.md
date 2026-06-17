@@ -124,3 +124,17 @@ G18-align-R2 is now the active pre-G22 implementation slice on `godot/g18-align-
 - G24 is not complete LongTerm, real targets, real rewards, real gacha, real red dots, real SaveManager, real asset writes, complete Warehouse, or complete Gacha.
 - Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
 - Manual playtest was not run, and no manual playtest PASS is claimed.
+
+## G24 Final Main Merge Calibration
+
+- G24 has been fast-forward merged to `main`.
+- G24 branch: `godot/g24-long-term-content-framework-foundation`.
+- G24 implementation commit: `02c2e577787a49ce4cbed173482a7acc31fa2bc9`.
+- G24 closeout docs commit: `8502c2dee4b0a9736f7f9be51a4ea19bc77330cd`.
+- First `main` commit containing G24: `8502c2dee4b0a9736f7f9be51a4ea19bc77330cd`.
+- G24-R3 static validation PASS.
+- G24-R3 Godot headless project-load/parser smoke PASS.
+- `D:\AGAME1\Connection\Program\G24_LongTerm_Content_Framework_Art_Request.md` was written as an external program-to-art request and was not committed.
+- G24 remains foundation-only and not complete LongTerm, real rewards, real gacha, real red dots, real SaveManager, real asset writes, complete Warehouse, or complete Gacha.
+- Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
+- Manual playtest was not run, and no manual playtest PASS is claimed.
