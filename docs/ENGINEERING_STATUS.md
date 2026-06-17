@@ -1,3 +1,16 @@
+# G25-R3b Closeout Status
+
+G25 UI Structure Stabilization & Playable Route Recovery is complete on branch `godot/g25-ui-structure-playable-route`.
+
+- G25 implementation commit: `ae6f2ab6abd50b51c6f8f600cb8f5cda1cda7462`.
+- Static validation PASS.
+- Godot headless project-load/parser smoke PASS.
+- `git diff --check` had no whitespace error; LF/CRLF warnings only.
+- Godot smoke produced no new dirty side effects.
+- `D:\AGAME1\Connection\Program\G25_UI_Structure_Stabilization_Notice.md` was written outside the repository and is not committed.
+
+G25 adds a clear main-menu `快速开始 / Demo Run` current playable route entry, keeps DeployPrep start preview-only, improves DeployPrep / LongTerm readability, and reduces Settings placeholder noise. It does not implement real warehouse, rewards, settlement, gacha, objectives, red dots, SaveManager, asset writes, real LongTerm backend, real settings, or art import. Gameplay runtime and manual playtest were not run and are not claimed as PASS.
+
 # G24 Final Main Merge Status
 
 G24 LongTerm Content Framework Foundation has been fast-forward merged to `main`.

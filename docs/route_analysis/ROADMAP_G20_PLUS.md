@@ -1,5 +1,16 @@
 # G20+ 路线建议
 
+## G25-R3b Update
+
+G25 UI Structure Stabilization & Playable Route Recovery is complete on branch `godot/g25-ui-structure-playable-route`.
+
+- Implementation commit: `ae6f2ab6abd50b51c6f8f600cb8f5cda1cda7462`.
+- Static validation PASS.
+- Godot headless project-load/parser smoke PASS.
+- Scope: main-menu `快速开始 / Demo Run` current playable route, DeployPrep readability, LongTerm readability, and Settings placeholder noise reduction.
+- Boundary: not real warehouse, rewards, settlement, gacha, objectives, red dots, SaveManager, asset writes, real LongTerm backend, real settings, or art import.
+- No gameplay runtime PASS or manual playtest PASS is claimed.
+
 ## 声明
 
 这是 G20 的路线建议。G21 后续已独立启动、完成 R3/R4 validation，并 fast-forward 合并到 main。G21-R5 又完成 docs-only 设计一致性校准：G22 不应直接按旧 Warehouse / Asset Page Shell 口径启动；G22、G23、G24、G25 仍需独立审计、计划、执行、验收和合并。
