@@ -1,5 +1,9 @@
 # Docs Index
 
+> P2 更新：本文件保留为历史导航和扩展证据索引。P2 后第一入口改为 `docs/INDEX.md`；第一轮必读不再要求通读本文件下方的长列表。
+>
+> 当前必读入口：`docs/INDEX.md`、`docs/10_current/CURRENT_STATE.md`、`docs/10_current/NEXT_ACTION.md`、`docs/10_current/CAPABILITY_MATRIX.yaml`、`docs/00_governance/SOURCE_REGISTRY.md`。
+
 ## G18-align Closeout Evidence
 
 - `docs/validation/G18_ALIGN_DEPLOY_PREP_ASSET_VIEW_VALIDATION.md` records G18-align-R3 acceptance and R4B closeout.
@@ -28,7 +32,8 @@ G21-R5 design alignment calibration records the full Base Docs consistency audit
 
 ## Current Fact Sources
 
-- `docs/PROJECT_BASELINE.md` - current engineering fact source.
+- `docs/10_current/CURRENT_STATE.md` - P2 current fact summary entry.
+- `docs/PROJECT_BASELINE.md` - pre-P2 expanded engineering fact evidence.
 - `docs/ENGINEERING_STATUS.md` - broader engineering status and validation list.
 - `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md` - Godot-specific current status.
 - `docs/MILESTONES.md` - historical G-number to formal milestone mapping.
@@ -57,7 +62,7 @@ G21-R5 design alignment calibration records the full Base Docs consistency audit
 
 ## Next Conversation Minimum Reading
 
-Read these first in a new Codex or ChatGPT conversation:
+P2 后新对话优先读取 `docs/INDEX.md` 中列出的 5 个当前入口。下列长清单保留为历史导航，需要追溯旧阶段时再读取：
 
 1. `docs/NEXT_HANDOFF.md`
 2. `docs/PROJECT_BASELINE.md`

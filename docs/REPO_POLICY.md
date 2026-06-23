@@ -8,9 +8,10 @@
 
 ## Current Baseline Policy
 
-- Use `docs/PROJECT_BASELINE.md` for the current engineering fact source.
-- Use `docs/NEXT_HANDOFF.md` as the minimum next-chat context entry.
-- Use `docs/DOCS_INDEX.md` for document navigation and historical status.
+- Use `docs/INDEX.md` for the P2 unified document entry.
+- Use `docs/10_current/CURRENT_STATE.md` for the current fact summary.
+- Use `docs/10_current/NEXT_ACTION.md` as the minimum next-step context entry.
+- Use `docs/DOCS_INDEX.md` and `docs/PROJECT_BASELINE.md` as expanded historical navigation and fact evidence.
 - Use `docs/handoff/HANDOFF_TEMPLATE.md` for future handoffs.
 - Lua prototype baseline is preserved on `lua-prototype-main` at `d53d117af8c786014292c2981b7edfdaf11182ea`.
 - Historical G2.5, S1/S2, and Lua parity branch notes remain reference material, not the current project baseline.
@@ -25,6 +26,9 @@
 ## File And Asset Policy
 
 - Do not commit `D:\Godot\Tools`.
+- Do not copy or commit files from `D:\AGAME1\Connection`; Connection remains an external parallel handoff area.
+- Do not import `D:\AGAME1\Connection` files as Godot resources.
+- Treat `D:\AGAME1\Base Docs` as a current external read-only planning source. Do not refresh or add repository copies without explicit authorization.
 - Do not commit `.godot`, editor data, import caches, temp caches, or local tool directories.
 - Lua baseline may retain existing prototype assets unless a file exceeds GitHub limits or the user approves a cleanup/LFS pass.
 - Large files, LFS needs, and asset licensing risks must be reported before changing storage strategy.

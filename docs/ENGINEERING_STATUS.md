@@ -15,6 +15,8 @@ G26-R1 audit result is PASS with preconditions. G26 has been reset to Engineerin
 
 # G25 Final Main Merge Status
 
+> P2 更新：本文件保留为扩展工程状态证据。P2 后当前工程/策划文档入口见 `docs/INDEX.md` 与 `docs/10_current/CURRENT_STATE.md`。本文件正文未删除，但不再作为第一轮必读入口。
+
 G25 UI Structure Stabilization & Playable Route Recovery has been fast-forward merged to `main`.
 
 - G25 branch: `godot/g25-ui-structure-playable-route`.
@@ -345,7 +347,7 @@ G9 UI core flow baseline is in `main`. It is not a complete final UI, not comple
 
 ## Current Baseline Documents
 
-- `docs/PROJECT_BASELINE.md` is the current engineering fact source.
+- After P2, `docs/10_current/CURRENT_STATE.md` is the current summary entry; `docs/PROJECT_BASELINE.md` remains expanded engineering fact evidence.
 - `docs/NEXT_HANDOFF.md` is the minimum next Codex/ChatGPT context entry.
 - `docs/DOCS_INDEX.md` is the document navigation and historical index.
 - `docs/MILESTONES.md` maps historical G labels to stable milestone names.

@@ -1,5 +1,7 @@
 # Source Registry
 
+> P2 更新：本文件保留为 G20 治理来源注册证据。P2 后当前来源总表见 `docs/00_governance/SOURCE_REGISTRY.md`。
+
 This registry records active sources, imported design sources, external references, and planned governance artifacts. It is a governance index, not a replacement for the source files.
 
 ## Current Active Fact Sources

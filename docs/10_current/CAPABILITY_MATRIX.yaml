@@ -1,0 +1,89 @@
+document_status: current_summary
+last_updated: "2026/06/23"
+scope: "P2 unified docs current capability matrix"
+stage_boundary:
+  current_stage: "P2 docs-only governance"
+  latest_closed_engineering_stage: "G25 UI Structure Stabilization & Playable Route Recovery"
+  g26_status: "not_started_reserved_for_future_product_or_prototype_stage"
+validation_boundary:
+  godot_headless_project_load_parser_smoke_pass: "recorded for G25"
+  gameplay_runtime_pass: false
+  manual_playtest_pass: false
+capabilities:
+  main_menu_app_shell:
+    implementation_status: "foundation_plus_g25_playable_route_entry"
+    evidence:
+      - "docs/validation/G25_UI_STRUCTURE_PLAYABLE_ROUTE_VALIDATION.md"
+      - "docs/handoff/HANDOFF_G25_UI_STRUCTURE_PLAYABLE_ROUTE.md"
+    not_complete:
+      - "complete final main menu"
+      - "real settings"
+      - "new gameplay systems"
+  deploy_prep:
+    implementation_status: "foundation_preview_display_only"
+    evidence:
+      - "docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md"
+      - "docs/validation/G22_DEPLOY_PREP_FULL_MODULE_CONTENT_PREVIEW_VALIDATION.md"
+    not_complete:
+      - "real run start/continue/abandon implementation"
+      - "real warehouse"
+      - "real claim purchase"
+      - "real map generation"
+  long_term:
+    implementation_status: "six_module_foundation_preview_display_only"
+    modules:
+      - "目标"
+      - "图鉴"
+      - "研究"
+      - "个人资历"
+      - "抽奖"
+      - "收藏/外观"
+    evidence:
+      - "docs/validation/G19_LONG_TERM_SHELL_FOUNDATION_VALIDATION.md"
+      - "docs/validation/G24_LONG_TERM_CONTENT_FRAMEWORK_FOUNDATION_VALIDATION.md"
+    not_complete:
+      - "real task system"
+      - "real rewards"
+      - "real gacha"
+      - "real profile progression"
+  asset_item_flow:
+    implementation_status: "contract_foundation_only"
+    evidence:
+      - "docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md"
+    not_complete:
+      - "real asset system"
+      - "warehouse implementation"
+      - "event bus"
+      - "reward grant"
+      - "Policy/Tag rule engine"
+  settlement_history:
+    implementation_status: "snapshot_foundation_only"
+    evidence:
+      - "docs/validation/G23_SETTLEMENT_HISTORY_SNAPSHOT_FOUNDATION_VALIDATION.md"
+    not_complete:
+      - "real settlement report UI"
+      - "history persistence"
+      - "reward grant"
+      - "asset return/loss/conversion"
+  encounter_combat:
+    implementation_status: "encounter_and_basic_combat_foundation"
+    evidence:
+      - "docs/validation/G15_ENCOUNTER_CONTRACT_VALIDATION.md"
+      - "docs/validation/G16_COMBAT_ENCOUNTER_FOUNDATION_VALIDATION.md"
+    not_complete:
+      - "boss"
+      - "action combat"
+      - "real-time combat"
+      - "full drop economy"
+  docs_governance:
+    implementation_status: "p2_unified_docs_with_external_read_only_source_boundary"
+    evidence:
+      - "docs/INDEX.md"
+      - "docs/00_governance/SOURCE_REGISTRY.md"
+      - "docs/00_governance/OPEN_DECISIONS.md"
+      - "docs/00_governance/EXTERNAL_SOURCE_BOUNDARY.md"
+source_boundaries:
+  base_docs: "current post-archive external read-only planning source; locate current files by topic/name/date/status; no refresh or copy without explicit authorization"
+  base_docs_existing_repo_copies: "historical authorized imports or frozen snapshots; not current authority and not auto-synchronized"
+  connection: "external parallel handoff only; path/hash registry only; content must not enter Git or Godot resources"
+  ui_images: "external confirmed/example/issue/unknown reference only, not rule authority"

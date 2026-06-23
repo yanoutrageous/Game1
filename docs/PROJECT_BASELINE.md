@@ -1,5 +1,7 @@
 # Project Baseline
 
+> P2 更新：本文件保留为扩展工程事实与历史状态证据。P2 后当前事实摘要见 `docs/10_current/CURRENT_STATE.md`，统一入口见 `docs/INDEX.md`。本文件正文未删除，但不再作为新对话第一必读入口。
+
 ## G26-R2A Engineering Architecture Structure Readiness
 
 - G25 final `main` / `origin/main`: `17f8406dcf745f81c829e78478663bec6cbd4e68`.
@@ -215,7 +217,7 @@
 - `lua-prototype-main`: read-only historical prototype baseline.
 - Planning source originals still live under `D:\AGAME1\Base Docs`; `docs/可行性判断.md` and `docs/难度判断.md` were moved there by the user and their repository deletions are authorized docs relocation deletions. G20-R3a imported authorized Markdown / TXT copies into `docs/design_sources/`; external Base Docs originals and PNG references were not modified by R3b.
 
-This file is the current engineering fact source. Use `docs/NEXT_HANDOFF.md` for the shortest next-chat context and `docs/DOCS_INDEX.md` for document navigation.
+This file is retained as the pre-P2 expanded engineering fact source. After P2, use `docs/10_current/CURRENT_STATE.md` for the current fact summary, `docs/10_current/NEXT_ACTION.md` for the shortest next-step context, and `docs/INDEX.md` for document navigation.
 
 ## Current Mainline Capability
 

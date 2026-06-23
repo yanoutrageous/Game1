@@ -1,5 +1,7 @@
 # Document Lifecycle
 
+> P2 更新：本文件保留为 G20 文档生命周期规则。P2 后当前生命周期规则见 `docs/00_governance/DOCUMENT_LIFECYCLE.md`。
+
 This file defines document lifecycle categories for G20 governance. It does not delete, rename, or move historical documents.
 
 ## Lifecycle Types

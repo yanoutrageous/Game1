@@ -17,6 +17,8 @@ No Godot run was performed for G26-R2A. No gameplay runtime PASS or manual playt
 
 # G25 Final Main Merge Note
 
+> P2 更新：本文件保留为历史 handoff 与扩展证据。P2 后下一步入口见 `docs/10_current/NEXT_ACTION.md`。本文件正文未删除，但不再作为唯一下一步依据。
+
 - G25 has been fast-forward merged to `main`.
 - G25 branch: `godot/g25-ui-structure-playable-route`.
 - G25 implementation commit: `ae6f2ab6abd50b51c6f8f600cb8f5cda1cda7462`.

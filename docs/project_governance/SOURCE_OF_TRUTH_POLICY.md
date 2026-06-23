@@ -1,5 +1,7 @@
 # Source of Truth Policy
 
+> P2 更新：P2 后统一入口见 `docs/INDEX.md`，当前事实摘要见 `docs/10_current/CURRENT_STATE.md`，来源总表见 `docs/00_governance/SOURCE_REGISTRY.md`。Base Docs / Connection 当前边界见 `docs/00_governance/EXTERNAL_SOURCE_BOUNDARY.md`。本文件保留为 G20 来源优先级证据，其旧优先级不覆盖当前外部来源边界。
+
 This file defines Source of Truth priority for G20 project knowledge governance. It does not replace current status files, validation records, or implementation plans.
 
 ## Priority Order
