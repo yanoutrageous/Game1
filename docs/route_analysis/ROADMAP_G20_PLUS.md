@@ -4,6 +4,7 @@
 
 G25 UI Structure Stabilization & Playable Route Recovery is complete on branch `godot/g25-ui-structure-playable-route`.
 
+- Final `main` / `origin/main`: `17f8406dcf745f81c829e78478663bec6cbd4e68`.
 - Implementation commit: `ae6f2ab6abd50b51c6f8f600cb8f5cda1cda7462`.
 - Static validation PASS.
 - Godot headless project-load/parser smoke PASS.
@@ -11,9 +12,19 @@ G25 UI Structure Stabilization & Playable Route Recovery is complete on branch `
 - Boundary: not real warehouse, rewards, settlement, gacha, objectives, red dots, SaveManager, asset writes, real LongTerm backend, real settings, or art import.
 - No gameplay runtime PASS or manual playtest PASS is claimed.
 
+## G26-R1 Route Reset
+
+- G26-R1 audit result: PASS with preconditions.
+- G26 is Engineering Architecture Structure Readiness Foundation.
+- G26 prepares reviewable responsibility boundaries for `core`, `ui`, `preview`, `contract`, `content`, `validation`, and `docs`.
+- G26 does not implement real objectives, rewards, pools, gacha, warehouse, asset writes, SaveManager, AssetLedger behavior, CommandBus behavior, or player-playable prototype v1.
+- Prototype-Facing Objective / Reward / Pool Contract Foundation is deferred to G27 or a later independently authorized functional stage.
+- Lua remains the gameplay-validation line. Godot remains the formal system-skeleton and interface-readiness line.
+- Every later functional slice must declare a precise file allowlist, explicit exclusions, protected-dirty baseline, validation commands, and a separate Git gate.
+
 ## 声明
 
-这是 G20 的路线建议。G21 后续已独立启动、完成 R3/R4 validation，并 fast-forward 合并到 main。G21-R5 又完成 docs-only 设计一致性校准：G22 不应直接按旧 Warehouse / Asset Page Shell 口径启动；G22、G23、G24、G25 仍需独立审计、计划、执行、验收和合并。
+这是从 G20 延续并经后续阶段校准的路线记录。G21-G25 已分别执行并进入 `main`；当前路线从 G26 工程架构结构准备继续。历史候选名称不得覆盖后续审计确认的阶段目标。
 
 G20 是 docs-only knowledge governance，不实现 Asset Contract、Warehouse、Settlement、Objective、Gacha 或 gameplay，不运行 Godot。
 
@@ -23,11 +34,13 @@ G20 是 docs-only knowledge governance，不实现 Asset Contract、Warehouse、
 | --- | --- | --- | --- |
 | G20 | 项目知识治理与设计资料入库 | design source 文本入库、project governance、stage summaries、route analysis、system boundary/dependency maps | 已完成并 fast-forward 合并 main |
 | G21 | Asset Contract Foundation | 建立资产/物品/奖励/标签/策略的最小 public contract，与现有 ledger 和 future long-term shell 对齐 | R3 complete at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; R4 Godot headless project-load/parser smoke PASS; R4B / first main commit `fdadd78ccdf1d61378ac93a74cfe26449e47c411`; merged main |
-| G18-align | Deploy Prep Asset Attendance Alignment | 校准出发探索资产出勤视角、二级标签、卡片详情、深层跳转、开始/继续/放弃强确认口径 | 建议作为 G22 前置；未启动 |
-| G22 | Deploy Prep Full Module Alignment / Warehouse later | G18-align 后再决定是否进入仓库/资产页 shell；不得直接实现完整仓库或长期系统扩展 | 未启动 |
-| G23 | Settlement / History Snapshot Foundation | 建立结算结果与历史快照 foundation，连接 run result summary 与长期展示 | 未启动 |
-| G24 | LongTerm Content Framework Foundation | 建立长期系统六模块内容框架、二级分组、preview cards、Objective / Reward / Gacha / Collection preview slots 与 UI/art/data key reservation | R2 implementation complete at `02c2e577787a49ce4cbed173482a7acc31fa2bc9`; R3 static validation PASS; Godot headless project-load/parser smoke PASS |
-| G25 | Gacha / Unique Collectible Preview Foundation | 建立抽奖与唯一藏品 preview foundation，不做真实概率、保底、消耗或持久化 | 未启动 |
+| G18-align | Deploy Prep Asset Attendance Alignment | 校准出发探索资产出勤视角、二级标签、卡片详情、深层跳转、开始/继续/放弃强确认口径 | 已完成并纳入历史基线；first main / closeout `70d3735a3ed49dec31ce5a6de73cfdf0829885eb` |
+| G22 | Deploy Prep Full Module Content Preview | 建立出发探索完整模块内容预览；保持 preview-only / display-only / read-only | 已完成；first main / closeout `a4fb21e618d348161aa46e2099fa5a1c0f95da4f` |
+| G23 | Settlement / History Snapshot Foundation | 建立结算结果与历史快照 foundation，连接 run result summary 与长期展示 | 已完成；first main / closeout `85bf697d09147c7d92268dee4d4b6f51643155a7` |
+| G24 | LongTerm Content Framework Foundation | 建立长期系统六模块内容框架、二级分组、preview cards、Objective / Reward / Gacha / Collection preview slots 与 UI/art/data key reservation | 已完成；first main / closeout `8502c2dee4b0a9736f7f9be51a4ea19bc77330cd` |
+| G25 | UI Structure Stabilization & Playable Route Recovery | 恢复当前可玩入口并稳定 MainMenu / DeployPrep / LongTerm / Settings 的 UI 结构与可读性 | 已完成；final `main` / `origin/main` 为 `17f8406dcf745f81c829e78478663bec6cbd4e68` |
+| G26 | Engineering Architecture Structure Readiness Foundation | 收束 core / ui / preview / contract / content / validation / docs 职责边界，形成后续精确 allowlist 与审查基础 | G26-R1 PASS with preconditions；G26-R2A docs-only reviewable workspace preparation |
+| G27 | Objective / Reward / Pool Contract Foundation candidate | 在 G26 审查通过后，另行审计最小 public contract；不预授权真实目标、发奖、奖池、抽奖或资产写入 | 后移候选；未启动 |
 
 ## 阶段门禁
 
@@ -45,10 +58,10 @@ G20 是 docs-only knowledge governance，不实现 Asset Contract、Warehouse、
 - G21-R4 已通过 Godot headless project-load/parser smoke PASS，且 smoke 后工作区 clean、无 dirty 副作用。
 - G21 已 fast-forward 合并 main，main 首次包含 G21 的提交为 `fdadd78ccdf1d61378ac93a74cfe26449e47c411`。
 - G21-R5 已完成设计一致性校准：Base Docs 全量一致性审计未发现 P0，但存在 P1/P2 设计口径与 foundation 完成度问题。
-- G22 尚未启动。
+- 历史记录（G21-R5 当时状态）：G22 尚未启动。该状态已被后续 G22 完成记录取代。
 - G21 不代表真实资产系统、仓库、事件总线、发奖、存档、抽奖、结算、历史战绩、红点或 Policy / Tag 规则引擎已实现。
 
-## G21-R5 路线校准
+## 历史记录：G21-R5 路线校准（已被后续完成记录取代）
 
 - 出发探索仍是 foundation，不能误称为完整模块内容。
 - 结算报告 / 历史战绩仍缺快照系统。

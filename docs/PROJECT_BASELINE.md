@@ -1,5 +1,20 @@
 # Project Baseline
 
+## G26-R2A Engineering Architecture Structure Readiness
+
+- G25 final `main` / `origin/main`: `17f8406dcf745f81c829e78478663bec6cbd4e68`.
+- G25 completed stage: UI Structure Stabilization & Playable Route Recovery.
+- G25 validation remains static validation PASS and Godot headless project-load/parser smoke PASS only.
+- No gameplay runtime PASS or manual playtest PASS is claimed.
+- G26-R1 audit result: PASS with preconditions.
+- Current G26 stage: Engineering Architecture Structure Readiness Foundation.
+- The former Prototype-Facing Objective / Reward / Pool Contract Foundation candidate is deferred to G27 or a later separately authorized functional stage.
+- G26 is docs-only structure preparation. It does not implement objectives, rewards, pools, asset writes, gacha, warehouse, player-playable prototype v1, SaveManager, AssetLedger behavior, or CommandBus behavior.
+- Lua remains the gameplay-validation line. Godot remains the formal system-skeleton and interface-readiness line.
+- Future functional slices require a precise path allowlist, explicit exclusions, validation scope, protected-dirty baseline, and a separate Git gate.
+- Existing `project.godot`, `asset_manifest.*.translation`, first-real engineering bundle files, and independent governance work are protected dirty. G26-R2A does not restore, delete, stage, commit, or absorb them.
+- `docs/00_governance/EXTERNAL_SOURCE_BOUNDARY.md` and `docs/00_governance/EXTERNAL_SOURCE_BOUNDARY_UPDATE_REPORT.md` are read-only external-source boundary evidence and are not part of the G26-R2A diff.
+
 ## G25 Final Main Merge Status
 
 - G25 has been fast-forward merged to `main`.
@@ -12,7 +27,7 @@
 - G25-R3b Godot headless project-load/parser smoke PASS.
 - Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
 - Manual playtest was not run, and no manual playtest PASS is claimed.
-- Next recommended step: G25 audit evaluation or G26 original audit.
+- Historical next-step note superseded by G26-R1 PASS with preconditions and the current G26 architecture-readiness direction.
 
 ## G25-R3b Closeout Status
 
@@ -105,9 +120,9 @@
 - Completed scope: deploy prep asset attendance view, right-side summary, and start / continue / abandon strong-confirmation preview consistency alignment.
 - Not completed: complete deploy prep, complete warehouse, real asset writes, event bus, reward grant, persistence, real RunScene start / continue / abandon logic.
 - No gameplay runtime PASS and no manual playtest PASS are claimed.
-- G22 has not started.
+- Historical record for the G18-align closeout point: G22 had not started. This status is superseded by the later G22 completion record.
 
-## G18-align-R2 Branch Status
+## Historical G18-align-R2 Branch Status (Superseded)
 
 - Branch: `godot/g18-align-deploy-prep-asset-view`.
 - Baseline main HEAD: `dab8e9eacb009a6e51d84cb7ab7d0f5cac4f1690`.
@@ -116,7 +131,7 @@
 - Boundary: still foundation alignment only. It is not complete deploy prep, not a complete warehouse, not real asset writing, not event bus, not reward grant, not persistence, not real run start/continue/abandon, and not G22.
 - Godot is not run in G18-align-R2. Parser smoke is deferred to a later acceptance round.
 
-## Current Authority
+## Historical Authority Record (Superseded)
 
 - Stage: G21 Asset & Item Flow Contract Foundation is fast-forward merged to `main`.
 - G21-R3 commit: `29a68e7b093ae653be212e32eb97042c0a7c0a4c`.
@@ -143,7 +158,7 @@
 - G20 docs-only governance branch `godot/g20-project-knowledge-governance` is fast-forward merged to main. R3a 已完成 authorized Base Docs Markdown / TXT text design source copies 入库，Base Docs 原件未修改，PNG 未入库且仅登记为 `external_reference` / `pending_user_authorization`；R3b 已完成 project_governance 与 design_sources index structure；R3c 已完成 G10-G19 stage summaries 与 route analysis；R3d1 已完成 branch / commit / validation governance matrices；R3d2 新增 decision log / glossary / deprecated inventory；G20-R4A 只读验收通过；G20-R4B docs-only closeout 已完成。G20 first main merge baseline / R4B closeout commit is `ae689b7464fd6ea81a763110cd89813abcfb6665`; post-merge docs commit hash is pending until commit.
 - G20-R3d1 matrix docs: `docs/project_governance/BRANCH_INVENTORY.md`, `docs/project_governance/COMMIT_MILESTONE_MAP.md`, and `docs/project_governance/VALIDATION_STATUS_MATRIX.md`.
 - G20-R3d2 docs: `docs/project_governance/DECISION_LOG.md`, `docs/project_governance/GLOSSARY.md`, and `docs/project_governance/TEMP_AND_DEPRECATED_INVENTORY.md`.
-- G21-R3 is complete on `godot/g21-asset-item-flow-contract` at `29a68e7b093ae653be212e32eb97042c0a7c0a4c`; G21-R4 acceptance passed with Godot headless project-load/parser smoke PASS; G21-R4B closeout / first main commit is `fdadd78ccdf1d61378ac93a74cfe26449e47c411`; G21 is fast-forward merged to main. G22 has not started. G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
+- Historical record at the G21 closeout point: G21 was merged and G22 had not started. The G22 status is superseded by its later completion record. G20-R3a/R3b/R3c/R3d1/R3d2/R4A/R4B/final do not claim Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 - G19-R4B smoke is not complete gameplay runtime PASS and not manual playtest PASS.
 - G21-R5 design alignment calibration: Base Docs 全量一致性审计已完成，未发现 P0；存在 P1/P2 设计口径与 foundation 完成度问题，因此不得直接进入功能化 G22。
 - Foundation boundaries after the audit: G17 主菜单 = foundation / 部分符合，不等于完整主菜单内容；G18 出发探索 = foundation，不等于完整出发探索模块内容；G19 长期系统 = 六模块 display-only shell，不等于完整长期系统；G21 资产契约 = contract foundation，不等于真实资产系统。
@@ -281,11 +296,11 @@ G20-R4A read-only acceptance passed, G20-R4B docs-only closeout is complete, and
 
 G20-R3c added `docs/stage_summaries/STAGE_SUMMARY_INDEX.md`, `docs/stage_summaries/G10_SUMMARY.md` through `docs/stage_summaries/G19_SUMMARY.md`, and route analysis under `docs/route_analysis/`. G20-R3d1 added branch / commit / validation matrices under `docs/project_governance/`. G20-R3d2 added `DECISION_LOG.md`, `GLOSSARY.md`, and `TEMP_AND_DEPRECATED_INVENTORY.md`. G20-R4B added `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md` and `docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md`. These are docs-only governance artifacts and do not implement Asset Contract, Warehouse, gameplay, Godot smoke, complete gameplay runtime PASS, or manual playtest PASS.
 
-G21 direction is Asset & Item Flow Contract Foundation. G21-R3 implements only the contract foundation, G21-R4 validation passed with Godot headless project-load/parser smoke PASS, and G21 final fast-forward merged the branch to main. G21-R5 then calibrated design alignment before G22. G22 has not started.
+Historical G21 route record: G21 was Asset & Item Flow Contract Foundation, followed by G21-R5 design alignment before G22. At that time G22 had not started; this is superseded by the later G22 completion record.
 
 G18 should not be treated as complete expedition prep. G18-R3 is only the minimal foundation for `DeployPrepShell / DeployConfig / RunStartConfig` preview. Do not expand it into Boss, action combat, true run start, real maps, warehouse economy, requisition economy, work permit rules, settlement reports/history, lottery, out-of-run progression, MetaProgress, Deploy persistence, or full long-term systems without explicit authorization.
 
-The next recommended planning stage is G18-align / 出发探索资产出勤视角 rather than complete Warehouse / Asset Page Shell. The alignment must keep the current tab vocabulary as 地图 / 仓库 / 申领 / 出勤配置 / 作业许可 and keep settlement report / history as snapshot work still missing.
+Historical route recommendation before G18-align: plan 出发探索资产出勤视角 rather than complete Warehouse / Asset Page Shell. That recommendation was subsequently executed; current route authority is the G26 section at the top of this document.
 
 ## G15 Boundary
 
@@ -392,4 +407,4 @@ G10 is complete, merged to main, and closed. It must not be continued as complet
 - This remains deploy prep asset attendance view alignment: secondary labels, card/detail preview, right-side summary, and start / continue / abandon strong-confirmation preview.
 - It is not complete deploy prep, not complete warehouse, not real asset writes, not event bus, not reward grant, not persistence, and not real RunScene start / continue / abandon logic.
 - No gameplay runtime PASS or manual playtest PASS is claimed.
-- G22 has not started.
+- Historical record at the G18-align validation point: G22 had not started. This status is superseded by the later G22 completion record.

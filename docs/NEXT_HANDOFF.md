@@ -1,3 +1,20 @@
+# G26-R2A Engineering Architecture Structure Readiness Handoff
+
+Current review target: G26 Engineering Architecture Structure Readiness Foundation.
+
+- Baseline: `main` / `origin/main` at `17f8406dcf745f81c829e78478663bec6cbd4e68`.
+- G25 is complete as UI Structure Stabilization & Playable Route Recovery.
+- G26-R1 audit result: PASS with preconditions.
+- G26-R2A produces a docs-only reviewable workspace diff. It does not start functional implementation.
+- Objective / Reward / Pool Contract Foundation is deferred to G27 or a later separately authorized stage.
+- Lua validates gameplay hypotheses; Godot prepares formal system skeletons, public contracts, interfaces, and validation seams.
+- Protected dirty and first-real engineering bundle files remain untouched and outside this handoff.
+- Base Docs / Connection boundaries are read-only governed by `docs/00_governance/EXTERNAL_SOURCE_BOUNDARY.md` and its update report; those files are independent prior governance work.
+- Any next functional slice must declare an exact file allowlist and exclusions before execution.
+- Next gate: G26-R2B review of the workspace diff. No stage, commit, push, or merge is implied.
+
+No Godot run was performed for G26-R2A. No gameplay runtime PASS or manual playtest PASS is claimed.
+
 # G25 Final Main Merge Note
 
 - G25 has been fast-forward merged to `main`.
@@ -10,7 +27,7 @@
 - G25-R3b Godot headless project-load/parser smoke PASS.
 - Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
 - Manual playtest was not run, and no manual playtest PASS is claimed.
-- Next recommended step: G25 audit evaluation or G26 original audit.
+- Historical next-step note superseded by the G26-R1 audit and the current G26 architecture-readiness direction above.
 
 # G25-R3b Closeout Note
 
@@ -120,9 +137,9 @@
 - G18-align completed only deploy prep asset attendance view, right-side summary, and start / continue / abandon strong-confirmation preview consistency alignment.
 - It did not implement complete deploy prep, complete warehouse, real asset writes, event bus, reward grant, persistence, or real RunScene start / continue / abandon logic.
 - No gameplay runtime PASS or manual playtest PASS is claimed.
-- G22 has not started.
+- Historical record for the G18-align closeout point: G22 had not started. This status is superseded by the later G22 completion record.
 
-## G18-align-R2 Branch Note
+## Historical G18-align-R2 Branch Note (Superseded)
 
 - Active branch for this batch: `godot/g18-align-deploy-prep-asset-view`.
 - Baseline main HEAD: `dab8e9eacb009a6e51d84cb7ab7d0f5cac4f1690`.
@@ -133,7 +150,7 @@
 
 Read this first in the next Codex or ChatGPT conversation. This is the minimum next-chat entry, not a full historical archive.
 
-## Current Baseline
+## Historical Baseline Record (Superseded)
 
 - Repo: `D:\AGAME1\_repo_cache\Game1_work`
 - Remote: `https://github.com/yanoutrageous/Game1.git`
@@ -148,9 +165,9 @@ Read this first in the next Codex or ChatGPT conversation. This is the minimum n
 - G21-R4 validation: Godot headless project-load/parser smoke PASS; smoke left the working tree clean with no dirty side effects.
 - G21 final status: fast-forward merged to `main`; post-merge docs calibration is in progress/complete in this batch.
 - This is not complete gameplay runtime PASS and not manual playtest PASS.
-- G22 status: not started.
+- Historical status at the G21 handoff point: G22 was not started. This status is superseded by the later G22 completion record.
 - G21-R5 design alignment calibration records the full Base Docs consistency audit: no P0 was found, but P1/P2 wording and foundation-completeness gaps remain.
-- Do not enter functional G22 directly from the old Warehouse / Asset Page Shell wording. The next recommended planning step is G18-align / 出发探索资产出勤视角 before any G22 implementation.
+- Historical route guard before G18-align/G22: do not enter functional G22 directly from the old Warehouse / Asset Page Shell wording. This guard was followed by the later G18-align and G22 stages.
 - G22 priority, if later authorized, should align Deploy Prep full module semantics: 出发探索资产出勤视角, 二级标签, 卡片详情, 深层跳转, and strong confirmation for start / continue / abandon.
 - Historical wording to treat as superseded: old long-term seven-module structure, old "天赋" tab wording, and old G21/G22 ordering. Current long-term modules are 目标 / 图鉴 / 研究 / 个人资历 / 抽奖 / 收藏外观; current 出发探索 tabs are 地图 / 仓库 / 申领 / 出勤配置 / 作业许可.
 - G21 AssetEvent future action vocabulary is design-level only: 获得, 消耗, 丢失, 转化, 出售, 入仓, 清空, 抢救, 装备, 卸下, 加入出勤, 移出出勤, 解锁, 完成, 记录. This does not mean G21 implemented event writes or an event bus.
@@ -318,7 +335,7 @@ G16 does not claim complete gameplay runtime PASS or manual playtest PASS.
 
 - Latest integrated stage: G20 `Project Knowledge Governance`.
 - G20 is docs-only and fast-forward merged to main at `ae689b7464fd6ea81a763110cd89813abcfb6665`; post-merge docs commit hash is pending until commit.
-- G21 is complete and fast-forward merged to `main` as Asset & Item Flow Contract Foundation only. G21-R4 validation passed with Godot headless project-load/parser smoke PASS. G22 has not started.
+- Historical G21 closeout record: G21 was complete and G22 had not started. The G22 status is superseded by its later completion record.
 - G21-R5 design alignment calibration says the immediate next stage should be G18-align / 出发探索资产出勤视角 planning, not complete warehouse, long-term expansion, gacha, reward claiming, settlement history, or G22 feature implementation.
 - Later candidates: true run-start handoff, warehouse/requisition/permit rules, settlement report/history, long-term systems, MetaProgress, and Deploy persistence.
 
@@ -331,5 +348,5 @@ This handoff records G20 mainline integration and G21 mainline integration. Godo
 - G18-align-R4B closeout commit: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
 - G18-align-R3 recorded Godot headless project-load/parser smoke PASS only.
 - No gameplay runtime PASS or manual playtest PASS is claimed.
-- G22 has not started.
+- Historical record at the G18-align final merge point: G22 had not started. This status is superseded by the later G22 completion record.
 - Next step remains closeout / new-conversation handoff preparation, not automatic G22.
