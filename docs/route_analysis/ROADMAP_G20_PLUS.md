@@ -1,3 +1,15 @@
+# G28A Route Update
+
+Current active slice: G28A Item Asset Content / Warehouse View Content Contract - docs-only.
+
+- G27 is completed: asset-domain / warehouse-view contract docs and Godot schema foundation are now historical inputs.
+- G28A adds `docs/20_product/ITEM_ASSET_CONTENT_AND_WAREHOUSE_VIEW_CONTRACT.md`.
+- G28A aligns item asset content, warehouse view content, Base Docs source contexts, preview fixture boundaries, display policies, and future consumer boundaries.
+- Objective / Reward / Pool Contract Foundation is deferred to G29 or later.
+- Run Map and Run Flow are not merged into G28A; only interface-reservation language is recorded.
+- G28A does not implement Godot schema, UI consumers, real warehouse, real asset writes, reward delivery, gacha, settlement warehouse writes, objective progress, runtime catalog, ContentDB, persistence, gameplay runtime, or manual playtest validation.
+- Any remaining G27A/G27B/G27C or older route wording below this update is historical / superseded / resolved unless explicitly reopened by a future gate.
+
 # G27A Route Update
 
 Current active slice: G27A Asset Domain / Warehouse View Contract Foundation - docs-only.

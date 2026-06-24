@@ -1,3 +1,21 @@
+# G28A Docs Index Update
+
+Current G28A docs-only entry point:
+
+- `docs/20_product/ITEM_ASSET_CONTENT_AND_WAREHOUSE_VIEW_CONTRACT.md`
+
+Read with:
+
+- `docs/20_product/ASSET_DOMAIN_AND_WAREHOUSE_VIEW_CONTRACT.md`
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+
+G28A is documentation-only item asset content / warehouse view content contract work. It does not approve Godot schema changes, UI consumer changes, Base Docs writes, Connection writes, real warehouse behavior, real asset writes, runtime catalog / ContentDB, rewards, gacha, settlement warehouse writes, objective progress, FileAccess/user persistence, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G27A/G27B/G27C index wording below this update is historical / superseded / resolved unless explicitly reopened by a future gate.
+
 # G27A Docs Index Update
 
 Current G27A docs-only entry point:

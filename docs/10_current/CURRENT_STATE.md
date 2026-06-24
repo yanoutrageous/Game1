@@ -1,3 +1,36 @@
+# G28A Current Update
+
+Current active slice: G28A Item Asset Content / Warehouse View Content Contract - docs-only.
+
+G28A only updates repository docs. It aligns the new Base Docs source context for item asset content, warehouse view content, DeployPrep, LongTerm, Settlement, Run Map, Run Flow, combat room encounters, and future planning. It does not write Base Docs, Connection, Godot files, project metadata, scenes, resources, UID, or translation files.
+
+Current G28A contract source:
+
+- `docs/20_product/ITEM_ASSET_CONTENT_AND_WAREHOUSE_VIEW_CONTRACT.md`
+
+G28A status boundaries:
+
+- G27 Asset Domain / Warehouse View Contract Foundation is completed and historical.
+- G28A defines item asset content and warehouse view content fields, source contexts, and preview fixture boundaries.
+- G29 or later remains the candidate for Objective / Reward / Pool Contract Foundation.
+- Run Map and Run Flow are interface-reservation notes only; G28A does not merge map generation or flow state machines into this slice.
+- Any remaining G27A/G27B/G27C or older route wording below this update is historical / superseded / resolved unless explicitly reopened by a future gate.
+
+G28A non-goals:
+
+- no Godot schema or UI consumer implementation
+- no real warehouse
+- no real asset write
+- no sale/equipment/carry mutation
+- no reward delivery
+- no gacha draw or result delivery
+- no settlement warehouse write
+- no objective progress
+- no SaveManager / AssetLedger / RunAssetLedger / CommandBus mutation
+- no FileAccess / user:// persistence
+- no gameplay runtime PASS
+- no manual playtest PASS
+
 # G27A Current Update
 
 Current active slice: G27A Asset Domain / Warehouse View Contract Foundation - docs-only.

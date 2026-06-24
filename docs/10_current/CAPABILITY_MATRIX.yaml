@@ -1,14 +1,13 @@
 document_status: current_summary
 last_updated: "2026/06/23"
-scope: "G27A docs-only current capability matrix"
+scope: "G28A docs-only current capability matrix"
 stage_boundary:
-  current_stage: "G27A Asset Domain / Warehouse View Contract Foundation - docs-only"
-  latest_closed_engineering_stage: "G25 UI Structure Stabilization & Playable Route Recovery"
+  current_stage: "G28A Item Asset Content / Warehouse View Content Contract - docs-only"
+  latest_closed_engineering_stage: "G27 Asset Domain / Warehouse View Contract Foundation"
   g26_status: "completed_historical_no_longer_not_started_or_placeholder"
-  g27a_status: "active_docs_only_asset_domain_warehouse_view_contract"
-  g27b_status: "future_candidate_godot_asset_warehouse_schema_foundation_requires_gate"
-  g27c_status: "future_candidate_display_only_warehouse_ui_consumer_requires_gate"
-  g28_status: "future_candidate_objective_reward_pool_contract_or_later_requires_gate"
+  g27_status: "completed_historical_asset_domain_warehouse_view_contract_foundation"
+  g28a_status: "active_docs_only_item_asset_content_warehouse_view_content_contract"
+  g29_status: "future_candidate_objective_reward_pool_contract_or_later_requires_gate"
 validation_boundary:
   godot_headless_project_load_parser_smoke_pass: "recorded for G25"
   gameplay_runtime_pass: false
@@ -62,9 +61,10 @@ capabilities:
       - "reward grant"
       - "Policy/Tag rule engine"
   warehouse_view:
-    implementation_status: "g27a_docs_only_product_contract"
+    implementation_status: "g27_completed_contract_foundation_with_g28a_content_contract_active"
     evidence:
       - "docs/20_product/ASSET_DOMAIN_AND_WAREHOUSE_VIEW_CONTRACT.md"
+      - "docs/20_product/ITEM_ASSET_CONTENT_AND_WAREHOUSE_VIEW_CONTRACT.md"
     current_boundaries:
       - "warehouse is an independent asset view and does not define item ontology"
       - "OwnedAssetSnapshot and WarehouseViewSnapshot are read-only display-only preview"
@@ -79,6 +79,48 @@ capabilities:
       - "real gacha"
       - "real settlement mutation"
       - "real persistence"
+  item_asset_content_warehouse_view_content:
+    implementation_status: "g28a_docs_only_content_contract"
+    evidence:
+      - "docs/20_product/ITEM_ASSET_CONTENT_AND_WAREHOUSE_VIEW_CONTRACT.md"
+    content_categories:
+      - "resource"
+      - "equipment"
+      - "consumable"
+      - "material"
+      - "collectible"
+      - "unlock"
+      - "appearance"
+      - "special"
+    source_contexts:
+      - "deploy"
+      - "map"
+      - "room"
+      - "event"
+      - "combat"
+      - "chest"
+      - "objective"
+      - "settlement"
+      - "history"
+      - "gacha"
+    reserved_preview_concepts:
+      - "ItemAssetContentPreview"
+      - "WarehouseViewContentSnapshot"
+      - "room_loot"
+      - "ground_loot"
+      - "run_bag_item"
+      - "settlement_candidate"
+      - "history_reference"
+    not_complete:
+      - "Godot schema implementation"
+      - "runtime catalog or ContentDB"
+      - "real warehouse"
+      - "real asset write"
+      - "real reward delivery"
+      - "real gacha"
+      - "real settlement warehouse write"
+      - "real objective progress"
+      - "FileAccess/user persistence"
   settlement_history:
     implementation_status: "snapshot_foundation_only"
     evidence:

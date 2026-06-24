@@ -1,3 +1,14 @@
+# G28A Open Decisions Update
+
+G28A docs-only open decisions:
+
+- `OD-G28A-001`: preview fixture row count and review depth remain open.
+- `OD-G28A-002`: whether `material` remains a content category only or later becomes a runtime economy concept remains open.
+- `OD-G28A-003`: appearance display depth for LongTerm collection / appearance views remains open.
+- `OD-G28A-004`: `room_loot`, `ground_loot`, and `run_bag_item` are reserved concepts only; future gate must decide whether they stay interface-only or become runtime contracts.
+- `OD-G28A-005`: G29 naming remains open: Objective / Reward / Pool Contract Foundation or a later split name.
+- Any G27A / prior G27 open-decision wording below this update is historical / superseded / resolved unless explicitly reopened.
+
 # G27A Open Decisions Update
 
 G27A docs-only decision posture:
