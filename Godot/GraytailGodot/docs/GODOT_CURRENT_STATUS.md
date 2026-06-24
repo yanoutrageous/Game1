@@ -1,3 +1,14 @@
+# G30 LongTerm Asset Interface Status
+
+G30-R2 is the current implementation slice on branch `godot/g30-long-term-asset-interface-full-content`.
+
+- Scope: LongTerm system integration and asset interface full content.
+- Product contract: `docs/20_product/LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT_CONTRACT.md`.
+- Godot scope: LongTerm preview model/schema/UI, asset-domain RewardBundle/event/red-dot/jump helpers, Settlement and DeployPrep display-only consumer alignment.
+- Boundary: preview_only / display_only / read_only / no_persistence.
+- Not implemented: real LongTerm backend, objective progress, reward claim/grant, gacha odds/roll/result, red dot clearing, asset write, SaveManager, AssetLedger mutation, CommandBus mutation, gameplay runtime, manual playtest.
+- G30-R2 Godot headless project-load/parser smoke PASS was recorded for project-load/parser only; this is not gameplay runtime PASS or manual playtest PASS.
+
 # G26 Engineering Architecture Structure Readiness
 
 Current G26 direction is Engineering Architecture Structure Readiness Foundation.

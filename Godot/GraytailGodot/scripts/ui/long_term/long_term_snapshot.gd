@@ -4,6 +4,7 @@ class_name LongTermSnapshot
 const LongTermContentFrameworkScript := preload("res://scripts/ui/long_term/long_term_content_framework.gd")
 const LongTermContentSlotModelScript := preload("res://scripts/ui/long_term/long_term_content_slot_model.gd")
 const SettlementHistoryPreviewScript := preload("res://scripts/core/settlement/settlement_history_preview.gd")
+const AssetDomainContractScript := preload("res://scripts/core/asset/asset_domain_contract.gd")
 const WarehouseViewSchemaScript := preload("res://scripts/core/asset/warehouse_view_schema.gd")
 const WarehouseViewContentSchemaScript := preload("res://scripts/core/asset/warehouse_view_content_schema.gd")
 
@@ -18,6 +19,8 @@ static func default_snapshot(module_summaries: Dictionary = {}, source: StringNa
 	var long_term_history_preview: Dictionary = settlement_history_preview.get("long_term_history_preview", {})
 	var long_term_asset_reference_view: Dictionary = WarehouseViewSchemaScript.default_long_term_asset_reference_view()
 	var long_term_content_view: Dictionary = WarehouseViewContentSchemaScript.build_long_term_content_view()
+	var g30_reward_bundle := AssetDomainContractScript.default_reward_bundle_preview("g30.long_term.reward_bundle.preview", &"long_term")
+	var g30_red_dot_policy := AssetDomainContractScript.default_red_dot_policy(&"g30.long_term.red_dot_policy")
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"profile_snapshot": {
@@ -65,6 +68,33 @@ static func default_snapshot(module_summaries: Dictionary = {}, source: StringNa
 			"read_only": true,
 			"display_only": true,
 			"preview": true,
+		},
+		"long_term_asset_interface_full_content_preview": {
+			"title": "G30 LongTerm asset interface full content preview",
+			"state": "display_only",
+			"scope": "六模块 / RewardBundle / ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent / ObjectiveEvent / red_dot / jump_target",
+			"modules": ["目标", "图鉴", "研究", "个人资历", "抽奖", "收藏 / 外观"],
+			"reward_bundle_preview": g30_reward_bundle.duplicate(true),
+			"red_dot_policy": g30_red_dot_policy.duplicate(true),
+			"jump_targets": [
+				AssetDomainContractScript.default_jump_target(&"warehouse", "Warehouse view reference preview"),
+				AssetDomainContractScript.default_jump_target(&"deploy_prep", "DeployPrep objective consumer preview"),
+				AssetDomainContractScript.default_jump_target(&"settlement_history", "Settlement/history snapshot preview"),
+			],
+			"event_flow_preview": {
+				"ResourceEvent": AssetDomainContractScript.default_resource_event_preview("g30.resource_event.preview"),
+				"ItemEvent": AssetDomainContractScript.default_item_event_preview("g30.item_event.preview"),
+				"UnlockEvent": AssetDomainContractScript.default_unlock_event_preview("g30.unlock_event.preview"),
+				"HistoryRecordEvent": AssetDomainContractScript.default_history_record_event_preview("g30.history_record_event.preview"),
+				"ObjectiveEvent": AssetDomainContractScript.default_objective_event_preview("g30.objective_event.preview"),
+			},
+			"read_only": true,
+			"display_only": true,
+			"preview": true,
+			"preview_only": true,
+			"no_persistence": true,
+			"no_asset_write": true,
+			"no_reward_grant": true,
 		},
 		"content_framework_preview": {
 			"title": "G24 长期系统内容框架 preview",

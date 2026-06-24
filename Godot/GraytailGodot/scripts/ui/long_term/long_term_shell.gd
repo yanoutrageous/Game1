@@ -124,6 +124,7 @@ func _refresh_from_model() -> void:
 		_format_preview_line(snapshot, "red_dot_preview"),
 		_format_slots(content_preview.get("event_slots_preview", []) as Array),
 	]
+	interface_preview_label.text += "\n%s" % _format_g30_interface_preview(current_model, content_preview)
 	var history_preview: Dictionary = current_model.get("history_preview_panel", {})
 	history_preview_label.text = _format_history_preview(history_preview)
 	next_stage_label.text = "链接 preview：%s / %s / %s\nG24 cross-link：%s\nart slot：%s" % [
@@ -202,6 +203,24 @@ func _format_art_slots(slots: Array) -> String:
 	for slot: Dictionary in slots:
 		labels.append(String(slot.get("art_key", "")))
 	return ", ".join(labels.slice(0, 3)) if not labels.is_empty() else "art_placeholder_id"
+
+
+func _format_g30_interface_preview(model: Dictionary, content_preview: Dictionary) -> String:
+	var lines := ["G30 asset interface"]
+	lines.append("RewardBundle: %s" % _safe_display_text((model.get("reward_bundle_preview", {}) as Dictionary).get("schema_kind", "RewardBundle")))
+	lines.append("red_dot_policy: %s" % _safe_display_text((model.get("red_dot_policy", {}) as Dictionary).get("policy_id", "red_dot")))
+	lines.append("jump_target: %s" % _format_jump_targets(model.get("jump_targets", []) as Array))
+	lines.append("asset_refs: %s" % _safe_display_text((model.get("asset_interface_preview", {}) as Dictionary).get("asset_refs", [])))
+	lines.append("events: %s" % _safe_display_text((content_preview.get("event_flow_preview", {}) as Dictionary).get("summary", "ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent / ObjectiveEvent")))
+	lines.append("preview_only / display_only / read_only / no_persistence")
+	return "\n".join(lines)
+
+
+func _format_jump_targets(targets: Array) -> String:
+	var labels := []
+	for target: Dictionary in targets.slice(0, 4):
+		labels.append("%s" % _safe_display_text(target.get("target_id", "")))
+	return ", ".join(labels) if not labels.is_empty() else "jump_target preview"
 
 
 func _format_snapshot_section(raw_section: Variant) -> String:

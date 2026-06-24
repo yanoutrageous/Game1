@@ -1,3 +1,17 @@
+# G30 Open Decisions Update
+
+G30-R2 long-term system / asset interface open decisions:
+
+- `OD-G30-001`: LongTerm six-module final naming remains open: 目标 / 图鉴 / 研究 / 个人资历 / 抽奖 / 收藏 / 外观 may still receive final display names.
+- `OD-G30-002`: history record default priority inside 个人资历 remains open.
+- `OD-G30-003`: RewardBundle ownership and claim location remain open; G30 only models preview fields.
+- `OD-G30-004`: red_dot_policy clear granularity remains open; G30 models preview reasons and clear-policy names only.
+- `OD-G30-005`: gacha pool display depth, owned/unowned display, and result jump priority remain open.
+- `OD-G30-006`: collection / appearance display depth and unique collectible duplicate policy remain open.
+- `OD-G30-007`: research line visibility and whether research remains a primary module remain open.
+- `OD-G30-008`: jump_target priority and return-path UX remain open.
+- Any G29 / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G29 Open Decisions Update
 
 G29-R2 deploy prep revision open decisions:

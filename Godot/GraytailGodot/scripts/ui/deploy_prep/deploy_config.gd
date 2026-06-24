@@ -1,6 +1,7 @@
 extends RefCounted
 class_name DeployConfig
 
+const AssetDomainContractScript := preload("res://scripts/core/asset/asset_domain_contract.gd")
 const AssetProjectionSchemaScript := preload("res://scripts/core/asset/asset_projection_schema.gd")
 const WarehouseViewSchemaScript := preload("res://scripts/core/asset/warehouse_view_schema.gd")
 const WarehouseViewContentSchemaScript := preload("res://scripts/core/asset/warehouse_view_content_schema.gd")
@@ -62,6 +63,7 @@ static func default_config(sequence: int = 1) -> Dictionary:
 		"deploy_asset_view_preview": WarehouseViewSchemaScript.default_deploy_asset_view(),
 		"warehouse_view_snapshot": WarehouseViewSchemaScript.default_warehouse_view_snapshot(),
 		"warehouse_view_content_snapshot": WarehouseViewContentSchemaScript.build_deploy_prep_content_view(),
+		"long_term_asset_interface_preview": _long_term_asset_interface_preview(),
 		"preview": true,
 		"display_only": true,
 		"read_only": true,
@@ -155,6 +157,7 @@ static func build_run_start_config(config: Dictionary) -> Dictionary:
 		"deploy_asset_view_preview": _dictionary_copy(source.get("deploy_asset_view_preview", WarehouseViewSchemaScript.default_deploy_asset_view())),
 		"warehouse_view_snapshot": _dictionary_copy(source.get("warehouse_view_snapshot", WarehouseViewSchemaScript.default_warehouse_view_snapshot())),
 		"warehouse_view_content_snapshot": _dictionary_copy(source.get("warehouse_view_content_snapshot", WarehouseViewContentSchemaScript.build_deploy_prep_content_view())),
+		"long_term_asset_interface_preview": _dictionary_copy(source.get("long_term_asset_interface_preview", _long_term_asset_interface_preview())),
 		"right_summary_preview": _dictionary_copy(source.get("right_summary_preview", right_summary_preview(source))),
 		"history_metadata": history_metadata_for(source),
 		"profile_snapshot_ref": source.get("profile_snapshot_ref", &"placeholder_profile_snapshot"),
@@ -442,6 +445,26 @@ static func _action_intent_boundaries_preview() -> Dictionary:
 		"display_only": true,
 		"read_only": true,
 		"preview": true,
+	}
+
+
+static func _long_term_asset_interface_preview() -> Dictionary:
+	return {
+		"title": "G30 LongTerm asset interface consumer preview",
+		"reward_bundle_preview": AssetDomainContractScript.default_reward_bundle_preview("deploy_prep.objective.reward_bundle.preview", &"deploy_prep"),
+		"red_dot_policy": AssetDomainContractScript.default_red_dot_policy(&"deploy_prep.objective.red_dot_policy"),
+		"jump_targets": [
+			AssetDomainContractScript.default_jump_target(&"long_term_goals", "LongTerm goals preview"),
+			AssetDomainContractScript.default_jump_target(&"warehouse", "Warehouse asset reference preview"),
+		],
+		"boundary": "DeployPrep reads objective/reward/asset interface preview only; it does not write objective progress, rewards, or assets.",
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"preview_only": true,
+		"no_persistence": true,
+		"no_asset_write": true,
+		"no_reward_grant": true,
 	}
 
 

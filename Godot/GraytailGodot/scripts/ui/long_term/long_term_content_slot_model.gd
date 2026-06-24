@@ -1,6 +1,8 @@
 extends RefCounted
 class_name LongTermContentSlotModel
 
+const AssetDomainContractScript := preload("res://scripts/core/asset/asset_domain_contract.gd")
+
 const STATE_PREVIEW := &"preview"
 const STATE_DISABLED := &"disabled"
 
@@ -225,15 +227,29 @@ static func asset_event_preview_slot() -> Dictionary:
 
 static func _slot(slot_id: StringName, slot_type: StringName, display_name: String, description: String) -> Dictionary:
 	var slot_key := String(slot_id)
+	var reward_bundle := AssetDomainContractScript.default_reward_bundle_preview("long_term.%s.reward_bundle.preview" % slot_key, &"long_term")
 	return {
 		"slot_id": slot_id,
 		"slot_type": slot_type,
 		"display_name": display_name,
 		"description": description,
 		"state": STATE_PREVIEW,
+		"reward_bundle_preview": reward_bundle,
+		"resource_event_preview": AssetDomainContractScript.default_resource_event_preview("long_term.%s.resource_event.preview" % slot_key),
+		"item_event_preview": AssetDomainContractScript.default_item_event_preview("long_term.%s.item_event.preview" % slot_key),
+		"unlock_event_preview": AssetDomainContractScript.default_unlock_event_preview("long_term.%s.unlock_event.preview" % slot_key),
+		"history_record_event_preview": AssetDomainContractScript.default_history_record_event_preview("long_term.%s.history_record_event.preview" % slot_key),
+		"objective_event_preview": AssetDomainContractScript.default_objective_event_preview("long_term.%s.objective_event.preview" % slot_key),
+		"red_dot_policy": AssetDomainContractScript.default_red_dot_policy(StringName("long_term.%s.red_dot_policy" % slot_key)),
+		"jump_targets": [
+			AssetDomainContractScript.default_jump_target(&"warehouse", "Warehouse reference preview"),
+			AssetDomainContractScript.default_jump_target(&"codex", "Codex reference preview"),
+			AssetDomainContractScript.default_jump_target(&"deploy_prep", "DeployPrep reference preview"),
+		],
 		"read_only": true,
 		"display_only": true,
 		"preview": true,
+		"preview_only": true,
 		"no_persistence": true,
 		"no_reward_grant": true,
 		"no_claim": true,

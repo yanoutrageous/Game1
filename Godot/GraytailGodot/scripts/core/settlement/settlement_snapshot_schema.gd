@@ -1,6 +1,7 @@
 extends RefCounted
 class_name SettlementSnapshotSchema
 
+const AssetDomainContractScript := preload("res://scripts/core/asset/asset_domain_contract.gd")
 const WarehouseViewSchemaScript := preload("res://scripts/core/asset/warehouse_view_schema.gd")
 const WarehouseViewContentSchemaScript := preload("res://scripts/core/asset/warehouse_view_content_schema.gd")
 
@@ -35,6 +36,11 @@ static func default_snapshot() -> Dictionary:
 		"history_asset_reference_preview": WarehouseViewSchemaScript.default_history_asset_reference(),
 		"resource_result_preview": _default_resource_preview(),
 		"objective_result_preview": _default_named_preview("objective"),
+		"reward_bundle_preview": AssetDomainContractScript.default_reward_bundle_preview("settlement.reward_bundle.preview", &"settlement"),
+		"resource_event_preview": AssetDomainContractScript.default_resource_event_preview("settlement.resource_event.preview"),
+		"item_event_preview": AssetDomainContractScript.default_item_event_preview("settlement.item_event.preview"),
+		"unlock_event_preview": AssetDomainContractScript.default_unlock_event_preview("settlement.unlock_event.preview"),
+		"objective_event_preview": AssetDomainContractScript.default_objective_event_preview("settlement.objective_event.preview"),
 		"commission_result_preview": _default_named_preview("commission"),
 		"codex_unlock_preview": _default_named_preview("codex"),
 		"qualification_delta_preview": _default_named_preview("qualification"),
@@ -66,6 +72,11 @@ static func normalize_snapshot(data: Dictionary = {}) -> Dictionary:
 	result["history_asset_reference_preview"] = _dictionary_from(result.get("history_asset_reference_preview", {}), WarehouseViewSchemaScript.default_history_asset_reference())
 	result["resource_result_preview"] = _dictionary_from(result.get("resource_result_preview", {}), _default_resource_preview())
 	result["objective_result_preview"] = _dictionary_from(result.get("objective_result_preview", {}), _default_named_preview("objective"))
+	result["reward_bundle_preview"] = AssetDomainContractScript.normalize_reward_bundle_preview(_dictionary_from(result.get("reward_bundle_preview", {}), AssetDomainContractScript.default_reward_bundle_preview("settlement.reward_bundle.preview", &"settlement")))
+	result["resource_event_preview"] = _dictionary_from(result.get("resource_event_preview", {}), AssetDomainContractScript.default_resource_event_preview("settlement.resource_event.preview"))
+	result["item_event_preview"] = _dictionary_from(result.get("item_event_preview", {}), AssetDomainContractScript.default_item_event_preview("settlement.item_event.preview"))
+	result["unlock_event_preview"] = _dictionary_from(result.get("unlock_event_preview", {}), AssetDomainContractScript.default_unlock_event_preview("settlement.unlock_event.preview"))
+	result["objective_event_preview"] = _dictionary_from(result.get("objective_event_preview", {}), AssetDomainContractScript.default_objective_event_preview("settlement.objective_event.preview"))
 	result["commission_result_preview"] = _dictionary_from(result.get("commission_result_preview", {}), _default_named_preview("commission"))
 	result["codex_unlock_preview"] = _dictionary_from(result.get("codex_unlock_preview", {}), _default_named_preview("codex"))
 	result["qualification_delta_preview"] = _dictionary_from(result.get("qualification_delta_preview", {}), _default_named_preview("qualification"))

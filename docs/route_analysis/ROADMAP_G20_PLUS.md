@@ -1,3 +1,15 @@
+# G30 Route Update
+
+Current active slice: G30-R2 Long-Term System Integration & Asset Interface Full Content Implementation.
+
+- G30 uses `D:\AGAME1\Base Docs\长期系统整合与资产接口规则策划案.md` as the primary read-only planning source.
+- G30 adds the current product contract at `docs/20_product/LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT_CONTRACT.md`.
+- G30 aligns LongTerm six modules, secondary groups, cards, status chips, asset references, RewardBundle preview, ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent / ObjectiveEvent preview, red_dot_policy, and jump_target preview.
+- G30 aligns DeployPrep and Settlement as display-only consumers of the same preview interface.
+- G30 does not implement real objective progress, reward claim/grant, gacha odds/roll/results, red dot clearing, asset writes, SaveManager, AssetLedger mutation, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+- Unified G30-R3 audit / release gate should validate parser smoke and branch state before any main merge.
+- Any remaining G29 or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G29 Route Update
 
 Current active slice: G29-R2 Deploy Prep Revision Full Content Implementation.

@@ -84,6 +84,7 @@ static func _build_model(
 			"deploy_asset_view_preview": (config.get("deploy_asset_view_preview", {}) as Dictionary).duplicate(true),
 			"warehouse_view_snapshot": (config.get("warehouse_view_snapshot", {}) as Dictionary).duplicate(true),
 			"warehouse_view_content_snapshot": (config.get("warehouse_view_content_snapshot", {}) as Dictionary).duplicate(true),
+			"long_term_asset_interface_preview": (config.get("long_term_asset_interface_preview", {}) as Dictionary).duplicate(true),
 			"objective_preview": (config.get("objective_preview", {}) as Dictionary).duplicate(true),
 			"config_validity_preview": (config.get("config_validity_preview", {}) as Dictionary).duplicate(true),
 			"action_intent_boundaries": (config.get("action_intent_boundaries", {}) as Dictionary).duplicate(true),

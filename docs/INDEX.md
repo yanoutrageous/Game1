@@ -1,3 +1,22 @@
+# G30 Docs Index Update
+
+Current G30 entry point:
+
+- `docs/20_product/LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT_CONTRACT.md`
+
+Read with:
+
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+- `docs/validation/G30_LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT_VALIDATION.md`
+- `docs/handoff/HANDOFF_G30_LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT.md`
+
+G30 implements LongTerm system integration and asset interface full content as preview_only / display_only / read_only. It covers six modules, RewardBundle, ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent / ObjectiveEvent, red_dot_policy, jump_target, and display-only consumer alignment. It does not implement real LongTerm backend, rewards, gacha, red dots, objective progress, asset writes, persistence, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G29 / older index wording below this update is historical / superseded unless explicitly reopened.
+
 # G29 Docs Index Update
 
 Current G29 entry point:

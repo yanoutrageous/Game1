@@ -1,3 +1,23 @@
+# G30 Current Update
+
+Current active slice: G30-R2 Long-Term System Integration & Asset Interface Full Content Implementation.
+
+Current G30 contract source:
+
+- `docs/20_product/LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT_CONTRACT.md`
+
+G30 uses `D:\AGAME1\Base Docs\长期系统整合与资产接口规则策划案.md` as the primary read-only planning source and aligns the six-module LongTerm structure with asset interface, RewardBundle, event flow, red_dot_policy, and jump_target preview data.
+
+G30 status boundaries:
+
+- LongTerm primary modules remain: 目标 / 图鉴 / 研究 / 个人资历 / 抽奖 / 收藏 / 外观.
+- G30 adds display-only module scope, secondary groups, cards, status chips, asset refs, RewardBundle preview, red_dot_policy, jump_targets, and event-flow preview.
+- G30 aligns DeployPrep and Settlement as display-only consumers of the same preview interface.
+- G30 remains preview_only / display_only / read_only / no_persistence.
+- G30 does not implement real LongTerm backend, real objective progress, reward claim/grant, real gacha odds/roll/result, real red dot clearing, real asset writes, SaveManager, AssetLedger mutation, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G29 or older current-state wording below this update is historical / superseded unless explicitly reopened by a future gate.
+
 # G29 Current Update
 
 Current active slice: G29-R2 Deploy Prep Revision Full Content Implementation.

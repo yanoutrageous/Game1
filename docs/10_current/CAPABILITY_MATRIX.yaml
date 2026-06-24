@@ -1,13 +1,43 @@
 document_status: current_summary
 last_updated: "2026/06/24"
-scope: "G29-R2 deploy prep revision full content capability matrix"
+scope: "G30-R2 long-term system asset interface full content capability matrix"
+g30_update:
+  current_stage: "G30-R2 Long-Term System Integration & Asset Interface Full Content Implementation"
+  contract: "docs/20_product/LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT_CONTRACT.md"
+  status: "active_preview_display_only_read_only"
+  modules:
+    - "目标"
+    - "图鉴"
+    - "研究"
+    - "个人资历"
+    - "抽奖"
+    - "收藏 / 外观"
+  preview_interfaces:
+    - "RewardBundle"
+    - "ResourceEvent"
+    - "ItemEvent"
+    - "UnlockEvent"
+    - "HistoryRecordEvent"
+    - "ObjectiveEvent"
+    - "red_dot_policy"
+    - "jump_target"
+    - "asset_interface_preview"
+  not_complete:
+    - "real LongTerm backend"
+    - "real objective progress"
+    - "real reward claim/grant"
+    - "real gacha odds/roll/result"
+    - "real red dot clearing"
+    - "real asset write"
+    - "real persistence"
 stage_boundary:
-  current_stage: "G29-R2 Deploy Prep Revision Full Content Implementation"
+  current_stage: "G30-R2 Long-Term System Integration & Asset Interface Full Content Implementation"
   latest_closed_engineering_stage: "G28 Item Asset Content / Warehouse View Content Preview Foundation"
   g26_status: "completed_historical_no_longer_not_started_or_placeholder"
   g27_status: "completed_historical_asset_domain_warehouse_view_contract_foundation"
   g28a_status: "completed_historical_item_asset_content_warehouse_view_content_contract"
-  g29_status: "active_deploy_prep_revision_full_content_preview_display_only"
+  g29_status: "completed_historical_deploy_prep_revision_full_content_preview_display_only"
+  g30_status: "active_long_term_asset_interface_preview_display_only"
 validation_boundary:
   godot_headless_project_load_parser_smoke_pass: "recorded for G25"
   gameplay_runtime_pass: false

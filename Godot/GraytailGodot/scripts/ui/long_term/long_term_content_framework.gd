@@ -1,6 +1,7 @@
 extends RefCounted
 class_name LongTermContentFramework
 
+const AssetDomainContractScript := preload("res://scripts/core/asset/asset_domain_contract.gd")
 const LongTermContentSlotModelScript := preload("res://scripts/ui/long_term/long_term_content_slot_model.gd")
 
 const STATE_PREVIEW := &"preview"
@@ -178,6 +179,7 @@ static func _module(
 ) -> Dictionary:
 	var id_text := String(module_id)
 	var event_slots := LongTermContentSlotModelScript.build_slots_for_module(module_id)
+	var reward_bundle := AssetDomainContractScript.default_reward_bundle_preview("long_term.%s.reward_bundle.preview" % id_text, &"long_term")
 	return {
 		"module_id": module_id,
 		"id": module_id,
@@ -195,6 +197,11 @@ static func _module(
 		"display_only": true,
 		"read_only": true,
 		"preview": true,
+		"preview_only": true,
+		"no_persistence": true,
+		"no_reward_grant": true,
+		"no_asset_write": true,
+		"module_scope": _module_scope(module_id),
 		"secondary_groups": secondary_groups.duplicate(true),
 		"cards": cards.duplicate(true),
 		"detail_preview": {
@@ -206,6 +213,13 @@ static func _module(
 		},
 		"cross_links_preview": cross_links.duplicate(true),
 		"event_slots_preview": event_slots.duplicate(true),
+		"event_flow_preview": _event_flow_preview(module_id),
+		"reward_bundle_preview": reward_bundle,
+		"red_dot_policy": AssetDomainContractScript.default_red_dot_policy(StringName("long_term.%s.red_dot_policy" % id_text)),
+		"jump_targets": _jump_targets(module_id),
+		"asset_interface_preview": _asset_interface_preview(module_id),
+		"current_landable_scope": _current_landable_scope(module_id),
+		"deferred_scope": _deferred_scope(module_id),
 		"art_slots_preview": _art_slots(module_id),
 		"ui_art_data_keys": _ui_art_data_keys(module_id),
 		"future_data_ref": "future.long_term.%s.content_framework" % id_text,
@@ -235,6 +249,7 @@ static func _group(title: String, items: Array, group_icon_key: String) -> Dicti
 
 
 static func _card(card_id: String, title: String, description: String, group_title: String, preview_slot: StringName) -> Dictionary:
+	var card_ref := AssetDomainContractScript.default_asset_ref(card_id, AssetDomainContractScript.CATEGORY_RECORD_UNLOCK)
 	return {
 		"card_id": card_id,
 		"title": title,
@@ -251,9 +266,20 @@ static func _card(card_id: String, title: String, description: String, group_tit
 		"description_key": "ui.long_term.card.%s.description" % card_id,
 		"future_data_ref": "future.long_term.card.%s" % card_id,
 		"data_source_ref": "preview.long_term.card.%s" % card_id,
+		"status_chips": ["preview_only", "display_only", "read_only"],
+		"asset_refs": [card_ref],
+		"reward_summary": "RewardBundle preview only; no reward grant.",
+		"reward_bundle_preview": AssetDomainContractScript.default_reward_bundle_preview("long_term.card.%s.reward_bundle.preview" % card_id, &"long_term"),
+		"red_dot_policy": AssetDomainContractScript.default_red_dot_policy(StringName("long_term.card.%s.red_dot_policy" % card_id)),
+		"jump_targets": [
+			AssetDomainContractScript.default_jump_target(&"warehouse", "Warehouse reference preview"),
+			AssetDomainContractScript.default_jump_target(&"codex", "Codex reference preview"),
+		],
 		"read_only": true,
 		"display_only": true,
 		"preview": true,
+		"preview_only": true,
+		"no_persistence": true,
 	}
 
 
@@ -316,3 +342,133 @@ static func _ui_art_data_keys(module_id: StringName) -> Dictionary:
 		"future_data_ref": "future.long_term.%s" % id_text,
 		"data_source_ref": "preview.long_term.%s" % id_text,
 	}
+
+
+static func _module_scope(module_id: StringName) -> Dictionary:
+	match module_id:
+		&"goals":
+			return _scope(["tasks", "achievements", "commission_records"], ["objective progress preview", "RewardBundle preview", "claim state preview"])
+		&"codex":
+			return _scope(["maps", "monsters", "items", "events", "rules", "lore"], ["discovery state preview", "asset reference preview"])
+		&"research":
+			return _scope(["research lines", "unlock entry preview"], ["research unlock preview", "requirement preview"])
+		&"profile":
+			return _scope(["profile level", "history records", "statistics", "milestones", "titles", "badges"], ["HistoryRecordEvent preview", "qualification preview"])
+		&"gacha":
+			return _scope(["pool descriptor", "cost descriptor", "result ownership preview"], ["pool preview", "RewardBundle preview"])
+		&"collection_appearance":
+			return _scope(["unique display", "appearance config intent", "badges", "settlement display"], ["asset display preview", "cosmetic unlock preview"])
+		_:
+			return _scope([], [])
+
+
+static func _scope(responsibilities: Array, interfaces: Array) -> Dictionary:
+	return {
+		"responsibilities": responsibilities.duplicate(true),
+		"interfaces": interfaces.duplicate(true),
+		"boundary": "LongTerm content only; no real backend, no persistence, no asset mutation.",
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"preview_only": true,
+	}
+
+
+static func _event_flow_preview(module_id: StringName) -> Dictionary:
+	var id_text := String(module_id)
+	return {
+		"module_id": module_id,
+		"events": [
+			AssetDomainContractScript.default_resource_event_preview("long_term.%s.resource_event.preview" % id_text),
+			AssetDomainContractScript.default_item_event_preview("long_term.%s.item_event.preview" % id_text),
+			AssetDomainContractScript.default_unlock_event_preview("long_term.%s.unlock_event.preview" % id_text),
+			AssetDomainContractScript.default_history_record_event_preview("long_term.%s.history_record_event.preview" % id_text),
+			AssetDomainContractScript.default_objective_event_preview("long_term.%s.objective_event.preview" % id_text),
+		],
+		"summary": "ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent / ObjectiveEvent preview only.",
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"preview_only": true,
+	}
+
+
+static func _asset_interface_preview(module_id: StringName) -> Dictionary:
+	var id_text := String(module_id)
+	return {
+		"module_id": module_id,
+		"asset_refs": [
+			AssetDomainContractScript.default_asset_ref("%s_asset_reference_preview" % id_text, AssetDomainContractScript.CATEGORY_RECORD_UNLOCK),
+		],
+		"warehouse_relationship": "Warehouse remains independent; LongTerm stores references and jump intent only.",
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"preview_only": true,
+		"no_asset_write": true,
+	}
+
+
+static func _jump_targets(module_id: StringName) -> Array:
+	match module_id:
+		&"goals":
+			return [
+				AssetDomainContractScript.default_jump_target(&"deploy_prep", "Open DeployPrep objective selection preview"),
+				AssetDomainContractScript.default_jump_target(&"warehouse", "Open reward asset reference preview"),
+			]
+		&"codex":
+			return [
+				AssetDomainContractScript.default_jump_target(&"warehouse", "Open owned-state reference preview"),
+				AssetDomainContractScript.default_jump_target(&"profile", "Open first discovery history preview"),
+			]
+		&"research":
+			return [
+				AssetDomainContractScript.default_jump_target(&"codex", "Open codex requirement preview"),
+				AssetDomainContractScript.default_jump_target(&"deploy_prep", "Open future unlock consumer preview"),
+			]
+		&"profile":
+			return [
+				AssetDomainContractScript.default_jump_target(&"history", "Open history record preview"),
+				AssetDomainContractScript.default_jump_target(&"collection_appearance", "Open badge/title display preview"),
+			]
+		&"gacha":
+			return [
+				AssetDomainContractScript.default_jump_target(&"collection_appearance", "Open result display preview"),
+				AssetDomainContractScript.default_jump_target(&"warehouse", "Open item result preview"),
+			]
+		&"collection_appearance":
+			return [
+				AssetDomainContractScript.default_jump_target(&"codex", "Open source codex preview"),
+				AssetDomainContractScript.default_jump_target(&"warehouse", "Open unique collectible body preview"),
+			]
+		_:
+			return []
+
+
+static func _current_landable_scope(module_id: StringName) -> Array:
+	match module_id:
+		&"goals":
+			return ["display objective categories", "display reward state preview", "display red_dot_policy preview"]
+		&"codex":
+			return ["display codex categories", "display asset/codex relation preview"]
+		&"research":
+			return ["display disabled research lines", "display unlock interface preview"]
+		&"profile":
+			return ["display profile/history preview", "display milestone/title/badge preview"]
+		&"gacha":
+			return ["display disabled pool/cost/result preview"]
+		&"collection_appearance":
+			return ["display collection/cosmetic/unique preview", "display asset reference preview"]
+		_:
+			return []
+
+
+static func _deferred_scope(module_id: StringName) -> Array:
+	return [
+		"real backend state",
+		"real reward delivery",
+		"real gacha result",
+		"real objective progress",
+		"real asset mutation",
+		"real persistence for %s" % String(module_id),
+	]
