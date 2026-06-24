@@ -1,3 +1,25 @@
+# G31 Current Update
+
+Current active slice: G31-R2 Run Map Domain / Room State Foundation Full Content Implementation.
+
+Current G31 contract source:
+
+- `docs/20_product/RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION_CONTRACT.md`
+
+G31 uses `D:\AGAME1\Base Docs\局内地图本体与生成规则策划案.md` as the primary read-only planning source and establishes the run-local map / room-state fact source.
+
+G31 status boundaries:
+
+- Core layers: TruthMap / KnownMap / ScanLayer / MarkMap / RunMapState / InfoReliabilityLayer.
+- Current map type: classic rectangular minesweeper map.
+- Current outputs: FinalMapSnapshot, RunMapSnapshot, MapResult, RoomState, RoomPolicy, RoomTag, return_eligibility / fast_return preview.
+- UI consumers: minimap / run surface / HUD read display-only public snapshots.
+- Settlement receives map-facing summary preview fields only.
+- G31 remains read_only / display_only / preview / no_persistence.
+- G31 does not implement complete RunFlow, persistence, battle runtime, event chains, RoomLoot runtime, objective progress, reward grant, settlement warehouse write, SaveManager, AssetLedger / RunAssetLedger mutation, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G30 or older current-state wording below this update is historical / superseded unless explicitly reopened by a future gate.
+
 # G30 Current Update
 
 Current active slice: G30-R2 Long-Term System Integration & Asset Interface Full Content Implementation.

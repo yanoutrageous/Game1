@@ -794,7 +794,9 @@ func _refresh_view_models() -> void:
 	var snapshot := run_context.get_status_snapshot()
 	var layout_profile: Dictionary = _current_layout_profile()
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
-	var minimap_vm := MiniMapViewModel.build_from_intel(run_context.intel_map, run_context.get_current_pos())
+	var minimap_vm := MiniMapViewModel.build_from_run_map_snapshot(snapshot.get("run_map_snapshot", {}))
+	if minimap_vm.room_markers.is_empty():
+		minimap_vm = MiniMapViewModel.build_from_intel(run_context.intel_map, run_context.get_current_pos())
 	if run_surface != null:
 		var surface_model := RunSurfaceModel.build(snapshot, minimap_vm, layout_profile, last_command_result)
 		run_surface.apply_layout_profile(layout_profile)

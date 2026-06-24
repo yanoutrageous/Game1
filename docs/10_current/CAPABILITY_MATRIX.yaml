@@ -1,3 +1,38 @@
+g31_update:
+  current_stage: "G31-R2 Run Map Domain / Room State Foundation Full Content Implementation"
+  contract: "docs/20_product/RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION_CONTRACT.md"
+  status: "active_map_room_state_foundation_preview_display_only"
+  map_layers:
+    - "TruthMap"
+    - "KnownMap"
+    - "ScanLayer"
+    - "MarkMap"
+    - "RunMapState"
+    - "InfoReliabilityLayer"
+  snapshot_interfaces:
+    - "MapGenProfile"
+    - "MapGenerationLog"
+    - "FinalMapSnapshot"
+    - "RunMapSnapshot"
+    - "MapResult"
+    - "RoomState"
+    - "RoomPolicy"
+    - "RoomTag"
+    - "return_eligibility"
+    - "fast_return"
+  not_complete:
+    - "complete RunFlow"
+    - "real persistence"
+    - "real battle runtime"
+    - "real event chain"
+    - "RoomLoot runtime"
+    - "objective progress runtime"
+    - "reward grant"
+    - "settlement warehouse write"
+    - "SaveManager"
+    - "AssetLedger / RunAssetLedger mutation"
+    - "CommandBus mutation"
+
 document_status: current_summary
 last_updated: "2026/06/24"
 scope: "G30-R2 long-term system asset interface full content capability matrix"

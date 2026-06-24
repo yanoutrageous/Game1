@@ -11,6 +11,8 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 	var ledger_snapshot: Dictionary = get_asset_snapshot(context)
 	var event_log_snapshot: Array[Dictionary] = get_event_log_snapshot(context)
 	var transaction_log_snapshot: Array[Dictionary] = get_transaction_log_snapshot(context)
+	var run_map_snapshot := build_run_map_snapshot(context)
+	var map_result := build_map_result(context)
 	return {
 		"outcome": context.outcome,
 		"mode": context.mode,
@@ -41,6 +43,13 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 		"event_count": event_log_snapshot.size(),
 		"transaction_log": transaction_log_snapshot,
 		"transaction_count": transaction_log_snapshot.size(),
+		"run_map_snapshot": run_map_snapshot,
+		"map_result": map_result,
+		"map_summary_preview": map_result.get("map_summary_preview", {}),
+		"objective_context_preview": run_map_snapshot.get("objective_context_preview", {}),
+		"modifier_context_preview": run_map_snapshot.get("modifier_context_preview", {}),
+		"room_loot_context_preview": run_map_snapshot.get("room_loot_context_preview", {}),
+		"run_result_context_preview": run_map_snapshot.get("run_result_context_preview", {}),
 		"status_effects": ledger_snapshot.get("status_effects", []),
 		"failure_salvage": context.failure_salvage.duplicate(true),
 		"stats": context.run_stats.duplicate(true),
@@ -57,6 +66,9 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 	var event_log_snapshot: Array[Dictionary] = get_event_log_snapshot(context)
 	var transaction_log_snapshot: Array[Dictionary] = get_transaction_log_snapshot(context)
 	var content_def_snapshot: Dictionary = get_content_def_snapshot(context)
+	var run_map_snapshot := build_run_map_snapshot(context)
+	var map_result_preview := build_map_result(context)
+	var current_room_detail := get_current_room_detail(context)
 	return {
 		"run_id": context.run_id,
 		"mode": context.mode,
@@ -90,6 +102,15 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"transaction_count": transaction_log_snapshot.size(),
 		"content_definitions": content_def_snapshot,
 		"content_definition_count": content_def_snapshot.size(),
+		"run_map_snapshot": run_map_snapshot,
+		"map_result_preview": map_result_preview,
+		"map_summary_preview": map_result_preview.get("map_summary_preview", {}),
+		"current_room_detail": current_room_detail,
+		"return_eligibility": current_room_detail.get("return_eligibility", {}),
+		"objective_context_preview": run_map_snapshot.get("objective_context_preview", {}),
+		"modifier_context_preview": run_map_snapshot.get("modifier_context_preview", {}),
+		"room_loot_context_preview": run_map_snapshot.get("room_loot_context_preview", {}),
+		"run_result_context_preview": run_map_snapshot.get("run_result_context_preview", {}),
 		"status_effects": ledger_snapshot.get("status_effects", []),
 		"position": context.player_pos,
 		"current_room": context.current_room_type,
@@ -139,6 +160,27 @@ func get_content_def_snapshot(context: RunContext) -> Dictionary:
 	if context == null or context.content_defs == null:
 		return {}
 	return context.content_defs.snapshot()
+
+
+func build_run_map_snapshot(context: RunContext) -> Dictionary:
+	if context == null or context.truth_map == null:
+		return _empty_run_map_snapshot()
+	return context.truth_map.build_run_map_snapshot(context.intel_map, context.player_pos)
+
+
+func build_map_result(context: RunContext) -> Dictionary:
+	if context == null or context.truth_map == null:
+		return _empty_map_result()
+	return context.truth_map.build_map_result(context.intel_map, context.player_pos)
+
+
+func get_current_room_detail(context: RunContext) -> Dictionary:
+	if context == null or context.truth_map == null:
+		return {}
+	var detail := context.truth_map.get_room_state(context.player_pos, context.intel_map)
+	detail["schema_kind"] = &"RoomDetailPreview"
+	detail["current_room"] = true
+	return detail
 
 
 func get_inventory_summary(context: RunContext) -> Dictionary:
@@ -216,4 +258,33 @@ func get_search_state_data(context: RunContext) -> Dictionary:
 		"searched": searched,
 		"reason": reason,
 		"is_chest": is_chest,
+	}
+
+
+func _empty_run_map_snapshot() -> Dictionary:
+	return {
+		"schema_kind": &"RunMapSnapshot",
+		"RunMap": {},
+		"TruthMap": {"access": &"internal_only"},
+		"KnownMap": {},
+		"ScanLayer": {},
+		"MarkMap": {},
+		"RunMapState": {},
+		"InfoReliabilityLayer": {},
+		"map_summary_preview": {},
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
+	}
+
+
+func _empty_map_result() -> Dictionary:
+	return {
+		"schema_kind": &"MapResult",
+		"map_summary_preview": {},
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
 	}

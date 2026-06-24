@@ -1,3 +1,17 @@
+# G31 Run Map Room State Status
+
+G31-R2 is the current implementation slice on branch `godot/g31-run-map-room-state-foundation`.
+
+- Scope: Run Map Domain / Room State Foundation.
+- Product contract: `docs/20_product/RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION_CONTRACT.md`.
+- Godot scope: TruthMap / IntelMap / RunQueryFacade map snapshot output, settlement map-facing preview, minimap / run surface / HUD display-only snapshot consumers.
+- Boundary: read_only / display_only / preview / no_persistence.
+- Not implemented: complete RunFlow, persistence, battle runtime, event chains, RoomLoot runtime, objective progress, reward grant, settlement warehouse write, SaveManager, AssetLedger / RunAssetLedger mutation, CommandBus mutation, gameplay runtime, manual playtest.
+- G31-R2 static validation PASS.
+- G31-R2 Godot headless project-load/parser smoke PASS after a local `IntelMap.build_public_cell` explicit `Dictionary` type hotfix.
+- Godot smoke produced no new metadata dirty side effects.
+- This is project-load/parser only and not gameplay runtime PASS or manual playtest PASS.
+
 # G30 LongTerm Asset Interface Status
 
 G30-R2 is the current implementation slice on branch `godot/g30-long-term-asset-interface-full-content`.

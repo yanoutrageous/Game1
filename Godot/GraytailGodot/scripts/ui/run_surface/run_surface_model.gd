@@ -12,6 +12,9 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 	var event_state: Dictionary = _dict_from(snapshot, "event_state")
 	var search_data: Dictionary = _dict_from(snapshot, "search_state_data")
 	var reward: Dictionary = _dict_from(snapshot, "last_reward")
+	var run_map_snapshot: Dictionary = _dict_from(snapshot, "run_map_snapshot")
+	var current_room_detail: Dictionary = _dict_from(snapshot, "current_room_detail")
+	var return_eligibility: Dictionary = _dict_from(snapshot, "return_eligibility")
 	var encounter_section := _encounter_section(snapshot)
 	var last_message := String(snapshot.get("last_message", ""))
 	var command_feedback := RunUIViewModel.command_result_text(last_command_result)
@@ -39,9 +42,12 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"encounter_section": encounter_section,
 		"scanner_summary": _scanner_summary(minimap_view_model, position),
 		"scanner_legend_lines": _scanner_legend_lines(minimap_view_model),
-		"scanner_detail": _scanner_detail(minimap_view_model),
+		"scanner_detail": _scanner_detail(minimap_view_model, run_map_snapshot),
 		"scanner_markers": _scanner_markers(minimap_view_model),
-		"status_lines": _status_lines(snapshot, room_type, adjacent_mines, search_data),
+		"status_lines": _status_lines(snapshot, room_type, adjacent_mines, search_data, current_room_detail, return_eligibility),
+		"map_domain_summary": _map_domain_summary(run_map_snapshot),
+		"room_state_detail": _room_state_detail(current_room_detail),
+		"return_eligibility_summary": _return_eligibility_summary(return_eligibility),
 		"event_panel_summary": event_modal_text(event_state),
 		"loot_panel_summary": loot_modal_text(reward, last_message),
 		"extract_summary": extract_modal_text(snapshot),
@@ -566,12 +572,14 @@ static func _monster_summary_text(monster_summary: Dictionary) -> String:
 	return _join_lines(lines)
 
 
-static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary) -> Array[String]:
+static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary, room_detail: Dictionary = {}, return_eligibility: Dictionary = {}) -> Array[String]:
 	return [
 		"协议：%s | 压力：%s/100" % [snapshot.get("protocol_level", 5), snapshot.get("pressure", 0)],
 		"危险：%s | 周边雷险：%s" % [_danger_label(room_type, adjacent_mines), adjacent_mines],
 		"房间状态：%s | 阶段：%s" % [String(snapshot.get("outcome", "Running")), String(snapshot.get("phase", &"running"))],
 		"%s" % _search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
+		"RoomState: %s / %s" % [String(room_detail.get("known_state", "unknown")), String(room_detail.get("visibility", "unknown"))],
+		"fast_return: %s / %s" % [str(bool(return_eligibility.get("eligible", false))), String(return_eligibility.get("reason_code", "unknown"))],
 	]
 
 
@@ -608,7 +616,7 @@ static func _scanner_legend_lines(minimap_view_model: MiniMapViewModel) -> Array
 	]
 
 
-static func _scanner_detail(minimap_view_model: MiniMapViewModel) -> String:
+static func _scanner_detail(minimap_view_model: MiniMapViewModel, run_map_snapshot: Dictionary = {}) -> String:
 	if minimap_view_model == null:
 		return "图例：等待 MiniMapViewModel；不会触发额外扫描或规则计算。"
 	return "图例只反映已公开 MiniMap 数据；未知、标记、危险、事件、奖励、撤离均不改变地图规则。"
@@ -640,6 +648,37 @@ static func _scanner_markers(minimap_view_model: MiniMapViewModel) -> Array:
 	if minimap_view_model == null:
 		return []
 	return minimap_view_model.room_markers.duplicate(true)
+
+
+static func _map_domain_summary(run_map_snapshot: Dictionary) -> String:
+	if run_map_snapshot.is_empty():
+		return "RunMapSnapshot: unavailable"
+	var run_map: Dictionary = _dict_variant(run_map_snapshot.get("RunMap", {}))
+	var summary: Dictionary = _dict_variant(run_map_snapshot.get("map_summary_preview", {}))
+	return "RunMapSnapshot: %sx%s | %s | display_only" % [
+		run_map.get("width", 0),
+		run_map.get("height", 0),
+		String(summary.get("map_kind", "classic_rect_minesweeper")),
+	]
+
+
+static func _room_state_detail(room_detail: Dictionary) -> String:
+	if room_detail.is_empty():
+		return "RoomState: unavailable"
+	return "RoomState: %s / %s / %s" % [
+		String(room_detail.get("room_type_key", "unknown")),
+		String(room_detail.get("known_state", "unknown")),
+		String(room_detail.get("visibility", "unknown")),
+	]
+
+
+static func _return_eligibility_summary(return_eligibility: Dictionary) -> String:
+	if return_eligibility.is_empty():
+		return "return_eligibility: unavailable"
+	return "return_eligibility: %s / %s" % [
+		str(bool(return_eligibility.get("eligible", false))),
+		String(return_eligibility.get("reason_code", "unknown")),
+	]
 
 
 static func _interact_hint(room_type: StringName, search_data: Dictionary, has_event: bool) -> String:

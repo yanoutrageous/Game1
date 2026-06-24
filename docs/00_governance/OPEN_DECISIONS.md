@@ -1,3 +1,15 @@
+# G31 Open Decisions Update
+
+G31-R2 run map / room-state open decisions:
+
+- `OD-G31-001`: exact map generator repair/retry policy remains open; G31 records preview validation and log fields only.
+- `OD-G31-002`: final fast-return lock conditions remain open; G31 exposes eligibility / reason code / intent only.
+- `OD-G31-003`: scan reliability vocabulary and UI depth remain open; G31 reserves InfoReliabilityLayer fields.
+- `OD-G31-004`: future hex / multi-layer / special-rule map interface depth remains open.
+- `OD-G31-005`: MapResult handoff depth for Settlement / History / Objective remains open; G31 reserves map-facing previews only.
+- `OD-G31-006`: event-driven map mutation runtime remains open and deferred.
+- Any G30 / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G30 Open Decisions Update
 
 G30-R2 long-term system / asset interface open decisions:

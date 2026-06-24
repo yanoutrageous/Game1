@@ -58,6 +58,14 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 		snapshot.get("adjacent_mines", 0),
 		_search_state_label(String(snapshot.get("search_state", "blocked"))),
 	]
+	var room_detail: Dictionary = snapshot.get("current_room_detail", {})
+	var return_eligibility: Dictionary = snapshot.get("return_eligibility", {})
+	model.status_text += "\nRoomState: %s / %s\nfast_return: %s / %s" % [
+		String(room_detail.get("known_state", "unknown")),
+		String(room_detail.get("visibility", "unknown")),
+		str(bool(return_eligibility.get("eligible", false))),
+		String(return_eligibility.get("reason_code", "unknown")),
+	]
 	model.protocol_text = "压力：%s / 100\n协议等级：%s\n阶段：%s\n结果：%s\n遭遇：%s\n状态效果：%s" % [
 		snapshot.get("pressure", 0),
 		snapshot.get("protocol_level", 5),

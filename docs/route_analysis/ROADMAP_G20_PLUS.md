@@ -1,3 +1,16 @@
+# G31 Route Update
+
+Current active slice: G31-R2 Run Map Domain / Room State Foundation Full Content Implementation.
+
+- G31 uses `D:\AGAME1\Base Docs\局内地图本体与生成规则策划案.md` as the primary read-only planning source.
+- G31 adds the current product contract at `docs/20_product/RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION_CONTRACT.md`.
+- G31 formalizes TruthMap / KnownMap / ScanLayer / MarkMap / RunMapState / InfoReliabilityLayer.
+- G31 lands MapGenProfile, MapGenerationLog, FinalMapSnapshot, RunMapSnapshot, MapResult, RoomState, RoomPolicy, RoomTag, return_eligibility, and fast_return preview.
+- G31 aligns minimap / run surface / HUD as display-only public snapshot consumers and reserves Settlement / Objective / Modifier / RoomLoot / RunResult context fields.
+- G31 does not implement complete RunFlow, persistence, battle runtime, event chains, RoomLoot runtime, objective progress, reward grant, settlement warehouse write, SaveManager, AssetLedger / RunAssetLedger mutation, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+- Unified G31-R3 audit / release gate should validate parser smoke and branch state before any main merge.
+- Any remaining G30 or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G30 Route Update
 
 Current active slice: G30-R2 Long-Term System Integration & Asset Interface Full Content Implementation.

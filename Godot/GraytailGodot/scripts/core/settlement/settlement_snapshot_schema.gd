@@ -28,6 +28,8 @@ static func default_snapshot() -> Dictionary:
 		"run_label": "Preview run",
 		"result_type": RESULT_SUCCESS,
 		"map_summary": _default_map_summary(),
+		"run_map_snapshot_preview": _default_run_map_snapshot_preview(),
+		"map_result_preview": _default_map_result_preview(),
 		"deploy_summary": _default_deploy_summary(),
 		"result_summary": _default_result_summary(),
 		"item_result_preview": _default_result_bucket(),
@@ -64,6 +66,8 @@ static func normalize_snapshot(data: Dictionary = {}) -> Dictionary:
 	var result := _normalize_with_defaults(data, default_snapshot())
 	result["result_type"] = StringName(result.get("result_type", RESULT_SUCCESS))
 	result["map_summary"] = _dictionary_from(result.get("map_summary", {}), _default_map_summary())
+	result["run_map_snapshot_preview"] = _dictionary_from(result.get("run_map_snapshot_preview", {}), _default_run_map_snapshot_preview())
+	result["map_result_preview"] = _dictionary_from(result.get("map_result_preview", {}), _default_map_result_preview())
 	result["deploy_summary"] = _dictionary_from(result.get("deploy_summary", {}), _default_deploy_summary())
 	result["result_summary"] = _dictionary_from(result.get("result_summary", {}), _default_result_summary())
 	result["item_result_preview"] = _dictionary_from(result.get("item_result_preview", {}), _default_result_bucket())
@@ -115,6 +119,36 @@ static func _default_map_summary() -> Dictionary:
 		"map_display_key": "",
 		"difficulty_display_key": "",
 		"region_display_key": "",
+		"RunMapSnapshot": "preview-only map-facing summary source",
+		"MapResult": "preview-only settlement/history map output source",
+	}
+
+
+static func _default_run_map_snapshot_preview() -> Dictionary:
+	return {
+		"schema_kind": &"RunMapSnapshot",
+		"map_summary_preview": {},
+		"objective_context_preview": {},
+		"modifier_context_preview": {},
+		"room_loot_context_preview": {},
+		"run_result_context_preview": {},
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
+	}
+
+
+static func _default_map_result_preview() -> Dictionary:
+	return {
+		"schema_kind": &"MapResult",
+		"known_summary": {},
+		"history_reference_preview": {},
+		"settlement_context_preview": {},
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
 	}
 
 

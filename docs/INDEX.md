@@ -1,3 +1,22 @@
+# G31 Docs Index Update
+
+Current G31 entry point:
+
+- `docs/20_product/RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION_CONTRACT.md`
+
+Read with:
+
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+- `docs/validation/G31_RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION_VALIDATION.md`
+- `docs/handoff/HANDOFF_G31_RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION.md`
+
+G31 implements run map / room-state foundation content as read_only / display_only / preview / no_persistence. It covers TruthMap, KnownMap, ScanLayer, MarkMap, RunMapState, InfoReliabilityLayer, MapGenProfile, MapGenerationLog, FinalMapSnapshot, RunMapSnapshot, MapResult, RoomState, RoomPolicy, RoomTag, return_eligibility, and fast_return preview. It does not implement complete RunFlow, persistence, battle runtime, event chains, RoomLoot runtime, objective progress, reward grant, settlement warehouse write, SaveManager, AssetLedger / RunAssetLedger mutation, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G30 / older index wording below this update is historical / superseded unless explicitly reopened.
+
 # G30 Docs Index Update
 
 Current G30 entry point:
