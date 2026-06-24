@@ -5,6 +5,7 @@ const LongTermContentFrameworkScript := preload("res://scripts/ui/long_term/long
 const LongTermContentSlotModelScript := preload("res://scripts/ui/long_term/long_term_content_slot_model.gd")
 const SettlementHistoryPreviewScript := preload("res://scripts/core/settlement/settlement_history_preview.gd")
 const WarehouseViewSchemaScript := preload("res://scripts/core/asset/warehouse_view_schema.gd")
+const WarehouseViewContentSchemaScript := preload("res://scripts/core/asset/warehouse_view_content_schema.gd")
 
 const SCHEMA_VERSION := 1
 
@@ -16,6 +17,7 @@ static func default_snapshot(module_summaries: Dictionary = {}, source: StringNa
 	var history_record_preview: Dictionary = settlement_history_preview.get("history_record_snapshot_preview", {})
 	var long_term_history_preview: Dictionary = settlement_history_preview.get("long_term_history_preview", {})
 	var long_term_asset_reference_view: Dictionary = WarehouseViewSchemaScript.default_long_term_asset_reference_view()
+	var long_term_content_view: Dictionary = WarehouseViewContentSchemaScript.build_long_term_content_view()
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"profile_snapshot": {
@@ -58,6 +60,7 @@ static func default_snapshot(module_summaries: Dictionary = {}, source: StringNa
 			"title": "Asset domain / warehouse view reference preview",
 			"state": "display_only",
 			"long_term_asset_reference_view": long_term_asset_reference_view.duplicate(true),
+			"warehouse_view_content_snapshot": long_term_content_view.duplicate(true),
 			"message": "LongTerm collection / appearance / gacha may reference assets without merging with the warehouse.",
 			"read_only": true,
 			"display_only": true,

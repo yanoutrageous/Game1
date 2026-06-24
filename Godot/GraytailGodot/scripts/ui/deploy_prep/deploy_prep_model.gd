@@ -82,6 +82,7 @@ static func _build_model(
 		"asset_domain_preview": {
 			"deploy_asset_view_preview": (config.get("deploy_asset_view_preview", {}) as Dictionary).duplicate(true),
 			"warehouse_view_snapshot": (config.get("warehouse_view_snapshot", {}) as Dictionary).duplicate(true),
+			"warehouse_view_content_snapshot": (config.get("warehouse_view_content_snapshot", {}) as Dictionary).duplicate(true),
 			"summary": "Asset domain / WarehouseViewSnapshot preview is read_only display_only and does not write assets.",
 			"read_only": true,
 			"display_only": true,

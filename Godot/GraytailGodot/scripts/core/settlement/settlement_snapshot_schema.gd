@@ -2,6 +2,7 @@ extends RefCounted
 class_name SettlementSnapshotSchema
 
 const WarehouseViewSchemaScript := preload("res://scripts/core/asset/warehouse_view_schema.gd")
+const WarehouseViewContentSchemaScript := preload("res://scripts/core/asset/warehouse_view_content_schema.gd")
 
 const SCHEMA_VERSION := 1
 const SNAPSHOT_KIND := &"SettlementSnapshot"
@@ -30,6 +31,7 @@ static func default_snapshot() -> Dictionary:
 		"result_summary": _default_result_summary(),
 		"item_result_preview": _default_result_bucket(),
 		"settlement_asset_delta_preview": WarehouseViewSchemaScript.default_settlement_asset_delta(),
+		"settlement_content_snapshot": WarehouseViewContentSchemaScript.build_settlement_content_view(),
 		"history_asset_reference_preview": WarehouseViewSchemaScript.default_history_asset_reference(),
 		"resource_result_preview": _default_resource_preview(),
 		"objective_result_preview": _default_named_preview("objective"),
@@ -60,6 +62,7 @@ static func normalize_snapshot(data: Dictionary = {}) -> Dictionary:
 	result["result_summary"] = _dictionary_from(result.get("result_summary", {}), _default_result_summary())
 	result["item_result_preview"] = _dictionary_from(result.get("item_result_preview", {}), _default_result_bucket())
 	result["settlement_asset_delta_preview"] = _dictionary_from(result.get("settlement_asset_delta_preview", {}), WarehouseViewSchemaScript.default_settlement_asset_delta())
+	result["settlement_content_snapshot"] = _dictionary_from(result.get("settlement_content_snapshot", {}), WarehouseViewContentSchemaScript.build_settlement_content_view())
 	result["history_asset_reference_preview"] = _dictionary_from(result.get("history_asset_reference_preview", {}), WarehouseViewSchemaScript.default_history_asset_reference())
 	result["resource_result_preview"] = _dictionary_from(result.get("resource_result_preview", {}), _default_resource_preview())
 	result["objective_result_preview"] = _dictionary_from(result.get("objective_result_preview", {}), _default_named_preview("objective"))
