@@ -28,6 +28,7 @@ static func build(selected_module_id: StringName = &"goals", source: StringName 
 		"current_module": current_module.duplicate(true),
 		"placeholder_panel": placeholder_panel,
 		"snapshot_preview": snapshot.duplicate(true),
+		"asset_domain_warehouse_view_preview": (snapshot.get("asset_domain_warehouse_view_preview", {}) as Dictionary).duplicate(true),
 		"content_framework_preview": {
 			"title": "G24 LongTerm content framework preview",
 			"state": "framework",

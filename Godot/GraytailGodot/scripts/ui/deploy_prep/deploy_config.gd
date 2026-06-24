@@ -2,6 +2,7 @@ extends RefCounted
 class_name DeployConfig
 
 const AssetProjectionSchemaScript := preload("res://scripts/core/asset/asset_projection_schema.gd")
+const WarehouseViewSchemaScript := preload("res://scripts/core/asset/warehouse_view_schema.gd")
 
 const CONFIG_VERSION := 3
 const START_MODE_STANDARD_PREVIEW := &"standard_preview"
@@ -49,6 +50,8 @@ static func default_config(sequence: int = 1) -> Dictionary:
 		"permit_preview": _permit_preview(),
 		"active_run_preview": active_run_preview(false),
 		"deploy_prep_projection": deploy_prep_projection_preview(),
+		"deploy_asset_view_preview": WarehouseViewSchemaScript.default_deploy_asset_view(),
+		"warehouse_view_snapshot": WarehouseViewSchemaScript.default_warehouse_view_snapshot(),
 		"preview": true,
 		"display_only": true,
 		"read_only": true,
@@ -131,6 +134,8 @@ static func build_run_start_config(config: Dictionary) -> Dictionary:
 		"permit_preview": _dictionary_copy(source.get("permit_preview", {})),
 		"active_run_preview": _dictionary_copy(source.get("active_run_preview", active_run_preview(false))),
 		"deploy_prep_projection": _dictionary_copy(source.get("deploy_prep_projection", deploy_prep_projection_preview())),
+		"deploy_asset_view_preview": _dictionary_copy(source.get("deploy_asset_view_preview", WarehouseViewSchemaScript.default_deploy_asset_view())),
+		"warehouse_view_snapshot": _dictionary_copy(source.get("warehouse_view_snapshot", WarehouseViewSchemaScript.default_warehouse_view_snapshot())),
 		"right_summary_preview": _dictionary_copy(source.get("right_summary_preview", right_summary_preview(source))),
 		"history_metadata": history_metadata_for(source),
 		"profile_snapshot_ref": source.get("profile_snapshot_ref", &"placeholder_profile_snapshot"),

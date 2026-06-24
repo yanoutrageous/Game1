@@ -36,6 +36,8 @@ static func build_history_preview(settlement_snapshot: Dictionary = {}) -> Dicti
 	record["historical_item_preview"] = {
 		"kind": "item",
 		"items": (settlement.get("item_result_preview", {}) as Dictionary).duplicate(true),
+		"settlement_asset_delta_preview": (settlement.get("settlement_asset_delta_preview", {}) as Dictionary).duplicate(true),
+		"history_asset_reference_preview": (settlement.get("history_asset_reference_preview", {}) as Dictionary).duplicate(true),
 		"summary": "history keeps the original run item result preview",
 		"item_display_key": "history.item.preview",
 		"read_only": true,
@@ -80,6 +82,7 @@ static func build_long_term_history_preview(history_record: Dictionary = {}) -> 
 		"result_type": record.get("result_type", &"success"),
 		"map_summary": (record.get("map_summary", {}) as Dictionary).duplicate(true),
 		"historical_item_preview": (record.get("historical_item_preview", {}) as Dictionary).duplicate(true),
+		"history_asset_reference_preview": ((record.get("historical_item_preview", {}) as Dictionary).get("history_asset_reference_preview", {}) as Dictionary).duplicate(true),
 		"historical_resource_preview": (record.get("historical_resource_preview", {}) as Dictionary).duplicate(true),
 		"historical_objective_preview": (record.get("historical_objective_preview", {}) as Dictionary).duplicate(true),
 		"historical_codex_preview": (record.get("historical_codex_preview", {}) as Dictionary).duplicate(true),
