@@ -1,10 +1,27 @@
+# G27A Docs Index Update
+
+Current G27A docs-only entry point:
+
+- `docs/20_product/ASSET_DOMAIN_AND_WAREHOUSE_VIEW_CONTRACT.md`
+
+Read with:
+
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+
+G27A is a documentation-only asset-domain / warehouse-view contract foundation. It does not approve Godot code changes, Base Docs changes, Connection changes, real warehouse behavior, real asset writes, rewards, gacha, settlement mutation, persistence, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining P2 / G26 / prior G27 index wording below this update is historical / superseded / resolved unless explicitly named as the current G27A split or future G27B / G27C / G28 candidate.
+
 # AGAME1 Unified Docs Index
 
-文档状态：P2 统一入口
+文档状态：G27A 当前入口；P2 统一入口为 historical / superseded
 适用范围：仓库 `docs` 根目录的当前入口、归属和阅读顺序
 最后更新：2026/06/23
 
-本文件是 P2 文档治理后的仓库文档统一入口。它不新增玩法规则，不替代验证记录，不把外部来源材料写成定案。
+本文件当前服务 G27A docs-only 入口；原 P2 文档治理说明为 historical / superseded。它不新增玩法规则，不替代验证记录，不把外部来源材料写成定案。
 
 ## 1. 当前必读入口
 
@@ -21,12 +38,12 @@
 ## 2. 阶段边界
 
 ```text
-P2 = 策划文档统一整理与仓库文档同步执行。
+P2 = historical / superseded 策划文档统一整理与仓库文档同步执行。
 G25 = UI Structure Stabilization & Playable Route Recovery，已作为工程阶段关闭。
-G26 = 后续产品 / 原型阶段占位，未被 P2 占用。
+G26 = completed / historical；不再是后续产品 / 原型阶段占位。
 ```
 
-P2 只处理文档治理，不执行工程实现，不运行 Godot，不提交或 push。
+Historical / superseded P2 note: G27A 当前仍只处理 allowlist docs，不执行 Godot 工程实现，不运行 Godot；Git gate 仅限 G27A docs branch。
 
 ## 3. 目录归属
 
@@ -42,7 +59,7 @@ P2 只处理文档治理，不执行工程实现，不运行 Godot，不提交�
 | `70_sources/` | Base Docs、UI 图片等外部来源登记与此前获授权的冻结历史快照 |
 | `90_archive/` | 历史、生成报告、旧体系归档说明 |
 
-既有 `handoff/`、`validation/`、`stage_summaries/`、`route_analysis/`、`project_governance/`、`design_sources/` 不删除；P2 通过新入口和索引统一引用。
+既有 `handoff/`、`validation/`、`stage_summaries/`、`route_analysis/`、`project_governance/`、`design_sources/` 不删除；P2 historical / superseded references are retained only as older index context; G27A current references are listed at the top of this file.
 
 ## 4. 使用规则
 

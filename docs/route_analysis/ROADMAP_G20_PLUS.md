@@ -1,3 +1,16 @@
+# G27A Route Update
+
+Current active slice: G27A Asset Domain / Warehouse View Contract Foundation - docs-only.
+
+- G25 is closed: UI Structure Stabilization & Playable Route Recovery is merged.
+- G26 is completed and historical; it is no longer not started or a placeholder.
+- G27A adds the product contract at `docs/20_product/ASSET_DOMAIN_AND_WAREHOUSE_VIEW_CONTRACT.md`.
+- G27B may consider Godot asset / warehouse view schema foundation after a separate gate.
+- G27C may consider a display-only warehouse UI consumer after a separate gate.
+- Objective / Reward / Pool contract work remains deferred to G28 or later unless re-gated.
+- G27A does not implement real warehouse, asset writes, reward grant, gacha, settlement mutation, persistence, gameplay runtime, or manual playtest validation.
+- Any remaining P2 / G26 / prior G27 route rows below this update are historical / superseded / resolved unless explicitly named as the current G27A split or future G27B / G27C / G28 candidate.
+
 # G20+ 路线建议
 
 ## G25-R3b Update
@@ -17,7 +30,7 @@ G25 UI Structure Stabilization & Playable Route Recovery is complete on branch `
 - G26-R1 audit result: PASS with preconditions.
 - G26 is Engineering Architecture Structure Readiness Foundation.
 - G26 prepares reviewable responsibility boundaries for `core`, `ui`, `preview`, `contract`, `content`, `validation`, and `docs`.
-- G26 does not implement real objectives, rewards, pools, gacha, warehouse, asset writes, SaveManager, AssetLedger behavior, CommandBus behavior, or player-playable prototype v1.
+- Historical G26 boundary: G26 did not implement real objectives, rewards, pools, gacha, warehouse, asset writes, SaveManager, AssetLedger behavior, CommandBus behavior, or player-playable prototype v1.
 - Prototype-Facing Objective / Reward / Pool Contract Foundation is deferred to G27 or a later independently authorized functional stage.
 - Lua remains the gameplay-validation line. Godot remains the formal system-skeleton and interface-readiness line.
 - Every later functional slice must declare a precise file allowlist, explicit exclusions, protected-dirty baseline, validation commands, and a separate Git gate.
@@ -39,8 +52,8 @@ G20 是 docs-only knowledge governance，不实现 Asset Contract、Warehouse、
 | G23 | Settlement / History Snapshot Foundation | 建立结算结果与历史快照 foundation，连接 run result summary 与长期展示 | 已完成；first main / closeout `85bf697d09147c7d92268dee4d4b6f51643155a7` |
 | G24 | LongTerm Content Framework Foundation | 建立长期系统六模块内容框架、二级分组、preview cards、Objective / Reward / Gacha / Collection preview slots 与 UI/art/data key reservation | 已完成；first main / closeout `8502c2dee4b0a9736f7f9be51a4ea19bc77330cd` |
 | G25 | UI Structure Stabilization & Playable Route Recovery | 恢复当前可玩入口并稳定 MainMenu / DeployPrep / LongTerm / Settings 的 UI 结构与可读性 | 已完成；final `main` / `origin/main` 为 `17f8406dcf745f81c829e78478663bec6cbd4e68` |
-| G26 | Engineering Architecture Structure Readiness Foundation | 收束 core / ui / preview / contract / content / validation / docs 职责边界，形成后续精确 allowlist 与审查基础 | G26-R1 PASS with preconditions；G26-R2A docs-only reviewable workspace preparation |
-| G27 | Objective / Reward / Pool Contract Foundation candidate | 在 G26 审查通过后，另行审计最小 public contract；不预授权真实目标、发奖、奖池、抽奖或资产写入 | 后移候选；未启动 |
+| G26 | Engineering Architecture Structure Readiness Foundation | 收束 core / ui / preview / contract / content / validation / docs 职责边界，形成后续精确 allowlist 与审查基础 | completed / historical；no longer not started or placeholder |
+| G27A | Asset Domain / Warehouse View Contract Foundation | docs-only asset-domain / warehouse-view contract; no real warehouse, asset write, reward, gacha, settlement, or persistence | current split slice; G27B/G27C future candidates; Objective / Reward / Pool deferred to G28 or later |
 
 ## 阶段门禁
 
@@ -96,7 +109,7 @@ G18-align-R2 is now the active pre-G22 implementation slice on `godot/g18-align-
 - G18-align-R4B closeout commit: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
 - G18-align-R3 recorded Godot headless project-load/parser smoke PASS only.
 - This is not gameplay runtime PASS and not manual playtest PASS.
-- G22 remains not started; do not infer G22 start from this merge.
+- Historical / superseded note: at that time G22 remained not started; later G22 records supersede this line.
 - The next step remains closeout / new-conversation handoff unless a later user instruction starts a new stage.
 
 ## G22 Final Main Merge Calibration

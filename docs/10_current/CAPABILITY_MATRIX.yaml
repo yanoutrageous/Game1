@@ -1,10 +1,14 @@
 document_status: current_summary
 last_updated: "2026/06/23"
-scope: "P2 unified docs current capability matrix"
+scope: "G27A docs-only current capability matrix"
 stage_boundary:
-  current_stage: "P2 docs-only governance"
+  current_stage: "G27A Asset Domain / Warehouse View Contract Foundation - docs-only"
   latest_closed_engineering_stage: "G25 UI Structure Stabilization & Playable Route Recovery"
-  g26_status: "not_started_reserved_for_future_product_or_prototype_stage"
+  g26_status: "completed_historical_no_longer_not_started_or_placeholder"
+  g27a_status: "active_docs_only_asset_domain_warehouse_view_contract"
+  g27b_status: "future_candidate_godot_asset_warehouse_schema_foundation_requires_gate"
+  g27c_status: "future_candidate_display_only_warehouse_ui_consumer_requires_gate"
+  g28_status: "future_candidate_objective_reward_pool_contract_or_later_requires_gate"
 validation_boundary:
   godot_headless_project_load_parser_smoke_pass: "recorded for G25"
   gameplay_runtime_pass: false
@@ -50,12 +54,31 @@ capabilities:
     implementation_status: "contract_foundation_only"
     evidence:
       - "docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md"
+      - "docs/20_product/ASSET_DOMAIN_AND_WAREHOUSE_VIEW_CONTRACT.md"
     not_complete:
       - "real asset system"
       - "warehouse implementation"
       - "event bus"
       - "reward grant"
       - "Policy/Tag rule engine"
+  warehouse_view:
+    implementation_status: "g27a_docs_only_product_contract"
+    evidence:
+      - "docs/20_product/ASSET_DOMAIN_AND_WAREHOUSE_VIEW_CONTRACT.md"
+    current_boundaries:
+      - "warehouse is an independent asset view and does not define item ontology"
+      - "OwnedAssetSnapshot and WarehouseViewSnapshot are read-only display-only preview"
+      - "AssetEventPreview and AssetSourceContext do not write assets"
+      - "DeployAssetView and CarryIntent reserve deploy carry boundaries only"
+      - "SettlementAssetDelta and HistoryAssetReference reserve settlement/history references only"
+      - "LongTerm collection appearance and gacha may reference assets without merging warehouse"
+    not_complete:
+      - "real warehouse"
+      - "real sale/equip/carry"
+      - "real reward grant"
+      - "real gacha"
+      - "real settlement mutation"
+      - "real persistence"
   settlement_history:
     implementation_status: "snapshot_foundation_only"
     evidence:
