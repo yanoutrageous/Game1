@@ -1,3 +1,15 @@
+# G34 Route Update
+
+Current active slice: G34-R2 Rule / Effect / Modifier & Content Delivery Common System Full Content Implementation.
+
+- G34 uses `D:\AGAME1\Base Docs\规则、效果、Modifier 与内容投放通用系统策划案.md` as the primary read-only planning source.
+- G34 adds the current product contract at `docs/20_product/RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_CONTRACT.md`.
+- G34 formalizes RuleDefinition, RuleTrigger, RuleCondition, RuleContextSnapshot, TargetSelector, ApplicabilityCheck, ScopePolicy, EffectDescriptor, EffectPreview, EffectResultPreview, ModifierProfile, ModifierStackPreview, ModifierConflictPolicy, ContentPool, ContentEntry, ContentSelector, ContentDeliveryContext, PoolResultPreview, FallbackPolicy, and DeliveryRollPreview.
+- G34 aligns RoomRulePreview, RunFlowSnapshot, Settlement preview, RunSurface, and HUD as display-only consumers.
+- G34 remains read_only / display_only / preview / no_persistence and does not implement complete Rule engine runtime, script language, AI Director, real reward grant, real drops, objective progress, map mutation runtime, persistence, AssetLedger / RunAssetLedger long-term writes, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+- Unified G34-R3 audit / release gate should validate parser smoke and branch state before any main merge.
+- Any remaining G33 or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G33 Route Update
 
 Current active slice: G33-R2 Room Type / Tag / Encounter Common Rule Full Content Implementation.

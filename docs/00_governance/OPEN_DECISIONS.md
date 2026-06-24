@@ -1,3 +1,15 @@
+# G34 Open Decisions Update
+
+G34-R2 rule / effect / modifier / content-delivery open decisions:
+
+- `OD-G34-001`: final expression / condition authoring model remains open; G34 provides preview dictionaries only.
+- `OD-G34-002`: final modifier conflict resolution depth remains open; G34 records priority / layer / suppression / replacement policies as preview-only vocabulary.
+- `OD-G34-003`: content pool tuning, weighting, fallback, and deterministic roll policy remain open.
+- `OD-G34-004`: Objective / Reward / Pool subscription to Rule / Effect / ContentDelivery previews remains deferred to a later audited stage.
+- `OD-G34-005`: real drop, reward grant, and RoomLoot runtime ownership remains open and outside G34.
+- `OD-G34-006`: any CommandBus command-list expansion remains deferred to a separate audited gate.
+- Any G33 / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G33 Open Decisions Update
 
 G33-R2 room type / tag / encounter common-rule open decisions:

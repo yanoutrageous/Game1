@@ -1,3 +1,50 @@
+g34_update:
+  current_stage: "G34-R2 Rule / Effect / Modifier & Content Delivery Common System Full Content Implementation"
+  contract: "docs/20_product/RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_CONTRACT.md"
+  status: "active_rule_effect_modifier_content_delivery_preview_display_only"
+  rule_interfaces:
+    - "RuleDefinition"
+    - "RuleTrigger"
+    - "RuleCondition"
+    - "RuleContextSnapshot"
+    - "TargetSelector"
+    - "ApplicabilityCheck"
+    - "ScopePolicy"
+  effect_interfaces:
+    - "EffectDescriptor"
+    - "EffectPreview"
+    - "EffectResultPreview"
+  modifier_interfaces:
+    - "ModifierProfile"
+    - "ModifierStackPreview"
+    - "ModifierConflictPolicy"
+  content_delivery_interfaces:
+    - "ContentPool"
+    - "ContentEntry"
+    - "ContentSelector"
+    - "ContentDeliveryContext"
+    - "PoolResultPreview"
+    - "FallbackPolicy"
+    - "DeliveryRollPreview"
+  consumers:
+    - "RoomRulePreview"
+    - "RunFlowSnapshot"
+    - "Settlement preview"
+    - "RunSurface"
+    - "HUD"
+  not_complete:
+    - "complete Rule engine runtime"
+    - "script or expression language"
+    - "nested rule chain or AI Director"
+    - "real reward grant"
+    - "real drops"
+    - "real objective progress"
+    - "real map mutation runtime"
+    - "real battle skill effects"
+    - "SaveManager or active-run persistence"
+    - "AssetLedger or RunAssetLedger long-term writes"
+    - "CommandBus mutation"
+
 g33_update:
   current_stage: "G33-R2 Room Type / Tag / Encounter Common Rule Full Content Implementation"
   contract: "docs/20_product/ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_CONTRACT.md"

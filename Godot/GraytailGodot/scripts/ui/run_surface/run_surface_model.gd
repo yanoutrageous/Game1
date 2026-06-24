@@ -16,6 +16,8 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 	var run_flow_snapshot: Dictionary = _dict_from(snapshot, "run_flow_snapshot")
 	var current_room_detail: Dictionary = _dict_from(snapshot, "current_room_detail")
 	var return_eligibility: Dictionary = _dict_from(snapshot, "return_eligibility")
+	var rule_effect_summary: Dictionary = _dict_from(snapshot, "rule_effect_modifier_summary_preview")
+	var content_delivery_summary: Dictionary = _dict_from(snapshot, "content_delivery_summary_preview")
 	var encounter_section := _encounter_section(snapshot)
 	var last_message := String(snapshot.get("last_message", ""))
 	var command_feedback := RunUIViewModel.command_result_text(last_command_result)
@@ -45,9 +47,10 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"scanner_legend_lines": _scanner_legend_lines(minimap_view_model),
 		"scanner_detail": _scanner_detail(minimap_view_model, run_map_snapshot),
 		"scanner_markers": _scanner_markers(minimap_view_model),
-		"status_lines": _status_lines(snapshot, room_type, adjacent_mines, search_data, current_room_detail, return_eligibility, run_flow_snapshot),
+		"status_lines": _status_lines(snapshot, room_type, adjacent_mines, search_data, current_room_detail, return_eligibility, run_flow_snapshot, rule_effect_summary, content_delivery_summary),
 		"map_domain_summary": _map_domain_summary(run_map_snapshot),
 		"run_flow_summary": _run_flow_summary(run_flow_snapshot),
+		"rule_effect_modifier_summary": _rule_effect_modifier_summary(rule_effect_summary, content_delivery_summary),
 		"room_state_detail": _room_state_detail(current_room_detail),
 		"room_common_rule_summary": _room_common_rule_summary(current_room_detail),
 		"encounter_preview_summary": _encounter_preview_summary(current_room_detail),
@@ -578,7 +581,7 @@ static func _monster_summary_text(monster_summary: Dictionary) -> String:
 	return _join_lines(lines)
 
 
-static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary, room_detail: Dictionary = {}, return_eligibility: Dictionary = {}, run_flow_snapshot: Dictionary = {}) -> Array[String]:
+static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary, room_detail: Dictionary = {}, return_eligibility: Dictionary = {}, run_flow_snapshot: Dictionary = {}, rule_effect_summary: Dictionary = {}, content_delivery_summary: Dictionary = {}) -> Array[String]:
 	var lifecycle: Dictionary = _dict_variant(run_flow_snapshot.get("RunLifecycle", {}))
 	var transition: Dictionary = _dict_variant(run_flow_snapshot.get("RoomTransition", {}))
 	return [
@@ -592,6 +595,7 @@ static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_
 		"RoomPolicy: %s" % _room_policy_compact(room_detail),
 		"EncounterPreview: %s" % _encounter_preview_compact(room_detail),
 		"fast_return: %s / %s" % [str(bool(return_eligibility.get("eligible", false))), String(return_eligibility.get("reason_code", "unknown"))],
+		"Rule/Modifier: %s | Pool: %s" % [_rule_label(rule_effect_summary), _content_pool_label(content_delivery_summary)],
 	]
 
 
@@ -764,6 +768,41 @@ static func _settlement_trigger_summary(run_flow_snapshot: Dictionary) -> String
 		String(trigger.get("trigger_state", "not_ready")),
 		str(bool(trigger.get("writes_warehouse", false))),
 	]
+
+
+static func _rule_effect_modifier_summary(rule_effect_summary: Dictionary, content_delivery_summary: Dictionary) -> String:
+	if rule_effect_summary.is_empty() and content_delivery_summary.is_empty():
+		return "Rule/Effect/Modifier: unavailable"
+	return "Rule/Effect/Modifier: %s | effects=%s | modifiers=%s | pool=%s | display_only" % [
+		_rule_label(rule_effect_summary),
+		_effect_count(rule_effect_summary),
+		_modifier_count(rule_effect_summary),
+		_content_pool_label(content_delivery_summary),
+	]
+
+
+static func _rule_label(rule_effect_summary: Dictionary) -> String:
+	var definition: Dictionary = _dict_variant(rule_effect_summary.get("RuleDefinition", {}))
+	if definition.is_empty():
+		return String(rule_effect_summary.get("status", "preview"))
+	return String(definition.get("display_key", definition.get("rule_id", "rule.preview")))
+
+
+static func _effect_count(rule_effect_summary: Dictionary) -> int:
+	var effect_summary: Dictionary = _dict_variant(rule_effect_summary.get("EffectResultPreview", {}))
+	return int(effect_summary.get("effect_count", _array_variant(effect_summary.get("items", [])).size()))
+
+
+static func _modifier_count(rule_effect_summary: Dictionary) -> int:
+	var modifier_stack: Dictionary = _dict_variant(rule_effect_summary.get("ModifierStackPreview", {}))
+	return int(modifier_stack.get("modifier_count", _array_variant(modifier_stack.get("modifiers", [])).size()))
+
+
+static func _content_pool_label(content_delivery_summary: Dictionary) -> String:
+	var pool: Dictionary = _dict_variant(content_delivery_summary.get("ContentPool", {}))
+	if pool.is_empty():
+		return "pool.preview"
+	return "%s entries=%s" % [String(pool.get("pool_id", "pool.preview")), int(pool.get("entry_count", _array_variant(pool.get("entries", [])).size()))]
 
 
 static func _interact_hint(room_type: StringName, search_data: Dictionary, has_event: bool) -> String:

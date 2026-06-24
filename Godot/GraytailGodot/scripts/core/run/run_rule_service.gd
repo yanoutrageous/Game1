@@ -6,6 +6,8 @@ class_name RunRuleService
 
 const DEFAULT_ACTOR_ID := &"player"
 const EncounterResolverScript := preload("res://scripts/core/run/encounter/encounter_resolver.gd")
+const RuleEffectModifierSchemaScript := preload("res://scripts/core/rules/rule_effect_modifier_schema.gd")
+const ContentDeliverySchemaScript := preload("res://scripts/core/content/content_delivery_schema.gd")
 
 
 static func make_rule_result(ok: bool, status: StringName, actor_id: StringName = DEFAULT_ACTOR_ID, reason: String = "", effects: Array = [], messages: Array[String] = [], snapshot_delta: Dictionary = {}, settlement_log_entry: Dictionary = {}, rule_request_id: String = "", produced_events: Array = [], produced_transactions: Array = []) -> Dictionary:
@@ -24,6 +26,16 @@ static func make_rule_result(ok: bool, status: StringName, actor_id: StringName 
 		"messages": messages.duplicate(true),
 		"snapshot_delta": snapshot_delta.duplicate(true),
 		"settlement_log_entry": settlement_log_entry.duplicate(true),
+		"RulePreviewSummary": RuleEffectModifierSchemaScript.build_rule_preview_summary({
+			"ok": ok,
+			"status": status,
+			"rule_result": status,
+			"blocked_reason": reason if not ok else "",
+			"effects": effects.duplicate(true),
+		}, {"rule_id": status, "actor_id": actor_id, "rule_request_id": rule_request_id}),
+		"EffectResultPreview": RuleEffectModifierSchemaScript.build_effect_result_summary([], effects.duplicate(true), reason if not ok else ""),
+		"ContentDeliveryPreview": ContentDeliverySchemaScript.build_content_delivery_preview({}, {"context_id": "rule_result.%s" % str(status)}),
+		"read_only_preview_summary": true,
 	}
 
 
@@ -41,6 +53,12 @@ static func make_effect_spec(effect_type: StringName, source: String, target: Va
 		"actor_id": actor_id,
 		"command_id": command_id,
 		"rule_request_id": rule_request_id,
+		"EffectDescriptor": RuleEffectModifierSchemaScript.default_effect_descriptor(effect_type),
+		"EffectPreview": RuleEffectModifierSchemaScript.default_effect_preview(RuleEffectModifierSchemaScript.default_effect_descriptor(effect_type)),
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
 	}
 
 
@@ -320,6 +338,9 @@ static func _finalize_rule(context: RunContext, request: Dictionary, result: Dic
 	if context != null and context.rule_pipeline != null:
 		var rule_context: Dictionary = context.rule_pipeline.make_rule_context(context, request)
 		final_result = context.rule_pipeline.apply_modifiers(rule_context, final_result)
+	final_result["RulePreviewSummary"] = RuleEffectModifierSchemaScript.build_rule_preview_summary(final_result, _dictionary_from_variant(final_result.get("rule_context", {})))
+	final_result["EffectResultPreview"] = RuleEffectModifierSchemaScript.build_effect_result_summary(_array_from_variant(final_result.get("effect_results", [])), _array_from_variant(final_result.get("effects", [])), String(final_result.get("blocked_reason", final_result.get("reason", ""))))
+	final_result["ContentDeliveryPreview"] = ContentDeliverySchemaScript.build_content_delivery_preview({}, {"context_id": "rule_result.%s" % str(final_result.get("rule_result", "preview"))})
 	return final_result
 
 

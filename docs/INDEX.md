@@ -1,3 +1,22 @@
+# G34 Docs Index Update
+
+Current G34 entry point:
+
+- `docs/20_product/RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_CONTRACT.md`
+
+Read with:
+
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+- `docs/validation/G34_RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_VALIDATION.md`
+- `docs/handoff/HANDOFF_G34_RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM.md`
+
+G34 implements rule / effect / modifier / content-delivery common-system foundation content as read_only / display_only / preview / no_persistence. It covers RuleDefinition, RuleTrigger, RuleCondition, RuleContextSnapshot, TargetSelector, ApplicabilityCheck, ScopePolicy, EffectDescriptor, EffectPreview, EffectResultPreview, ModifierProfile, ModifierStackPreview, ModifierConflictPolicy, ContentPool, ContentEntry, ContentSelector, ContentDeliveryContext, PoolResultPreview, FallbackPolicy, DeliveryRollPreview, RunFlow handoff, Settlement preview, RunSurface, and HUD display. It does not implement complete Rule engine runtime, script language, AI Director, real rewards, real drops, objective progress, map mutation runtime, persistence, AssetLedger / RunAssetLedger long-term writes, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G33 / older index wording below this update is historical / superseded unless explicitly reopened.
+
 # G33 Docs Index Update
 
 Current G33 entry point:

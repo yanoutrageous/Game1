@@ -1,3 +1,25 @@
+# G34 Current Update
+
+Current active slice: G34-R2 Rule / Effect / Modifier & Content Delivery Common System Full Content Implementation.
+
+Current G34 contract source:
+
+- `docs/20_product/RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_CONTRACT.md`
+
+G34 uses `D:\AGAME1\Base Docs\规则、效果、Modifier 与内容投放通用系统策划案.md` as the primary read-only planning source and establishes the project-supported common preview layer for rules, effects, modifiers, and content delivery.
+
+G34 status boundaries:
+
+- Core outputs: RuleDefinition / RuleTrigger / RuleCondition / RuleContextSnapshot / TargetSelector / ApplicabilityCheck / ScopePolicy.
+- Effect outputs: EffectDescriptor / EffectPreview / EffectResultPreview.
+- Modifier outputs: ModifierProfile / ModifierStackPreview / ModifierConflictPolicy.
+- Content outputs: ContentPool / ContentEntry / ContentSelector / ContentDeliveryContext / PoolResultPreview / FallbackPolicy / DeliveryRollPreview.
+- Consumer alignment: RoomRulePreview, RunFlowSnapshot, Settlement preview, RunSurface, and HUD can read display-only summaries.
+- G34 remains read_only / display_only / preview / no_persistence.
+- G34 does not implement a complete Rule engine runtime, script language, AI Director, real rewards, real drops, real objective progress, real map mutation runtime, persistence, AssetLedger / RunAssetLedger long-term writes, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G33 or older current-state wording below this update is historical / superseded unless explicitly reopened by a future gate.
+
 # G33 Current Update
 
 Current active slice: G33-R2 Room Type / Tag / Encounter Common Rule Full Content Implementation.

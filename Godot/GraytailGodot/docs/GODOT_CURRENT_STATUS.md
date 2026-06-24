@@ -1,3 +1,17 @@
+# G34 Rule Effect Modifier Content Delivery Status
+
+G34-R2 is the current implementation slice on branch `godot/g34-rule-effect-modifier-content-delivery`.
+
+- Scope: Rule / Effect / Modifier & Content Delivery Common System.
+- Product contract: `docs/20_product/RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_CONTRACT.md`.
+- Godot scope: `RuleEffectModifierSchema`, `ContentDeliverySchema`, `RunRulePipeline` preview summaries, `RunRuleService` result previews, `ContentDefRegistry` pool previews, `RunQueryFacade` public snapshot output, RunFlow / Settlement preview handoff, RunSurface / HUD display-only consumers.
+- Boundary: read_only / display_only / preview / no_persistence.
+- Not implemented: complete Rule engine runtime, script language, AI Director, real rewards, real drops, objective progress, map mutation runtime, persistence, AssetLedger / RunAssetLedger long-term writes, CommandBus mutation, gameplay runtime, manual playtest.
+- G34-R2 static validation PASS.
+- G34-R2 Godot headless project-load/parser smoke PASS.
+- Godot smoke produced no new metadata dirty side effects.
+- Parser smoke is project-load/parser only and not gameplay runtime PASS or manual playtest PASS.
+
 # G33 Room Type Tag Encounter Common Rule Status
 
 G33-R2 is the current implementation slice on branch `godot/g33-room-type-tag-encounter-common-rule`.

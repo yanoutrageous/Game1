@@ -6,6 +6,8 @@ class_name RunQueryFacade
 
 const EncounterResolverScript := preload("res://scripts/core/run/encounter/encounter_resolver.gd")
 const RunFlowStateContractScript := preload("res://scripts/core/run/run_flow_state_contract.gd")
+const RuleEffectModifierSchemaScript := preload("res://scripts/core/rules/rule_effect_modifier_schema.gd")
+const ContentDeliverySchemaScript := preload("res://scripts/core/content/content_delivery_schema.gd")
 
 
 func build_result_snapshot(context: RunContext) -> Dictionary:
@@ -16,6 +18,8 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 	var map_result := build_map_result(context)
 	var run_flow_snapshot := build_run_flow_snapshot(context, run_map_snapshot, map_result)
 	var current_room_detail := get_current_room_detail(context)
+	var rule_summary_preview := build_rule_effect_modifier_summary(context, current_room_detail)
+	var content_delivery_preview := build_content_delivery_summary(context, current_room_detail)
 	return {
 		"outcome": context.outcome,
 		"mode": context.mode,
@@ -61,8 +65,17 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 		"current_room_detail": current_room_detail,
 		"room_common_rule_summary_preview": _room_common_rule_summary(current_room_detail),
 		"room_resolution_summary_preview": map_result.get("room_resolution_summary_preview", {}),
+		"rule_effect_modifier_summary_preview": rule_summary_preview,
+		"content_delivery_summary_preview": content_delivery_preview,
+		"RuleDefinition": rule_summary_preview.get("RuleDefinition", {}),
+		"EffectPreview": rule_summary_preview.get("EffectPreview", {}),
+		"EffectResultPreview": rule_summary_preview.get("EffectResultPreview", {}),
+		"ModifierStackPreview": rule_summary_preview.get("ModifierStackPreview", {}),
+		"ContentPool": content_delivery_preview.get("ContentPool", {}),
+		"PoolResultPreview": content_delivery_preview.get("PoolResultPreview", {}),
 		"objective_context_preview": run_map_snapshot.get("objective_context_preview", {}),
 		"modifier_context_preview": run_map_snapshot.get("modifier_context_preview", {}),
+		"pool_context_preview": content_delivery_preview.get("ContentDeliveryContext", {}),
 		"room_loot_context_preview": run_map_snapshot.get("room_loot_context_preview", {}),
 		"run_result_context_preview": run_map_snapshot.get("run_result_context_preview", {}),
 		"status_effects": ledger_snapshot.get("status_effects", []),
@@ -85,6 +98,8 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 	var map_result_preview := build_map_result(context)
 	var run_flow_snapshot := build_run_flow_snapshot(context, run_map_snapshot, map_result_preview)
 	var current_room_detail := get_current_room_detail(context)
+	var rule_summary_preview := build_rule_effect_modifier_summary(context, current_room_detail)
+	var content_delivery_preview := build_content_delivery_summary(context, current_room_detail)
 	return {
 		"run_id": context.run_id,
 		"mode": context.mode,
@@ -134,8 +149,17 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"room_common_rule_summary_preview": _room_common_rule_summary(current_room_detail),
 		"room_resolution_summary_preview": map_result_preview.get("room_resolution_summary_preview", {}),
 		"return_eligibility": current_room_detail.get("return_eligibility", {}),
+		"rule_effect_modifier_summary_preview": rule_summary_preview,
+		"content_delivery_summary_preview": content_delivery_preview,
+		"RuleDefinition": rule_summary_preview.get("RuleDefinition", {}),
+		"EffectPreview": rule_summary_preview.get("EffectPreview", {}),
+		"EffectResultPreview": rule_summary_preview.get("EffectResultPreview", {}),
+		"ModifierStackPreview": rule_summary_preview.get("ModifierStackPreview", {}),
+		"ContentPool": content_delivery_preview.get("ContentPool", {}),
+		"PoolResultPreview": content_delivery_preview.get("PoolResultPreview", {}),
 		"objective_context_preview": run_map_snapshot.get("objective_context_preview", {}),
 		"modifier_context_preview": run_map_snapshot.get("modifier_context_preview", {}),
+		"pool_context_preview": content_delivery_preview.get("ContentDeliveryContext", {}),
 		"room_loot_context_preview": run_map_snapshot.get("room_loot_context_preview", {}),
 		"run_result_context_preview": run_map_snapshot.get("run_result_context_preview", {}),
 		"status_effects": ledger_snapshot.get("status_effects", []),
@@ -187,6 +211,46 @@ func get_content_def_snapshot(context: RunContext) -> Dictionary:
 	if context == null or context.content_defs == null:
 		return {}
 	return context.content_defs.snapshot()
+
+
+func build_rule_effect_modifier_summary(context: RunContext, current_room_detail: Dictionary = {}) -> Dictionary:
+	var rule_id := "room.%s.preview" % String(current_room_detail.get("room_type_key", "unknown"))
+	var summary := RuleEffectModifierSchemaScript.build_rule_preview_summary({
+		"ok": true,
+		"status": &"preview",
+		"rule_result": &"room_rule_preview",
+		"effects": [],
+	}, {
+		"rule_id": rule_id,
+		"run_id": "" if context == null else String(context.run_id),
+		"room_type": current_room_detail.get("room_type", &"Unknown"),
+	})
+	summary["RoomRulePreview"] = _dictionary_from_variant(current_room_detail.get("RoomRulePreview", {}))
+	summary["RoomCondition"] = _dictionary_from_variant(current_room_detail.get("RoomCondition", {}))
+	summary["RoomResolutionPreview"] = _dictionary_from_variant(current_room_detail.get("RoomResolutionPreview", {}))
+	if context != null and context.rule_pipeline != null:
+		var pipeline_preview: Dictionary = context.rule_pipeline.content_modifier_context_preview()
+		summary["ModifierStackPreview"] = _dictionary_from_variant(pipeline_preview.get("ModifierStackPreview", summary.get("ModifierStackPreview", {})))
+		summary["ModifierConflictPolicy"] = _dictionary_from_variant(pipeline_preview.get("ModifierConflictPolicy", {}))
+	summary["EffectPreview"] = RuleEffectModifierSchemaScript.default_effect_preview(RuleEffectModifierSchemaScript.default_effect_descriptor(&"room.preview"))
+	summary["read_only"] = true
+	summary["display_only"] = true
+	summary["preview"] = true
+	summary["no_persistence"] = true
+	return summary
+
+
+func build_content_delivery_summary(context: RunContext, current_room_detail: Dictionary = {}) -> Dictionary:
+	var delivery_context := {
+		"context_id": "room.%s.content_delivery_preview" % String(current_room_detail.get("room_type_key", "unknown")),
+		"run_id": "" if context == null else String(context.run_id),
+		"room_type": current_room_detail.get("room_type", &"Unknown"),
+		"encounter_type": _dictionary_from_variant(current_room_detail.get("EncounterPreview", {})).get("encounter_type", &"none"),
+		"seed": 0 if context == null else int(context.seed_value),
+	}
+	if context != null and context.content_defs != null:
+		return context.content_defs.content_delivery_preview(delivery_context)
+	return ContentDeliverySchemaScript.build_content_delivery_preview({}, delivery_context)
 
 
 func build_run_map_snapshot(context: RunContext) -> Dictionary:
@@ -342,3 +406,9 @@ func _empty_map_result() -> Dictionary:
 		"preview": true,
 		"no_persistence": true,
 	}
+
+
+func _dictionary_from_variant(value: Variant) -> Dictionary:
+	if value is Dictionary:
+		return (value as Dictionary).duplicate(true)
+	return {}

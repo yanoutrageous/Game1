@@ -66,7 +66,9 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 	var room_policy: Dictionary = room_detail.get("RoomPolicy", {})
 	var encounter_preview: Dictionary = room_detail.get("EncounterPreview", {})
 	var resolution_preview: Dictionary = room_detail.get("RoomResolutionPreview", {})
-	model.status_text += "\nRunLifecycle: %s / %s\nRoomState: %s / %s\nRoomPolicy: %s / %s\nEncounterPreview: %s / %s\nRoomResolutionPreview: %s\nfast_return: %s / %s\nSettlementTriggerPreview: %s" % [
+	var rule_summary: Dictionary = snapshot.get("rule_effect_modifier_summary_preview", {})
+	var content_summary: Dictionary = snapshot.get("content_delivery_summary_preview", {})
+	model.status_text += "\nRunLifecycle: %s / %s\nRoomState: %s / %s\nRoomPolicy: %s / %s\nEncounterPreview: %s / %s\nRoomResolutionPreview: %s\nRule/Modifier: %s\nContentPool: %s\nfast_return: %s / %s\nSettlementTriggerPreview: %s" % [
 		String(lifecycle.get("state", "initialized")),
 		String(lifecycle.get("phase", "idle")),
 		String(room_detail.get("known_state", "unknown")),
@@ -76,6 +78,8 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 		String(encounter_preview.get("encounter_type", "empty")),
 		String(encounter_preview.get("option_channel_preview", "none")),
 		String(resolution_preview.get("schema_kind", "RoomResolutionPreview")),
+		_rule_summary_label(rule_summary),
+		_content_pool_label(content_summary),
 		str(bool(return_eligibility.get("eligible", false))),
 		String(return_eligibility.get("reason_code", "unknown")),
 		String(settlement_trigger.get("trigger_state", "not_ready")),
@@ -223,3 +227,32 @@ static func _player_message(message: String) -> String:
 	text = text.replace("pressure", "压力")
 	text = text.replace("HP", "生命")
 	return text
+
+
+static func _rule_summary_label(rule_summary: Dictionary) -> String:
+	if rule_summary.is_empty():
+		return "preview unavailable"
+	var definition: Dictionary = rule_summary.get("RuleDefinition", {})
+	var modifier_stack: Dictionary = rule_summary.get("ModifierStackPreview", {})
+	var effect_preview: Dictionary = rule_summary.get("EffectResultPreview", {})
+	return "%s / effects=%s / modifiers=%s / display_only" % [
+		String(definition.get("display_key", definition.get("rule_id", rule_summary.get("status", "preview")))),
+		int(effect_preview.get("effect_count", _array_variant(effect_preview.get("items", [])).size())),
+		int(modifier_stack.get("modifier_count", _array_variant(modifier_stack.get("modifiers", [])).size())),
+	]
+
+
+static func _content_pool_label(content_summary: Dictionary) -> String:
+	if content_summary.is_empty():
+		return "pool.preview"
+	var pool: Dictionary = content_summary.get("ContentPool", {})
+	return "%s / entries=%s / read_only" % [
+		String(pool.get("pool_id", "pool.preview")),
+		int(pool.get("entry_count", _array_variant(pool.get("entries", [])).size())),
+	]
+
+
+static func _array_variant(value: Variant) -> Array:
+	if value is Array:
+		return (value as Array).duplicate(true)
+	return []

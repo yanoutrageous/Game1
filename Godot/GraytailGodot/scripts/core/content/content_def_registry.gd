@@ -3,6 +3,8 @@ class_name ContentDefRegistry
 
 # G8.2 stable ContentDef registry. Definitions are data only and never mutate state.
 
+const ContentDeliverySchemaScript := preload("res://scripts/core/content/content_delivery_schema.gd")
+
 const KIND_CURRENCY := &"CurrencyDef"
 const KIND_ITEM := &"ItemDef"
 const KIND_ENCOUNTER := &"EncounterDef"
@@ -57,3 +59,11 @@ func get_defs_by_kind(kind: StringName) -> Array[Dictionary]:
 
 func snapshot() -> Dictionary:
 	return definitions.duplicate(true)
+
+
+func content_pool_preview() -> Dictionary:
+	return ContentDeliverySchemaScript.build_registry_pool_preview(snapshot())
+
+
+func content_delivery_preview(context: Dictionary = {}) -> Dictionary:
+	return ContentDeliverySchemaScript.build_content_delivery_preview(content_pool_preview(), context)

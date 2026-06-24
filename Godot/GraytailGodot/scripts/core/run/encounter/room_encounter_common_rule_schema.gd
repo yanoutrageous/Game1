@@ -6,6 +6,8 @@ class_name RoomEncounterCommonRuleSchema
 # reward, objective, settlement, asset, or persistence state.
 
 const SCHEMA_VERSION := 1
+const RuleEffectModifierSchemaScript := preload("res://scripts/core/rules/rule_effect_modifier_schema.gd")
+const ContentDeliverySchemaScript := preload("res://scripts/core/content/content_delivery_schema.gd")
 
 const ROOM_SPAWN := &"Spawn"
 const ROOM_NORMAL := &"Normal"
@@ -283,6 +285,10 @@ static func room_rule_preview_for(room_type: StringName) -> Dictionary:
 		"trigger_policy": policy.get("trigger_policy", &"unknown"),
 		"search_policy": policy.get("search_policy", &"unknown"),
 		"repeat_policy": policy.get("repeat_policy", &"unknown"),
+		"RuleDefinition": RuleEffectModifierSchemaScript.default_rule_definition("room.%s.preview" % String(room_type_key(room_type)), &"room_policy_preview"),
+		"EffectPreview": RuleEffectModifierSchemaScript.default_effect_preview(RuleEffectModifierSchemaScript.default_effect_descriptor(&"room.preview")),
+		"ModifierStackPreview": RuleEffectModifierSchemaScript.default_modifier_stack_preview(),
+		"ContentDeliveryContext": ContentDeliverySchemaScript.default_content_delivery_context("room.%s.content_preview" % String(room_type_key(room_type))),
 		"rule_engine_runtime_connected": false,
 		"modifier_context_preview": _context_placeholder(&"modifier_context_preview"),
 		"read_only": true,
@@ -322,6 +328,8 @@ static func room_resolution_preview_for(room_type: StringName, source_state: Dic
 		},
 		"loot_generated": false,
 		"objective_delta": _context_placeholder(&"objective_delta_preview"),
+		"effect_result_preview": RuleEffectModifierSchemaScript.default_effect_result_preview(RuleEffectModifierSchemaScript.default_effect_descriptor(&"room.resolution_preview")),
+		"pool_result_preview": ContentDeliverySchemaScript.default_pool_result_preview("room.%s.pool_preview" % String(room_type_key(room_type))),
 		"map_mutation": room_policy_for(room_type).get("map_mutation_policy", &"none"),
 		"failure_trigger": normalize_room_type(room_type) == ROOM_MINE,
 		"evacuation_trigger": normalize_room_type(room_type) == ROOM_EXIT,
@@ -405,6 +413,11 @@ static func default_common_rule_summary() -> Dictionary:
 		"encounter_types": [ENCOUNTER_SEARCH, ENCOUNTER_COMBAT, ENCOUNTER_TREASURE, ENCOUNTER_EVENT_CHOICE, ENCOUNTER_MERCHANT, ENCOUNTER_RECYCLE_TERMINAL, ENCOUNTER_EVACUATION, ENCOUNTER_RULE_MODIFIER, ENCOUNTER_BOSS, ENCOUNTER_MINE, ENCOUNTER_NONE],
 		"RoomContentSlot": &"preview_schema",
 		"RoomRulePreview": &"preview_schema",
+		"RuleDefinition": &"preview_schema",
+		"RuleCondition": &"preview_schema",
+		"EffectPreview": &"preview_schema",
+		"ModifierStackPreview": &"preview_schema",
+		"ContentDeliveryContext": &"preview_schema",
 		"RoomResolutionPreview": &"preview_schema",
 		"GroundLoot": &"semantic_boundary_only",
 		"RoomLootContainer": &"semantic_boundary_only",

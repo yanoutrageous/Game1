@@ -4,6 +4,8 @@ class_name SettlementSnapshotSchema
 const AssetDomainContractScript := preload("res://scripts/core/asset/asset_domain_contract.gd")
 const WarehouseViewSchemaScript := preload("res://scripts/core/asset/warehouse_view_schema.gd")
 const WarehouseViewContentSchemaScript := preload("res://scripts/core/asset/warehouse_view_content_schema.gd")
+const RuleEffectModifierSchemaScript := preload("res://scripts/core/rules/rule_effect_modifier_schema.gd")
+const ContentDeliverySchemaScript := preload("res://scripts/core/content/content_delivery_schema.gd")
 
 const SCHEMA_VERSION := 1
 const SNAPSHOT_KIND := &"SettlementSnapshot"
@@ -42,6 +44,10 @@ static func default_snapshot() -> Dictionary:
 		"history_asset_reference_preview": WarehouseViewSchemaScript.default_history_asset_reference(),
 		"resource_result_preview": _default_resource_preview(),
 		"objective_result_preview": _default_named_preview("objective"),
+		"rule_effect_result_preview": RuleEffectModifierSchemaScript.build_effect_result_summary(),
+		"modifier_stack_preview": RuleEffectModifierSchemaScript.default_modifier_stack_preview(),
+		"content_pool_result_preview": ContentDeliverySchemaScript.default_pool_result_preview("settlement.pool.preview"),
+		"content_delivery_context_preview": ContentDeliverySchemaScript.default_content_delivery_context("settlement.content.preview"),
 		"reward_bundle_preview": AssetDomainContractScript.default_reward_bundle_preview("settlement.reward_bundle.preview", &"settlement"),
 		"resource_event_preview": AssetDomainContractScript.default_resource_event_preview("settlement.resource_event.preview"),
 		"item_event_preview": AssetDomainContractScript.default_item_event_preview("settlement.item_event.preview"),
@@ -84,6 +90,10 @@ static func normalize_snapshot(data: Dictionary = {}) -> Dictionary:
 	result["history_asset_reference_preview"] = _dictionary_from(result.get("history_asset_reference_preview", {}), WarehouseViewSchemaScript.default_history_asset_reference())
 	result["resource_result_preview"] = _dictionary_from(result.get("resource_result_preview", {}), _default_resource_preview())
 	result["objective_result_preview"] = _dictionary_from(result.get("objective_result_preview", {}), _default_named_preview("objective"))
+	result["rule_effect_result_preview"] = _dictionary_from(result.get("rule_effect_result_preview", {}), RuleEffectModifierSchemaScript.build_effect_result_summary())
+	result["modifier_stack_preview"] = _dictionary_from(result.get("modifier_stack_preview", {}), RuleEffectModifierSchemaScript.default_modifier_stack_preview())
+	result["content_pool_result_preview"] = _dictionary_from(result.get("content_pool_result_preview", {}), ContentDeliverySchemaScript.default_pool_result_preview("settlement.pool.preview"))
+	result["content_delivery_context_preview"] = _dictionary_from(result.get("content_delivery_context_preview", {}), ContentDeliverySchemaScript.default_content_delivery_context("settlement.content.preview"))
 	result["reward_bundle_preview"] = AssetDomainContractScript.normalize_reward_bundle_preview(_dictionary_from(result.get("reward_bundle_preview", {}), AssetDomainContractScript.default_reward_bundle_preview("settlement.reward_bundle.preview", &"settlement")))
 	result["resource_event_preview"] = _dictionary_from(result.get("resource_event_preview", {}), AssetDomainContractScript.default_resource_event_preview("settlement.resource_event.preview"))
 	result["item_event_preview"] = _dictionary_from(result.get("item_event_preview", {}), AssetDomainContractScript.default_item_event_preview("settlement.item_event.preview"))
