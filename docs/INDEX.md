@@ -1,3 +1,22 @@
+# G32 Docs Index Update
+
+Current G32 entry point:
+
+- `docs/20_product/RUN_FLOW_STATE_TRANSITION_FULL_CONTENT_CONTRACT.md`
+
+Read with:
+
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+- `docs/validation/G32_RUN_FLOW_STATE_TRANSITION_FULL_CONTENT_VALIDATION.md`
+- `docs/handoff/HANDOFF_G32_RUN_FLOW_STATE_TRANSITION_FULL_CONTENT.md`
+
+G32 implements run lifecycle / state transition foundation content as read_only / display_only / preview / no_persistence. It covers RunLifecycle, RunState, RunFlowSnapshot, RoomTransition, RoomActionResult, RunIntent, SettlementTriggerPreview, RunOutcomePreview, RunResult draft, DeployPrep bounded start bridge, RunSurface/HUD display, and Settlement preview handoff. It does not implement SaveManager, active-run persistence, real continue recovery, real abandon settlement, warehouse writes, reward grants, objective progress, RoomLoot runtime, CommandBus command-list changes, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G31 / older index wording below this update is historical / superseded unless explicitly reopened.
+
 # G31 Docs Index Update
 
 Current G31 entry point:

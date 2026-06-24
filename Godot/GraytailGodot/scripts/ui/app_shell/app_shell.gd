@@ -175,9 +175,10 @@ func _on_navigation_intent_requested(intent: Dictionary) -> void:
 			show_main()
 
 
-func _on_deploy_start_intent_requested(_intent: Dictionary) -> void:
-	# DeployPrep remains preview-only; use main menu quick start for the current playable route.
-	pass
+func _on_deploy_start_intent_requested(intent: Dictionary) -> void:
+	var payload := NavigationIntentScript.payload(intent)
+	if NavigationIntentScript.target(intent) == NavigationIntentScript.TARGET_RUN and bool(payload.get("uses_existing_route", false)):
+		host_route_requested.emit(intent)
 
 
 func _set_page_visible(active_page: Control) -> void:

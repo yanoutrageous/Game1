@@ -60,11 +60,17 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 	]
 	var room_detail: Dictionary = snapshot.get("current_room_detail", {})
 	var return_eligibility: Dictionary = snapshot.get("return_eligibility", {})
-	model.status_text += "\nRoomState: %s / %s\nfast_return: %s / %s" % [
+	var run_flow_snapshot: Dictionary = snapshot.get("run_flow_snapshot", {})
+	var lifecycle: Dictionary = run_flow_snapshot.get("RunLifecycle", {})
+	var settlement_trigger: Dictionary = run_flow_snapshot.get("SettlementTriggerPreview", {})
+	model.status_text += "\nRunLifecycle: %s / %s\nRoomState: %s / %s\nfast_return: %s / %s\nSettlementTriggerPreview: %s" % [
+		String(lifecycle.get("state", "initialized")),
+		String(lifecycle.get("phase", "idle")),
 		String(room_detail.get("known_state", "unknown")),
 		String(room_detail.get("visibility", "unknown")),
 		str(bool(return_eligibility.get("eligible", false))),
 		String(return_eligibility.get("reason_code", "unknown")),
+		String(settlement_trigger.get("trigger_state", "not_ready")),
 	]
 	model.protocol_text = "压力：%s / 100\n协议等级：%s\n阶段：%s\n结果：%s\n遭遇：%s\n状态效果：%s" % [
 		snapshot.get("pressure", 0),

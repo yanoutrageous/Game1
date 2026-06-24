@@ -13,6 +13,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 	var search_data: Dictionary = _dict_from(snapshot, "search_state_data")
 	var reward: Dictionary = _dict_from(snapshot, "last_reward")
 	var run_map_snapshot: Dictionary = _dict_from(snapshot, "run_map_snapshot")
+	var run_flow_snapshot: Dictionary = _dict_from(snapshot, "run_flow_snapshot")
 	var current_room_detail: Dictionary = _dict_from(snapshot, "current_room_detail")
 	var return_eligibility: Dictionary = _dict_from(snapshot, "return_eligibility")
 	var encounter_section := _encounter_section(snapshot)
@@ -44,10 +45,12 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"scanner_legend_lines": _scanner_legend_lines(minimap_view_model),
 		"scanner_detail": _scanner_detail(minimap_view_model, run_map_snapshot),
 		"scanner_markers": _scanner_markers(minimap_view_model),
-		"status_lines": _status_lines(snapshot, room_type, adjacent_mines, search_data, current_room_detail, return_eligibility),
+		"status_lines": _status_lines(snapshot, room_type, adjacent_mines, search_data, current_room_detail, return_eligibility, run_flow_snapshot),
 		"map_domain_summary": _map_domain_summary(run_map_snapshot),
+		"run_flow_summary": _run_flow_summary(run_flow_snapshot),
 		"room_state_detail": _room_state_detail(current_room_detail),
 		"return_eligibility_summary": _return_eligibility_summary(return_eligibility),
+		"settlement_trigger_summary": _settlement_trigger_summary(run_flow_snapshot),
 		"event_panel_summary": event_modal_text(event_state),
 		"loot_panel_summary": loot_modal_text(reward, last_message),
 		"extract_summary": extract_modal_text(snapshot),
@@ -572,12 +575,16 @@ static func _monster_summary_text(monster_summary: Dictionary) -> String:
 	return _join_lines(lines)
 
 
-static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary, room_detail: Dictionary = {}, return_eligibility: Dictionary = {}) -> Array[String]:
+static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary, room_detail: Dictionary = {}, return_eligibility: Dictionary = {}, run_flow_snapshot: Dictionary = {}) -> Array[String]:
+	var lifecycle: Dictionary = _dict_variant(run_flow_snapshot.get("RunLifecycle", {}))
+	var transition: Dictionary = _dict_variant(run_flow_snapshot.get("RoomTransition", {}))
 	return [
 		"协议：%s | 压力：%s/100" % [snapshot.get("protocol_level", 5), snapshot.get("pressure", 0)],
 		"危险：%s | 周边雷险：%s" % [_danger_label(room_type, adjacent_mines), adjacent_mines],
 		"房间状态：%s | 阶段：%s" % [String(snapshot.get("outcome", "Running")), String(snapshot.get("phase", &"running"))],
 		"%s" % _search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
+		"RunLifecycle: %s / locked=%s" % [String(lifecycle.get("state", "initialized")), str(bool(lifecycle.get("locked", false)))],
+		"RoomTransition: %s / %s" % [String(transition.get("entry_mode", "adjacent_or_return_preview")), String(transition.get("illegal_target_policy", "disabled_reason_only"))],
 		"RoomState: %s / %s" % [String(room_detail.get("known_state", "unknown")), String(room_detail.get("visibility", "unknown"))],
 		"fast_return: %s / %s" % [str(bool(return_eligibility.get("eligible", false))), String(return_eligibility.get("reason_code", "unknown"))],
 	]
@@ -662,6 +669,17 @@ static func _map_domain_summary(run_map_snapshot: Dictionary) -> String:
 	]
 
 
+static func _run_flow_summary(run_flow_snapshot: Dictionary) -> String:
+	if run_flow_snapshot.is_empty():
+		return "RunFlowSnapshot: unavailable"
+	var lifecycle: Dictionary = _dict_variant(run_flow_snapshot.get("RunLifecycle", {}))
+	var state: Dictionary = _dict_variant(run_flow_snapshot.get("RunState", {}))
+	return "RunFlowSnapshot: %s | phase=%s | display_only" % [
+		String(lifecycle.get("state", "initialized")),
+		String(state.get("phase", "idle")),
+	]
+
+
 static func _room_state_detail(room_detail: Dictionary) -> String:
 	if room_detail.is_empty():
 		return "RoomState: unavailable"
@@ -678,6 +696,16 @@ static func _return_eligibility_summary(return_eligibility: Dictionary) -> Strin
 	return "return_eligibility: %s / %s" % [
 		str(bool(return_eligibility.get("eligible", false))),
 		String(return_eligibility.get("reason_code", "unknown")),
+	]
+
+
+static func _settlement_trigger_summary(run_flow_snapshot: Dictionary) -> String:
+	if run_flow_snapshot.is_empty():
+		return "SettlementTriggerPreview: unavailable"
+	var trigger: Dictionary = _dict_variant(run_flow_snapshot.get("SettlementTriggerPreview", {}))
+	return "SettlementTriggerPreview: %s / writes_warehouse=%s" % [
+		String(trigger.get("trigger_state", "not_ready")),
+		str(bool(trigger.get("writes_warehouse", false))),
 	]
 
 

@@ -287,14 +287,13 @@ func _on_start_preview_pressed() -> void:
 	current_model["preview_lines"] = DeployConfigScript.build_preview_lines(config)
 	current_model["action_message"] = "开始探索 preview 已刷新；完整出发配置启动未接入。请从主菜单“快速开始 / Demo Run”进入当前可玩探索。"
 	_refresh_view()
-	var intent := NavigationIntentScript.make_deploy(
-		&"deploy_prep",
-		{
-			"preview_only": true,
-			"deploy_start_intent": true,
-			"config": current_model.get("run_start_config", {}),
-		}
-	)
+	var start_action := _action("start")
+	var run_payload := _dictionary_from(start_action.get("run_intent", {}))
+	run_payload["source_page"] = &"deploy_prep"
+	run_payload["preview_only"] = false
+	run_payload["run_start_config_preview"] = current_model.get("run_start_config", {})
+	run_payload["boundary"] = "existing_run_route_only_no_run_bootstrapper"
+	var intent := NavigationIntentScript.make_run(&"deploy_prep", run_payload)
 	deploy_start_intent_requested.emit(intent)
 
 

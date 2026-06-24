@@ -256,6 +256,10 @@ func get_status_snapshot() -> Dictionary:
 	return _query().build_status_snapshot(self)
 
 
+func get_run_flow_snapshot() -> Dictionary:
+	return _query().build_run_flow_snapshot(self)
+
+
 func get_search_state_label() -> String:
 	return _query().get_search_state_label(self)
 

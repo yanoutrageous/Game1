@@ -1,3 +1,15 @@
+# G32 Open Decisions Update
+
+G32-R2 run flow / state transition open decisions:
+
+- `OD-G32-001`: exact active-run persistence and continue recovery model remains open; G32 exposes disabled/preview state only.
+- `OD-G32-002`: real abandon settlement outcome remains open; G32 exposes strong-confirm intent only.
+- `OD-G32-003`: DeployPrep full RunBootstrapper and config legality bridge remains open; G32 uses the existing demo/standard run route only.
+- `OD-G32-004`: final RoomActionResult vocabulary for RoomLoot, Objective, Reward, and Modifier remains open.
+- `OD-G32-005`: SettlementTriggerPreview to real settlement report handoff remains open; G32 does not write warehouse state.
+- `OD-G32-006`: CommandBus command-list expansion remains explicitly deferred to a separate audited gate.
+- Any G31 / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G31 Open Decisions Update
 
 G31-R2 run map / room-state open decisions:

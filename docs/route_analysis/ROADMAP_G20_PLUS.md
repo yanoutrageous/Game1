@@ -1,3 +1,16 @@
+# G32 Route Update
+
+Current active slice: G32-R2 Run Flow & State Transition Full Content Implementation.
+
+- G32 uses `D:\AGAME1\Base Docs\局内流程与状态流转规则策划案.md` as the primary read-only planning source.
+- G32 adds the current product contract at `docs/20_product/RUN_FLOW_STATE_TRANSITION_FULL_CONTENT_CONTRACT.md`.
+- G32 formalizes RunLifecycle, RunState, RunFlowSnapshot, RoomTransition, RoomActionResult, RunIntent, SettlementTriggerPreview, RunOutcomePreview, and RunResult draft.
+- G32 aligns DeployPrep start intent to a bounded existing run route bridge; no full RunBootstrapper or deploy-config legality runtime is implemented.
+- G32 aligns RunSurface / HUD / Settlement as display-only public snapshot consumers.
+- G32 does not implement SaveManager, active-run persistence, real continue recovery, real abandon settlement, warehouse writes, reward grants, objective progress, RoomLoot runtime, CommandBus command-list changes, gameplay runtime PASS, or manual playtest PASS.
+- Unified G32-R3 audit / release gate should validate parser smoke and branch state before any main merge.
+- Any remaining G31 or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G31 Route Update
 
 Current active slice: G31-R2 Run Map Domain / Room State Foundation Full Content Implementation.

@@ -1,3 +1,17 @@
+# G32 Run Flow State Transition Status
+
+G32-R2 is the current implementation slice on branch `godot/g32-run-flow-state-transition-full-content`.
+
+- Scope: Run Flow & State Transition Full Content.
+- Product contract: `docs/20_product/RUN_FLOW_STATE_TRANSITION_FULL_CONTENT_CONTRACT.md`.
+- Godot scope: `RunFlowStateContract`, `RunQueryFacade` run-flow snapshot output, DeployPrep bounded route bridge, AppShell handoff, RunSurface / HUD display-only snapshot consumers, Settlement trigger/outcome/result draft preview.
+- Boundary: read_only / display_only / preview / no_persistence.
+- Not implemented: SaveManager, active-run persistence, real continue recovery, real abandon settlement, warehouse write, reward grant, objective progress, complete Rule / Modifier engine, RoomLoot runtime, CommandBus command-list change, gameplay runtime, manual playtest.
+- G32-R2 static validation PASS.
+- G32-R2 Godot headless project-load/parser smoke PASS.
+- Godot smoke produced no new metadata dirty side effects.
+- This is project-load/parser only and not gameplay runtime PASS or manual playtest PASS.
+
 # G31 Run Map Room State Status
 
 G31-R2 is the current implementation slice on branch `godot/g31-run-map-room-state-foundation`.

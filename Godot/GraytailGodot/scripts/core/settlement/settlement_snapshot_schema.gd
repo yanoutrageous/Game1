@@ -30,6 +30,9 @@ static func default_snapshot() -> Dictionary:
 		"map_summary": _default_map_summary(),
 		"run_map_snapshot_preview": _default_run_map_snapshot_preview(),
 		"map_result_preview": _default_map_result_preview(),
+		"settlement_trigger_preview": _default_settlement_trigger_preview(),
+		"run_outcome_preview": _default_run_outcome_preview(),
+		"run_result_draft_preview": _default_run_result_draft_preview(),
 		"deploy_summary": _default_deploy_summary(),
 		"result_summary": _default_result_summary(),
 		"item_result_preview": _default_result_bucket(),
@@ -68,6 +71,9 @@ static func normalize_snapshot(data: Dictionary = {}) -> Dictionary:
 	result["map_summary"] = _dictionary_from(result.get("map_summary", {}), _default_map_summary())
 	result["run_map_snapshot_preview"] = _dictionary_from(result.get("run_map_snapshot_preview", {}), _default_run_map_snapshot_preview())
 	result["map_result_preview"] = _dictionary_from(result.get("map_result_preview", {}), _default_map_result_preview())
+	result["settlement_trigger_preview"] = _dictionary_from(result.get("settlement_trigger_preview", {}), _default_settlement_trigger_preview())
+	result["run_outcome_preview"] = _dictionary_from(result.get("run_outcome_preview", {}), _default_run_outcome_preview())
+	result["run_result_draft_preview"] = _dictionary_from(result.get("run_result_draft_preview", {}), _default_run_result_draft_preview())
 	result["deploy_summary"] = _dictionary_from(result.get("deploy_summary", {}), _default_deploy_summary())
 	result["result_summary"] = _dictionary_from(result.get("result_summary", {}), _default_result_summary())
 	result["item_result_preview"] = _dictionary_from(result.get("item_result_preview", {}), _default_result_bucket())
@@ -145,6 +151,52 @@ static func _default_map_result_preview() -> Dictionary:
 		"known_summary": {},
 		"history_reference_preview": {},
 		"settlement_context_preview": {},
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
+	}
+
+
+static func _default_settlement_trigger_preview() -> Dictionary:
+	return {
+		"schema_kind": &"SettlementTriggerPreview",
+		"trigger_state": &"not_ready",
+		"source_lifecycle_state": &"initialized",
+		"writes_warehouse": false,
+		"grants_reward": false,
+		"persists_history": false,
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
+	}
+
+
+static func _default_run_outcome_preview() -> Dictionary:
+	return {
+		"schema_kind": &"RunOutcomePreview",
+		"outcome": "Idle",
+		"lifecycle_state": &"initialized",
+		"result_type": &"running",
+		"writes_assets": false,
+		"advances_objectives": false,
+		"grants_rewards": false,
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
+	}
+
+
+static func _default_run_result_draft_preview() -> Dictionary:
+	return {
+		"schema_kind": &"RunResult",
+		"draft_only": true,
+		"settlement_trigger_ref": &"SettlementTriggerPreview",
+		"objective_context_preview": _default_named_preview("objective_context"),
+		"reward_context_preview": _default_named_preview("reward_context"),
+		"room_loot_context_preview": _default_named_preview("room_loot_context"),
 		"read_only": true,
 		"display_only": true,
 		"preview": true,

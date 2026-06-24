@@ -5,6 +5,7 @@ class_name RunQueryFacade
 # UI and presentation code should consume these snapshots instead of private run state.
 
 const EncounterResolverScript := preload("res://scripts/core/run/encounter/encounter_resolver.gd")
+const RunFlowStateContractScript := preload("res://scripts/core/run/run_flow_state_contract.gd")
 
 
 func build_result_snapshot(context: RunContext) -> Dictionary:
@@ -13,6 +14,7 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 	var transaction_log_snapshot: Array[Dictionary] = get_transaction_log_snapshot(context)
 	var run_map_snapshot := build_run_map_snapshot(context)
 	var map_result := build_map_result(context)
+	var run_flow_snapshot := build_run_flow_snapshot(context, run_map_snapshot, map_result)
 	return {
 		"outcome": context.outcome,
 		"mode": context.mode,
@@ -45,6 +47,15 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 		"transaction_count": transaction_log_snapshot.size(),
 		"run_map_snapshot": run_map_snapshot,
 		"map_result": map_result,
+		"run_flow_snapshot": run_flow_snapshot,
+		"RunLifecycle": run_flow_snapshot.get("RunLifecycle", {}),
+		"RunState": run_flow_snapshot.get("RunState", {}),
+		"RoomTransition": run_flow_snapshot.get("RoomTransition", {}),
+		"RoomActionResult": run_flow_snapshot.get("RoomActionResult", {}),
+		"RunIntent": run_flow_snapshot.get("RunIntent", {}),
+		"SettlementTriggerPreview": run_flow_snapshot.get("SettlementTriggerPreview", {}),
+		"RunOutcomePreview": run_flow_snapshot.get("RunOutcomePreview", {}),
+		"RunResult": run_flow_snapshot.get("RunResult", {}),
 		"map_summary_preview": map_result.get("map_summary_preview", {}),
 		"objective_context_preview": run_map_snapshot.get("objective_context_preview", {}),
 		"modifier_context_preview": run_map_snapshot.get("modifier_context_preview", {}),
@@ -68,6 +79,7 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 	var content_def_snapshot: Dictionary = get_content_def_snapshot(context)
 	var run_map_snapshot := build_run_map_snapshot(context)
 	var map_result_preview := build_map_result(context)
+	var run_flow_snapshot := build_run_flow_snapshot(context, run_map_snapshot, map_result_preview)
 	var current_room_detail := get_current_room_detail(context)
 	return {
 		"run_id": context.run_id,
@@ -104,6 +116,15 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"content_definition_count": content_def_snapshot.size(),
 		"run_map_snapshot": run_map_snapshot,
 		"map_result_preview": map_result_preview,
+		"run_flow_snapshot": run_flow_snapshot,
+		"RunLifecycle": run_flow_snapshot.get("RunLifecycle", {}),
+		"RunState": run_flow_snapshot.get("RunState", {}),
+		"RoomTransition": run_flow_snapshot.get("RoomTransition", {}),
+		"RoomActionResult": run_flow_snapshot.get("RoomActionResult", {}),
+		"RunIntent": run_flow_snapshot.get("RunIntent", {}),
+		"SettlementTriggerPreview": run_flow_snapshot.get("SettlementTriggerPreview", {}),
+		"RunOutcomePreview": run_flow_snapshot.get("RunOutcomePreview", {}),
+		"RunResult": run_flow_snapshot.get("RunResult", {}),
 		"map_summary_preview": map_result_preview.get("map_summary_preview", {}),
 		"current_room_detail": current_room_detail,
 		"return_eligibility": current_room_detail.get("return_eligibility", {}),
@@ -172,6 +193,12 @@ func build_map_result(context: RunContext) -> Dictionary:
 	if context == null or context.truth_map == null:
 		return _empty_map_result()
 	return context.truth_map.build_map_result(context.intel_map, context.player_pos)
+
+
+func build_run_flow_snapshot(context: RunContext, run_map_snapshot: Dictionary = {}, map_result: Dictionary = {}) -> Dictionary:
+	if context == null:
+		return RunFlowStateContractScript.build_flow_snapshot()
+	return RunFlowStateContractScript.build_flow_snapshot(context, run_map_snapshot, map_result)
 
 
 func get_current_room_detail(context: RunContext) -> Dictionary:

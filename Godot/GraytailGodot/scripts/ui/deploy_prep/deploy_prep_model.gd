@@ -80,6 +80,7 @@ static func _build_model(
 		"config": config,
 		"run_start_config": DeployConfigScript.build_run_start_config(config),
 		"local_draft_preview": _local_draft_preview(config),
+		"run_flow_route_preview": _run_flow_route_preview(config, run_active),
 		"asset_domain_preview": {
 			"deploy_asset_view_preview": (config.get("deploy_asset_view_preview", {}) as Dictionary).duplicate(true),
 			"warehouse_view_snapshot": (config.get("warehouse_view_snapshot", {}) as Dictionary).duplicate(true),
@@ -125,12 +126,49 @@ static func _local_draft_preview(config: Dictionary) -> Dictionary:
 	}
 
 
+static func _run_flow_route_preview(config: Dictionary, run_active: bool) -> Dictionary:
+	return {
+		"schema_kind": &"RunIntent",
+		"start_bridge": {
+			"target_route": &"run",
+			"route_mode": &"demo_run",
+			"entry_id": &"deploy_prep_start_bridge",
+			"deploy_config_bridge": true,
+			"uses_existing_route": true,
+			"does_not_create_run_bootstrapper": true,
+			"config_ref": String(DeployConfigScript.build_run_start_config(config).get("config_id", "")),
+		},
+		"continue": {
+			"disabled": not run_active,
+			"disabled_reason": &"" if run_active else &"no_active_run_persistence",
+			"preview": true,
+		},
+		"abandon": {
+			"disabled": true,
+			"disabled_reason": &"settlement_runtime_not_connected",
+			"strong_confirm_required": run_active,
+			"preview": true,
+		},
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
+	}
+
+
 static func _actions(run_active: bool) -> Dictionary:
 	return {
 		"start": {
 			"label": "开始探索 preview",
 			"tooltip": "只刷新 DeployConfig / RunStartConfig preview；完整出发配置启动未接入。当前可玩探索请从主菜单快速开始进入。",
 			"disabled": run_active,
+			"run_intent": {
+				"target_route": &"run",
+				"route_mode": &"demo_run",
+				"entry_id": &"deploy_prep_start_bridge",
+				"deploy_config_bridge": true,
+				"uses_existing_route": true,
+			},
 			"preview": true,
 			"display_only": true,
 			"read_only": true,
@@ -140,6 +178,7 @@ static func _actions(run_active: bool) -> Dictionary:
 			"tooltip": "继续入口只保留 read_only preview；真实继续流程后置。",
 			"disabled": not run_active,
 			"has_active_run": run_active,
+			"disabled_reason": &"" if run_active else &"no_active_run_persistence",
 			"preview": true,
 			"display_only": true,
 			"read_only": true,
@@ -149,6 +188,7 @@ static func _actions(run_active: bool) -> Dictionary:
 			"tooltip": "放弃必须强确认；本页只显示强确认 preview，不执行放弃。",
 			"disabled": not run_active,
 			"requires_confirm": run_active,
+			"disabled_reason": &"settlement_runtime_not_connected",
 			"confirm_copy": "强确认 preview：放弃当前探索会在真实系统中损失本局状态，但本轮不执行。",
 			"preview": true,
 			"display_only": true,
