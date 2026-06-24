@@ -1,3 +1,24 @@
+# G29 Current Update
+
+Current active slice: G29-R2 Deploy Prep Revision Full Content Implementation.
+
+G29 uses `D:\AGAME1\Base Docs\出发探索界面与出勤准备规则策划修正案.md` as the read-only planning source. The revision source supersedes older DeployPrep preview wording where the two conflict.
+
+Current G29 contract source:
+
+- `docs/20_product/DEPLOY_PREP_REVISION_FULL_CONTENT_CONTRACT.md`
+
+G29 status boundaries:
+
+- DeployPrep visible primary tabs are now aligned to 地图 / 仓库 / 申领 / 目标 / 出勤配置.
+- 目标 replaces the old 作业许可 visible page position.
+- 作业许可 is downgraded to future interface / locked state.
+- 仓库 is ownership-first; 申领 is catalog-first.
+- Capacity wording is unified as 背包容量.
+- G29 remains preview / display-only / read-only and does not implement real warehouse, real asset writes, real purchase, real reward grant, real settlement, real RunBootstrapper, persistence, or full RunFlow.
+- G29 internal slices are docs alignment, model/state/content, and UI display/interaction/validation.
+- Unified G29 release gate must wait until the main G29-R2 content is complete.
+
 # G28A Current Update
 
 Current active slice: G28A Item Asset Content / Warehouse View Content Contract - docs-only.

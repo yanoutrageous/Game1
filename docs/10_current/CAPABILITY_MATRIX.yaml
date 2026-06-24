@@ -1,13 +1,13 @@
 document_status: current_summary
-last_updated: "2026/06/23"
-scope: "G28A docs-only current capability matrix"
+last_updated: "2026/06/24"
+scope: "G29-R2 deploy prep revision full content capability matrix"
 stage_boundary:
-  current_stage: "G28A Item Asset Content / Warehouse View Content Contract - docs-only"
-  latest_closed_engineering_stage: "G27 Asset Domain / Warehouse View Contract Foundation"
+  current_stage: "G29-R2 Deploy Prep Revision Full Content Implementation"
+  latest_closed_engineering_stage: "G28 Item Asset Content / Warehouse View Content Preview Foundation"
   g26_status: "completed_historical_no_longer_not_started_or_placeholder"
   g27_status: "completed_historical_asset_domain_warehouse_view_contract_foundation"
-  g28a_status: "active_docs_only_item_asset_content_warehouse_view_content_contract"
-  g29_status: "future_candidate_objective_reward_pool_contract_or_later_requires_gate"
+  g28a_status: "completed_historical_item_asset_content_warehouse_view_content_contract"
+  g29_status: "active_deploy_prep_revision_full_content_preview_display_only"
 validation_boundary:
   godot_headless_project_load_parser_smoke_pass: "recorded for G25"
   gameplay_runtime_pass: false
@@ -23,15 +23,31 @@ capabilities:
       - "real settings"
       - "new gameplay systems"
   deploy_prep:
-    implementation_status: "foundation_preview_display_only"
+    implementation_status: "g29_revision_v0_2_preview_display_only"
     evidence:
       - "docs/validation/G18_DEPLOY_PREP_FOUNDATION_VALIDATION.md"
       - "docs/validation/G22_DEPLOY_PREP_FULL_MODULE_CONTENT_PREVIEW_VALIDATION.md"
+      - "docs/20_product/DEPLOY_PREP_REVISION_FULL_CONTENT_CONTRACT.md"
+    current_primary_tabs:
+      - "地图"
+      - "仓库"
+      - "申领"
+      - "目标"
+      - "出勤配置"
+    current_revision_rules:
+      - "revision source overrides older DeployPrep preview wording"
+      - "目标 replaces the old 作业许可 visible tab"
+      - "作业许可 is future interface / locked state"
+      - "warehouse is ownership-first"
+      - "claim is catalog-first"
+      - "capacity wording is 背包容量"
     not_complete:
       - "real run start/continue/abandon implementation"
       - "real warehouse"
       - "real claim purchase"
       - "real map generation"
+      - "real objective progress"
+      - "real reward grant"
   long_term:
     implementation_status: "six_module_foundation_preview_display_only"
     modules:

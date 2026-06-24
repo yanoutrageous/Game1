@@ -68,8 +68,8 @@ static func _build_model(
 	var preview := DeployConfigScript.build_preview_lines(config)
 	return {
 		"title": "出发探索",
-		"subtitle": "本局准备中心 / 五模块内容 preview / display_only",
-		"boundary": "G22-R2 只补全地图、仓库、申领、出勤配置、作业许可的内容 preview；不实现完整出发探索、真实仓库、真实资产写入、真实扣费、真实探索执行或真实记录。",
+		"subtitle": "修正案 v0.2 / 地图、仓库、申领、目标、出勤配置 / preview",
+		"boundary": "G29-R2 落地出发探索修正案 v0.2 的页面结构、内容模型、状态汇总和交互边界；作业许可降级为后续接口，不实现真实仓库、资产写入、扣费、结算、RunBootstrapper 或完整 RunFlow。",
 		"tabs": DeployTabModelScript.build_tabs(),
 		"active_tab": active_tab,
 		"selected_filter": selected_filter,
@@ -79,11 +79,15 @@ static func _build_model(
 		"selected_card_detail": selected_detail,
 		"config": config,
 		"run_start_config": DeployConfigScript.build_run_start_config(config),
+		"local_draft_preview": _local_draft_preview(config),
 		"asset_domain_preview": {
 			"deploy_asset_view_preview": (config.get("deploy_asset_view_preview", {}) as Dictionary).duplicate(true),
 			"warehouse_view_snapshot": (config.get("warehouse_view_snapshot", {}) as Dictionary).duplicate(true),
 			"warehouse_view_content_snapshot": (config.get("warehouse_view_content_snapshot", {}) as Dictionary).duplicate(true),
-			"summary": "Asset domain / WarehouseViewSnapshot preview is read_only display_only and does not write assets.",
+			"objective_preview": (config.get("objective_preview", {}) as Dictionary).duplicate(true),
+			"config_validity_preview": (config.get("config_validity_preview", {}) as Dictionary).duplicate(true),
+			"action_intent_boundaries": (config.get("action_intent_boundaries", {}) as Dictionary).duplicate(true),
+			"summary": "G27/G28 AssetDescriptor / WarehouseViewSnapshot / ItemAssetContentPreview / WarehouseViewContentSnapshot are display sources only and do not write assets.",
 			"read_only": true,
 			"display_only": true,
 			"preview": true,
@@ -92,6 +96,28 @@ static func _build_model(
 		"abandon_confirm_visible": confirm_visible,
 		"action_message": action_message,
 		"actions": _actions(run_active),
+		"preview": true,
+		"display_only": true,
+		"read_only": true,
+	}
+
+
+static func _local_draft_preview(config: Dictionary) -> Dictionary:
+	return {
+		"map": {
+			"summary": String(config.get("selected_map_summary", "")),
+			"map_mode": String(config.get("map_mode_label", "常规扫雷")),
+			"difficulty": String(config.get("difficulty_label", "普通")),
+			"region": String(config.get("region_label", "灰尾外围")),
+		},
+		"warehouse": (config.get("warehouse_attendance_preview", {}) as Dictionary).duplicate(true),
+		"claim": (config.get("claim_preview", {}) as Dictionary).duplicate(true),
+		"objective": (config.get("objective_preview", {}) as Dictionary).duplicate(true),
+		"loadout": (config.get("loadout_preview", {}) as Dictionary).duplicate(true),
+		"backpack_capacity": (config.get("backpack_capacity_preview", {}) as Dictionary).duplicate(true),
+		"validity": (config.get("config_validity_preview", {}) as Dictionary).duplicate(true),
+		"permission_interface": (config.get("permission_interface_preview", {}) as Dictionary).duplicate(true),
+		"linkage_note": "地图、仓库、申领、目标、出勤配置共享同一个 local draft preview；不会写真实仓库、目标进度或 RunStartConfig 锁定状态。",
 		"preview": true,
 		"display_only": true,
 		"read_only": true,

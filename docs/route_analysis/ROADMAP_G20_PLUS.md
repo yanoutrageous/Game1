@@ -1,3 +1,16 @@
+# G29 Route Update
+
+Current active slice: G29-R2 Deploy Prep Revision Full Content Implementation.
+
+- G29 uses `D:\AGAME1\Base Docs\出发探索界面与出勤准备规则策划修正案.md` as read-only planning source.
+- G29 advances DeployPrep to revision v0.2 page/content/state/interaction boundaries.
+- Current visible tabs: 地图 / 仓库 / 申领 / 目标 / 出勤配置.
+- 目标 replaces the old 作业许可 visible position; 作业许可 is a future interface / locked state.
+- Warehouse is ownership-first; Claim is catalog-first; capacity wording is 背包容量.
+- G29 remains preview / display-only / read-only and does not implement real warehouse, asset writes, purchase, sale, claim reward, settlement, RunBootstrapper, persistence, or full RunFlow.
+- Unified G29 release gate must wait for this main implementation content to complete.
+- Any remaining G28A or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G28A Route Update
 
 Current active slice: G28A Item Asset Content / Warehouse View Content Contract - docs-only.

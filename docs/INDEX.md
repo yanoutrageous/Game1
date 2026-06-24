@@ -1,3 +1,20 @@
+# G29 Docs Index Update
+
+Current G29 entry point:
+
+- `docs/20_product/DEPLOY_PREP_REVISION_FULL_CONTENT_CONTRACT.md`
+
+Read with:
+
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+
+G29 implements the DeployPrep revision v0.2 UI/model/content layer as preview / display-only / read-only. It aligns the visible tabs to 地图 / 仓库 / 申领 / 目标 / 出勤配置, downgrades 作业许可 to future interface / locked state, and keeps real warehouse, asset writes, purchase, reward, settlement, RunBootstrapper, persistence, gameplay runtime PASS, and manual playtest PASS out of scope.
+
+Any remaining G28A/G27A index wording below this update is historical / superseded unless explicitly reopened by a future gate.
+
 # G28A Docs Index Update
 
 Current G28A docs-only entry point:

@@ -1,3 +1,15 @@
+# G29 Open Decisions Update
+
+G29-R2 deploy prep revision open decisions:
+
+- `OD-G29-001`: default number of selectable run objectives remains open; current preview assumes 0-1.
+- `OD-G29-002`: whether purchase-and-add-to-attendance is exposed as a shortcut remains open; G29 models it as two future events.
+- `OD-G29-003`: warehouse sale confirmation and configured-item sale conflict behavior remain open.
+- `OD-G29-004`: abandon exploration retained-record rules remain open.
+- `OD-G29-005`: insurance, consignment, and 作业许可 remain future interface / locked state.
+- `OD-G29-006`: exact topology effect text for consumables remains open; G29 only reserves the display boundary.
+- Any G28A / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G28A Open Decisions Update
 
 G28A docs-only open decisions:
