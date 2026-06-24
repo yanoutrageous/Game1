@@ -15,6 +15,7 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 	var run_map_snapshot := build_run_map_snapshot(context)
 	var map_result := build_map_result(context)
 	var run_flow_snapshot := build_run_flow_snapshot(context, run_map_snapshot, map_result)
+	var current_room_detail := get_current_room_detail(context)
 	return {
 		"outcome": context.outcome,
 		"mode": context.mode,
@@ -57,6 +58,9 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 		"RunOutcomePreview": run_flow_snapshot.get("RunOutcomePreview", {}),
 		"RunResult": run_flow_snapshot.get("RunResult", {}),
 		"map_summary_preview": map_result.get("map_summary_preview", {}),
+		"current_room_detail": current_room_detail,
+		"room_common_rule_summary_preview": _room_common_rule_summary(current_room_detail),
+		"room_resolution_summary_preview": map_result.get("room_resolution_summary_preview", {}),
 		"objective_context_preview": run_map_snapshot.get("objective_context_preview", {}),
 		"modifier_context_preview": run_map_snapshot.get("modifier_context_preview", {}),
 		"room_loot_context_preview": run_map_snapshot.get("room_loot_context_preview", {}),
@@ -127,6 +131,8 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"RunResult": run_flow_snapshot.get("RunResult", {}),
 		"map_summary_preview": map_result_preview.get("map_summary_preview", {}),
 		"current_room_detail": current_room_detail,
+		"room_common_rule_summary_preview": _room_common_rule_summary(current_room_detail),
+		"room_resolution_summary_preview": map_result_preview.get("room_resolution_summary_preview", {}),
 		"return_eligibility": current_room_detail.get("return_eligibility", {}),
 		"objective_context_preview": run_map_snapshot.get("objective_context_preview", {}),
 		"modifier_context_preview": run_map_snapshot.get("modifier_context_preview", {}),
@@ -208,6 +214,27 @@ func get_current_room_detail(context: RunContext) -> Dictionary:
 	detail["schema_kind"] = &"RoomDetailPreview"
 	detail["current_room"] = true
 	return detail
+
+
+func _room_common_rule_summary(room_detail: Dictionary) -> Dictionary:
+	return {
+		"schema_kind": &"room_common_rule_summary_preview",
+		"room_type": room_detail.get("room_type", &"Unknown"),
+		"RoomTag": room_detail.get("RoomTag", []),
+		"RoomPolicy": room_detail.get("RoomPolicy", {}),
+		"RoomContentSlot": room_detail.get("RoomContentSlot", {}),
+		"EncounterEntry": room_detail.get("EncounterEntry", {}),
+		"EncounterPreview": room_detail.get("EncounterPreview", {}),
+		"RoomRulePreview": room_detail.get("RoomRulePreview", {}),
+		"RoomResolutionPreview": room_detail.get("RoomResolutionPreview", {}),
+		"RoomResultPreview": room_detail.get("RoomResultPreview", {}),
+		"GroundLoot": room_detail.get("GroundLoot", {}),
+		"RoomLootContainer": room_detail.get("RoomLootContainer", {}),
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
+	}
 
 
 func get_inventory_summary(context: RunContext) -> Dictionary:

@@ -30,6 +30,7 @@ static func default_snapshot() -> Dictionary:
 		"map_summary": _default_map_summary(),
 		"run_map_snapshot_preview": _default_run_map_snapshot_preview(),
 		"map_result_preview": _default_map_result_preview(),
+		"room_resolution_summary_preview": _default_room_resolution_summary_preview(),
 		"settlement_trigger_preview": _default_settlement_trigger_preview(),
 		"run_outcome_preview": _default_run_outcome_preview(),
 		"run_result_draft_preview": _default_run_result_draft_preview(),
@@ -71,6 +72,7 @@ static func normalize_snapshot(data: Dictionary = {}) -> Dictionary:
 	result["map_summary"] = _dictionary_from(result.get("map_summary", {}), _default_map_summary())
 	result["run_map_snapshot_preview"] = _dictionary_from(result.get("run_map_snapshot_preview", {}), _default_run_map_snapshot_preview())
 	result["map_result_preview"] = _dictionary_from(result.get("map_result_preview", {}), _default_map_result_preview())
+	result["room_resolution_summary_preview"] = _dictionary_from(result.get("room_resolution_summary_preview", {}), _default_room_resolution_summary_preview())
 	result["settlement_trigger_preview"] = _dictionary_from(result.get("settlement_trigger_preview", {}), _default_settlement_trigger_preview())
 	result["run_outcome_preview"] = _dictionary_from(result.get("run_outcome_preview", {}), _default_run_outcome_preview())
 	result["run_result_draft_preview"] = _dictionary_from(result.get("run_result_draft_preview", {}), _default_run_result_draft_preview())
@@ -151,6 +153,34 @@ static func _default_map_result_preview() -> Dictionary:
 		"known_summary": {},
 		"history_reference_preview": {},
 		"settlement_context_preview": {},
+		"room_resolution_summary_preview": _default_room_resolution_summary_preview(),
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
+	}
+
+
+static func _default_room_resolution_summary_preview() -> Dictionary:
+	return {
+		"schema_kind": &"room_resolution_summary_preview",
+		"RoomType": {},
+		"RoomTag": [],
+		"RoomPolicy": {},
+		"EncounterPreview": {},
+		"RoomResolutionPreview": {},
+		"RoomResultPreview": {},
+		"GroundLoot": {
+			"semantic_boundary": "Room-local item presence; not player backpack and not long-term warehouse.",
+			"runtime_connected": false,
+		},
+		"RoomLootContainer": {
+			"semantic_boundary": "Room-local loot container preview; no item grant or warehouse write.",
+			"runtime_connected": false,
+		},
+		"writes_warehouse": false,
+		"grants_reward": false,
+		"advances_objective": false,
 		"read_only": true,
 		"display_only": true,
 		"preview": true,

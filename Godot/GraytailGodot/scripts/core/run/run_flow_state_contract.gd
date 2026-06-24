@@ -123,6 +123,14 @@ static func build_room_transition(context: RunContext = null, run_map_snapshot: 
 		"entry_mode": &"adjacent_or_return_preview",
 		"entry_source": &"existing_run_route",
 		"current_room_detail": current_room_detail,
+		"RoomType": _dictionary_from_variant(current_room_detail.get("RoomType", {})),
+		"RoomTag": _array_from_variant(current_room_detail.get("RoomTag", [])),
+		"RoomPolicy": _dictionary_from_variant(current_room_detail.get("RoomPolicy", {})),
+		"RoomContentSlot": _dictionary_from_variant(current_room_detail.get("RoomContentSlot", {})),
+		"EncounterEntry": _dictionary_from_variant(current_room_detail.get("EncounterEntry", {})),
+		"EncounterPreview": _dictionary_from_variant(current_room_detail.get("EncounterPreview", {})),
+		"RoomRulePreview": _dictionary_from_variant(current_room_detail.get("RoomRulePreview", {})),
+		"RoomResolutionPreview": _dictionary_from_variant(current_room_detail.get("RoomResolutionPreview", {})),
 		"return_eligibility": return_eligibility,
 		"fast_return": bool(return_eligibility.get("eligible", false)),
 		"illegal_target_policy": &"disabled_reason_only",
@@ -149,6 +157,8 @@ static func build_room_action_result(context: RunContext = null, command_result:
 		"reward_context_preview": _placeholder(&"reward_context_preview"),
 		"objective_context_preview": _placeholder(&"objective_context_preview"),
 		"room_loot_context_preview": _placeholder(&"room_loot_context_preview"),
+		"RoomResolutionPreview": _room_resolution_preview_for(context),
+		"RoomResultPreview": _room_result_preview_for(context),
 		"read_only": true,
 		"display_only": true,
 		"preview": true,
@@ -381,6 +391,7 @@ static func _context_placeholders() -> Dictionary:
 		"pool": _placeholder(&"pool_context_preview"),
 		"modifier": _placeholder(&"modifier_context_preview"),
 		"room_loot": _placeholder(&"room_loot_context_preview"),
+		"room_resolution": _placeholder(&"room_resolution_summary_preview"),
 	}
 
 
@@ -393,3 +404,29 @@ static func _placeholder(context_id: StringName) -> Dictionary:
 		"preview": true,
 		"no_persistence": true,
 	}
+
+
+static func _room_resolution_preview_for(context: RunContext = null) -> Dictionary:
+	if context == null or context.truth_map == null:
+		return {}
+	var detail: Dictionary = context.truth_map.get_room_state(context.player_pos, context.intel_map)
+	return _dictionary_from_variant(detail.get("RoomResolutionPreview", {}))
+
+
+static func _room_result_preview_for(context: RunContext = null) -> Dictionary:
+	if context == null or context.truth_map == null:
+		return {}
+	var detail: Dictionary = context.truth_map.get_room_state(context.player_pos, context.intel_map)
+	return _dictionary_from_variant(detail.get("RoomResultPreview", {}))
+
+
+static func _array_from_variant(value: Variant) -> Array:
+	if value is Array:
+		return (value as Array).duplicate(true)
+	return []
+
+
+static func _dictionary_from_variant(value: Variant) -> Dictionary:
+	if value is Dictionary:
+		return (value as Dictionary).duplicate(true)
+	return {}

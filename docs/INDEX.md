@@ -1,3 +1,22 @@
+# G33 Docs Index Update
+
+Current G33 entry point:
+
+- `docs/20_product/ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_CONTRACT.md`
+
+Read with:
+
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+- `docs/validation/G33_ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_VALIDATION.md`
+- `docs/handoff/HANDOFF_G33_ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE.md`
+
+G33 implements room type / tag / encounter common-rule foundation content as read_only / display_only / preview / no_persistence. It covers RoomType, RoomTag, RoomPolicy, RoomState, RoomContentSlot, EncounterEntry, EncounterPreview, RoomRulePreview, RoomCondition, RoomResolutionPreview, RoomResultPreview, GroundLoot, RoomLootContainer, RunFlow handoff, Settlement preview, RunSurface, and HUD display. It does not implement battle runtime, event-chain runtime, RoomLoot/GroundLoot runtime, Rule/Modifier engine, objective progress, reward grant, settlement warehouse write, SaveManager, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G32 / older index wording below this update is historical / superseded unless explicitly reopened.
+
 # G32 Docs Index Update
 
 Current G32 entry point:

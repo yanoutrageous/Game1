@@ -5,37 +5,44 @@ class_name EncounterResolver
 # from RunContext and delegates actual rule resolution to existing commands.
 
 const EncounterContractScript := preload("res://scripts/core/run/encounter/encounter_contract.gd")
+const RoomCommonRuleSchemaScript := preload("res://scripts/core/run/encounter/room_encounter_common_rule_schema.gd")
 
 
 static func get_encounter_identity(context: RunContext, room_type: StringName, pos: Vector2i) -> Dictionary:
 	var encounter_type: StringName = StringName(String(room_type).to_lower())
-	var tags: Array = []
+	var tags: Array = RoomCommonRuleSchemaScript.room_tags_for(room_type)
 	match room_type:
 		&"Event":
 			encounter_type = EventService.get_event_type(context, pos)
-			tags = [&"event_like", encounter_type]
+			tags.append_array([&"event_like", encounter_type])
 		&"Chest":
 			encounter_type = EncounterContractScript.TYPE_CHEST
-			tags = [&"loot", &"container"]
+			tags.append_array([&"loot", &"container"])
 		&"Monster":
 			encounter_type = EncounterContractScript.TYPE_MONSTER_BASIC
-			tags = [EncounterContractScript.TYPE_COMBAT_BASIC, EncounterContractScript.TYPE_COMBAT, &"monster", &"melee_basic", &"loot"]
+			tags.append_array([EncounterContractScript.TYPE_COMBAT_BASIC, EncounterContractScript.TYPE_COMBAT, &"monster", &"melee_basic", &"loot"])
 		&"Exit":
 			encounter_type = &"exit_beacon"
-			tags = [&"settlement", EncounterContractScript.TYPE_EXTRACT]
+			tags.append_array([&"settlement", EncounterContractScript.TYPE_EXTRACT])
 		&"Mine":
 			encounter_type = &"mine_trap"
-			tags = [&"hazard"]
+			tags.append(&"hazard")
 		&"Normal":
 			encounter_type = EncounterContractScript.TYPE_SEARCH
-			tags = [&"search", &"loot"]
+			tags.append_array([&"search", &"loot"])
 		_:
-			tags = [&"room"]
+			tags.append(&"room")
 	return {
 		"encounter_type": encounter_type,
 		"encounter_tags": tags,
 		"room_type": room_type,
 		"position": pos,
+		"EncounterEntry": RoomCommonRuleSchemaScript.encounter_entry_for(room_type, pos),
+		"EncounterPreview": RoomCommonRuleSchemaScript.encounter_preview_for(room_type, pos),
+		"RoomPolicy": RoomCommonRuleSchemaScript.room_policy_for(room_type),
+		"RoomRulePreview": RoomCommonRuleSchemaScript.room_rule_preview_for(room_type),
+		"RoomContentSlot": RoomCommonRuleSchemaScript.room_content_slot_for(room_type),
+		"RoomResolutionPreview": RoomCommonRuleSchemaScript.room_resolution_preview_for(room_type),
 	}
 
 
@@ -76,6 +83,16 @@ static func build_view_model(context: RunContext) -> Dictionary:
 		options,
 		build_result_summary(context)
 	)
+	view_model["EncounterEntry"] = _dictionary_from(identity, "EncounterEntry")
+	view_model["EncounterPreview"] = _dictionary_from(identity, "EncounterPreview")
+	view_model["RoomPolicy"] = _dictionary_from(identity, "RoomPolicy")
+	view_model["RoomRulePreview"] = _dictionary_from(identity, "RoomRulePreview")
+	view_model["RoomContentSlot"] = _dictionary_from(identity, "RoomContentSlot")
+	view_model["RoomResolutionPreview"] = _dictionary_from(identity, "RoomResolutionPreview")
+	view_model["read_only"] = true
+	view_model["display_only"] = true
+	view_model["preview"] = true
+	view_model["no_persistence"] = true
 	if room_type == &"Monster":
 		view_model["monster_summary"] = _monster_summary(context, pos)
 		view_model["combat_encounter_state"] = {

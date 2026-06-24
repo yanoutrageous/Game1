@@ -1,3 +1,15 @@
+# G33 Route Update
+
+Current active slice: G33-R2 Room Type / Tag / Encounter Common Rule Full Content Implementation.
+
+- G33 uses `D:\AGAME1\Base Docs\房间类型、标签与遭遇通用规则策划案.md` as the primary read-only planning source.
+- G33 adds the current product contract at `docs/20_product/ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_CONTRACT.md`.
+- G33 formalizes RoomType, RoomTag, RoomPolicy, RoomState, RoomContentSlot, EncounterEntry, EncounterPreview, RoomRulePreview, RoomCondition, RoomResolutionPreview, RoomResultPreview, GroundLoot, and RoomLootContainer semantic previews.
+- G33 aligns TruthMap, EncounterResolver, RunFlowSnapshot, Settlement preview, RunSurface, and HUD as display-only public snapshot consumers.
+- G33 does not implement battle runtime, event-chain runtime, RoomLoot/GroundLoot runtime, Rule/Modifier engine, objective progress, reward grant, settlement warehouse write, SaveManager, AssetLedger / RunAssetLedger mutation, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+- Unified G33-R3 audit / release gate should validate parser smoke and branch state before any main merge.
+- Any remaining G32 or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G32 Route Update
 
 Current active slice: G32-R2 Run Flow & State Transition Full Content Implementation.

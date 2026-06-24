@@ -63,11 +63,19 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 	var run_flow_snapshot: Dictionary = snapshot.get("run_flow_snapshot", {})
 	var lifecycle: Dictionary = run_flow_snapshot.get("RunLifecycle", {})
 	var settlement_trigger: Dictionary = run_flow_snapshot.get("SettlementTriggerPreview", {})
-	model.status_text += "\nRunLifecycle: %s / %s\nRoomState: %s / %s\nfast_return: %s / %s\nSettlementTriggerPreview: %s" % [
+	var room_policy: Dictionary = room_detail.get("RoomPolicy", {})
+	var encounter_preview: Dictionary = room_detail.get("EncounterPreview", {})
+	var resolution_preview: Dictionary = room_detail.get("RoomResolutionPreview", {})
+	model.status_text += "\nRunLifecycle: %s / %s\nRoomState: %s / %s\nRoomPolicy: %s / %s\nEncounterPreview: %s / %s\nRoomResolutionPreview: %s\nfast_return: %s / %s\nSettlementTriggerPreview: %s" % [
 		String(lifecycle.get("state", "initialized")),
 		String(lifecycle.get("phase", "idle")),
 		String(room_detail.get("known_state", "unknown")),
 		String(room_detail.get("visibility", "unknown")),
+		String(room_policy.get("entry_policy", room_policy.get("return_policy", "unknown"))),
+		String(room_policy.get("repeat_policy", "unknown")),
+		String(encounter_preview.get("encounter_type", "empty")),
+		String(encounter_preview.get("option_channel_preview", "none")),
+		String(resolution_preview.get("schema_kind", "RoomResolutionPreview")),
 		str(bool(return_eligibility.get("eligible", false))),
 		String(return_eligibility.get("reason_code", "unknown")),
 		String(settlement_trigger.get("trigger_state", "not_ready")),

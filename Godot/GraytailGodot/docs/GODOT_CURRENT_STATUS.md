@@ -1,3 +1,17 @@
+# G33 Room Type Tag Encounter Common Rule Status
+
+G33-R2 is the current implementation slice on branch `godot/g33-room-type-tag-encounter-common-rule`.
+
+- Scope: Room Type / Tag / Encounter Common Rule Full Content.
+- Product contract: `docs/20_product/ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_CONTRACT.md`.
+- Godot scope: RoomEncounterCommonRuleSchema, TruthMap room common-rule snapshots, EncounterResolver preview fields, RunFlow room resolution handoff, Settlement / RunSurface / HUD display-only consumers.
+- Boundary: read_only / display_only / preview / no_persistence.
+- Not implemented: battle runtime, monster AI, event-chain runtime, RoomLoot/GroundLoot runtime, real in-run backpack, Rule/Modifier engine, objective progress, reward grant, settlement warehouse write, SaveManager, AssetLedger / RunAssetLedger mutation, CommandBus mutation, gameplay runtime, manual playtest.
+- G33-R2 static validation PASS.
+- G33-R2 Godot headless project-load/parser smoke PASS.
+- Godot smoke produced no new metadata dirty side effects.
+- This is project-load/parser only and not gameplay runtime PASS or manual playtest PASS.
+
 # G32 Run Flow State Transition Status
 
 G32-R2 is the current implementation slice on branch `godot/g32-run-flow-state-transition-full-content`.

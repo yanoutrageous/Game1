@@ -49,6 +49,9 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"map_domain_summary": _map_domain_summary(run_map_snapshot),
 		"run_flow_summary": _run_flow_summary(run_flow_snapshot),
 		"room_state_detail": _room_state_detail(current_room_detail),
+		"room_common_rule_summary": _room_common_rule_summary(current_room_detail),
+		"encounter_preview_summary": _encounter_preview_summary(current_room_detail),
+		"room_resolution_summary": _room_resolution_summary(current_room_detail),
 		"return_eligibility_summary": _return_eligibility_summary(return_eligibility),
 		"settlement_trigger_summary": _settlement_trigger_summary(run_flow_snapshot),
 		"event_panel_summary": event_modal_text(event_state),
@@ -586,6 +589,8 @@ static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_
 		"RunLifecycle: %s / locked=%s" % [String(lifecycle.get("state", "initialized")), str(bool(lifecycle.get("locked", false)))],
 		"RoomTransition: %s / %s" % [String(transition.get("entry_mode", "adjacent_or_return_preview")), String(transition.get("illegal_target_policy", "disabled_reason_only"))],
 		"RoomState: %s / %s" % [String(room_detail.get("known_state", "unknown")), String(room_detail.get("visibility", "unknown"))],
+		"RoomPolicy: %s" % _room_policy_compact(room_detail),
+		"EncounterPreview: %s" % _encounter_preview_compact(room_detail),
 		"fast_return: %s / %s" % [str(bool(return_eligibility.get("eligible", false))), String(return_eligibility.get("reason_code", "unknown"))],
 	]
 
@@ -687,6 +692,58 @@ static func _room_state_detail(room_detail: Dictionary) -> String:
 		String(room_detail.get("room_type_key", "unknown")),
 		String(room_detail.get("known_state", "unknown")),
 		String(room_detail.get("visibility", "unknown")),
+	]
+
+
+static func _room_common_rule_summary(room_detail: Dictionary) -> String:
+	if room_detail.is_empty():
+		return "RoomCommonRule: unavailable"
+	var tags: Array = _array_variant(room_detail.get("RoomTag", []))
+	return "RoomCommonRule: type=%s | tags=%s | policy=%s | display_only" % [
+		String(room_detail.get("room_type_key", "unknown")),
+		tags.size(),
+		_room_policy_compact(room_detail),
+	]
+
+
+static func _encounter_preview_summary(room_detail: Dictionary) -> String:
+	if room_detail.is_empty():
+		return "EncounterPreview: unavailable"
+	return "EncounterPreview: %s | slot=%s | display_only" % [
+		_encounter_preview_compact(room_detail),
+		String(_dict_variant(room_detail.get("RoomContentSlot", {})).get("slot_id", "primary_encounter")),
+	]
+
+
+static func _room_resolution_summary(room_detail: Dictionary) -> String:
+	if room_detail.is_empty():
+		return "RoomResolutionPreview: unavailable"
+	var resolution: Dictionary = _dict_variant(room_detail.get("RoomResolutionPreview", {}))
+	return "RoomResolutionPreview: %s | loot_runtime=%s | objective_runtime=%s" % [
+		String(resolution.get("schema_kind", "RoomResolutionPreview")),
+		str(false),
+		str(false),
+	]
+
+
+static func _room_policy_compact(room_detail: Dictionary) -> String:
+	var policy: Dictionary = _dict_variant(room_detail.get("RoomPolicy", {}))
+	if policy.is_empty():
+		return "none"
+	return "%s/%s/%s" % [
+		String(policy.get("entry_policy", policy.get("return_policy", "unknown"))),
+		String(policy.get("trigger_policy", policy.get("search_policy", "unknown"))),
+		String(policy.get("repeat_policy", "unknown")),
+	]
+
+
+static func _encounter_preview_compact(room_detail: Dictionary) -> String:
+	var encounter: Dictionary = _dict_variant(room_detail.get("EncounterPreview", {}))
+	if encounter.is_empty():
+		return "none"
+	return "%s/%s" % [
+		String(encounter.get("encounter_type", "empty")),
+		String(encounter.get("option_channel_preview", "none")),
 	]
 
 

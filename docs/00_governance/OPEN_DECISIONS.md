@@ -1,3 +1,15 @@
+# G33 Open Decisions Update
+
+G33-R2 room type / tag / encounter common-rule open decisions:
+
+- `OD-G33-001`: final runtime ownership for RoomLoot / GroundLoot remains open; G33 records semantic preview only.
+- `OD-G33-002`: merchant and recycle terminal event behavior remains open; G33 treats them as event encounter previews without trade/sell/recycle asset writes.
+- `OD-G33-003`: boss and special-rule room generation depth remains open; G33 reserves placeholders only.
+- `OD-G33-004`: Objective / Reward / Pool subscription to RoomResult remains open; G33 provides context placeholders only.
+- `OD-G33-005`: final player-facing naming for RoomPolicy / EncounterPreview / RoomResolutionPreview remains open.
+- `OD-G33-006`: any CommandBus command-list expansion remains deferred to a separate audited gate.
+- Any G32 / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G32 Open Decisions Update
 
 G32-R2 run flow / state transition open decisions:

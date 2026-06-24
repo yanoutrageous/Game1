@@ -1,3 +1,23 @@
+# G33 Current Update
+
+Current active slice: G33-R2 Room Type / Tag / Encounter Common Rule Full Content Implementation.
+
+Current G33 contract source:
+
+- `docs/20_product/ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_CONTRACT.md`
+
+G33 uses `D:\AGAME1\Base Docs\房间类型、标签与遭遇通用规则策划案.md` as the primary read-only planning source and establishes the project-supported room type / tag / policy / state / encounter preview carrier layer.
+
+G33 status boundaries:
+
+- Core outputs: RoomType / RoomTag / RoomPolicy / RoomState / RoomContentSlot / EncounterEntry / EncounterPreview / RoomRulePreview / RoomCondition / RoomResolutionPreview / RoomResultPreview.
+- Room loot boundary: GroundLoot and RoomLootContainer are semantic preview only; they are not player backpack, long-term warehouse, or settlement grant runtime.
+- Consumer alignment: TruthMap, EncounterResolver, RunFlowSnapshot, Settlement preview, RunSurface, and HUD read display-only room common-rule summaries.
+- G33 remains read_only / display_only / preview / no_persistence.
+- G33 does not implement battle runtime, monster AI, event-chain runtime, RoomLoot/GroundLoot runtime, real in-run backpack, Rule/Modifier engine, objective progress, reward grant, settlement warehouse write, SaveManager, AssetLedger / RunAssetLedger mutation, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G32 or older current-state wording below this update is historical / superseded unless explicitly reopened by a future gate.
+
 # G32 Current Update
 
 Current active slice: G32-R2 Run Flow & State Transition Full Content Implementation.

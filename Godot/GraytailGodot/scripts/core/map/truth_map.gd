@@ -3,6 +3,8 @@ class_name TruthMap
 
 # TruthMap owns real map truth. UI must read IntelMap/ViewModels only.
 
+const RoomCommonRuleSchemaScript := preload("res://scripts/core/run/encounter/room_encounter_common_rule_schema.gd")
+
 const MAP_KIND_CLASSIC_RECT := &"classic_rect_minesweeper"
 const ROOM_SPAWN := &"Spawn"
 const ROOM_NORMAL := &"Normal"
@@ -11,6 +13,8 @@ const ROOM_MONSTER := &"Monster"
 const ROOM_CHEST := &"Chest"
 const ROOM_EVENT := &"Event"
 const ROOM_EXIT := &"Exit"
+const ROOM_BOSS := &"Boss"
+const ROOM_SPECIAL_RULE := &"SpecialRule"
 const ROOM_UNKNOWN := &"Unknown"
 const ROOM_STATE_UNKNOWN := &"unknown"
 const ROOM_STATE_SCANNED := &"scanned"
@@ -307,6 +311,7 @@ func build_run_map_snapshot(intel_map: IntelMap = null, player_pos: Vector2i = V
 			"generation_log_count": generation_log.size(),
 		},
 		"map_summary_preview": _map_summary_preview(),
+		"room_common_rule_summary_preview": RoomCommonRuleSchemaScript.default_common_rule_summary(),
 		"objective_context_preview": _context_placeholder(&"objective_context_preview"),
 		"modifier_context_preview": _context_placeholder(&"modifier_context_preview"),
 		"room_loot_context_preview": _context_placeholder(&"room_loot_context_preview"),
@@ -331,6 +336,7 @@ func build_map_result(intel_map: IntelMap = null, player_pos: Vector2i = Vector2
 		"known_summary": known_summary,
 		"player_pos": player_pos,
 		"map_summary_preview": _map_summary_preview(),
+		"room_resolution_summary_preview": RoomCommonRuleSchemaScript.room_resolution_summary_preview(get_room_state(player_pos, intel_map) if is_inside(player_pos) else {}),
 		"history_reference_preview": {
 			"final_map_snapshot_ref": &"FinalMapSnapshot",
 			"known_map_snapshot_ref": &"KnownMap",
@@ -358,13 +364,33 @@ func get_room_state(pos: Vector2i, intel_map: IntelMap = null) -> Dictionary:
 		}
 	var cell := get_cell(pos)
 	var known_state := _known_state_for(pos, intel_map)
+	var room_type := _normalized_room_type(cell, pos)
+	var room_state_source := {
+		"known_state": known_state,
+		"scanned": known_state == ROOM_STATE_SCANNED,
+		"explored": bool(cell.get("explored", false)),
+		"triggered": bool(cell.get("triggered", false)),
+		"cleared": bool(cell.get("cleared", false)),
+		"blocked": bool(cell.get("blocked", false)),
+	}
+	var room_contract: Dictionary = RoomCommonRuleSchemaScript.build_room_contract(room_type, pos, room_state_source)
 	return {
 		"schema_kind": &"RoomState",
 		"pos": pos,
-		"room_type": _normalized_room_type(cell, pos),
-		"room_type_key": _room_type_key(_normalized_room_type(cell, pos)),
-		"RoomPolicy": cell.get("RoomPolicy", _room_policy_for(_normalized_room_type(cell, pos))).duplicate(true),
-		"RoomTag": _array_from_variant(cell.get("RoomTag", _room_tags_for(_normalized_room_type(cell, pos)))),
+		"room_type": room_type,
+		"room_type_key": _room_type_key(room_type),
+		"RoomType": room_contract.get("RoomType", {}),
+		"RoomPolicy": cell.get("RoomPolicy", room_contract.get("RoomPolicy", {})).duplicate(true),
+		"RoomTag": _array_from_variant(cell.get("RoomTag", room_contract.get("RoomTag", []))),
+		"RoomContentSlot": cell.get("RoomContentSlot", room_contract.get("RoomContentSlot", {})).duplicate(true),
+		"EncounterEntry": cell.get("EncounterEntry", room_contract.get("EncounterEntry", {})).duplicate(true),
+		"EncounterPreview": cell.get("EncounterPreview", room_contract.get("EncounterPreview", {})).duplicate(true),
+		"RoomRulePreview": cell.get("RoomRulePreview", room_contract.get("RoomRulePreview", {})).duplicate(true),
+		"RoomCondition": cell.get("RoomCondition", room_contract.get("RoomCondition", {})).duplicate(true),
+		"RoomResolutionPreview": room_contract.get("RoomResolutionPreview", {}).duplicate(true),
+		"RoomResultPreview": room_contract.get("RoomResultPreview", {}).duplicate(true),
+		"GroundLoot": room_contract.get("GroundLoot", {}).duplicate(true),
+		"RoomLootContainer": room_contract.get("RoomLootContainer", {}).duplicate(true),
 		"known_state": known_state,
 		"visibility": _visibility_for(known_state),
 		"scanned": known_state == ROOM_STATE_SCANNED,
@@ -503,8 +529,7 @@ func _set_cell(pos: Vector2i, values: Dictionary) -> void:
 	for value_key in values.keys():
 		cell[value_key] = values[value_key]
 	var normalized_type := _normalized_room_type(cell, pos)
-	cell["RoomPolicy"] = _room_policy_for(normalized_type)
-	cell["RoomTag"] = _room_tags_for(normalized_type)
+	_apply_common_rule_contract_to_cell(cell, normalized_type, pos)
 	rooms[key] = cell
 
 
@@ -527,6 +552,11 @@ func _refresh_room_contracts() -> void:
 		var room_type := _normalized_room_type(cell, pos)
 		cell["RoomPolicy"] = _room_policy_for(room_type)
 		cell["RoomTag"] = _room_tags_for(room_type)
+		cell["RoomContentSlot"] = RoomCommonRuleSchemaScript.room_content_slot_for(room_type)
+		cell["EncounterEntry"] = RoomCommonRuleSchemaScript.encounter_entry_for(room_type, pos)
+		cell["EncounterPreview"] = RoomCommonRuleSchemaScript.encounter_preview_for(room_type, pos)
+		cell["RoomRulePreview"] = RoomCommonRuleSchemaScript.room_rule_preview_for(room_type)
+		cell["RoomCondition"] = RoomCommonRuleSchemaScript.room_condition_for(room_type)
 		rooms[key] = cell
 
 
@@ -536,27 +566,12 @@ func _apply_room_contract(pos: Vector2i) -> void:
 	var key := _key(pos)
 	var cell: Dictionary = rooms.get(key, {})
 	var room_type := _normalized_room_type(cell, pos)
-	cell["RoomPolicy"] = _room_policy_for(room_type)
-	cell["RoomTag"] = _room_tags_for(room_type)
+	_apply_common_rule_contract_to_cell(cell, room_type, pos)
 	rooms[key] = cell
 
 
 func _room_policy_for(room_type: StringName) -> Dictionary:
-	match room_type:
-		ROOM_SPAWN:
-			return _policy(&"return_allowed", &"not_searchable", &"none", &"safe_revisit")
-		ROOM_MINE:
-			return _policy(&"return_after_explored", &"not_searchable", &"none", &"trigger_once")
-		ROOM_MONSTER:
-			return _policy(&"return_after_explored", &"blocked_until_cleared", &"combat_reward_preview", &"clear_once")
-		ROOM_CHEST:
-			return _policy(&"return_after_explored", &"searchable_once", &"chest_preview", &"loot_once")
-		ROOM_EVENT:
-			return _policy(&"return_after_explored", &"event_policy", &"event_reward_preview", &"event_defined")
-		ROOM_EXIT:
-			return _policy(&"return_allowed", &"not_searchable", &"extraction_preview", &"revisit_allowed")
-		_:
-			return _policy(&"return_after_explored", &"searchable_once", &"search_reward_preview", &"search_once")
+	return RoomCommonRuleSchemaScript.room_policy_for(room_type)
 
 
 func _policy(return_policy: StringName, search_policy: StringName, loot_policy: StringName, repeat_policy: StringName) -> Dictionary:
@@ -574,21 +589,7 @@ func _policy(return_policy: StringName, search_policy: StringName, loot_policy: 
 
 
 func _room_tags_for(room_type: StringName) -> Array:
-	match room_type:
-		ROOM_SPAWN:
-			return [&"room.spawn", &"return.safe"]
-		ROOM_MINE:
-			return [&"room.mine", &"risk.lethal", &"mine_count_source"]
-		ROOM_MONSTER:
-			return [&"room.monster", &"encounter.combat", &"risk.active"]
-		ROOM_CHEST:
-			return [&"room.chest", &"loot.container", &"search.target"]
-		ROOM_EVENT:
-			return [&"room.event", &"encounter.event", &"rule.entry"]
-		ROOM_EXIT:
-			return [&"room.exit", &"run.extract", &"return.safe"]
-		_:
-			return [&"room.normal", &"search.target"]
+	return RoomCommonRuleSchemaScript.room_tags_for(room_type)
 
 
 func _normalized_room_type(cell: Dictionary, pos: Vector2i) -> StringName:
@@ -613,6 +614,10 @@ func _room_type_key(room_type: StringName) -> StringName:
 			return &"event"
 		ROOM_EXIT:
 			return &"exit"
+		ROOM_BOSS:
+			return &"boss"
+		ROOM_SPECIAL_RULE:
+			return &"special_rule"
 		_:
 			return &"unknown"
 
@@ -700,6 +705,7 @@ func _map_summary_preview() -> Dictionary:
 		"map_kind": MAP_KIND_CLASSIC_RECT,
 		"dimensions": "%dx%d" % [width, height],
 		"room_counts": _room_counts(),
+		"room_common_rule_summary_preview": RoomCommonRuleSchemaScript.default_common_rule_summary(),
 		"generation_log_count": generation_log.size(),
 		"mutation_log_count": mutation_log.size(),
 		"layers": [&"TruthMap", &"KnownMap", &"ScanLayer", &"MarkMap", &"RunMapState", &"InfoReliabilityLayer"],
@@ -707,6 +713,16 @@ func _map_summary_preview() -> Dictionary:
 		"display_only": true,
 		"preview": true,
 	}
+
+
+func _apply_common_rule_contract_to_cell(cell: Dictionary, room_type: StringName, pos: Vector2i) -> void:
+	cell["RoomPolicy"] = _room_policy_for(room_type)
+	cell["RoomTag"] = _room_tags_for(room_type)
+	cell["RoomContentSlot"] = RoomCommonRuleSchemaScript.room_content_slot_for(room_type)
+	cell["EncounterEntry"] = RoomCommonRuleSchemaScript.encounter_entry_for(room_type, pos)
+	cell["EncounterPreview"] = RoomCommonRuleSchemaScript.encounter_preview_for(room_type, pos)
+	cell["RoomRulePreview"] = RoomCommonRuleSchemaScript.room_rule_preview_for(room_type)
+	cell["RoomCondition"] = RoomCommonRuleSchemaScript.room_condition_for(room_type)
 
 
 func _context_placeholder(context_id: StringName) -> Dictionary:
