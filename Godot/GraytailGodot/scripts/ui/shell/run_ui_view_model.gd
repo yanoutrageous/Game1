@@ -69,6 +69,10 @@ static func command_result_text(result: Dictionary) -> String:
 	return "操作受阻：%s（%s）" % [reason_label(reason), message_key]
 
 
+static func player_message(message: String) -> String:
+	return _player_message(message)
+
+
 static func reason_label(reason_code: String) -> String:
 	match reason_code:
 		"":
@@ -147,6 +151,7 @@ static func result_summary(snapshot: Dictionary) -> Dictionary:
 	lines.append("带出物品：%s | 装备：%s" % [_array_from(snapshot, "inventory_items").size(), _array_from(snapshot, "equipped_items").size()])
 	lines.append("地面遗留：%s" % snapshot.get("room_floor_item_count", 0))
 	lines.append("临时仓库记录：%s" % _array_from(snapshot, "warehouse_lite").size())
+	lines.append("Debug 使用：%s" % ("是" if bool(snapshot.get("debug_used", snapshot.get("debug_command_used", false))) else "否"))
 	var salvage: Dictionary = _dict_from(snapshot, "failure_salvage")
 	if not salvage.is_empty():
 		lines.append("失败抢救：保留 %s / 丢失 %s" % [salvage.get("salvaged_item_count", 0), salvage.get("lost_item_count", 0)])

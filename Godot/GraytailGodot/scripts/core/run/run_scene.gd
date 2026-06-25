@@ -319,6 +319,10 @@ func _build_run_overlay() -> void:
 	_add_debug_button(debug_content, "Tutorial Run", func() -> void: _start_tutorial_from_ui())
 	_add_debug_button(debug_content, "Standard Run", func() -> void: _start_standard_from_ui())
 	_add_debug_button(debug_content, "Teleport Exit", func() -> void: _debug_teleport_to_exit())
+	_add_debug_button(debug_content, "Nearest Chest", func() -> void: _debug_teleport_to_room_type(&"Chest"))
+	_add_debug_button(debug_content, "Nearest Event", func() -> void: _debug_teleport_to_room_type(&"Event"))
+	_add_debug_button(debug_content, "Nearest Monster", func() -> void: _debug_teleport_to_room_type(&"Monster"))
+	_add_debug_button(debug_content, "Nearest Mine", func() -> void: _debug_teleport_to_room_type(&"Mine"))
 	_add_debug_button(debug_content, "Move XY no trigger", func() -> void: _debug_teleport_xy(false))
 	_add_debug_button(debug_content, "Enter XY trigger", func() -> void: _debug_teleport_xy(true))
 	_add_debug_button(debug_content, "+100 Run Black Coin", func() -> void: _dispatch_command(&"debug_add_run_black_coin", {"amount": 100, "source": "debug"}))
@@ -900,6 +904,7 @@ func _is_runtime_modal_open() -> bool:
 		or (result_panel != null and result_panel.visible)
 		or (pause_panel != null and pause_panel.visible)
 		or (dev_diagnostics_panel != null and dev_diagnostics_panel.visible)
+		or (debug_panel != null and debug_panel.visible)
 	)
 
 
@@ -1182,6 +1187,38 @@ func _debug_teleport_to_exit() -> void:
 	_sync_debug_coordinates()
 
 
+func _debug_teleport_to_room_type(room_type: StringName) -> void:
+	if run_context == null or run_context.truth_map == null:
+		_show_command_feedback({"ok": false, "accepted": false, "reason_code": &"not_ready", "command_id": &"debug_find_room"})
+		return
+	var target := _nearest_room_of_type(room_type)
+	if target.x < 0:
+		_show_command_feedback({"ok": false, "accepted": false, "reason_code": &"debug_target_missing", "command_id": &"debug_find_room"})
+		return
+	var result := _dispatch_command(&"debug_teleport_to", {"pos": target, "enter_room": true, "source": "debug", "target_room_type": room_type})
+	if bool(result.get("ok", false)) and player_controller != null:
+		player_controller.reset_local_position()
+	_sync_debug_coordinates()
+
+
+func _nearest_room_of_type(room_type: StringName) -> Vector2i:
+	if run_context == null or run_context.truth_map == null:
+		return Vector2i(-1, -1)
+	var current := run_context.get_current_pos()
+	var best := Vector2i(-1, -1)
+	var best_distance := 999999
+	for y in range(run_context.truth_map.height):
+		for x in range(run_context.truth_map.width):
+			var pos := Vector2i(x, y)
+			if run_context.truth_map.get_room_type(pos) != room_type:
+				continue
+			var distance: int = abs(pos.x - current.x) + abs(pos.y - current.y)
+			if distance < best_distance:
+				best_distance = distance
+				best = pos
+	return best
+
+
 func _debug_teleport_xy(enter_room: bool) -> void:
 	var result := _dispatch_command(&"debug_teleport_to", {"pos": _debug_target_pos(), "enter_room": enter_room, "source": "debug"})
 	if bool(result.get("ok", false)) and player_controller != null:
@@ -1350,13 +1387,13 @@ func _on_map_overlay_cell_action_requested(marker: Dictionary) -> void:
 	if command_bus == null or run_context == null:
 		return
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
-	var state: StringName = StringName(marker.get("state", &"hidden"))
-	if state == &"hidden" or state == &"flagged":
+	var action_id := StringName(marker.get("action_id", &"inspect"))
+	if action_id == &"toggle_flag":
 		var flag_result: Dictionary = _dispatch_command(&"toggle_flag_cell", {"pos": pos})
 		if map_overlay_panel != null:
 			map_overlay_panel.show_action_feedback(marker, flag_result)
 		return
-	if bool(marker.get("explored", false)) and not bool(marker.get("mine", false)):
+	if action_id == &"fast_return":
 		var result: Dictionary = _dispatch_command(&"teleport_to_explored", {"pos": pos})
 		if map_overlay_panel != null:
 			map_overlay_panel.show_action_feedback(marker, result)
@@ -1365,6 +1402,9 @@ func _on_map_overlay_cell_action_requested(marker: Dictionary) -> void:
 				player_controller.reset_local_position()
 			if map_overlay_panel != null:
 				map_overlay_panel.hide_overlay()
+		return
+	if map_overlay_panel != null:
+		map_overlay_panel.show_action_feedback(marker, MiniMapViewModel.action_result_for_marker(marker))
 
 
 func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Color) -> ColorRect:

@@ -4,6 +4,7 @@ class_name RunSurface
 const HUDScene := preload("res://scenes/ui/hud/hud.tscn")
 const MiniMapScene := preload("res://scenes/ui/minimap/minimap_panel.tscn")
 const PresentationTheme := preload("res://scripts/presentation/presentation_theme.gd")
+const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 
 signal interact_requested
 signal inventory_requested
@@ -238,10 +239,10 @@ func show_command_feedback(result: Dictionary) -> void:
 	if command_feedback_label == null or result.is_empty():
 		return
 	var accepted := bool(result.get("accepted", result.get("ok", false)))
-	var key := String(result.get("message_key", result.get("reason_code", "")))
-	if key == "":
-		key = "accepted" if accepted else "blocked"
-	command_feedback_label.text = "操作反馈：%s" % key
+	var text := RunUIViewModel.command_result_text(result)
+	if text == "":
+		text = "操作完成。" if accepted else "操作受阻。"
+	command_feedback_label.text = text
 	if not accepted:
 		var tween := create_tween()
 		tween.tween_property(command_feedback_label, "modulate", Color(1.0, 0.55, 0.35, 1.0), 0.06)

@@ -5,6 +5,7 @@ signal cell_action_requested(marker: Dictionary)
 
 var view_model: MiniMapViewModel
 var selected_feedback_text: String = ""
+var selected_marker: Dictionary = {}
 var layout_profile: Dictionary = {}
 var marker_size: Vector2 = Vector2(42, 42)
 var title_font_size: int = 20
@@ -49,6 +50,7 @@ func show_overlay() -> void:
 
 func hide_overlay() -> void:
 	visible = false
+	get_viewport().gui_release_focus()
 
 
 func toggle_overlay() -> void:
@@ -74,6 +76,7 @@ func _input(event: InputEvent) -> void:
 func _rebuild_grid() -> void:
 	var grid := get_node_or_null("Panel/Content/Grid") as GridContainer
 	var title := get_node_or_null("Panel/Content/Title") as Label
+	var detail := _ensure_detail_label()
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
@@ -85,11 +88,17 @@ func _rebuild_grid() -> void:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		title.add_theme_font_size_override("font_size", title_font_size)
 		title.text = "区域扫描器回顾"
+	if detail != null:
+		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
+		detail.add_theme_font_size_override("font_size", 13 if footer_font_size <= 13 else 14)
+		detail.add_theme_constant_override("line_spacing", 2)
+		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail.text = _selected_detail_text()
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		footer.add_theme_font_size_override("font_size", footer_font_size)
 		footer.add_theme_constant_override("line_spacing", 2)
-		footer.text = "点击未知房间标记风险；点击已探索安全房间尝试快速返回。"
+		footer.text = "左键选中格子：未知格只标记风险，已探索安全格才尝试回传；Esc 关闭大地图。"
 
 	if footer != null and selected_feedback_text != "":
 		footer.text += "\n" + selected_feedback_text
@@ -110,12 +119,12 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	button.custom_minimum_size = marker_size
 	button.focus_mode = Control.FOCUS_NONE
 	button.text = String(marker.get("label", "?"))
-	button.tooltip_text = String(marker.get("tooltip", "cell"))
+	button.tooltip_text = String(marker.get("detail_text", marker.get("tooltip", "cell")))
 	button.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
 	if asset_ref is Texture2D:
 		button.icon = asset_ref
 		button.expand_icon = true
-	button.pressed.connect(func() -> void: cell_action_requested.emit(marker.duplicate(true)))
+	button.pressed.connect(func() -> void: _select_marker(marker))
 	grid.add_child(button)
 
 
@@ -141,6 +150,7 @@ func _event_matches_key(event: InputEvent, keycodes: Array) -> bool:
 
 
 func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
+	selected_marker = marker.duplicate(true)
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var accepted: bool = bool(result.get("accepted", result.get("ok", false)))
 	var reason: String = String(result.get("reason_code", result.get("reason", "")))
@@ -153,5 +163,36 @@ func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 
 
 func show_open_feedback(source: StringName) -> void:
-	selected_feedback_text = "扫描记录：从 %s 打开。未知房间可标记，已探索安全房间可尝试快速返回。" % String(source)
+	selected_feedback_text = "扫描记录：从 %s 打开。先选格子查看原因，再执行标记或回传。" % String(source)
 	_rebuild_grid()
+
+
+func _select_marker(marker: Dictionary) -> void:
+	selected_marker = marker.duplicate(true)
+	selected_feedback_text = ""
+	cell_action_requested.emit(marker.duplicate(true))
+	_rebuild_grid()
+
+
+func _ensure_detail_label() -> Label:
+	var content := get_node_or_null("Panel/Content") as VBoxContainer
+	if content == null:
+		return null
+	var detail := get_node_or_null("Panel/Content/Detail") as Label
+	if detail != null:
+		return detail
+	detail = Label.new()
+	detail.name = "Detail"
+	detail.custom_minimum_size = Vector2(0, 86)
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(detail)
+	var grid := get_node_or_null("Panel/Content/Grid")
+	if grid != null:
+		content.move_child(detail, grid.get_index())
+	return detail
+
+
+func _selected_detail_text() -> String:
+	if selected_marker.is_empty():
+		return "选中格详情：点击任意格子查看状态、允许动作、阻止原因。"
+	return String(selected_marker.get("detail_text", "选中格详情不可用。"))

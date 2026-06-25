@@ -111,6 +111,7 @@ func show_panel() -> void:
 
 func hide_panel() -> void:
 	visible = false
+	get_viewport().gui_release_focus()
 
 
 func apply_layout_profile(profile: Dictionary) -> void:

@@ -842,7 +842,7 @@ static func _player_message(message: String) -> String:
 	var text := message.strip_edges()
 	if text == "":
 		return "操作反馈：等待输入。"
-	return "操作反馈：%s" % text
+	return "操作反馈：%s" % RunUIViewModel.player_message(text)
 
 
 static func _array_from(source: Dictionary, key: String) -> Array:
