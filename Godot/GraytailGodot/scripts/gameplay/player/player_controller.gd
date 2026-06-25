@@ -5,6 +5,7 @@ const ROOM_RECT := Rect2(Vector2(420, 220), Vector2(440, 360))
 const LOCAL_MOVE_SPEED := 0.74
 const PLAYER_RADIUS := 0.055
 const DOOR_ALIGN_HALF := 0.16
+const BLOCKED_EDGE_REBOUND := 0.035
 
 var input_enabled := true
 var facing_asset_id: StringName = &"sprite.player.default"
@@ -19,7 +20,17 @@ func get_move_vector() -> Vector2:
 	if not input_enabled:
 		return Vector2.ZERO
 
-	return Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	var left_pressed := Input.is_action_pressed("move_left") or Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT)
+	var right_pressed := Input.is_action_pressed("move_right") or Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT)
+	var up_pressed := Input.is_action_pressed("move_up") or Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP)
+	var down_pressed := Input.is_action_pressed("move_down") or Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN)
+	var x_axis := float(int(right_pressed) - int(left_pressed))
+	var y_axis := float(int(down_pressed) - int(up_pressed))
+	if absf(x_axis) < 0.01 and absf(y_axis) < 0.01:
+		return Vector2.ZERO
+	if absf(x_axis) >= absf(y_axis):
+		return Vector2(1.0 if x_axis > 0.0 else -1.0, 0.0)
+	return Vector2(0.0, 1.0 if y_axis > 0.0 else -1.0)
 
 
 func reset_local_position() -> void:
@@ -53,13 +64,13 @@ func place_from_entry(direction: Vector2i) -> void:
 
 func block_transition(direction: Vector2i) -> void:
 	if direction.x > 0:
-		set_local_position(Vector2(1.0 - PLAYER_RADIUS, local_pos.y))
+		set_local_position(Vector2(1.0 - PLAYER_RADIUS - BLOCKED_EDGE_REBOUND, local_pos.y))
 	elif direction.x < 0:
-		set_local_position(Vector2(PLAYER_RADIUS, local_pos.y))
+		set_local_position(Vector2(PLAYER_RADIUS + BLOCKED_EDGE_REBOUND, local_pos.y))
 	elif direction.y > 0:
-		set_local_position(Vector2(local_pos.x, 1.0 - PLAYER_RADIUS))
+		set_local_position(Vector2(local_pos.x, 1.0 - PLAYER_RADIUS - BLOCKED_EDGE_REBOUND))
 	elif direction.y < 0:
-		set_local_position(Vector2(local_pos.x, PLAYER_RADIUS))
+		set_local_position(Vector2(local_pos.x, PLAYER_RADIUS + BLOCKED_EDGE_REBOUND))
 
 
 func move_local(move_vector: Vector2, delta: float) -> Dictionary:

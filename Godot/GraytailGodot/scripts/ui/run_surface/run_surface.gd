@@ -115,6 +115,7 @@ func build() -> void:
 
 	hud = HUDScene.instantiate() as Hud
 	hud.name = "LegacySurfaceHUD"
+	hud.visible = false
 	add_child(hud)
 
 	feedback_slot = _add_slot("LegacyFeedbackSlot")
@@ -147,8 +148,16 @@ func apply_surface_model(model: Dictionary) -> void:
 	var status_text := _lines_text(model.get("status_lines", []), "")
 	if status_text != "":
 		right_body_label.text = status_text
-	event_label.text = String(model.get("event_panel_summary", model.get("event_summary", event_label.text)))
-	reward_label.text = String(model.get("loot_panel_summary", model.get("reward_summary", reward_label.text)))
+	right_body_label.tooltip_text = "%s\n%s\n%s\n%s" % [
+		String(model.get("map_domain_summary", "")),
+		String(model.get("run_flow_summary", "")),
+		String(model.get("room_common_rule_summary", "")),
+		String(model.get("rule_effect_modifier_summary", "")),
+	]
+	event_label.text = String(model.get("event_summary", event_label.text))
+	event_label.tooltip_text = String(model.get("event_panel_summary", event_label.text))
+	reward_label.text = String(model.get("reward_summary", reward_label.text))
+	reward_label.tooltip_text = String(model.get("loot_panel_summary", reward_label.text))
 	action_hint_label.text = String(model.get("action_hint", "行动提示：可用按钮高亮，灰显按钮保留原因提示。"))
 
 	var profile: Dictionary = model.get("layout_profile", {})
@@ -168,6 +177,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		supported_size = Vector2i(1280, 720)
 	var is_low: bool = bool(profile.get("is_low_resolution", false))
 	var is_high: bool = bool(profile.get("is_high_resolution", false))
+	if hud != null:
+		hud.visible = false
 	var width: float = float(supported_size.x)
 	var height: float = float(supported_size.y)
 	var margin: float = 16.0 if is_low else 20.0
@@ -178,16 +189,19 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var center_left: float = left_width + margin
 	var center_right: float = width - right_width - margin
 	var center_width: float = max(360.0, center_right - center_left)
+	var right_left: float = width - right_width
+	var right_content_left: float = right_left + margin
+	var right_content_width: float = right_width - margin * 2.0
 	var scanner_map_height: float = min(240.0 if is_low else 276.0, height * 0.34)
 	var scanner_legend_top: float = margin + 84.0 + scanner_map_height
-	var encounter_top: float = margin + (152.0 if is_low else 170.0)
-	var encounter_bottom: float = height - bottom_height - margin - 44.0
-	var encounter_height: float = max(250.0 if is_low else 300.0, encounter_bottom - encounter_top)
+	var encounter_top: float = margin + (316.0 if is_low else 340.0)
+	var encounter_bottom: float = height - 132.0
+	var encounter_height: float = max(206.0 if is_low else 236.0, encounter_bottom - encounter_top)
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
-	_set_rect(right_backdrop, Rect2(width - right_width, 0, right_width, height))
+	_set_rect(right_backdrop, Rect2(right_left, 0, right_width, height))
 	_set_rect(center_backdrop, Rect2(center_left, margin, center_width, 132.0 if is_low else 150.0))
-	_set_rect(encounter_backdrop, Rect2(center_left, encounter_top, center_width, encounter_height))
+	_set_rect(encounter_backdrop, Rect2(right_left, encounter_top - 8.0, right_width, encounter_height + 16.0))
 	_set_rect(bottom_backdrop, Rect2(center_left, height - bottom_height - margin, center_width, bottom_height))
 	_set_rect(resource_backdrop, Rect2(margin, height - pocket_height - margin, left_width - margin * 2.0, pocket_height))
 
@@ -200,18 +214,18 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 12.0, center_width - 36.0, 34))
 	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 52.0, center_width - 36.0, 62))
 	_set_rect(objective_label, Rect2(center_left + 18.0, margin + 112.0, center_width - 36.0, 30))
-	_set_rect(encounter_title_label, Rect2(center_left + 18.0, encounter_top + 12.0, center_width - 36.0, 28))
-	_set_rect(encounter_body_label, Rect2(center_left + 18.0, encounter_top + 46.0, center_width - 36.0, 78.0 if is_low else 90.0))
-	_set_rect(encounter_options_box, Rect2(center_left + 18.0, encounter_top + (130.0 if is_low else 144.0), center_width - 36.0, max(78.0, encounter_height - (206.0 if is_low else 230.0))))
-	_set_rect(encounter_result_label, Rect2(center_left + 18.0, encounter_top + encounter_height - (68.0 if is_low else 78.0), center_width - 36.0, 56.0 if is_low else 66.0))
+	_set_rect(encounter_title_label, Rect2(right_content_left, encounter_top + 6.0, right_content_width, 24))
+	_set_rect(encounter_body_label, Rect2(right_content_left, encounter_top + 34.0, right_content_width, 64.0 if is_low else 72.0))
+	_set_rect(encounter_options_box, Rect2(right_content_left, encounter_top + (104.0 if is_low else 114.0), right_content_width, max(42.0, encounter_height - (158.0 if is_low else 176.0))))
+	_set_rect(encounter_result_label, Rect2(right_content_left, encounter_top + encounter_height - (44.0 if is_low else 52.0), right_content_width, 38.0 if is_low else 44.0))
 	_set_rect(resource_label, Rect2(margin * 1.5, height - pocket_height + 2.0, left_width - margin * 3.0, pocket_height - 28.0))
 
-	_set_rect(right_title_label, Rect2(width - right_width + margin, margin, right_width - margin * 2.0, 30))
-	_set_rect(right_body_label, Rect2(width - right_width + margin, margin + 38.0, right_width - margin * 2.0, 118))
-	_set_rect(event_label, Rect2(width - right_width + margin, margin + 164.0, right_width - margin * 2.0, 62))
-	_set_rect(reward_label, Rect2(width - right_width + margin, margin + 232.0, right_width - margin * 2.0, 180))
-	_set_rect(command_feedback_label, Rect2(width - right_width + margin, height - 122.0, right_width - margin * 2.0, 66))
-	_set_rect(layout_label, Rect2(width - right_width + margin, height - 46.0, right_width - margin * 2.0, 24))
+	_set_rect(right_title_label, Rect2(right_content_left, margin, right_content_width, 30))
+	_set_rect(right_body_label, Rect2(right_content_left, margin + 38.0, right_content_width, 108))
+	_set_rect(event_label, Rect2(right_content_left, margin + 152.0, right_content_width, 54))
+	_set_rect(reward_label, Rect2(right_content_left, margin + 212.0, right_content_width, 86))
+	_set_rect(command_feedback_label, Rect2(right_content_left, height - 122.0, right_content_width, 66))
+	_set_rect(layout_label, Rect2(right_content_left, height - 46.0, right_content_width, 24))
 
 	_set_rect(action_hint_label, Rect2(center_left + 18.0, height - bottom_height - margin - 30.0, center_width - 36.0, 24))
 	_set_rect(action_bar, Rect2(center_left + 14.0, height - bottom_height - margin + 13.0, center_width - 28.0, bottom_height - 22.0))
@@ -292,6 +306,7 @@ func _add_label(node_name: String, text: String, font_size: int, color: Color) -
 	label.name = node_name
 	label.text = text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -304,6 +319,7 @@ func _add_action_button(action_id: StringName, label: String, callback: Callable
 	button.name = "LegacyAction_%s" % String(action_id)
 	button.text = label
 	button.custom_minimum_size = Vector2(96, 34)
+	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
 	button.add_theme_font_size_override("font_size", 13)
 	_apply_action_button_style(button, &"secondary", true)
@@ -359,6 +375,7 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 		button.name = "LegacyEncounterOption_%s" % String(option_id)
 		button.text = "%s%s" % [title, "  [需确认]" if requires_confirm else ""]
 		button.custom_minimum_size = Vector2(240, 32)
+		button.focus_mode = Control.FOCUS_NONE
 		button.disabled = disabled
 		button.tooltip_text = _encounter_option_tooltip(option)
 		button.add_theme_font_size_override("font_size", 12)

@@ -20,7 +20,18 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 	var current_room_detail := get_current_room_detail(context)
 	var rule_summary_preview := build_rule_effect_modifier_summary(context, current_room_detail)
 	var content_delivery_preview := build_content_delivery_summary(context, current_room_detail)
+	var result_id := "%s:%s:%s" % [String(context.run_id), context.outcome, context.turn]
+	var active_command: Dictionary = context.active_command.duplicate(true)
+	var active_command_name := String(active_command.get("command_name", ""))
+	var active_source := String(active_command.get("source", ""))
 	return {
+		"run_id": context.run_id,
+		"result_id": result_id,
+		"result_source_command": active_command.duplicate(true),
+		"debug_command_used": context.debug_used or active_source == "debug" or active_command_name.begins_with("debug_"),
+		"debug_used": context.debug_used,
+		"debug_commands": context.debug_commands.duplicate(true),
+		"debug_command_count": context.debug_commands.size(),
 		"outcome": context.outcome,
 		"mode": context.mode,
 		"position": context.player_pos,
@@ -133,6 +144,9 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"transaction_count": transaction_log_snapshot.size(),
 		"content_definitions": content_def_snapshot,
 		"content_definition_count": content_def_snapshot.size(),
+		"debug_used": context.debug_used,
+		"debug_commands": context.debug_commands.duplicate(true),
+		"debug_command_count": context.debug_commands.size(),
 		"run_map_snapshot": run_map_snapshot,
 		"map_result_preview": map_result_preview,
 		"run_flow_snapshot": run_flow_snapshot,

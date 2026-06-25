@@ -43,6 +43,7 @@ func build() -> void:
 	header.add_child(title_label)
 	var close_button := Button.new()
 	close_button.name = "GroundLootCloseButton"
+	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.text = "关闭"
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	header.add_child(close_button)
@@ -154,12 +155,14 @@ func _add_item_row(item: Dictionary) -> void:
 	item_list.add_child(row)
 	var item_button := Button.new()
 	item_button.name = "GroundLootItemButton"
+	item_button.focus_mode = Control.FOCUS_NONE
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
 	item_button.pressed.connect(func() -> void: tooltip_label.text = RunUIViewModel.item_tooltip(item))
 	row.add_child(item_button)
 	var pickup_button := Button.new()
 	pickup_button.name = "GroundLootPickupButton"
+	pickup_button.focus_mode = Control.FOCUS_NONE
 	pickup_button.text = "拾取"
 	pickup_button.tooltip_text = "拾取到背包；容量不足时会显示 blocked_capacity 并保留在地面。"
 	var instance_id: String = String(item.get("instance_id", ""))

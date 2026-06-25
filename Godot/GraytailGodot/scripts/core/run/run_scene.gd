@@ -20,12 +20,14 @@ const G10ArtSmokeRegistry := preload("res://scripts/presentation/g10_art_smoke_r
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const RunSurfaceScript := preload("res://scripts/ui/run_surface/run_surface.gd")
 const RunSurfaceModel := preload("res://scripts/ui/run_surface/run_surface_model.gd")
+const MetaProgressAdapterScript := preload("res://scripts/core/save/meta_progress_adapter.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
 const SCREEN_LONG_TERM := &"long_term_shell"
 const SCREEN_SETTINGS := &"settings_shell"
 const SCREEN_RUN := &"run"
+const M1_DEBUG_PANEL_ENABLED := true
 
 const LEGACY_GRAYBOX_VALIDATION_MARKERS := ["Start Tutorial 5x5", "Start Standard 10x10", "Controls: W/A/S/D or arrows move"]
 const G9_UI_NODE_VALIDATION_MARKERS := [
@@ -52,6 +54,7 @@ const G9_UI_NODE_VALIDATION_MARKERS := [
 
 var run_context: RunContext
 var command_bus: CommandBus
+var meta_progress_adapter: MetaProgressAdapter
 var ui_root: Control
 var ui_shell: Control
 var main_menu_panel: Control
@@ -62,7 +65,11 @@ var run_surface
 var room_badge: Label
 var protocol_badge: Label
 var command_result_label: Label
-var debug_panel: VBoxContainer
+var debug_panel: PanelContainer
+var debug_content: VBoxContainer
+var debug_scroll: ScrollContainer
+var debug_x_spin: SpinBox
+var debug_y_spin: SpinBox
 var debug_toggle_button: Button
 var debug_log: Label
 var layout_profile_label: Label
@@ -94,6 +101,7 @@ var last_command_result: Dictionary = {}
 
 func _ready() -> void:
 	ContentDB.load_asset_manifest()
+	meta_progress_adapter = MetaProgressAdapterScript.new()
 	run_context = RunContextScript.new()
 	command_bus = CommandBusScript.new()
 	command_bus.bind_context(run_context)
@@ -121,40 +129,76 @@ func _process(delta: float) -> void:
 		_attempt_room_transition(local_result.get("direction", Vector2i.ZERO))
 
 
+func _input(event: InputEvent) -> void:
+	if _handle_cancel_input(event):
+		get_viewport().set_input_as_handled()
+		return
+	if _handle_run_action_input(event):
+		get_viewport().set_input_as_handled()
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("cancel"):
-		if _close_top_runtime_modal():
-			get_viewport().set_input_as_handled()
-			return
-		if screen_state in [SCREEN_DEPLOY, SCREEN_LONG_TERM, SCREEN_SETTINGS]:
-			_show_main_menu()
-			get_viewport().set_input_as_handled()
-			return
-		if screen_state == SCREEN_RUN:
-			_show_pause_panel()
-			get_viewport().set_input_as_handled()
-			return
+	if _handle_cancel_input(event):
+		get_viewport().set_input_as_handled()
+		return
 
+
+func _handle_cancel_input(event: InputEvent) -> bool:
+	if not (event.is_action_pressed("cancel") or _event_matches_key(event, [KEY_ESCAPE])):
+		return false
+	if _close_top_runtime_modal():
+		return true
+	if screen_state in [SCREEN_DEPLOY, SCREEN_LONG_TERM, SCREEN_SETTINGS]:
+		_show_main_menu()
+		return true
+	if screen_state == SCREEN_RUN:
+		_show_pause_panel()
+		return true
+	return false
+
+
+func _handle_run_action_input(event: InputEvent) -> bool:
 	if screen_state != SCREEN_RUN or run_context == null:
-		return
+		return false
+	if event is InputEventKey:
+		var key_event := event as InputEventKey
+		if key_event.echo:
+			return false
 	if run_context.has_blocking_tutorial_popup():
-		return
+		return false
+	if _is_runtime_modal_open():
+		return false
+	if map_overlay_panel != null and map_overlay_panel.visible:
+		return false
 
-	if event.is_action_pressed("interact"):
+	if event.is_action_pressed("interact") or _event_matches_key(event, [KEY_E]):
 		_handle_interact_pressed()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("attack"):
+		return true
+	elif event.is_action_pressed("attack") or _event_matches_key(event, [KEY_SPACE, KEY_J]):
 		_fight_and_show_result()
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("flag_cell"):
+		return true
+	elif event.is_action_pressed("flag_cell") or _event_matches_key(event, [KEY_F]):
 		_dispatch_command(&"flag_current_cell")
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("open_map"):
+		return true
+	elif event.is_action_pressed("open_map") or _event_matches_key(event, [KEY_M, KEY_TAB]):
 		_open_map_from_ui(&"keyboard")
-		get_viewport().set_input_as_handled()
+		return true
 	elif event.is_action_pressed("debug_restart_run"):
 		_restart_run_from_ui()
-		get_viewport().set_input_as_handled()
+		return true
+	return false
+
+
+func _event_matches_key(event: InputEvent, keycodes: Array) -> bool:
+	if not (event is InputEventKey):
+		return false
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return false
+	for keycode: int in keycodes:
+		if key_event.physical_keycode == keycode or key_event.keycode == keycode:
+			return true
+	return false
 
 
 func _build_playfield_visuals() -> void:
@@ -214,10 +258,10 @@ func _build_run_overlay() -> void:
 	var surface_overlay_slot: Control = run_surface.get_overlay_slot()
 
 	debug_toggle_button = _add_button(run_overlay_root, "DebugToggleButton", Rect2(1010, 226, 170, 34), "Dev Debug", func() -> void: _toggle_debug_panel())
-	debug_toggle_button.visible = G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED
-	debug_toggle_button.disabled = not G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED
-	debug_toggle_button.tooltip_text = "dev_only=true; hidden outside dev build channel"
-	debug_panel = VBoxContainer.new()
+	debug_toggle_button.visible = M1_DEBUG_PANEL_ENABLED
+	debug_toggle_button.disabled = not M1_DEBUG_PANEL_ENABLED
+	debug_toggle_button.tooltip_text = "m1_debug_panel=true; dev/test-only cheat panel"
+	debug_panel = PanelContainer.new()
 	debug_panel.name = "DebugOperationPanel"
 	debug_panel.offset_left = 980.0
 	debug_panel.offset_top = 270.0
@@ -225,25 +269,89 @@ func _build_run_overlay() -> void:
 	debug_panel.offset_bottom = 690.0
 	debug_panel.visible = false
 	run_overlay_root.add_child(debug_panel)
+	var debug_outer := VBoxContainer.new()
+	debug_outer.name = "DebugOperationContent"
+	debug_outer.add_theme_constant_override("separation", 8)
+	debug_panel.add_child(debug_outer)
+	var debug_header := HBoxContainer.new()
+	debug_header.name = "DebugOperationHeader"
+	debug_outer.add_child(debug_header)
 	var debug_title := Label.new()
-	debug_title.text = "Debug / Grid Move"
-	debug_panel.add_child(debug_title)
-	_add_debug_button(debug_panel, "Tutorial", func() -> void: _start_tutorial_from_ui())
-	_add_debug_button(debug_panel, "Standard", func() -> void: _start_standard_from_ui())
-	_add_debug_button(debug_panel, "GridUp", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, -1), "source": "debug"}))
-	_add_debug_button(debug_panel, "GridDown", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, 1), "source": "debug"}))
-	_add_debug_button(debug_panel, "GridLeft", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(-1, 0), "source": "debug"}))
-	_add_debug_button(debug_panel, "GridRight", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(1, 0), "source": "debug"}))
-	_add_debug_button(debug_panel, "Flag", func() -> void: _dispatch_command(&"flag_current_cell", {"source": "debug"}))
-	_add_debug_button(debug_panel, "Search", func() -> void: _search_and_show_loot())
-	_add_debug_button(debug_panel, "PickupFloor", func() -> void: _pickup_floor_from_ui())
-	_add_debug_button(debug_panel, "DropItem", func() -> void: _drop_inventory_from_ui())
-	_add_debug_button(debug_panel, "ReqExtract", func() -> void: _request_extract_from_ui())
-	_add_debug_button(debug_panel, "ConfirmExt", func() -> void: _dispatch_command(&"confirm_extract", {"source": "debug"}))
+	debug_title.text = "M1 Debug Cheats"
+	debug_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	debug_header.add_child(debug_title)
+	_add_debug_button(debug_header, "Close", func() -> void: _close_debug_panel())
+	var debug_note := Label.new()
+	debug_note.text = "dev_only=true | commands go through CommandBus / MetaProgressAdapter"
+	debug_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	debug_outer.add_child(debug_note)
+	var coord_row := HBoxContainer.new()
+	coord_row.name = "DebugCoordinateRow"
+	coord_row.add_theme_constant_override("separation", 6)
+	debug_outer.add_child(coord_row)
+	var coord_label := Label.new()
+	coord_label.text = "XY"
+	coord_row.add_child(coord_label)
+	debug_x_spin = SpinBox.new()
+	debug_x_spin.name = "DebugTeleportX"
+	debug_x_spin.min_value = 0
+	debug_x_spin.max_value = 99
+	debug_x_spin.step = 1
+	debug_x_spin.custom_minimum_size = Vector2(70, 28)
+	coord_row.add_child(debug_x_spin)
+	debug_y_spin = SpinBox.new()
+	debug_y_spin.name = "DebugTeleportY"
+	debug_y_spin.min_value = 0
+	debug_y_spin.max_value = 99
+	debug_y_spin.step = 1
+	debug_y_spin.custom_minimum_size = Vector2(70, 28)
+	coord_row.add_child(debug_y_spin)
+	debug_scroll = ScrollContainer.new()
+	debug_scroll.name = "DebugOperationScroll"
+	debug_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	debug_scroll.custom_minimum_size = Vector2(260, 360)
+	debug_outer.add_child(debug_scroll)
+	debug_content = VBoxContainer.new()
+	debug_content.name = "DebugOperationButtons"
+	debug_content.add_theme_constant_override("separation", 6)
+	debug_scroll.add_child(debug_content)
+	_add_debug_section(debug_content, "Run Debug")
+	_add_debug_button(debug_content, "Tutorial Run", func() -> void: _start_tutorial_from_ui())
+	_add_debug_button(debug_content, "Standard Run", func() -> void: _start_standard_from_ui())
+	_add_debug_button(debug_content, "Teleport Exit", func() -> void: _debug_teleport_to_exit())
+	_add_debug_button(debug_content, "Move XY no trigger", func() -> void: _debug_teleport_xy(false))
+	_add_debug_button(debug_content, "Enter XY trigger", func() -> void: _debug_teleport_xy(true))
+	_add_debug_button(debug_content, "+100 Run Black Coin", func() -> void: _dispatch_command(&"debug_add_run_black_coin", {"amount": 100, "source": "debug"}))
+	_add_debug_button(debug_content, "Reveal Full Map", func() -> void: _dispatch_command(&"debug_reveal_full_map", {"source": "debug"}))
+	_add_debug_button(debug_content, "Spawn Floor Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_floor", {"source": "debug"}))
+	_add_debug_button(debug_content, "Spawn Backpack Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_backpack", {"source": "debug"}))
+	_add_debug_button(debug_content, "Full HP", func() -> void: _dispatch_command(&"debug_heal_full", {"source": "debug"}))
+	_add_debug_button(debug_content, "Force Extract Success", func() -> void: _dispatch_command(&"debug_force_extract", {"source": "debug"}))
+	_add_debug_button(debug_content, "Force Fail", func() -> void: _dispatch_command(&"debug_force_fail", {"reason": "debug_forced_failure", "source": "debug"}))
+	_add_debug_section(debug_content, "Run Utility")
+	_add_debug_button(debug_content, "Grid Up", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, -1), "source": "debug"}))
+	_add_debug_button(debug_content, "Grid Down", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, 1), "source": "debug"}))
+	_add_debug_button(debug_content, "Grid Left", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(-1, 0), "source": "debug"}))
+	_add_debug_button(debug_content, "Grid Right", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(1, 0), "source": "debug"}))
+	_add_debug_button(debug_content, "Flag Current", func() -> void: _dispatch_command(&"flag_current_cell", {"source": "debug"}))
+	_add_debug_button(debug_content, "Search Current", func() -> void: _debug_search_and_show_loot())
+	_add_debug_button(debug_content, "Pickup Floor", func() -> void: _pickup_floor_from_ui())
+	_add_debug_button(debug_content, "Drop Item", func() -> void: _drop_inventory_from_ui())
+	_add_debug_button(debug_content, "Request Extract", func() -> void: _request_extract_from_ui())
+	_add_debug_button(debug_content, "Confirm Extract", func() -> void: _dispatch_command(&"confirm_extract", {"source": "debug"}))
+	_add_debug_section(debug_content, "Meta Debug")
+	_add_debug_button(debug_content, "+1000 Meta Gold", func() -> void: _debug_meta_add_gold())
+	_add_debug_button(debug_content, "Set Meta Gold 0", func() -> void: _debug_meta_set_gold(0))
+	_add_debug_button(debug_content, "Clear Meta Gold", func() -> void: _debug_meta_clear_gold())
+	_add_debug_button(debug_content, "Add Warehouse Test Item", func() -> void: _debug_meta_add_warehouse_item())
+	_add_debug_button(debug_content, "Clear Warehouse", func() -> void: _debug_meta_clear_warehouse())
+	_add_debug_button(debug_content, "Save Meta Now", func() -> void: _debug_meta_save())
+	_add_debug_button(debug_content, "Clear Save", func() -> void: _debug_meta_clear_save())
+	_add_debug_button(debug_content, "Read Save Summary", func() -> void: _debug_meta_summary())
 	debug_log = Label.new()
 	debug_log.name = "DebugLastMessage"
 	debug_log.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	debug_panel.add_child(debug_log)
+	debug_outer.add_child(debug_log)
 
 	inventory_panel = InventoryPanelScript.new() as Control
 	inventory_panel.name = "InventoryPanel"
@@ -292,7 +400,7 @@ func _build_runtime_modals() -> void:
 	event_content.add_child(event_title_label)
 	event_body_label = Label.new()
 	event_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	event_body_label.custom_minimum_size = Vector2(400, 78)
+	event_body_label.custom_minimum_size = Vector2(250, 78)
 	event_content.add_child(event_body_label)
 	event_options_box = VBoxContainer.new()
 	event_options_box.name = "EventOptionButtons"
@@ -313,7 +421,7 @@ func _build_runtime_modals() -> void:
 	loot_content.add_child(loot_title_label)
 	loot_body_label = Label.new()
 	loot_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	loot_body_label.custom_minimum_size = Vector2(390, 180)
+	loot_body_label.custom_minimum_size = Vector2(250, 160)
 	loot_content.add_child(loot_body_label)
 	_add_menu_button(loot_content, "关闭", func() -> void: loot_panel.visible = false)
 
@@ -331,7 +439,7 @@ func _build_runtime_modals() -> void:
 	extract_content.add_child(extract_title)
 	extract_body_label = Label.new()
 	extract_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	extract_body_label.custom_minimum_size = Vector2(390, 120)
+	extract_body_label.custom_minimum_size = Vector2(250, 120)
 	extract_content.add_child(extract_body_label)
 	var extract_buttons := HBoxContainer.new()
 	extract_content.add_child(extract_buttons)
@@ -355,9 +463,12 @@ func _build_runtime_modals() -> void:
 	pause_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	pause_status_label.text = "本面板只暂停 UI 并提供设置入口；继续会返回当前局，不写本地持久化偏好。"
 	pause_content.add_child(pause_status_label)
+	if M1_DEBUG_PANEL_ENABLED:
+		_add_menu_button(pause_content, "Dev Debug Panel", func() -> void: _open_debug_panel_from_pause())
 	_add_menu_button(pause_content, "继续", func() -> void: pause_panel.visible = false)
 	_add_menu_button(pause_content, "设置说明", func() -> void: _open_settings_from_pause())
 	_add_menu_button(pause_content, "关闭", func() -> void: pause_panel.visible = false)
+	_apply_runtime_modal_layout(_current_layout_profile())
 
 
 func _new_modal_panel(node_name: String, rect: Rect2) -> PanelContainer:
@@ -375,10 +486,66 @@ func _new_modal_panel(node_name: String, rect: Rect2) -> PanelContainer:
 	return panel
 
 
+func _apply_runtime_modal_layout(profile: Dictionary) -> void:
+	var supported_size: Vector2 = profile.get("supported_size", Vector2(1366, 768))
+	var actual_size: Vector2i = profile.get("actual_viewport_size", Vector2i(int(supported_size.x), int(supported_size.y)))
+	var width: float = float(max(1, actual_size.x))
+	var height: float = float(max(1, actual_size.y))
+	var margin: float = 24.0
+	var left_width: float = clamp(width * 0.29, 360.0, 420.0)
+	var right_width: float = clamp(width * 0.20, 268.0, 330.0)
+	var modal_width: float = min(max(300.0, right_width - 16.0), max(260.0, width - left_width - margin * 3.0))
+	var modal_left: float = width - modal_width - margin
+	var modal_top: float = margin + 80.0
+	var available_height: float = max(220.0, height - modal_top - margin)
+	_set_control_rect(event_panel, Rect2(modal_left, modal_top, modal_width, min(360.0, available_height)))
+	_set_control_rect(loot_panel, Rect2(modal_left, modal_top, modal_width, min(300.0, available_height)))
+	_set_control_rect(extract_panel, Rect2(modal_left, modal_top, modal_width, min(260.0, available_height)))
+	_set_control_rect(pause_panel, Rect2(modal_left, modal_top, modal_width, min(270.0, available_height)))
+	_apply_debug_panel_layout(profile)
+
+
+func _apply_debug_panel_layout(profile: Dictionary) -> void:
+	if debug_panel == null:
+		return
+	var supported_size: Vector2 = profile.get("supported_size", Vector2(1366, 768))
+	var actual_size: Vector2i = profile.get("actual_viewport_size", Vector2i(int(supported_size.x), int(supported_size.y)))
+	var width: float = float(max(1, actual_size.x))
+	var height: float = float(max(1, actual_size.y))
+	var margin: float = 24.0
+	var panel_width: float = clamp(width * 0.24, 300.0, 380.0)
+	var top: float = margin + 70.0
+	var panel_height: float = max(380.0, height - top - margin)
+	_set_control_rect(debug_panel, Rect2(width - panel_width - margin, top, panel_width, panel_height))
+	if debug_scroll != null:
+		debug_scroll.custom_minimum_size = Vector2(panel_width - 32.0, max(240.0, panel_height - 170.0))
+
+
+func _shell_snapshot() -> Dictionary:
+	var snapshot: Dictionary = {}
+	if run_context != null:
+		snapshot = run_context.get_status_snapshot()
+	snapshot["meta_progress_summary"] = _meta_progress_summary()
+	return snapshot
+
+
+func _meta_progress_summary() -> Dictionary:
+	if meta_progress_adapter == null:
+		return {}
+	return meta_progress_adapter.get_summary()
+
+
+func _commit_result_to_meta(result_snapshot: Dictionary) -> Dictionary:
+	if meta_progress_adapter == null:
+		return {"ok": false, "reason": "meta_progress_adapter_missing"}
+	return meta_progress_adapter.apply_settlement(result_snapshot)
+
+
 func _show_main_menu() -> void:
 	screen_state = SCREEN_MAIN_MENU
 	_set_gameplay_visible(false)
 	ui_shell.call("show_main")
+	ui_shell.call("apply_snapshot", _shell_snapshot())
 	run_overlay_root.visible = false
 	_hide_runtime_popups()
 
@@ -412,6 +579,7 @@ func _show_run_screen() -> void:
 	_set_gameplay_visible(true)
 	ui_shell.visible = false
 	run_overlay_root.visible = true
+	get_viewport().gui_release_focus()
 	_hide_runtime_popups()
 	if debug_panel != null:
 		debug_panel.visible = false
@@ -438,6 +606,7 @@ func _show_pause_panel() -> void:
 			snapshot.get("phase", ""),
 			snapshot.get("current_room", ""),
 		]
+	_apply_runtime_modal_layout(_current_layout_profile())
 	pause_panel.visible = true
 
 
@@ -472,7 +641,7 @@ func _on_app_shell_host_route_requested(intent: Dictionary) -> void:
 	var target := NavigationIntentScript.target(intent)
 	match target:
 		NavigationIntentScript.TARGET_RUN:
-			_show_run_screen()
+			_start_run_from_route(intent)
 		_:
 			_show_main_menu()
 
@@ -618,6 +787,7 @@ func _show_event_panel(event_state: Dictionary) -> void:
 		button.tooltip_text = "事件选项：仍通过既有 select_event_option 命令处理。"
 		if run_surface != null:
 			run_surface.apply_legacy_button_style(button, &"primary" if not button.disabled else &"secondary")
+	_apply_runtime_modal_layout(_current_layout_profile())
 	event_panel.visible = true
 
 
@@ -674,6 +844,7 @@ func _show_extract_panel(snapshot: Dictionary) -> void:
 	extract_body_label.text = RunSurfaceModel.extract_modal_text(snapshot)
 	if run_surface != null:
 		run_surface.apply_legacy_modal_style(extract_panel, &"mini.exit")
+	_apply_runtime_modal_layout(_current_layout_profile())
 	extract_panel.visible = true
 
 
@@ -694,6 +865,7 @@ func _show_loot_panel(title: String, reward: Dictionary) -> void:
 	loot_body_label.text = RunSurfaceModel.loot_modal_text(reward, String(run_context.last_message))
 	if run_surface != null:
 		run_surface.apply_legacy_modal_style(loot_panel, &"mini.chest")
+	_apply_runtime_modal_layout(_current_layout_profile())
 	loot_panel.visible = true
 	_refresh_view_models()
 
@@ -732,6 +904,9 @@ func _is_runtime_modal_open() -> bool:
 
 
 func _close_top_runtime_modal() -> bool:
+	if debug_panel != null and debug_panel.visible:
+		_close_debug_panel()
+		return true
 	if inventory_panel != null and inventory_panel.visible:
 		inventory_panel.call("hide_panel")
 		return true
@@ -773,6 +948,8 @@ func _hide_runtime_popups() -> void:
 		pause_panel.visible = false
 	if dev_diagnostics_panel != null:
 		dev_diagnostics_panel.call("hide_panel")
+	if debug_panel != null:
+		debug_panel.visible = false
 	if map_overlay_panel != null:
 		map_overlay_panel.hide_overlay()
 
@@ -782,17 +959,21 @@ func _on_state_changed(_snapshot: Dictionary) -> void:
 
 
 func _on_result_available(snapshot: Dictionary) -> void:
+	var display_snapshot := snapshot.duplicate(true)
+	display_snapshot["meta_progress_commit"] = _commit_result_to_meta(snapshot)
+	display_snapshot["meta_progress_summary"] = _meta_progress_summary()
 	_refresh_view_models()
 	_hide_runtime_popups()
 	if result_panel != null:
-		result_panel.show_summary(snapshot)
+		result_panel.show_summary(display_snapshot)
 
 
 func _refresh_view_models() -> void:
 	if run_context == null:
 		return
-	var snapshot := run_context.get_status_snapshot()
+	var snapshot := _shell_snapshot()
 	var layout_profile: Dictionary = _current_layout_profile()
+	_apply_runtime_modal_layout(layout_profile)
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	var minimap_vm := MiniMapViewModel.build_from_run_map_snapshot(snapshot.get("run_map_snapshot", {}))
 	if minimap_vm.room_markers.is_empty():
@@ -848,17 +1029,24 @@ func _refresh_view_models() -> void:
 		_apply_dev_diagnostics(snapshot)
 	if debug_log != null:
 		debug_log.text = String(snapshot.get("last_message", ""))
+	if debug_panel != null and debug_panel.visible:
+		_sync_debug_coordinates()
 	if result_panel != null and bool(snapshot.get("run_active", false)):
 		result_panel.hide_result()
 
 
 func _current_layout_profile() -> Dictionary:
 	var viewport_size: Vector2 = get_viewport_rect().size
+	var window := get_window()
+	if window != null and window.size.x > 0 and window.size.y > 0:
+		var window_size := Vector2(float(window.size.x), float(window.size.y))
+		viewport_size = Vector2(min(viewport_size.x, window_size.x), min(viewport_size.y, window_size.y))
+	var requested_resolution_size := Vector2i.ZERO
 	if SettingsManager != null:
-		var resolution_size: Vector2i = SettingsManager.get_current_resolution_size()
-		if resolution_size.x > 0 and resolution_size.y > 0:
-			viewport_size = Vector2(resolution_size.x, resolution_size.y)
+		requested_resolution_size = SettingsManager.get_current_resolution_size()
 	var profile: Dictionary = UILayoutProfileScript.profile_for_size(viewport_size)
+	profile["actual_viewport_size"] = Vector2i(int(viewport_size.x), int(viewport_size.y))
+	profile["requested_resolution_size"] = requested_resolution_size
 	current_layout_profile_id = StringName(profile.get("profile_id", &"desktop"))
 	return profile
 
@@ -902,6 +1090,7 @@ func _dispatch_command(command_name: StringName, payload: Dictionary = {}) -> Di
 	var result: Dictionary = command_bus.dispatch(command_name, payload)
 	last_command_result = result.duplicate(true)
 	_show_command_feedback(result)
+	get_viewport().gui_release_focus()
 	return result
 
 
@@ -936,10 +1125,174 @@ func _open_map_from_ui(source: StringName = &"button") -> void:
 
 
 func _toggle_debug_panel() -> void:
-	if not G9ShellPanelScript.DEV_DIAGNOSTICS_ENABLED:
+	if not M1_DEBUG_PANEL_ENABLED:
 		return
 	if debug_panel != null:
+		if not debug_panel.visible:
+			_sync_debug_coordinates()
+			_apply_debug_panel_layout(_current_layout_profile())
 		debug_panel.visible = not debug_panel.visible
+
+
+func _open_debug_panel_from_pause() -> void:
+	if pause_panel != null:
+		pause_panel.visible = false
+	_open_debug_panel()
+
+
+func _open_debug_panel() -> void:
+	if not M1_DEBUG_PANEL_ENABLED or debug_panel == null:
+		return
+	_sync_debug_coordinates()
+	_apply_debug_panel_layout(_current_layout_profile())
+	debug_panel.visible = true
+
+
+func _close_debug_panel() -> void:
+	if debug_panel != null:
+		debug_panel.visible = false
+	get_viewport().gui_release_focus()
+
+
+func _sync_debug_coordinates() -> void:
+	if run_context == null:
+		return
+	if debug_x_spin != null:
+		debug_x_spin.max_value = maxi(0, run_context.width - 1)
+		debug_x_spin.value = clampi(run_context.get_current_pos().x, 0, maxi(0, run_context.width - 1))
+	if debug_y_spin != null:
+		debug_y_spin.max_value = maxi(0, run_context.height - 1)
+		debug_y_spin.value = clampi(run_context.get_current_pos().y, 0, maxi(0, run_context.height - 1))
+
+
+func _debug_target_pos() -> Vector2i:
+	var x := 0
+	var y := 0
+	if debug_x_spin != null:
+		x = int(debug_x_spin.value)
+	if debug_y_spin != null:
+		y = int(debug_y_spin.value)
+	return Vector2i(x, y)
+
+
+func _debug_teleport_to_exit() -> void:
+	var result := _dispatch_command(&"debug_teleport_to_exit", {"source": "debug"})
+	if bool(result.get("ok", false)) and player_controller != null:
+		player_controller.reset_local_position()
+	_sync_debug_coordinates()
+
+
+func _debug_teleport_xy(enter_room: bool) -> void:
+	var result := _dispatch_command(&"debug_teleport_to", {"pos": _debug_target_pos(), "enter_room": enter_room, "source": "debug"})
+	if bool(result.get("ok", false)) and player_controller != null:
+		player_controller.reset_local_position()
+	_sync_debug_coordinates()
+
+
+func _debug_search_and_show_loot() -> void:
+	var result := _dispatch_command(&"search_current_room", {"source": "debug"})
+	var snapshot := run_context.get_status_snapshot()
+	var reward: Dictionary = snapshot.get("last_reward", {})
+	if not reward.is_empty():
+		_show_loot_panel("Debug Search Result", reward)
+	else:
+		_show_command_feedback(result)
+
+
+func _debug_meta_add_gold() -> void:
+	if meta_progress_adapter == null:
+		return
+	var summary := meta_progress_adapter.add_gold(1000, "m1_debug_panel")
+	if debug_log != null:
+		debug_log.text = "Meta debug: +1000 gold. Total=%s" % summary.get("gold", 0)
+	if ui_shell != null:
+		ui_shell.call("apply_snapshot", _shell_snapshot())
+
+
+func _debug_meta_set_gold(amount: int) -> void:
+	if meta_progress_adapter == null:
+		return
+	var summary := meta_progress_adapter.set_gold(amount, "m1_debug_panel")
+	if debug_log != null:
+		debug_log.text = "Meta debug: set gold=%s." % summary.get("gold", 0)
+	if ui_shell != null:
+		ui_shell.call("apply_snapshot", _shell_snapshot())
+
+
+func _debug_meta_clear_gold() -> void:
+	if meta_progress_adapter == null:
+		return
+	var summary := meta_progress_adapter.clear_gold()
+	if debug_log != null:
+		debug_log.text = "Meta debug: cleared gold. Total=%s" % summary.get("gold", 0)
+	if ui_shell != null:
+		ui_shell.call("apply_snapshot", _shell_snapshot())
+
+
+func _debug_meta_add_warehouse_item() -> void:
+	if meta_progress_adapter == null:
+		return
+	var summary := meta_progress_adapter.add_warehouse_item({
+		"instance_id": "m1_debug_warehouse_item_%d" % Time.get_ticks_msec(),
+		"item_id": "m1_debug_warehouse_item",
+		"display_name": "M1 Debug Warehouse Item",
+		"rarity": "rare",
+		"base_value": 50,
+		"source": "m1_debug_panel",
+	})
+	if debug_log != null:
+		debug_log.text = "Meta debug: warehouse item added. Items=%s" % summary.get("warehouse_items_count", 0)
+	if ui_shell != null:
+		ui_shell.call("apply_snapshot", _shell_snapshot())
+
+
+func _debug_meta_clear_warehouse() -> void:
+	if meta_progress_adapter == null:
+		return
+	var summary := meta_progress_adapter.clear_warehouse("m1_debug_panel")
+	if debug_log != null:
+		debug_log.text = "Meta debug: warehouse cleared. Items=%s" % summary.get("warehouse_items_count", 0)
+	if ui_shell != null:
+		ui_shell.call("apply_snapshot", _shell_snapshot())
+
+
+func _debug_meta_save() -> void:
+	if meta_progress_adapter == null:
+		return
+	var summary := meta_progress_adapter.mark_debug_command("meta_save", {"source": "m1_debug_panel"})
+	var saved := meta_progress_adapter.save()
+	if debug_log != null:
+		debug_log.text = "Meta debug: save=%s gold=%s items=%s" % [saved, summary.get("gold", 0), summary.get("warehouse_items_count", 0)]
+	if ui_shell != null:
+		ui_shell.call("apply_snapshot", _shell_snapshot())
+
+
+func _debug_meta_clear_save() -> void:
+	if meta_progress_adapter == null:
+		return
+	var summary := meta_progress_adapter.clear()
+	summary = meta_progress_adapter.mark_debug_command("meta_clear_save", {"source": "m1_debug_panel"})
+	if debug_log != null:
+		debug_log.text = "Meta debug: save cleared. Total=%s" % summary.get("gold", 0)
+	if ui_shell != null:
+		ui_shell.call("apply_snapshot", _shell_snapshot())
+
+
+func _debug_meta_summary() -> void:
+	if meta_progress_adapter == null:
+		return
+	meta_progress_adapter.load_or_create_default()
+	var summary := meta_progress_adapter.mark_debug_command("meta_read_save", {"source": "m1_debug_panel"})
+	if debug_log != null:
+		debug_log.text = "Meta summary: gold=%s runs=%s extracts=%s fails=%s items=%s" % [
+			summary.get("gold", 0),
+			summary.get("run_count", 0),
+			summary.get("extract_count", 0),
+			summary.get("fail_count", 0),
+			summary.get("warehouse_items_count", 0),
+		]
+	if ui_shell != null:
+		ui_shell.call("apply_snapshot", _shell_snapshot())
 
 
 func _on_tutorial_popup_confirmed() -> void:
@@ -962,6 +1315,23 @@ func _start_standard_from_ui() -> void:
 	if player_controller != null:
 		player_controller.reset_local_position()
 	_show_run_screen()
+
+
+func _start_run_from_route(intent: Dictionary) -> void:
+	var payload := NavigationIntentScript.payload(intent)
+	var route_mode := StringName(payload.get("route_mode", &"standard_run"))
+	match route_mode:
+		&"tutorial_run":
+			_start_tutorial_from_ui()
+		&"demo_run":
+			var result: Dictionary = command_bus.dispatch(&"start_demo_run")
+			last_command_result = result.duplicate(true)
+			_show_command_feedback(result)
+			if player_controller != null:
+				player_controller.reset_local_position()
+			_show_run_screen()
+		_:
+			_start_standard_from_ui()
 
 
 func _attempt_room_transition(direction: Vector2i) -> void:
@@ -1033,24 +1403,45 @@ func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, 
 	button.offset_top = rect.position.y
 	button.offset_right = rect.position.x + rect.size.x
 	button.offset_bottom = rect.position.y + rect.size.y
+	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
+
+
+func _set_control_rect(control: Control, rect: Rect2) -> void:
+	if control == null:
+		return
+	control.offset_left = rect.position.x
+	control.offset_top = rect.position.y
+	control.offset_right = rect.position.x + rect.size.x
+	control.offset_bottom = rect.position.y + rect.size.y
 
 
 func _add_menu_button(parent: Control, label: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(110, 34)
+	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
 
 
+func _add_debug_section(parent: Control, label: String) -> Label:
+	var section := Label.new()
+	section.text = label
+	section.add_theme_font_size_override("font_size", 15)
+	section.custom_minimum_size = Vector2(200, 24)
+	parent.add_child(section)
+	return section
+
+
 func _add_debug_button(parent: Control, label: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = label
-	button.custom_minimum_size = Vector2(200, 28)
+	button.custom_minimum_size = Vector2(180, 28)
+	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button

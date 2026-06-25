@@ -8,27 +8,13 @@ static func build() -> Dictionary:
 	return {
 		"title": "灰尾回收",
 		"subtitle": "基地门厅 / 中控入口",
-		"scene_hint": "主菜单提供当前可玩探索入口；出发探索页仍是配置 preview，不承担真实出发配置启动。",
+		"scene_hint": "主菜单固定承担分流：出发探索、长期系统、设置、退出。M1 标准局作为当前可玩快捷入口保留，不替代正式出发页流程。",
 		"role_hint": "当前角色展示占位：外观和穿搭入口后续归入长期系统。",
 		"entries": [
 			{
-				"id": &"quick_start_demo",
-				"label": "快速开始 / Demo Run",
-				"description": "进入当前可玩探索路线；复用已有 RunScene start path，不改出发配置、奖励、结算或存档规则。",
-				"target": NavigationIntentScript.TARGET_RUN,
-				"payload": {
-					"entry_id": &"quick_start_demo",
-					"entry_label": "当前可玩探索",
-					"playable_route": true,
-					"route_mode": &"demo_run",
-				},
-				"requires_confirm": false,
-				"has_badge": true,
-			},
-			{
 				"id": &"deploy",
 				"label": "出发探索",
-				"description": "进入出发探索页查看资产出勤 preview；完整出发配置启动未接入。",
+				"description": "进入出发探索页查看本次出勤配置 preview；开始/继续探索的正式归属在该页，当前仍未接真实配置启动。",
 				"target": NavigationIntentScript.TARGET_DEPLOY,
 				"requires_confirm": false,
 				"has_badge": false,
@@ -59,11 +45,24 @@ static func build() -> Dictionary:
 			},
 		],
 		"notices": [
-			"公司公告：当前可从快速开始进入可玩探索路线。",
-			"提示：出发探索、长期系统和设置仍按 preview / display-only 边界展示。",
+			"公司公告：主菜单只保留固定分流入口；复杂配置进入出发探索页。",
+			"提示：M1 当前可通过快捷入口开始 standard_10x10 验证局。",
 			"安全说明：退出游戏不会在主菜单中放弃进行中的探索。",
 		],
 		"shortcuts": [
+			{
+				"id": &"shortcut_standard_10x10",
+				"label": "快捷：开始标准局",
+				"description": "M1 当前可玩入口；复用 AppShell / CommandBus / RunScene 标准局路径，不让主菜单实现 run 规则。",
+				"target": NavigationIntentScript.TARGET_RUN,
+				"payload": {
+					"entry_id": &"standard_10x10",
+					"entry_label": "开始标准局",
+					"playable_route": true,
+					"route_mode": &"standard_run",
+				},
+				"has_badge": true,
+			},
 			{
 				"id": &"shortcut_warehouse",
 				"label": "快捷：仓库",

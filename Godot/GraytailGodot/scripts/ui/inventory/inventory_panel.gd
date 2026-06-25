@@ -43,6 +43,7 @@ func build() -> void:
 	header.add_child(title_label)
 	var close_button := Button.new()
 	close_button.name = "InventoryCloseButton"
+	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.text = "关闭"
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	header.add_child(close_button)
@@ -159,12 +160,14 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	item_list.add_child(row)
 	var item_button := Button.new()
 	item_button.name = "InventoryItemButton"
+	item_button.focus_mode = Control.FOCUS_NONE
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
 	item_button.pressed.connect(func() -> void: tooltip_label.text = RunUIViewModel.item_tooltip(item))
 	row.add_child(item_button)
 	var drop_button := Button.new()
 	drop_button.name = "InventoryDropButton"
+	drop_button.focus_mode = Control.FOCUS_NONE
 	drop_button.text = "丢弃"
 	drop_button.disabled = not can_drop
 	drop_button.tooltip_text = "丢弃到当前房间地面，稍后可从地面物品重新拾取。" if can_drop else "已装备物品暂不可从此面板丢弃。"

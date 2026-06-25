@@ -152,6 +152,10 @@ static func result_summary(snapshot: Dictionary) -> Dictionary:
 		lines.append("失败抢救：保留 %s / 丢失 %s" % [salvage.get("salvaged_item_count", 0), salvage.get("lost_item_count", 0)])
 	var settlement_log: Array = _array_from(snapshot, "settlement_log")
 	lines.append("结算日志：%s 条" % settlement_log.size())
+	var meta_commit: Dictionary = _dict_from(snapshot, "meta_progress_commit")
+	if not meta_commit.is_empty():
+		var commit_state := "重复提交已忽略" if bool(meta_commit.get("duplicate", false)) else "已提交"
+		lines.append("MetaProgress：%s | result_id=%s" % [commit_state, String(meta_commit.get("result_id", ""))])
 	lines.append("")
 	lines.append("事件记录")
 	lines.append_array(compact_event_log(snapshot))

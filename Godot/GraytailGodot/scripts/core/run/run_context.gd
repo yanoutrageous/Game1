@@ -64,6 +64,9 @@ var failure_salvage: Dictionary = {}
 var tutorial_triggers: Dictionary = {}
 var tutorial_shown: Dictionary = {}
 var tutorial_popup: Dictionary = {}
+var run_instance_sequence: int = 0
+var debug_used: bool = false
+var debug_commands: Array[Dictionary] = []
 
 
 func reset() -> void:
@@ -126,13 +129,17 @@ func reset() -> void:
 	tutorial_triggers.clear()
 	tutorial_shown.clear()
 	tutorial_popup.clear()
+	debug_used = false
+	debug_commands.clear()
 
 
 func start_run(config: Dictionary) -> void:
 	var command_before_reset := active_command.duplicate(true)
 	reset()
 	active_command = command_before_reset
-	run_id = StringName(config.get("id", &"run"))
+	var run_template_id := String(config.get("id", &"run"))
+	run_instance_sequence += 1
+	run_id = StringName("%s_%d_%d" % [run_template_id, Time.get_ticks_msec(), run_instance_sequence])
 	mode = StringName(config.get("mode", &"standard"))
 	seed_value = int(config.get("seed", 1001))
 	phase = &"running"
@@ -274,6 +281,19 @@ func record_event(event_type: StringName, command_id: String = "", actor_id: Str
 	return run_event_log.record_event(event_type, command_id, actor_id, source, payload)
 
 
+func record_debug_command(command: String, payload: Dictionary = {}) -> Dictionary:
+	debug_used = true
+	var entry := {
+		"command": command,
+		"payload": _json_safe(payload),
+		"command_id": String(active_command.get("command_id", "")),
+		"source": String(active_command.get("source", payload.get("source", "debug"))),
+		"index": debug_commands.size() + 1,
+	}
+	debug_commands.append(entry)
+	return entry.duplicate(true)
+
+
 func cell_key(pos: Vector2i) -> String:
 	return "%d,%d" % [pos.x, pos.y]
 
@@ -282,3 +302,27 @@ func _query() -> RunQueryFacade:
 	if query_facade == null:
 		query_facade = RunQueryFacade.new()
 	return query_facade
+
+
+func _json_safe(value: Variant) -> Variant:
+	if value is Dictionary:
+		var result := {}
+		var dict_value := value as Dictionary
+		for key in dict_value.keys():
+			result[str(key)] = _json_safe(dict_value[key])
+		return result
+	if value is Array:
+		var result: Array = []
+		var array_value := value as Array
+		for item in array_value:
+			result.append(_json_safe(item))
+		return result
+	if value is Vector2i:
+		var pos := value as Vector2i
+		return {"x": pos.x, "y": pos.y}
+	if value is Vector2:
+		var vector := value as Vector2
+		return {"x": vector.x, "y": vector.y}
+	if value is StringName:
+		return str(value)
+	return value

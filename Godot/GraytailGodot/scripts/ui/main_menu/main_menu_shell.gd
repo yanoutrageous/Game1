@@ -7,6 +7,8 @@ const MainMenuModelScript := preload("res://scripts/ui/main_menu/main_menu_model
 signal navigation_intent_requested(intent: Dictionary)
 
 var current_model: Dictionary = {}
+var current_snapshot: Dictionary = {}
+var meta_summary_label: Label
 
 
 func build(model: Dictionary = {}) -> void:
@@ -17,6 +19,7 @@ func build(model: Dictionary = {}) -> void:
 	_build_role_panel()
 	_build_menu_panel()
 	_build_notice_panel()
+	_build_meta_summary_panel()
 	_build_shortcut_panel()
 
 
@@ -24,6 +27,12 @@ func _clear_children() -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
+	meta_summary_label = null
+
+
+func apply_snapshot(snapshot: Dictionary) -> void:
+	current_snapshot = snapshot.duplicate(true)
+	_refresh_meta_summary()
 
 
 func _build_backdrop() -> void:
@@ -50,7 +59,7 @@ func _build_menu_panel() -> void:
 	panel.offset_bottom = 430.0
 	panel.add_theme_constant_override("separation", 12)
 	add_child(panel)
-	_add_section_label(panel, "当前可玩入口 / 固定入口")
+	_add_section_label(panel, "固定主入口")
 	for raw_entry in _array_from(current_model, "entries"):
 		if raw_entry is Dictionary:
 			var entry: Dictionary = (raw_entry as Dictionary).duplicate(true)
@@ -76,6 +85,12 @@ func _build_notice_panel() -> void:
 		notice_panel.add_child(label)
 
 
+func _build_meta_summary_panel() -> void:
+	_add_label(self, "MainMenuMetaSummaryHeading", Rect2(828, 608, 240, 22), "M1 验证摘要", 14, PresentationTheme.color_for_key(&"ui.muted"))
+	meta_summary_label = _add_label(self, "MainMenuMetaSummary", Rect2(828, 632, 364, 70), "", 13, PresentationTheme.text_color())
+	_refresh_meta_summary()
+
+
 func _build_shortcut_panel() -> void:
 	var shortcut_panel := HBoxContainer.new()
 	shortcut_panel.name = "MainMenuShortcutPanel"
@@ -89,6 +104,23 @@ func _build_shortcut_panel() -> void:
 		if raw_shortcut is Dictionary:
 			var shortcut: Dictionary = (raw_shortcut as Dictionary).duplicate(true)
 			_add_entry_button(shortcut_panel, shortcut)
+
+
+func _refresh_meta_summary() -> void:
+	if meta_summary_label == null:
+		return
+	var summary: Dictionary = {}
+	var raw: Variant = current_snapshot.get("meta_progress_summary", {})
+	if raw is Dictionary:
+		summary = (raw as Dictionary).duplicate(true)
+	meta_summary_label.text = "探索 %s | 撤离 %s | 失败 %s | Debug %s\n结算可见：金币 %s | 仓库物品 %s（后续主菜单弱化）" % [
+		summary.get("run_count", 0),
+		summary.get("extract_count", 0),
+		summary.get("fail_count", 0),
+		"是" if bool(summary.get("debug_used", false)) else "否",
+		summary.get("gold", 0),
+		summary.get("warehouse_items_count", 0),
+	]
 
 
 func _add_entry_button(parent: Control, entry: Dictionary) -> Button:

@@ -27,6 +27,8 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 	var transaction_start: int = _transaction_count()
 	if context != null:
 		context.active_command = command.duplicate(true)
+		if _is_debug_command_request(command_name, command_payload):
+			context.record_debug_command(String(command_name), command_payload)
 	command_requested.emit(command_name, command)
 	var action_result: Dictionary = {}
 	match command_name:
@@ -76,6 +78,24 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = confirm_tutorial_popup()
 		&"open_map":
 			action_result = _mark_open_map_placeholder()
+		&"debug_add_run_black_coin":
+			action_result = debug_add_run_black_coin(int(command_payload.get("amount", 25)))
+		&"debug_teleport_to_exit":
+			action_result = debug_teleport_to_exit()
+		&"debug_teleport_to":
+			action_result = debug_teleport_to(_vector2i_from(command_payload.get("pos", Vector2i.ZERO)), bool(command_payload.get("enter_room", true)))
+		&"debug_reveal_full_map":
+			action_result = debug_reveal_full_map()
+		&"debug_spawn_test_item_floor":
+			action_result = debug_spawn_test_item(RunAssetLedger.LOCATION_ROOM_FLOOR)
+		&"debug_spawn_test_item_backpack":
+			action_result = debug_spawn_test_item(RunAssetLedger.LOCATION_INVENTORY)
+		&"debug_heal_full":
+			action_result = debug_heal_full()
+		&"debug_force_extract":
+			action_result = debug_force_extract()
+		&"debug_force_fail":
+			action_result = debug_force_fail(String(command_payload.get("reason", "debug_forced_failure")))
 		_:
 			action_result = _blocked(&"unknown_command", "unknown_command")
 	if context != null:
@@ -358,6 +378,122 @@ func restart_run() -> Dictionary:
 		return start_tutorial_run()
 
 
+func debug_add_run_black_coin(amount: int = 25) -> Dictionary:
+	if not _has_active_run():
+		return _blocked(&"not_ready", "not_ready")
+	var clamped := maxi(0, amount)
+	if clamped <= 0:
+		return _blocked(&"invalid_amount", "invalid_amount")
+	context.asset_ledger.add_currency(RunAssetLedger.CURRENCY_BLACK, clamped, "debug_command")
+	context.asset_ledger.sync_compat_fields(context)
+	context.last_message = "Debug added %d run black coin through RunAssetLedger." % clamped
+	context.record_event(RunEventLog.EVENT_ITEM_GAINED, _active_command_id(), DEFAULT_ACTOR_ID, "debug_command", {"currency_id": &"black_coin", "amount": clamped})
+	_emit_state()
+	return {"ok": true, "status": &"debug_black_coin_added", "amount": clamped, "actor_id": DEFAULT_ACTOR_ID}
+
+
+func debug_teleport_to_exit() -> Dictionary:
+	if not _has_active_run():
+		return _blocked(&"not_ready", "not_ready")
+	var exits := context.truth_map.get_exits()
+	if exits.is_empty():
+		return _blocked(&"no_exit", "no_exit")
+	return debug_teleport_to(exits[0], true)
+
+
+func debug_teleport_to(pos: Vector2i, enter_room: bool = true) -> Dictionary:
+	if not _has_active_run():
+		return _blocked(&"not_ready", "not_ready")
+	if not context.is_inside(pos):
+		return _blocked(&"out_of_bounds", "out_of_bounds")
+	var debug_mode := &"debug_enter" if enter_room else &"debug_move"
+	context.player_pos = pos
+	context.current_pos = pos
+	context.last_message = "Debug teleport to %s (%s)." % [_format_pos(pos), String(debug_mode)]
+	context.record_event(RunEventLog.EVENT_ROOM_ENTERED, _active_command_id(), DEFAULT_ACTOR_ID, "debug_command", {"position": pos, "mode": debug_mode})
+	if enter_room:
+		room_resolver.enter_room(context)
+	else:
+		context.intel_map.reveal_cell(pos, context.truth_map)
+		context.current_room_type = context.truth_map.get_room_type(pos)
+		context.current_adjacent_mines = context.minefield_service.count_adjacent_mines(context.truth_map, pos)
+	_emit_state()
+	if context.failed:
+		result_available.emit(context.result_snapshot)
+	return {"ok": true, "status": &"debug_teleported", "position": pos, "enter_room": enter_room, "actor_id": DEFAULT_ACTOR_ID}
+
+
+func debug_reveal_full_map() -> Dictionary:
+	if not _has_active_run():
+		return _blocked(&"not_ready", "not_ready")
+	if context.intel_map == null or context.truth_map == null:
+		return _blocked(&"not_ready", "not_ready")
+	for x in range(context.width):
+		for y in range(context.height):
+			context.intel_map.reveal_cell(Vector2i(x, y), context.truth_map)
+	context.last_message = "Debug revealed the full known map through IntelMap."
+	context.record_event(&"debug_command", _active_command_id(), DEFAULT_ACTOR_ID, "debug_command", {"command": "debug_reveal_full_map", "width": context.width, "height": context.height})
+	_emit_state()
+	return {"ok": true, "status": &"debug_map_revealed", "width": context.width, "height": context.height, "actor_id": DEFAULT_ACTOR_ID}
+
+
+func debug_spawn_test_item(preferred_location: StringName) -> Dictionary:
+	if not _has_active_run():
+		return _blocked(&"not_ready", "not_ready")
+	var location := preferred_location
+	if not (location in [RunAssetLedger.LOCATION_ROOM_FLOOR, RunAssetLedger.LOCATION_INVENTORY]):
+		location = RunAssetLedger.LOCATION_ROOM_FLOOR
+	var item_def := {
+		"item_id": "m1_debug_relic",
+		"display_name": "M1 Debug Relic",
+		"item_type": &"debug_test_item",
+		"rarity": &"rare",
+		"weight": 1,
+		"base_value": 25,
+		"tags": [&"debug", &"m1"],
+		"can_sell": false,
+		"can_store": true,
+		"source": "m1_debug_panel",
+	}
+	var result: Dictionary = context.asset_ledger.add_reward_items([item_def], location, context.get_current_pos(), "debug_command")
+	context.asset_ledger.sync_compat_fields(context)
+	context.last_reward = result.duplicate(true)
+	context.last_message = "Debug spawned a test item to %s through RunAssetLedger." % String(location)
+	context.record_event(RunEventLog.EVENT_ITEM_GAINED, _active_command_id(), DEFAULT_ACTOR_ID, "debug_command", {"command": "debug_spawn_test_item", "location": location, "result": result.duplicate(true)})
+	_emit_state()
+	return {"ok": true, "status": &"debug_test_item_spawned", "location": location, "result": result, "actor_id": DEFAULT_ACTOR_ID}
+
+
+func debug_heal_full() -> Dictionary:
+	if not _has_active_run():
+		return _blocked(&"not_ready", "not_ready")
+	context.hp = context.max_hp
+	context.last_message = "Debug restored HP to full through RunContext."
+	context.record_event(&"debug_command", _active_command_id(), DEFAULT_ACTOR_ID, "debug_command", {"command": "debug_heal_full", "hp": context.hp, "max_hp": context.max_hp})
+	_emit_state()
+	return {"ok": true, "status": &"debug_healed_full", "hp": context.hp, "max_hp": context.max_hp, "actor_id": DEFAULT_ACTOR_ID}
+
+
+func debug_force_extract() -> Dictionary:
+	if not _has_active_run():
+		return _blocked(&"not_ready", "not_ready")
+	context.complete_extract()
+	context.last_message = "Debug forced extraction through CommandBus."
+	_emit_state()
+	result_available.emit(context.result_snapshot)
+	return {"ok": true, "status": &"debug_forced_extract", "actor_id": DEFAULT_ACTOR_ID, "result_snapshot": context.result_snapshot.duplicate(true)}
+
+
+func debug_force_fail(reason: String = "debug_forced_failure") -> Dictionary:
+	if not _has_active_run():
+		return _blocked(&"not_ready", "not_ready")
+	context.fail_run(reason)
+	context.last_message = "Debug forced failure through CommandBus."
+	_emit_state()
+	result_available.emit(context.result_snapshot)
+	return {"ok": true, "status": &"debug_forced_failure", "reason": reason, "actor_id": DEFAULT_ACTOR_ID, "result_snapshot": context.result_snapshot.duplicate(true)}
+
+
 func confirm_tutorial_popup() -> Dictionary:
 	TutorialService.confirm_popup(context)
 	_emit_state()
@@ -368,12 +504,21 @@ func _can_accept_command() -> bool:
 	return context != null and context.can_accept_command()
 
 
+func _has_active_run() -> bool:
+	return context != null and context.run_started and context.run_active and context.asset_ledger != null
+
+
 func _current_blocked_reason() -> String:
 	if context == null:
 		return "not_ready"
 	if context.has_blocking_tutorial_popup():
 		return "tutorial_lock"
 	return "command_blocked"
+
+
+func _is_debug_command_request(command_name: StringName, payload: Dictionary) -> bool:
+	var source := String(payload.get("source", ""))
+	return String(command_name).begins_with("debug_") or source in ["debug", "debug_panel", "m1_debug_panel"]
 
 
 func _mark_open_map_placeholder() -> Dictionary:
@@ -447,3 +592,15 @@ func _active_command_id() -> String:
 	if context == null:
 		return ""
 	return String(context.active_command.get("command_id", ""))
+
+
+func _vector2i_from(value: Variant) -> Vector2i:
+	if value is Vector2i:
+		return value
+	if value is Vector2:
+		var vector := value as Vector2
+		return Vector2i(int(vector.x), int(vector.y))
+	if value is Dictionary:
+		var dict := value as Dictionary
+		return Vector2i(int(dict.get("x", 0)), int(dict.get("y", 0)))
+	return Vector2i.ZERO

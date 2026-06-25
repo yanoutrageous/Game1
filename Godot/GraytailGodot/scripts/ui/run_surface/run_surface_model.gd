@@ -353,9 +353,9 @@ static func _encounter_description(raw_description: String) -> String:
 
 static func _value_label(value: Variant) -> String:
 	if value is StringName:
-		return String(value)
+		return str(value)
 	if value is String:
-		match String(value):
+		match str(value):
 			"possible":
 				return "可能获得"
 			"roll_dependent":
@@ -369,10 +369,10 @@ static func _value_label(value: Variant) -> String:
 			"future_codex_monster_basic":
 				return "后续图鉴接口预留"
 			_:
-				return String(value)
+				return str(value)
 	if value is bool:
 		return "是" if bool(value) else "否"
-	return String(value)
+	return str(value)
 
 
 static func _reason_label(reason: String) -> String:
@@ -410,13 +410,13 @@ static func _action_buttons(snapshot: Dictionary, search_data: Dictionary, event
 	var can_search := bool(search_data.get("can_search", false))
 	var floor_count := int(snapshot.get("room_floor_item_count", 0))
 	return [
-		_action(&"interact", "搜索 / 交互", run_active and (can_search or has_event or room_type == &"Exit"), _interact_hint(room_type, search_data, has_event)),
+		_action(&"interact", "E 搜索/交互", run_active and (can_search or has_event or room_type == &"Exit"), _interact_hint(room_type, search_data, has_event)),
 		_action(&"inventory", "背包", run_active, "查看背包和装备摘要。"),
 		_action(&"ground_loot", "地面物品", run_active and floor_count > 0, "查看当前房间地面物品。"),
-		_action(&"map", "区域扫描", run_active, "打开大地图扫描视图。"),
-		_action(&"combat", "清理威胁", run_active and room_type == &"Monster", "当前房间存在可清理威胁时可用。"),
-		_action(&"extract", "撤离", run_active and (room_type == &"Exit" or phase == &"confirm_extract"), "在撤离点请求或确认撤离。"),
-		_action(&"pause", "暂停", run_active, "打开暂停和设置入口。"),
+		_action(&"map", "M/Tab 扫描图", run_active, "打开大地图扫描视图。"),
+		_action(&"combat", "Space/J 清理", run_active and room_type == &"Monster", "当前房间存在可清理威胁时可用。"),
+		_action(&"extract", "撤离", run_active and (room_type == &"Exit" or phase == &"confirm_extract"), "在撤离点请求或确认撤离；键盘 E 通过搜索/交互进入撤离确认。"),
+		_action(&"pause", "Esc 暂停", run_active, "打开暂停和设置入口。"),
 	]
 
 
@@ -545,7 +545,7 @@ static func _search_summary(search_data: Dictionary, search_state: String) -> St
 static func _backpack_summary(snapshot: Dictionary) -> String:
 	var inventory_items: Array = _array_from(snapshot, "inventory_items")
 	var equipped_items: Array = _array_from(snapshot, "equipped_items")
-	return "背包：%s/%s | 物品 %s | 装备 %s" % [
+	return "作业包：%s/%s | 背包物 %s | 穿戴 %s" % [
 		snapshot.get("backpack_used", 0),
 		snapshot.get("backpack_capacity", 0),
 		inventory_items.size(),
@@ -554,12 +554,12 @@ static func _backpack_summary(snapshot: Dictionary) -> String:
 
 
 static func _resource_summary(snapshot: Dictionary) -> String:
-	return "黑币 %s | 金币 %s | 零件 %s | HP %s/%s" % [
-		snapshot.get("black_coin", 0),
-		snapshot.get("gold_coin", 0),
-		snapshot.get("parts", 0),
+	return "生命 %s/%s | 作业强度 %s | 待结算黑币 %s | 安全金币 %s" % [
 		snapshot.get("hp", 0),
 		snapshot.get("max_hp", 0),
+		snapshot.get("power", 0),
+		snapshot.get("black_coin", 0),
+		snapshot.get("gold_coin", 0),
 	]
 
 
@@ -583,19 +583,21 @@ static func _monster_summary_text(monster_summary: Dictionary) -> String:
 
 static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary, room_detail: Dictionary = {}, return_eligibility: Dictionary = {}, run_flow_snapshot: Dictionary = {}, rule_effect_summary: Dictionary = {}, content_delivery_summary: Dictionary = {}) -> Array[String]:
 	var lifecycle: Dictionary = _dict_variant(run_flow_snapshot.get("RunLifecycle", {}))
-	var transition: Dictionary = _dict_variant(run_flow_snapshot.get("RoomTransition", {}))
+	var settlement_trigger: Dictionary = _dict_variant(run_flow_snapshot.get("SettlementTriggerPreview", {}))
 	return [
-		"协议：%s | 压力：%s/100" % [snapshot.get("protocol_level", 5), snapshot.get("pressure", 0)],
-		"危险：%s | 周边雷险：%s" % [_danger_label(room_type, adjacent_mines), adjacent_mines],
-		"房间状态：%s | 阶段：%s" % [String(snapshot.get("outcome", "Running")), String(snapshot.get("phase", &"running"))],
+		"协议 %s | 封锁压力 %s/100 | %s" % [snapshot.get("protocol_level", 5), snapshot.get("pressure", 0), String(lifecycle.get("state", "running"))],
+		"房间 %s | 周边雷险 %s | %s" % [_room_label(room_type), adjacent_mines, _danger_label(room_type, adjacent_mines)],
 		"%s" % _search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
-		"RunLifecycle: %s / locked=%s" % [String(lifecycle.get("state", "initialized")), str(bool(lifecycle.get("locked", false)))],
-		"RoomTransition: %s / %s" % [String(transition.get("entry_mode", "adjacent_or_return_preview")), String(transition.get("illegal_target_policy", "disabled_reason_only"))],
-		"RoomState: %s / %s" % [String(room_detail.get("known_state", "unknown")), String(room_detail.get("visibility", "unknown"))],
-		"RoomPolicy: %s" % _room_policy_compact(room_detail),
-		"EncounterPreview: %s" % _encounter_preview_compact(room_detail),
-		"fast_return: %s / %s" % [str(bool(return_eligibility.get("eligible", false))), String(return_eligibility.get("reason_code", "unknown"))],
-		"Rule/Modifier: %s | Pool: %s" % [_rule_label(rule_effect_summary), _content_pool_label(content_delivery_summary)],
+		"回传 %s / %s | 状态 %s" % [
+			"可用" if bool(return_eligibility.get("eligible", false)) else "不可用",
+			String(return_eligibility.get("reason_code", "unknown")),
+			String(room_detail.get("known_state", "unknown")),
+		],
+		"规则 %s | 池 %s | 结算 %s" % [
+			_rule_label(rule_effect_summary),
+			_content_pool_label(content_delivery_summary),
+			String(settlement_trigger.get("trigger_state", "not_ready")),
+		],
 	]
 
 
@@ -639,13 +641,14 @@ static func _scanner_detail(minimap_view_model: MiniMapViewModel, run_map_snapsh
 
 
 static func _action_hint(actions: Array[Dictionary]) -> String:
+	var keyboard_hint := "键盘：WASD/方向键移动；E搜索/交互；Space/J清理；M/Tab地图；F标记；Esc暂停。"
 	for action in actions:
 		if bool(action.get("enabled", true)):
 			continue
 		var reason := String(action.get("disabled_reason", ""))
 		if reason != "":
-			return "行动提示：%s 暂不可用：%s" % [String(action.get("label", "行动")), reason]
-	return "行动提示：高亮按钮可执行；灰显按钮保留禁用原因，仍走既有命令路径。"
+			return "%s %s 暂不可用：%s" % [keyboard_hint, String(action.get("label", "行动")), reason]
+	return keyboard_hint
 
 
 static func _scanner_summary(minimap_view_model: MiniMapViewModel, position: Vector2i) -> String:

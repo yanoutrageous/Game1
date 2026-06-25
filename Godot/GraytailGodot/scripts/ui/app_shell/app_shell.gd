@@ -35,6 +35,8 @@ func build() -> void:
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	current_snapshot = snapshot.duplicate(true)
+	if main_menu_shell != null and main_menu_shell.has_method("apply_snapshot"):
+		main_menu_shell.call("apply_snapshot", current_snapshot)
 	if deploy_page != null and deploy_page.has_method("apply_snapshot"):
 		deploy_page.call("apply_snapshot", current_snapshot)
 	if long_term_page != null and long_term_page.has_method("apply_snapshot"):
