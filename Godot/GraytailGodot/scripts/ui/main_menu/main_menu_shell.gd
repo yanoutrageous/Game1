@@ -18,6 +18,7 @@ func build(model: Dictionary = {}) -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	current_model = model.duplicate(true) if not model.is_empty() else MainMenuModelScript.build()
 	_build_backdrop()
+	_build_top_entrance_panel()
 	_build_role_panel()
 	_build_menu_panel()
 	_build_notice_panel()
@@ -40,75 +41,111 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 func _build_backdrop() -> void:
 	_add_color_rect(self, "MainMenuBackdrop", Rect2(0, 0, 1280, 720), Color(0.018, 0.035, 0.040, 1.0))
 	var visuals := _dictionary_from(current_model.get("art09_visuals", {}))
-	_add_texture_rect_from_ref(self, "Art09MainMenuBackground", Rect2(0, 0, 1280, 720), _dictionary_from(visuals.get("background", {})), 0.56)
-	_add_color_rect(self, "BaseStaticLayer", Rect2(42, 64, 708, 562), Color(0.060, 0.095, 0.105, 0.96))
-	_add_color_rect(self, "BaseAtmosphereLayer", Rect2(70, 226, 650, 266), Color(0.10, 0.19, 0.18, 0.35))
-	_add_label(self, "MainMenuTitle", Rect2(76, 66, 560, 64), String(current_model.get("title", "灰尾回收")), 44, PresentationTheme.color_for_key(&"ui.warning"))
-	_add_label(self, "MainMenuSubtitle", Rect2(80, 136, 620, 42), String(current_model.get("subtitle", "基地入口")), 18, PresentationTheme.text_color())
-	_add_label(self, "MainMenuSceneHint", Rect2(82, 522, 620, 84), String(current_model.get("scene_hint", "")), 16, PresentationTheme.color_for_key(&"ui.muted"))
+	_add_texture_rect_from_ref(self, "Art09MainMenuBackground", Rect2(0, 0, 1280, 720), _dictionary_from(visuals.get("background", {})), 0.64)
+	_add_color_rect(self, "MainMenuVignette", Rect2(0, 0, 1280, 720), Color(0.0, 0.0, 0.0, 0.24))
+	_add_panel(self, "MainMenuNarrativeFrame", Rect2(46, 66, 690, 548), &"deep")
+	_add_color_rect(self, "BaseAtmosphereLayer", Rect2(70, 210, 640, 266), Color(0.10, 0.19, 0.17, 0.28))
+	_add_color_rect(self, "BaseFloorLine", Rect2(86, 486, 598, 4), PresentationTheme.color_for_key(&"ui.warning", Color(0.94, 0.7, 0.28, 1.0)))
+	_add_label_token(self, "MainMenuTitle", Art10UISkinKitScript.rect(&"main_menu", "title"), String(current_model.get("title", "灰尾回收")), &"title", &"warning")
+	_add_label_token(self, "MainMenuSubtitle", Rect2(78, 126, 610, 42), "基地门厅 / 任务入口", &"body", &"text")
+	_add_label_token(self, "MainMenuSceneHint", Rect2(354, 202, 330, 92), "整备区灯箱已亮起。右侧选择行动入口，底部快捷键保留当前可玩探索。", &"body", &"caption")
 
 
 func _build_role_panel() -> void:
-	_add_color_rect(self, "CharacterDisplayLayer", Rect2(92, 188, 184, 324), Color(0.16, 0.22, 0.21, 0.70))
-	_add_label(self, "CharacterDisplayLabel", Rect2(112, 310, 144, 72), "角色展示\n占位", 18, PresentationTheme.text_color())
-	_add_label(self, "OutfitShortcutHint", Rect2(116, 456, 230, 44), String(current_model.get("role_hint", "")), 13, PresentationTheme.color_for_key(&"ui.muted"))
+	_add_panel(self, "CharacterDisplayLayer", Art10UISkinKitScript.rect(&"main_menu", "role"), &"card")
+	_add_color_rect(self, "CharacterSilhouette", Rect2(122, 220, 128, 248), Color(0.18, 0.27, 0.23, 0.82))
+	_add_color_rect(self, "CharacterHighlight", Rect2(152, 188, 70, 330), Color(0.62, 0.94, 0.80, 0.08))
+	_add_label_token(self, "CharacterDisplayLabel", Rect2(112, 474, 178, 36), "探索员整备", &"tab", &"text")
+	_add_label_token(self, "OutfitShortcutHint", Rect2(354, 312, 318, 82), "装备外观、背包和长期记录仍由后续系统接管；主菜单只保留入口和状态提示。", &"caption", &"muted")
+
+
+func _build_top_entrance_panel() -> void:
+	var top_panel := HBoxContainer.new()
+	top_panel.name = "MainMenuTopEntrancePanel"
+	top_panel.offset_left = 770.0
+	top_panel.offset_top = 36.0
+	top_panel.offset_right = 1198.0
+	top_panel.offset_bottom = 78.0
+	top_panel.add_theme_constant_override("separation", 8)
+	add_child(top_panel)
+	var shortcut_index := 1
+	for raw_shortcut in _array_from(current_model, "shortcuts"):
+		if not (raw_shortcut is Dictionary):
+			continue
+		var shortcut: Dictionary = (raw_shortcut as Dictionary).duplicate(true)
+		if shortcut_index > 2:
+			break
+		_add_entry_button(top_panel, shortcut, false, "F%d" % shortcut_index)
+		shortcut_index += 1
+	for raw_entry in _array_from(current_model, "entries"):
+		if not (raw_entry is Dictionary):
+			continue
+		var entry: Dictionary = (raw_entry as Dictionary).duplicate(true)
+		var entry_id := StringName(entry.get("id", &""))
+		if entry_id == &"settings" or entry_id == &"exit_game":
+			_add_entry_button(top_panel, entry, false, "")
 
 
 func _build_menu_panel() -> void:
 	var panel := VBoxContainer.new()
 	panel.name = "MainMenuFixedEntries"
-	panel.offset_left = 828.0
-	panel.offset_top = 92.0
-	panel.offset_right = 1192.0
-	panel.offset_bottom = 430.0
-	panel.add_theme_constant_override("separation", 12)
+	panel.offset_left = 770.0
+	panel.offset_top = 122.0
+	panel.offset_right = 1198.0
+	panel.offset_bottom = 500.0
+	panel.add_theme_constant_override("separation", 14)
 	add_child(panel)
-	_add_section_label(panel, "固定主入口")
 	for raw_entry in _array_from(current_model, "entries"):
 		if raw_entry is Dictionary:
 			var entry: Dictionary = (raw_entry as Dictionary).duplicate(true)
-			_add_entry_button(panel, entry)
+			_add_entry_button(panel, entry, true, "")
 
 
 func _build_notice_panel() -> void:
 	var notice_panel := VBoxContainer.new()
 	notice_panel.name = "MainMenuNoticePanel"
-	notice_panel.offset_left = 828.0
-	notice_panel.offset_top = 462.0
-	notice_panel.offset_right = 1192.0
-	notice_panel.offset_bottom = 604.0
-	notice_panel.add_theme_constant_override("separation", 6)
+	notice_panel.offset_left = 86.0
+	notice_panel.offset_top = 540.0
+	notice_panel.offset_right = 646.0
+	notice_panel.offset_bottom = 608.0
+	notice_panel.add_theme_constant_override("separation", 4)
 	add_child(notice_panel)
-	_add_section_label(notice_panel, "公告栏")
-	for notice in _array_from(current_model, "notices"):
+	_add_panel(self, "MainMenuNoticeFrame", Art10UISkinKitScript.rect(&"main_menu", "notice"), &"summary")
+	move_child(notice_panel, get_child_count() - 1)
+	_add_section_label(notice_panel, "公告")
+	for notice in _array_from(current_model, "notices").slice(0, 2):
 		var label := Label.new()
-		label.text = String(notice)
+		label.text = _shorten_copy(String(notice), 46)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.add_theme_font_size_override("font_size", 13)
-		label.add_theme_color_override("font_color", PresentationTheme.text_color())
-		Art10UISkinKitScript.apply_label(label, 13, PresentationTheme.text_color())
+		Art10UISkinKitScript.apply_label_token(label, &"caption", &"text")
 		notice_panel.add_child(label)
 
 
 func _build_meta_summary_panel() -> void:
-	_add_label(self, "MainMenuMetaSummaryHeading", Rect2(828, 608, 240, 22), "M1 验证摘要", 14, PresentationTheme.color_for_key(&"ui.muted"))
-	meta_summary_label = _add_label(self, "MainMenuMetaSummary", Rect2(828, 632, 364, 70), "", 13, PresentationTheme.text_color())
+	_add_panel(self, "MainMenuMetaFrame", Rect2(354, 414, 320, 82), &"soft")
+	_add_label_token(self, "MainMenuMetaSummaryHeading", Rect2(372, 430, 220, 22), "行动记录", &"caption", &"muted")
+	meta_summary_label = _add_label_token(self, "MainMenuMetaSummary", Rect2(372, 454, 282, 36), "", &"caption", &"text")
 	_refresh_meta_summary()
 
 
 func _build_shortcut_panel() -> void:
 	var shortcut_panel := HBoxContainer.new()
 	shortcut_panel.name = "MainMenuShortcutPanel"
-	shortcut_panel.offset_left = 76.0
-	shortcut_panel.offset_top = 620.0
-	shortcut_panel.offset_right = 744.0
-	shortcut_panel.offset_bottom = 676.0
-	shortcut_panel.add_theme_constant_override("separation", 10)
+	var key_bar_rect := Art10UISkinKitScript.rect(&"main_menu", "bottom_key_bar")
+	shortcut_panel.offset_left = key_bar_rect.position.x
+	shortcut_panel.offset_top = key_bar_rect.position.y
+	shortcut_panel.offset_right = key_bar_rect.position.x + key_bar_rect.size.x
+	shortcut_panel.offset_bottom = key_bar_rect.position.y + key_bar_rect.size.y
+	shortcut_panel.add_theme_constant_override("separation", 8)
 	add_child(shortcut_panel)
+	_add_panel(self, "MainMenuKeyBarFrame", key_bar_rect.grow(8.0), &"surface")
+	move_child(shortcut_panel, get_child_count() - 1)
+	var key_index := 1
 	for raw_shortcut in _array_from(current_model, "shortcuts"):
 		if raw_shortcut is Dictionary:
 			var shortcut: Dictionary = (raw_shortcut as Dictionary).duplicate(true)
-			_add_entry_button(shortcut_panel, shortcut)
+			_add_entry_button(shortcut_panel, shortcut, false, "F%d" % key_index)
+			key_index += 1
 
 
 func _refresh_meta_summary() -> void:
@@ -118,26 +155,25 @@ func _refresh_meta_summary() -> void:
 	var raw: Variant = current_snapshot.get("meta_progress_summary", {})
 	if raw is Dictionary:
 		summary = (raw as Dictionary).duplicate(true)
-	meta_summary_label.text = "探索 %s | 撤离 %s | 失败 %s | Debug %s\n结算可见：金币 %s | 仓库物品 %s（后续主菜单弱化）" % [
+	meta_summary_label.text = "探索 %s | 撤离 %s | 失败 %s\n金币 %s | 仓库物品 %s" % [
 		summary.get("run_count", 0),
 		summary.get("extract_count", 0),
 		summary.get("fail_count", 0),
-		"是" if bool(summary.get("debug_used", false)) else "否",
 		summary.get("gold", 0),
 		summary.get("warehouse_items_count", 0),
 	]
 	meta_summary_label.text = Art10UISkinKitScript.sanitize_player_copy(meta_summary_label.text)
 
 
-func _add_entry_button(parent: Control, entry: Dictionary) -> Button:
-	var button := Button.new()
-	button.text = String(entry.get("label", "入口"))
+func _add_entry_button(parent: Control, entry: Dictionary, large: bool = false, key_label: String = "") -> Button:
+	var raw_label := String(entry.get("label", "入口")).replace("快捷：", "")
+	var button := Art10UISkinKitScript.make_large_nav_button(raw_label, _shorten_copy(String(entry.get("description", "")), 28)) if large else Art10UISkinKitScript.make_bottom_key_button(raw_label, key_label)
 	button.tooltip_text = String(entry.get("description", ""))
 	button.text = Art10UISkinKitScript.sanitize_player_copy(button.text)
 	button.tooltip_text = Art10UISkinKitScript.sanitize_player_copy(button.tooltip_text)
-	button.custom_minimum_size = Vector2(244, 48)
+	button.custom_minimum_size = Vector2(410, 78) if large else Vector2(118, 36)
 	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})))
-	Art10UISkinKitScript.apply_button(button, &"primary" if bool(entry.get("primary", false)) else &"secondary", 15)
+	Art10UISkinKitScript.apply_button_token(button, &"primary" if large or bool(entry.get("primary", false)) else &"secondary", &"main_button" if large else &"key_prompt", &"large_nav" if large else &"key")
 	button.pressed.connect(func() -> void: _emit_entry(entry))
 	parent.add_child(button)
 	return button
@@ -161,9 +197,7 @@ func _emit_entry(entry: Dictionary) -> void:
 func _add_section_label(parent: Control, text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-	label.add_theme_font_size_override("font_size", 14)
-	Art10UISkinKitScript.apply_label(label, 14, PresentationTheme.color_for_key(&"ui.muted"))
+	Art10UISkinKitScript.apply_label_token(label, &"caption", &"muted")
 	parent.add_child(label)
 	return label
 
@@ -177,11 +211,20 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.offset_right = rect.position.x + rect.size.x
 	label.offset_bottom = rect.position.y + rect.size.y
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", font_size)
 	Art10UISkinKitScript.apply_label(label, font_size, color)
 	parent.add_child(label)
 	return label
+
+
+func _add_label_token(parent: Control, node_name: String, rect: Rect2, text: String, token: StringName, color_token: StringName) -> Label:
+	var label := _add_label(parent, node_name, rect, text, Art10UISkinKitScript.font_size(token), Art10UISkinKitScript.color(color_token, PresentationTheme.text_color()))
+	return label
+
+
+func _add_panel(parent: Control, node_name: String, rect: Rect2, tone: StringName) -> PanelContainer:
+	var panel := Art10UISkinKitScript.make_frame_panel(node_name, rect, tone)
+	parent.add_child(panel)
+	return panel
 
 
 func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Color) -> ColorRect:
@@ -221,7 +264,14 @@ func _apply_art09_button_icon(button: Button, asset_ref: Dictionary) -> void:
 	if texture == null:
 		return
 	button.icon = texture
-	button.expand_icon = true
+	Art10UISkinKitScript.controlled_button_icon(button, &"large_nav")
+
+
+func _shorten_copy(text: String, max_chars: int) -> String:
+	var safe := Art10UISkinKitScript.sanitize_player_copy(text)
+	if safe.length() <= max_chars:
+		return safe
+	return "%s..." % safe.substr(0, max_chars)
 
 
 func _array_from(source: Dictionary, key: String) -> Array:

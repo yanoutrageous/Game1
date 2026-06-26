@@ -61,52 +61,54 @@ func build() -> void:
 	name = "RunSurface"
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	z_index = 5
 
-	left_backdrop = _add_panel("LegacyScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
-	center_backdrop = _add_panel("LegacyRoomMainPanel", Color(0.025, 0.045, 0.05, 0.78), PresentationTheme.color_for_key(&"mini.normal"))
-	encounter_backdrop = _add_panel("LegacyEncounterSlot", Color(0.018, 0.034, 0.038, 0.88), PresentationTheme.color_for_key(&"ui.warning"))
-	right_backdrop = _add_panel("LegacyProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
-	bottom_backdrop = _add_panel("LegacyActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
-	resource_backdrop = _add_panel("LegacyResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
+	left_backdrop = _add_panel("RunScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
+	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.025, 0.045, 0.05, 0.78), PresentationTheme.color_for_key(&"mini.normal"))
+	encounter_backdrop = _add_panel("RunEncounterSlot", Color(0.018, 0.034, 0.038, 0.88), PresentationTheme.color_for_key(&"ui.warning"))
+	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
+	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
+	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
 
-	scanner_title_label = _add_label("LegacyScannerTitle", "区域扫描器", 18, PresentationTheme.color_for_key(&"ui.accent"))
-	scanner_summary_label = _add_label("LegacyScannerSummary", "扫描器：等待数据", 13, PresentationTheme.text_color())
-	scanner_legend_label = _add_label("LegacyScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	scanner_title_label = _add_label("RunScannerTitle", "区域扫描器", 18, PresentationTheme.color_for_key(&"ui.accent"))
+	scanner_summary_label = _add_label("RunScannerSummary", "扫描器：等待数据", 13, PresentationTheme.text_color())
+	scanner_legend_label = _add_label("RunScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
-	scanner_detail_label = _add_label("LegacyScannerDetail", "图例：只显示已公开扫描信息。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	scanner_detail_label = _add_label("RunScannerDetail", "图例：只显示已公开扫描信息。", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 	minimap_panel = MiniMapScene.instantiate() as MiniMapPanel
-	minimap_panel.name = "LegacyScannerMiniMap"
+	minimap_panel.name = "RunScannerMiniMap"
 	minimap_panel.open_map_requested.connect(func() -> void: map_requested.emit(&"surface_minimap"))
 	add_child(minimap_panel)
 
-	room_title_label = _add_label("LegacyRoomTitle", "当前房间", 24, PresentationTheme.color_for_key(&"ui.accent"))
-	room_body_label = _add_label("LegacyRoomBody", "等待 run snapshot。", 15, PresentationTheme.text_color())
-	objective_label = _add_label("LegacyObjectiveLine", "目标：等待输入。", 15, PresentationTheme.color_for_key(&"ui.warning"))
+	room_title_label = _add_label("RunRoomTitle", "当前房间", 22, PresentationTheme.color_for_key(&"ui.accent"))
+	room_body_label = _add_label("RunRoomBody", "等待探索快照。", 13, PresentationTheme.text_color())
+	objective_label = _add_label("RunObjectiveLine", "目标：等待输入。", 13, PresentationTheme.color_for_key(&"ui.warning"))
 
-	encounter_title_label = _add_label("LegacyEncounterTitle", "遭遇槽", 18, PresentationTheme.color_for_key(&"ui.warning"))
-	encounter_body_label = _add_label("LegacyEncounterBody", "等待遭遇公开信息。", 13, PresentationTheme.text_color())
-	encounter_result_label = _add_label("LegacyEncounterResult", "最近结果：暂无遭遇结果。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	encounter_title_label = _add_label("RunEncounterTitle", "遭遇提示", 18, PresentationTheme.color_for_key(&"ui.warning"))
+	encounter_body_label = _add_label("RunEncounterBody", "等待遭遇公开信息。", 13, PresentationTheme.text_color())
+	encounter_result_label = _add_label("RunEncounterResult", "最近结果：暂无遭遇结果。", 12, PresentationTheme.color_for_key(&"ui.muted"))
 	encounter_options_box = VBoxContainer.new()
-	encounter_options_box.name = "LegacyEncounterOptions"
+	encounter_options_box.name = "RunEncounterOptions"
 	encounter_options_box.add_theme_constant_override("separation", 6)
 	encounter_options_box.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(encounter_options_box)
 
-	resource_label = _add_label("LegacyResourceSummary", "资源：等待数据", 13, PresentationTheme.text_color())
+	resource_label = _add_label("RunResourceSummary", "资源：等待数据", 13, PresentationTheme.text_color())
 
-	right_title_label = _add_label("LegacyProtocolTitle", "协议 / 危险 / 状态", 18, PresentationTheme.color_for_key(&"ui.warning"))
-	right_body_label = _add_label("LegacyProtocolBody", "协议：--\n压力：--\n危险：--", 14, PresentationTheme.text_color())
-	event_label = _add_label("LegacyEventStatus", "事件：无待处理事件。", 13, PresentationTheme.text_color())
-	reward_label = _add_label("LegacyRewardSummary", "奖励：等待记录。", 12, PresentationTheme.color_for_key(&"ui.muted"))
-	command_feedback_label = _add_label("LegacyCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
-	layout_label = _add_label("LegacyLayoutProfileStatus", "Layout: desktop", 11, PresentationTheme.color_for_key(&"ui.muted"))
+	right_title_label = _add_label("RunProtocolTitle", "协议 / 危险 / 状态", 18, PresentationTheme.color_for_key(&"ui.warning"))
+	right_body_label = _add_label("RunProtocolBody", "协议：--\n压力：--\n危险：--", 13, PresentationTheme.text_color())
+	event_label = _add_label("RunEventStatus", "事件：无待处理事件。", 13, PresentationTheme.text_color())
+	reward_label = _add_label("RunRewardSummary", "奖励：等待记录。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	command_feedback_label = _add_label("RunCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
+	layout_label = _add_label("RunLayoutProfileStatus", "", 11, PresentationTheme.color_for_key(&"ui.muted"))
+	layout_label.visible = false
 
-	action_hint_label = _add_label("LegacyActionHint", "行动提示：可用按钮高亮，灰显按钮保留原因提示。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	action_hint_label = _add_label("RunActionHint", "行动提示：可用按钮高亮，灰显按钮保留原因提示。", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 	action_bar = HBoxContainer.new()
-	action_bar.name = "LegacyBottomActionButtons"
-	action_bar.add_theme_constant_override("separation", 6)
+	action_bar.name = "RunBottomActionButtons"
+	action_bar.add_theme_constant_override("separation", 5)
 	add_child(action_bar)
 	_add_action_button(&"interact", "搜索 / 交互", func() -> void: interact_requested.emit())
 	_add_action_button(&"inventory", "背包", func() -> void: inventory_requested.emit())
@@ -117,13 +119,13 @@ func build() -> void:
 	_add_action_button(&"pause", "暂停", func() -> void: pause_requested.emit())
 
 	hud = HUDScene.instantiate() as Hud
-	hud.name = "LegacySurfaceHUD"
+	hud.name = "RunSurfaceHUD"
 	hud.visible = false
 	add_child(hud)
 
-	feedback_slot = _add_slot("LegacyFeedbackSlot")
-	overlay_slot = _add_slot("LegacyOverlaySlot")
-	modal_slot = _add_slot("LegacyModalSlot")
+	feedback_slot = _add_slot("RunFeedbackSlot")
+	overlay_slot = _add_slot("RunOverlaySlot")
+	modal_slot = _add_slot("RunModalSlot")
 
 
 func apply_surface_model(model: Dictionary) -> void:
@@ -133,7 +135,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	scanner_detail_label.text = String(model.get("scanner_detail", "图例：只显示已公开扫描信息。"))
 	scanner_summary_label.text = String(model.get("scanner_summary", "扫描器：等待公开地图数据。"))
 	room_title_label.text = "%s | %s" % [String(model.get("room_title", "当前房间")), String(model.get("room_coordinate", "(0,0)"))]
-	room_body_label.text = String(model.get("room_summary", "等待 run snapshot。"))
+	room_body_label.text = String(model.get("room_summary", "等待探索快照。"))
 	objective_label.text = "目标：%s" % String(model.get("current_objective", "继续探索。"))
 	resource_label.text = "%s\n%s" % [String(model.get("resource_summary", "")), String(model.get("backpack_summary", ""))]
 	var danger_key := StringName(model.get("danger_theme_key", &"ui.warning"))
@@ -164,10 +166,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	action_hint_label.text = String(model.get("action_hint", "行动提示：可用按钮高亮，灰显按钮保留原因提示。"))
 
 	var profile: Dictionary = model.get("layout_profile", {})
-	layout_label.text = "Layout: %s / %s" % [
-		String(profile.get("profile_id", "desktop")),
-		String(profile.get("resolution_id", "unknown")),
-	]
+	layout_label.text = ""
 	_apply_actions(model.get("action_buttons", []))
 	_apply_encounter_section(model.get("encounter_section", {}))
 	_apply_art10_text_refresh()
@@ -188,8 +187,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var margin: float = 16.0 if is_low else 20.0
 	var left_width: float = 352.0 if is_low else (420.0 if is_high else 380.0)
 	var right_width: float = 268.0 if is_low else (330.0 if is_high else 296.0)
-	var bottom_height: float = 62.0 if is_low else 70.0
-	var pocket_height: float = 118.0 if is_low else 128.0
+	var bottom_height: float = 54.0 if is_low else 58.0
+	var pocket_height: float = 108.0 if is_low else 116.0
 	var center_left: float = left_width + margin
 	var center_right: float = width - right_width - margin
 	var center_width: float = max(360.0, center_right - center_left)
@@ -204,7 +203,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(right_left, 0, right_width, height))
-	_set_rect(center_backdrop, Rect2(center_left, margin, center_width, 132.0 if is_low else 150.0))
+	_set_rect(center_backdrop, Rect2(center_left, margin, center_width, 98.0 if is_low else 112.0))
 	_set_rect(encounter_backdrop, Rect2(right_left, encounter_top - 8.0, right_width, encounter_height + 16.0))
 	_set_rect(bottom_backdrop, Rect2(center_left, height - bottom_height - margin, center_width, bottom_height))
 	_set_rect(resource_backdrop, Rect2(margin, height - pocket_height - margin, left_width - margin * 2.0, pocket_height))
@@ -215,9 +214,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(scanner_legend_label, Rect2(margin, scanner_legend_top, left_width - margin * 2.0, 62))
 	_set_rect(scanner_detail_label, Rect2(margin, scanner_legend_top + 66.0, left_width - margin * 2.0, 86))
 
-	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 12.0, center_width - 36.0, 34))
-	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 52.0, center_width - 36.0, 62))
-	_set_rect(objective_label, Rect2(center_left + 18.0, margin + 112.0, center_width - 36.0, 30))
+	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 10.0, center_width - 36.0, 30))
+	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 42.0, center_width - 36.0, 38))
+	_set_rect(objective_label, Rect2(center_left + 18.0, margin + 78.0, center_width - 36.0, 24))
 	_set_rect(encounter_title_label, Rect2(right_content_left, encounter_top + 6.0, right_content_width, 24))
 	_set_rect(encounter_body_label, Rect2(right_content_left, encounter_top + 34.0, right_content_width, 64.0 if is_low else 72.0))
 	_set_rect(encounter_options_box, Rect2(right_content_left, encounter_top + (104.0 if is_low else 114.0), right_content_width, max(42.0, encounter_height - (158.0 if is_low else 176.0))))
@@ -230,9 +229,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(reward_label, Rect2(right_content_left, margin + 212.0, right_content_width, 86))
 	_set_rect(command_feedback_label, Rect2(right_content_left, height - 122.0, right_content_width, 66))
 	_set_rect(layout_label, Rect2(right_content_left, height - 46.0, right_content_width, 24))
+	layout_label.visible = false
 
-	_set_rect(action_hint_label, Rect2(center_left + 18.0, height - bottom_height - margin - 30.0, center_width - 36.0, 24))
-	_set_rect(action_bar, Rect2(center_left + 14.0, height - bottom_height - margin + 13.0, center_width - 28.0, bottom_height - 22.0))
+	_set_rect(action_hint_label, Rect2(center_left + 18.0, height - bottom_height - margin - 26.0, center_width - 36.0, 22))
+	_set_rect(action_bar, Rect2(center_left + 12.0, height - bottom_height - margin + 10.0, center_width - 24.0, bottom_height - 18.0))
 	_set_rect(feedback_slot, Rect2(0, 0, width, height))
 	_set_rect(overlay_slot, Rect2(0, 0, width, height))
 	_set_rect(modal_slot, Rect2(0, 0, width, height))
@@ -322,9 +322,9 @@ func _add_label(node_name: String, text: String, font_size: int, color: Color) -
 
 func _add_action_button(action_id: StringName, label: String, callback: Callable) -> void:
 	var button := Button.new()
-	button.name = "LegacyAction_%s" % String(action_id)
+	button.name = "RunAction_%s" % String(action_id)
 	button.text = label
-	button.custom_minimum_size = Vector2(96, 34)
+	button.custom_minimum_size = Vector2(76, 30)
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
 	button.add_theme_font_size_override("font_size", 13)
@@ -355,7 +355,7 @@ func _apply_key_prompt_icon(button: Button, action_id: StringName) -> void:
 	if texture == null:
 		return
 	button.icon = texture
-	button.expand_icon = true
+	Art10UISkinKitScript.controlled_button_icon(button, &"key")
 
 
 func _add_slot(node_name: String) -> Control:
@@ -404,7 +404,7 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 		var disabled := bool(option.get("disabled", false))
 		var requires_confirm := bool(option.get("requires_confirm", false))
 		var title := String(option.get("title", String(option_id)))
-		button.name = "LegacyEncounterOption_%s" % String(option_id)
+		button.name = "RunEncounterOption_%s" % String(option_id)
 		button.text = "%s%s" % [title, "  [需确认]" if requires_confirm else ""]
 		button.custom_minimum_size = Vector2(240, 32)
 		button.focus_mode = Control.FOCUS_NONE
@@ -419,7 +419,7 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 		encounter_option_buttons.append(button)
 	if encounter_option_buttons.is_empty():
 		var placeholder := Label.new()
-		placeholder.name = "LegacyEncounterOptionPlaceholder"
+		placeholder.name = "RunEncounterOptionPlaceholder"
 		placeholder.text = "暂无可执行遭遇选项。"
 		placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		placeholder.add_theme_font_size_override("font_size", 12)

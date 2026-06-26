@@ -18,6 +18,7 @@ var snapshot_label: Label
 var interface_preview_label: Label
 var history_preview_label: Label
 var next_stage_label: Label
+var card_grid_container: GridContainer
 
 
 func build(model: Dictionary = {}) -> void:
@@ -47,39 +48,59 @@ func get_selected_module_id() -> StringName:
 
 
 func _build_static_layout() -> void:
-	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.018, 0.032, 0.038, 1.0))
-	_add_color_rect(self, "LongTermProfileColumn", Art10UISkinKitScript.rect(&"long_term", "profile_column"), Color(0.032, 0.054, 0.060, 0.94))
-	_add_color_rect(self, "LongTermCardGridColumn", Art10UISkinKitScript.rect(&"long_term", "card_grid"), Color(0.022, 0.044, 0.050, 0.90))
-	_add_color_rect(self, "LongTermDetailColumn", Art10UISkinKitScript.rect(&"long_term", "detail_column"), Color(0.040, 0.052, 0.056, 0.94))
-	_add_label(self, "LongTermTitle", Rect2(64, 42, 520, 42), "长期系统", 31, PresentationTheme.color_for_key(&"ui.accent"))
-	_add_label(self, "LongTermSubtitle", Rect2(66, 84, 760, 42), "G24 foundation：六模块内容框架、preview cards、slot 与美术 key 预留。", 15, PresentationTheme.color_for_key(&"ui.muted"))
-	overview_label = _add_label(self, "LongTermOverview", Rect2(64, 132, 1120, 72), "", 15, PresentationTheme.text_color())
+	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.016, 0.030, 0.036, 1.0))
+	_add_panel(self, "LongTermProfileColumn", Art10UISkinKitScript.rect(&"long_term", "profile_column"), &"deep")
+	_add_panel(self, "LongTermCardGridColumn", Art10UISkinKitScript.rect(&"long_term", "card_grid"), &"surface")
+	_add_panel(self, "LongTermDetailColumn", Art10UISkinKitScript.rect(&"long_term", "detail_column"), &"summary")
+	_add_label_token(self, "LongTermTitle", Rect2(44, 32, 360, 48), "长期系统", &"page_title", &"accent")
+	_add_label_token(self, "LongTermSubtitle", Rect2(44, 80, 700, 28), "档案、图鉴、研究、收藏的产品化外壳；玩法内容仍后置。", &"caption", &"muted")
+	_add_button(self, "LongTermBackButton", Rect2(1084, 36, 154, 38), "返回主菜单", Callable(self, "_request_back_to_main"))
 	_build_tab_buttons()
-	module_title_label = _add_label(self, "LongTermModuleTitle", Rect2(64, 268, 400, 34), "", 24, PresentationTheme.color_for_key(&"ui.warning"))
-	module_state_label = _add_label(self, "LongTermModuleState", Rect2(470, 272, 260, 28), "", 16, PresentationTheme.color_for_key(&"ui.muted"))
-	module_body_label = _add_label(self, "LongTermModuleBody", Rect2(64, 316, 500, 112), "", 15, PresentationTheme.text_color())
-	module_reason_label = _add_label(self, "LongTermModuleReason", Rect2(64, 432, 500, 62), "", 14, PresentationTheme.color_for_key(&"ui.warning"))
-	child_preview_label = _add_label(self, "LongTermChildPreview", Rect2(610, 268, 290, 294), "", 14, PresentationTheme.text_color())
-	snapshot_label = _add_label(self, "LongTermSnapshotPreview", Rect2(930, 146, 270, 220), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
-	interface_preview_label = _add_label(self, "LongTermInterfacePreview", Rect2(930, 384, 270, 162), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
-	history_preview_label = _add_label(self, "LongTermHistoryPreview", Rect2(930, 552, 270, 58), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
-	next_stage_label = _add_label(self, "LongTermNextStage", Rect2(64, 616, 1136, 34), "", 13, PresentationTheme.color_for_key(&"ui.muted"))
-	_add_button(self, "LongTermBackButton", Rect2(64, 656, 170, 40), "返回主菜单", Callable(self, "_request_back_to_main"))
+
+	_add_label_token(self, "LongTermProfileHeading", Rect2(66, 178, 220, 24), "角色档案", &"tab", &"accent")
+	overview_label = _add_label_token(self, "LongTermOverview", Rect2(66, 212, 214, 96), "", &"caption", &"text")
+	child_preview_label = _add_label_token(self, "LongTermChildPreview", Rect2(66, 324, 214, 164), "", &"caption", &"text")
+	history_preview_label = _add_label_token(self, "LongTermHistoryPreview", Rect2(66, 504, 214, 84), "", &"caption", &"muted")
+
+	_add_label_token(self, "LongTermGridHeading", Rect2(348, 176, 320, 28), "内容卡片", &"tab", &"warning")
+	card_grid_container = GridContainer.new()
+	card_grid_container.name = "LongTermCardGrid"
+	card_grid_container.columns = 3
+	card_grid_container.add_theme_constant_override("h_separation", 10)
+	card_grid_container.add_theme_constant_override("v_separation", 10)
+	_set_rect(card_grid_container, Rect2(348, 216, 516, 370))
+	add_child(card_grid_container)
+	next_stage_label = _add_label_token(self, "LongTermNextStage", Rect2(348, 596, 516, 34), "", &"caption", &"muted")
+
+	module_title_label = _add_label_token(self, "LongTermModuleTitle", Rect2(940, 178, 250, 32), "", &"tab", &"warning")
+	module_state_label = _add_label_token(self, "LongTermModuleState", Rect2(940, 214, 250, 22), "", &"caption", &"muted")
+	module_body_label = _add_label_token(self, "LongTermModuleBody", Rect2(940, 246, 250, 112), "", &"caption", &"text")
+	module_reason_label = _add_label_token(self, "LongTermModuleReason", Rect2(940, 366, 250, 54), "", &"caption", &"warning")
+	snapshot_label = _add_label_token(self, "LongTermSnapshotPreview", Rect2(940, 434, 250, 72), "", &"caption", &"text")
+	interface_preview_label = _add_label_token(self, "LongTermInterfacePreview", Rect2(940, 518, 250, 80), "", &"caption", &"muted")
 
 
 func _build_tab_buttons() -> void:
 	tab_buttons.clear()
+	var tab_row := HBoxContainer.new()
+	tab_row.name = "LongTermTopTabRow"
+	_set_rect(tab_row, Art10UISkinKitScript.rect(&"long_term", "tab_row"))
+	tab_row.add_theme_constant_override("separation", 8)
+	add_child(tab_row)
 	var modules: Array = current_model.get("modules", [])
-	var index := 0
 	for module: Dictionary in modules:
 		var module_id := StringName(module.get("id", &""))
 		var title := String(module.get("title", ""))
-		var state := String(module.get("state", "preview"))
-		var button := _add_button(self, "LongTermTab_%s" % String(module_id), Rect2(64 + index * 184, 214, 170, 42), "%s\n%s" % [title, state], Callable(self, "_on_module_tab_pressed").bind(module_id))
+		var button := Button.new()
+		button.name = "LongTermTab_%s" % String(module_id)
+		button.text = title
+		button.tooltip_text = String(module.get("reason", ""))
 		button.toggle_mode = true
-		Art10UISkinKitScript.apply_button(button, &"secondary", 13)
+		button.custom_minimum_size = Vector2(110, 40)
+		button.pressed.connect(Callable(self, "_on_module_tab_pressed").bind(module_id))
+		Art10UISkinKitScript.apply_button_token(button, &"secondary", &"tab", &"tab")
+		tab_row.add_child(button)
 		tab_buttons[module_id] = button
-		index += 1
 
 
 func _on_module_tab_pressed(module_id: StringName) -> void:
@@ -96,51 +117,69 @@ func _refresh_from_model() -> void:
 		return
 	selected_module_id = StringName(current_model.get("selected_module_id", selected_module_id))
 	var overview: Dictionary = current_model.get("overview_summary", {})
-	overview_label.text = "%s\n%s\n模块：%s" % [
+	overview_label.text = "%s\n%s" % [
 		String(overview.get("title", "长期系统内容框架")),
 		String(overview.get("message", "")),
-		", ".join(overview.get("modules", []) as Array),
 	]
 	var panel: Dictionary = current_model.get("placeholder_panel", {})
 	var content_preview: Dictionary = current_model.get("current_content_preview", panel.get("content_preview", {}))
 	module_title_label.text = String(panel.get("title", ""))
-	module_state_label.text = "状态：%s" % String(panel.get("state", "preview"))
-	module_body_label.text = "%s\n\n摘要：\n%s\n\n内容框架：%s" % [
-		String(panel.get("description", "")),
-		_format_summary_dictionary(panel.get("summary", {})),
+	module_state_label.text = "状态：%s" % Art10UISkinKitScript.status_label(panel.get("state", "preview"))
+	module_body_label.text = "%s\n%s" % [
+		_shorten_copy(String(panel.get("description", "")), 34),
 		_format_detail_preview(content_preview.get("detail_preview", {})),
 	]
-	module_reason_label.text = "边界：%s" % String(panel.get("reason", ""))
-	child_preview_label.text = "内部 preview\n\n%s\n\nG24 二级分组\n%s\n\nPreview cards\n%s" % [
+	module_reason_label.text = "边界：%s" % _shorten_copy(String(panel.get("reason", "")), 44)
+	child_preview_label.text = "记录摘要\n- 模块：%s\n- 状态：%s\n- 内容：%s\n\n分组\n%s" % [
+		_shorten_copy(String(panel.get("title", "")), 12),
+		Art10UISkinKitScript.status_label(panel.get("state", "preview")),
+		_shorten_copy(String(panel.get("description", "")), 14),
 		_format_child_groups(panel.get("child_preview_groups", []) as Array),
-		_format_secondary_groups(content_preview.get("secondary_groups", []) as Array),
-		_format_cards(content_preview.get("cards", []) as Array),
 	]
 	var snapshot: Dictionary = current_model.get("snapshot_preview", {})
-	snapshot_label.text = "只读快照预览\n\n%s\n%s\n%s" % [
+	snapshot_label.text = "%s\n%s" % [
 		_format_snapshot_section(snapshot.get("profile_snapshot", {})),
 		_format_snapshot_section(snapshot.get("unlock_snapshot", {})),
-		_format_snapshot_section(snapshot.get("history_snapshot", {})),
 	]
-	interface_preview_label.text = "接口 / slot preview\n\n%s\n%s\n%s\n%s\n%s" % [
-		_format_preview_line(snapshot, "asset_projection_preview"),
-		_format_preview_line(snapshot, "event_flow_preview"),
-		_format_preview_line(snapshot, "reward_preview"),
-		_format_preview_line(snapshot, "red_dot_preview"),
-		_format_slots(content_preview.get("event_slots_preview", []) as Array),
-	]
-	interface_preview_label.text += "\n%s" % _format_g30_interface_preview(current_model, content_preview)
+	interface_preview_label.text = "接口位：奖励、事件、红点、跳转\n美术槽：模块图标 / 横幅 / 卡片"
 	var history_preview: Dictionary = current_model.get("history_preview_panel", {})
 	history_preview_label.text = _format_history_preview(history_preview)
-	next_stage_label.text = "链接 preview：%s / %s / %s\nG24 cross-link：%s\nart slot：%s" % [
-		_format_preview_line(snapshot, "inventory_link_preview"),
-		_format_preview_line(snapshot, "codex_link_preview"),
-		_format_preview_line(snapshot, "history_link_preview"),
-		_format_cross_links(content_preview.get("cross_links_preview", []) as Array),
-		_format_art_slots(content_preview.get("art_slots_preview", []) as Array),
-	]
+	next_stage_label.text = "跳转接口：仓库 / 图鉴 / 历史战绩入口待接入；本页不打开对应系统。"
+	_refresh_card_grid(content_preview.get("cards", []) as Array)
 	_apply_art10_text_refresh()
 	_refresh_tab_buttons()
+
+
+func _refresh_card_grid(cards: Array) -> void:
+	if card_grid_container == null:
+		return
+	for child in card_grid_container.get_children():
+		card_grid_container.remove_child(child)
+		child.queue_free()
+	var visible_cards := cards.slice(0, 9)
+	if visible_cards.is_empty():
+		var placeholder := Label.new()
+		placeholder.text = "当前模块尚无可展示卡片。"
+		placeholder.custom_minimum_size = Vector2(500, 60)
+		Art10UISkinKitScript.apply_label_token(placeholder, &"body", &"muted")
+		card_grid_container.add_child(placeholder)
+		return
+	var index := 0
+	for card: Dictionary in visible_cards:
+		var button := Button.new()
+		button.name = "LongTermCard_%s" % str(card.get("id", index))
+		button.text = "%s\n%s\n%s" % [
+			String(card.get("title", "")),
+			String(card.get("group_title", "")),
+			"槽位预留",
+		]
+		button.tooltip_text = String(card.get("description", ""))
+		button.custom_minimum_size = Vector2(160, 104)
+		button.toggle_mode = true
+		button.button_pressed = index == 0
+		Art10UISkinKitScript.apply_button_token(button, &"primary" if index == 0 else &"secondary", &"caption", &"slot")
+		card_grid_container.add_child(button)
+		index += 1
 
 
 func _refresh_tab_buttons() -> void:
@@ -148,118 +187,90 @@ func _refresh_tab_buttons() -> void:
 		var button := tab_buttons[module_id] as Button
 		if button != null:
 			button.button_pressed = StringName(module_id) == selected_module_id
-			Art10UISkinKitScript.apply_button(button, &"primary" if button.button_pressed else &"secondary", 13)
+			Art10UISkinKitScript.apply_button_token(button, &"primary" if button.button_pressed else &"secondary", &"tab", &"tab")
 
 
 func _format_child_groups(groups: Array) -> String:
 	var lines := []
-	var visible_groups := groups.slice(0, 4)
+	var visible_groups := groups.slice(0, 2)
 	for group: Dictionary in visible_groups:
-		lines.append("[%s]" % String(group.get("title", "")))
-		var items: Array = group.get("items", [])
-		for item in items.slice(0, 2):
-			lines.append("- %s" % String(item))
-		if items.size() > 2:
-			lines.append("- 还有 %d 项 preview" % (items.size() - 2))
+		lines.append("- %s" % _shorten_copy(String(group.get("title", "")), 14))
 	if groups.size() > visible_groups.size():
-		lines.append("还有 %d 个二级分组已收起" % (groups.size() - visible_groups.size()))
-	return "\n".join(lines)
-
-
-func _format_secondary_groups(groups: Array) -> String:
-	var lines := []
-	for group: Dictionary in groups:
-		lines.append("[%s] %s" % [String(group.get("title", "")), String(group.get("group_icon_key", ""))])
-		var items: Array = group.get("items", [])
-		for item: Dictionary in items.slice(0, 2):
-			lines.append("- %s" % String(item.get("title", "")))
-	return "\n".join(lines) if not lines.is_empty() else "secondary_groups: display_only / read_only / preview"
-
-
-func _format_cards(cards: Array) -> String:
-	var lines := []
-	for card: Dictionary in cards.slice(0, 4):
-		lines.append("- %s (%s)" % [String(card.get("title", "")), String(card.get("preview_slot", ""))])
-	return "\n".join(lines) if not lines.is_empty() else "cards: display_only / read_only / preview"
+		lines.append("- 还有 %d 个分组已收起" % (groups.size() - visible_groups.size()))
+	return Art10UISkinKitScript.sanitize_player_copy("\n".join(lines))
 
 
 func _format_detail_preview(detail: Variant) -> String:
 	var preview: Dictionary = detail if detail is Dictionary else {}
-	return "%s / %s" % [
-		String(preview.get("title", "detail_preview")),
-		String(preview.get("message", "display_only / read_only / preview")),
-	]
+	return Art10UISkinKitScript.sanitize_player_copy("%s\n%s" % [
+		_shorten_copy(String(preview.get("title", "详情")), 18),
+		_shorten_copy(String(preview.get("message", "展示信息")), 28),
+	])
 
 
 func _format_slots(slots: Array) -> String:
 	var lines := []
-	for slot: Dictionary in slots.slice(0, 5):
-		lines.append("- %s: %s" % [String(slot.get("slot_id", "")), String(slot.get("display_name", ""))])
-	return "\n".join(lines) if not lines.is_empty() else "event_slots_preview: display_only / read_only"
-
-
-func _format_cross_links(links: Array) -> String:
-	var labels := []
-	for link: Dictionary in links:
-		labels.append(String(link.get("target", "")))
-	return ", ".join(labels) if not labels.is_empty() else "display_only"
+	for slot: Dictionary in slots.slice(0, 2):
+		lines.append("- %s" % _shorten_copy(String(slot.get("display_name", "")), 14))
+	return Art10UISkinKitScript.sanitize_player_copy("\n".join(lines)) if not lines.is_empty() else "事件槽：待接入"
 
 
 func _format_art_slots(slots: Array) -> String:
 	var labels := []
 	for slot: Dictionary in slots:
 		labels.append(String(slot.get("art_key", "")))
-	return ", ".join(labels.slice(0, 3)) if not labels.is_empty() else "art_placeholder_id"
+	return "美术槽：模块图标 / 横幅"
+
+
+func _format_cross_links(links: Array) -> String:
+	var labels := []
+	for link: Dictionary in links:
+		labels.append(String(link.get("target", "")))
+	return ", ".join(labels) if not labels.is_empty() else "待接入"
 
 
 func _format_g30_interface_preview(model: Dictionary, content_preview: Dictionary) -> String:
-	var lines := ["G30 asset interface"]
-	lines.append("RewardBundle: %s" % _safe_display_text((model.get("reward_bundle_preview", {}) as Dictionary).get("schema_kind", "RewardBundle")))
-	lines.append("red_dot_policy: %s" % _safe_display_text((model.get("red_dot_policy", {}) as Dictionary).get("policy_id", "red_dot")))
-	lines.append("jump_target: %s" % _format_jump_targets(model.get("jump_targets", []) as Array))
-	lines.append("asset_refs: %s" % _safe_display_text((model.get("asset_interface_preview", {}) as Dictionary).get("asset_refs", [])))
-	lines.append("events: %s" % _safe_display_text((content_preview.get("event_flow_preview", {}) as Dictionary).get("summary", "ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent / ObjectiveEvent")))
-	lines.append("preview_only / display_only / read_only / no_persistence")
-	return "\n".join(lines)
+	return Art10UISkinKitScript.sanitize_player_copy("RewardBundle %s / events %s" % [
+		_safe_display_text((model.get("reward_bundle_preview", {}) as Dictionary).get("schema_kind", "RewardBundle")),
+		_safe_display_text((content_preview.get("event_flow_preview", {}) as Dictionary).get("summary", "事件接口")),
+	])
 
 
 func _format_jump_targets(targets: Array) -> String:
 	var labels := []
 	for target: Dictionary in targets.slice(0, 4):
 		labels.append("%s" % _safe_display_text(target.get("target_id", "")))
-	return ", ".join(labels) if not labels.is_empty() else "jump_target preview"
+	return ", ".join(labels) if not labels.is_empty() else "跳转待接入"
 
 
 func _format_snapshot_section(raw_section: Variant) -> String:
 	var section: Dictionary = raw_section if raw_section is Dictionary else {}
 	var lines: Array = section.get("lines", [])
-	return "%s：%s" % [String(section.get("title", "")), " / ".join(lines)]
+	return Art10UISkinKitScript.sanitize_player_copy("%s：%s" % [_shorten_copy(String(section.get("title", "")), 16), _shorten_copy(" / ".join(lines.slice(0, 2)), 24)])
 
 
 func _format_preview_line(snapshot: Dictionary, key: String) -> String:
 	var section: Dictionary = snapshot.get(key, {})
-	return "%s：%s" % [String(section.get("title", key)), String(section.get("message", ""))]
+	return Art10UISkinKitScript.sanitize_player_copy("%s：%s" % [_shorten_copy(String(section.get("title", key)), 14), _shorten_copy(String(section.get("message", "")), 22)])
 
 
 func _format_history_preview(history_preview: Dictionary) -> String:
 	if history_preview.is_empty():
-		return "历史战绩 preview: display_only / read_only"
-	return "历史战绩 preview\n%s\n%s / %s" % [
-		String(history_preview.get("summary", "")),
-		String(history_preview.get("history_card_icon_key", "")),
-		String(history_preview.get("art_placeholder_id", "")),
-	]
+		return "历史战绩：待接入"
+	return Art10UISkinKitScript.sanitize_player_copy("历史战绩\n%s\n%s / %s" % [
+		_shorten_copy(String(history_preview.get("summary", "")), 30),
+		_shorten_copy(String(history_preview.get("history_card_icon_key", "")), 16),
+		_shorten_copy(String(history_preview.get("art_placeholder_id", "")), 16),
+	])
 
 
 func _format_summary_dictionary(value: Variant) -> String:
 	if value is Dictionary:
 		var summary: Dictionary = value
 		var lines := []
-		for key in summary.keys().slice(0, 5):
-			lines.append("- %s: %s" % [_safe_display_text(key), _safe_display_text(summary.get(key, ""))])
-		if summary.size() > lines.size():
-			lines.append("- 还有 %d 项 key preview 已收起" % (summary.size() - lines.size()))
-		return "\n".join(lines)
+		for key in summary.keys().slice(0, 3):
+			lines.append("- %s: %s" % [_shorten_copy(_safe_display_text(key), 14), _shorten_copy(_safe_display_text(summary.get(key, "")), 18)])
+		return Art10UISkinKitScript.sanitize_player_copy("\n".join(lines))
 	return _safe_display_text(value)
 
 
@@ -270,7 +281,7 @@ func _safe_display_text(value: Variant) -> String:
 		return "Dictionary(%d)" % (value as Dictionary).size()
 	if value is Array:
 		return "Array(%d)" % (value as Array).size()
-	return str(value)
+	return Art10UISkinKitScript.sanitize_player_copy(str(value))
 
 
 func _apply_art10_text_refresh() -> void:
@@ -288,9 +299,7 @@ func _apply_art10_text_refresh() -> void:
 	]:
 		if label is Label:
 			Art10UISkinKitScript.apply_label(label)
-	for module_id in tab_buttons.keys():
-		var button := tab_buttons[module_id] as Button
-		Art10UISkinKitScript.apply_button(button, &"primary" if button != null and button.button_pressed else &"secondary", 13)
+			label.clip_text = true
 
 
 func _clear_children() -> void:
@@ -303,41 +312,47 @@ func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, 
 	var button := Button.new()
 	button.name = node_name
 	button.text = text
-	button.offset_left = rect.position.x
-	button.offset_top = rect.position.y
-	button.offset_right = rect.position.x + rect.size.x
-	button.offset_bottom = rect.position.y + rect.size.y
-	Art10UISkinKitScript.apply_button(button, &"secondary", 13)
+	_set_rect(button, rect)
+	Art10UISkinKitScript.apply_button_token(button, &"secondary", &"caption", &"button")
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
 
 
-func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color) -> Label:
+func _add_label_token(parent: Control, node_name: String, rect: Rect2, text: String, token: StringName, color_token: StringName) -> Label:
 	var label := Label.new()
 	label.name = node_name
 	label.text = text
-	label.offset_left = rect.position.x
-	label.offset_top = rect.position.y
-	label.offset_right = rect.position.x + rect.size.x
-	label.offset_bottom = rect.position.y + rect.size.y
+	_set_rect(label, rect)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	Art10UISkinKitScript.apply_label_token(label, token, color_token)
 	label.clip_text = true
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", font_size)
-	Art10UISkinKitScript.apply_label(label, font_size, color)
 	parent.add_child(label)
 	return label
+
+
+func _add_panel(parent: Control, node_name: String, rect: Rect2, tone: StringName) -> PanelContainer:
+	var panel := Art10UISkinKitScript.make_frame_panel(node_name, rect, tone)
+	parent.add_child(panel)
+	return panel
 
 
 func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Color) -> ColorRect:
 	var color_rect := ColorRect.new()
 	color_rect.name = node_name
 	color_rect.color = color
-	color_rect.offset_left = rect.position.x
-	color_rect.offset_top = rect.position.y
-	color_rect.offset_right = rect.position.x + rect.size.x
-	color_rect.offset_bottom = rect.position.y + rect.size.y
+	_set_rect(color_rect, rect)
 	color_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(color_rect)
 	return color_rect
+
+
+func _set_rect(control: Control, rect: Rect2) -> void:
+	Art10UISkinKitScript.set_rect(control, rect)
+
+
+func _shorten_copy(text: String, max_chars: int) -> String:
+	var safe := Art10UISkinKitScript.sanitize_player_copy(text)
+	if safe.length() <= max_chars:
+		return safe
+	return "%s..." % safe.substr(0, max_chars)

@@ -90,21 +90,26 @@ func _clear_children() -> void:
 
 
 func _build_backdrop() -> void:
-	_add_color_rect(self, "DeployPrepBackdrop", Rect2(0, 0, 1280, 720), Color(0.018, 0.034, 0.040, 1.0))
-	_add_color_rect(self, "DeployPrepLeftPanel", Rect2(52, 84, 290, 552), Color(0.055, 0.090, 0.100, 0.96))
-	_add_color_rect(self, "DeployPrepCenterPanel", Rect2(372, 84, 498, 552), Color(0.044, 0.070, 0.080, 0.95))
-	_add_color_rect(self, "DeployPrepSummaryPanel", Rect2(900, 84, 322, 552), Color(0.060, 0.085, 0.094, 0.97))
+	_add_color_rect(self, "DeployPrepBackdrop", Rect2(0, 0, 1280, 720), Color(0.016, 0.032, 0.038, 1.0))
+	_add_panel(self, "DeployLeftVisualFrame", Art10UISkinKitScript.rect(&"deploy", "left_column"), &"deep")
+	_add_panel(self, "DeployCenterCardFrame", Art10UISkinKitScript.rect(&"deploy", "center_column"), &"surface")
+	_add_panel(self, "DeploySummaryFrame", Art10UISkinKitScript.rect(&"deploy", "summary_column"), &"summary")
 	var art09_refs := _art09_asset_refs()
-	_add_texture_rect_from_ref(self, "Art09DeployMainPanel", Rect2(372, 84, 498, 552), _asset_ref_from(art09_refs, "panels", "main"), 0.26)
-	_add_texture_rect_from_ref(self, "Art09DeploySummaryPanel", Rect2(900, 84, 322, 552), _asset_ref_from(art09_refs, "panels", "summary"), 0.28)
-	_add_texture_rect_from_ref(self, "Art09DeployHighlight", Rect2(398, 96, 430, 236), _asset_ref_from(art09_refs, "panels", "highlight"), 0.34)
-	_add_label(self, "DeployPrepTitle", Rect2(64, 30, 520, 42), String(current_model.get("title", "出发探索")), 32, PresentationTheme.color_for_key(&"ui.warning"))
-	_add_label(self, "DeployPrepSubtitle", Rect2(380, 38, 620, 34), String(current_model.get("subtitle", "")), 15, PresentationTheme.color_for_key(&"ui.muted"))
+	_add_texture_rect_from_ref(self, "Art09DeployMainPanel", Rect2(334, 150, 600, 472), _asset_ref_from(art09_refs, "panels", "main"), 0.18)
+	_add_texture_rect_from_ref(self, "Art09DeploySummaryPanel", Rect2(958, 150, 278, 472), _asset_ref_from(art09_refs, "panels", "summary"), 0.20)
+	_add_color_rect(self, "DeployMapAtmosphere", Rect2(64, 206, 226, 220), Color(0.12, 0.20, 0.19, 0.34))
+	_add_color_rect(self, "DeployMapHorizon", Rect2(84, 364, 188, 3), Art10UISkinKitScript.color(&"gold"))
+	_add_label_token(self, "DeployPrepTitle", Rect2(46, 34, 250, 48), String(current_model.get("title", "出发探索")), &"page_title", &"warning")
+	_add_label_token(self, "DeployPrepSubtitle", Rect2(304, 36, 620, 32), "选择路线、整备物资，然后进入当前可玩探索。", &"body", &"caption")
 
 
 func _build_tab_panel() -> void:
-	_add_label(self, "DeployTabsHeading", Rect2(76, 104, 230, 28), "一级页签", 17, PresentationTheme.color_for_key(&"ui.accent"))
-	var y := 146.0
+	var tab_row := HBoxContainer.new()
+	tab_row.name = "DeployTopTabRow"
+	var row_rect := Art10UISkinKitScript.rect(&"deploy", "tab_row")
+	_set_rect(tab_row, row_rect)
+	tab_row.add_theme_constant_override("separation", 8)
+	add_child(tab_row)
 	for raw_tab in _array_from(current_model, "tabs"):
 		if raw_tab is Dictionary:
 			var tab := raw_tab as Dictionary
@@ -113,54 +118,58 @@ func _build_tab_panel() -> void:
 			button.name = "DeployTab_%s" % String(tab_id)
 			button.text = String(tab.get("label", tab_id))
 			button.tooltip_text = String(tab.get("subtitle", ""))
-			_apply_art09_button_icon(button, _dictionary_from(tab.get("art09_asset_ref", {})))
-			button.offset_left = 76.0
-			button.offset_top = y
-			button.offset_right = 316.0
-			button.offset_bottom = y + 42.0
+			button.toggle_mode = true
+			button.custom_minimum_size = Vector2(112, 42)
+			_apply_art09_button_icon(button, _dictionary_from(tab.get("art09_asset_ref", {})), &"tab")
 			var captured_tab := tab_id
 			button.pressed.connect(func() -> void: show_tab(captured_tab))
-			add_child(button)
+			Art10UISkinKitScript.apply_button_token(button, &"secondary", &"tab", &"tab")
+			tab_row.add_child(button)
 			tab_buttons[tab_id] = button
-			y += 52.0
-	_add_label(self, "DeployBoundary", Rect2(76, 438, 236, 142), String(current_model.get("boundary", "")), 14, PresentationTheme.color_for_key(&"ui.muted"))
 
 
 func _build_content_panel() -> void:
-	tab_title_label = _add_label(self, "DeployTabTitle", Rect2(404, 104, 416, 34), "", 23, PresentationTheme.color_for_key(&"ui.accent"))
-	tab_body_label = _add_label(self, "DeployTabBody", Rect2(406, 144, 414, 92), "", 14, PresentationTheme.text_color())
-	filter_heading_label = _add_label(self, "DeployFilterHeading", Rect2(406, 246, 420, 24), "二级标签 / 筛选 preview", 15, PresentationTheme.color_for_key(&"ui.warning"))
-	card_heading_label = _add_label(self, "DeployCardHeading", Rect2(406, 320, 420, 24), "出勤内容卡片 preview", 15, PresentationTheme.color_for_key(&"ui.warning"))
+	_add_label_token(self, "DeployLeftHeading", Rect2(66, 172, 220, 26), "探索整备", &"tab", &"accent")
+	tab_body_label = _add_label_token(self, "DeployTabBody", Rect2(66, 430, 224, 112), "", &"caption", &"text")
+	_add_label_token(self, "DeployLoadoutHeading", Rect2(66, 554, 220, 22), "携带槽", &"caption", &"muted")
+	_add_icon_slot(self, "DeployLoadoutSlotA", Rect2(66, 580, 48, 48), "装备")
+	_add_icon_slot(self, "DeployLoadoutSlotB", Rect2(124, 580, 48, 48), "药剂")
+	_add_icon_slot(self, "DeployLoadoutSlotC", Rect2(182, 580, 48, 48), "工具")
+	tab_title_label = _add_label_token(self, "DeployTabTitle", Rect2(362, 170, 530, 34), "", &"main_button", &"accent")
+	filter_heading_label = _add_label_token(self, "DeployFilterHeading", Rect2(362, 212, 210, 24), "二级筛选", &"caption", &"warning")
+	card_heading_label = _add_label_token(self, "DeployCardHeading", Rect2(362, 268, 240, 24), "路线 / 目标卡片", &"tab", &"warning")
 	card_scroll = ScrollContainer.new()
 	card_scroll.name = "DeployCardScroll"
-	card_scroll.offset_left = 406.0
-	card_scroll.offset_top = 350.0
-	card_scroll.offset_right = 604.0
-	card_scroll.offset_bottom = 520.0
+	_set_rect(card_scroll, Rect2(362, 300, 350, 272))
 	card_scroll.clip_contents = true
 	add_child(card_scroll)
 	card_list_container = VBoxContainer.new()
 	card_list_container.name = "DeployCardList"
-	card_list_container.add_theme_constant_override("separation", 6)
+	card_list_container.add_theme_constant_override("separation", 8)
 	card_scroll.add_child(card_list_container)
-	detail_label = _add_label(self, "DeployCardDetail", Rect2(622, 350, 214, 170), "", 13, PresentationTheme.text_color())
-	_add_label(self, "DeployConfigPreviewHeading", Rect2(406, 538, 390, 24), "RunStartConfig draft / read_only", 15, PresentationTheme.color_for_key(&"ui.warning"))
-	preview_label = _add_label(self, "DeployConfigPreview", Rect2(406, 566, 420, 42), "", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	_add_panel(self, "DeployDetailFrame", Rect2(728, 298, 178, 274), &"card")
+	detail_label = _add_label_token(self, "DeployCardDetail", Rect2(742, 312, 150, 236), "", &"caption", &"text")
+	preview_label = _add_label_token(self, "DeployConfigPreview", Rect2(362, 586, 530, 26), "", &"caption", &"muted")
 
 
 func _build_summary_panel() -> void:
-	_add_label(self, "DeploySummaryHeading", Rect2(930, 106, 240, 30), "右侧摘要 / 配置 / 效果 / 风险", 20, PresentationTheme.color_for_key(&"ui.accent"))
-	summary_label = _add_label(self, "DeploySummaryText", Rect2(930, 146, 250, 92), "", 13, PresentationTheme.text_color())
-	config_label = _add_label(self, "DeployConfigText", Rect2(930, 248, 250, 92), "", 13, PresentationTheme.text_color())
-	effect_label = _add_label(self, "DeployEffectText", Rect2(930, 350, 250, 92), "", 13, PresentationTheme.text_color())
-	risk_label = _add_label(self, "DeployRiskText", Rect2(930, 452, 250, 104), "", 13, PresentationTheme.text_color())
+	_add_label_token(self, "DeploySummaryHeading", Rect2(984, 172, 220, 30), "出发摘要", &"tab", &"accent")
+	summary_label = _add_label_token(self, "DeploySummaryText", Rect2(984, 210, 220, 66), "", &"caption", &"text")
+	config_label = _add_label_token(self, "DeployConfigText", Rect2(984, 286, 220, 66), "", &"caption", &"text")
+	_add_label_token(self, "DeploySlotHeading", Rect2(984, 364, 220, 22), "装备 / 消耗品", &"caption", &"warning")
+	_add_icon_slot(self, "DeployEquipSlotA", Rect2(984, 392, 48, 48), "武器")
+	_add_icon_slot(self, "DeployEquipSlotB", Rect2(1042, 392, 48, 48), "护具")
+	_add_icon_slot(self, "DeployItemSlotA", Rect2(1100, 392, 48, 48), "补给")
+	_add_icon_slot(self, "DeployItemSlotB", Rect2(1158, 392, 48, 48), "钥匙")
+	effect_label = _add_label_token(self, "DeployEffectText", Rect2(984, 452, 220, 58), "", &"caption", &"text")
+	risk_label = _add_label_token(self, "DeployRiskText", Rect2(984, 514, 220, 42), "", &"caption", &"warning")
 
 
 func _build_action_panel() -> void:
-	start_button = _add_button(self, "DeployStartPreviewButton", Rect2(930, 568, 254, 34), "开始探索 preview", _on_start_preview_pressed)
-	continue_button = _add_button(self, "DeployContinuePreviewButton", Rect2(930, 610, 122, 34), "继续 preview", _on_continue_preview_pressed)
-	abandon_button = _add_button(self, "DeployAbandonPreviewButton", Rect2(1062, 610, 122, 34), "放弃 preview", _on_abandon_preview_pressed)
-	action_message_label = _add_label(self, "DeployActionMessage", Rect2(930, 652, 254, 42), "", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	start_button = _add_button(self, "DeployStartButton", Rect2(958, 628, 278, 64), "开始探索", _on_start_preview_pressed)
+	continue_button = _add_button(self, "DeployContinueButton", Rect2(362, 640, 120, 38), "继续", _on_continue_preview_pressed)
+	abandon_button = _add_button(self, "DeployAbandonButton", Rect2(492, 640, 120, 38), "放弃", _on_abandon_preview_pressed)
+	action_message_label = _add_label_token(self, "DeployActionMessage", Rect2(630, 642, 304, 38), "", &"caption", &"muted")
 
 
 func _refresh_view() -> void:
@@ -171,17 +180,18 @@ func _refresh_view() -> void:
 	for tab_id in tab_buttons.keys():
 		var button := tab_buttons[tab_id] as Button
 		if button != null:
-			button.disabled = StringName(tab_id) == active_tab
-	tab_title_label.text = "%s / %s" % [String(tab.get("label", active_tab)), String(tab.get("subtitle", ""))]
-	tab_body_label.text = _lines_text(_array_from(tab, "lines"))
+			button.button_pressed = StringName(tab_id) == active_tab
+			Art10UISkinKitScript.apply_button_token(button, &"primary" if button.button_pressed else &"secondary", &"tab", &"tab")
+	tab_title_label.text = String(tab.get("label", active_tab))
+	tab_body_label.text = _lines_text(_array_from(tab, "lines"), 4)
 	_refresh_filter_buttons(tab)
 	_refresh_card_buttons()
 	_refresh_detail()
 	var preview := _preview()
-	summary_label.text = _section_text("摘要", _array_from(preview, "summary"), 3)
-	config_label.text = _section_text("配置", _array_from(preview, "config"), 3)
-	effect_label.text = _section_text("效果", _array_from(preview, "effect"), 3)
-	risk_label.text = _section_text("风险", _array_from(preview, "risk"), 4)
+	summary_label.text = _section_text("摘要", _array_from(preview, "summary"), 1)
+	config_label.text = _section_text("配置", _array_from(preview, "config"), 1)
+	effect_label.text = _section_text("效果", _array_from(preview, "effect"), 1)
+	risk_label.text = _section_text("风险", _array_from(preview, "risk"), 1)
 	preview_label.text = _run_start_preview_text(DeployConfigScript.build_run_start_config(_config()))
 	_refresh_actions()
 	_apply_art10_text_refresh()
@@ -190,24 +200,27 @@ func _refresh_view() -> void:
 func _refresh_filter_buttons(tab: Dictionary) -> void:
 	for button in filter_buttons:
 		if button != null:
-			remove_child(button)
+			if button.get_parent() != null:
+				button.get_parent().remove_child(button)
 			button.queue_free()
 	filter_buttons.clear()
-	var x := 406.0
-	var y := 276.0
+	var x := 472.0
+	var y := 210.0
 	var selected_filter := StringName(current_model.get("selected_filter", DeployTabModelScript.FILTER_ALL))
 	for raw_filter in _array_from(tab, "secondary_filters"):
 		if raw_filter is Dictionary:
 			var filter := raw_filter as Dictionary
 			var filter_id := StringName(filter.get("id", DeployTabModelScript.FILTER_ALL))
 			var captured_filter := filter_id
-			var button := _add_button(self, "DeployFilter_%s" % String(filter_id), Rect2(x, y, 92, 28), String(filter.get("label", filter_id)), func() -> void: _on_filter_pressed(captured_filter))
-			button.disabled = filter_id == selected_filter
+			var button := _add_button(self, "DeployFilter_%s" % String(filter_id), Rect2(x, y, 96, 30), String(filter.get("label", filter_id)), func() -> void: _on_filter_pressed(captured_filter))
+			button.toggle_mode = true
+			button.button_pressed = filter_id == selected_filter
+			Art10UISkinKitScript.apply_button_token(button, &"primary" if button.button_pressed else &"secondary", &"caption", &"tab")
 			filter_buttons.append(button)
-			x += 98.0
-			if x > 760.0:
-				x = 406.0
-				y += 32.0
+			x += 104.0
+			if x > 828.0:
+				x = 472.0
+				y += 34.0
 
 
 func _refresh_card_buttons() -> void:
@@ -224,70 +237,65 @@ func _refresh_card_buttons() -> void:
 		if raw_card is Dictionary:
 			var card := raw_card as Dictionary
 			var card_id := StringName(card.get("id", &""))
-			var label := "%s\n%s / %s" % [String(card.get("title", card_id)), String(card.get("category", "")), String(card.get("state", &"preview"))]
+			var label := "%s\n%s · %s" % [
+				String(card.get("title", card_id)),
+				String(card.get("category", "")),
+				Art10UISkinKitScript.status_label(card.get("state", &"preview")),
+			]
 			var captured_card := card_id
 			var button := Button.new()
 			button.name = "DeployCard_%s" % String(card_id)
 			button.text = label
 			button.tooltip_text = String(card.get("summary", ""))
-			_apply_art09_button_icon(button, _dictionary_from(card.get("art09_asset_ref", {})))
-			button.custom_minimum_size = Vector2(180, 44)
-			button.clip_text = true
-			Art10UISkinKitScript.apply_button(button, &"primary" if card_id == selected_card else &"secondary", 13)
+			button.custom_minimum_size = Vector2(330, 66)
+			button.toggle_mode = true
+			button.button_pressed = card_id == selected_card
+			_apply_art09_button_icon(button, _dictionary_from(card.get("art09_asset_ref", {})), &"slot")
+			Art10UISkinKitScript.apply_button_token(button, &"primary" if button.button_pressed else &"secondary", &"body", &"slot")
 			button.pressed.connect(func() -> void: _on_card_pressed(captured_card))
 			card_list_container.add_child(button)
-			button.disabled = card_id == selected_card
 			card_buttons.append(button)
 
 
 func _refresh_detail() -> void:
 	var detail := _dictionary_from(current_model.get("selected_card_detail", {}))
 	if detail.is_empty():
-		detail_label.text = "卡片详情\n- 当前筛选下没有可显示卡片。"
+		detail_label.text = "当前筛选下没有可显示卡片。"
 		return
 	var lines := [
-		"状态：%s / preview=%s / display_only=%s / read_only=%s" % [
-			String(detail.get("state", "preview")),
-			str(bool(detail.get("preview", true))),
-			str(bool(detail.get("display_only", true))),
-			str(bool(detail.get("read_only", true))),
-		],
 		String(detail.get("summary", "")),
 		String(detail.get("detail", "")),
 	]
-	for line in _array_from(detail, "lines"):
+	for line in _array_from(detail, "lines").slice(0, 3):
 		lines.append(String(line))
-	var links := _array_from(detail, "link_preview")
-	if not links.is_empty():
-		lines.append("只读跳转：%s" % _join_array(links, "无"))
-	detail_label.text = _section_text("卡片详情", lines, 6)
+	detail_label.text = _section_text("卡片详情", lines, 5)
 
 
 func _refresh_actions() -> void:
 	var start_action := _action("start")
 	var continue_action := _action("continue")
 	var abandon_action := _action("abandon")
-	start_button.text = String(start_action.get("label", "生成出勤 preview"))
+	start_button.text = "开始探索"
 	start_button.disabled = bool(start_action.get("disabled", false))
 	start_button.tooltip_text = String(start_action.get("tooltip", ""))
-	continue_button.text = String(continue_action.get("label", "继续探索"))
+	continue_button.text = "继续"
 	continue_button.disabled = bool(continue_action.get("disabled", true))
 	continue_button.tooltip_text = String(continue_action.get("tooltip", ""))
-	abandon_button.text = String(abandon_action.get("label", "放弃探索"))
+	abandon_button.text = "放弃"
 	abandon_button.disabled = bool(abandon_action.get("disabled", true))
 	abandon_button.tooltip_text = String(abandon_action.get("tooltip", ""))
 	var art09_refs := _art09_asset_refs()
-	_apply_art09_button_icon(start_button, _asset_ref_from(art09_refs, "buttons", "confirm"))
-	_apply_art09_button_icon(continue_button, _asset_ref_from(art09_refs, "buttons", "loadout"))
-	_apply_art09_button_icon(abandon_button, _asset_ref_from(art09_refs, "buttons", "back_main"))
-	Art10UISkinKitScript.apply_button(start_button, &"primary", 14)
-	Art10UISkinKitScript.apply_button(continue_button, &"secondary", 13)
-	Art10UISkinKitScript.apply_button(abandon_button, &"danger", 13)
+	_apply_art09_button_icon(start_button, _asset_ref_from(art09_refs, "buttons", "confirm"), &"large_nav")
+	_apply_art09_button_icon(continue_button, _asset_ref_from(art09_refs, "buttons", "loadout"), &"button")
+	_apply_art09_button_icon(abandon_button, _asset_ref_from(art09_refs, "buttons", "back_main"), &"button")
+	Art10UISkinKitScript.apply_button_token(start_button, &"gold", &"main_button", &"large_nav")
+	Art10UISkinKitScript.apply_button_token(continue_button, &"secondary", &"caption", &"button")
+	Art10UISkinKitScript.apply_button_token(abandon_button, &"danger", &"caption", &"button")
 	var message := String(current_model.get("action_message", ""))
 	if bool(current_model.get("abandon_confirm_visible", false)):
-		message = String(abandon_action.get("confirm_copy", "强确认 preview：再次点击只会关闭提示，不执行放弃。"))
+		message = String(abandon_action.get("confirm_copy", "再次点击只会关闭提示，不执行放弃。"))
 	action_message_label.text = message
-	Art10UISkinKitScript.apply_label(action_message_label)
+	Art10UISkinKitScript.apply_label_token(action_message_label, &"caption", &"muted")
 
 
 func _on_filter_pressed(filter_id: StringName) -> void:
@@ -304,7 +312,7 @@ func _on_start_preview_pressed() -> void:
 	var config := _config()
 	current_model["run_start_config"] = DeployConfigScript.build_run_start_config(config)
 	current_model["preview_lines"] = DeployConfigScript.build_preview_lines(config)
-	current_model["action_message"] = "开始探索 preview 已刷新；完整出发配置启动未接入。请从主菜单“快速开始 / Demo Run”进入当前可玩探索。"
+	current_model["action_message"] = "开始探索已刷新；当前仍复用标准探索入口。"
 	_refresh_view()
 	var start_action := _action("start")
 	var run_payload := _dictionary_from(start_action.get("run_intent", {}))
@@ -316,15 +324,15 @@ func _on_start_preview_pressed() -> void:
 
 
 func _on_continue_preview_pressed() -> void:
-	current_model = DeployPrepModelScript.model_with_action_message(current_model, "继续探索入口仅为 preview / read_only；真实继续流程后置。")
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, "继续探索入口尚未开放到当前配置。")
 	_refresh_view()
 
 
 func _on_abandon_preview_pressed() -> void:
 	if bool(current_model.get("abandon_confirm_visible", false)):
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, "已关闭放弃强确认 preview；没有执行放弃。", false)
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "已关闭放弃确认；没有执行放弃。", false)
 	else:
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, "放弃当前探索需要强确认 preview；本轮不执行真实放弃。", true)
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "放弃当前探索需要强确认；本轮不执行真实放弃。", true)
 	_refresh_view()
 
 
@@ -359,20 +367,20 @@ func _lines_text(lines: Array, max_lines: int = 6) -> String:
 	var parts := []
 	var visible := lines.slice(0, max_lines)
 	for line in visible:
-		parts.append("- %s" % String(line))
+		parts.append("- %s" % _shorten_copy(String(line), 24))
 	if lines.size() > visible.size():
-		parts.append("- 还有 %d 项 preview 已收起" % (lines.size() - visible.size()))
-	return "\n".join(parts)
+		parts.append("- 还有 %d 项已收起" % (lines.size() - visible.size()))
+	return Art10UISkinKitScript.sanitize_player_copy("\n".join(parts))
 
 
 func _run_start_preview_text(run_start: Dictionary) -> String:
-	return "出发配置 %s  背包 %d/%d  seed %s  路线 %s" % [
+	return Art10UISkinKitScript.sanitize_player_copy("出发配置 %s  背包 %d/%d  seed %s  路线 %s" % [
 		String(run_start.get("config_id", "")),
 		int(run_start.get("bag_used", 0)),
 		int(run_start.get("bag_limit", 0)),
 		String(run_start.get("seed_policy", "")),
 		String((_dictionary_from(run_start.get("deploy_prep_projection", {}))).get("projection_type", &"")),
-	]
+	])
 
 
 func _array_from(source: Dictionary, key: String) -> Array:
@@ -413,21 +421,22 @@ func _apply_art10_text_refresh() -> void:
 	]:
 		if label is Label:
 			Art10UISkinKitScript.apply_label(label)
+			label.clip_text = true
 	for button_id in tab_buttons.keys():
 		var tab_button := tab_buttons[button_id] as Button
-		Art10UISkinKitScript.apply_button(tab_button, &"primary" if tab_button != null and tab_button.disabled else &"secondary", 13)
+		Art10UISkinKitScript.apply_button_token(tab_button, &"primary" if tab_button != null and tab_button.button_pressed else &"secondary", &"tab", &"tab")
 	for button in filter_buttons:
-		Art10UISkinKitScript.apply_button(button, &"primary" if button != null and button.disabled else &"secondary", 12)
+		Art10UISkinKitScript.apply_button_token(button, &"primary" if button != null and button.button_pressed else &"secondary", &"caption", &"tab")
 
 
-func _apply_art09_button_icon(button: Button, asset_ref: Dictionary) -> void:
+func _apply_art09_button_icon(button: Button, asset_ref: Dictionary, icon_token: StringName = &"button") -> void:
 	if button == null:
 		return
 	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
 	if texture == null:
 		return
 	button.icon = texture
-	button.expand_icon = true
+	Art10UISkinKitScript.controlled_button_icon(button, icon_token)
 
 
 func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2, asset_ref: Dictionary, alpha: float = 1.0) -> TextureRect:
@@ -437,10 +446,7 @@ func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2,
 	var texture_rect := TextureRect.new()
 	texture_rect.name = node_name
 	texture_rect.texture = texture
-	texture_rect.offset_left = rect.position.x
-	texture_rect.offset_top = rect.position.y
-	texture_rect.offset_right = rect.position.x + rect.size.x
-	texture_rect.offset_bottom = rect.position.y + rect.size.y
+	_set_rect(texture_rect, rect)
 	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	texture_rect.modulate = Color(1.0, 1.0, 1.0, alpha)
@@ -449,54 +455,60 @@ func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2,
 	return texture_rect
 
 
-func _join_array(items: Array, fallback: String) -> String:
-	if items.is_empty():
-		return fallback
-	var parts := []
-	for item in items:
-		parts.append(String(item))
-	return "、".join(parts)
-
-
 func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, callback: Callable) -> Button:
 	var button := Button.new()
 	button.name = node_name
 	button.text = text
-	button.offset_left = rect.position.x
-	button.offset_top = rect.position.y
-	button.offset_right = rect.position.x + rect.size.x
-	button.offset_bottom = rect.position.y + rect.size.y
-	Art10UISkinKitScript.apply_button(button, &"secondary", 13)
+	_set_rect(button, rect)
+	Art10UISkinKitScript.apply_button_token(button, &"secondary", &"caption", &"button")
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
 
 
-func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color) -> Label:
+func _add_label_token(parent: Control, node_name: String, rect: Rect2, text: String, token: StringName, color_token: StringName) -> Label:
 	var label := Label.new()
 	label.name = node_name
 	label.text = text
-	label.offset_left = rect.position.x
-	label.offset_top = rect.position.y
-	label.offset_right = rect.position.x + rect.size.x
-	label.offset_bottom = rect.position.y + rect.size.y
+	_set_rect(label, rect)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	Art10UISkinKitScript.apply_label_token(label, token, color_token)
 	label.clip_text = true
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", font_size)
-	Art10UISkinKitScript.apply_label(label, font_size, color)
 	parent.add_child(label)
 	return label
+
+
+func _add_icon_slot(parent: Control, node_name: String, rect: Rect2, label_text: String) -> PanelContainer:
+	var panel := Art10UISkinKitScript.make_icon_slot(node_name, rect.size, &"slot")
+	_set_rect(panel, rect)
+	parent.add_child(panel)
+	var label := _add_label_token(parent, "%sLabel" % node_name, Rect2(rect.position.x, rect.position.y + rect.size.y + 3.0, rect.size.x, 16.0), label_text, &"key_prompt", &"muted")
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return panel
+
+
+func _add_panel(parent: Control, node_name: String, rect: Rect2, tone: StringName) -> PanelContainer:
+	var panel := Art10UISkinKitScript.make_frame_panel(node_name, rect, tone)
+	parent.add_child(panel)
+	return panel
 
 
 func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Color) -> ColorRect:
 	var color_rect := ColorRect.new()
 	color_rect.name = node_name
 	color_rect.color = color
-	color_rect.offset_left = rect.position.x
-	color_rect.offset_top = rect.position.y
-	color_rect.offset_right = rect.position.x + rect.size.x
-	color_rect.offset_bottom = rect.position.y + rect.size.y
+	_set_rect(color_rect, rect)
 	color_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(color_rect)
 	return color_rect
+
+
+func _set_rect(control: Control, rect: Rect2) -> void:
+	Art10UISkinKitScript.set_rect(control, rect)
+
+
+func _shorten_copy(text: String, max_chars: int) -> String:
+	var safe := Art10UISkinKitScript.sanitize_player_copy(text)
+	if safe.length() <= max_chars:
+		return safe
+	return "%s..." % safe.substr(0, max_chars)
