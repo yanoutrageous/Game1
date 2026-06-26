@@ -1,4 +1,9 @@
-# Project Baseline
+﻿# Project Baseline
+
+## DOC-GOV-001 状态说明
+
+本文件保留为历史扩展证据，不再作为当前第一入口。当前入口请先读 `docs/README.md`、`docs/INDEX.md`、`docs/10_current/CURRENT_STATE.md` 和 `docs/10_current/NEXT_ACTION.md`。本说明不改写历史正文，不新增玩法规则。
+
 
 > P2 更新：本文件保留为扩展工程事实与历史状态证据。P2 后当前事实摘要见 `docs/10_current/CURRENT_STATE.md`，统一入口见 `docs/INDEX.md`。本文件正文未删除，但不再作为新对话第一必读入口。
 

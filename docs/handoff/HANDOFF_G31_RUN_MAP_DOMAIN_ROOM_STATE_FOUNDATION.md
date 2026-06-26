@@ -1,4 +1,11 @@
-# Handoff: G31 Run Map Domain / Room State Foundation
+﻿# Handoff: G31 Run Map Domain / Room State Foundation
+
+## 中文交接摘要（DOC-GOV-001）
+
+G31 记录局内地图与房间状态 foundation 的 preview / display-only 内容。它说明 TruthMap、KnownMap、扫描层、标记层、RunMapState、房间状态和地图结果快照的边界；不实现完整 RunFlow、真实持久化、战斗 runtime、事件链、RoomLoot runtime、奖励发放、仓库写入、SaveManager、AssetLedger / RunAssetLedger mutation、gameplay runtime PASS 或 manual playtest PASS。
+
+本交接摘要只帮助阅读 handoff，不授权后续实现，不替代下一阶段 gate。
+
 
 Stage: G31-R2 Run Map Domain / Room State Foundation Full Content Implementation.
 

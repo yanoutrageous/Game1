@@ -1,4 +1,11 @@
-# Handoff G35 Runtime Safety / Ownership Cleanup
+﻿# Handoff G35 Runtime Safety / Ownership Cleanup
+
+## 中文交接摘要（DOC-GOV-001）
+
+G35 记录 runtime safety 与 ownership cleanup。它说明 MetaProgress read-only fallback、DebugGate、CommandBus debug hard gate、EventService result return、RunScene 当前 runtime owner 和 GameKernel inactive/bootstrap placeholder 的边界；不实现完整 SaveManager、active-run persistence、完整 RunFlow、真实 DeployPrep RunBootstrapper、新 gameplay systems、gameplay runtime PASS 或 manual playtest PASS。
+
+本交接摘要只帮助阅读 handoff，不授权后续实现，不替代下一阶段 gate。
+
 
 Stage: G35-R2 Engineering Stabilization / Runtime Ownership Cleanup.
 

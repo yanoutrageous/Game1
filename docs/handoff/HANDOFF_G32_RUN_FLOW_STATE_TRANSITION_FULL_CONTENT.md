@@ -1,4 +1,11 @@
-# Handoff: G32 Run Flow / State Transition Full Content
+﻿# Handoff: G32 Run Flow / State Transition Full Content
+
+## 中文交接摘要（DOC-GOV-001）
+
+G32 记录局内流程与状态流转 full content preview。它说明 RunLifecycle、RunState、RunFlowSnapshot、RoomTransition、RoomActionResult、RunIntent、结算触发预览和 RunResult draft 的边界；不实现 active-run persistence、真实 continue/abandon、仓库写入、奖励发放、目标进度、RoomLoot runtime、CommandBus command-list change、gameplay runtime PASS 或 manual playtest PASS。
+
+本交接摘要只帮助阅读 handoff，不授权后续实现，不替代下一阶段 gate。
+
 
 Stage: G32-R2 Run Flow & State Transition Full Content Implementation.
 

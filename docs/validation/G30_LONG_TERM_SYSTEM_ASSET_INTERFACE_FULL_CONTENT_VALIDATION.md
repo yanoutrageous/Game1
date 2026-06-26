@@ -1,4 +1,11 @@
-# G30 Long-Term System Asset Interface Full Content Validation
+﻿# G30 Long-Term System Asset Interface Full Content Validation
+
+## 中文结论摘要（DOC-GOV-001）
+
+G30 记录长期系统与资产接口的 full content preview / display-only / read-only 内容。它说明六模块、RewardBundle、事件流、red_dot_policy、jump_target 和资产接口预览如何被展示或引用；不实现真实长期系统后台、奖励发放、抽奖、红点清除、资产写入、持久化、gameplay runtime PASS 或 manual playtest PASS。
+
+本验证摘要只概括原 validation 的验证对象、边界和未声明项。具体 PASS/命令以原 validation 正文为准；不得把 parser/headless smoke 写成 gameplay runtime PASS 或 manual playtest PASS。
+
 
 Stage: G30-R2 Long-Term System Integration & Asset Interface Full Content Implementation.
 

@@ -1,37 +1,36 @@
-# Next Action
+﻿# Next Action
 
 文档状态：当前下一步建议
-适用范围：P2 后续动作与阶段闸门
-最后更新：2026/06/23
+适用范围：DOC-GOV-001 完成后的审计复查与后续 gate
+最后更新：2026/06/26
 
 ## 1. 推荐下一步
 
 ```text
-1. 完成 P2 文档治理自检。
-2. 复查 Base Docs 归档只读来源与 Connection 外部并行交接边界。
-3. 进入 P2 审计复查。
-4. 由用户决定是否进入 G26 原始审计 / 产品原型计划。
+1. 完成 DOC-GOV-001 执行框自检。
+2. 由审计框复查 README、INDEX、current、validation index、stage index 和重复台账。
+3. 审计确认后，再决定是否进入文档治理 Git gate。
+4. G36 后续如需 release / merge gate，应另开工程 gate，不由 DOC-GOV-001 自动执行。
 ```
 
-P2 不自动开启 G26，不执行产品功能实现。
-
-## 2. 进入 G26 前置条件
+## 2. 本阶段不得自动推进
 
 ```text
-1. P2 审计确认统一入口、来源映射、待确认事项和声明台账可用。
-2. 用户明确 G26 目标、范围和安全边界。
-3. 未确认玩法、经济、奖励、抽奖、长期系统规则不得提前定案。
-4. 若涉及工程实现，必须另开工程计划并重新确认禁止触碰项。
-5. 后续读取 Base Docs 时先按当前外部目录、相近名称、更新时间和文档状态定位，不依赖冻结快照。
-6. Connection 内容不得复制入库、提交 Git 或导入 Godot。
-```
-
-## 3. 本阶段禁止项
-
-```text
-1. 不修改工程代码。
-2. 不修改 Godot 场景、脚本、资源、导入文件或项目配置。
+1. 不 commit。
+2. 不 push。
 3. 不运行 Godot。
-4. 不执行 git commit / push / reset / clean / checkout / switch / stash。
-5. 不把 UI 图片或工程临时实现反推为正式规则。
+4. 不执行 manual playtest。
+5. 不修改 Base Docs、Base Docs_Governance、Connection。
+6. 不修改 Godot scripts/scenes/data/project.godot/.uid/.translation。
+7. 不把 G36 验证摘要写成 gameplay runtime PASS 或 manual playtest PASS。
+```
+
+## 3. 审计框复查重点
+
+```text
+1. DOC_PLACEMENT_STANDARD.md 是否覆盖后续 CodeX 文档落位规则。
+2. DUPLICATE_DOC_LEDGER.md 是否正确区分当前入口、历史证据、外部快照和外部原件。
+3. docs/INDEX.md 是否停止长历史堆叠。
+4. G30-G36 中文摘要是否只解释既有内容，没有新增玩法规则。
+5. Base Docs_Governance 是否只被写成外部快照，不是当前事实源。
 ```

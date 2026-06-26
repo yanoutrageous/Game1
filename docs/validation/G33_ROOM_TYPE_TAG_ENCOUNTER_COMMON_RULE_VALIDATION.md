@@ -1,4 +1,11 @@
-# G33 Room Type / Tag / Encounter Common Rule Validation
+﻿# G33 Room Type / Tag / Encounter Common Rule Validation
+
+## 中文结论摘要（DOC-GOV-001）
+
+G33 记录房间类型、标签与遭遇通用规则的 preview / display-only 内容。它说明 RoomType、RoomTag、RoomPolicy、RoomState、EncounterEntry、RoomRulePreview、RoomResultPreview、GroundLoot 和 RoomLootContainer 的语义预览边界；不实现 battle runtime、monster AI、事件链 runtime、真实掉落/背包、规则引擎、奖励发放、结算仓库写入、SaveManager、CommandBus mutation、gameplay runtime PASS 或 manual playtest PASS。
+
+本验证摘要只概括原 validation 的验证对象、边界和未声明项。具体 PASS/命令以原 validation 正文为准；不得把 parser/headless smoke 写成 gameplay runtime PASS 或 manual playtest PASS。
+
 
 Stage: G33-R2 Room Type / Tag / Encounter Common Rule Full Content Implementation.
 

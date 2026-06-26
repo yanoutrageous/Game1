@@ -1,4 +1,11 @@
-# G32 Run Flow / State Transition Full Content Validation
+﻿# G32 Run Flow / State Transition Full Content Validation
+
+## 中文结论摘要（DOC-GOV-001）
+
+G32 记录局内流程与状态流转 full content preview。它说明 RunLifecycle、RunState、RunFlowSnapshot、RoomTransition、RoomActionResult、RunIntent、结算触发预览和 RunResult draft 的边界；不实现 active-run persistence、真实 continue/abandon、仓库写入、奖励发放、目标进度、RoomLoot runtime、CommandBus command-list change、gameplay runtime PASS 或 manual playtest PASS。
+
+本验证摘要只概括原 validation 的验证对象、边界和未声明项。具体 PASS/命令以原 validation 正文为准；不得把 parser/headless smoke 写成 gameplay runtime PASS 或 manual playtest PASS。
+
 
 Stage: G32-R2 Run Flow & State Transition Full Content Implementation.
 

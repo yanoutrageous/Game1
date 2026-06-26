@@ -1,4 +1,11 @@
-# Handoff G34 Rule / Effect / Modifier & Content Delivery Common System
+﻿# Handoff G34 Rule / Effect / Modifier & Content Delivery Common System
+
+## 中文交接摘要（DOC-GOV-001）
+
+G34 记录规则、效果、Modifier 与内容投放通用系统的 preview / display-only 内容。它说明 RuleDefinition、RuleTrigger、EffectDescriptor、EffectPreview、ModifierProfile、ContentPool、ContentEntry、DeliveryRollPreview 等公共预览结构；不实现完整规则引擎、脚本语言、AI Director、真实奖励/掉落、目标进度、地图 runtime mutation、持久化、AssetLedger / RunAssetLedger 长期写入、CommandBus mutation、gameplay runtime PASS 或 manual playtest PASS。
+
+本交接摘要只帮助阅读 handoff，不授权后续实现，不替代下一阶段 gate。
+
 
 ## Summary
 

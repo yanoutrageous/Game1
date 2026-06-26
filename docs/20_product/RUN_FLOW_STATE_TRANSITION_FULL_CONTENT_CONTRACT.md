@@ -1,4 +1,11 @@
-# G32 Run Flow / State Transition Full Content Contract
+﻿# G32 Run Flow / State Transition Full Content Contract
+
+## 中文摘要（DOC-GOV-001）
+
+G32 记录局内流程与状态流转 full content preview。它说明 RunLifecycle、RunState、RunFlowSnapshot、RoomTransition、RoomActionResult、RunIntent、结算触发预览和 RunResult draft 的边界；不实现 active-run persistence、真实 continue/abandon、仓库写入、奖励发放、目标进度、RoomLoot runtime、CommandBus command-list change、gameplay runtime PASS 或 manual playtest PASS。
+
+本摘要只解释既有英文 contract 内容，不新增玩法规则，不扩大验证结论。
+
 
 Stage: G32-R2 Run Flow & State Transition Full Content Implementation.
 

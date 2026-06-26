@@ -1,8 +1,10 @@
-# P2 Document Lifecycle
+# DOC-GOV-001 Document Lifecycle
 
 文档状态：当前治理规则
-适用范围：P2 后仓库 `docs` 文档生命周期
-最后更新：2026/06/23
+适用范围：仓库 `docs` 文档生命周期、重复文档状态、阶段完成文档落位
+最后更新：2026/06/26
+
+本文件是 DOC-GOV-001 后的仓库文档生命周期规则。P2 历史规则保留其证据价值，但当前治理入口以 `docs/README.md`、`docs/INDEX.md`、`docs/00_governance/DOC_PLACEMENT_STANDARD.md` 和本文件为准。
 
 ## 1. 生命周期类型
 
@@ -18,6 +20,8 @@
 | `validation_evidence` | 验证记录 | 只证明记录中明确验证过的范围 |
 | `stage_evidence` | 阶段 handoff / summary | 保留历史证据，不批量重写 |
 | `archive` | 历史归档或旧体系说明 | 先登记，后迁移；不直接删除 |
+| `external_governance_snapshot` | 外部治理快照 | 只读参考；不替代当前仓库事实源 |
+| `duplicate_registered` | 重复文档已登记 | 不删除；由 `DUPLICATE_DOC_LEDGER.md` 说明状态 |
 
 ## 2. 当前入口维护规则
 
@@ -27,6 +31,8 @@
 3. NEXT_ACTION.md 只写下一步和闸门，不自动启动 G26。
 4. CAPABILITY_MATRIX.yaml 只登记能力状态，不定玩法规则。
 5. SOURCE_REGISTRY.md 负责来源归属，不替代来源文件。
+6. DOC_PLACEMENT_STANDARD.md 负责新文档落位规则。
+7. DUPLICATE_DOC_LEDGER.md 负责重复组状态登记。
 ```
 
 ## 3. 旧文档处理规则
@@ -38,4 +44,17 @@
 4. 如需把外部来源转成正式规则，必须另起确认流程。
 5. Base Docs 文件名或归档位置变化时，按主题、相近名称、更新时间和文档状态重新定位。
 6. 不因外部并行更新而回滚、清理或覆盖 Base Docs / Connection。
+7. `Base Docs_Governance/06_工程仓库docs参考` 是历史快照，不参与当前仓库去重执行。
+8. `Godot/GraytailGodot/docs` 是工程历史 / 环境证据，不再作为当前阶段治理主入口。
+```
+
+## 4. 阶段完成文档规则
+
+```text
+1. contract / validation / handoff 原文保留原位。
+2. 当前入口只保留摘要、链接、边界和下一步。
+3. validation index 登记验证证据，不复制全文。
+4. stage index 登记 active / closed / historical 状态。
+5. G30-G36 当前关键英文文档至少保留中文摘要，摘要只解释既有内容。
+6. 禁止为了统一入口而删除、移动、重命名历史文档。
 ```

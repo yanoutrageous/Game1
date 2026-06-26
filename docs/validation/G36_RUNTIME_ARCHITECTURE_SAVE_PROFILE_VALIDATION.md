@@ -1,4 +1,11 @@
-# G36 Runtime Architecture / Save Profile Validation
+﻿# G36 Runtime Architecture / Save Profile Validation
+
+## 中文结论摘要（DOC-GOV-001）
+
+G36 记录 runtime architecture consolidation 与 save/profile foundation。它说明 SaveManager、SaveProfileManifest、SaveImportStaging、SaveProfilePreview、profile path、RunScene helper 拆分、RunStartConfig / RunStartRouteAdapter 和 DebugGate 的边界；不实现完整 SaveManager UI、active-run persistence、runtime profile switching、完整 RunBootstrapper、新 gameplay systems、gameplay runtime PASS 或 manual playtest PASS。
+
+本验证摘要只概括原 validation 的验证对象、边界和未声明项。具体 PASS/命令以原 validation 正文为准；不得把 parser/headless smoke 写成 gameplay runtime PASS 或 manual playtest PASS。
+
 
 Stage: G36-R2 Runtime Architecture Consolidation & Save/Profile Foundation.
 

@@ -1,4 +1,11 @@
-# G31 Run Map Domain / Room State Foundation Contract
+﻿# G31 Run Map Domain / Room State Foundation Contract
+
+## 中文摘要（DOC-GOV-001）
+
+G31 记录局内地图与房间状态 foundation 的 preview / display-only 内容。它说明 TruthMap、KnownMap、扫描层、标记层、RunMapState、房间状态和地图结果快照的边界；不实现完整 RunFlow、真实持久化、战斗 runtime、事件链、RoomLoot runtime、奖励发放、仓库写入、SaveManager、AssetLedger / RunAssetLedger mutation、gameplay runtime PASS 或 manual playtest PASS。
+
+本摘要只解释既有英文 contract 内容，不新增玩法规则，不扩大验证结论。
+
 
 Status: G31-R2 implementation contract.
 

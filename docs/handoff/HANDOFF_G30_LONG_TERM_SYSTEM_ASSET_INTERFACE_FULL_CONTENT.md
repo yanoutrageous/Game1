@@ -1,4 +1,11 @@
-# Handoff: G30 Long-Term System Asset Interface Full Content
+﻿# Handoff: G30 Long-Term System Asset Interface Full Content
+
+## 中文交接摘要（DOC-GOV-001）
+
+G30 记录长期系统与资产接口的 full content preview / display-only / read-only 内容。它说明六模块、RewardBundle、事件流、red_dot_policy、jump_target 和资产接口预览如何被展示或引用；不实现真实长期系统后台、奖励发放、抽奖、红点清除、资产写入、持久化、gameplay runtime PASS 或 manual playtest PASS。
+
+本交接摘要只帮助阅读 handoff，不授权后续实现，不替代下一阶段 gate。
+
 
 Stage: G30-R2 Long-Term System Integration & Asset Interface Full Content Implementation.
 

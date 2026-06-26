@@ -1,4 +1,11 @@
-# G36 Runtime Architecture / Save Profile Foundation Contract
+﻿# G36 Runtime Architecture / Save Profile Foundation Contract
+
+## 中文摘要（DOC-GOV-001）
+
+G36 记录 runtime architecture consolidation 与 save/profile foundation。它说明 SaveManager、SaveProfileManifest、SaveImportStaging、SaveProfilePreview、profile path、RunScene helper 拆分、RunStartConfig / RunStartRouteAdapter 和 DebugGate 的边界；不实现完整 SaveManager UI、active-run persistence、runtime profile switching、完整 RunBootstrapper、新 gameplay systems、gameplay runtime PASS 或 manual playtest PASS。
+
+本摘要只解释既有英文 contract 内容，不新增玩法规则，不扩大验证结论。
+
 
 G36-R2 consolidates current M1 runtime architecture and adds the first save/profile foundation. It is an engineering stabilization stage, not a new gameplay-system stage.
 

@@ -1,4 +1,11 @@
-# G34 Rule / Effect / Modifier & Content Delivery Common System Validation
+﻿# G34 Rule / Effect / Modifier & Content Delivery Common System Validation
+
+## 中文结论摘要（DOC-GOV-001）
+
+G34 记录规则、效果、Modifier 与内容投放通用系统的 preview / display-only 内容。它说明 RuleDefinition、RuleTrigger、EffectDescriptor、EffectPreview、ModifierProfile、ContentPool、ContentEntry、DeliveryRollPreview 等公共预览结构；不实现完整规则引擎、脚本语言、AI Director、真实奖励/掉落、目标进度、地图 runtime mutation、持久化、AssetLedger / RunAssetLedger 长期写入、CommandBus mutation、gameplay runtime PASS 或 manual playtest PASS。
+
+本验证摘要只概括原 validation 的验证对象、边界和未声明项。具体 PASS/命令以原 validation 正文为准；不得把 parser/headless smoke 写成 gameplay runtime PASS 或 manual playtest PASS。
+
 
 ## Scope
 

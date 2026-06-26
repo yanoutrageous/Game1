@@ -1,4 +1,11 @@
-# G34 Rule / Effect / Modifier & Content Delivery Common System Contract
+﻿# G34 Rule / Effect / Modifier & Content Delivery Common System Contract
+
+## 中文摘要（DOC-GOV-001）
+
+G34 记录规则、效果、Modifier 与内容投放通用系统的 preview / display-only 内容。它说明 RuleDefinition、RuleTrigger、EffectDescriptor、EffectPreview、ModifierProfile、ContentPool、ContentEntry、DeliveryRollPreview 等公共预览结构；不实现完整规则引擎、脚本语言、AI Director、真实奖励/掉落、目标进度、地图 runtime mutation、持久化、AssetLedger / RunAssetLedger 长期写入、CommandBus mutation、gameplay runtime PASS 或 manual playtest PASS。
+
+本摘要只解释既有英文 contract 内容，不新增玩法规则，不扩大验证结论。
+
 
 G34 implements the foundation contract for the common rule, effect, modifier, and content delivery layer. The primary planning source is the read-only Base Docs file `规则、效果、Modifier 与内容投放通用系统策划案.md`.
 

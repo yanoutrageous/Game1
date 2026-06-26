@@ -1,4 +1,11 @@
-# Handoff G36 Runtime Architecture / Save Profile
+﻿# Handoff G36 Runtime Architecture / Save Profile
+
+## 中文交接摘要（DOC-GOV-001）
+
+G36 记录 runtime architecture consolidation 与 save/profile foundation。它说明 SaveManager、SaveProfileManifest、SaveImportStaging、SaveProfilePreview、profile path、RunScene helper 拆分、RunStartConfig / RunStartRouteAdapter 和 DebugGate 的边界；不实现完整 SaveManager UI、active-run persistence、runtime profile switching、完整 RunBootstrapper、新 gameplay systems、gameplay runtime PASS 或 manual playtest PASS。
+
+本交接摘要只帮助阅读 handoff，不授权后续实现，不替代下一阶段 gate。
+
 
 G36-R2 adds save/profile foundation and thins RunScene responsibilities without changing project scenes or runtime gameplay scope.
 

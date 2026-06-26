@@ -1,4 +1,9 @@
-# G26 Engineering Architecture Structure Readiness Status
+﻿# G26 Engineering Architecture Structure Readiness Status
+
+## DOC-GOV-001 状态说明
+
+本文件保留为历史扩展证据，不再作为当前第一入口。当前入口请先读 `docs/README.md`、`docs/INDEX.md`、`docs/10_current/CURRENT_STATE.md` 和 `docs/10_current/NEXT_ACTION.md`。本说明不改写历史正文，不新增玩法规则。
+
 
 G26-R1 audit result is PASS with preconditions. G26 has been reset to Engineering Architecture Structure Readiness Foundation.
 

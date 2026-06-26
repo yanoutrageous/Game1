@@ -1,4 +1,11 @@
-# G31 Run Map Domain / Room State Foundation Validation
+﻿# G31 Run Map Domain / Room State Foundation Validation
+
+## 中文结论摘要（DOC-GOV-001）
+
+G31 记录局内地图与房间状态 foundation 的 preview / display-only 内容。它说明 TruthMap、KnownMap、扫描层、标记层、RunMapState、房间状态和地图结果快照的边界；不实现完整 RunFlow、真实持久化、战斗 runtime、事件链、RoomLoot runtime、奖励发放、仓库写入、SaveManager、AssetLedger / RunAssetLedger mutation、gameplay runtime PASS 或 manual playtest PASS。
+
+本验证摘要只概括原 validation 的验证对象、边界和未声明项。具体 PASS/命令以原 validation 正文为准；不得把 parser/headless smoke 写成 gameplay runtime PASS 或 manual playtest PASS。
+
 
 Stage: G31-R2 Run Map Domain / Room State Foundation Full Content Implementation.
 

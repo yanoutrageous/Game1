@@ -1,245 +1,55 @@
-# G36 Docs Index Update
+﻿# Game1 Docs Index
 
-Current G36 entry points:
+文档状态：当前索引入口
+适用范围：仓库 `docs` 当前入口、最近阶段、验证与治理跳转
+最后更新：2026/06/26
 
-- `docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md`
-- `docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`
-- `docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md`
-- `tools/validate_g36_runtime_architecture.ps1`
+本文件是短索引，不复制完整历史正文。旧的 G27A-G35/G36 堆叠说明保留在对应 validation / handoff / contract 原文中。
 
-Read with:
-
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-- `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
-
-G36 implements runtime architecture and save/profile foundation only. It covers save profile path contracts, MetaProgress read-only fallback write-blocking, RunScene helper decomposition, bounded DeployPrep route payload normalization, and DebugGate review. It does not implement complete SaveManager UI, active-run persistence, runtime profile switching, full RunBootstrapper, new gameplay systems, gameplay runtime PASS, or manual playtest PASS.
-
-Any remaining G35 / older index wording below this update is historical / superseded unless explicitly reopened.
-
-# G35 Docs Index Update
-
-Current G35 entry points:
-
-- `docs/validation/G35_RUNTIME_SAFETY_OWNERSHIP_CLEANUP_VALIDATION.md`
-- `docs/handoff/HANDOFF_G35_RUNTIME_SAFETY_OWNERSHIP_CLEANUP.md`
-- `tools/validate_g35_runtime_safety.ps1`
-
-Read with:
-
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-- `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
-
-G35 implements runtime safety and ownership cleanup only. It covers persistence read fallback safety, debug command hard gating, Event result return, GameKernel inactive ownership marker, and DeployPrep preview boundary confirmation. It does not implement complete SaveManager, active-run persistence, full RunFlow rewrite, real DeployPrep RunBootstrapper, new gameplay systems, gameplay runtime PASS, or manual playtest PASS.
-
-Any remaining G34 / older index wording below this update is historical / superseded unless explicitly reopened.
-
-# G34 Docs Index Update
-
-Current G34 entry point:
-
-- `docs/20_product/RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_CONTRACT.md`
-
-Read with:
-
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-- `docs/validation/G34_RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_VALIDATION.md`
-- `docs/handoff/HANDOFF_G34_RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM.md`
-
-G34 implements rule / effect / modifier / content-delivery common-system foundation content as read_only / display_only / preview / no_persistence. It covers RuleDefinition, RuleTrigger, RuleCondition, RuleContextSnapshot, TargetSelector, ApplicabilityCheck, ScopePolicy, EffectDescriptor, EffectPreview, EffectResultPreview, ModifierProfile, ModifierStackPreview, ModifierConflictPolicy, ContentPool, ContentEntry, ContentSelector, ContentDeliveryContext, PoolResultPreview, FallbackPolicy, DeliveryRollPreview, RunFlow handoff, Settlement preview, RunSurface, and HUD display. It does not implement complete Rule engine runtime, script language, AI Director, real rewards, real drops, objective progress, map mutation runtime, persistence, AssetLedger / RunAssetLedger long-term writes, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
-
-Any remaining G33 / older index wording below this update is historical / superseded unless explicitly reopened.
-
-# G33 Docs Index Update
-
-Current G33 entry point:
-
-- `docs/20_product/ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_CONTRACT.md`
-
-Read with:
-
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-- `docs/validation/G33_ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_VALIDATION.md`
-- `docs/handoff/HANDOFF_G33_ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE.md`
-
-G33 implements room type / tag / encounter common-rule foundation content as read_only / display_only / preview / no_persistence. It covers RoomType, RoomTag, RoomPolicy, RoomState, RoomContentSlot, EncounterEntry, EncounterPreview, RoomRulePreview, RoomCondition, RoomResolutionPreview, RoomResultPreview, GroundLoot, RoomLootContainer, RunFlow handoff, Settlement preview, RunSurface, and HUD display. It does not implement battle runtime, event-chain runtime, RoomLoot/GroundLoot runtime, Rule/Modifier engine, objective progress, reward grant, settlement warehouse write, SaveManager, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
-
-Any remaining G32 / older index wording below this update is historical / superseded unless explicitly reopened.
-
-# G32 Docs Index Update
-
-Current G32 entry point:
-
-- `docs/20_product/RUN_FLOW_STATE_TRANSITION_FULL_CONTENT_CONTRACT.md`
-
-Read with:
-
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-- `docs/validation/G32_RUN_FLOW_STATE_TRANSITION_FULL_CONTENT_VALIDATION.md`
-- `docs/handoff/HANDOFF_G32_RUN_FLOW_STATE_TRANSITION_FULL_CONTENT.md`
-
-G32 implements run lifecycle / state transition foundation content as read_only / display_only / preview / no_persistence. It covers RunLifecycle, RunState, RunFlowSnapshot, RoomTransition, RoomActionResult, RunIntent, SettlementTriggerPreview, RunOutcomePreview, RunResult draft, DeployPrep bounded start bridge, RunSurface/HUD display, and Settlement preview handoff. It does not implement SaveManager, active-run persistence, real continue recovery, real abandon settlement, warehouse writes, reward grants, objective progress, RoomLoot runtime, CommandBus command-list changes, gameplay runtime PASS, or manual playtest PASS.
-
-Any remaining G31 / older index wording below this update is historical / superseded unless explicitly reopened.
-
-# G31 Docs Index Update
-
-Current G31 entry point:
-
-- `docs/20_product/RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION_CONTRACT.md`
-
-Read with:
-
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-- `docs/validation/G31_RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION_VALIDATION.md`
-- `docs/handoff/HANDOFF_G31_RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION.md`
-
-G31 implements run map / room-state foundation content as read_only / display_only / preview / no_persistence. It covers TruthMap, KnownMap, ScanLayer, MarkMap, RunMapState, InfoReliabilityLayer, MapGenProfile, MapGenerationLog, FinalMapSnapshot, RunMapSnapshot, MapResult, RoomState, RoomPolicy, RoomTag, return_eligibility, and fast_return preview. It does not implement complete RunFlow, persistence, battle runtime, event chains, RoomLoot runtime, objective progress, reward grant, settlement warehouse write, SaveManager, AssetLedger / RunAssetLedger mutation, CommandBus mutation, gameplay runtime PASS, or manual playtest PASS.
-
-Any remaining G30 / older index wording below this update is historical / superseded unless explicitly reopened.
-
-# G30 Docs Index Update
-
-Current G30 entry point:
-
-- `docs/20_product/LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT_CONTRACT.md`
-
-Read with:
-
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-- `docs/validation/G30_LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT_VALIDATION.md`
-- `docs/handoff/HANDOFF_G30_LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT.md`
-
-G30 implements LongTerm system integration and asset interface full content as preview_only / display_only / read_only. It covers six modules, RewardBundle, ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent / ObjectiveEvent, red_dot_policy, jump_target, and display-only consumer alignment. It does not implement real LongTerm backend, rewards, gacha, red dots, objective progress, asset writes, persistence, gameplay runtime PASS, or manual playtest PASS.
-
-Any remaining G29 / older index wording below this update is historical / superseded unless explicitly reopened.
-
-# G29 Docs Index Update
-
-Current G29 entry point:
-
-- `docs/20_product/DEPLOY_PREP_REVISION_FULL_CONTENT_CONTRACT.md`
-
-Read with:
-
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-
-G29 implements the DeployPrep revision v0.2 UI/model/content layer as preview / display-only / read-only. It aligns the visible tabs to 地图 / 仓库 / 申领 / 目标 / 出勤配置, downgrades 作业许可 to future interface / locked state, and keeps real warehouse, asset writes, purchase, reward, settlement, RunBootstrapper, persistence, gameplay runtime PASS, and manual playtest PASS out of scope.
-
-Any remaining G28A/G27A index wording below this update is historical / superseded unless explicitly reopened by a future gate.
-
-# G28A Docs Index Update
-
-Current G28A docs-only entry point:
-
-- `docs/20_product/ITEM_ASSET_CONTENT_AND_WAREHOUSE_VIEW_CONTRACT.md`
-
-Read with:
-
-- `docs/20_product/ASSET_DOMAIN_AND_WAREHOUSE_VIEW_CONTRACT.md`
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-
-G28A is documentation-only item asset content / warehouse view content contract work. It does not approve Godot schema changes, UI consumer changes, Base Docs writes, Connection writes, real warehouse behavior, real asset writes, runtime catalog / ContentDB, rewards, gacha, settlement warehouse writes, objective progress, FileAccess/user persistence, gameplay runtime PASS, or manual playtest PASS.
-
-Any remaining G27A/G27B/G27C index wording below this update is historical / superseded / resolved unless explicitly reopened by a future gate.
-
-# G27A Docs Index Update
-
-Current G27A docs-only entry point:
-
-- `docs/20_product/ASSET_DOMAIN_AND_WAREHOUSE_VIEW_CONTRACT.md`
-
-Read with:
-
-- `docs/10_current/CURRENT_STATE.md`
-- `docs/10_current/CAPABILITY_MATRIX.yaml`
-- `docs/00_governance/OPEN_DECISIONS.md`
-- `docs/route_analysis/ROADMAP_G20_PLUS.md`
-
-G27A is a documentation-only asset-domain / warehouse-view contract foundation. It does not approve Godot code changes, Base Docs changes, Connection changes, real warehouse behavior, real asset writes, rewards, gacha, settlement mutation, persistence, gameplay runtime PASS, or manual playtest PASS.
-
-Any remaining P2 / G26 / prior G27 index wording below this update is historical / superseded / resolved unless explicitly named as the current G27A split or future G27B / G27C / G28 candidate.
-
-# AGAME1 Unified Docs Index
-
-文档状态：G27A 当前入口；P2 统一入口为 historical / superseded
-适用范围：仓库 `docs` 根目录的当前入口、归属和阅读顺序
-最后更新：2026/06/23
-
-本文件当前服务 G27A docs-only 入口；原 P2 文档治理说明为 historical / superseded。它不新增玩法规则，不替代验证记录，不把外部来源材料写成定案。
-
-## 1. 当前必读入口
-
-新对话或审计复查优先读取以下 5 个文件：
-
-1. `docs/INDEX.md`
-2. `docs/10_current/CURRENT_STATE.md`
-3. `docs/10_current/NEXT_ACTION.md`
-4. `docs/10_current/CAPABILITY_MATRIX.yaml`
-5. `docs/00_governance/SOURCE_REGISTRY.md`
-
-旧的 `PROJECT_BASELINE.md`、`ENGINEERING_STATUS.md`、`NEXT_HANDOFF.md`、`DOCS_INDEX.md` 保留为扩展证据和历史状态材料，不再作为第一轮必须通读入口。
-
-## 2. 阶段边界
+## 1. 第一入口
 
 ```text
-P2 = historical / superseded 策划文档统一整理与仓库文档同步执行。
-G25 = UI Structure Stabilization & Playable Route Recovery，已作为工程阶段关闭。
-G26 = completed / historical；不再是后续产品 / 原型阶段占位。
+docs/README.md
+docs/10_current/CURRENT_STATE.md
+docs/10_current/NEXT_ACTION.md
+docs/10_current/CAPABILITY_MATRIX.yaml
+docs/00_governance/SOURCE_REGISTRY.md
+docs/00_governance/DOC_PLACEMENT_STANDARD.md
+docs/00_governance/DUPLICATE_DOC_LEDGER.md
 ```
 
-Historical / superseded P2 note: G27A 当前仍只处理 allowlist docs，不执行 Godot 工程实现，不运行 Godot；Git gate 仅限 G27A docs branch。
+## 2. 当前阶段入口
 
-## 3. 目录归属
+| 阶段 | 状态 | 入口 |
+| --- | --- | --- |
+| DOC-GOV-001 | active / docs-only governance | `docs/00_governance/DOC_PLACEMENT_STANDARD.md`、`docs/00_governance/DUPLICATE_DOC_LEDGER.md` |
+| G36 | current engineering evidence / release gate pending | `docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md`、`docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`、`docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md` |
 
-| 目录 | 定位 |
+G36 不声明 gameplay runtime PASS，也不声明 manual playtest PASS。DOC-GOV-001 不新增玩法规则。
+
+## 3. 近期历史阶段
+
+| 阶段 | 状态 | 索引 |
+| --- | --- | --- |
+| G30-G35 | closed / historical evidence | `docs/40_validation/VALIDATION_INDEX.md`、`docs/50_stages/closed/STAGE_INDEX.md` |
+| G27A-G29 | closed / historical evidence | `docs/50_stages/closed/STAGE_INDEX.md` |
+| G20-G26 | historical evidence | `docs/validation/`、`docs/handoff/`、`docs/route_analysis/ROADMAP_G20_PLUS.md` |
+| G10-G19 | historical evidence | `docs/stage_summaries/STAGE_SUMMARY_INDEX.md` |
+
+## 4. 目录跳转
+
+| 目录 | 用途 |
 | --- | --- |
-| `00_governance/` | 文档治理、来源注册、生命周期、待确认事项、声明台账 |
-| `10_current/` | 当前状态、下一步、能力矩阵 |
-| `20_product/` | 产品契约草案和待确认产品边界 |
-| `30_engineering/` | 工程文档入口与 Godot docs 只读注册 |
-| `40_validation/` | 验证证据索引 |
-| `50_stages/` | 阶段索引；历史阶段保留证据价值 |
-| `60_interfaces/` | Connection 外部只读交接登记与接口说明；不保存内容镜像 |
-| `70_sources/` | Base Docs、UI 图片等外部来源登记与此前获授权的冻结历史快照 |
-| `90_archive/` | 历史、生成报告、旧体系归档说明 |
+| `docs/00_governance/` | 当前治理规则、来源、重复台账、生命周期 |
+| `docs/10_current/` | 当前状态、下一步、能力矩阵 |
+| `docs/20_product/` | 产品 / 工程契约 |
+| `docs/30_engineering/` | 工程文档入口与 Godot docs 注册 |
+| `docs/40_validation/` | 验证索引 |
+| `docs/50_stages/` | 阶段 active / closed 索引 |
+| `docs/60_interfaces/` | Connection 外部交接登记 |
+| `docs/70_sources/` | Base Docs / UI reference 来源登记 |
+| `docs/90_archive/` | 历史和旧体系说明 |
 
-既有 `handoff/`、`validation/`、`stage_summaries/`、`route_analysis/`、`project_governance/`、`design_sources/` 不删除；P2 historical / superseded references are retained only as older index context; G27A current references are listed at the top of this file.
+## 5. 历史入口状态
 
-## 4. 使用规则
-
-```text
-1. 当前事实先看 10_current。
-2. 来源归属先看 00_governance/SOURCE_REGISTRY.md。
-3. Base Docs 是当前归档后的外部只读策划事实来源之一；读取前应按当前目录和相近文件名重新定位。
-4. UI 图片只作为确定图、示例图、问题截图或未知图登记。
-5. 未确认内容不得写成最终规则。
-6. Connection 是外部并行交接区，不得进入 Git 或作为 Godot 资源导入。
-7. 外部来源完整边界见 `docs/00_governance/EXTERNAL_SOURCE_BOUNDARY.md`。
-```
+`docs/DOCS_INDEX.md`、`docs/PROJECT_BASELINE.md`、`docs/ENGINEERING_STATUS.md`、`docs/NEXT_HANDOFF.md` 保留为历史扩展证据，不再作为当前第一入口。

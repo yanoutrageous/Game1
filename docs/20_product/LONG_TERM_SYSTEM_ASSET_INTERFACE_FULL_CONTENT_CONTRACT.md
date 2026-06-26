@@ -1,4 +1,11 @@
-# G30 Long-Term System Asset Interface Full Content Contract
+﻿# G30 Long-Term System Asset Interface Full Content Contract
+
+## 中文摘要（DOC-GOV-001）
+
+G30 记录长期系统与资产接口的 full content preview / display-only / read-only 内容。它说明六模块、RewardBundle、事件流、red_dot_policy、jump_target 和资产接口预览如何被展示或引用；不实现真实长期系统后台、奖励发放、抽奖、红点清除、资产写入、持久化、gameplay runtime PASS 或 manual playtest PASS。
+
+本摘要只解释既有英文 contract 内容，不新增玩法规则，不扩大验证结论。
+
 
 Status: G30-R2 implementation contract.
 
