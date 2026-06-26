@@ -1,3 +1,14 @@
+# G35 Runtime Safety / Ownership Cleanup Status
+
+G35-R2 is the current implementation slice on branch `godot/g35-runtime-safety-ownership-cleanup`.
+
+- Scope: engineering stabilization, persistence safety, debug gate hardening, Event result return, and RunScene/GameKernel ownership clarification.
+- Persistence: MetaProgress load is read-only; parse/open/future-schema failures use explicit load status and do not overwrite original save files.
+- Debug: `DebugGate` controls debug panel visibility and CommandBus debug-source execution.
+- Runtime ownership: RunScene remains authoritative for the current M1 `RunContext` / `CommandBus`; GameKernel is inactive/bootstrap placeholder.
+- DeployPrep remains preview/intent only and does not implement a real RunBootstrapper.
+- Not implemented: complete SaveManager, active-run persistence, full RunFlow rewrite, real DeployPrep start, new gameplay systems, gameplay runtime PASS, manual playtest PASS.
+
 # G34 Rule Effect Modifier Content Delivery Status
 
 G34-R2 is the current implementation slice on branch `godot/g34-rule-effect-modifier-content-delivery`.

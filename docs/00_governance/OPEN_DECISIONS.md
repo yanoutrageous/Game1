@@ -1,3 +1,14 @@
+# G35 Open Decisions Update
+
+G35-R2 runtime safety / ownership cleanup open decisions:
+
+- `OD-G35-001`: final active-run persistence and SaveManager ownership remains open; G35 only prevents silent overwrite on load failure.
+- `OD-G35-002`: final dev/debug enablement policy for non-editor debug builds remains open; G35 adds a hard gate with editor/debug setting support.
+- `OD-G35-003`: future GameKernel ownership migration remains open; G35 keeps RunScene authoritative.
+- `OD-G35-004`: DeployPrep real RunBootstrapper and config legality bridge remains deferred to a later audited stage.
+- `OD-G35-005`: broader RunScene decomposition remains deferred; G35 only performs first-step safety thinning.
+- Any G34 / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G34 Open Decisions Update
 
 G34-R2 rule / effect / modifier / content-delivery open decisions:

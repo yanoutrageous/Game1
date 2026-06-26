@@ -4,6 +4,8 @@ class_name SaveAdapter
 const M1_META_PROGRESS_PATH := "user://graytail_m1_meta_progress.json"
 
 var last_error: String = ""
+var last_load_status: String = ""
+var last_load_result: Dictionary = {}
 
 
 func build_run_save_snapshot(context: RunContext) -> Dictionary:
@@ -47,21 +49,32 @@ func default_meta_progress() -> Dictionary:
 
 
 func load_json_or_default(path: String = M1_META_PROGRESS_PATH, default_data: Dictionary = {}) -> Dictionary:
+	var result := load_json_result(path, default_data)
+	return _dictionary_from(result.get("data", default_meta_progress()))
+
+
+func load_json_result(path: String = M1_META_PROGRESS_PATH, default_data: Dictionary = {}) -> Dictionary:
 	last_error = ""
+	last_load_status = ""
 	var fallback := default_meta_progress() if default_data.is_empty() else default_data.duplicate(true)
 	if not FileAccess.file_exists(path):
-		return fallback
+		return _load_result(true, "missing", fallback, "")
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		last_error = "open_failed:%s" % FileAccess.get_open_error()
-		return fallback
+		return _load_result(false, "open_failed", fallback, last_error)
 	var text := file.get_as_text()
 	file.close()
 	var parsed: Variant = JSON.parse_string(text)
 	if parsed is Dictionary:
-		return _normalize_meta_progress(parsed as Dictionary, fallback)
+		var parsed_dict := parsed as Dictionary
+		var schema_version := int(parsed_dict.get("schema_version", fallback.get("schema_version", 1)))
+		if schema_version > int(fallback.get("schema_version", 1)):
+			last_error = "future_schema:%d" % schema_version
+			return _load_result(false, "future_schema", fallback, last_error)
+		return _load_result(true, "loaded", _normalize_meta_progress(parsed_dict, fallback), "")
 	last_error = "parse_failed"
-	return fallback
+	return _load_result(false, "parse_failed", fallback, last_error)
 
 
 func save_json(data: Dictionary, path: String = M1_META_PROGRESS_PATH) -> bool:
@@ -93,7 +106,26 @@ func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Diction
 	return result
 
 
+func _load_result(ok: bool, status: String, data: Dictionary, error: String) -> Dictionary:
+	last_load_status = status
+	last_load_result = {
+		"ok": ok,
+		"status": status,
+		"data": data.duplicate(true),
+		"error": error,
+		"read_only_fallback": not ok,
+		"writes_storage": false,
+	}
+	return last_load_result.duplicate(true)
+
+
 func _array_from(value: Variant) -> Array:
 	if value is Array:
 		return (value as Array).duplicate(true)
 	return []
+
+
+func _dictionary_from(value: Variant) -> Dictionary:
+	if value is Dictionary:
+		return (value as Dictionary).duplicate(true)
+	return {}

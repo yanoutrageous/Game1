@@ -21,13 +21,13 @@ const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const RunSurfaceScript := preload("res://scripts/ui/run_surface/run_surface.gd")
 const RunSurfaceModel := preload("res://scripts/ui/run_surface/run_surface_model.gd")
 const MetaProgressAdapterScript := preload("res://scripts/core/save/meta_progress_adapter.gd")
+const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
 const SCREEN_LONG_TERM := &"long_term_shell"
 const SCREEN_SETTINGS := &"settings_shell"
 const SCREEN_RUN := &"run"
-const M1_DEBUG_PANEL_ENABLED := true
 
 const LEGACY_GRAYBOX_VALIDATION_MARKERS := ["Start Tutorial 5x5", "Start Standard 10x10", "Controls: W/A/S/D or arrows move"]
 const G9_UI_NODE_VALIDATION_MARKERS := [
@@ -97,9 +97,11 @@ var player_controller: PlayerController
 var screen_state: StringName = SCREEN_MAIN_MENU
 var current_layout_profile_id: StringName = &"desktop"
 var last_command_result: Dictionary = {}
+var m1_debug_panel_enabled: bool = false
 
 
 func _ready() -> void:
+	m1_debug_panel_enabled = DebugGateScript.is_debug_tools_enabled()
 	ContentDB.load_asset_manifest()
 	meta_progress_adapter = MetaProgressAdapterScript.new()
 	run_context = RunContextScript.new()
@@ -258,8 +260,8 @@ func _build_run_overlay() -> void:
 	var surface_overlay_slot: Control = run_surface.get_overlay_slot()
 
 	debug_toggle_button = _add_button(run_overlay_root, "DebugToggleButton", Rect2(1010, 226, 170, 34), "Dev Debug", func() -> void: _toggle_debug_panel())
-	debug_toggle_button.visible = M1_DEBUG_PANEL_ENABLED
-	debug_toggle_button.disabled = not M1_DEBUG_PANEL_ENABLED
+	debug_toggle_button.visible = m1_debug_panel_enabled
+	debug_toggle_button.disabled = not m1_debug_panel_enabled
 	debug_toggle_button.tooltip_text = "m1_debug_panel=true; dev/test-only cheat panel"
 	debug_panel = PanelContainer.new()
 	debug_panel.name = "DebugOperationPanel"
@@ -467,7 +469,7 @@ func _build_runtime_modals() -> void:
 	pause_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	pause_status_label.text = "本面板只暂停 UI 并提供设置入口；继续会返回当前局，不写本地持久化偏好。"
 	pause_content.add_child(pause_status_label)
-	if M1_DEBUG_PANEL_ENABLED:
+	if m1_debug_panel_enabled:
 		_add_menu_button(pause_content, "Dev Debug Panel", func() -> void: _open_debug_panel_from_pause())
 	_add_menu_button(pause_content, "继续", func() -> void: pause_panel.visible = false)
 	_add_menu_button(pause_content, "设置说明", func() -> void: _open_settings_from_pause())
@@ -1130,7 +1132,8 @@ func _open_map_from_ui(source: StringName = &"button") -> void:
 
 
 func _toggle_debug_panel() -> void:
-	if not M1_DEBUG_PANEL_ENABLED:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
 		return
 	if debug_panel != null:
 		if not debug_panel.visible:
@@ -1146,7 +1149,10 @@ func _open_debug_panel_from_pause() -> void:
 
 
 func _open_debug_panel() -> void:
-	if not M1_DEBUG_PANEL_ENABLED or debug_panel == null:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		return
+	if debug_panel == null:
 		return
 	_sync_debug_coordinates()
 	_apply_debug_panel_layout(_current_layout_profile())
@@ -1157,6 +1163,14 @@ func _close_debug_panel() -> void:
 	if debug_panel != null:
 		debug_panel.visible = false
 	get_viewport().gui_release_focus()
+
+
+func _can_use_debug_tools() -> bool:
+	return m1_debug_panel_enabled and DebugGateScript.is_debug_tools_enabled()
+
+
+func _show_debug_disabled_feedback() -> void:
+	_show_command_feedback(DebugGateScript.disabled_result())
 
 
 func _sync_debug_coordinates() -> void:
@@ -1237,6 +1251,9 @@ func _debug_search_and_show_loot() -> void:
 
 
 func _debug_meta_add_gold() -> void:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		return
 	if meta_progress_adapter == null:
 		return
 	var summary := meta_progress_adapter.add_gold(1000, "m1_debug_panel")
@@ -1247,6 +1264,9 @@ func _debug_meta_add_gold() -> void:
 
 
 func _debug_meta_set_gold(amount: int) -> void:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		return
 	if meta_progress_adapter == null:
 		return
 	var summary := meta_progress_adapter.set_gold(amount, "m1_debug_panel")
@@ -1257,6 +1277,9 @@ func _debug_meta_set_gold(amount: int) -> void:
 
 
 func _debug_meta_clear_gold() -> void:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		return
 	if meta_progress_adapter == null:
 		return
 	var summary := meta_progress_adapter.clear_gold()
@@ -1267,6 +1290,9 @@ func _debug_meta_clear_gold() -> void:
 
 
 func _debug_meta_add_warehouse_item() -> void:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		return
 	if meta_progress_adapter == null:
 		return
 	var summary := meta_progress_adapter.add_warehouse_item({
@@ -1284,6 +1310,9 @@ func _debug_meta_add_warehouse_item() -> void:
 
 
 func _debug_meta_clear_warehouse() -> void:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		return
 	if meta_progress_adapter == null:
 		return
 	var summary := meta_progress_adapter.clear_warehouse("m1_debug_panel")
@@ -1294,6 +1323,9 @@ func _debug_meta_clear_warehouse() -> void:
 
 
 func _debug_meta_save() -> void:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		return
 	if meta_progress_adapter == null:
 		return
 	var summary := meta_progress_adapter.mark_debug_command("meta_save", {"source": "m1_debug_panel"})
@@ -1305,6 +1337,9 @@ func _debug_meta_save() -> void:
 
 
 func _debug_meta_clear_save() -> void:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		return
 	if meta_progress_adapter == null:
 		return
 	var summary := meta_progress_adapter.clear()
@@ -1316,6 +1351,9 @@ func _debug_meta_clear_save() -> void:
 
 
 func _debug_meta_summary() -> void:
+	if not _can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		return
 	if meta_progress_adapter == null:
 		return
 	meta_progress_adapter.load_or_create_default()

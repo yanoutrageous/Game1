@@ -1,3 +1,26 @@
+g35_update:
+  current_stage: "G35-R2 Engineering Stabilization / Runtime Ownership Cleanup"
+  status: "runtime_safety_ownership_cleanup"
+  safety_interfaces:
+    - "SaveAdapter.load_json_result"
+    - "MetaProgressAdapter read-only load fallback"
+    - "DebugGate"
+    - "CommandBus debug execution gate"
+    - "RoomResolver real EventService result return"
+    - "GameKernel inactive ownership marker"
+  boundaries:
+    - "RunScene remains current authoritative M1 runtime owner"
+    - "DeployPrep start remains preview / intent only"
+    - "no project.godot / scene / resource / uid / translation / import metadata changes"
+  not_complete:
+    - "complete SaveManager"
+    - "active-run persistence"
+    - "complete RunFlow rewrite"
+    - "real DeployPrep RunBootstrapper"
+    - "new gameplay systems"
+    - "gameplay runtime PASS"
+    - "manual playtest PASS"
+
 g34_update:
   current_stage: "G34-R2 Rule / Effect / Modifier & Content Delivery Common System Full Content Implementation"
   contract: "docs/20_product/RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_CONTRACT.md"

@@ -12,6 +12,7 @@ const REJECTION_EVENT_OPTION_UNAVAILABLE := "event_option_unavailable"
 const REJECTION_CANNOT_EXTRACT := "cannot_extract"
 const REJECTION_NO_EXTRACT_REQUEST := "no_extract_request"
 const EncounterContractScript := preload("res://scripts/core/run/encounter/encounter_contract.gd")
+const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
 
 var context: RunContext
 var room_resolver: RoomResolver = RoomResolver.new()
@@ -21,6 +22,9 @@ var command_sequence: int = 0
 func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 	var command: Dictionary = _normalize_command(command_name, payload)
 	var command_payload: Dictionary = command.get("payload", {})
+	if _is_debug_command_request(command_name, command_payload) and not DebugGateScript.is_debug_tools_enabled():
+		var blocked := DebugGateScript.disabled_result(DEFAULT_ACTOR_ID)
+		return CommandResult.from_action(command, blocked, [], [], _snapshot_delta_for(blocked))
 	if context == null and command_name in [&"start_demo_run", &"start_tutorial_run", &"start_standard_run"]:
 		context = RunContext.new()
 	var event_start: int = _event_count()
@@ -517,8 +521,7 @@ func _current_blocked_reason() -> String:
 
 
 func _is_debug_command_request(command_name: StringName, payload: Dictionary) -> bool:
-	var source := String(payload.get("source", ""))
-	return String(command_name).begins_with("debug_") or source in ["debug", "debug_panel", "m1_debug_panel"]
+	return DebugGateScript.is_debug_command(command_name, payload)
 
 
 func _mark_open_map_placeholder() -> Dictionary:

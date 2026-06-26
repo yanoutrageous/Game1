@@ -7,6 +7,8 @@ var save_adapter: SaveAdapter = SaveAdapterScript.new()
 var data: Dictionary = {}
 var last_commit: Dictionary = {}
 var last_error: String = ""
+var last_load_status: String = ""
+var last_load_result: Dictionary = {}
 
 
 func _init() -> void:
@@ -39,10 +41,13 @@ func describe_boundary() -> Dictionary:
 
 
 func load_or_create_default() -> Dictionary:
-	data = save_adapter.load_json_or_default(SaveAdapter.M1_META_PROGRESS_PATH, save_adapter.default_meta_progress())
-	if save_adapter.last_error != "":
-		last_error = save_adapter.last_error
-	save()
+	last_error = ""
+	var result := save_adapter.load_json_result(SaveAdapter.M1_META_PROGRESS_PATH, save_adapter.default_meta_progress())
+	last_load_result = result.duplicate(true)
+	last_load_status = str(result.get("status", ""))
+	data = _dictionary_from(result.get("data", save_adapter.default_meta_progress()))
+	if not bool(result.get("ok", false)):
+		last_error = str(result.get("error", save_adapter.last_error))
 	return data.duplicate(true)
 
 
@@ -139,6 +144,8 @@ func get_summary() -> Dictionary:
 		"debug_used": bool(data.get("debug_used", false)),
 		"debug_commands": _array_from(data.get("debug_commands", [])),
 		"last_commit": last_commit.duplicate(true),
+		"last_load_status": last_load_status,
+		"last_error": last_error,
 		"path": SaveAdapter.M1_META_PROGRESS_PATH,
 	}
 

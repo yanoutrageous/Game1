@@ -1,3 +1,23 @@
+# G35 Docs Index Update
+
+Current G35 entry points:
+
+- `docs/validation/G35_RUNTIME_SAFETY_OWNERSHIP_CLEANUP_VALIDATION.md`
+- `docs/handoff/HANDOFF_G35_RUNTIME_SAFETY_OWNERSHIP_CLEANUP.md`
+- `tools/validate_g35_runtime_safety.ps1`
+
+Read with:
+
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+- `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
+
+G35 implements runtime safety and ownership cleanup only. It covers persistence read fallback safety, debug command hard gating, Event result return, GameKernel inactive ownership marker, and DeployPrep preview boundary confirmation. It does not implement complete SaveManager, active-run persistence, full RunFlow rewrite, real DeployPrep RunBootstrapper, new gameplay systems, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G34 / older index wording below this update is historical / superseded unless explicitly reopened.
+
 # G34 Docs Index Update
 
 Current G34 entry point:

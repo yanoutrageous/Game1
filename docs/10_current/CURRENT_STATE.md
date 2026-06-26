@@ -1,3 +1,18 @@
+# G35 Current Update
+
+Current active slice: G35-R2 Engineering Stabilization / Runtime Ownership Cleanup.
+
+G35 status boundaries:
+
+- Persistence safety: M1 MetaProgress loading is read-only and does not overwrite parse-failed, future-schema, or manually edited save files.
+- Debug safety: Debug panel visibility and CommandBus debug-source execution are hard-gated behind debug/editor or explicit dev setting.
+- Event safety: default Event room interaction returns the real EventService result.
+- Runtime ownership: RunScene remains the authoritative M1 runtime owner; GameKernel is inactive/bootstrap placeholder until a later migration.
+- DeployPrep start remains bounded preview/intent wording only; no real RunBootstrapper is implemented.
+- G35 does not implement complete SaveManager, active-run persistence, full RunFlow, real DeployPrep start, new gameplay systems, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G34 or older current-state wording below this update is historical / superseded unless explicitly reopened by a future gate.
+
 # G34 Current Update
 
 Current active slice: G34-R2 Rule / Effect / Modifier & Content Delivery Common System Full Content Implementation.

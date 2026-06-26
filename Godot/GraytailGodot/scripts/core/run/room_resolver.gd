@@ -107,6 +107,7 @@ func interact_current_room(context: RunContext) -> Dictionary:
 			if bool(result.get("completed", false)):
 				context.truth_map.mark_cleared(pos)
 				context.intel_map.refresh_revealed_cell(pos, context.truth_map)
+			return result
 		&"Monster":
 			context.last_message = "Monster requires fight command."
 		&"Exit":

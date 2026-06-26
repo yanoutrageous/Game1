@@ -1,3 +1,16 @@
+# G35 Route Update
+
+Current active slice: G35-R2 Engineering Stabilization / Runtime Ownership Cleanup.
+
+- G35 hardens existing M1 runtime seams rather than adding content or systems.
+- Persistence safety now requires explicit save actions; load/parse/future-schema fallback must not overwrite original user save files.
+- Debug tools are gated by `DebugGate` and CommandBus execution checks, not only by UI visibility.
+- Event room interaction returns the real EventService result to preserve UI/result fidelity.
+- RunScene remains the current authoritative runtime owner; GameKernel is inactive/bootstrap placeholder until a future audited ownership migration.
+- DeployPrep start remains preview/intent only and does not implement real RunBootstrapper.
+- Unified G35-R3 audit / release gate should validate static checks, parser smoke, staged-file allowlist, and no main merge/main push unless separately authorized.
+- Any remaining G34 or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G34 Route Update
 
 Current active slice: G34-R2 Rule / Effect / Modifier & Content Delivery Common System Full Content Implementation.
