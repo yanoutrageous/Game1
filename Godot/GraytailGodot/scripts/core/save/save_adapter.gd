@@ -2,6 +2,13 @@ extends RefCounted
 class_name SaveAdapter
 
 const M1_META_PROGRESS_PATH := "user://graytail_m1_meta_progress.json"
+const SAVE_ROOT_DIR := "user://saves"
+const SAVE_MANIFEST_PATH := "user://saves/manifest.json"
+const SAVE_PROFILES_DIR := "user://saves/profiles"
+const DEFAULT_PROFILE_ID := "default"
+const DEFAULT_PROFILE_META_PROGRESS_PATH := "user://saves/profiles/default/meta_progress.json"
+const DEFAULT_PROFILE_RUN_CHECKPOINT_PATH := "user://saves/profiles/default/run_checkpoint.json"
+const DEFAULT_PROFILE_PREVIEW_PATH := "user://saves/profiles/default/preview.json"
 
 var last_error: String = ""
 var last_load_status: String = ""
@@ -30,7 +37,9 @@ func describe_boundary() -> Dictionary:
 		"adapter_id": &"save_adapter_m1",
 		"writes_storage": true,
 		"scope": &"m1_meta_progress_json",
-		"path": M1_META_PROGRESS_PATH,
+		"path": DEFAULT_PROFILE_META_PROGRESS_PATH,
+		"legacy_path": M1_META_PROGRESS_PATH,
+		"profile_manifest_path": SAVE_MANIFEST_PATH,
 	}
 
 
@@ -48,12 +57,12 @@ func default_meta_progress() -> Dictionary:
 	}
 
 
-func load_json_or_default(path: String = M1_META_PROGRESS_PATH, default_data: Dictionary = {}) -> Dictionary:
-	var result := load_json_result(path, default_data)
+func load_json_or_default(path: String = M1_META_PROGRESS_PATH, default_data: Dictionary = {}, normalize_meta_progress: bool = true) -> Dictionary:
+	var result := load_json_result(path, default_data, normalize_meta_progress)
 	return _dictionary_from(result.get("data", default_meta_progress()))
 
 
-func load_json_result(path: String = M1_META_PROGRESS_PATH, default_data: Dictionary = {}) -> Dictionary:
+func load_json_result(path: String = M1_META_PROGRESS_PATH, default_data: Dictionary = {}, normalize_meta_progress: bool = true) -> Dictionary:
 	last_error = ""
 	last_load_status = ""
 	var fallback := default_meta_progress() if default_data.is_empty() else default_data.duplicate(true)
@@ -72,24 +81,34 @@ func load_json_result(path: String = M1_META_PROGRESS_PATH, default_data: Dictio
 		if schema_version > int(fallback.get("schema_version", 1)):
 			last_error = "future_schema:%d" % schema_version
 			return _load_result(false, "future_schema", fallback, last_error)
-		return _load_result(true, "loaded", _normalize_meta_progress(parsed_dict, fallback), "")
+		var loaded_data := _normalize_meta_progress(parsed_dict, fallback) if normalize_meta_progress else parsed_dict.duplicate(true)
+		return _load_result(true, "loaded", loaded_data, "")
 	last_error = "parse_failed"
 	return _load_result(false, "parse_failed", fallback, last_error)
 
 
-func save_json(data: Dictionary, path: String = M1_META_PROGRESS_PATH) -> bool:
+func save_json(data: Dictionary, path: String = M1_META_PROGRESS_PATH, normalize_meta_progress: bool = true) -> bool:
 	last_error = ""
+	_ensure_parent_dir(path)
 	var file := FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
 		last_error = "open_failed:%s" % FileAccess.get_open_error()
 		return false
-	file.store_string(JSON.stringify(_normalize_meta_progress(data, default_meta_progress()), "\t"))
+	var output := _normalize_meta_progress(data, default_meta_progress()) if normalize_meta_progress else data.duplicate(true)
+	file.store_string(JSON.stringify(output, "\t"))
 	file.close()
 	return true
 
 
 func clear(path: String = M1_META_PROGRESS_PATH) -> bool:
 	return save_json(default_meta_progress(), path)
+
+
+func _ensure_parent_dir(path: String) -> void:
+	var base_dir := path.get_base_dir()
+	if base_dir == "" or base_dir == ".":
+		return
+	DirAccess.make_dir_recursive_absolute(base_dir)
 
 
 func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Dictionary:

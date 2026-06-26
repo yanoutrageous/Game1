@@ -5,6 +5,7 @@ const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_i
 const DeployConfigScript := preload("res://scripts/ui/deploy_prep/deploy_config.gd")
 const DeployPrepModelScript := preload("res://scripts/ui/deploy_prep/deploy_prep_model.gd")
 const DeployTabModelScript := preload("res://scripts/ui/deploy_prep/deploy_tab_model.gd")
+const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
 
 signal deploy_start_intent_requested(intent: Dictionary)
 
@@ -291,8 +292,7 @@ func _on_start_preview_pressed() -> void:
 	var run_payload := _dictionary_from(start_action.get("run_intent", {}))
 	run_payload["source_page"] = &"deploy_prep"
 	run_payload["preview_only"] = false
-	run_payload["run_start_config_preview"] = current_model.get("run_start_config", {})
-	run_payload["boundary"] = "existing_run_route_only_no_run_bootstrapper"
+	run_payload = RunStartRouteAdapterScript.payload_from_deploy_preview(current_model.get("run_start_config", {}), run_payload)
 	var intent := NavigationIntentScript.make_run(&"deploy_prep", run_payload)
 	deploy_start_intent_requested.emit(intent)
 

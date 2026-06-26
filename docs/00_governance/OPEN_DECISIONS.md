@@ -1,3 +1,15 @@
+# G36 Open Decisions Update
+
+G36-R2 runtime architecture / save profile open decisions:
+
+- `OD-G36-001`: final SaveManager UI and player-facing profile management remain open; G36 adds core/profile path foundation only.
+- `OD-G36-002`: active-run persistence and checkpoint resume remain open; G36 defines path slots but does not persist active runs.
+- `OD-G36-003`: runtime profile switching remains blocked mid-run; final switch UX and conflict handling remain open.
+- `OD-G36-004`: full DeployPrep RunBootstrapper and config legality bridge remain deferred; G36 maps unsupported config fields to existing-route fallback.
+- `OD-G36-005`: future GameKernel ownership migration remains open; RunScene remains authoritative.
+- `OD-G36-006`: broader RunScene decomposition can continue later; G36 splits debug lookup, meta commit, UI bridge, and route normalization only.
+- Any G35 / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G35 Open Decisions Update
 
 G35-R2 runtime safety / ownership cleanup open decisions:

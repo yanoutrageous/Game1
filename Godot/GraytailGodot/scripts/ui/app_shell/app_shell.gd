@@ -6,6 +6,7 @@ const PageRouterScript := preload("res://scripts/ui/app_shell/page_router.gd")
 const MainMenuShellScript := preload("res://scripts/ui/main_menu/main_menu_shell.gd")
 const DeployPrepShellScript := preload("res://scripts/ui/deploy_prep/deploy_prep_shell.gd")
 const LongTermShellScript := preload("res://scripts/ui/long_term/long_term_shell.gd")
+const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
 
 signal host_route_requested(intent: Dictionary)
 
@@ -179,7 +180,9 @@ func _on_navigation_intent_requested(intent: Dictionary) -> void:
 
 func _on_deploy_start_intent_requested(intent: Dictionary) -> void:
 	var payload := NavigationIntentScript.payload(intent)
+	payload = RunStartRouteAdapterScript.payload_from_route_payload(payload)
 	if NavigationIntentScript.target(intent) == NavigationIntentScript.TARGET_RUN and bool(payload.get("uses_existing_route", false)):
+		intent["payload"] = payload
 		host_route_requested.emit(intent)
 
 

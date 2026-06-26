@@ -1,3 +1,24 @@
+# G36 Docs Index Update
+
+Current G36 entry points:
+
+- `docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md`
+- `docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`
+- `docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md`
+- `tools/validate_g36_runtime_architecture.ps1`
+
+Read with:
+
+- `docs/10_current/CURRENT_STATE.md`
+- `docs/10_current/CAPABILITY_MATRIX.yaml`
+- `docs/00_governance/OPEN_DECISIONS.md`
+- `docs/route_analysis/ROADMAP_G20_PLUS.md`
+- `Godot/GraytailGodot/docs/GODOT_CURRENT_STATUS.md`
+
+G36 implements runtime architecture and save/profile foundation only. It covers save profile path contracts, MetaProgress read-only fallback write-blocking, RunScene helper decomposition, bounded DeployPrep route payload normalization, and DebugGate review. It does not implement complete SaveManager UI, active-run persistence, runtime profile switching, full RunBootstrapper, new gameplay systems, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G35 / older index wording below this update is historical / superseded unless explicitly reopened.
+
 # G35 Docs Index Update
 
 Current G35 entry points:

@@ -2,6 +2,7 @@ extends RefCounted
 class_name MetaProgressAdapter
 
 const SaveAdapterScript := preload("res://scripts/core/save/save_adapter.gd")
+const SaveProfileManifestScript := preload("res://scripts/core/save/save_profile_manifest.gd")
 
 var save_adapter: SaveAdapter = SaveAdapterScript.new()
 var data: Dictionary = {}
@@ -9,6 +10,10 @@ var last_commit: Dictionary = {}
 var last_error: String = ""
 var last_load_status: String = ""
 var last_load_result: Dictionary = {}
+var active_profile_id: String = SaveProfileManifestScript.DEFAULT_PROFILE_ID
+var active_meta_progress_path: String = SaveProfileManifestScript.default_meta_progress_path()
+var write_blocked: bool = false
+var write_block_reason: String = ""
 
 
 func _init() -> void:
@@ -28,36 +33,51 @@ func build_settlement_export(result_snapshot: Dictionary) -> Dictionary:
 
 
 func can_write_persistence() -> bool:
-	return true
+	return not write_blocked
 
 
 func describe_boundary() -> Dictionary:
 	return {
 		"adapter_id": &"meta_progress_adapter_m1",
-		"writes_storage": true,
+		"writes_storage": can_write_persistence(),
 		"scope": &"m1_minimal_meta_progress",
-		"path": SaveAdapter.M1_META_PROGRESS_PATH,
+		"profile_id": active_profile_id,
+		"path": active_meta_progress_path,
+		"legacy_path": SaveAdapter.M1_META_PROGRESS_PATH,
+		"write_blocked": write_blocked,
+		"write_block_reason": write_block_reason,
 	}
+
+func set_active_profile_path(path: String, profile_id: String = SaveProfileManifestScript.DEFAULT_PROFILE_ID) -> void:
+	active_profile_id = SaveProfileManifestScript.sanitize_profile_id(profile_id)
+	active_meta_progress_path = path if path != "" else SaveProfileManifestScript.profile_paths(active_profile_id).get("meta_progress", SaveProfileManifestScript.default_meta_progress_path())
+	load_or_create_default()
 
 
 func load_or_create_default() -> Dictionary:
 	last_error = ""
-	var result := save_adapter.load_json_result(SaveAdapter.M1_META_PROGRESS_PATH, save_adapter.default_meta_progress())
+	var result := save_adapter.load_json_result(active_meta_progress_path, save_adapter.default_meta_progress())
 	last_load_result = result.duplicate(true)
 	last_load_status = str(result.get("status", ""))
 	data = _dictionary_from(result.get("data", save_adapter.default_meta_progress()))
+	write_blocked = bool(result.get("read_only_fallback", false))
+	write_block_reason = "meta_progress_read_only_fallback" if write_blocked else ""
 	if not bool(result.get("ok", false)):
 		last_error = str(result.get("error", save_adapter.last_error))
 	return data.duplicate(true)
 
 
 func save() -> bool:
-	var ok := save_adapter.save_json(data, SaveAdapter.M1_META_PROGRESS_PATH)
+	if not _ensure_writable("save"):
+		return false
+	var ok := save_adapter.save_json(data, active_meta_progress_path)
 	last_error = save_adapter.last_error
 	return ok
 
 
 func clear() -> Dictionary:
+	if not _ensure_writable("clear"):
+		return get_summary()
 	data = save_adapter.default_meta_progress()
 	save()
 	return get_summary()
@@ -66,6 +86,16 @@ func clear() -> Dictionary:
 func apply_settlement(result_snapshot: Dictionary) -> Dictionary:
 	if data.is_empty():
 		load_or_create_default()
+	if not _ensure_writable("apply_settlement"):
+		last_commit = {
+			"ok": false,
+			"status": "write_blocked",
+			"reason": write_block_reason,
+			"result_id": _result_id(result_snapshot),
+			"summary": get_summary(),
+			"error": last_error,
+		}
+		return last_commit.duplicate(true)
 	var result_id := _result_id(result_snapshot)
 	var committed_ids: Array = _array_from(data.get("committed_result_ids", []))
 	if result_id in committed_ids:
@@ -145,14 +175,19 @@ func get_summary() -> Dictionary:
 		"debug_commands": _array_from(data.get("debug_commands", [])),
 		"last_commit": last_commit.duplicate(true),
 		"last_load_status": last_load_status,
+		"write_blocked": write_blocked,
+		"write_block_reason": write_block_reason,
+		"profile_id": active_profile_id,
 		"last_error": last_error,
-		"path": SaveAdapter.M1_META_PROGRESS_PATH,
+		"path": active_meta_progress_path,
 	}
 
 
 func mark_debug_command(command: String, payload: Dictionary = {}) -> Dictionary:
 	if data.is_empty():
 		load_or_create_default()
+	if not _ensure_writable("mark_debug_command"):
+		return get_summary()
 	data["debug_used"] = true
 	var commands: Array = _array_from(data.get("debug_commands", []))
 	commands.append({
@@ -168,6 +203,8 @@ func mark_debug_command(command: String, payload: Dictionary = {}) -> Dictionary
 func add_gold(amount: int, source: String = "debug") -> Dictionary:
 	if data.is_empty():
 		load_or_create_default()
+	if not _ensure_writable("add_gold"):
+		return get_summary()
 	data["gold"] = maxi(0, int(data.get("gold", 0)) + amount)
 	mark_debug_command("meta_add_gold", {"amount": amount, "source": source})
 	return get_summary()
@@ -176,6 +213,8 @@ func add_gold(amount: int, source: String = "debug") -> Dictionary:
 func set_gold(amount: int, source: String = "debug") -> Dictionary:
 	if data.is_empty():
 		load_or_create_default()
+	if not _ensure_writable("set_gold"):
+		return get_summary()
 	data["gold"] = maxi(0, amount)
 	mark_debug_command("meta_set_gold", {"amount": amount, "source": source})
 	return get_summary()
@@ -184,6 +223,8 @@ func set_gold(amount: int, source: String = "debug") -> Dictionary:
 func clear_gold() -> Dictionary:
 	if data.is_empty():
 		load_or_create_default()
+	if not _ensure_writable("clear_gold"):
+		return get_summary()
 	data["gold"] = 0
 	mark_debug_command("meta_clear_gold", {"source": "debug"})
 	return get_summary()
@@ -192,6 +233,8 @@ func clear_gold() -> Dictionary:
 func add_warehouse_item(item: Dictionary) -> Dictionary:
 	if data.is_empty():
 		load_or_create_default()
+	if not _ensure_writable("add_warehouse_item"):
+		return get_summary()
 	var items: Array = _array_from(data.get("warehouse_items", []))
 	items.append(_minimal_item_record(item))
 	data["warehouse_items"] = items
@@ -202,6 +245,8 @@ func add_warehouse_item(item: Dictionary) -> Dictionary:
 func clear_warehouse(source: String = "debug") -> Dictionary:
 	if data.is_empty():
 		load_or_create_default()
+	if not _ensure_writable("clear_warehouse"):
+		return get_summary()
 	data["warehouse_items"] = []
 	mark_debug_command("meta_clear_warehouse", {"source": source})
 	return get_summary()
@@ -238,6 +283,9 @@ func _minimal_item_record(item: Variant) -> Dictionary:
 
 
 func _record_debug_marker(command: String, payload: Dictionary = {}) -> void:
+	if write_blocked:
+		last_error = write_block_reason
+		return
 	data["debug_used"] = true
 	var commands: Array = _array_from(data.get("debug_commands", []))
 	commands.append({
@@ -258,6 +306,13 @@ func _dictionary_from(value: Variant) -> Dictionary:
 	if value is Dictionary:
 		return (value as Dictionary).duplicate(true)
 	return {}
+
+
+func _ensure_writable(operation: String = "write") -> bool:
+	if write_blocked:
+		last_error = "%s:%s" % [write_block_reason, operation]
+		return false
+	return true
 
 
 func _json_safe(value: Variant) -> Variant:

@@ -1,3 +1,34 @@
+g36_update:
+  current_stage: "G36-R2 Runtime Architecture Consolidation & Save/Profile Foundation"
+  status: "runtime_architecture_save_profile_foundation"
+  save_profile_interfaces:
+    - "SaveManager"
+    - "SaveProfileManifest"
+    - "SaveImportStaging"
+    - "SaveProfilePreview"
+    - "MetaProgressAdapter active profile path injection"
+  runtime_split_interfaces:
+    - "RunSceneMetaCommitter"
+    - "RunSceneDebugBridge"
+    - "RunSceneUIBridge"
+    - "RunStartConfig"
+    - "RunStartRouteAdapter"
+  safety_boundaries:
+    - "read-only fallback blocks MetaProgress writes"
+    - "profile switching blocked mid-run"
+    - "RunScene remains current authoritative runtime owner"
+    - "GameKernel remains inactive bootstrap placeholder"
+    - "DeployPrep uses existing run route only"
+    - "DebugGate remains hard debug command gate"
+  not_complete:
+    - "complete SaveManager UI"
+    - "active-run persistence"
+    - "runtime profile switching"
+    - "complete RunBootstrapper"
+    - "new gameplay systems"
+    - "gameplay runtime PASS"
+    - "manual playtest PASS"
+
 g35_update:
   current_stage: "G35-R2 Engineering Stabilization / Runtime Ownership Cleanup"
   status: "runtime_safety_ownership_cleanup"

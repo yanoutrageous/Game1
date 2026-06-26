@@ -1,3 +1,19 @@
+# G36 Current Update
+
+Current active slice: G36-R2 Runtime Architecture Consolidation & Save/Profile Foundation.
+
+G36 status boundaries:
+
+- Save/profile foundation: `SaveManager`, `SaveProfileManifest`, `SaveImportStaging`, and `SaveProfilePreview` define the first profile manifest and per-profile path structure.
+- MetaProgress safety: read-only fallback states such as parse failure, future schema, or open failure block `save`, settlement commit, debug meta writes, clear/reset, and debug marker writes.
+- Runtime decomposition: RunScene remains high-level scene lifecycle/orchestration while helper scripts own meta commit, debug lookup, UI bridge, and start route normalization.
+- Ownership: RunScene remains current authoritative M1 runtime owner; GameKernel remains inactive/bootstrap placeholder.
+- DeployPrep route: DeployPrep/AppShell use bounded `RunStartConfig` / `RunStartRouteAdapter` payloads and fall back to existing standard/demo route for unsupported config fields.
+- Debug: DebugGate remains the hard gate for debug panel and CommandBus debug-source execution.
+- G36 does not implement complete SaveManager UI, active-run persistence, runtime profile switching, full RunBootstrapper, new gameplay systems, gameplay runtime PASS, or manual playtest PASS.
+
+Any remaining G35 or older current-state wording below this update is historical / superseded unless explicitly reopened by a future gate.
+
 # G35 Current Update
 
 Current active slice: G35-R2 Engineering Stabilization / Runtime Ownership Cleanup.

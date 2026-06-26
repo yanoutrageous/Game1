@@ -1,3 +1,16 @@
+# G36 Runtime Architecture / Save Profile Status
+
+G36-R2 is the current implementation slice on branch `godot/g36-runtime-architecture-save-profile`.
+
+- Scope: Runtime Architecture Consolidation & Save/Profile Foundation.
+- Product contract: `docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md`.
+- Godot scope: `SaveManager`, `SaveProfileManifest`, `SaveImportStaging`, `SaveProfilePreview`, `MetaProgressAdapter` write-blocking, `RunSceneMetaCommitter`, `RunSceneDebugBridge`, `RunSceneUIBridge`, `RunStartConfig`, `RunStartRouteAdapter`, DeployPrep/AppShell bounded route payload.
+- Boundary: runtime architecture / save profile foundation only.
+- Not implemented: complete SaveManager UI, active-run persistence, runtime profile switching, full RunBootstrapper, new gameplay systems, gameplay runtime, manual playtest.
+- Validation target: `tools/validate_g35_runtime_safety.ps1`, `tools/validate_g36_runtime_architecture.ps1`, plus Godot headless project-load/parser smoke when available.
+- G36-R2 validation PASS: G35 script, G36 script, Godot headless import, project-load/parser, and scene-load smoke.
+- Parser / scene smoke is not gameplay runtime PASS or manual playtest PASS.
+
 # G35 Runtime Safety / Ownership Cleanup Status
 
 G35-R2 is the current implementation slice on branch `godot/g35-runtime-safety-ownership-cleanup`.

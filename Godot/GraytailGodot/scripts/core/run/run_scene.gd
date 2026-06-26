@@ -21,7 +21,12 @@ const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const RunSurfaceScript := preload("res://scripts/ui/run_surface/run_surface.gd")
 const RunSurfaceModel := preload("res://scripts/ui/run_surface/run_surface_model.gd")
 const MetaProgressAdapterScript := preload("res://scripts/core/save/meta_progress_adapter.gd")
+const SaveManagerScript := preload("res://scripts/core/save/save_manager.gd")
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
+const RunSceneDebugBridgeScript := preload("res://scripts/core/run/run_scene_debug_bridge.gd")
+const RunSceneMetaCommitterScript := preload("res://scripts/core/run/run_scene_meta_committer.gd")
+const RunSceneUIBridgeScript := preload("res://scripts/core/run/run_scene_ui_bridge.gd")
+const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
@@ -55,6 +60,7 @@ const G9_UI_NODE_VALIDATION_MARKERS := [
 var run_context: RunContext
 var command_bus: CommandBus
 var meta_progress_adapter: MetaProgressAdapter
+var save_manager
 var ui_root: Control
 var ui_shell: Control
 var main_menu_panel: Control
@@ -103,7 +109,10 @@ var m1_debug_panel_enabled: bool = false
 func _ready() -> void:
 	m1_debug_panel_enabled = DebugGateScript.is_debug_tools_enabled()
 	ContentDB.load_asset_manifest()
+	save_manager = SaveManagerScript.new()
+	save_manager.load_manifest()
 	meta_progress_adapter = MetaProgressAdapterScript.new()
+	save_manager.configure_meta_adapter(meta_progress_adapter)
 	run_context = RunContextScript.new()
 	command_bus = CommandBusScript.new()
 	command_bus.bind_context(run_context)
@@ -536,15 +545,11 @@ func _shell_snapshot() -> Dictionary:
 
 
 func _meta_progress_summary() -> Dictionary:
-	if meta_progress_adapter == null:
-		return {}
-	return meta_progress_adapter.get_summary()
+	return RunSceneMetaCommitterScript.summary(meta_progress_adapter)
 
 
 func _commit_result_to_meta(result_snapshot: Dictionary) -> Dictionary:
-	if meta_progress_adapter == null:
-		return {"ok": false, "reason": "meta_progress_adapter_missing"}
-	return meta_progress_adapter.apply_settlement(result_snapshot)
+	return RunSceneMetaCommitterScript.commit_result(meta_progress_adapter, result_snapshot)
 
 
 func _show_main_menu() -> void:
@@ -982,11 +987,9 @@ func _refresh_view_models() -> void:
 	var layout_profile: Dictionary = _current_layout_profile()
 	_apply_runtime_modal_layout(layout_profile)
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
-	var minimap_vm := MiniMapViewModel.build_from_run_map_snapshot(snapshot.get("run_map_snapshot", {}))
-	if minimap_vm.room_markers.is_empty():
-		minimap_vm = MiniMapViewModel.build_from_intel(run_context.intel_map, run_context.get_current_pos())
+	var minimap_vm := RunSceneUIBridgeScript.minimap_from_snapshot_or_intel(snapshot, run_context)
 	if run_surface != null:
-		var surface_model := RunSurfaceModel.build(snapshot, minimap_vm, layout_profile, last_command_result)
+		var surface_model := RunSceneUIBridgeScript.build_surface_model(snapshot, minimap_vm, layout_profile, last_command_result)
 		run_surface.apply_layout_profile(layout_profile)
 		run_surface.apply_surface_model(surface_model)
 	if ui_shell != null:
@@ -1166,11 +1169,11 @@ func _close_debug_panel() -> void:
 
 
 func _can_use_debug_tools() -> bool:
-	return m1_debug_panel_enabled and DebugGateScript.is_debug_tools_enabled()
+	return m1_debug_panel_enabled and RunSceneDebugBridgeScript.can_use_debug_tools()
 
 
 func _show_debug_disabled_feedback() -> void:
-	_show_command_feedback(DebugGateScript.disabled_result())
+	_show_command_feedback(RunSceneDebugBridgeScript.disabled_feedback())
 
 
 func _sync_debug_coordinates() -> void:
@@ -1216,21 +1219,7 @@ func _debug_teleport_to_room_type(room_type: StringName) -> void:
 
 
 func _nearest_room_of_type(room_type: StringName) -> Vector2i:
-	if run_context == null or run_context.truth_map == null:
-		return Vector2i(-1, -1)
-	var current := run_context.get_current_pos()
-	var best := Vector2i(-1, -1)
-	var best_distance := 999999
-	for y in range(run_context.truth_map.height):
-		for x in range(run_context.truth_map.width):
-			var pos := Vector2i(x, y)
-			if run_context.truth_map.get_room_type(pos) != room_type:
-				continue
-			var distance: int = abs(pos.x - current.x) + abs(pos.y - current.y)
-			if distance < best_distance:
-				best_distance = distance
-				best = pos
-	return best
+	return RunSceneDebugBridgeScript.nearest_room_of_type(run_context, room_type)
 
 
 func _debug_teleport_xy(enter_room: bool) -> void:
@@ -1256,9 +1245,9 @@ func _debug_meta_add_gold() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := meta_progress_adapter.add_gold(1000, "m1_debug_panel")
+	var summary := RunSceneMetaCommitterScript.debug_add_gold(meta_progress_adapter, 1000, "m1_debug_panel")
 	if debug_log != null:
-		debug_log.text = "Meta debug: +1000 gold. Total=%s" % summary.get("gold", 0)
+		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: +1000 gold.", summary)
 	if ui_shell != null:
 		ui_shell.call("apply_snapshot", _shell_snapshot())
 
@@ -1269,9 +1258,9 @@ func _debug_meta_set_gold(amount: int) -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := meta_progress_adapter.set_gold(amount, "m1_debug_panel")
+	var summary := RunSceneMetaCommitterScript.debug_set_gold(meta_progress_adapter, amount, "m1_debug_panel")
 	if debug_log != null:
-		debug_log.text = "Meta debug: set gold=%s." % summary.get("gold", 0)
+		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: set gold.", summary)
 	if ui_shell != null:
 		ui_shell.call("apply_snapshot", _shell_snapshot())
 
@@ -1282,9 +1271,9 @@ func _debug_meta_clear_gold() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := meta_progress_adapter.clear_gold()
+	var summary := RunSceneMetaCommitterScript.debug_clear_gold(meta_progress_adapter)
 	if debug_log != null:
-		debug_log.text = "Meta debug: cleared gold. Total=%s" % summary.get("gold", 0)
+		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: cleared gold.", summary)
 	if ui_shell != null:
 		ui_shell.call("apply_snapshot", _shell_snapshot())
 
@@ -1295,7 +1284,7 @@ func _debug_meta_add_warehouse_item() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := meta_progress_adapter.add_warehouse_item({
+	var summary := RunSceneMetaCommitterScript.debug_add_warehouse_item(meta_progress_adapter, {
 		"instance_id": "m1_debug_warehouse_item_%d" % Time.get_ticks_msec(),
 		"item_id": "m1_debug_warehouse_item",
 		"display_name": "M1 Debug Warehouse Item",
@@ -1304,7 +1293,7 @@ func _debug_meta_add_warehouse_item() -> void:
 		"source": "m1_debug_panel",
 	})
 	if debug_log != null:
-		debug_log.text = "Meta debug: warehouse item added. Items=%s" % summary.get("warehouse_items_count", 0)
+		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: warehouse item added.", summary)
 	if ui_shell != null:
 		ui_shell.call("apply_snapshot", _shell_snapshot())
 
@@ -1315,9 +1304,9 @@ func _debug_meta_clear_warehouse() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := meta_progress_adapter.clear_warehouse("m1_debug_panel")
+	var summary := RunSceneMetaCommitterScript.debug_clear_warehouse(meta_progress_adapter, "m1_debug_panel")
 	if debug_log != null:
-		debug_log.text = "Meta debug: warehouse cleared. Items=%s" % summary.get("warehouse_items_count", 0)
+		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: warehouse cleared.", summary)
 	if ui_shell != null:
 		ui_shell.call("apply_snapshot", _shell_snapshot())
 
@@ -1328,8 +1317,9 @@ func _debug_meta_save() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := meta_progress_adapter.mark_debug_command("meta_save", {"source": "m1_debug_panel"})
-	var saved := meta_progress_adapter.save()
+	var result := RunSceneMetaCommitterScript.debug_mark_and_save(meta_progress_adapter, "meta_save", {"source": "m1_debug_panel"})
+	var summary: Dictionary = result.get("summary", {})
+	var saved := bool(result.get("saved", false))
 	if debug_log != null:
 		debug_log.text = "Meta debug: save=%s gold=%s items=%s" % [saved, summary.get("gold", 0), summary.get("warehouse_items_count", 0)]
 	if ui_shell != null:
@@ -1342,10 +1332,9 @@ func _debug_meta_clear_save() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := meta_progress_adapter.clear()
-	summary = meta_progress_adapter.mark_debug_command("meta_clear_save", {"source": "m1_debug_panel"})
+	var summary := RunSceneMetaCommitterScript.debug_clear_save(meta_progress_adapter, "m1_debug_panel")
 	if debug_log != null:
-		debug_log.text = "Meta debug: save cleared. Total=%s" % summary.get("gold", 0)
+		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: save cleared.", summary)
 	if ui_shell != null:
 		ui_shell.call("apply_snapshot", _shell_snapshot())
 
@@ -1356,8 +1345,7 @@ func _debug_meta_summary() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	meta_progress_adapter.load_or_create_default()
-	var summary := meta_progress_adapter.mark_debug_command("meta_read_save", {"source": "m1_debug_panel"})
+	var summary := RunSceneMetaCommitterScript.debug_read_summary(meta_progress_adapter, "m1_debug_panel")
 	if debug_log != null:
 		debug_log.text = "Meta summary: gold=%s runs=%s extracts=%s fails=%s items=%s" % [
 			summary.get("gold", 0),
@@ -1393,12 +1381,11 @@ func _start_standard_from_ui() -> void:
 
 
 func _start_run_from_route(intent: Dictionary) -> void:
-	var payload := NavigationIntentScript.payload(intent)
-	var route_mode := StringName(payload.get("route_mode", &"standard_run"))
-	match route_mode:
-		&"tutorial_run":
+	var payload := RunStartRouteAdapterScript.payload_from_intent(intent)
+	match RunStartRouteAdapterScript.route_command_from_payload(payload):
+		&"start_tutorial_run":
 			_start_tutorial_from_ui()
-		&"demo_run":
+		&"start_demo_run":
 			var result: Dictionary = command_bus.dispatch(&"start_demo_run")
 			last_command_result = result.duplicate(true)
 			_show_command_feedback(result)

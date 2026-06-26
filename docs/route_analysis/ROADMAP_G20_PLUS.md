@@ -1,3 +1,17 @@
+# G36 Route Update
+
+Current active slice: G36-R2 Runtime Architecture Consolidation & Save/Profile Foundation.
+
+- G36 consolidates runtime architecture and save/profile foundation without adding gameplay content.
+- Save/Profile foundation adds `SaveManager`, `SaveProfileManifest`, `SaveImportStaging`, and `SaveProfilePreview`.
+- MetaProgress writes are blocked when the current load state is read-only fallback, including parse failure and future schema.
+- RunScene remains authoritative but delegates meta commit, debug lookup, UI model bridge, and route payload normalization to helper scripts.
+- DeployPrep start payloads are normalized by `RunStartConfig` / `RunStartRouteAdapter` and continue to use the existing run route only.
+- Debug tooling remains gated by `DebugGate` and `CommandBus`.
+- G36 does not implement complete SaveManager UI, active-run persistence, runtime profile switching, full RunBootstrapper, new gameplay systems, gameplay runtime PASS, or manual playtest PASS.
+- Unified G36-R3 audit / release gate should validate G35/G36 scripts, parser smoke, staged-file allowlist, and no main merge/main push unless separately authorized.
+- Any remaining G35 or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G35 Route Update
 
 Current active slice: G35-R2 Engineering Stabilization / Runtime Ownership Cleanup.
