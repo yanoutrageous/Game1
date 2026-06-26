@@ -6,6 +6,7 @@ const DeployConfigScript := preload("res://scripts/ui/deploy_prep/deploy_config.
 const DeployPrepModelScript := preload("res://scripts/ui/deploy_prep/deploy_prep_model.gd")
 const DeployTabModelScript := preload("res://scripts/ui/deploy_prep/deploy_tab_model.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
+const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 
 signal deploy_start_intent_requested(intent: Dictionary)
 
@@ -92,6 +93,10 @@ func _build_backdrop() -> void:
 	_add_color_rect(self, "DeployPrepLeftPanel", Rect2(52, 84, 290, 552), Color(0.055, 0.090, 0.100, 0.96))
 	_add_color_rect(self, "DeployPrepCenterPanel", Rect2(372, 84, 498, 552), Color(0.044, 0.070, 0.080, 0.95))
 	_add_color_rect(self, "DeployPrepSummaryPanel", Rect2(900, 84, 322, 552), Color(0.060, 0.085, 0.094, 0.97))
+	var art09_refs := _art09_asset_refs()
+	_add_texture_rect_from_ref(self, "Art09DeployMainPanel", Rect2(372, 84, 498, 552), _asset_ref_from(art09_refs, "panels", "main"), 0.26)
+	_add_texture_rect_from_ref(self, "Art09DeploySummaryPanel", Rect2(900, 84, 322, 552), _asset_ref_from(art09_refs, "panels", "summary"), 0.28)
+	_add_texture_rect_from_ref(self, "Art09DeployHighlight", Rect2(398, 96, 430, 236), _asset_ref_from(art09_refs, "panels", "highlight"), 0.34)
 	_add_label(self, "DeployPrepTitle", Rect2(64, 30, 520, 42), String(current_model.get("title", "出发探索")), 32, PresentationTheme.color_for_key(&"ui.warning"))
 	_add_label(self, "DeployPrepSubtitle", Rect2(380, 38, 620, 34), String(current_model.get("subtitle", "")), 15, PresentationTheme.color_for_key(&"ui.muted"))
 
@@ -107,6 +112,7 @@ func _build_tab_panel() -> void:
 			button.name = "DeployTab_%s" % String(tab_id)
 			button.text = String(tab.get("label", tab_id))
 			button.tooltip_text = String(tab.get("subtitle", ""))
+			_apply_art09_button_icon(button, _dictionary_from(tab.get("art09_asset_ref", {})))
 			button.offset_left = 76.0
 			button.offset_top = y
 			button.offset_right = 316.0
@@ -222,6 +228,7 @@ func _refresh_card_buttons() -> void:
 			button.name = "DeployCard_%s" % String(card_id)
 			button.text = label
 			button.tooltip_text = String(card.get("summary", ""))
+			_apply_art09_button_icon(button, _dictionary_from(card.get("art09_asset_ref", {})))
 			button.custom_minimum_size = Vector2(180, 44)
 			button.clip_text = true
 			button.pressed.connect(func() -> void: _on_card_pressed(captured_card))
@@ -266,6 +273,10 @@ func _refresh_actions() -> void:
 	abandon_button.text = String(abandon_action.get("label", "放弃探索"))
 	abandon_button.disabled = bool(abandon_action.get("disabled", true))
 	abandon_button.tooltip_text = String(abandon_action.get("tooltip", ""))
+	var art09_refs := _art09_asset_refs()
+	_apply_art09_button_icon(start_button, _asset_ref_from(art09_refs, "buttons", "confirm"))
+	_apply_art09_button_icon(continue_button, _asset_ref_from(art09_refs, "buttons", "loadout"))
+	_apply_art09_button_icon(abandon_button, _asset_ref_from(art09_refs, "buttons", "back_main"))
 	var message := String(current_model.get("action_message", ""))
 	if bool(current_model.get("abandon_confirm_visible", false)):
 		message = String(abandon_action.get("confirm_copy", "强确认 preview：再次点击只会关闭提示，不执行放弃。"))
@@ -368,6 +379,44 @@ func _dictionary_from(value: Variant) -> Dictionary:
 	if value is Dictionary:
 		return (value as Dictionary).duplicate(true)
 	return {}
+
+
+func _art09_asset_refs() -> Dictionary:
+	return _dictionary_from((_config()).get("art09_asset_refs", {}))
+
+
+func _asset_ref_from(source: Dictionary, group_id: String, entry_id: String) -> Dictionary:
+	var group := _dictionary_from(source.get(group_id, {}))
+	return _dictionary_from(group.get(entry_id, {}))
+
+
+func _apply_art09_button_icon(button: Button, asset_ref: Dictionary) -> void:
+	if button == null:
+		return
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	if texture == null:
+		return
+	button.icon = texture
+	button.expand_icon = true
+
+
+func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2, asset_ref: Dictionary, alpha: float = 1.0) -> TextureRect:
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	if texture == null:
+		return null
+	var texture_rect := TextureRect.new()
+	texture_rect.name = node_name
+	texture_rect.texture = texture
+	texture_rect.offset_left = rect.position.x
+	texture_rect.offset_top = rect.position.y
+	texture_rect.offset_right = rect.position.x + rect.size.x
+	texture_rect.offset_bottom = rect.position.y + rect.size.y
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	texture_rect.modulate = Color(1.0, 1.0, 1.0, alpha)
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(texture_rect)
+	return texture_rect
 
 
 func _join_array(items: Array, fallback: String) -> String:

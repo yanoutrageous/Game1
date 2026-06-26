@@ -2,6 +2,8 @@ extends PanelContainer
 class_name InventoryPanel
 
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
+const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 
 signal drop_item_requested(instance_id: String)
 signal close_requested
@@ -164,6 +166,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	item_button.focus_mode = Control.FOCUS_NONE
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
+	_apply_art09_item_icon(item_button, item)
 	item_button.pressed.connect(func() -> void: tooltip_label.text = RunUIViewModel.item_tooltip(item))
 	row.add_child(item_button)
 	var drop_button := Button.new()
@@ -182,3 +185,12 @@ func _array_from(source: Dictionary, key: String) -> Array:
 	if raw is Array:
 		return (raw as Array).duplicate(true)
 	return []
+
+
+func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
+	var asset_ref := PresentationMappingScript.inventory_item_icon_ref(item)
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	if texture == null:
+		return
+	button.icon = texture
+	button.expand_icon = true

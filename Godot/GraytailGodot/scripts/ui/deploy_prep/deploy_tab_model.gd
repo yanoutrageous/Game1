@@ -1,6 +1,8 @@
 extends RefCounted
 class_name DeployTabModel
 
+const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
+
 const TAB_MAP := &"map"
 const TAB_WAREHOUSE := &"warehouse"
 const TAB_CLAIM := &"claim"
@@ -239,6 +241,7 @@ static func _tab(tab_id: StringName, label: String, subtitle: String, lines: Arr
 		"lines": lines.duplicate(true),
 		"secondary_filters": filters.duplicate(true),
 		"cards": cards.duplicate(true),
+		"art09_asset_ref": PresentationMappingScript.deploy_tab_icon_ref(tab_id),
 		"disabled": false,
 		"preview": true,
 		"display_only": true,
@@ -277,6 +280,7 @@ static func _card(
 		"detail": detail,
 		"lines": lines.duplicate(true),
 		"link_preview": links.duplicate(true),
+		"art09_asset_ref": PresentationMappingScript.deploy_card_asset_ref(card_id, category, filter_id if filter_id != &"" else _filter_for_category(category)),
 		"preview": true,
 		"display_only": true,
 		"read_only": true,

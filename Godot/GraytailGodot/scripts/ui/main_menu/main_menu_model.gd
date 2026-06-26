@@ -2,6 +2,7 @@ extends RefCounted
 class_name MainMenuModel
 
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
+const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
 
 
 static func build() -> Dictionary:
@@ -10,6 +11,9 @@ static func build() -> Dictionary:
 		"subtitle": "基地门厅 / 中控入口",
 		"scene_hint": "主菜单固定承担分流：出发探索、长期系统、设置、退出。M1 标准局作为当前可玩快捷入口保留，不替代正式出发页流程。",
 		"role_hint": "当前角色展示占位：外观和穿搭入口后续归入长期系统。",
+		"art09_visuals": {
+			"background": PresentationMappingScript.main_menu_background_ref(),
+		},
 		"entries": [
 			{
 				"id": &"deploy",
@@ -18,6 +22,7 @@ static func build() -> Dictionary:
 				"target": NavigationIntentScript.TARGET_DEPLOY,
 				"requires_confirm": false,
 				"has_badge": false,
+				"art09_asset_ref": PresentationMappingScript.main_menu_entry_icon_ref(&"deploy"),
 			},
 			{
 				"id": &"long_term",
@@ -26,6 +31,7 @@ static func build() -> Dictionary:
 				"target": NavigationIntentScript.TARGET_LONG_TERM,
 				"requires_confirm": false,
 				"has_badge": false,
+				"art09_asset_ref": PresentationMappingScript.main_menu_entry_icon_ref(&"long_term"),
 			},
 			{
 				"id": &"settings",
@@ -34,6 +40,7 @@ static func build() -> Dictionary:
 				"target": NavigationIntentScript.TARGET_SETTINGS,
 				"requires_confirm": false,
 				"has_badge": false,
+				"art09_asset_ref": PresentationMappingScript.main_menu_entry_icon_ref(&"settings"),
 			},
 			{
 				"id": &"exit_game",
@@ -42,6 +49,7 @@ static func build() -> Dictionary:
 				"target": NavigationIntentScript.TARGET_EXIT,
 				"requires_confirm": true,
 				"has_badge": false,
+				"art09_asset_ref": PresentationMappingScript.main_menu_entry_icon_ref(&"exit_game"),
 			},
 		],
 		"notices": [
@@ -62,6 +70,7 @@ static func build() -> Dictionary:
 					"route_mode": &"standard_run",
 				},
 				"has_badge": true,
+				"art09_asset_ref": PresentationMappingScript.key_prompt_ref(&"interact", true),
 			},
 			{
 				"id": &"shortcut_warehouse",

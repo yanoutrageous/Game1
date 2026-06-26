@@ -5,6 +5,7 @@ const AssetDomainContractScript := preload("res://scripts/core/asset/asset_domai
 const AssetProjectionSchemaScript := preload("res://scripts/core/asset/asset_projection_schema.gd")
 const WarehouseViewSchemaScript := preload("res://scripts/core/asset/warehouse_view_schema.gd")
 const WarehouseViewContentSchemaScript := preload("res://scripts/core/asset/warehouse_view_content_schema.gd")
+const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
 
 const CONFIG_VERSION := 3
 const START_MODE_STANDARD_PREVIEW := &"standard_preview"
@@ -64,6 +65,7 @@ static func default_config(sequence: int = 1) -> Dictionary:
 		"warehouse_view_snapshot": WarehouseViewSchemaScript.default_warehouse_view_snapshot(),
 		"warehouse_view_content_snapshot": WarehouseViewContentSchemaScript.build_deploy_prep_content_view(),
 		"long_term_asset_interface_preview": _long_term_asset_interface_preview(),
+		"art09_asset_refs": PresentationMappingScript.deploy_prep_asset_refs(),
 		"preview": true,
 		"display_only": true,
 		"read_only": true,
@@ -158,6 +160,7 @@ static func build_run_start_config(config: Dictionary) -> Dictionary:
 		"warehouse_view_snapshot": _dictionary_copy(source.get("warehouse_view_snapshot", WarehouseViewSchemaScript.default_warehouse_view_snapshot())),
 		"warehouse_view_content_snapshot": _dictionary_copy(source.get("warehouse_view_content_snapshot", WarehouseViewContentSchemaScript.build_deploy_prep_content_view())),
 		"long_term_asset_interface_preview": _dictionary_copy(source.get("long_term_asset_interface_preview", _long_term_asset_interface_preview())),
+		"art09_asset_refs": _dictionary_copy(source.get("art09_asset_refs", PresentationMappingScript.deploy_prep_asset_refs())),
 		"right_summary_preview": _dictionary_copy(source.get("right_summary_preview", right_summary_preview(source))),
 		"history_metadata": history_metadata_for(source),
 		"profile_snapshot_ref": source.get("profile_snapshot_ref", &"placeholder_profile_snapshot"),

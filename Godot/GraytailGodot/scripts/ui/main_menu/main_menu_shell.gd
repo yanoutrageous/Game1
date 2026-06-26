@@ -3,6 +3,7 @@ class_name MainMenuShell
 
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const MainMenuModelScript := preload("res://scripts/ui/main_menu/main_menu_model.gd")
+const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 
 signal navigation_intent_requested(intent: Dictionary)
 
@@ -37,6 +38,8 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 
 func _build_backdrop() -> void:
 	_add_color_rect(self, "MainMenuBackdrop", Rect2(0, 0, 1280, 720), Color(0.018, 0.035, 0.040, 1.0))
+	var visuals := _dictionary_from(current_model.get("art09_visuals", {}))
+	_add_texture_rect_from_ref(self, "Art09MainMenuBackground", Rect2(0, 0, 1280, 720), _dictionary_from(visuals.get("background", {})), 0.56)
 	_add_color_rect(self, "BaseStaticLayer", Rect2(42, 64, 708, 562), Color(0.060, 0.095, 0.105, 0.96))
 	_add_color_rect(self, "BaseAtmosphereLayer", Rect2(70, 226, 650, 266), Color(0.10, 0.19, 0.18, 0.35))
 	_add_label(self, "MainMenuTitle", Rect2(76, 66, 560, 64), String(current_model.get("title", "灰尾回收")), 44, PresentationTheme.color_for_key(&"ui.warning"))
@@ -128,6 +131,7 @@ func _add_entry_button(parent: Control, entry: Dictionary) -> Button:
 	button.text = String(entry.get("label", "入口"))
 	button.tooltip_text = String(entry.get("description", ""))
 	button.custom_minimum_size = Vector2(168, 40)
+	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})))
 	button.pressed.connect(func() -> void: _emit_entry(entry))
 	parent.add_child(button)
 	return button
@@ -185,8 +189,41 @@ func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Col
 	return color_rect
 
 
+func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2, asset_ref: Dictionary, alpha: float = 1.0) -> TextureRect:
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	if texture == null:
+		return null
+	var texture_rect := TextureRect.new()
+	texture_rect.name = node_name
+	texture_rect.texture = texture
+	texture_rect.offset_left = rect.position.x
+	texture_rect.offset_top = rect.position.y
+	texture_rect.offset_right = rect.position.x + rect.size.x
+	texture_rect.offset_bottom = rect.position.y + rect.size.y
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	texture_rect.modulate = Color(1.0, 1.0, 1.0, alpha)
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(texture_rect)
+	return texture_rect
+
+
+func _apply_art09_button_icon(button: Button, asset_ref: Dictionary) -> void:
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	if texture == null:
+		return
+	button.icon = texture
+	button.expand_icon = true
+
+
 func _array_from(source: Dictionary, key: String) -> Array:
 	var raw: Variant = source.get(key, [])
 	if raw is Array:
 		return (raw as Array).duplicate(true)
 	return []
+
+
+func _dictionary_from(value: Variant) -> Dictionary:
+	if value is Dictionary:
+		return (value as Dictionary).duplicate(true)
+	return {}
