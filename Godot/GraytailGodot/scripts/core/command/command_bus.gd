@@ -112,6 +112,7 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 
 func bind_context(next_context: RunContext) -> void:
 	context = next_context
+	room_resolver.bind_runtime_controller(null)
 	if context != null and context.run_active:
 		room_resolver.enter_room(context)
 		_emit_state()
@@ -120,6 +121,7 @@ func bind_context(next_context: RunContext) -> void:
 func bind_runtime_controller(next_controller) -> void:
 	runtime_controller = next_controller
 	context = runtime_controller.context if runtime_controller != null else null
+	room_resolver.bind_runtime_controller(runtime_controller)
 	if context != null and context.run_active:
 		room_resolver.enter_room(context)
 		_emit_state()

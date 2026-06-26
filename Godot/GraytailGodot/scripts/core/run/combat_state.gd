@@ -1,21 +1,23 @@
 extends RefCounted
 class_name CombatState
 
+const RunStateMachineScript := preload("res://scripts/core/run/run_state_machine.gd")
+
 const BASE_MINE_DAMAGE := 30
 const MIN_MINE_DAMAGE := 5
 
 
-static func apply_damage(context: RunContext, amount: int, reason: String = "") -> int:
+static func apply_damage(context: RunContext, amount: int, reason: String = "", fail_authority = null) -> int:
 	if context == null:
 		return 0
 	var damage: int = maxi(0, amount)
 	context.hp = maxi(0, context.hp - damage)
 	if context.hp <= 0:
-		context.fail_run(reason if reason != "" else "hp_depleted")
+		_fail_run(context, reason if reason != "" else "hp_depleted", fail_authority)
 	return damage
 
 
-static func take_mine_hit(context: RunContext) -> int:
+static func take_mine_hit(context: RunContext, fail_authority = null) -> int:
 	if context == null:
 		return 0
 	var damage: int = maxi(MIN_MINE_DAMAGE, BASE_MINE_DAMAGE - context.mine_dmg_reduce)
@@ -23,18 +25,18 @@ static func take_mine_hit(context: RunContext) -> int:
 		context.mine_immunity -= 1
 		damage = 0
 		context.run_stats["mine_immunity_used"] = int(context.run_stats.get("mine_immunity_used", 0)) + 1
-	apply_damage(context, damage, "mine")
+	apply_damage(context, damage, "mine", fail_authority)
 	return damage
 
 
-static func fight_enemy(context: RunContext, pos: Vector2i, adjacent_mines: int) -> Dictionary:
+static func fight_enemy(context: RunContext, pos: Vector2i, adjacent_mines: int, fail_authority = null) -> Dictionary:
 	if context == null:
 		return {"ok": false, "message": "No active run."}
 	var enemy_state := build_enemy_state(context, pos, adjacent_mines)
 	var enemy_power: int = int(enemy_state.get("enemy_power", 0))
 	var player_power := context.power
 	var damage: int = maxi(0, enemy_power - context.power)
-	apply_damage(context, damage, "monster")
+	apply_damage(context, damage, "monster", fail_authority)
 	if context.failed:
 		context.run_stats["combat_damage"] = int(context.run_stats.get("combat_damage", 0)) + damage
 		return {
@@ -137,3 +139,11 @@ static func build_combat_risk_summary(context: RunContext, pos: Vector2i, adjace
 		"player_power": player_power,
 		"adjacent_danger": adjacent_mines,
 	}
+
+
+static func _fail_run(context: RunContext, reason: String, fail_authority = null) -> Dictionary:
+	var fail_reason := reason if reason != "" else "hp_depleted"
+	if fail_authority != null and fail_authority.has_method("fail_run"):
+		return fail_authority.fail_run(fail_reason)
+	var fallback_state_machine = RunStateMachineScript.new()
+	return fallback_state_machine.fail_run(context, fail_reason)

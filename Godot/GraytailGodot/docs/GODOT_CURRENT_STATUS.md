@@ -5,6 +5,7 @@ G37-R2 is the current implementation slice on branch `godot/g37-runtime-authorit
 - Scope: Runtime Authority / RunFlow Execution Consolidation.
 - Product contract: `docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md`.
 - Godot scope: `RunRuntimeController`, `RunStateMachine`, `CommandBus` lifecycle delegation, `RunScene` orchestration-only runtime construction, projection-only `RunFlowStateContract`, and hard-disabled `GameKernel` runtime driver.
+- G37-R2 fail-transition follow-up routes combat HP depletion, fatal mine, event trap, and debug force failure through runtime authority instead of direct `context.fail_run(...)` calls in gameplay services.
 - Boundary: consolidate existing runtime authority only.
 - Not implemented: complete RunFlow rewrite, active-run persistence, SaveManager runtime ownership migration, new gameplay systems, gameplay runtime, manual playtest.
 - G37-R2 validation PASS: `tools/validate_g35_runtime_safety.ps1`, `tools/validate_g36_runtime_architecture.ps1`, `tools/validate_g37_runtime_authority.ps1`, Godot headless project-load/parser smoke, and Godot headless scene-load smoke.

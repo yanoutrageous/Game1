@@ -12,6 +12,8 @@ G37 consolidates the M1 runtime authority path:
 - Added `RunStateMachine` for lifecycle transitions.
 - Updated `CommandBus` to delegate start / extract / fail lifecycle transitions.
 - Updated `RunScene` to use the runtime controller instead of constructing a separate runtime pair.
+- Routed combat HP depletion, fatal mine, and event trap failure through `RunRuntimeController` / `RunStateMachine`.
+- Updated validation to reject direct `context.fail_run(...)` outside `RunContext`, `RunStateMachine`, and the runtime-controller wrapper boundary.
 - Kept `RunFlowStateContract` projection-only.
 - Kept `GameKernel` hard-disabled as a runtime driver.
 

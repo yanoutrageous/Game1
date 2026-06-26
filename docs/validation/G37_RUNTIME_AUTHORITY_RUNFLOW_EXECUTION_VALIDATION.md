@@ -30,6 +30,8 @@ git diff --check
 
 - `RunRuntimeController` owns active `RunContext` and `CommandBus`
 - `CommandBus` delegates start/extract/fail lifecycle paths
+- `combat_state.gd`, `room_resolver.gd`, `command_bus.gd`, and other non-authority files do not call `context.fail_run(...)` directly
+- HP depletion, fatal mine, event trap, and debug force failure route through `RunRuntimeController` / `RunStateMachine`
 - `RunScene` no longer directly constructs `RunContext` / `CommandBus`
 - `RunFlowStateContract` remains projection-only
 - `GameKernel` cannot drive a second runtime context in G37
@@ -54,6 +56,16 @@ Observed notes:
 - Godot project-load / parser smoke exited successfully.
 - Godot scene-load smoke exited successfully with ObjectDB/resource leak warnings; these warnings are recorded and are not gameplay runtime PASS.
 - Smoke produced no committed metadata diff.
+
+## 6. R3 Blocker Fix Coverage
+
+G37-R2 follow-up fixes the R3 blocker where `combat_state.gd` and `room_resolver.gd` could call `context.fail_run(...)` directly. Failure lifecycle transitions now route through runtime authority:
+
+- combat HP depletion passes a fail authority into `CombatState`.
+- fatal mine failure in `RoomResolver` calls runtime authority.
+- event trap HP depletion carries the same fail authority through `EventService`.
+- `CommandBus` binds `RoomResolver` to the current `RunRuntimeController`.
+- `context.fail_run(...)` is allowed only in the `RunContext` primitive and the `RunStateMachine` authority path.
 
 ## 4. Explicit Non-Claims
 

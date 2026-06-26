@@ -77,11 +77,15 @@ func debug_force_extract() -> Dictionary:
 	return _with_actor(state_machine.force_extract(context))
 
 
+func fail_run(reason: String = "forced_failure") -> Dictionary:
+	return _with_actor(state_machine.fail_run(context, reason))
+
+
 func debug_force_fail(reason: String = "debug_forced_failure") -> Dictionary:
-	var result: Dictionary = state_machine.fail_run(context, reason)
+	var result: Dictionary = fail_run(reason)
 	if context != null:
 		context.last_message = "Debug forced failure through RunStateMachine."
-	return _with_actor(result)
+	return result
 
 
 func _enter_room_after_start(room_resolver: RoomResolver) -> void:

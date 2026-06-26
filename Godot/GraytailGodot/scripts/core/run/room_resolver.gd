@@ -4,6 +4,14 @@ class_name RoomResolver
 # Room behavior goes through RoomResolver. UI reads emitted snapshots only.
 # G6 replaces the G4 text "Event placeholder resolved" with EventService outcomes.
 
+const RunStateMachineScript := preload("res://scripts/core/run/run_state_machine.gd")
+
+var runtime_controller
+
+
+func bind_runtime_controller(next_controller) -> void:
+	runtime_controller = next_controller
+
 
 func resolve_entry(_room_id: StringName, _context: Variant = null) -> Dictionary:
 	return {}
@@ -103,7 +111,7 @@ func interact_current_room(context: RunContext) -> Dictionary:
 		&"Normal":
 			return search_current_room(context)
 		&"Event":
-			var result := EventService.execute_default(context, pos)
+			var result := EventService.execute_default(context, pos, runtime_controller)
 			if bool(result.get("completed", false)):
 				context.truth_map.mark_cleared(pos)
 				context.intel_map.refresh_revealed_cell(pos, context.truth_map)
@@ -126,7 +134,7 @@ func select_event_option(context: RunContext, option_id: StringName) -> Dictiona
 	if context.current_room_type != &"Event":
 		context.last_message = "No event option is available here."
 		return {"ok": false, "reason": "event_option_unavailable", "blocked_reason": "event_option_unavailable", "message": context.last_message}
-	var result := EventService.execute_option(context, pos, option_id)
+	var result := EventService.execute_option(context, pos, option_id, runtime_controller)
 	_record_room_event(context, RunEventLog.EVENT_EVENT_OPTION_SELECTED, {"position": pos, "option_id": option_id, "result": result.duplicate(true)})
 	if bool(result.get("completed", false)):
 		context.truth_map.mark_cleared(pos)
@@ -146,7 +154,7 @@ func fight_current_enemy(context: RunContext) -> Dictionary:
 	if context.truth_map.is_cleared(pos):
 		context.last_message = "Monster already cleared."
 		return {"ok": true, "message": context.last_message}
-	var result := CombatState.fight_enemy(context, pos, context.current_adjacent_mines)
+	var result := CombatState.fight_enemy(context, pos, context.current_adjacent_mines, runtime_controller)
 	if bool(result.get("cleared", false)):
 		context.truth_map.mark_cleared(pos)
 		context.intel_map.refresh_revealed_cell(pos, context.truth_map)
@@ -169,13 +177,13 @@ func _enter_mine(context: RunContext, pos: Vector2i) -> Dictionary:
 	if not context.entered_cells.has(key):
 		context.entered_cells[key] = true
 		context.truth_map.mark_triggered(pos)
-		var damage := CombatState.take_mine_hit(context)
+		var damage := CombatState.take_mine_hit(context, runtime_controller)
 		ProtocolService.add_pressure(context, 10)
 		context.run_stats["mine_hits"] = int(context.run_stats.get("mine_hits", 0)) + 1
 		context.intel_map.refresh_revealed_cell(pos, context.truth_map)
 		context.last_message = "Mine triggered: -%d HP, +10 pressure." % damage
 		if context.mine_hits_are_fatal and not context.failed:
-			context.fail_run("fatal_mine")
+			_fail_run(context, "fatal_mine")
 	else:
 		context.last_message = "Triggered mine re-entered; no damage."
 	return {"ok": true, "message": context.last_message}
@@ -192,3 +200,10 @@ func _record_room_event(context: RunContext, event_type: StringName, payload: Di
 		return
 	var command := context.active_command
 	context.record_event(event_type, String(command.get("command_id", "")), StringName(command.get("actor_id", &"player")), String(command.get("source", "room_resolver")), payload)
+
+
+func _fail_run(context: RunContext, reason: String) -> Dictionary:
+	if runtime_controller != null and runtime_controller.has_method("fail_run"):
+		return runtime_controller.fail_run(reason)
+	var fallback_state_machine = RunStateMachineScript.new()
+	return fallback_state_machine.fail_run(context, reason)

@@ -50,21 +50,21 @@ static func get_event_options(context: RunContext, pos: Vector2i, event_type: St
 	return [{"id": &"leave", "label": "Leave event", "enabled": true}]
 
 
-static func execute_default(context: RunContext, pos: Vector2i) -> Dictionary:
+static func execute_default(context: RunContext, pos: Vector2i, fail_authority = null) -> Dictionary:
 	var event_type := get_event_type(context, pos)
 	match event_type:
 		&"trader":
-			return execute_option(context, pos, &"sell_best_item")
+			return execute_option(context, pos, &"sell_best_item", fail_authority)
 		&"dice":
-			return execute_option(context, pos, &"bet_small")
+			return execute_option(context, pos, &"bet_small", fail_authority)
 		&"altar":
-			return execute_option(context, pos, &"offer_hp")
+			return execute_option(context, pos, &"offer_hp", fail_authority)
 		&"trap":
-			return execute_option(context, pos, &"disarm")
-	return execute_option(context, pos, &"leave")
+			return execute_option(context, pos, &"disarm", fail_authority)
+	return execute_option(context, pos, &"leave", fail_authority)
 
 
-static func execute_option(context: RunContext, pos: Vector2i, option_id: StringName) -> Dictionary:
+static func execute_option(context: RunContext, pos: Vector2i, option_id: StringName, fail_authority = null) -> Dictionary:
 	if context == null:
 		return {"ok": false, "message": "No active run."}
 	var key := context.cell_key(pos)
@@ -99,7 +99,7 @@ static func execute_option(context: RunContext, pos: Vector2i, option_id: String
 		&"altar":
 			result = _execute_altar(context, option_id)
 		&"trap":
-			result = _execute_trap(context, option_id)
+			result = _execute_trap(context, option_id, fail_authority)
 		_:
 			result = {"ok": false, "message": "Unknown event type."}
 
@@ -159,7 +159,7 @@ static func _execute_altar(context: RunContext, option_id: StringName) -> Dictio
 	})
 
 
-static func _execute_trap(context: RunContext, option_id: StringName) -> Dictionary:
+static func _execute_trap(context: RunContext, option_id: StringName, fail_authority = null) -> Dictionary:
 	if option_id != &"disarm":
 		return {"ok": false, "message": "Unknown mechanism option."}
 	if context.power >= TRAP_POWER_REQ:
@@ -168,6 +168,6 @@ static func _execute_trap(context: RunContext, option_id: StringName) -> Diction
 			{"item_id": "trap_cache_low_%d" % context.turn, "display_name": "Mechanism Parts", "item_type": &"recovered", "rarity": &"common", "weight": 1, "base_value": 2, "value_state": &"known_value", "tags": ["trap", "event"]},
 		]
 		return RunRuleService.apply_event_rule_result(context, &"trap", {"ok": true, "completed": true, "event_type": &"trap", "black_coin_delta": 25, "pending_gold_delta": 25, "item_defs": item_defs, "message": "Mechanism opened: black_coin +25, item +2."})
-	CombatState.apply_damage(context, 1, "event_trap")
+	CombatState.apply_damage(context, 1, "event_trap", fail_authority)
 	ProtocolService.add_pressure(context, 5)
 	return {"ok": true, "completed": true, "event_type": &"trap", "hp_delta": -1, "pressure_delta": 5, "message": "Mechanism triggered: HP -1, pressure +5."}
