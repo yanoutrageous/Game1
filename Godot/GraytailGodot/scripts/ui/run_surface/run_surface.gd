@@ -5,6 +5,8 @@ const HUDScene := preload("res://scenes/ui/hud/hud.tscn")
 const MiniMapScene := preload("res://scenes/ui/minimap/minimap_panel.tscn")
 const PresentationTheme := preload("res://scripts/presentation/presentation_theme.gd")
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal interact_requested
 signal inventory_requested
@@ -168,6 +170,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	]
 	_apply_actions(model.get("action_buttons", []))
 	_apply_encounter_section(model.get("encounter_section", {}))
+	_apply_art10_text_refresh()
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
@@ -242,7 +245,7 @@ func show_command_feedback(result: Dictionary) -> void:
 	var text := RunUIViewModel.command_result_text(result)
 	if text == "":
 		text = "操作完成。" if accepted else "操作受阻。"
-	command_feedback_label.text = text
+	command_feedback_label.text = Art10UISkinKitScript.sanitize_player_copy(text)
 	if not accepted:
 		var tween := create_tween()
 		tween.tween_property(command_feedback_label, "modulate", Color(1.0, 0.55, 0.35, 1.0), 0.06)
@@ -298,6 +301,7 @@ func _add_panel(node_name: String, color: Color, border_color: Color) -> PanelCo
 	panel.name = node_name
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override("panel", _panel_style(color, border_color, 1))
+	Art10UISkinKitScript.apply_panel(panel, &"surface")
 	add_child(panel)
 	return panel
 
@@ -310,6 +314,7 @@ func _add_label(node_name: String, text: String, font_size: int, color: Color) -
 	label.clip_text = true
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
+	Art10UISkinKitScript.apply_label(label, font_size, color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(label)
 	return label
@@ -324,8 +329,33 @@ func _add_action_button(action_id: StringName, label: String, callback: Callable
 	button.pressed.connect(callback)
 	button.add_theme_font_size_override("font_size", 13)
 	_apply_action_button_style(button, &"secondary", true)
+	_apply_key_prompt_icon(button, action_id)
 	action_bar.add_child(button)
 	action_buttons[action_id] = button
+
+
+func _apply_key_prompt_icon(button: Button, action_id: StringName) -> void:
+	if button == null:
+		return
+	var prompt_action := &"interact"
+	match action_id:
+		&"inventory", &"ground_loot":
+			prompt_action = &"quick"
+		&"map":
+			prompt_action = &"map"
+		&"combat":
+			prompt_action = &"inspect"
+		&"extract":
+			prompt_action = &"toggle"
+		&"pause":
+			prompt_action = &"cancel"
+		_:
+			prompt_action = &"interact"
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(Art09ManifestAssetMappingScript.key_prompt_ref(prompt_action, true))
+	if texture == null:
+		return
+	button.icon = texture
+	button.expand_icon = true
 
 
 func _add_slot(node_name: String) -> Control:
@@ -355,6 +385,7 @@ func _apply_actions(actions: Variant) -> void:
 		button.disabled = not enabled
 		button.tooltip_text = description if enabled or disabled_reason == "" else "%s\n禁用：%s" % [description, disabled_reason]
 		_apply_action_button_style(button, StringName(action_data.get("tone", &"secondary")), enabled)
+		_apply_key_prompt_icon(button, action_id)
 
 
 func _apply_encounter_section(section_variant: Variant) -> void:
@@ -393,6 +424,7 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 		placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		placeholder.add_theme_font_size_override("font_size", 12)
 		placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
+		Art10UISkinKitScript.apply_label(placeholder, 12, PresentationTheme.color_for_key(&"ui.muted"))
 		encounter_options_box.add_child(placeholder)
 
 
@@ -417,6 +449,37 @@ func _clear_encounter_option_buttons() -> void:
 		encounter_options_box.remove_child(child)
 		child.queue_free()
 	encounter_option_buttons.clear()
+
+
+func _apply_art10_text_refresh() -> void:
+	for label in [
+		scanner_title_label,
+		scanner_summary_label,
+		scanner_legend_label,
+		scanner_detail_label,
+		room_title_label,
+		room_body_label,
+		objective_label,
+		encounter_title_label,
+		encounter_body_label,
+		encounter_result_label,
+		resource_label,
+		right_title_label,
+		right_body_label,
+		event_label,
+		reward_label,
+		command_feedback_label,
+		layout_label,
+		action_hint_label,
+	]:
+		if label is Label:
+			Art10UISkinKitScript.apply_label(label)
+	for action_id in action_buttons.keys():
+		var action_button := action_buttons[action_id] as Button
+		Art10UISkinKitScript.apply_button(action_button, &"secondary", 13)
+		_apply_key_prompt_icon(action_button, StringName(action_id))
+	for button in encounter_option_buttons:
+		Art10UISkinKitScript.apply_button(button, &"primary" if button != null and not button.disabled else &"secondary", 12)
 
 
 func _array_variant(raw: Variant) -> Array:
@@ -455,6 +518,7 @@ func _apply_action_button_style(button: Button, tone: StringName, enabled: bool)
 	button.add_theme_stylebox_override("pressed", _panel_style(Color(0.02, 0.04, 0.045, 0.98), accent, 2))
 	button.add_theme_stylebox_override("disabled", _panel_style(Color(0.025, 0.032, 0.034, 0.72), PresentationTheme.color_for_key(&"ui.muted"), 1))
 	button.modulate = Color(1, 1, 1, 1) if enabled else Color(0.74, 0.78, 0.76, 1)
+	Art10UISkinKitScript.apply_button(button, tone, 13)
 
 
 func _tone_color(tone: StringName) -> Color:

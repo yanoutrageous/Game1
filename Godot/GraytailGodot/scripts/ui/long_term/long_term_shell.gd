@@ -3,6 +3,7 @@ class_name LongTermShell
 
 const LongTermModelScript := preload("res://scripts/ui/long_term/long_term_model.gd")
 const LongTermTabModelScript := preload("res://scripts/ui/long_term/long_term_tab_model.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 var current_model: Dictionary = {}
 var selected_module_id: StringName = &"goals"
@@ -47,6 +48,9 @@ func get_selected_module_id() -> StringName:
 
 func _build_static_layout() -> void:
 	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.018, 0.032, 0.038, 1.0))
+	_add_color_rect(self, "LongTermProfileColumn", Art10UISkinKitScript.rect(&"long_term", "profile_column"), Color(0.032, 0.054, 0.060, 0.94))
+	_add_color_rect(self, "LongTermCardGridColumn", Art10UISkinKitScript.rect(&"long_term", "card_grid"), Color(0.022, 0.044, 0.050, 0.90))
+	_add_color_rect(self, "LongTermDetailColumn", Art10UISkinKitScript.rect(&"long_term", "detail_column"), Color(0.040, 0.052, 0.056, 0.94))
 	_add_label(self, "LongTermTitle", Rect2(64, 42, 520, 42), "长期系统", 31, PresentationTheme.color_for_key(&"ui.accent"))
 	_add_label(self, "LongTermSubtitle", Rect2(66, 84, 760, 42), "G24 foundation：六模块内容框架、preview cards、slot 与美术 key 预留。", 15, PresentationTheme.color_for_key(&"ui.muted"))
 	overview_label = _add_label(self, "LongTermOverview", Rect2(64, 132, 1120, 72), "", 15, PresentationTheme.text_color())
@@ -73,6 +77,7 @@ func _build_tab_buttons() -> void:
 		var state := String(module.get("state", "preview"))
 		var button := _add_button(self, "LongTermTab_%s" % String(module_id), Rect2(64 + index * 184, 214, 170, 42), "%s\n%s" % [title, state], Callable(self, "_on_module_tab_pressed").bind(module_id))
 		button.toggle_mode = true
+		Art10UISkinKitScript.apply_button(button, &"secondary", 13)
 		tab_buttons[module_id] = button
 		index += 1
 
@@ -134,6 +139,7 @@ func _refresh_from_model() -> void:
 		_format_cross_links(content_preview.get("cross_links_preview", []) as Array),
 		_format_art_slots(content_preview.get("art_slots_preview", []) as Array),
 	]
+	_apply_art10_text_refresh()
 	_refresh_tab_buttons()
 
 
@@ -142,6 +148,7 @@ func _refresh_tab_buttons() -> void:
 		var button := tab_buttons[module_id] as Button
 		if button != null:
 			button.button_pressed = StringName(module_id) == selected_module_id
+			Art10UISkinKitScript.apply_button(button, &"primary" if button.button_pressed else &"secondary", 13)
 
 
 func _format_child_groups(groups: Array) -> String:
@@ -266,6 +273,26 @@ func _safe_display_text(value: Variant) -> String:
 	return str(value)
 
 
+func _apply_art10_text_refresh() -> void:
+	for label in [
+		overview_label,
+		module_title_label,
+		module_state_label,
+		module_body_label,
+		module_reason_label,
+		child_preview_label,
+		snapshot_label,
+		interface_preview_label,
+		history_preview_label,
+		next_stage_label,
+	]:
+		if label is Label:
+			Art10UISkinKitScript.apply_label(label)
+	for module_id in tab_buttons.keys():
+		var button := tab_buttons[module_id] as Button
+		Art10UISkinKitScript.apply_button(button, &"primary" if button != null and button.button_pressed else &"secondary", 13)
+
+
 func _clear_children() -> void:
 	for child in get_children():
 		remove_child(child)
@@ -280,6 +307,7 @@ func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, 
 	button.offset_top = rect.position.y
 	button.offset_right = rect.position.x + rect.size.x
 	button.offset_bottom = rect.position.y + rect.size.y
+	Art10UISkinKitScript.apply_button(button, &"secondary", 13)
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -297,6 +325,7 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.clip_text = true
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", font_size)
+	Art10UISkinKitScript.apply_label(label, font_size, color)
 	parent.add_child(label)
 	return label
 

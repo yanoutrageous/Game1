@@ -7,6 +7,7 @@ const DeployPrepModelScript := preload("res://scripts/ui/deploy_prep/deploy_prep
 const DeployTabModelScript := preload("res://scripts/ui/deploy_prep/deploy_tab_model.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal deploy_start_intent_requested(intent: Dictionary)
 
@@ -183,6 +184,7 @@ func _refresh_view() -> void:
 	risk_label.text = _section_text("风险", _array_from(preview, "risk"), 4)
 	preview_label.text = _run_start_preview_text(DeployConfigScript.build_run_start_config(_config()))
 	_refresh_actions()
+	_apply_art10_text_refresh()
 
 
 func _refresh_filter_buttons(tab: Dictionary) -> void:
@@ -231,6 +233,7 @@ func _refresh_card_buttons() -> void:
 			_apply_art09_button_icon(button, _dictionary_from(card.get("art09_asset_ref", {})))
 			button.custom_minimum_size = Vector2(180, 44)
 			button.clip_text = true
+			Art10UISkinKitScript.apply_button(button, &"primary" if card_id == selected_card else &"secondary", 13)
 			button.pressed.connect(func() -> void: _on_card_pressed(captured_card))
 			card_list_container.add_child(button)
 			button.disabled = card_id == selected_card
@@ -277,10 +280,14 @@ func _refresh_actions() -> void:
 	_apply_art09_button_icon(start_button, _asset_ref_from(art09_refs, "buttons", "confirm"))
 	_apply_art09_button_icon(continue_button, _asset_ref_from(art09_refs, "buttons", "loadout"))
 	_apply_art09_button_icon(abandon_button, _asset_ref_from(art09_refs, "buttons", "back_main"))
+	Art10UISkinKitScript.apply_button(start_button, &"primary", 14)
+	Art10UISkinKitScript.apply_button(continue_button, &"secondary", 13)
+	Art10UISkinKitScript.apply_button(abandon_button, &"danger", 13)
 	var message := String(current_model.get("action_message", ""))
 	if bool(current_model.get("abandon_confirm_visible", false)):
 		message = String(abandon_action.get("confirm_copy", "强确认 preview：再次点击只会关闭提示，不执行放弃。"))
 	action_message_label.text = message
+	Art10UISkinKitScript.apply_label(action_message_label)
 
 
 func _on_filter_pressed(filter_id: StringName) -> void:
@@ -359,7 +366,7 @@ func _lines_text(lines: Array, max_lines: int = 6) -> String:
 
 
 func _run_start_preview_text(run_start: Dictionary) -> String:
-	return "id=%s  bag=%d/%d  seed=%s  projection=%s" % [
+	return "出发配置 %s  背包 %d/%d  seed %s  路线 %s" % [
 		String(run_start.get("config_id", "")),
 		int(run_start.get("bag_used", 0)),
 		int(run_start.get("bag_limit", 0)),
@@ -388,6 +395,29 @@ func _art09_asset_refs() -> Dictionary:
 func _asset_ref_from(source: Dictionary, group_id: String, entry_id: String) -> Dictionary:
 	var group := _dictionary_from(source.get(group_id, {}))
 	return _dictionary_from(group.get(entry_id, {}))
+
+
+func _apply_art10_text_refresh() -> void:
+	for label in [
+		tab_title_label,
+		tab_body_label,
+		filter_heading_label,
+		card_heading_label,
+		detail_label,
+		summary_label,
+		config_label,
+		effect_label,
+		risk_label,
+		preview_label,
+		action_message_label,
+	]:
+		if label is Label:
+			Art10UISkinKitScript.apply_label(label)
+	for button_id in tab_buttons.keys():
+		var tab_button := tab_buttons[button_id] as Button
+		Art10UISkinKitScript.apply_button(tab_button, &"primary" if tab_button != null and tab_button.disabled else &"secondary", 13)
+	for button in filter_buttons:
+		Art10UISkinKitScript.apply_button(button, &"primary" if button != null and button.disabled else &"secondary", 12)
 
 
 func _apply_art09_button_icon(button: Button, asset_ref: Dictionary) -> void:
@@ -436,6 +466,7 @@ func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, 
 	button.offset_top = rect.position.y
 	button.offset_right = rect.position.x + rect.size.x
 	button.offset_bottom = rect.position.y + rect.size.y
+	Art10UISkinKitScript.apply_button(button, &"secondary", 13)
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -453,6 +484,7 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.clip_text = true
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", font_size)
+	Art10UISkinKitScript.apply_label(label, font_size, color)
 	parent.add_child(label)
 	return label
 

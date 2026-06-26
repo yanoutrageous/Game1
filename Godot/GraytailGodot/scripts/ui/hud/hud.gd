@@ -3,6 +3,8 @@ class_name Hud
 
 # UI reads HudViewModel only. UI must not read TruthMap directly.
 
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+
 var view_model: HUDViewModel
 var layout_profile: Dictionary = {}
 
@@ -42,12 +44,14 @@ func _apply_labels() -> void:
 		status_panel.add_theme_font_size_override("font_size", font_size)
 		status_panel.add_theme_constant_override("line_spacing", line_spacing)
 		status_panel.text = view_model.status_text if view_model != null else "生命：--"
+		Art10UISkinKitScript.apply_label(status_panel, font_size, PresentationTheme.text_color())
 	if protocol_panel != null:
 		protocol_panel.custom_minimum_size = Vector2(332, 86) if is_low else (Vector2(360, 108) if is_high else Vector2(344, 92))
 		protocol_panel.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.warning"))
 		protocol_panel.add_theme_font_size_override("font_size", font_size)
 		protocol_panel.add_theme_constant_override("line_spacing", line_spacing)
 		protocol_panel.text = view_model.protocol_text if view_model != null else "压力：--"
+		Art10UISkinKitScript.apply_label(protocol_panel, font_size, PresentationTheme.color_for_key(&"ui.warning"))
 	if hint_panel != null:
 		hint_panel.custom_minimum_size = Vector2(332, 116) if is_low else (Vector2(360, 138) if is_high else Vector2(344, 124))
 		var hint_color := PresentationTheme.color_for_key(view_model.risk_key) if view_model != null else PresentationTheme.text_color()
@@ -55,6 +59,7 @@ func _apply_labels() -> void:
 		hint_panel.add_theme_font_size_override("font_size", font_size)
 		hint_panel.add_theme_constant_override("line_spacing", line_spacing)
 		hint_panel.text = view_model.hint_text if view_model != null else "最新记录：--"
+		Art10UISkinKitScript.apply_label(hint_panel, font_size, hint_color)
 
 
 func _ensure_asset_backdrops() -> void:

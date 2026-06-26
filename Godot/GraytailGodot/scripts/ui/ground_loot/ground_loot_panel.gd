@@ -2,6 +2,7 @@ extends PanelContainer
 class_name GroundLootPanel
 
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal pickup_item_requested(instance_id: String)
 signal close_requested
@@ -40,11 +41,13 @@ func build() -> void:
 	title_label.text = "地面回收物"
 	title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 	title_label.add_theme_font_size_override("font_size", 20)
+	Art10UISkinKitScript.apply_label(title_label, 20, PresentationTheme.color_for_key(&"ui.accent"))
 	header.add_child(title_label)
 	var close_button := Button.new()
 	close_button.name = "GroundLootCloseButton"
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.text = "关闭"
+	Art10UISkinKitScript.apply_button(close_button, &"secondary", 13)
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	header.add_child(close_button)
 
@@ -84,6 +87,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		snapshot.get("backpack_capacity", 0),
 		snapshot.get("backpack_remaining", 0),
 	]
+	Art10UISkinKitScript.apply_label(summary_label, 13, PresentationTheme.text_color())
 	for child in item_list.get_children():
 		child.queue_free()
 	if ground_items.is_empty():
@@ -91,18 +95,21 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		empty_label.add_theme_constant_override("line_spacing", 2)
 		empty_label.text = "当前房间没有地面回收物。搜索、物资箱、异常体或事件奖励可能把物品留在地面。"
+		Art10UISkinKitScript.apply_label(empty_label, 13, PresentationTheme.text_color())
 		item_list.add_child(empty_label)
 	else:
 		for item: Dictionary in ground_items:
 			_add_item_row(item)
 	if tooltip_label != null:
 		tooltip_label.text = "选择物品可查看说明；拾取会检查背包容量，容量不足时显示 blocked_capacity。"
+		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
 
 
 func show_command_result(result: Dictionary) -> void:
 	if last_result_label == null:
 		return
-	last_result_label.text = RunUIViewModel.command_result_text(result)
+	last_result_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.command_result_text(result))
+	Art10UISkinKitScript.apply_label(last_result_label, 13, PresentationTheme.color_for_key(&"ui.accent"))
 
 
 func show_panel() -> void:
@@ -159,13 +166,18 @@ func _add_item_row(item: Dictionary) -> void:
 	item_button.focus_mode = Control.FOCUS_NONE
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
-	item_button.pressed.connect(func() -> void: tooltip_label.text = RunUIViewModel.item_tooltip(item))
+	Art10UISkinKitScript.apply_button(item_button, &"secondary", 13)
+	item_button.pressed.connect(func() -> void:
+		tooltip_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.item_tooltip(item))
+		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
+	)
 	row.add_child(item_button)
 	var pickup_button := Button.new()
 	pickup_button.name = "GroundLootPickupButton"
 	pickup_button.focus_mode = Control.FOCUS_NONE
 	pickup_button.text = "拾取"
 	pickup_button.tooltip_text = "拾取到背包；容量不足时会显示 blocked_capacity 并保留在地面。"
+	Art10UISkinKitScript.apply_button(pickup_button, &"primary", 13)
 	var instance_id: String = String(item.get("instance_id", ""))
 	pickup_button.pressed.connect(func() -> void: pickup_item_requested.emit(instance_id))
 	row.add_child(pickup_button)

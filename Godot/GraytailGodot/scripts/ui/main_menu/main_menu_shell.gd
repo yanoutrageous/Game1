@@ -4,6 +4,7 @@ class_name MainMenuShell
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const MainMenuModelScript := preload("res://scripts/ui/main_menu/main_menu_model.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal navigation_intent_requested(intent: Dictionary)
 
@@ -85,6 +86,7 @@ func _build_notice_panel() -> void:
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		label.add_theme_font_size_override("font_size", 13)
 		label.add_theme_color_override("font_color", PresentationTheme.text_color())
+		Art10UISkinKitScript.apply_label(label, 13, PresentationTheme.text_color())
 		notice_panel.add_child(label)
 
 
@@ -124,14 +126,18 @@ func _refresh_meta_summary() -> void:
 		summary.get("gold", 0),
 		summary.get("warehouse_items_count", 0),
 	]
+	meta_summary_label.text = Art10UISkinKitScript.sanitize_player_copy(meta_summary_label.text)
 
 
 func _add_entry_button(parent: Control, entry: Dictionary) -> Button:
 	var button := Button.new()
 	button.text = String(entry.get("label", "入口"))
 	button.tooltip_text = String(entry.get("description", ""))
-	button.custom_minimum_size = Vector2(168, 40)
+	button.text = Art10UISkinKitScript.sanitize_player_copy(button.text)
+	button.tooltip_text = Art10UISkinKitScript.sanitize_player_copy(button.tooltip_text)
+	button.custom_minimum_size = Vector2(244, 48)
 	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})))
+	Art10UISkinKitScript.apply_button(button, &"primary" if bool(entry.get("primary", false)) else &"secondary", 15)
 	button.pressed.connect(func() -> void: _emit_entry(entry))
 	parent.add_child(button)
 	return button
@@ -157,6 +163,7 @@ func _add_section_label(parent: Control, text: String) -> Label:
 	label.text = text
 	label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 	label.add_theme_font_size_override("font_size", 14)
+	Art10UISkinKitScript.apply_label(label, 14, PresentationTheme.color_for_key(&"ui.muted"))
 	parent.add_child(label)
 	return label
 
@@ -172,6 +179,7 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", font_size)
+	Art10UISkinKitScript.apply_label(label, font_size, color)
 	parent.add_child(label)
 	return label
 

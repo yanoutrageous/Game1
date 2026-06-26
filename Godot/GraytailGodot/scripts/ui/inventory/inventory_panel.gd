@@ -4,6 +4,7 @@ class_name InventoryPanel
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal drop_item_requested(instance_id: String)
 signal close_requested
@@ -42,11 +43,13 @@ func build() -> void:
 	title_label.text = "回收背包"
 	title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 	title_label.add_theme_font_size_override("font_size", 20)
+	Art10UISkinKitScript.apply_label(title_label, 20, PresentationTheme.color_for_key(&"ui.accent"))
 	header.add_child(title_label)
 	var close_button := Button.new()
 	close_button.name = "InventoryCloseButton"
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.text = "关闭"
+	Art10UISkinKitScript.apply_button(close_button, &"secondary", 13)
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	header.add_child(close_button)
 
@@ -89,6 +92,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		inventory_items.size(),
 		equipped_items.size(),
 	]
+	Art10UISkinKitScript.apply_label(summary_label, 13, PresentationTheme.text_color())
 	for child in item_list.get_children():
 		child.queue_free()
 	if inventory_items.is_empty() and equipped_items.is_empty():
@@ -96,6 +100,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		empty_label.add_theme_constant_override("line_spacing", 2)
 		empty_label.text = "背包为空。搜索、物资箱、异常体或事件奖励可能获得物品；容量不足时物品会留在当前房间地面。"
+		Art10UISkinKitScript.apply_label(empty_label, 13, PresentationTheme.text_color())
 		item_list.add_child(empty_label)
 	else:
 		for item: Dictionary in inventory_items:
@@ -104,12 +109,14 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 			_add_item_row(item, false)
 	if tooltip_label != null:
 		tooltip_label.text = "选择物品可查看说明；背包物品可丢弃到当前房间地面，已装备物品暂不可从此面板丢弃。"
+		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
 
 
 func show_command_result(result: Dictionary) -> void:
 	if last_result_label == null:
 		return
-	last_result_label.text = RunUIViewModel.command_result_text(result)
+	last_result_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.command_result_text(result))
+	Art10UISkinKitScript.apply_label(last_result_label, 13, PresentationTheme.color_for_key(&"ui.accent"))
 
 
 func show_panel() -> void:
@@ -167,7 +174,11 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
 	_apply_art09_item_icon(item_button, item)
-	item_button.pressed.connect(func() -> void: tooltip_label.text = RunUIViewModel.item_tooltip(item))
+	Art10UISkinKitScript.apply_button(item_button, &"secondary", 13)
+	item_button.pressed.connect(func() -> void:
+		tooltip_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.item_tooltip(item))
+		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
+	)
 	row.add_child(item_button)
 	var drop_button := Button.new()
 	drop_button.name = "InventoryDropButton"
@@ -175,6 +186,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	drop_button.text = "丢弃"
 	drop_button.disabled = not can_drop
 	drop_button.tooltip_text = "丢弃到当前房间地面，稍后可从地面物品重新拾取。" if can_drop else "已装备物品暂不可从此面板丢弃。"
+	Art10UISkinKitScript.apply_button(drop_button, &"danger" if can_drop else &"secondary", 13)
 	var instance_id: String = String(item.get("instance_id", ""))
 	drop_button.pressed.connect(func() -> void: drop_item_requested.emit(instance_id))
 	row.add_child(drop_button)
