@@ -1,3 +1,15 @@
+# G37 Open Decisions Update
+
+G37-R2 runtime authority / RunFlow execution consolidation open decisions:
+
+- `OD-G37-001`: final GameKernel ownership migration remains open; G37 hard-disables GameKernel as a runtime driver.
+- `OD-G37-002`: complete RunFlow decomposition remains open; G37 centralizes lifecycle authority without rewriting all room/action runtime behavior.
+- `OD-G37-003`: active-run persistence remains open and is not implemented by G37.
+- `OD-G37-004`: future SaveManager ownership over active runs remains open; G37 does not migrate save/profile runtime ownership.
+- `OD-G37-005`: command vocabulary expansion remains deferred; G37 only delegates existing lifecycle command paths.
+- `OD-G37-006`: gameplay runtime / manual playtest acceptance remains outside G37-R2 and requires a later gate.
+- Any G36 / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G36 Open Decisions Update
 
 G36-R2 runtime architecture / save profile open decisions:

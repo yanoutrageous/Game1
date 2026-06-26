@@ -2,7 +2,9 @@ extends RefCounted
 class_name RunFlowStateContract
 
 # G32 read-only run lifecycle / transition snapshot contract.
-# This file must not dispatch commands, persist state, grant rewards, or write assets.
+# G37 keeps this file as a projection only: it reads RunRuntimeController /
+# RunStateMachine / RunContext authority state, but must not execute transitions,
+# dispatch commands, persist state, grant rewards, or write assets.
 
 const SCHEMA_VERSION := 1
 

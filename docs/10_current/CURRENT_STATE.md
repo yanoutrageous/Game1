@@ -1,7 +1,7 @@
 ﻿# Current State
 
 文档状态：当前事实摘要
-适用范围：DOC-GOV-001 文档治理阶段与 G36 最新工程证据摘要
+适用范围：DOC-GOV-001 文档治理阶段与 G37 最新工程证据摘要
 最后更新：2026/06/26
 
 本文件只汇总当前事实入口，不替代验证记录、历史 handoff、产品契约或外部策划来源。
@@ -9,34 +9,35 @@
 ## 1. 当前工作阶段
 
 ```text
-当前执行阶段：DOC-GOV-001 仓库文档体系治理与去重标准化
-阶段性质：docs-only governance / documentation standardization
-当前仓库分支观测：main
-当前 HEAD 观测：cbf9746180c4731c6cbc65df00293430e8a83646
+当前执行阶段：G37-R2 Runtime Authority / RunFlow Execution Consolidation
+阶段性质：runtime authority consolidation / branch implementation
+当前仓库分支观测：godot/g37-runtime-authority-runflow
+当前 HEAD 观测：G37 branch worktree before final commit
 ```
 
-DOC-GOV-001 只修改仓库内文档，不修改 Base Docs、Base Docs_Governance、Connection、工程代码、Godot 场景、资源、metadata 或 project.godot。
+G37 consolidates current M1 runtime authority around `RunRuntimeController`, `RunStateMachine`, `CommandBus` lifecycle delegation, and `RunScene` orchestration. It does not modify Base Docs, Connection, Godot scenes, resources, metadata, imports, or `project.godot`.
 
 ## 2. 最新工程证据阶段
 
 ```text
-最新工程证据阶段：G36-R2 Runtime Architecture Consolidation & Save/Profile Foundation
-G36 contract：docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md
-G36 validation：docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md
-G36 handoff：docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md
+最新工程证据阶段：G37-R2 Runtime Authority / RunFlow Execution Consolidation
+G37 contract：docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md
+G37 validation：docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md
+G37 handoff：docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md
 ```
 
-G36 已有 contract / validation / handoff 三件套。DOC-GOV-001 只登记和索引这些事实，不重新声明 G36 release 已完成。
+G37 is a runtime-authority branch implementation. Release acceptance remains pending a later G37-R3 audit / release gate.
 
-## 3. G36 边界摘要
+## 3. G37 边界摘要
 
-- Save/profile foundation 覆盖 `SaveManager`、`SaveProfileManifest`、`SaveImportStaging`、`SaveProfilePreview` 和 profile path 结构。
-- MetaProgress read-only fallback 会阻断 save、settlement commit、debug meta writes、clear/reset 和 debug marker writes。
-- RunScene 仍是当前 M1 runtime owner；GameKernel 仍是 inactive/bootstrap placeholder。
-- DeployPrep/AppShell 使用 bounded `RunStartConfig` / `RunStartRouteAdapter` payload，并保留 unsupported config fallback。
-- Debug panel 和 debug command 继续由 `DebugGate` / `CommandBus` 硬 gate。
+- `RunRuntimeController` owns the active `RunContext` and `CommandBus`.
+- `RunStateMachine` owns lifecycle transitions for start, extract, cancel, failure, and force-extract paths.
+- `CommandBus` remains the command surface and delegates lifecycle transitions to the runtime controller.
+- `RunScene` is orchestration-only for current runtime construction.
+- `RunFlowStateContract` remains projection-only.
+- `GameKernel` remains hard-disabled as a runtime driver.
 
-未实现 / 未声明：complete SaveManager UI、active-run persistence、runtime profile switching、complete RunBootstrapper、新 gameplay systems、gameplay runtime PASS、manual playtest PASS。
+未实现 / 未声明：complete RunFlow rewrite、active-run persistence、SaveManager ownership migration、new gameplay systems、gameplay runtime PASS、manual playtest PASS。
 
 ## 4. 历史阶段状态
 

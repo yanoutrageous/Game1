@@ -15,6 +15,7 @@ const EncounterContractScript := preload("res://scripts/core/run/encounter/encou
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
 
 var context: RunContext
+var runtime_controller
 var room_resolver: RoomResolver = RoomResolver.new()
 var command_sequence: int = 0
 
@@ -25,8 +26,8 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 	if _is_debug_command_request(command_name, command_payload) and not DebugGateScript.is_debug_tools_enabled():
 		var blocked := DebugGateScript.disabled_result(DEFAULT_ACTOR_ID)
 		return CommandResult.from_action(command, blocked, [], [], _snapshot_delta_for(blocked))
-	if context == null and command_name in [&"start_demo_run", &"start_tutorial_run", &"start_standard_run"]:
-		context = RunContext.new()
+	if context == null and runtime_controller != null:
+		context = runtime_controller.context
 	var event_start: int = _event_count()
 	var transaction_start: int = _transaction_count()
 	if context != null:
@@ -116,31 +117,36 @@ func bind_context(next_context: RunContext) -> void:
 		_emit_state()
 
 
+func bind_runtime_controller(next_controller) -> void:
+	runtime_controller = next_controller
+	context = runtime_controller.context if runtime_controller != null else null
+	if context != null and context.run_active:
+		room_resolver.enter_room(context)
+		_emit_state()
+
+
 func start_demo_run() -> Dictionary:
-	if context == null:
-		context = RunContext.new()
-	context.reset_demo_run()
-	room_resolver.enter_room(context)
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.start_demo_run(room_resolver)
 	_emit_state()
-	return {"ok": true, "status": &"run_started", "mode": context.mode, "actor_id": DEFAULT_ACTOR_ID}
+	return result
 
 
 func start_tutorial_run() -> Dictionary:
-	if context == null:
-		context = RunContext.new()
-	context.start_tutorial_run()
-	room_resolver.enter_room(context)
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.start_tutorial_run(room_resolver)
 	_emit_state()
-	return {"ok": true, "status": &"run_started", "mode": context.mode, "actor_id": DEFAULT_ACTOR_ID}
+	return result
 
 
 func start_standard_run() -> Dictionary:
-	if context == null:
-		context = RunContext.new()
-	context.start_standard_run()
-	room_resolver.enter_room(context)
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.start_standard_run(room_resolver)
 	_emit_state()
-	return {"ok": true, "status": &"run_started", "mode": context.mode, "actor_id": DEFAULT_ACTOR_ID}
+	return result
 
 
 func attempt_room_transition(direction: Vector2i) -> Dictionary:
@@ -325,61 +331,47 @@ func teleport_to_explored(pos: Vector2i) -> Dictionary:
 
 
 func request_extract() -> Dictionary:
-	if not _can_accept_command():
-		return _blocked(&"blocked", _current_blocked_reason())
-	if not room_resolver.can_extract(context):
-		context.blocked_reason = "cannot_extract"
-		context.last_message = "Extraction requires an exit room."
-		_emit_state()
-		return _blocked(&"cannot_extract", "cannot_extract")
-	context.phase = &"confirm_extract"
-	context.last_message = "Extraction requested. Confirm or cancel."
-	context.record_event(RunEventLog.EVENT_EXTRACTION_FOUND, _active_command_id(), DEFAULT_ACTOR_ID, "command_bus", {"position": context.get_current_pos(), "exit_id": context.exit_id})
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.request_extract(room_resolver, _active_command_id(), DEFAULT_ACTOR_ID)
 	_emit_state()
-	return {"ok": true, "status": &"extract_requested", "actor_id": DEFAULT_ACTOR_ID}
+	return result
 
 
 func confirm_extract() -> Dictionary:
-	if context == null:
-		return _blocked(&"not_ready", "not_ready")
-	if context.phase != &"confirm_extract":
-		context.last_message = "No extraction request is active."
-		_emit_state()
-		return _blocked(&"no_extract_request", "no_extract_request")
-	if not room_resolver.can_extract(context):
-		context.phase = &"running"
-		context.last_message = "Extraction cancelled: not on exit."
-		_emit_state()
-		return _blocked(&"cannot_extract", "cannot_extract")
-	context.complete_extract()
-	context.last_message = "Extraction complete."
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.confirm_extract(room_resolver)
 	_emit_state()
-	result_available.emit(context.result_snapshot)
-	return {"ok": true, "status": &"extracted", "actor_id": DEFAULT_ACTOR_ID, "result_snapshot": context.result_snapshot.duplicate(true)}
+	if bool(result.get("ok", false)) and context != null and context.extracted:
+		result_available.emit(context.result_snapshot)
+	return result
 
 
 func cancel_extract() -> Dictionary:
-	if context == null:
-		return _blocked(&"not_ready", "not_ready")
-	if context.phase == &"confirm_extract":
-		context.phase = &"running"
-		context.last_message = "Extraction cancelled."
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.cancel_extract()
 	_emit_state()
-	return {"ok": true, "status": &"extract_cancelled", "actor_id": DEFAULT_ACTOR_ID}
+	return result
 
 
 func extract() -> Dictionary:
-	var request_result: Dictionary = request_extract()
-	if context != null and context.phase == &"confirm_extract":
-		return confirm_extract()
-	return request_result
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.extract(room_resolver, _active_command_id(), DEFAULT_ACTOR_ID)
+	_emit_state()
+	if bool(result.get("ok", false)) and context != null and context.extracted:
+		result_available.emit(context.result_snapshot)
+	return result
 
 
 func restart_run() -> Dictionary:
-	if context != null and context.mode == &"standard":
-		return start_standard_run()
-	else:
-		return start_tutorial_run()
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.restart_run(room_resolver)
+	_emit_state()
+	return result
 
 
 func debug_add_run_black_coin(amount: int = 25) -> Dictionary:
@@ -481,21 +473,23 @@ func debug_heal_full() -> Dictionary:
 func debug_force_extract() -> Dictionary:
 	if not _has_active_run():
 		return _blocked(&"not_ready", "not_ready")
-	context.complete_extract()
-	context.last_message = "Debug forced extraction through CommandBus."
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.debug_force_extract()
 	_emit_state()
 	result_available.emit(context.result_snapshot)
-	return {"ok": true, "status": &"debug_forced_extract", "actor_id": DEFAULT_ACTOR_ID, "result_snapshot": context.result_snapshot.duplicate(true)}
+	return result
 
 
 func debug_force_fail(reason: String = "debug_forced_failure") -> Dictionary:
 	if not _has_active_run():
 		return _blocked(&"not_ready", "not_ready")
-	context.fail_run(reason)
-	context.last_message = "Debug forced failure through CommandBus."
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.debug_force_fail(reason)
 	_emit_state()
 	result_available.emit(context.result_snapshot)
-	return {"ok": true, "status": &"debug_forced_failure", "reason": reason, "actor_id": DEFAULT_ACTOR_ID, "result_snapshot": context.result_snapshot.duplicate(true)}
+	return result
 
 
 func confirm_tutorial_popup() -> Dictionary:

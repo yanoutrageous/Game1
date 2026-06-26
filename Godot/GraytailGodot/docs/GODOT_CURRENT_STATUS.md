@@ -1,3 +1,16 @@
+# G37 Runtime Authority / RunFlow Execution Status
+
+G37-R2 is the current implementation slice on branch `godot/g37-runtime-authority-runflow`.
+
+- Scope: Runtime Authority / RunFlow Execution Consolidation.
+- Product contract: `docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md`.
+- Godot scope: `RunRuntimeController`, `RunStateMachine`, `CommandBus` lifecycle delegation, `RunScene` orchestration-only runtime construction, projection-only `RunFlowStateContract`, and hard-disabled `GameKernel` runtime driver.
+- Boundary: consolidate existing runtime authority only.
+- Not implemented: complete RunFlow rewrite, active-run persistence, SaveManager runtime ownership migration, new gameplay systems, gameplay runtime, manual playtest.
+- G37-R2 validation PASS: `tools/validate_g35_runtime_safety.ps1`, `tools/validate_g36_runtime_architecture.ps1`, `tools/validate_g37_runtime_authority.ps1`, Godot headless project-load/parser smoke, and Godot headless scene-load smoke.
+- Scene-load smoke emitted ObjectDB/resource leak warnings; no metadata dirty side effects were produced.
+- Parser / scene smoke is not gameplay runtime PASS or manual playtest PASS.
+
 # G36 Runtime Architecture / Save Profile Status
 
 G36-R2 is the current implementation slice on branch `godot/g36-runtime-architecture-save-profile`.

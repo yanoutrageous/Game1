@@ -1,6 +1,27 @@
 ﻿document_status: current_summary
 last_updated: "2026/06/26"
-scope: "DOC-GOV-001 documentation governance and G36 latest engineering evidence summary"
+scope: "DOC-GOV-001 documentation governance and G37 latest engineering evidence summary"
+
+g37_runtime_authority:
+  stage: "G37-R2 Runtime Authority / RunFlow Execution Consolidation"
+  status: "branch_implementation_pending_release_gate"
+  contract: "docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md"
+  validation: "docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md"
+  handoff: "docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md"
+  implemented_foundation_interfaces:
+    - "RunRuntimeController"
+    - "RunStateMachine"
+    - "CommandBus lifecycle delegation"
+    - "RunScene orchestration ownership"
+    - "RunFlowStateContract projection-only boundary"
+    - "GameKernel runtime-driver hard disable"
+  not_complete:
+    - "complete RunFlow rewrite"
+    - "active-run persistence"
+    - "SaveManager runtime ownership migration"
+    - "new gameplay systems"
+    - "gameplay runtime PASS"
+    - "manual playtest PASS"
 
 current_docs_governance:
   stage: "DOC-GOV-001 Document Governance Standardization & Deduplication"

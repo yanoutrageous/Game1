@@ -1,3 +1,17 @@
+# G37 Route Update
+
+Current active slice: G37-R2 Runtime Authority / RunFlow Execution Consolidation.
+
+- G37 consolidates current M1 runtime ownership without adding gameplay content.
+- `RunRuntimeController` owns the active `RunContext` and `CommandBus`.
+- `RunStateMachine` owns lifecycle transitions for run start, extraction request/confirm/cancel, failure, and force-extract paths.
+- `CommandBus` remains the command surface and delegates lifecycle transitions to the runtime controller.
+- `RunScene` becomes orchestration-only for runtime construction instead of directly creating a second `RunContext` / `CommandBus` pair.
+- `RunFlowStateContract` remains projection-only and `GameKernel` remains hard-disabled as a runtime driver.
+- G37 does not implement a complete RunFlow rewrite, active-run persistence, SaveManager runtime migration, new gameplay systems, gameplay runtime PASS, or manual playtest PASS.
+- Unified G37-R3 audit / release gate should validate G35/G36/G37 scripts, parser/scene smoke, command-sequence regression, staged-file allowlist, and no main merge/main push unless separately authorized.
+- Any remaining G36 or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G36 Route Update
 
 Current active slice: G36-R2 Runtime Architecture Consolidation & Save/Profile Foundation.

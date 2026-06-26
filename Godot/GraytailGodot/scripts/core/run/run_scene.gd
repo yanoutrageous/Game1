@@ -27,6 +27,7 @@ const RunSceneDebugBridgeScript := preload("res://scripts/core/run/run_scene_deb
 const RunSceneMetaCommitterScript := preload("res://scripts/core/run/run_scene_meta_committer.gd")
 const RunSceneUIBridgeScript := preload("res://scripts/core/run/run_scene_ui_bridge.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
+const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
@@ -59,6 +60,7 @@ const G9_UI_NODE_VALIDATION_MARKERS := [
 
 var run_context: RunContext
 var command_bus: CommandBus
+var runtime_controller
 var meta_progress_adapter: MetaProgressAdapter
 var save_manager
 var ui_root: Control
@@ -113,9 +115,9 @@ func _ready() -> void:
 	save_manager.load_manifest()
 	meta_progress_adapter = MetaProgressAdapterScript.new()
 	save_manager.configure_meta_adapter(meta_progress_adapter)
-	run_context = RunContextScript.new()
-	command_bus = CommandBusScript.new()
-	command_bus.bind_context(run_context)
+	runtime_controller = RunRuntimeControllerScript.new()
+	run_context = runtime_controller.context
+	command_bus = runtime_controller.command_bus
 	command_bus.state_changed.connect(_on_state_changed)
 	command_bus.result_available.connect(_on_result_available)
 	_build_playfield_visuals()
