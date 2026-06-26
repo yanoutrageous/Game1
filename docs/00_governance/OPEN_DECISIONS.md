@@ -1,3 +1,15 @@
+# G37S Open Decisions Update
+
+G37S-R2 validation / handoff supplement decisions:
+
+- `OD-G37S-001`: G37 lifecycle authority is considered validated by base and supplement scripts; future regressions must fail validation.
+- `OD-G37S-002`: RunScene decomposition is deferred to G38+.
+- `OD-G37S-003`: GameKernel deprecation or ownership handoff remains deferred to G38+.
+- `OD-G37S-004`: Modifier / Effect migration from preview into real execution remains deferred.
+- `OD-G37S-005`: TruthMap split and deeper map ownership remain deferred.
+- `OD-G37S-006`: `.gitattributes`, LFS, and binary asset policy remain deferred.
+- Any G37 / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G37 Open Decisions Update
 
 G37-R2 runtime authority / RunFlow execution consolidation open decisions:

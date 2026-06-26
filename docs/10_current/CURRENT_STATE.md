@@ -1,7 +1,7 @@
 ﻿# Current State
 
 文档状态：当前事实摘要
-适用范围：DOC-GOV-001 文档治理阶段与 G37 最新工程证据摘要
+适用范围：G37S validation supplement 与 G37 最新工程证据摘要
 最后更新：2026/06/26
 
 本文件只汇总当前事实入口，不替代验证记录、历史 handoff、产品契约或外部策划来源。
@@ -9,13 +9,13 @@
 ## 1. 当前工作阶段
 
 ```text
-当前执行阶段：G37-R2 Runtime Authority / RunFlow Execution Consolidation
-阶段性质：runtime authority consolidation / branch implementation
-当前仓库分支观测：godot/g37-runtime-authority-runflow
-当前 HEAD 观测：G37 branch worktree before final commit
+当前执行阶段：G37S-R2 Runtime Authority Validation / Handoff Supplement
+阶段性质：validation / handoff supplement only
+当前仓库分支观测：godot/g37-runtime-authority-validation-supplement
+当前 HEAD 观测：main-derived supplement branch
 ```
 
-G37 consolidates current M1 runtime authority around `RunRuntimeController`, `RunStateMachine`, `CommandBus` lifecycle delegation, and `RunScene` orchestration. It does not modify Base Docs, Connection, Godot scenes, resources, metadata, imports, or `project.godot`.
+G37S supplements validation and handoff evidence for the already completed G37 runtime authority work. It does not modify core runtime code, UI code, Base Docs, Connection, Godot scenes, resources, metadata, imports, or `project.godot`.
 
 ## 2. 最新工程证据阶段
 
@@ -23,10 +23,12 @@ G37 consolidates current M1 runtime authority around `RunRuntimeController`, `Ru
 最新工程证据阶段：G37-R2 Runtime Authority / RunFlow Execution Consolidation
 G37 contract：docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md
 G37 validation：docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md
+G37S validation supplement：docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md
 G37 handoff：docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md
+G37S handoff supplement：docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md
 ```
 
-G37 is a runtime-authority branch implementation. Release acceptance remains pending a later G37-R3 audit / release gate.
+G37 is a runtime-authority implementation. G37S records the validation supplement and hands unresolved runtime architecture work to G38+.
 
 ## 3. G37 边界摘要
 

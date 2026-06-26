@@ -1,3 +1,16 @@
+# G37S Runtime Authority Validation / Handoff Supplement Status
+
+G37S-R2 is the current validation / handoff supplement on branch `godot/g37-runtime-authority-validation-supplement`.
+
+- Scope: validation and handoff supplement only.
+- Supplement validation: `docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md`.
+- Supplement handoff: `docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md`.
+- Supplement script: `tools/validate_g37_runtime_authority_supplement.ps1`.
+- Boundary: no core runtime code, UI code, scene/resource files, project metadata, Base Docs, or Connection changes.
+- G37S-R2 validation PASS: G35, G36, G37, and G37S supplement scripts; Godot headless project-load/parser smoke exited successfully with ObjectDB/resource leak warnings.
+- Deferred to G38+: RunScene decomposition, GameKernel deprecation or ownership handoff, Modifier / Effect real execution migration, TruthMap split, `.gitattributes` / LFS / binary asset policy.
+- No gameplay runtime PASS or manual playtest PASS is claimed.
+
 # G37 Runtime Authority / RunFlow Execution Status
 
 G37-R2 is the current implementation slice on branch `godot/g37-runtime-authority-runflow`.

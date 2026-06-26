@@ -1,3 +1,16 @@
+# G37S Route Update
+
+Current active slice: G37S-R2 Runtime Authority Validation / Handoff Supplement.
+
+- G37S is not G38 and is not a redo of G37.
+- G37S only supplements validation and handoff evidence for runtime authority.
+- G37S adds `tools/validate_g37_runtime_authority_supplement.ps1`.
+- G37S records that G37 solved RunFlow lifecycle authority, fail transition authority, CommandBus lifecycle delegation, and RunFlowStateContract projection-only boundaries.
+- G37S does not modify core runtime code, UI code, scenes, resources, project metadata, Base Docs, or Connection.
+- Deferred to G38+: RunScene decomposition, GameKernel deprecation or real handoff, Modifier / Effect real execution migration, TruthMap split, `.gitattributes` / LFS / binary asset policy.
+- Recommended next stage: G38 RunScene Decomposition / App Runtime Boundary Cleanup.
+- Any remaining G37 or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G37 Route Update
 
 Current active slice: G37-R2 Runtime Authority / RunFlow Execution Consolidation.

@@ -2,6 +2,21 @@
 last_updated: "2026/06/26"
 scope: "DOC-GOV-001 documentation governance and G37 latest engineering evidence summary"
 
+g37s_runtime_authority_supplement:
+  stage: "G37S-R2 Runtime Authority Validation / Handoff Supplement"
+  status: "validation_handoff_supplement"
+  validation: "docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md"
+  handoff: "docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md"
+  validation_script: "tools/validate_g37_runtime_authority_supplement.ps1"
+  modifies_runtime_code: false
+  next_recommended_stage: "G38 RunScene Decomposition / App Runtime Boundary Cleanup"
+  deferred:
+    - "RunScene decomposition"
+    - "GameKernel deprecation or real ownership handoff"
+    - "Modifier / Effect real execution migration"
+    - "TruthMap split"
+    - ".gitattributes / LFS / binary asset policy"
+
 g37_runtime_authority:
   stage: "G37-R2 Runtime Authority / RunFlow Execution Consolidation"
   status: "branch_implementation_pending_release_gate"
