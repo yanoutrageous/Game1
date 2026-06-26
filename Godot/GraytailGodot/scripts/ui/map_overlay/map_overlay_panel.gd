@@ -123,7 +123,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	button.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
 	if asset_ref is Texture2D:
 		button.icon = asset_ref
-		button.expand_icon = true
+		button.expand_icon = false
 	button.pressed.connect(func() -> void: _select_marker(marker))
 	grid.add_child(button)
 

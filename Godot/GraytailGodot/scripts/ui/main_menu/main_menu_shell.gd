@@ -11,11 +11,13 @@ signal navigation_intent_requested(intent: Dictionary)
 var current_model: Dictionary = {}
 var current_snapshot: Dictionary = {}
 var meta_summary_label: Label
+var layout_profile: Dictionary = {}
 
 
 func build(model: Dictionary = {}) -> void:
 	_clear_children()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	layout_profile = Art10UISkinKitScript.layout_profile_for(self)
 	current_model = model.duplicate(true) if not model.is_empty() else MainMenuModelScript.build()
 	_build_backdrop()
 	_build_top_entrance_panel()
@@ -43,6 +45,11 @@ func _build_backdrop() -> void:
 	var visuals := _dictionary_from(current_model.get("art09_visuals", {}))
 	_add_texture_rect_from_ref(self, "Art09MainMenuBackground", Rect2(0, 0, 1280, 720), _dictionary_from(visuals.get("background", {})), 0.64)
 	_add_color_rect(self, "MainMenuVignette", Rect2(0, 0, 1280, 720), Color(0.0, 0.0, 0.0, 0.24))
+	_add_color_rect(self, "BaseHallWarmBacklight", Rect2(58, 178, 666, 336), Color(0.42, 0.30, 0.13, 0.10))
+	_add_color_rect(self, "BaseHallDoorGlow", Rect2(86, 186, 176, 326), Color(0.54, 0.86, 0.68, 0.10))
+	_add_color_rect(self, "BaseHallDoorLeft", Rect2(76, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
+	_add_color_rect(self, "BaseHallDoorRight", Rect2(282, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
+	_add_color_rect(self, "BaseHallForegroundRail", Rect2(56, 512, 642, 3), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
 	_add_panel(self, "MainMenuNarrativeFrame", Rect2(46, 66, 690, 548), &"deep")
 	_add_color_rect(self, "BaseAtmosphereLayer", Rect2(70, 210, 640, 266), Color(0.10, 0.19, 0.17, 0.28))
 	_add_color_rect(self, "BaseFloorLine", Rect2(86, 486, 598, 4), PresentationTheme.color_for_key(&"ui.warning", Color(0.94, 0.7, 0.28, 1.0)))
@@ -53,8 +60,10 @@ func _build_backdrop() -> void:
 
 func _build_role_panel() -> void:
 	_add_panel(self, "CharacterDisplayLayer", Art10UISkinKitScript.rect(&"main_menu", "role"), &"card")
+	_add_color_rect(self, "CharacterPodBacklight", Rect2(98, 196, 176, 304), Color(0.58, 0.93, 0.76, 0.06))
 	_add_color_rect(self, "CharacterSilhouette", Rect2(122, 220, 128, 248), Color(0.18, 0.27, 0.23, 0.82))
 	_add_color_rect(self, "CharacterHighlight", Rect2(152, 188, 70, 330), Color(0.62, 0.94, 0.80, 0.08))
+	_add_color_rect(self, "CharacterEquipmentLine", Rect2(108, 462, 178, 2), Art10UISkinKitScript.color(&"accent"))
 	_add_label_token(self, "CharacterDisplayLabel", Rect2(112, 474, 178, 36), "探索员整备", &"tab", &"text")
 	_add_label_token(self, "OutfitShortcutHint", Rect2(354, 312, 318, 82), "装备外观、背包和长期记录仍由后续系统接管；主菜单只保留入口和状态提示。", &"caption", &"muted")
 
@@ -62,10 +71,7 @@ func _build_role_panel() -> void:
 func _build_top_entrance_panel() -> void:
 	var top_panel := HBoxContainer.new()
 	top_panel.name = "MainMenuTopEntrancePanel"
-	top_panel.offset_left = 770.0
-	top_panel.offset_top = 36.0
-	top_panel.offset_right = 1198.0
-	top_panel.offset_bottom = 78.0
+	_set_rect(top_panel, Rect2(770, 36, 428, 42))
 	top_panel.add_theme_constant_override("separation", 8)
 	add_child(top_panel)
 	var shortcut_index := 1
@@ -89,10 +95,7 @@ func _build_top_entrance_panel() -> void:
 func _build_menu_panel() -> void:
 	var panel := VBoxContainer.new()
 	panel.name = "MainMenuFixedEntries"
-	panel.offset_left = 770.0
-	panel.offset_top = 122.0
-	panel.offset_right = 1198.0
-	panel.offset_bottom = 500.0
+	_set_rect(panel, Rect2(770, 122, 428, 378))
 	panel.add_theme_constant_override("separation", 14)
 	add_child(panel)
 	for raw_entry in _array_from(current_model, "entries"):
@@ -104,18 +107,15 @@ func _build_menu_panel() -> void:
 func _build_notice_panel() -> void:
 	var notice_panel := VBoxContainer.new()
 	notice_panel.name = "MainMenuNoticePanel"
-	notice_panel.offset_left = 86.0
-	notice_panel.offset_top = 540.0
-	notice_panel.offset_right = 646.0
-	notice_panel.offset_bottom = 608.0
+	_set_rect(notice_panel, Rect2(86, 540, 560, 68))
 	notice_panel.add_theme_constant_override("separation", 4)
 	add_child(notice_panel)
 	_add_panel(self, "MainMenuNoticeFrame", Art10UISkinKitScript.rect(&"main_menu", "notice"), &"summary")
 	move_child(notice_panel, get_child_count() - 1)
 	_add_section_label(notice_panel, "公告")
-	for notice in _array_from(current_model, "notices").slice(0, 2):
+	for notice in _array_from(current_model, "notices").slice(0, 1):
 		var label := Label.new()
-		label.text = _shorten_copy(String(notice), 46)
+		label.text = _shorten_copy(String(notice), 34)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		Art10UISkinKitScript.apply_label_token(label, &"caption", &"text")
 		notice_panel.add_child(label)
@@ -132,10 +132,7 @@ func _build_shortcut_panel() -> void:
 	var shortcut_panel := HBoxContainer.new()
 	shortcut_panel.name = "MainMenuShortcutPanel"
 	var key_bar_rect := Art10UISkinKitScript.rect(&"main_menu", "bottom_key_bar")
-	shortcut_panel.offset_left = key_bar_rect.position.x
-	shortcut_panel.offset_top = key_bar_rect.position.y
-	shortcut_panel.offset_right = key_bar_rect.position.x + key_bar_rect.size.x
-	shortcut_panel.offset_bottom = key_bar_rect.position.y + key_bar_rect.size.y
+	_set_rect(shortcut_panel, key_bar_rect)
 	shortcut_panel.add_theme_constant_override("separation", 8)
 	add_child(shortcut_panel)
 	_add_panel(self, "MainMenuKeyBarFrame", key_bar_rect.grow(8.0), &"surface")
@@ -167,16 +164,52 @@ func _refresh_meta_summary() -> void:
 
 func _add_entry_button(parent: Control, entry: Dictionary, large: bool = false, key_label: String = "") -> Button:
 	var raw_label := String(entry.get("label", "入口")).replace("快捷：", "")
-	var button := Art10UISkinKitScript.make_large_nav_button(raw_label, _shorten_copy(String(entry.get("description", "")), 28)) if large else Art10UISkinKitScript.make_bottom_key_button(raw_label, key_label)
-	button.tooltip_text = String(entry.get("description", ""))
+	var button := Art10UISkinKitScript.make_large_nav_button(raw_label, _entry_subtitle(entry)) if large else Art10UISkinKitScript.make_bottom_key_button(raw_label, key_label)
+	button.tooltip_text = _entry_tooltip(entry)
 	button.text = Art10UISkinKitScript.sanitize_player_copy(button.text)
 	button.tooltip_text = Art10UISkinKitScript.sanitize_player_copy(button.tooltip_text)
-	button.custom_minimum_size = Vector2(410, 78) if large else Vector2(118, 36)
+	button.custom_minimum_size = _layout_size(Vector2(410, 78) if large else Vector2(118, 36))
 	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})))
 	Art10UISkinKitScript.apply_button_token(button, &"primary" if large or bool(entry.get("primary", false)) else &"secondary", &"main_button" if large else &"key_prompt", &"large_nav" if large else &"key")
 	button.pressed.connect(func() -> void: _emit_entry(entry))
 	parent.add_child(button)
 	return button
+
+
+func _entry_subtitle(entry: Dictionary) -> String:
+	var entry_id := StringName(entry.get("id", &""))
+	match entry_id:
+		&"deploy":
+			return "查看出勤配置"
+		&"long_term":
+			return "任务 / 图鉴 / 收藏"
+		&"settings":
+			return "画面与音量"
+		&"exit_game":
+			return "确认后退出"
+		_:
+			return _shorten_copy(String(entry.get("description", "")), 12)
+
+
+func _entry_tooltip(entry: Dictionary) -> String:
+	var entry_id := StringName(entry.get("id", &""))
+	match entry_id:
+		&"shortcut_standard_10x10":
+			return "进入当前可玩探索。"
+		&"shortcut_warehouse":
+			return "查看仓库入口。"
+		&"shortcut_codex":
+			return "查看图鉴入口。"
+		&"deploy":
+			return "查看出勤配置并开始探索。"
+		&"long_term":
+			return "查看任务、图鉴和收藏。"
+		&"settings":
+			return "调整画面与音量。"
+		&"exit_game":
+			return "打开退出确认。"
+		_:
+			return _shorten_copy(String(entry.get("description", "")), 24)
 
 
 func _emit_entry(entry: Dictionary) -> void:
@@ -206,10 +239,7 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	var label := Label.new()
 	label.name = node_name
 	label.text = text
-	label.offset_left = rect.position.x
-	label.offset_top = rect.position.y
-	label.offset_right = rect.position.x + rect.size.x
-	label.offset_bottom = rect.position.y + rect.size.y
+	_set_rect(label, rect)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	Art10UISkinKitScript.apply_label(label, font_size, color)
 	parent.add_child(label)
@@ -224,6 +254,7 @@ func _add_label_token(parent: Control, node_name: String, rect: Rect2, text: Str
 func _add_panel(parent: Control, node_name: String, rect: Rect2, tone: StringName) -> PanelContainer:
 	var panel := Art10UISkinKitScript.make_frame_panel(node_name, rect, tone)
 	parent.add_child(panel)
+	_set_rect(panel, rect)
 	return panel
 
 
@@ -231,10 +262,7 @@ func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Col
 	var color_rect := ColorRect.new()
 	color_rect.name = node_name
 	color_rect.color = color
-	color_rect.offset_left = rect.position.x
-	color_rect.offset_top = rect.position.y
-	color_rect.offset_right = rect.position.x + rect.size.x
-	color_rect.offset_bottom = rect.position.y + rect.size.y
+	_set_rect(color_rect, rect)
 	color_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(color_rect)
 	return color_rect
@@ -247,10 +275,7 @@ func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2,
 	var texture_rect := TextureRect.new()
 	texture_rect.name = node_name
 	texture_rect.texture = texture
-	texture_rect.offset_left = rect.position.x
-	texture_rect.offset_top = rect.position.y
-	texture_rect.offset_right = rect.position.x + rect.size.x
-	texture_rect.offset_bottom = rect.position.y + rect.size.y
+	_set_rect(texture_rect, rect)
 	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	texture_rect.modulate = Color(1.0, 1.0, 1.0, alpha)
@@ -265,6 +290,14 @@ func _apply_art09_button_icon(button: Button, asset_ref: Dictionary) -> void:
 		return
 	button.icon = texture
 	Art10UISkinKitScript.controlled_button_icon(button, &"large_nav")
+
+
+func _set_rect(control: Control, rect: Rect2) -> void:
+	Art10UISkinKitScript.set_rect(control, Art10UISkinKitScript.layout_rect_for(self, rect))
+
+
+func _layout_size(base_size: Vector2) -> Vector2:
+	return Art10UISkinKitScript.layout_size_for(self, base_size)
 
 
 func _shorten_copy(text: String, max_chars: int) -> String:

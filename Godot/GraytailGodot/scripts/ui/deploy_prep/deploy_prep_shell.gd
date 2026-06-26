@@ -91,6 +91,11 @@ func _clear_children() -> void:
 
 func _build_backdrop() -> void:
 	_add_color_rect(self, "DeployPrepBackdrop", Rect2(0, 0, 1280, 720), Color(0.016, 0.032, 0.038, 1.0))
+	_add_color_rect(self, "DeployControlRoomGlow", Rect2(32, 112, 1210, 548), Color(0.10, 0.26, 0.30, 0.10))
+	_add_color_rect(self, "DeployConsoleHorizon", Rect2(334, 128, 902, 3), Art10UISkinKitScript.color(&"accent"))
+	_add_color_rect(self, "DeployMapGridA", Rect2(88, 244, 174, 2), Color(0.58, 0.93, 0.76, 0.28))
+	_add_color_rect(self, "DeployMapGridB", Rect2(88, 314, 174, 2), Color(0.58, 0.93, 0.76, 0.18))
+	_add_color_rect(self, "DeployMapGridC", Rect2(172, 222, 2, 166), Color(0.58, 0.93, 0.76, 0.18))
 	_add_panel(self, "DeployLeftVisualFrame", Art10UISkinKitScript.rect(&"deploy", "left_column"), &"deep")
 	_add_panel(self, "DeployCenterCardFrame", Art10UISkinKitScript.rect(&"deploy", "center_column"), &"surface")
 	_add_panel(self, "DeploySummaryFrame", Art10UISkinKitScript.rect(&"deploy", "summary_column"), &"summary")
@@ -98,6 +103,8 @@ func _build_backdrop() -> void:
 	_add_texture_rect_from_ref(self, "Art09DeployMainPanel", Rect2(334, 150, 600, 472), _asset_ref_from(art09_refs, "panels", "main"), 0.18)
 	_add_texture_rect_from_ref(self, "Art09DeploySummaryPanel", Rect2(958, 150, 278, 472), _asset_ref_from(art09_refs, "panels", "summary"), 0.20)
 	_add_color_rect(self, "DeployMapAtmosphere", Rect2(64, 206, 226, 220), Color(0.12, 0.20, 0.19, 0.34))
+	_add_color_rect(self, "DeployCharacterReadiness", Rect2(84, 180, 86, 226), Color(0.54, 0.84, 0.68, 0.12))
+	_add_color_rect(self, "DeployCharacterSilhouette", Rect2(108, 206, 72, 174), Color(0.16, 0.24, 0.22, 0.78))
 	_add_color_rect(self, "DeployMapHorizon", Rect2(84, 364, 188, 3), Art10UISkinKitScript.color(&"gold"))
 	_add_label_token(self, "DeployPrepTitle", Rect2(46, 34, 250, 48), String(current_model.get("title", "出发探索")), &"page_title", &"warning")
 	_add_label_token(self, "DeployPrepSubtitle", Rect2(304, 36, 620, 32), "选择路线、整备物资，然后进入当前可玩探索。", &"body", &"caption")
@@ -130,14 +137,16 @@ func _build_tab_panel() -> void:
 
 func _build_content_panel() -> void:
 	_add_label_token(self, "DeployLeftHeading", Rect2(66, 172, 220, 26), "探索整备", &"tab", &"accent")
-	tab_body_label = _add_label_token(self, "DeployTabBody", Rect2(66, 430, 224, 112), "", &"caption", &"text")
+	tab_body_label = _add_label_token(self, "DeployTabBody", Rect2(66, 430, 224, 72), "", &"caption", &"text")
 	_add_label_token(self, "DeployLoadoutHeading", Rect2(66, 554, 220, 22), "携带槽", &"caption", &"muted")
 	_add_icon_slot(self, "DeployLoadoutSlotA", Rect2(66, 580, 48, 48), "装备")
 	_add_icon_slot(self, "DeployLoadoutSlotB", Rect2(124, 580, 48, 48), "药剂")
 	_add_icon_slot(self, "DeployLoadoutSlotC", Rect2(182, 580, 48, 48), "工具")
 	tab_title_label = _add_label_token(self, "DeployTabTitle", Rect2(362, 170, 530, 34), "", &"main_button", &"accent")
 	filter_heading_label = _add_label_token(self, "DeployFilterHeading", Rect2(362, 212, 210, 24), "二级筛选", &"caption", &"warning")
-	card_heading_label = _add_label_token(self, "DeployCardHeading", Rect2(362, 268, 240, 24), "路线 / 目标卡片", &"tab", &"warning")
+	card_heading_label = _add_label_token(self, "DeployCardHeading", Rect2(362, 268, 240, 24), "路线 / 目标", &"tab", &"warning")
+	filter_heading_label.text = "筛选"
+	card_heading_label.text = "路线 / 目标"
 	card_scroll = ScrollContainer.new()
 	card_scroll.name = "DeployCardScroll"
 	_set_rect(card_scroll, Rect2(362, 300, 350, 272))
@@ -180,10 +189,11 @@ func _refresh_view() -> void:
 	for tab_id in tab_buttons.keys():
 		var button := tab_buttons[tab_id] as Button
 		if button != null:
-			button.button_pressed = StringName(tab_id) == active_tab
-			Art10UISkinKitScript.apply_button_token(button, &"primary" if button.button_pressed else &"secondary", &"tab", &"tab")
+			var selected := StringName(tab_id) == active_tab
+			button.button_pressed = selected
+			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if selected else &"normal"), &"tab", &"tab")
 	tab_title_label.text = String(tab.get("label", active_tab))
-	tab_body_label.text = _lines_text(_array_from(tab, "lines"), 4)
+	tab_body_label.text = _lines_text(_array_from(tab, "lines"), 2)
 	_refresh_filter_buttons(tab)
 	_refresh_card_buttons()
 	_refresh_detail()
@@ -215,7 +225,7 @@ func _refresh_filter_buttons(tab: Dictionary) -> void:
 			var button := _add_button(self, "DeployFilter_%s" % String(filter_id), Rect2(x, y, 96, 30), String(filter.get("label", filter_id)), func() -> void: _on_filter_pressed(captured_filter))
 			button.toggle_mode = true
 			button.button_pressed = filter_id == selected_filter
-			Art10UISkinKitScript.apply_button_token(button, &"primary" if button.button_pressed else &"secondary", &"caption", &"tab")
+			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if button.button_pressed else &"normal"), &"caption", &"tab")
 			filter_buttons.append(button)
 			x += 104.0
 			if x > 828.0:
@@ -237,10 +247,10 @@ func _refresh_card_buttons() -> void:
 		if raw_card is Dictionary:
 			var card := raw_card as Dictionary
 			var card_id := StringName(card.get("id", &""))
-			var label := "%s\n%s · %s" % [
-				String(card.get("title", card_id)),
-				String(card.get("category", "")),
-				Art10UISkinKitScript.status_label(card.get("state", &"preview")),
+			var state := StringName(card.get("state", &"preview"))
+			var label := "%s\n%s" % [
+				_shorten_copy(String(card.get("title", card_id)), 16),
+				Art10UISkinKitScript.status_label(state),
 			]
 			var captured_card := card_id
 			var button := Button.new()
@@ -251,7 +261,7 @@ func _refresh_card_buttons() -> void:
 			button.toggle_mode = true
 			button.button_pressed = card_id == selected_card
 			_apply_art09_button_icon(button, _dictionary_from(card.get("art09_asset_ref", {})), &"slot")
-			Art10UISkinKitScript.apply_button_token(button, &"primary" if button.button_pressed else &"secondary", &"body", &"slot")
+			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(state, button.button_pressed), &"body", &"slot")
 			button.pressed.connect(func() -> void: _on_card_pressed(captured_card))
 			card_list_container.add_child(button)
 			card_buttons.append(button)
@@ -266,9 +276,9 @@ func _refresh_detail() -> void:
 		String(detail.get("summary", "")),
 		String(detail.get("detail", "")),
 	]
-	for line in _array_from(detail, "lines").slice(0, 3):
+	for line in _array_from(detail, "lines").slice(0, 2):
 		lines.append(String(line))
-	detail_label.text = _section_text("卡片详情", lines, 5)
+	detail_label.text = _section_text("详情", lines, 3)
 
 
 func _refresh_actions() -> void:
@@ -367,19 +377,16 @@ func _lines_text(lines: Array, max_lines: int = 6) -> String:
 	var parts := []
 	var visible := lines.slice(0, max_lines)
 	for line in visible:
-		parts.append("- %s" % _shorten_copy(String(line), 24))
+		parts.append("- %s" % _shorten_copy(String(line), 18))
 	if lines.size() > visible.size():
 		parts.append("- 还有 %d 项已收起" % (lines.size() - visible.size()))
 	return Art10UISkinKitScript.sanitize_player_copy("\n".join(parts))
 
 
 func _run_start_preview_text(run_start: Dictionary) -> String:
-	return Art10UISkinKitScript.sanitize_player_copy("出发配置 %s  背包 %d/%d  seed %s  路线 %s" % [
-		String(run_start.get("config_id", "")),
+	return Art10UISkinKitScript.sanitize_player_copy("出发整备 | 背包 %d/%d | 路线已确认" % [
 		int(run_start.get("bag_used", 0)),
 		int(run_start.get("bag_limit", 0)),
-		String(run_start.get("seed_policy", "")),
-		String((_dictionary_from(run_start.get("deploy_prep_projection", {}))).get("projection_type", &"")),
 	])
 
 
@@ -424,9 +431,9 @@ func _apply_art10_text_refresh() -> void:
 			label.clip_text = true
 	for button_id in tab_buttons.keys():
 		var tab_button := tab_buttons[button_id] as Button
-		Art10UISkinKitScript.apply_button_token(tab_button, &"primary" if tab_button != null and tab_button.button_pressed else &"secondary", &"tab", &"tab")
+		Art10UISkinKitScript.apply_button_token(tab_button, Art10UISkinKitScript.visual_state_tone(&"selected" if tab_button != null and tab_button.button_pressed else &"normal"), &"tab", &"tab")
 	for button in filter_buttons:
-		Art10UISkinKitScript.apply_button_token(button, &"primary" if button != null and button.button_pressed else &"secondary", &"caption", &"tab")
+		Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if button != null and button.button_pressed else &"normal"), &"caption", &"tab")
 
 
 func _apply_art09_button_icon(button: Button, asset_ref: Dictionary, icon_token: StringName = &"button") -> void:

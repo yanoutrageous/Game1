@@ -205,4 +205,4 @@ func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
 	if texture == null:
 		return
 	button.icon = texture
-	button.expand_icon = true
+	Art10UISkinKitScript.controlled_button_icon(button, &"slot")

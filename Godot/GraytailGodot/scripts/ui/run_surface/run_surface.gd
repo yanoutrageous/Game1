@@ -29,6 +29,10 @@ var encounter_backdrop: PanelContainer
 var right_backdrop: PanelContainer
 var bottom_backdrop: PanelContainer
 var resource_backdrop: PanelContainer
+var scanner_glow_layer: ColorRect
+var room_glow_layer: ColorRect
+var protocol_glow_layer: ColorRect
+var bottom_key_glow_layer: ColorRect
 var scanner_title_label: Label
 var scanner_summary_label: Label
 var scanner_legend_label: Label
@@ -69,6 +73,10 @@ func build() -> void:
 	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
+	scanner_glow_layer = _add_color_layer("RunScannerGlow", Color(0.58, 0.93, 0.76, 0.08))
+	room_glow_layer = _add_color_layer("RunRoomFocusGlow", Color(0.58, 0.93, 0.76, 0.07))
+	protocol_glow_layer = _add_color_layer("RunProtocolWarningGlow", Color(0.94, 0.70, 0.28, 0.08))
+	bottom_key_glow_layer = _add_color_layer("RunBottomKeyGlow", Color(0.58, 0.93, 0.76, 0.06))
 
 	scanner_title_label = _add_label("RunScannerTitle", "区域扫描器", 18, PresentationTheme.color_for_key(&"ui.accent"))
 	scanner_summary_label = _add_label("RunScannerSummary", "扫描器：等待数据", 13, PresentationTheme.text_color())
@@ -104,17 +112,17 @@ func build() -> void:
 	layout_label = _add_label("RunLayoutProfileStatus", "", 11, PresentationTheme.color_for_key(&"ui.muted"))
 	layout_label.visible = false
 
-	action_hint_label = _add_label("RunActionHint", "行动提示：可用按钮高亮，灰显按钮保留原因提示。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	action_hint_label = _add_label("RunActionHint", "快捷键：E 搜索 / Q 背包 / G 拾取 / M 地图 / Space 清理 / Esc 暂停", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 	action_bar = HBoxContainer.new()
 	action_bar.name = "RunBottomActionButtons"
 	action_bar.add_theme_constant_override("separation", 5)
 	add_child(action_bar)
-	_add_action_button(&"interact", "搜索 / 交互", func() -> void: interact_requested.emit())
+	_add_action_button(&"interact", "搜索", func() -> void: interact_requested.emit())
 	_add_action_button(&"inventory", "背包", func() -> void: inventory_requested.emit())
-	_add_action_button(&"ground_loot", "地面物品", func() -> void: ground_loot_requested.emit())
-	_add_action_button(&"map", "区域扫描", func() -> void: map_requested.emit(&"surface_button"))
-	_add_action_button(&"combat", "清理威胁", func() -> void: combat_requested.emit())
+	_add_action_button(&"ground_loot", "拾取", func() -> void: ground_loot_requested.emit())
+	_add_action_button(&"map", "地图", func() -> void: map_requested.emit(&"surface_button"))
+	_add_action_button(&"combat", "清理", func() -> void: combat_requested.emit())
 	_add_action_button(&"extract", "撤离", func() -> void: extract_requested.emit())
 	_add_action_button(&"pause", "暂停", func() -> void: pause_requested.emit())
 
@@ -163,7 +171,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	event_label.tooltip_text = String(model.get("event_panel_summary", event_label.text))
 	reward_label.text = String(model.get("reward_summary", reward_label.text))
 	reward_label.tooltip_text = String(model.get("loot_panel_summary", reward_label.text))
-	action_hint_label.text = String(model.get("action_hint", "行动提示：可用按钮高亮，灰显按钮保留原因提示。"))
+	action_hint_label.text = "快捷键：E 搜索 / Q 背包 / G 拾取 / M 地图 / Space 清理 / Esc 暂停"
 
 	var profile: Dictionary = model.get("layout_profile", {})
 	layout_label.text = ""
@@ -207,6 +215,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(encounter_backdrop, Rect2(right_left, encounter_top - 8.0, right_width, encounter_height + 16.0))
 	_set_rect(bottom_backdrop, Rect2(center_left, height - bottom_height - margin, center_width, bottom_height))
 	_set_rect(resource_backdrop, Rect2(margin, height - pocket_height - margin, left_width - margin * 2.0, pocket_height))
+	_set_rect(scanner_glow_layer, Rect2(margin, margin + 78.0, left_width - margin * 2.0, scanner_map_height))
+	_set_rect(room_glow_layer, Rect2(center_left + 12.0, margin + 12.0, center_width - 24.0, 82.0 if is_low else 94.0))
+	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 34.0, right_content_width, 264.0))
+	_set_rect(bottom_key_glow_layer, Rect2(center_left + 8.0, height - bottom_height - margin + 8.0, center_width - 16.0, bottom_height - 16.0))
 
 	_set_rect(scanner_title_label, Rect2(margin, margin, left_width - margin * 2.0, 28))
 	_set_rect(scanner_summary_label, Rect2(margin, margin + 30.0, left_width - margin * 2.0, 42))
@@ -306,6 +318,15 @@ func _add_panel(node_name: String, color: Color, border_color: Color) -> PanelCo
 	return panel
 
 
+func _add_color_layer(node_name: String, color: Color) -> ColorRect:
+	var layer := ColorRect.new()
+	layer.name = node_name
+	layer.color = color
+	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(layer)
+	return layer
+
+
 func _add_label(node_name: String, text: String, font_size: int, color: Color) -> Label:
 	var label := Label.new()
 	label.name = node_name
@@ -321,10 +342,9 @@ func _add_label(node_name: String, text: String, font_size: int, color: Color) -
 
 
 func _add_action_button(action_id: StringName, label: String, callback: Callable) -> void:
-	var button := Button.new()
+	var button := Art10UISkinKitScript.make_bottom_key_button(label, _key_label_for_action(action_id))
 	button.name = "RunAction_%s" % String(action_id)
-	button.text = label
-	button.custom_minimum_size = Vector2(76, 30)
+	button.custom_minimum_size = Vector2(84, 30)
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
 	button.add_theme_font_size_override("font_size", 13)
@@ -378,7 +398,7 @@ func _apply_actions(actions: Variant) -> void:
 		if not action_buttons.has(action_id):
 			continue
 		var button: Button = action_buttons[action_id]
-		button.text = String(action_data.get("label", button.text))
+		button.text = "%s  %s" % [_key_label_for_action(action_id), _short_action_label(action_id, String(action_data.get("label", button.text)))]
 		var enabled := bool(action_data.get("enabled", true))
 		var description := String(action_data.get("description", ""))
 		var disabled_reason := String(action_data.get("disabled_reason", ""))
@@ -386,6 +406,46 @@ func _apply_actions(actions: Variant) -> void:
 		button.tooltip_text = description if enabled or disabled_reason == "" else "%s\n禁用：%s" % [description, disabled_reason]
 		_apply_action_button_style(button, StringName(action_data.get("tone", &"secondary")), enabled)
 		_apply_key_prompt_icon(button, action_id)
+
+
+func _key_label_for_action(action_id: StringName) -> String:
+	match action_id:
+		&"interact":
+			return "E"
+		&"inventory":
+			return "Q"
+		&"ground_loot":
+			return "G"
+		&"map":
+			return "M"
+		&"combat":
+			return "Space"
+		&"extract":
+			return "T"
+		&"pause":
+			return "Esc"
+		_:
+			return ""
+
+
+func _short_action_label(action_id: StringName, fallback: String) -> String:
+	match action_id:
+		&"interact":
+			return "搜索"
+		&"inventory":
+			return "背包"
+		&"ground_loot":
+			return "拾取"
+		&"map":
+			return "地图"
+		&"combat":
+			return "清理"
+		&"extract":
+			return "撤离"
+		&"pause":
+			return "暂停"
+		_:
+			return fallback
 
 
 func _apply_encounter_section(section_variant: Variant) -> void:
@@ -544,18 +604,28 @@ func _style_modal_children(node: Node) -> void:
 		_style_modal_children(child)
 
 
-func _lines_text(lines: Variant, fallback: String) -> String:
+func _lines_text(lines: Variant, fallback: String, max_lines: int = 4) -> String:
 	if not (lines is Array):
 		return fallback
 	var typed_lines: Array = lines
 	if typed_lines.is_empty():
 		return fallback
 	var text := ""
-	for index in range(typed_lines.size()):
+	var visible_count: int = mini(typed_lines.size(), max_lines)
+	for index in range(visible_count):
 		if index > 0:
 			text += "\n"
-		text += String(typed_lines[index])
-	return text
+		text += _shorten_copy(String(typed_lines[index]), 30)
+	if typed_lines.size() > visible_count:
+		text += "\n..."
+	return Art10UISkinKitScript.sanitize_player_copy(text)
+
+
+func _shorten_copy(text: String, max_chars: int) -> String:
+	var safe := Art10UISkinKitScript.sanitize_player_copy(text)
+	if safe.length() <= max_chars:
+		return safe
+	return "%s..." % safe.substr(0, max_chars)
 
 
 func _set_rect(control: Control, rect: Rect2) -> void:

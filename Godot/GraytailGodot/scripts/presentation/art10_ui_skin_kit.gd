@@ -4,6 +4,8 @@ class_name Art10UISkinKit
 # ART-10R UI skin kit is presentation-only. It owns shared pixel UI styling,
 # player-visible copy cleanup, and Base confirmed draft layout metrics.
 
+const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
+
 const FONT_ASSET_ID := &"ui.font.fusion_pixel"
 const CANVAS_SIZE := Vector2(1280, 720)
 
@@ -41,6 +43,23 @@ const COLORS := {
 	&"danger": Color(0.94, 0.34, 0.28, 1.0),
 	&"shadow": Color(0.0, 0.0, 0.0, 0.42),
 	&"disabled": Color(0.27, 0.32, 0.31, 0.76),
+}
+
+const VISUAL_STATE_TONES := {
+	&"normal": &"secondary",
+	&"hover": &"primary",
+	&"selected": &"selected",
+	&"disabled": &"disabled",
+	&"locked": &"locked",
+	&"warning": &"warning",
+	&"danger": &"danger",
+	&"new": &"new",
+	&"reward": &"reward",
+	&"ready": &"ready",
+	&"preview": &"secondary",
+	&"owned": &"primary",
+	&"configured": &"selected",
+	&"pending": &"warning",
 }
 
 const MAIN_MENU_RECTS := {
@@ -96,35 +115,45 @@ static func color(token: StringName, fallback: Color = Color.WHITE) -> Color:
 	return value if value is Color else fallback
 
 
+static func visual_state_tone(value: Variant, selected: bool = false) -> StringName:
+	if selected:
+		return &"selected"
+	var key := StringName(String(value).to_lower())
+	var tone: Variant = VISUAL_STATE_TONES.get(key, &"secondary")
+	return tone if tone is StringName else &"secondary"
+
+
 static func sanitize_player_copy(text: String) -> String:
 	var result := text
-	var replacements := {
-		"DEBUG": "诊断",
-		"Debug": "诊断",
-		"debug": "诊断",
-		"Legacy": "",
-		"legacy": "",
-		"draft": "配置草案",
-		"Draft": "配置草案",
-		"preview_only": "预览",
-		"preview": "预览",
-		"Preview": "预览",
-		"display_only": "展示",
-		"read_only": "只读",
-		"no_persistence": "不写入存档",
-		"G24 foundation": "长期系统基础",
-		"RunStartConfig": "出发配置",
-		"local draft": "本地配置",
-		"M1 验证摘要": "近期行动记录",
-	}
-	for key in replacements.keys():
-		result = result.replace(String(key), String(replacements[key]))
+	result = _sanitize_engineering_copy(result)
 	while result.find("  ") >= 0:
 		result = result.replace("  ", " ")
 	return result.strip_edges()
 
 
 static func status_label(value: Variant) -> String:
+	var raw := String(value)
+	var lowered_raw := raw.to_lower()
+	var labels := {
+		"preview": "可查看",
+		"preview_only": "可查看",
+		"display_only": "展示",
+		"read_only": "查看",
+		"pending": "待确认",
+		"selected": "已选择",
+		"configured": "已配置",
+		"owned": "已拥有",
+		"locked": "未开放",
+		"disabled": "未开放",
+		"normal": "可用",
+		"ready": "就绪",
+		"reward": "奖励",
+		"new": "新",
+		"warning": "需注意",
+		"danger": "高风险",
+	}
+	if labels.has(lowered_raw):
+		return String(labels[lowered_raw])
 	var text := sanitize_player_copy(String(value))
 	var lowered := text.to_lower()
 	if lowered == "pending" or lowered == "待确认":
@@ -136,6 +165,88 @@ static func status_label(value: Variant) -> String:
 	if lowered == "owned":
 		return "已拥有"
 	return text
+
+
+static func _sanitize_engineering_copy(text: String) -> String:
+	var result := text
+	var replacements := {
+		"DEBUG": "诊断",
+		"Debug": "诊断",
+		"debug": "诊断",
+		"Legacy": "",
+		"legacy": "",
+		"draft": "整备",
+		"Draft": "整备",
+		"preview_only": "可查看",
+		"preview": "可查看",
+		"Preview": "可查看",
+		"display-only": "展示",
+		"display_only": "展示",
+		"read_only": "查看",
+		"no_persistence": "本轮不保存",
+		"schema": "结构",
+		"interface": "联动",
+		"Interface": "联动",
+		"G24": "长期系统",
+		"G30": "内容接口",
+		"preview cards": "展示条目",
+		"slot": "位置",
+		"Slot": "位置",
+		"card": "条目",
+		"Card": "条目",
+		"tab_icon_key": "标签图标",
+		"module_icon_key": "模块图标",
+		"module_banner_key": "模块横幅",
+		"description_key": "说明文本",
+		"localization_key": "文本",
+		"ui_group_key": "分组",
+		"art_key": "美术标记",
+		"_key": "标记",
+		" key": " 标记",
+		"enum": "类型",
+		"locked": "未开放",
+		"Locked": "未开放",
+		"spawn": "出现",
+		"eligible": "可处理",
+		"not_ready": "未就绪",
+		"blocked_capacity": "容量不足",
+		"command.accepted": "操作已确认",
+		"intent": "操作",
+		"RunStartConfig": "出发配置",
+		"Deploy Prep full module content": "出发整备内容",
+		"seed_policy": "路线生成",
+		"defer_until_run_start": "开始时确定",
+		"deploy_prep_projection": "出发摘要",
+		"projection_type": "路线摘要",
+		"standard_10x10": "标准探索",
+		"RewardBundle": "奖励包",
+		"events": "事件",
+		"required_permission": "许可条件",
+		"future_permission_hook": "后续许可",
+		"runtime progress": "探索进度",
+		"reward grant": "奖励发放",
+		"long-term objective write": "目标记录",
+		"active_run_persistence": "探索存档",
+		"RunBootstrapper": "探索启动器",
+		"SettlementSnapshot": "结算记录",
+		"detail": "详情",
+		"Normal": "普通",
+		"standard": "标准",
+		"running": "探索中",
+	}
+	for key in replacements.keys():
+		result = result.replace(String(key), String(replacements[key]))
+	return result
+
+
+static func apply_visual_state(control: Control, state: Variant, selected: bool = false) -> void:
+	if control == null:
+		return
+	var tone := visual_state_tone(state, selected)
+	if control is Button:
+		apply_button_token(control as Button, tone, &"body", &"button")
+	elif control is PanelContainer:
+		apply_panel(control as PanelContainer, tone)
 
 
 static func apply_label(label: Label, font_size_value: int = -1, font_color: Color = Color(-1, -1, -1, -1)) -> void:
@@ -210,6 +321,26 @@ static func make_large_nav_button(text: String, subtitle: String = "", tone: Str
 	return button
 
 
+static func make_small_button(text: String, tone: StringName = &"secondary") -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(92, 32)
+	button.focus_mode = Control.FOCUS_NONE
+	apply_button_token(button, tone, &"caption", &"button")
+	return button
+
+
+static func make_tab_button(text: String, selected: bool = false, state: Variant = &"normal") -> Button:
+	var button := Button.new()
+	button.text = text
+	button.toggle_mode = true
+	button.button_pressed = selected
+	button.custom_minimum_size = Vector2(112, 40)
+	button.focus_mode = Control.FOCUS_NONE
+	apply_button_token(button, visual_state_tone(state, selected), &"tab", &"tab")
+	return button
+
+
 static func make_icon_slot(node_name: String, size: Vector2 = Vector2(52, 52), tone: StringName = &"slot") -> PanelContainer:
 	var panel := make_frame_panel(node_name, Rect2(Vector2.ZERO, size), tone)
 	panel.custom_minimum_size = size
@@ -218,6 +349,39 @@ static func make_icon_slot(node_name: String, size: Vector2 = Vector2(52, 52), t
 
 static func make_card_frame(node_name: String, rect: Rect2 = Rect2(), selected: bool = false) -> PanelContainer:
 	return make_frame_panel(node_name, rect, &"selected" if selected else &"card")
+
+
+static func make_summary_panel(node_name: String, rect: Rect2 = Rect2()) -> PanelContainer:
+	return make_frame_panel(node_name, rect, &"summary")
+
+
+static func make_notice_box(node_name: String, rect: Rect2 = Rect2()) -> PanelContainer:
+	return make_frame_panel(node_name, rect, &"notice")
+
+
+static func make_locked_overlay(node_name: String, rect: Rect2) -> ColorRect:
+	var overlay := ColorRect.new()
+	overlay.name = node_name
+	overlay.color = Color(0.0, 0.0, 0.0, 0.46)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	set_rect(overlay, rect)
+	return overlay
+
+
+static func make_badge(text: String, state: Variant = &"normal") -> Label:
+	var label := Label.new()
+	label.text = sanitize_player_copy(text)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.custom_minimum_size = Vector2(64, 24)
+	apply_label_token(label, &"key_prompt", &"text")
+	label.add_theme_stylebox_override("normal", panel_style(visual_state_tone(state)))
+	return label
+
+
+static func make_state_badge(state: Variant, text: String = "") -> Label:
+	var label_text := text if text != "" else status_label(state)
+	return make_badge(label_text, state)
 
 
 static func make_selected_glow(node_name: String, rect: Rect2, glow_color: Color = Color(0.58, 0.93, 0.76, 0.20)) -> ColorRect:
@@ -239,6 +403,10 @@ static func make_bottom_key_button(text: String, key_label: String = "", icon: T
 	return button
 
 
+static func make_bottom_key_bar(node_name: String, rect: Rect2 = Rect2()) -> PanelContainer:
+	return make_frame_panel(node_name, rect, &"surface")
+
+
 static func rect(group: StringName, key: String) -> Rect2:
 	var table := {}
 	match group:
@@ -254,6 +422,45 @@ static func rect(group: StringName, key: String) -> Rect2:
 			table = {}
 	var value: Variant = table.get(key, Rect2())
 	return value if value is Rect2 else Rect2()
+
+
+static func viewport_size_for(owner: Control) -> Vector2:
+	if owner == null:
+		return CANVAS_SIZE
+	var viewport_rect := owner.get_viewport_rect()
+	if viewport_rect.size.x < 1.0 or viewport_rect.size.y < 1.0:
+		return CANVAS_SIZE
+	return viewport_rect.size
+
+
+static func layout_profile_for(owner: Control) -> Dictionary:
+	return UILayoutProfileScript.profile_for_size(viewport_size_for(owner))
+
+
+static func layout_scale_for(owner: Control) -> float:
+	var viewport_size := viewport_size_for(owner)
+	return min(viewport_size.x / CANVAS_SIZE.x, viewport_size.y / CANVAS_SIZE.y)
+
+
+static func layout_origin_for(owner: Control) -> Vector2:
+	var viewport_size := viewport_size_for(owner)
+	var scale := layout_scale_for(owner)
+	var content_size := CANVAS_SIZE * scale
+	return (viewport_size - content_size) * 0.5
+
+
+static func layout_rect_for(owner: Control, base_rect: Rect2) -> Rect2:
+	var scale := layout_scale_for(owner)
+	return Rect2(layout_origin_for(owner) + base_rect.position * scale, base_rect.size * scale)
+
+
+static func layout_size_for(owner: Control, base_size: Vector2) -> Vector2:
+	var scale := layout_scale_for(owner)
+	return base_size * scale
+
+
+static func page_rect(owner: Control, group: StringName, key: String) -> Rect2:
+	return layout_rect_for(owner, rect(group, key))
 
 
 static func set_rect(control: Control, target_rect: Rect2) -> void:
@@ -288,6 +495,10 @@ static func panel_style(tone: StringName = &"surface") -> StyleBoxFlat:
 			bg = Color(0.044, 0.058, 0.058, 0.96)
 			border = color(&"warning")
 			padding = 12
+		&"notice":
+			bg = Color(0.052, 0.061, 0.048, 0.96)
+			border = color(&"gold")
+			padding = 10
 		&"card":
 			bg = Color(0.030, 0.052, 0.056, 0.94)
 			border = Color(0.24, 0.36, 0.34, 1.0)
@@ -306,6 +517,23 @@ static func panel_style(tone: StringName = &"surface") -> StyleBoxFlat:
 			border = color(&"gold")
 			border_width = 2
 			padding = 12
+		&"reward":
+			bg = Color(0.20, 0.13, 0.04, 0.96)
+			border = color(&"gold")
+			border_width = 2
+		&"ready":
+			bg = Color(0.044, 0.078, 0.052, 0.96)
+			border = color(&"accent")
+			border_width = 2
+		&"new":
+			bg = Color(0.050, 0.066, 0.088, 0.96)
+			border = Color(0.55, 0.78, 0.96, 1.0)
+		&"locked":
+			bg = Color(0.020, 0.026, 0.028, 0.84)
+			border = color(&"disabled")
+		&"warning":
+			bg = Color(0.068, 0.050, 0.026, 0.94)
+			border = color(&"warning")
 		&"danger":
 			bg = Color(0.060, 0.032, 0.032, 0.92)
 			border = color(&"danger")
@@ -327,11 +555,29 @@ static func button_style(tone: StringName = &"secondary", hover: bool = false, p
 		&"primary":
 			bg = Color(0.044, 0.075, 0.070, 0.97)
 			border = color(&"accent")
+		&"selected":
+			bg = Color(0.052, 0.084, 0.070, 0.98)
+			border = color(&"accent")
+			border_width = 2
 		&"gold":
 			bg = color(&"gold_dark")
 			border = color(&"gold")
 			border_width = 2
 			padding = 12
+		&"reward":
+			bg = Color(0.20, 0.13, 0.04, 0.96)
+			border = color(&"gold")
+			border_width = 2
+		&"ready":
+			bg = Color(0.045, 0.080, 0.052, 0.96)
+			border = color(&"accent")
+			border_width = 2
+		&"new":
+			bg = Color(0.050, 0.066, 0.088, 0.96)
+			border = Color(0.55, 0.78, 0.96, 1.0)
+		&"locked":
+			bg = Color(0.020, 0.028, 0.030, 0.72)
+			border = color(&"disabled")
 		&"warning":
 			border = color(&"warning")
 		&"danger":

@@ -49,6 +49,11 @@ func get_selected_module_id() -> StringName:
 
 func _build_static_layout() -> void:
 	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.016, 0.030, 0.036, 1.0))
+	_add_color_rect(self, "LongTermArchiveRoomGlow", Rect2(38, 122, 1202, 530), Color(0.13, 0.18, 0.20, 0.20))
+	_add_color_rect(self, "LongTermShelfLineA", Rect2(326, 204, 564, 2), Color(0.94, 0.70, 0.28, 0.26))
+	_add_color_rect(self, "LongTermShelfLineB", Rect2(326, 336, 564, 2), Color(0.94, 0.70, 0.28, 0.18))
+	_add_color_rect(self, "LongTermShelfLineC", Rect2(326, 468, 564, 2), Color(0.94, 0.70, 0.28, 0.14))
+	_add_color_rect(self, "LongTermDetailLamp", Rect2(914, 132, 322, 4), Art10UISkinKitScript.color(&"gold"))
 	_add_panel(self, "LongTermProfileColumn", Art10UISkinKitScript.rect(&"long_term", "profile_column"), &"deep")
 	_add_panel(self, "LongTermCardGridColumn", Art10UISkinKitScript.rect(&"long_term", "card_grid"), &"surface")
 	_add_panel(self, "LongTermDetailColumn", Art10UISkinKitScript.rect(&"long_term", "detail_column"), &"summary")
@@ -58,11 +63,14 @@ func _build_static_layout() -> void:
 	_build_tab_buttons()
 
 	_add_label_token(self, "LongTermProfileHeading", Rect2(66, 178, 220, 24), "角色档案", &"tab", &"accent")
-	overview_label = _add_label_token(self, "LongTermOverview", Rect2(66, 212, 214, 96), "", &"caption", &"text")
-	child_preview_label = _add_label_token(self, "LongTermChildPreview", Rect2(66, 324, 214, 164), "", &"caption", &"text")
-	history_preview_label = _add_label_token(self, "LongTermHistoryPreview", Rect2(66, 504, 214, 84), "", &"caption", &"muted")
+	_add_color_rect(self, "LongTermAvatarGlow", Rect2(72, 210, 116, 116), Color(0.58, 0.93, 0.76, 0.08))
+	_add_color_rect(self, "LongTermAvatarSilhouette", Rect2(104, 226, 52, 78), Color(0.18, 0.27, 0.24, 0.84))
+	_add_color_rect(self, "LongTermArchiveDivider", Rect2(66, 314, 214, 2), Art10UISkinKitScript.color(&"accent"))
+	overview_label = _add_label_token(self, "LongTermOverview", Rect2(66, 334, 214, 76), "", &"caption", &"text")
+	child_preview_label = _add_label_token(self, "LongTermChildPreview", Rect2(66, 420, 214, 86), "", &"caption", &"text")
+	history_preview_label = _add_label_token(self, "LongTermHistoryPreview", Rect2(66, 516, 214, 72), "", &"caption", &"muted")
 
-	_add_label_token(self, "LongTermGridHeading", Rect2(348, 176, 320, 28), "内容卡片", &"tab", &"warning")
+	_add_label_token(self, "LongTermGridHeading", Rect2(348, 176, 320, 28), "收藏与记录", &"tab", &"warning")
 	card_grid_container = GridContainer.new()
 	card_grid_container.name = "LongTermCardGrid"
 	card_grid_container.columns = 3
@@ -118,22 +126,21 @@ func _refresh_from_model() -> void:
 	selected_module_id = StringName(current_model.get("selected_module_id", selected_module_id))
 	var overview: Dictionary = current_model.get("overview_summary", {})
 	overview_label.text = "%s\n%s" % [
-		String(overview.get("title", "长期系统内容框架")),
-		String(overview.get("message", "")),
+		_shorten_copy(String(overview.get("title", "长期系统")), 12),
+		"档案 / 图鉴 / 研究 / 收藏",
 	]
 	var panel: Dictionary = current_model.get("placeholder_panel", {})
 	var content_preview: Dictionary = current_model.get("current_content_preview", panel.get("content_preview", {}))
 	module_title_label.text = String(panel.get("title", ""))
 	module_state_label.text = "状态：%s" % Art10UISkinKitScript.status_label(panel.get("state", "preview"))
 	module_body_label.text = "%s\n%s" % [
-		_shorten_copy(String(panel.get("description", "")), 34),
+		_shorten_copy(String(panel.get("description", "")), 24),
 		_format_detail_preview(content_preview.get("detail_preview", {})),
 	]
-	module_reason_label.text = "边界：%s" % _shorten_copy(String(panel.get("reason", "")), 44)
-	child_preview_label.text = "记录摘要\n- 模块：%s\n- 状态：%s\n- 内容：%s\n\n分组\n%s" % [
+	module_reason_label.text = "开放：%s" % _shorten_copy(String(panel.get("reason", "")), 28)
+	child_preview_label.text = "记录摘要\n- 模块：%s\n- 状态：%s\n%s" % [
 		_shorten_copy(String(panel.get("title", "")), 12),
 		Art10UISkinKitScript.status_label(panel.get("state", "preview")),
-		_shorten_copy(String(panel.get("description", "")), 14),
 		_format_child_groups(panel.get("child_preview_groups", []) as Array),
 	]
 	var snapshot: Dictionary = current_model.get("snapshot_preview", {})
@@ -141,10 +148,10 @@ func _refresh_from_model() -> void:
 		_format_snapshot_section(snapshot.get("profile_snapshot", {})),
 		_format_snapshot_section(snapshot.get("unlock_snapshot", {})),
 	]
-	interface_preview_label.text = "接口位：奖励、事件、红点、跳转\n美术槽：模块图标 / 横幅 / 卡片"
+	interface_preview_label.text = "联动：奖励 / 事件 / 跳转\n美术：图标 / 横幅 / 条目"
 	var history_preview: Dictionary = current_model.get("history_preview_panel", {})
 	history_preview_label.text = _format_history_preview(history_preview)
-	next_stage_label.text = "跳转接口：仓库 / 图鉴 / 历史战绩入口待接入；本页不打开对应系统。"
+	next_stage_label.text = "后续：仓库、图鉴、历史战绩继续接入。"
 	_refresh_card_grid(content_preview.get("cards", []) as Array)
 	_apply_art10_text_refresh()
 	_refresh_tab_buttons()
@@ -168,16 +175,15 @@ func _refresh_card_grid(cards: Array) -> void:
 	for card: Dictionary in visible_cards:
 		var button := Button.new()
 		button.name = "LongTermCard_%s" % str(card.get("id", index))
-		button.text = "%s\n%s\n%s" % [
-			String(card.get("title", "")),
-			String(card.get("group_title", "")),
-			"槽位预留",
+		button.text = "%s\n%s" % [
+			_shorten_copy(String(card.get("title", "")), 10),
+			Art10UISkinKitScript.status_label("preview"),
 		]
 		button.tooltip_text = String(card.get("description", ""))
 		button.custom_minimum_size = Vector2(160, 104)
 		button.toggle_mode = true
 		button.button_pressed = index == 0
-		Art10UISkinKitScript.apply_button_token(button, &"primary" if index == 0 else &"secondary", &"caption", &"slot")
+		Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if index == 0 else &"normal"), &"caption", &"slot")
 		card_grid_container.add_child(button)
 		index += 1
 
@@ -187,7 +193,7 @@ func _refresh_tab_buttons() -> void:
 		var button := tab_buttons[module_id] as Button
 		if button != null:
 			button.button_pressed = StringName(module_id) == selected_module_id
-			Art10UISkinKitScript.apply_button_token(button, &"primary" if button.button_pressed else &"secondary", &"tab", &"tab")
+			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if button.button_pressed else &"normal"), &"tab", &"tab")
 
 
 func _format_child_groups(groups: Array) -> String:
@@ -212,14 +218,14 @@ func _format_slots(slots: Array) -> String:
 	var lines := []
 	for slot: Dictionary in slots.slice(0, 2):
 		lines.append("- %s" % _shorten_copy(String(slot.get("display_name", "")), 14))
-	return Art10UISkinKitScript.sanitize_player_copy("\n".join(lines)) if not lines.is_empty() else "事件槽：待接入"
+	return Art10UISkinKitScript.sanitize_player_copy("\n".join(lines)) if not lines.is_empty() else "事件位：待开放"
 
 
 func _format_art_slots(slots: Array) -> String:
 	var labels := []
 	for slot: Dictionary in slots:
 		labels.append(String(slot.get("art_key", "")))
-	return "美术槽：模块图标 / 横幅"
+	return "美术位：模块图标 / 横幅"
 
 
 func _format_cross_links(links: Array) -> String:
@@ -230,10 +236,7 @@ func _format_cross_links(links: Array) -> String:
 
 
 func _format_g30_interface_preview(model: Dictionary, content_preview: Dictionary) -> String:
-	return Art10UISkinKitScript.sanitize_player_copy("RewardBundle %s / events %s" % [
-		_safe_display_text((model.get("reward_bundle_preview", {}) as Dictionary).get("schema_kind", "RewardBundle")),
-		_safe_display_text((content_preview.get("event_flow_preview", {}) as Dictionary).get("summary", "事件接口")),
-	])
+	return Art10UISkinKitScript.sanitize_player_copy("奖励与事件：待开放")
 
 
 func _format_jump_targets(targets: Array) -> String:
@@ -257,10 +260,8 @@ func _format_preview_line(snapshot: Dictionary, key: String) -> String:
 func _format_history_preview(history_preview: Dictionary) -> String:
 	if history_preview.is_empty():
 		return "历史战绩：待接入"
-	return Art10UISkinKitScript.sanitize_player_copy("历史战绩\n%s\n%s / %s" % [
+	return Art10UISkinKitScript.sanitize_player_copy("历史战绩\n%s\n记录图标与美术条目待开放" % [
 		_shorten_copy(String(history_preview.get("summary", "")), 30),
-		_shorten_copy(String(history_preview.get("history_card_icon_key", "")), 16),
-		_shorten_copy(String(history_preview.get("art_placeholder_id", "")), 16),
 	])
 
 
@@ -278,9 +279,9 @@ func _safe_display_text(value: Variant) -> String:
 	if value == null:
 		return "-"
 	if value is Dictionary:
-		return "Dictionary(%d)" % (value as Dictionary).size()
+		return "多项内容"
 	if value is Array:
-		return "Array(%d)" % (value as Array).size()
+		return "列表内容"
 	return Art10UISkinKitScript.sanitize_player_copy(str(value))
 
 

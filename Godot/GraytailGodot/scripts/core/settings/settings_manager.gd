@@ -42,10 +42,16 @@ func reset_to_defaults() -> void:
 
 
 func apply_startup_display_settings() -> void:
-	_lock_window_resize()
+	_apply_window_resize_policy()
 	var stored_resolution_id := StringName(values.get(DISPLAY_RESOLUTION_KEY, &""))
 	if is_supported_resolution_id(stored_resolution_id):
 		apply_resolution_id(stored_resolution_id, &"manual")
+	elif DisplayServer.window_can_draw():
+		var startup_resolution_id := resolution_id_for_size(DisplayServer.window_get_size())
+		if is_supported_resolution_id(startup_resolution_id):
+			_apply_resolution_entry(_entry_for_id(startup_resolution_id), &"auto", false)
+		else:
+			apply_auto_recommended_resolution()
 	else:
 		apply_auto_recommended_resolution()
 
@@ -123,6 +129,14 @@ func is_supported_resolution_id(resolution_id: StringName) -> bool:
 	return not _entry_for_id(resolution_id).is_empty()
 
 
+func resolution_id_for_size(size: Vector2i) -> StringName:
+	for entry in SUPPORTED_RESOLUTIONS:
+		var candidate_size: Vector2i = entry.get("size", MIN_SUPPORTED_RESOLUTION)
+		if candidate_size == size:
+			return StringName(entry.get("id", &""))
+	return &""
+
+
 func _entry_for_id(resolution_id: StringName) -> Dictionary:
 	for entry in SUPPORTED_RESOLUTIONS:
 		if StringName(entry.get("id", &"")) == resolution_id:
@@ -130,7 +144,7 @@ func _entry_for_id(resolution_id: StringName) -> Dictionary:
 	return {}
 
 
-func _apply_resolution_entry(entry: Dictionary, source: StringName) -> void:
+func _apply_resolution_entry(entry: Dictionary, source: StringName, resize_window: bool = true) -> void:
 	current_resolution_id = StringName(entry.get("id", &"1280x720"))
 	current_resolution_size = entry.get("size", MIN_SUPPORTED_RESOLUTION)
 	current_resolution_source = source
@@ -145,19 +159,18 @@ func _apply_resolution_entry(entry: Dictionary, source: StringName) -> void:
 			available_size = DisplayServer.screen_get_usable_rect(DisplayServer.window_get_current_screen()).size
 		if available_size.x < MIN_SUPPORTED_RESOLUTION.x or available_size.y < MIN_SUPPORTED_RESOLUTION.y:
 			display_notice = "当前显示区域低于最低支持 1280x720，已使用最低档。"
-	_lock_window_resize()
+	_apply_window_resize_policy()
 	if DisplayServer.window_can_draw():
 		DisplayServer.window_set_min_size(MIN_SUPPORTED_RESOLUTION)
 		DisplayServer.window_set_max_size(_largest_supported_resolution_size())
-		DisplayServer.window_set_size(current_resolution_size)
-		DisplayServer.window_set_min_size(current_resolution_size)
-		DisplayServer.window_set_max_size(current_resolution_size)
-		_center_window_in_current_screen()
+		if resize_window:
+			DisplayServer.window_set_size(current_resolution_size)
+			_center_window_in_current_screen()
 
 
-func _lock_window_resize() -> void:
+func _apply_window_resize_policy() -> void:
 	if DisplayServer.window_can_draw():
-		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_RESIZE_DISABLED, true)
+		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_RESIZE_DISABLED, false)
 
 
 func _largest_supported_resolution_size() -> Vector2i:
