@@ -1,3 +1,13 @@
+# G38 Open Decisions Update
+
+G38-R2 runtime architecture finalization decisions:
+
+- `OD-G38-001`: RunScene responsibility budget is now explicit; future additions must route through small helpers or a new audited stage.
+- `OD-G38-002`: GameKernel remains an inactive compatibility facade until a future project metadata gate can remove or replace the autoload.
+- `OD-G38-003`: active-run persistence, runtime profile switching, complete RunFlow rewrite, Objective/Reward/Pool, settlement/economy expansion, warehouse expansion, and complete Rule engine remain deferred.
+- `OD-G38-004`: gameplay runtime PASS and manual playtest PASS remain outside G38-R2.
+- Any G37S / older open-decision wording below this update is historical unless explicitly reopened.
+
 # G37S Open Decisions Update
 
 G37S-R2 validation / handoff supplement decisions:

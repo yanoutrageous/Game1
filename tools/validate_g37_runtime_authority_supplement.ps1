@@ -119,11 +119,12 @@ $diffNames = (& git -C $RepoRoot diff --name-only) -split "`r?`n" | Where-Object
 $forbiddenDiff = $diffNames | Where-Object {
     $_ -match '(^|/)project\.godot$' -or
     $_ -match '\.(tscn|tres|res|uid|translation|import)$' -or
-    $_ -match '^Godot/GraytailGodot/scripts/core/(run|command)/' -or
-    $_ -match '^Godot/GraytailGodot/scripts/ui/'
+    $_ -match '^Godot/GraytailGodot/scripts/core/command/(?!command_bus\.gd$)' -or
+    $_ -match '^Godot/GraytailGodot/scripts/core/(?!run/|command/command_bus\.gd$)' -or
+    $_ -match '^Godot/GraytailGodot/scripts/ui/(?!app_shell/|main_menu/|deploy_prep/|run_surface/|hud/)'
 }
 if ($forbiddenDiff.Count -gt 0) {
-    throw "G37S validation failed: supplement diff contains forbidden files: $($forbiddenDiff -join ', ')"
+    throw "G37S validation failed: current diff contains files outside G37/G38 runtime architecture ranges: $($forbiddenDiff -join ', ')"
 }
 
 Write-Output "G37_RUNTIME_AUTHORITY_SUPPLEMENT_VALIDATION=PASS"

@@ -1,3 +1,15 @@
+# G38 Route Update
+
+Current active slice: G38-R2 Runtime Architecture Consolidation Finalization.
+
+- G38 finalizes the runtime architecture boundary after G35/G36/G37/G37S.
+- `RunScene` remains responsible for scene lifecycle, node wiring, signal coordination, and modal visibility only.
+- Input routing, route handoff, command feedback, result/meta commit orchestration, and debug meta operations are delegated to dedicated helpers.
+- `GameKernel` is retained only as an inactive compatibility facade because `project.godot` autoload removal is out of scope.
+- G38 does not implement complete RunFlow, active-run persistence, new gameplay systems, Objective/Reward/Pool, complete settlement/economy, complete warehouse, complete Rule engine, gameplay runtime PASS, or manual playtest PASS.
+- Unified G38-R3 audit / release gate should validate G35/G36/G37/G37S/G38 scripts, parser/scene smoke, command-sequence regression, staged-file allowlist, and no main merge/main push unless separately authorized.
+- Any remaining G37S or older route wording below this update is historical / superseded unless explicitly reopened.
+
 # G37S Route Update
 
 Current active slice: G37S-R2 Runtime Authority Validation / Handoff Supplement.

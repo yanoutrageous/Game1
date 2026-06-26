@@ -1,6 +1,32 @@
 ﻿document_status: current_summary
 last_updated: "2026/06/26"
-scope: "DOC-GOV-001 documentation governance and G37 latest engineering evidence summary"
+scope: "G38 runtime architecture finalization and recent engineering evidence summary"
+
+g38_runtime_architecture_finalization:
+  stage: "G38-R2 Runtime Architecture Consolidation Finalization"
+  status: "branch_implementation_pending_release_gate"
+  contract: "docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md"
+  validation: "docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md"
+  handoff: "docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md"
+  validation_script: "tools/validate_g38_runtime_architecture_finalization.ps1"
+  implemented_foundation_interfaces:
+    - "RunSceneResponsibilityBudget"
+    - "RunSceneInputRouter"
+    - "RunSceneRouteController"
+    - "RunSceneCommandFeedback"
+    - "RunSceneResultController"
+    - "RunSceneDebugBridge debug meta wrapper"
+    - "GameKernel compatibility facade decision"
+  not_complete:
+    - "complete RunFlow rewrite"
+    - "active-run persistence"
+    - "runtime profile switching"
+    - "Objective / Reward / Pool"
+    - "complete settlement / economy"
+    - "complete warehouse"
+    - "complete Rule engine"
+    - "gameplay runtime PASS"
+    - "manual playtest PASS"
 
 g37s_runtime_authority_supplement:
   stage: "G37S-R2 Runtime Authority Validation / Handoff Supplement"

@@ -22,12 +22,13 @@ docs/00_governance/DUPLICATE_DOC_LEDGER.md
 
 | 阶段 | 状态 | 入口 |
 | --- | --- | --- |
+| G38 | current runtime architecture finalization / release gate pending | `docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md`、`docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md`、`docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md`、`tools/validate_g38_runtime_architecture_finalization.ps1` |
 | G37S | current validation / handoff supplement | `docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md`、`docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md`、`tools/validate_g37_runtime_authority_supplement.ps1` |
 | G37 | current engineering evidence / release gate pending | `docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md`、`docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md`、`docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md` |
 | DOC-GOV-001 | active / docs-only governance | `docs/00_governance/DOC_PLACEMENT_STANDARD.md`、`docs/00_governance/DUPLICATE_DOC_LEDGER.md` |
 | G36 | current engineering evidence / release gate pending | `docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md`、`docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`、`docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md` |
 
-G37S / G37 不声明 gameplay runtime PASS，也不声明 manual playtest PASS。DOC-GOV-001 不新增玩法规则。
+G38 / G37S / G37 不声明 gameplay runtime PASS，也不声明 manual playtest PASS。DOC-GOV-001 不新增玩法规则。
 
 ## 3. 近期历史阶段
 

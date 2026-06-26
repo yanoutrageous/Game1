@@ -17,7 +17,6 @@ const GroundLootPanelScript := preload("res://scripts/ui/ground_loot/ground_loot
 const DevDiagnosticsPanelScript := preload("res://scripts/ui/dev/dev_diagnostics_panel.gd")
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
 const G10ArtSmokeRegistry := preload("res://scripts/presentation/g10_art_smoke_registry.gd")
-const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const RunSurfaceScript := preload("res://scripts/ui/run_surface/run_surface.gd")
 const RunSurfaceModel := preload("res://scripts/ui/run_surface/run_surface_model.gd")
 const MetaProgressAdapterScript := preload("res://scripts/core/save/meta_progress_adapter.gd")
@@ -27,6 +26,11 @@ const RunSceneDebugBridgeScript := preload("res://scripts/core/run/run_scene_deb
 const RunSceneMetaCommitterScript := preload("res://scripts/core/run/run_scene_meta_committer.gd")
 const RunSceneUIBridgeScript := preload("res://scripts/core/run/run_scene_ui_bridge.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
+const RunSceneInputRouterScript := preload("res://scripts/core/run/run_scene_input_router.gd")
+const RunSceneRouteControllerScript := preload("res://scripts/core/run/run_scene_route_controller.gd")
+const RunSceneCommandFeedbackScript := preload("res://scripts/core/run/run_scene_command_feedback.gd")
+const RunSceneResultControllerScript := preload("res://scripts/core/run/run_scene_result_controller.gd")
+const RunSceneResponsibilityBudgetScript := preload("res://scripts/core/run/run_scene_responsibility_budget.gd")
 const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
@@ -157,7 +161,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _handle_cancel_input(event: InputEvent) -> bool:
-	if not (event.is_action_pressed("cancel") or _event_matches_key(event, [KEY_ESCAPE])):
+	if RunSceneInputRouterScript.cancel_action(event) != RunSceneInputRouterScript.ACTION_CANCEL:
 		return false
 	if _close_top_runtime_modal():
 		return true
@@ -173,10 +177,6 @@ func _handle_cancel_input(event: InputEvent) -> bool:
 func _handle_run_action_input(event: InputEvent) -> bool:
 	if screen_state != SCREEN_RUN or run_context == null:
 		return false
-	if event is InputEventKey:
-		var key_event := event as InputEventKey
-		if key_event.echo:
-			return false
 	if run_context.has_blocking_tutorial_popup():
 		return false
 	if _is_runtime_modal_open():
@@ -184,34 +184,24 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 	if map_overlay_panel != null and map_overlay_panel.visible:
 		return false
 
-	if event.is_action_pressed("interact") or _event_matches_key(event, [KEY_E]):
-		_handle_interact_pressed()
-		return true
-	elif event.is_action_pressed("attack") or _event_matches_key(event, [KEY_SPACE, KEY_J]):
-		_fight_and_show_result()
-		return true
-	elif event.is_action_pressed("flag_cell") or _event_matches_key(event, [KEY_F]):
-		_dispatch_command(&"flag_current_cell")
-		return true
-	elif event.is_action_pressed("open_map") or _event_matches_key(event, [KEY_M, KEY_TAB]):
-		_open_map_from_ui(&"keyboard")
-		return true
-	elif event.is_action_pressed("debug_restart_run"):
-		_restart_run_from_ui()
-		return true
-	return false
-
-
-func _event_matches_key(event: InputEvent, keycodes: Array) -> bool:
-	if not (event is InputEventKey):
-		return false
-	var key_event := event as InputEventKey
-	if not key_event.pressed or key_event.echo:
-		return false
-	for keycode: int in keycodes:
-		if key_event.physical_keycode == keycode or key_event.keycode == keycode:
+	match RunSceneInputRouterScript.run_action(event):
+		RunSceneInputRouterScript.ACTION_INTERACT:
+			_handle_interact_pressed()
 			return true
-	return false
+		RunSceneInputRouterScript.ACTION_FIGHT:
+			_fight_and_show_result()
+			return true
+		RunSceneInputRouterScript.ACTION_FLAG_CURRENT:
+			_dispatch_command(&"flag_current_cell")
+			return true
+		RunSceneInputRouterScript.ACTION_OPEN_MAP:
+			_open_map_from_ui(&"keyboard")
+			return true
+		RunSceneInputRouterScript.ACTION_RESTART_RUN:
+			_restart_run_from_ui()
+			return true
+		_:
+			return false
 
 
 func _build_playfield_visuals() -> void:
@@ -543,15 +533,12 @@ func _shell_snapshot() -> Dictionary:
 	if run_context != null:
 		snapshot = run_context.get_status_snapshot()
 	snapshot["meta_progress_summary"] = _meta_progress_summary()
+	snapshot["run_scene_responsibility_budget"] = RunSceneResponsibilityBudgetScript.describe()
 	return snapshot
 
 
 func _meta_progress_summary() -> Dictionary:
-	return RunSceneMetaCommitterScript.summary(meta_progress_adapter)
-
-
-func _commit_result_to_meta(result_snapshot: Dictionary) -> Dictionary:
-	return RunSceneMetaCommitterScript.commit_result(meta_progress_adapter, result_snapshot)
+	return RunSceneResultControllerScript.meta_summary(meta_progress_adapter)
 
 
 func _show_main_menu() -> void:
@@ -973,9 +960,7 @@ func _on_state_changed(_snapshot: Dictionary) -> void:
 
 
 func _on_result_available(snapshot: Dictionary) -> void:
-	var display_snapshot := snapshot.duplicate(true)
-	display_snapshot["meta_progress_commit"] = _commit_result_to_meta(snapshot)
-	display_snapshot["meta_progress_summary"] = _meta_progress_summary()
+	var display_snapshot := RunSceneResultControllerScript.build_result_display_snapshot(meta_progress_adapter, snapshot)
 	_refresh_view_models()
 	_hide_runtime_popups()
 	if result_panel != null:
@@ -1107,17 +1092,14 @@ func _dispatch_command(command_name: StringName, payload: Dictionary = {}) -> Di
 
 
 func _show_command_feedback(result: Dictionary) -> void:
-	if run_surface != null:
-		run_surface.show_command_feedback(result)
-	if command_result_label != null:
-		command_result_label.text = "操作提示：%s" % RunUIViewModel.command_result_text(result)
-		var accepted: bool = bool(result.get("accepted", result.get("ok", true)))
-		if not accepted:
-			_flash_blocked_reason()
-	if inventory_panel != null and inventory_panel.visible:
-		inventory_panel.call("show_command_result", result)
-	if ground_loot_panel != null and ground_loot_panel.visible:
-		ground_loot_panel.call("show_command_result", result)
+	RunSceneCommandFeedbackScript.apply_feedback(
+		result,
+		run_surface,
+		command_result_label,
+		inventory_panel,
+		ground_loot_panel,
+		Callable(self, "_flash_blocked_reason")
+	)
 
 func _flash_blocked_reason() -> void:
 	if command_result_label == null:
@@ -1247,7 +1229,7 @@ func _debug_meta_add_gold() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := RunSceneMetaCommitterScript.debug_add_gold(meta_progress_adapter, 1000, "m1_debug_panel")
+	var summary := RunSceneDebugBridgeScript.debug_add_gold(meta_progress_adapter, 1000, "m1_debug_panel")
 	if debug_log != null:
 		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: +1000 gold.", summary)
 	if ui_shell != null:
@@ -1260,7 +1242,7 @@ func _debug_meta_set_gold(amount: int) -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := RunSceneMetaCommitterScript.debug_set_gold(meta_progress_adapter, amount, "m1_debug_panel")
+	var summary := RunSceneDebugBridgeScript.debug_set_gold(meta_progress_adapter, amount, "m1_debug_panel")
 	if debug_log != null:
 		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: set gold.", summary)
 	if ui_shell != null:
@@ -1273,7 +1255,7 @@ func _debug_meta_clear_gold() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := RunSceneMetaCommitterScript.debug_clear_gold(meta_progress_adapter)
+	var summary := RunSceneDebugBridgeScript.debug_clear_gold(meta_progress_adapter)
 	if debug_log != null:
 		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: cleared gold.", summary)
 	if ui_shell != null:
@@ -1286,7 +1268,7 @@ func _debug_meta_add_warehouse_item() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := RunSceneMetaCommitterScript.debug_add_warehouse_item(meta_progress_adapter, {
+	var summary := RunSceneDebugBridgeScript.debug_add_warehouse_item(meta_progress_adapter, {
 		"instance_id": "m1_debug_warehouse_item_%d" % Time.get_ticks_msec(),
 		"item_id": "m1_debug_warehouse_item",
 		"display_name": "M1 Debug Warehouse Item",
@@ -1306,7 +1288,7 @@ func _debug_meta_clear_warehouse() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := RunSceneMetaCommitterScript.debug_clear_warehouse(meta_progress_adapter, "m1_debug_panel")
+	var summary := RunSceneDebugBridgeScript.debug_clear_warehouse(meta_progress_adapter, "m1_debug_panel")
 	if debug_log != null:
 		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: warehouse cleared.", summary)
 	if ui_shell != null:
@@ -1319,7 +1301,7 @@ func _debug_meta_save() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var result := RunSceneMetaCommitterScript.debug_mark_and_save(meta_progress_adapter, "meta_save", {"source": "m1_debug_panel"})
+	var result := RunSceneDebugBridgeScript.debug_mark_and_save(meta_progress_adapter, "meta_save", {"source": "m1_debug_panel"})
 	var summary: Dictionary = result.get("summary", {})
 	var saved := bool(result.get("saved", false))
 	if debug_log != null:
@@ -1334,7 +1316,7 @@ func _debug_meta_clear_save() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := RunSceneMetaCommitterScript.debug_clear_save(meta_progress_adapter, "m1_debug_panel")
+	var summary := RunSceneDebugBridgeScript.debug_clear_save(meta_progress_adapter, "m1_debug_panel")
 	if debug_log != null:
 		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: save cleared.", summary)
 	if ui_shell != null:
@@ -1347,7 +1329,7 @@ func _debug_meta_summary() -> void:
 		return
 	if meta_progress_adapter == null:
 		return
-	var summary := RunSceneMetaCommitterScript.debug_read_summary(meta_progress_adapter, "m1_debug_panel")
+	var summary := RunSceneDebugBridgeScript.debug_read_summary(meta_progress_adapter, "m1_debug_panel")
 	if debug_log != null:
 		debug_log.text = "Meta summary: gold=%s runs=%s extracts=%s fails=%s items=%s" % [
 			summary.get("gold", 0),
@@ -1383,19 +1365,14 @@ func _start_standard_from_ui() -> void:
 
 
 func _start_run_from_route(intent: Dictionary) -> void:
-	var payload := RunStartRouteAdapterScript.payload_from_intent(intent)
-	match RunStartRouteAdapterScript.route_command_from_payload(payload):
-		&"start_tutorial_run":
-			_start_tutorial_from_ui()
-		&"start_demo_run":
-			var result: Dictionary = command_bus.dispatch(&"start_demo_run")
-			last_command_result = result.duplicate(true)
-			_show_command_feedback(result)
-			if player_controller != null:
-				player_controller.reset_local_position()
-			_show_run_screen()
-		_:
-			_start_standard_from_ui()
+	var route_result := RunSceneRouteControllerScript.start_from_intent(intent, command_bus)
+	var command_result: Dictionary = route_result.get("command_result", route_result)
+	last_command_result = command_result.duplicate(true)
+	_show_command_feedback(command_result)
+	if bool(route_result.get("player_reset_requested", false)) and player_controller != null:
+		player_controller.reset_local_position()
+	if bool(route_result.get("run_screen_requested", false)):
+		_show_run_screen()
 
 
 func _attempt_room_transition(direction: Vector2i) -> void:

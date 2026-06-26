@@ -6,6 +6,27 @@
 
 本文件只汇总当前事实入口，不替代验证记录、历史 handoff、产品契约或外部策划来源。
 
+## G38 Current Update
+
+```text
+当前执行阶段：G38-R2 Runtime Architecture Consolidation Finalization
+阶段性质：runtime architecture boundary finalization
+当前仓库分支观测：godot/g38-runtime-architecture-finalization
+```
+
+G38 finalizes RunScene responsibility boundaries after G35/G36/G37/G37S. It adds helper controllers for input routing, route handoff, command feedback, result/meta commit orchestration, and debug meta operations. `RunRuntimeController` / `RunStateMachine` remain runtime authority, and `GameKernel` is retained only as an inactive compatibility facade until a future project metadata gate.
+
+G38 does not implement complete RunFlow, active-run persistence, Objective/Reward/Pool, complete settlement/economy, complete warehouse, complete Rule engine, gameplay runtime PASS, or manual playtest PASS.
+
+G38 entries:
+
+```text
+docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md
+docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md
+docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md
+tools/validate_g38_runtime_architecture_finalization.ps1
+```
+
 ## 1. 当前工作阶段
 
 ```text

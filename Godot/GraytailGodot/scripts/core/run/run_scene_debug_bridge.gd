@@ -2,6 +2,7 @@ extends RefCounted
 class_name RunSceneDebugBridge
 
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
+const RunSceneMetaCommitterScript := preload("res://scripts/core/run/run_scene_meta_committer.gd")
 
 
 static func can_use_debug_tools() -> bool:
@@ -34,3 +35,51 @@ static func debug_result_message(prefix: String, summary: Dictionary) -> String:
 	if bool(summary.get("write_blocked", false)):
 		return "%s blocked: %s" % [prefix, summary.get("write_block_reason", "write_blocked")]
 	return "%s gold=%s items=%s" % [prefix, summary.get("gold", 0), summary.get("warehouse_items_count", 0)]
+
+
+static func debug_add_gold(adapter: MetaProgressAdapter, amount: int, source: String) -> Dictionary:
+	if not can_use_debug_tools():
+		return disabled_feedback()
+	return RunSceneMetaCommitterScript.debug_add_gold(adapter, amount, source)
+
+
+static func debug_set_gold(adapter: MetaProgressAdapter, amount: int, source: String) -> Dictionary:
+	if not can_use_debug_tools():
+		return disabled_feedback()
+	return RunSceneMetaCommitterScript.debug_set_gold(adapter, amount, source)
+
+
+static func debug_clear_gold(adapter: MetaProgressAdapter) -> Dictionary:
+	if not can_use_debug_tools():
+		return disabled_feedback()
+	return RunSceneMetaCommitterScript.debug_clear_gold(adapter)
+
+
+static func debug_add_warehouse_item(adapter: MetaProgressAdapter, item: Dictionary) -> Dictionary:
+	if not can_use_debug_tools():
+		return disabled_feedback()
+	return RunSceneMetaCommitterScript.debug_add_warehouse_item(adapter, item)
+
+
+static func debug_clear_warehouse(adapter: MetaProgressAdapter, source: String) -> Dictionary:
+	if not can_use_debug_tools():
+		return disabled_feedback()
+	return RunSceneMetaCommitterScript.debug_clear_warehouse(adapter, source)
+
+
+static func debug_mark_and_save(adapter: MetaProgressAdapter, command: String, payload: Dictionary) -> Dictionary:
+	if not can_use_debug_tools():
+		return {"summary": disabled_feedback(), "saved": false}
+	return RunSceneMetaCommitterScript.debug_mark_and_save(adapter, command, payload)
+
+
+static func debug_clear_save(adapter: MetaProgressAdapter, source: String) -> Dictionary:
+	if not can_use_debug_tools():
+		return disabled_feedback()
+	return RunSceneMetaCommitterScript.debug_clear_save(adapter, source)
+
+
+static func debug_read_summary(adapter: MetaProgressAdapter, source: String) -> Dictionary:
+	if not can_use_debug_tools():
+		return disabled_feedback()
+	return RunSceneMetaCommitterScript.debug_read_summary(adapter, source)

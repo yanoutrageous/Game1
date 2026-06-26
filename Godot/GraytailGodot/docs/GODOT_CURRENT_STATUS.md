@@ -1,3 +1,15 @@
+# G38 Runtime Architecture Consolidation Finalization Status
+
+G38-R2 is the current implementation slice on branch `godot/g38-runtime-architecture-finalization`.
+
+- Scope: runtime architecture boundary finalization after G35/G36/G37/G37S.
+- Product contract: `docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md`.
+- Godot scope: `RunSceneResponsibilityBudget`, `RunSceneInputRouter`, `RunSceneRouteController`, `RunSceneCommandFeedback`, `RunSceneResultController`, `RunSceneDebugBridge` debug meta wrapping, and `GameKernel` compatibility facade wording.
+- Boundary: `RunRuntimeController` / `RunStateMachine` remain runtime authority; `RunScene` coordinates scene/UI lifecycle and helper calls.
+- Not implemented: complete RunFlow rewrite, active-run persistence, runtime profile switching, Objective/Reward/Pool, complete settlement/economy, complete warehouse, complete Rule engine, gameplay runtime, manual playtest.
+- Validation target: G35, G36, G37, G37S, and G38 validation scripts plus Godot headless project-load/parser smoke when available.
+- Parser / scene smoke is not gameplay runtime PASS or manual playtest PASS.
+
 # G37S Runtime Authority Validation / Handoff Supplement Status
 
 G37S-R2 is the current validation / handoff supplement on branch `godot/g37-runtime-authority-validation-supplement`.

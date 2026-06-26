@@ -1,0 +1,32 @@
+extends RefCounted
+class_name RunSceneResponsibilityBudget
+
+const STAGE_ID := "G38"
+const ROLE := "scene_lifecycle_node_wiring_signal_coordination"
+const RUNTIME_OWNER := "RunRuntimeController"
+const LIFECYCLE_OWNER := "RunStateMachine"
+
+
+static func describe() -> Dictionary:
+	return {
+		"stage_id": STAGE_ID,
+		"run_scene_role": ROLE,
+		"runtime_owner": RUNTIME_OWNER,
+		"lifecycle_owner": LIFECYCLE_OWNER,
+		"run_scene_may": [
+			"instantiate scenes and UI nodes",
+			"wire signals",
+			"coordinate viewport and modal visibility",
+			"delegate input, route, command feedback, result, and debug meta work to helpers",
+		],
+		"run_scene_must_not": [
+			"own a second RunContext or CommandBus",
+			"write context.phase directly",
+			"call context.fail_run directly",
+			"decide settlement or MetaProgress commit inline",
+			"bypass DebugGate for debug actions",
+		],
+		"read_only": true,
+		"display_only": true,
+		"no_persistence": true,
+	}
