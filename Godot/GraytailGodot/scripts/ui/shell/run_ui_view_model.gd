@@ -59,14 +59,9 @@ static func command_result_text(result: Dictionary) -> String:
 		return ""
 	var accepted: bool = bool(result.get("accepted", result.get("ok", false)))
 	var reason: String = String(result.get("reason_code", result.get("blocked_reason", result.get("reason", ""))))
-	var message_key: String = String(result.get("message_key", ""))
 	if accepted:
-		if message_key == "":
-			return "操作完成。"
-		return "操作完成：%s" % message_key
-	if message_key == "":
-		return "操作受阻：%s" % reason_label(reason)
-	return "操作受阻：%s（%s）" % [reason_label(reason), message_key]
+		return "操作完成。"
+	return "操作受阻：%s。" % reason_label(reason)
 
 
 static func player_message(message: String) -> String:
@@ -74,9 +69,16 @@ static func player_message(message: String) -> String:
 
 
 static func reason_label(reason_code: String) -> String:
-	match reason_code:
+	var normalized := reason_code.strip_edges()
+	if normalized == "":
+		return "这里暂时没有可交互目标"
+	if normalized.find("search") >= 0:
+		return "当前位置不可搜索"
+	if normalized.find("bound") >= 0 or normalized.find("position") >= 0:
+		return "请先移动到有效位置"
+	match normalized:
 		"":
-			return "无"
+			return "这里暂时没有可交互目标"
 		"tutorial_lock":
 			return "教程提示需要先确认"
 		"invalid_direction":
@@ -110,7 +112,7 @@ static func reason_label(reason_code: String) -> String:
 		"no_active_asset_ledger":
 			return "资产记录暂不可用"
 		_:
-			return reason_code
+			return "这里暂时没有可交互目标"
 
 
 static func compact_event_log(snapshot: Dictionary, max_count: int = 5) -> Array[String]:

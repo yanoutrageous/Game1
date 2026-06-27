@@ -75,7 +75,7 @@ func _rebuild_grid() -> void:
 	if placeholder != null:
 		placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		placeholder.add_theme_font_size_override("font_size", marker_font_size)
-		placeholder.text = "区域扫描图：点击打开回顾；数字为周围雷险"
+		placeholder.text = "扫描图：点击放大"
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) -> void:

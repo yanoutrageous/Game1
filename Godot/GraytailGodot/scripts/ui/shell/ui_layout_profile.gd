@@ -41,6 +41,13 @@ const REQUIRED_FIELDS := [
 	"safe_margin",
 	"grid_unit",
 	"column_gap",
+	"text_safe_padding",
+	"panel_inner_padding",
+	"min_readable_font_size",
+	"body_line_height",
+	"caption_line_height",
+	"summary_max_lines",
+	"summary_max_chars",
 ]
 
 
@@ -60,6 +67,7 @@ static func _profile_for_supported_size(resolution_id: StringName, supported_siz
 	var ui_scale := 0.94 if supported_size == Vector2i(1280, 720) else (0.97 if supported_size == Vector2i(1366, 768) else (1.12 if is_high else 1.0))
 	var viewport_size := Vector2(supported_size.x, supported_size.y)
 	var safe_margin := Vector2(42, 30) if is_low else (Vector2(70, 52) if is_high else Vector2(56, 40))
+	var text_safe_padding := Vector2(10, 7) if is_low else (Vector2(14, 10) if is_high else Vector2(12, 8))
 	return {
 		"profile_id": PROFILE_DESKTOP,
 		"schema_version": 1,
@@ -84,6 +92,13 @@ static func _profile_for_supported_size(resolution_id: StringName, supported_siz
 		"safe_margin": safe_margin,
 		"grid_unit": 8.0 if is_low else (12.0 if is_high else 10.0),
 		"column_gap": 20.0 if is_low else (32.0 if is_high else 24.0),
+		"text_safe_padding": text_safe_padding,
+		"panel_inner_padding": Vector2(14, 12) if is_low else (Vector2(20, 16) if is_high else Vector2(16, 14)),
+		"min_readable_font_size": 13 if is_low else 14,
+		"body_line_height": 20 if is_low else (24 if is_high else 22),
+		"caption_line_height": 16 if is_low else (19 if is_high else 17),
+		"summary_max_lines": 2 if is_low else 3,
+		"summary_max_chars": 16 if is_low else 20,
 	}
 
 
@@ -112,6 +127,13 @@ static func narrow_profile() -> Dictionary:
 		"safe_margin": Vector2(28, 28),
 		"grid_unit": 8.0,
 		"column_gap": 16.0,
+		"text_safe_padding": Vector2(9, 6),
+		"panel_inner_padding": Vector2(12, 10),
+		"min_readable_font_size": 13,
+		"body_line_height": 20,
+		"caption_line_height": 16,
+		"summary_max_lines": 2,
+		"summary_max_chars": 14,
 	}
 
 

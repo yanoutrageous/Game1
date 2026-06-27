@@ -126,7 +126,7 @@ func _build_tab_panel() -> void:
 			button.text = String(tab.get("label", tab_id))
 			button.tooltip_text = String(tab.get("subtitle", ""))
 			button.toggle_mode = true
-			button.custom_minimum_size = Vector2(112, 42)
+			button.custom_minimum_size = Vector2(122, 44)
 			_apply_art09_button_icon(button, _dictionary_from(tab.get("art09_asset_ref", {})), &"tab")
 			var captured_tab := tab_id
 			button.pressed.connect(func() -> void: show_tab(captured_tab))
@@ -137,7 +137,7 @@ func _build_tab_panel() -> void:
 
 func _build_content_panel() -> void:
 	_add_label_token(self, "DeployLeftHeading", Rect2(66, 172, 220, 26), "探索整备", &"tab", &"accent")
-	tab_body_label = _add_label_token(self, "DeployTabBody", Rect2(66, 430, 224, 72), "", &"caption", &"text")
+	tab_body_label = _add_label_token(self, "DeployTabBody", Rect2(66, 430, 224, 66), "", &"body_small", &"text")
 	_add_label_token(self, "DeployLoadoutHeading", Rect2(66, 554, 220, 22), "携带槽", &"caption", &"muted")
 	_add_icon_slot(self, "DeployLoadoutSlotA", Rect2(66, 580, 48, 48), "装备")
 	_add_icon_slot(self, "DeployLoadoutSlotB", Rect2(124, 580, 48, 48), "药剂")
@@ -157,28 +157,34 @@ func _build_content_panel() -> void:
 	card_list_container.add_theme_constant_override("separation", 8)
 	card_scroll.add_child(card_list_container)
 	_add_panel(self, "DeployDetailFrame", Rect2(728, 298, 178, 274), &"card")
-	detail_label = _add_label_token(self, "DeployCardDetail", Rect2(742, 312, 150, 236), "", &"caption", &"text")
+	detail_label = _add_label_token(self, "DeployCardDetail", Rect2(742, 312, 150, 210), "", &"body_small", &"text")
 	preview_label = _add_label_token(self, "DeployConfigPreview", Rect2(362, 586, 530, 26), "", &"caption", &"muted")
 
 
 func _build_summary_panel() -> void:
 	_add_label_token(self, "DeploySummaryHeading", Rect2(984, 172, 220, 30), "出发摘要", &"tab", &"accent")
-	summary_label = _add_label_token(self, "DeploySummaryText", Rect2(984, 210, 220, 66), "", &"caption", &"text")
-	config_label = _add_label_token(self, "DeployConfigText", Rect2(984, 286, 220, 66), "", &"caption", &"text")
+	_add_panel(self, "DeploySummaryBlockA", Rect2(974, 202, 244, 64), &"card")
+	_add_panel(self, "DeploySummaryBlockB", Rect2(974, 266, 244, 64), &"card")
+	_add_panel(self, "DeploySummaryBlockC", Rect2(974, 448, 244, 54), &"card")
+	_add_panel(self, "DeploySummaryBlockD", Rect2(974, 506, 244, 54), &"warning")
+	summary_label = _add_label_token(self, "DeploySummaryText", Rect2(984, 210, 220, 48), "", &"body_small", &"text")
+	config_label = _add_label_token(self, "DeployConfigText", Rect2(984, 272, 220, 48), "", &"body_small", &"text")
 	_add_label_token(self, "DeploySlotHeading", Rect2(984, 364, 220, 22), "装备 / 消耗品", &"caption", &"warning")
 	_add_icon_slot(self, "DeployEquipSlotA", Rect2(984, 392, 48, 48), "武器")
 	_add_icon_slot(self, "DeployEquipSlotB", Rect2(1042, 392, 48, 48), "护具")
 	_add_icon_slot(self, "DeployItemSlotA", Rect2(1100, 392, 48, 48), "补给")
 	_add_icon_slot(self, "DeployItemSlotB", Rect2(1158, 392, 48, 48), "钥匙")
-	effect_label = _add_label_token(self, "DeployEffectText", Rect2(984, 452, 220, 58), "", &"caption", &"text")
+	effect_label = _add_label_token(self, "DeployEffectText", Rect2(984, 456, 220, 42), "", &"body_small", &"text")
 	risk_label = _add_label_token(self, "DeployRiskText", Rect2(984, 514, 220, 42), "", &"caption", &"warning")
 
 
 func _build_action_panel() -> void:
+	_add_color_rect(self, "DeployStartButtonGlow", Rect2(948, 614, 298, 84), Color(0.94, 0.70, 0.28, 0.14))
 	start_button = _add_button(self, "DeployStartButton", Rect2(958, 628, 278, 64), "开始探索", _on_start_preview_pressed)
 	continue_button = _add_button(self, "DeployContinueButton", Rect2(362, 640, 120, 38), "继续", _on_continue_preview_pressed)
 	abandon_button = _add_button(self, "DeployAbandonButton", Rect2(492, 640, 120, 38), "放弃", _on_abandon_preview_pressed)
 	action_message_label = _add_label_token(self, "DeployActionMessage", Rect2(630, 642, 304, 38), "", &"caption", &"muted")
+	_set_rect(start_button, Rect2(958, 620, 278, 72))
 
 
 func _refresh_view() -> void:
@@ -193,15 +199,15 @@ func _refresh_view() -> void:
 			button.button_pressed = selected
 			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if selected else &"normal"), &"tab", &"tab")
 	tab_title_label.text = String(tab.get("label", active_tab))
-	tab_body_label.text = _lines_text(_array_from(tab, "lines"), 2)
+	tab_body_label.text = _lines_text(_array_from(tab, "lines"), 1, 12)
 	_refresh_filter_buttons(tab)
 	_refresh_card_buttons()
 	_refresh_detail()
 	var preview := _preview()
-	summary_label.text = _section_text("摘要", _array_from(preview, "summary"), 1)
-	config_label.text = _section_text("配置", _array_from(preview, "config"), 1)
-	effect_label.text = _section_text("效果", _array_from(preview, "effect"), 1)
-	risk_label.text = _section_text("风险", _array_from(preview, "risk"), 1)
+	summary_label.text = _section_text("摘要", _array_from(preview, "summary"), 1, 12)
+	config_label.text = _section_text("配置", _array_from(preview, "config"), 1, 12)
+	effect_label.text = _section_text("效果", _array_from(preview, "effect"), 1, 12)
+	risk_label.text = _section_text("风险", _array_from(preview, "risk"), 1, 11)
 	preview_label.text = _run_start_preview_text(DeployConfigScript.build_run_start_config(_config()))
 	_refresh_actions()
 	_apply_art10_text_refresh()
@@ -249,7 +255,7 @@ func _refresh_card_buttons() -> void:
 			var card_id := StringName(card.get("id", &""))
 			var state := StringName(card.get("state", &"preview"))
 			var label := "%s\n%s" % [
-				_shorten_copy(String(card.get("title", card_id)), 16),
+				_shorten_copy(String(card.get("title", card_id)), 14),
 				Art10UISkinKitScript.status_label(state),
 			]
 			var captured_card := card_id
@@ -257,7 +263,7 @@ func _refresh_card_buttons() -> void:
 			button.name = "DeployCard_%s" % String(card_id)
 			button.text = label
 			button.tooltip_text = String(card.get("summary", ""))
-			button.custom_minimum_size = Vector2(330, 66)
+			button.custom_minimum_size = Vector2(330, 62)
 			button.toggle_mode = true
 			button.button_pressed = card_id == selected_card
 			_apply_art09_button_icon(button, _dictionary_from(card.get("art09_asset_ref", {})), &"slot")
@@ -278,7 +284,7 @@ func _refresh_detail() -> void:
 	]
 	for line in _array_from(detail, "lines").slice(0, 2):
 		lines.append(String(line))
-	detail_label.text = _section_text("详情", lines, 3)
+	detail_label.text = _section_text("详情", lines, 1, 12)
 
 
 func _refresh_actions() -> void:
@@ -369,15 +375,15 @@ func _action(action_id: String) -> Dictionary:
 	return {}
 
 
-func _section_text(title: String, lines: Array, max_lines: int = 4) -> String:
-	return "%s\n%s" % [title, _lines_text(lines, max_lines)]
+func _section_text(title: String, lines: Array, max_lines: int = 4, max_chars: int = 16) -> String:
+	return Art10UISkinKitScript.readable_section_text(title, lines, min(max_lines, 2), max_chars)
 
 
-func _lines_text(lines: Array, max_lines: int = 6) -> String:
+func _lines_text(lines: Array, max_lines: int = 6, max_chars: int = 16) -> String:
 	var parts := []
 	var visible := lines.slice(0, max_lines)
 	for line in visible:
-		parts.append("- %s" % _shorten_copy(String(line), 18))
+		parts.append("- %s" % _shorten_copy(String(line), max_chars))
 	if lines.size() > visible.size():
 		parts.append("- 还有 %d 项已收起" % (lines.size() - visible.size()))
 	return Art10UISkinKitScript.sanitize_player_copy("\n".join(parts))
@@ -427,8 +433,19 @@ func _apply_art10_text_refresh() -> void:
 		action_message_label,
 	]:
 		if label is Label:
-			Art10UISkinKitScript.apply_label(label)
-			label.clip_text = true
+			label.clip_text = false
+			label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	Art10UISkinKitScript.apply_label_token(tab_title_label, &"section_title", &"accent")
+	Art10UISkinKitScript.apply_label_token(tab_body_label, &"body_small", &"text")
+	Art10UISkinKitScript.apply_label_token(filter_heading_label, &"caption", &"warning")
+	Art10UISkinKitScript.apply_label_token(card_heading_label, &"tab", &"warning")
+	Art10UISkinKitScript.apply_label_token(detail_label, &"body_small", &"text")
+	Art10UISkinKitScript.apply_label_token(summary_label, &"body_small", &"text")
+	Art10UISkinKitScript.apply_label_token(config_label, &"body_small", &"text")
+	Art10UISkinKitScript.apply_label_token(effect_label, &"body_small", &"text")
+	Art10UISkinKitScript.apply_label_token(risk_label, &"caption", &"warning")
+	Art10UISkinKitScript.apply_label_token(preview_label, &"caption", &"muted")
+	Art10UISkinKitScript.apply_label_token(action_message_label, &"caption", &"muted")
 	for button_id in tab_buttons.keys():
 		var tab_button := tab_buttons[button_id] as Button
 		Art10UISkinKitScript.apply_button_token(tab_button, Art10UISkinKitScript.visual_state_tone(&"selected" if tab_button != null and tab_button.button_pressed else &"normal"), &"tab", &"tab")
@@ -480,7 +497,7 @@ func _add_label_token(parent: Control, node_name: String, rect: Rect2, text: Str
 	_set_rect(label, rect)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	Art10UISkinKitScript.apply_label_token(label, token, color_token)
-	label.clip_text = true
+	label.clip_text = false
 	parent.add_child(label)
 	return label
 
@@ -515,7 +532,4 @@ func _set_rect(control: Control, rect: Rect2) -> void:
 
 
 func _shorten_copy(text: String, max_chars: int) -> String:
-	var safe := Art10UISkinKitScript.sanitize_player_copy(text)
-	if safe.length() <= max_chars:
-		return safe
-	return "%s..." % safe.substr(0, max_chars)
+	return Art10UISkinKitScript.short_summary(text, max_chars)

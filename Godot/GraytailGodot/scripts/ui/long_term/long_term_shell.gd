@@ -50,6 +50,9 @@ func get_selected_module_id() -> StringName:
 func _build_static_layout() -> void:
 	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.016, 0.030, 0.036, 1.0))
 	_add_color_rect(self, "LongTermArchiveRoomGlow", Rect2(38, 122, 1202, 530), Color(0.13, 0.18, 0.20, 0.20))
+	_add_color_rect(self, "LongTermArchiveWall", Rect2(318, 146, 584, 492), Color(0.06, 0.09, 0.09, 0.28))
+	_add_color_rect(self, "LongTermProfileMask", Rect2(60, 200, 228, 398), Color(0.0, 0.0, 0.0, 0.20))
+	_add_color_rect(self, "LongTermDetailMask", Rect2(928, 178, 286, 422), Color(0.0, 0.0, 0.0, 0.26))
 	_add_color_rect(self, "LongTermShelfLineA", Rect2(326, 204, 564, 2), Color(0.94, 0.70, 0.28, 0.26))
 	_add_color_rect(self, "LongTermShelfLineB", Rect2(326, 336, 564, 2), Color(0.94, 0.70, 0.28, 0.18))
 	_add_color_rect(self, "LongTermShelfLineC", Rect2(326, 468, 564, 2), Color(0.94, 0.70, 0.28, 0.14))
@@ -58,17 +61,18 @@ func _build_static_layout() -> void:
 	_add_panel(self, "LongTermCardGridColumn", Art10UISkinKitScript.rect(&"long_term", "card_grid"), &"surface")
 	_add_panel(self, "LongTermDetailColumn", Art10UISkinKitScript.rect(&"long_term", "detail_column"), &"summary")
 	_add_label_token(self, "LongTermTitle", Rect2(44, 32, 360, 48), "长期系统", &"page_title", &"accent")
-	_add_label_token(self, "LongTermSubtitle", Rect2(44, 80, 700, 28), "档案、图鉴、研究、收藏的产品化外壳；玩法内容仍后置。", &"caption", &"muted")
+	_add_label_token(self, "LongTermSubtitle", Rect2(44, 80, 700, 28), "档案、图鉴、研究与收藏。", &"body_small", &"muted")
 	_add_button(self, "LongTermBackButton", Rect2(1084, 36, 154, 38), "返回主菜单", Callable(self, "_request_back_to_main"))
 	_build_tab_buttons()
 
 	_add_label_token(self, "LongTermProfileHeading", Rect2(66, 178, 220, 24), "角色档案", &"tab", &"accent")
 	_add_color_rect(self, "LongTermAvatarGlow", Rect2(72, 210, 116, 116), Color(0.58, 0.93, 0.76, 0.08))
 	_add_color_rect(self, "LongTermAvatarSilhouette", Rect2(104, 226, 52, 78), Color(0.18, 0.27, 0.24, 0.84))
+	_add_color_rect(self, "LongTermAvatarBase", Rect2(88, 306, 84, 6), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
 	_add_color_rect(self, "LongTermArchiveDivider", Rect2(66, 314, 214, 2), Art10UISkinKitScript.color(&"accent"))
-	overview_label = _add_label_token(self, "LongTermOverview", Rect2(66, 334, 214, 76), "", &"caption", &"text")
-	child_preview_label = _add_label_token(self, "LongTermChildPreview", Rect2(66, 420, 214, 86), "", &"caption", &"text")
-	history_preview_label = _add_label_token(self, "LongTermHistoryPreview", Rect2(66, 516, 214, 72), "", &"caption", &"muted")
+	overview_label = _add_label_token(self, "LongTermOverview", Rect2(66, 334, 214, 58), "", &"body_small", &"text")
+	child_preview_label = _add_label_token(self, "LongTermChildPreview", Rect2(66, 408, 214, 64), "", &"caption", &"text")
+	history_preview_label = _add_label_token(self, "LongTermHistoryPreview", Rect2(66, 496, 214, 58), "", &"caption", &"muted")
 
 	_add_label_token(self, "LongTermGridHeading", Rect2(348, 176, 320, 28), "收藏与记录", &"tab", &"warning")
 	card_grid_container = GridContainer.new()
@@ -80,12 +84,16 @@ func _build_static_layout() -> void:
 	add_child(card_grid_container)
 	next_stage_label = _add_label_token(self, "LongTermNextStage", Rect2(348, 596, 516, 34), "", &"caption", &"muted")
 
-	module_title_label = _add_label_token(self, "LongTermModuleTitle", Rect2(940, 178, 250, 32), "", &"tab", &"warning")
-	module_state_label = _add_label_token(self, "LongTermModuleState", Rect2(940, 214, 250, 22), "", &"caption", &"muted")
-	module_body_label = _add_label_token(self, "LongTermModuleBody", Rect2(940, 246, 250, 112), "", &"caption", &"text")
-	module_reason_label = _add_label_token(self, "LongTermModuleReason", Rect2(940, 366, 250, 54), "", &"caption", &"warning")
-	snapshot_label = _add_label_token(self, "LongTermSnapshotPreview", Rect2(940, 434, 250, 72), "", &"caption", &"text")
-	interface_preview_label = _add_label_token(self, "LongTermInterfacePreview", Rect2(940, 518, 250, 80), "", &"caption", &"muted")
+	_add_panel(self, "LongTermDetailStatusBlock", Rect2(936, 212, 258, 52), &"surface")
+	_add_panel(self, "LongTermDetailInfoBlock", Rect2(936, 274, 258, 78), &"deep")
+	_add_panel(self, "LongTermDetailUnlockBlock", Rect2(936, 362, 258, 58), &"warning")
+	_add_panel(self, "LongTermDetailLinkBlock", Rect2(936, 430, 258, 92), &"surface")
+	module_title_label = _add_label_token(self, "LongTermModuleTitle", Rect2(940, 178, 250, 32), "", &"section_title", &"warning")
+	module_state_label = _add_label_token(self, "LongTermModuleState", Rect2(950, 222, 230, 28), "", &"body_small", &"muted")
+	module_body_label = _add_label_token(self, "LongTermModuleBody", Rect2(950, 284, 230, 52), "", &"caption", &"text")
+	module_reason_label = _add_label_token(self, "LongTermModuleReason", Rect2(950, 372, 230, 32), "", &"caption", &"warning")
+	snapshot_label = _add_label_token(self, "LongTermSnapshotPreview", Rect2(950, 440, 230, 44), "", &"caption", &"text")
+	interface_preview_label = _add_label_token(self, "LongTermInterfacePreview", Rect2(950, 488, 230, 34), "", &"caption", &"muted")
 
 
 func _build_tab_buttons() -> void:
@@ -131,27 +139,17 @@ func _refresh_from_model() -> void:
 	]
 	var panel: Dictionary = current_model.get("placeholder_panel", {})
 	var content_preview: Dictionary = current_model.get("current_content_preview", panel.get("content_preview", {}))
-	module_title_label.text = String(panel.get("title", ""))
-	module_state_label.text = "状态：%s" % Art10UISkinKitScript.status_label(panel.get("state", "preview"))
-	module_body_label.text = "%s\n%s" % [
-		_shorten_copy(String(panel.get("description", "")), 24),
-		_format_detail_preview(content_preview.get("detail_preview", {})),
-	]
-	module_reason_label.text = "开放：%s" % _shorten_copy(String(panel.get("reason", "")), 28)
-	child_preview_label.text = "记录摘要\n- 模块：%s\n- 状态：%s\n%s" % [
-		_shorten_copy(String(panel.get("title", "")), 12),
-		Art10UISkinKitScript.status_label(panel.get("state", "preview")),
-		_format_child_groups(panel.get("child_preview_groups", []) as Array),
-	]
+	module_title_label.text = _shorten_copy(String(panel.get("title", "")), 12)
+	module_state_label.text = "状态  %s" % Art10UISkinKitScript.status_label(panel.get("state", "preview"))
+	module_body_label.text = _detail_module_copy(String(panel.get("description", "")), content_preview.get("detail_preview", {}))
+	module_reason_label.text = "解锁  %s" % _shorten_copy(String(panel.get("reason", "")), 14)
+	child_preview_label.text = "记录\n%s" % _format_child_groups(panel.get("child_preview_groups", []) as Array)
 	var snapshot: Dictionary = current_model.get("snapshot_preview", {})
-	snapshot_label.text = "%s\n%s" % [
-		_format_snapshot_section(snapshot.get("profile_snapshot", {})),
-		_format_snapshot_section(snapshot.get("unlock_snapshot", {})),
-	]
-	interface_preview_label.text = "联动：奖励 / 事件 / 跳转\n美术：图标 / 横幅 / 条目"
+	snapshot_label.text = "档案  %s" % _format_snapshot_section(snapshot.get("profile_snapshot", {}))
+	interface_preview_label.text = "联动  奖励 / 事件 / 跳转"
 	var history_preview: Dictionary = current_model.get("history_preview_panel", {})
 	history_preview_label.text = _format_history_preview(history_preview)
-	next_stage_label.text = "后续：仓库、图鉴、历史战绩继续接入。"
+	next_stage_label.text = "后续内容已收起到详情。"
 	_refresh_card_grid(content_preview.get("cards", []) as Array)
 	_apply_art10_text_refresh()
 	_refresh_tab_buttons()
@@ -175,9 +173,10 @@ func _refresh_card_grid(cards: Array) -> void:
 	for card: Dictionary in visible_cards:
 		var button := Button.new()
 		button.name = "LongTermCard_%s" % str(card.get("id", index))
-		button.text = "%s\n%s" % [
+		button.text = "%s  %s\n[%s]" % [
+			_card_marker(index),
 			_shorten_copy(String(card.get("title", "")), 10),
-			Art10UISkinKitScript.status_label("preview"),
+			Art10UISkinKitScript.status_label(card.get("state", "preview")),
 		]
 		button.tooltip_text = String(card.get("description", ""))
 		button.custom_minimum_size = Vector2(160, 104)
@@ -200,17 +199,17 @@ func _format_child_groups(groups: Array) -> String:
 	var lines := []
 	var visible_groups := groups.slice(0, 2)
 	for group: Dictionary in visible_groups:
-		lines.append("- %s" % _shorten_copy(String(group.get("title", "")), 14))
+		lines.append(String(group.get("title", "")))
 	if groups.size() > visible_groups.size():
-		lines.append("- 还有 %d 个分组已收起" % (groups.size() - visible_groups.size()))
-	return Art10UISkinKitScript.sanitize_player_copy("\n".join(lines))
+		lines.append("%d 项已收起" % (groups.size() - visible_groups.size()))
+	return Art10UISkinKitScript.budgeted_lines_text(lines, 3, 12, true)
 
 
 func _format_detail_preview(detail: Variant) -> String:
 	var preview: Dictionary = detail if detail is Dictionary else {}
 	return Art10UISkinKitScript.sanitize_player_copy("%s\n%s" % [
-		_shorten_copy(String(preview.get("title", "详情")), 18),
-		_shorten_copy(String(preview.get("message", "展示信息")), 28),
+		_shorten_copy(String(preview.get("title", "详情")), 12),
+		_shorten_copy(String(preview.get("message", "展示信息")), 14),
 	])
 
 
@@ -249,7 +248,7 @@ func _format_jump_targets(targets: Array) -> String:
 func _format_snapshot_section(raw_section: Variant) -> String:
 	var section: Dictionary = raw_section if raw_section is Dictionary else {}
 	var lines: Array = section.get("lines", [])
-	return Art10UISkinKitScript.sanitize_player_copy("%s：%s" % [_shorten_copy(String(section.get("title", "")), 16), _shorten_copy(" / ".join(lines.slice(0, 2)), 24)])
+	return Art10UISkinKitScript.sanitize_player_copy("%s / %s" % [_shorten_copy(String(section.get("title", "")), 8), _shorten_copy(" / ".join(lines.slice(0, 1)), 14)])
 
 
 func _format_preview_line(snapshot: Dictionary, key: String) -> String:
@@ -260,8 +259,8 @@ func _format_preview_line(snapshot: Dictionary, key: String) -> String:
 func _format_history_preview(history_preview: Dictionary) -> String:
 	if history_preview.is_empty():
 		return "历史战绩：待接入"
-	return Art10UISkinKitScript.sanitize_player_copy("历史战绩\n%s\n记录图标与美术条目待开放" % [
-		_shorten_copy(String(history_preview.get("summary", "")), 30),
+	return Art10UISkinKitScript.sanitize_player_copy("战绩\n%s" % [
+		_shorten_copy(String(history_preview.get("summary", "")), 16),
 	])
 
 
@@ -288,19 +287,25 @@ func _safe_display_text(value: Variant) -> String:
 func _apply_art10_text_refresh() -> void:
 	for label in [
 		overview_label,
-		module_title_label,
-		module_state_label,
-		module_body_label,
-		module_reason_label,
 		child_preview_label,
-		snapshot_label,
-		interface_preview_label,
 		history_preview_label,
 		next_stage_label,
 	]:
 		if label is Label:
-			Art10UISkinKitScript.apply_label(label)
-			label.clip_text = true
+			Art10UISkinKitScript.apply_label_token(label, &"caption", &"text")
+			label.clip_text = false
+	if module_title_label is Label:
+		Art10UISkinKitScript.apply_label_token(module_title_label, &"section_title", &"warning")
+	if module_state_label is Label:
+		Art10UISkinKitScript.apply_label_token(module_state_label, &"body_small", &"muted")
+	if module_body_label is Label:
+		Art10UISkinKitScript.apply_label_token(module_body_label, &"caption", &"text")
+	if module_reason_label is Label:
+		Art10UISkinKitScript.apply_label_token(module_reason_label, &"caption", &"warning")
+	if snapshot_label is Label:
+		Art10UISkinKitScript.apply_label_token(snapshot_label, &"caption", &"text")
+	if interface_preview_label is Label:
+		Art10UISkinKitScript.apply_label_token(interface_preview_label, &"caption", &"muted")
 
 
 func _clear_children() -> void:
@@ -353,7 +358,19 @@ func _set_rect(control: Control, rect: Rect2) -> void:
 
 
 func _shorten_copy(text: String, max_chars: int) -> String:
-	var safe := Art10UISkinKitScript.sanitize_player_copy(text)
-	if safe.length() <= max_chars:
-		return safe
-	return "%s..." % safe.substr(0, max_chars)
+	return Art10UISkinKitScript.short_summary(text, max_chars)
+
+
+func _detail_module_copy(description: String, detail: Variant) -> String:
+	var preview: Dictionary = detail if detail is Dictionary else {}
+	var lines: Array = [
+		description,
+		String(preview.get("title", "")),
+		String(preview.get("message", "")),
+	]
+	return "说明\n%s" % Art10UISkinKitScript.budgeted_lines_text(lines, 2, 13, false)
+
+
+func _card_marker(index: int) -> String:
+	var markers := ["◆", "◇", "▣", "□", "◈", "○", "●", "△", "▲"]
+	return markers[index % markers.size()]

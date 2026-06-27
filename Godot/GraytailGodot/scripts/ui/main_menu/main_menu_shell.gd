@@ -47,6 +47,8 @@ func _build_backdrop() -> void:
 	_add_color_rect(self, "MainMenuVignette", Rect2(0, 0, 1280, 720), Color(0.0, 0.0, 0.0, 0.24))
 	_add_color_rect(self, "BaseHallWarmBacklight", Rect2(58, 178, 666, 336), Color(0.42, 0.30, 0.13, 0.10))
 	_add_color_rect(self, "BaseHallDoorGlow", Rect2(86, 186, 176, 326), Color(0.54, 0.86, 0.68, 0.10))
+	_add_color_rect(self, "BaseHallEntryMask", Rect2(62, 158, 650, 368), Color(0.0, 0.0, 0.0, 0.28))
+	_add_color_rect(self, "BaseHallHeroMask", Rect2(78, 166, 254, 376), Color(0.02, 0.05, 0.05, 0.68))
 	_add_color_rect(self, "BaseHallDoorLeft", Rect2(76, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
 	_add_color_rect(self, "BaseHallDoorRight", Rect2(282, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
 	_add_color_rect(self, "BaseHallForegroundRail", Rect2(56, 512, 642, 3), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
@@ -55,17 +57,19 @@ func _build_backdrop() -> void:
 	_add_color_rect(self, "BaseFloorLine", Rect2(86, 486, 598, 4), PresentationTheme.color_for_key(&"ui.warning", Color(0.94, 0.7, 0.28, 1.0)))
 	_add_label_token(self, "MainMenuTitle", Art10UISkinKitScript.rect(&"main_menu", "title"), String(current_model.get("title", "灰尾回收")), &"title", &"warning")
 	_add_label_token(self, "MainMenuSubtitle", Rect2(78, 126, 610, 42), "基地门厅 / 任务入口", &"body", &"text")
-	_add_label_token(self, "MainMenuSceneHint", Rect2(354, 202, 330, 92), "整备区灯箱已亮起。右侧选择行动入口，底部快捷键保留当前可玩探索。", &"body", &"caption")
+	_add_label_token(self, "MainMenuSceneHint", Rect2(354, 208, 300, 34), "基地入口已就绪", &"section_title", &"caption")
 
 
 func _build_role_panel() -> void:
 	_add_panel(self, "CharacterDisplayLayer", Art10UISkinKitScript.rect(&"main_menu", "role"), &"card")
-	_add_color_rect(self, "CharacterPodBacklight", Rect2(98, 196, 176, 304), Color(0.58, 0.93, 0.76, 0.06))
-	_add_color_rect(self, "CharacterSilhouette", Rect2(122, 220, 128, 248), Color(0.18, 0.27, 0.23, 0.82))
-	_add_color_rect(self, "CharacterHighlight", Rect2(152, 188, 70, 330), Color(0.62, 0.94, 0.80, 0.08))
-	_add_color_rect(self, "CharacterEquipmentLine", Rect2(108, 462, 178, 2), Art10UISkinKitScript.color(&"accent"))
-	_add_label_token(self, "CharacterDisplayLabel", Rect2(112, 474, 178, 36), "探索员整备", &"tab", &"text")
-	_add_label_token(self, "OutfitShortcutHint", Rect2(354, 312, 318, 82), "装备外观、背包和长期记录仍由后续系统接管；主菜单只保留入口和状态提示。", &"caption", &"muted")
+	_add_color_rect(self, "CharacterPodBacklight", Rect2(96, 188, 190, 318), Color(0.58, 0.93, 0.76, 0.10))
+	_add_color_rect(self, "CharacterCapeLayer", Rect2(112, 242, 160, 226), Color(0.10, 0.18, 0.16, 0.92))
+	_add_color_rect(self, "CharacterSilhouette", Rect2(132, 210, 122, 258), Color(0.20, 0.31, 0.27, 0.94))
+	_add_color_rect(self, "CharacterHead", Rect2(146, 184, 92, 82), Color(0.23, 0.34, 0.30, 0.94))
+	_add_color_rect(self, "CharacterTool", Rect2(248, 250, 10, 210), Art10UISkinKitScript.color(&"gold"))
+	_add_color_rect(self, "CharacterEquipmentLine", Rect2(104, 462, 188, 3), Art10UISkinKitScript.color(&"accent"))
+	_add_label_token(self, "CharacterDisplayLabel", Rect2(110, 474, 184, 28), "探索员整备", &"tab", &"text")
+	_add_label_token(self, "OutfitShortcutHint", Rect2(354, 312, 286, 26), "整备完成", &"caption", &"accent")
 
 
 func _build_top_entrance_panel() -> void:
@@ -107,7 +111,7 @@ func _build_menu_panel() -> void:
 func _build_notice_panel() -> void:
 	var notice_panel := VBoxContainer.new()
 	notice_panel.name = "MainMenuNoticePanel"
-	_set_rect(notice_panel, Rect2(86, 540, 560, 68))
+	_set_rect(notice_panel, Rect2(90, 550, 530, 46))
 	notice_panel.add_theme_constant_override("separation", 4)
 	add_child(notice_panel)
 	_add_panel(self, "MainMenuNoticeFrame", Art10UISkinKitScript.rect(&"main_menu", "notice"), &"summary")
@@ -115,7 +119,7 @@ func _build_notice_panel() -> void:
 	_add_section_label(notice_panel, "公告")
 	for notice in _array_from(current_model, "notices").slice(0, 1):
 		var label := Label.new()
-		label.text = _shorten_copy(String(notice), 34)
+		label.text = _shorten_copy(String(notice), 22)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		Art10UISkinKitScript.apply_label_token(label, &"caption", &"text")
 		notice_panel.add_child(label)
@@ -152,12 +156,10 @@ func _refresh_meta_summary() -> void:
 	var raw: Variant = current_snapshot.get("meta_progress_summary", {})
 	if raw is Dictionary:
 		summary = (raw as Dictionary).duplicate(true)
-	meta_summary_label.text = "探索 %s | 撤离 %s | 失败 %s\n金币 %s | 仓库物品 %s" % [
+	meta_summary_label.text = "探索 %s | 撤离 %s | 金币 %s" % [
 		summary.get("run_count", 0),
 		summary.get("extract_count", 0),
-		summary.get("fail_count", 0),
 		summary.get("gold", 0),
-		summary.get("warehouse_items_count", 0),
 	]
 	meta_summary_label.text = Art10UISkinKitScript.sanitize_player_copy(meta_summary_label.text)
 
@@ -168,8 +170,8 @@ func _add_entry_button(parent: Control, entry: Dictionary, large: bool = false, 
 	button.tooltip_text = _entry_tooltip(entry)
 	button.text = Art10UISkinKitScript.sanitize_player_copy(button.text)
 	button.tooltip_text = Art10UISkinKitScript.sanitize_player_copy(button.tooltip_text)
-	button.custom_minimum_size = _layout_size(Vector2(410, 78) if large else Vector2(118, 36))
-	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})))
+	button.custom_minimum_size = _layout_size(Vector2(410, 78) if large else Vector2(104, 36))
+	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})), &"large_nav" if large else &"key")
 	Art10UISkinKitScript.apply_button_token(button, &"primary" if large or bool(entry.get("primary", false)) else &"secondary", &"main_button" if large else &"key_prompt", &"large_nav" if large else &"key")
 	button.pressed.connect(func() -> void: _emit_entry(entry))
 	parent.add_child(button)
@@ -180,13 +182,13 @@ func _entry_subtitle(entry: Dictionary) -> String:
 	var entry_id := StringName(entry.get("id", &""))
 	match entry_id:
 		&"deploy":
-			return "查看出勤配置"
+			return "整备出发"
 		&"long_term":
-			return "任务 / 图鉴 / 收藏"
+			return "档案收藏"
 		&"settings":
-			return "画面与音量"
+			return "画面音量"
 		&"exit_game":
-			return "确认后退出"
+			return "确认退出"
 		_:
 			return _shorten_copy(String(entry.get("description", "")), 12)
 
@@ -284,12 +286,12 @@ func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2,
 	return texture_rect
 
 
-func _apply_art09_button_icon(button: Button, asset_ref: Dictionary) -> void:
+func _apply_art09_button_icon(button: Button, asset_ref: Dictionary, icon_token: StringName = &"button") -> void:
 	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
 	if texture == null:
 		return
 	button.icon = texture
-	Art10UISkinKitScript.controlled_button_icon(button, &"large_nav")
+	Art10UISkinKitScript.controlled_button_icon(button, icon_token)
 
 
 func _set_rect(control: Control, rect: Rect2) -> void:
@@ -301,10 +303,7 @@ func _layout_size(base_size: Vector2) -> Vector2:
 
 
 func _shorten_copy(text: String, max_chars: int) -> String:
-	var safe := Art10UISkinKitScript.sanitize_player_copy(text)
-	if safe.length() <= max_chars:
-		return safe
-	return "%s..." % safe.substr(0, max_chars)
+	return Art10UISkinKitScript.short_summary(text, max_chars)
 
 
 func _array_from(source: Dictionary, key: String) -> Array:

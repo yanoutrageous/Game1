@@ -38,19 +38,13 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 	var equipped_items: Array = snapshot.get("equipped_items", [])
 	var status_effects: Array = snapshot.get("status_effects", [])
 	model.run_label = "%s / %s" % [String(snapshot.get("run_id", &"")), String(snapshot.get("mode", &""))]
-	model.status_text = "生命：%s/%s\n作业强度：%s\n待结算黑币：%s / 安全金币：%s\n黑币：%s / 金币：%s\n物品：背包 %s / 装备 %s\n背包：%s/%s（剩余 %s）\n地面物品：%s\n位置：(%d,%d)\n房间：%s\n周围雷险：%s\n搜索状态：%s" % [
+	model.status_text = "生命：%s/%s | 强度：%s\n背包：%s/%s | 装备：%s | 地面：%s\n位置：(%d,%d) | %s\n雷险：%s | 搜索：%s" % [
 		snapshot.get("hp", 0),
 		snapshot.get("max_hp", 0),
 		snapshot.get("power", 0),
-		snapshot.get("pending_gold", 0),
-		snapshot.get("safe_gold", 0),
-		snapshot.get("black_coin", snapshot.get("pending_gold", 0)),
-		snapshot.get("gold_coin", snapshot.get("safe_gold", 0)),
-		inventory_items.size(),
-		equipped_items.size(),
 		snapshot.get("backpack_used", 0),
 		snapshot.get("backpack_capacity", 0),
-		snapshot.get("backpack_remaining", 0),
+		equipped_items.size(),
 		snapshot.get("room_floor_item_count", 0),
 		pos.x,
 		pos.y,
@@ -58,33 +52,7 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 		snapshot.get("adjacent_mines", 0),
 		_search_state_label(String(snapshot.get("search_state", "blocked"))),
 	]
-	var room_detail: Dictionary = snapshot.get("current_room_detail", {})
-	var return_eligibility: Dictionary = snapshot.get("return_eligibility", {})
-	var run_flow_snapshot: Dictionary = snapshot.get("run_flow_snapshot", {})
-	var lifecycle: Dictionary = run_flow_snapshot.get("RunLifecycle", {})
-	var settlement_trigger: Dictionary = run_flow_snapshot.get("SettlementTriggerPreview", {})
-	var room_policy: Dictionary = room_detail.get("RoomPolicy", {})
-	var encounter_preview: Dictionary = room_detail.get("EncounterPreview", {})
-	var resolution_preview: Dictionary = room_detail.get("RoomResolutionPreview", {})
-	var rule_summary: Dictionary = snapshot.get("rule_effect_modifier_summary_preview", {})
-	var content_summary: Dictionary = snapshot.get("content_delivery_summary_preview", {})
-	model.status_text += "\nRunLifecycle: %s / %s\nRoomState: %s / %s\nRoomPolicy: %s / %s\nEncounterPreview: %s / %s\nRoomResolutionPreview: %s\nRule/Modifier: %s\nContentPool: %s\nfast_return: %s / %s\nSettlementTriggerPreview: %s" % [
-		String(lifecycle.get("state", "initialized")),
-		String(lifecycle.get("phase", "idle")),
-		String(room_detail.get("known_state", "unknown")),
-		String(room_detail.get("visibility", "unknown")),
-		String(room_policy.get("entry_policy", room_policy.get("return_policy", "unknown"))),
-		String(room_policy.get("repeat_policy", "unknown")),
-		String(encounter_preview.get("encounter_type", "empty")),
-		String(encounter_preview.get("option_channel_preview", "none")),
-		String(resolution_preview.get("schema_kind", "RoomResolutionPreview")),
-		_rule_summary_label(rule_summary),
-		_content_pool_label(content_summary),
-		str(bool(return_eligibility.get("eligible", false))),
-		String(return_eligibility.get("reason_code", "unknown")),
-		String(settlement_trigger.get("trigger_state", "not_ready")),
-	]
-	model.protocol_text = "压力：%s / 100\n协议等级：%s\n阶段：%s\n结果：%s\n遭遇：%s\n状态效果：%s" % [
+	model.protocol_text = "压力：%s / 100\n协议：%s | 阶段：%s\n结果：%s | 遭遇：%s\n状态效果：%s" % [
 		snapshot.get("pressure", 0),
 		snapshot.get("protocol_level", 5),
 		_phase_label(StringName(snapshot.get("phase", &"idle"))),
@@ -97,26 +65,26 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 	var enemy_state: Dictionary = snapshot.get("enemy_state", {})
 	var popup_text := ""
 	if not popup.is_empty():
-		popup_text = "\n教学提示：%s\n%s" % [String(popup.get("id", "")), String(popup.get("message", ""))]
+		popup_text = "教学：%s" % _short_text(String(popup.get("message", popup.get("id", ""))), 20)
 	var event_text := ""
 	if not event_state.is_empty():
-		event_text = "\n事件：%s" % _event_label(StringName(event_state.get("event_type", &"event")))
+		event_text = "事件：%s" % _event_label(StringName(event_state.get("event_type", &"event")))
 	var enemy_text := ""
 	if not enemy_state.is_empty():
-		enemy_text = "\n异常体强度：%s / 作业强度：%s" % [enemy_state.get("enemy_power", 0), enemy_state.get("player_power", 0)]
+		enemy_text = "异常体：%s / 我方：%s" % [enemy_state.get("enemy_power", 0), enemy_state.get("player_power", 0)]
 	var blocked_text := ""
 	if String(snapshot.get("blocked_reason", "")) != "":
-		blocked_text = "\n阻塞：%s" % String(snapshot.get("blocked_reason", ""))
+		blocked_text = "受阻：%s" % _short_text(String(snapshot.get("blocked_reason", "")), 18)
 	model.room_hint = PresentationMapping.hint_for_snapshot(snapshot)
 	model.risk_key = PresentationTheme.risk_key(int(snapshot.get("adjacent_mines", 0)), StringName(snapshot.get("current_room", &"Unknown")))
-	model.hint_text = "房间提示：%s\n最新记录：%s%s%s%s%s" % [
-		model.room_hint,
-		_player_message(String(snapshot.get("last_message", ""))),
-		event_text,
-		enemy_text,
-		popup_text,
-		blocked_text,
+	var hint_lines: Array[String] = [
+		"提示：%s" % _short_text(model.room_hint, 22),
+		"记录：%s" % _short_text(_player_message(String(snapshot.get("last_message", ""))), 22),
 	]
+	for extra in [event_text, enemy_text, popup_text, blocked_text]:
+		if String(extra) != "":
+			hint_lines.append(String(extra))
+	model.hint_text = _join_limited(hint_lines, 4)
 	return model
 
 
@@ -226,17 +194,15 @@ static func _player_message(message: String) -> String:
 	text = text.replace("reward", "奖励")
 	text = text.replace("pressure", "压力")
 	text = text.replace("HP", "生命")
-	return text
+	return _short_text(_replace_engineering_terms(text), 36)
 
 
 static func _rule_summary_label(rule_summary: Dictionary) -> String:
 	if rule_summary.is_empty():
-		return "preview unavailable"
-	var definition: Dictionary = rule_summary.get("RuleDefinition", {})
+		return "规则影响待定"
 	var modifier_stack: Dictionary = rule_summary.get("ModifierStackPreview", {})
 	var effect_preview: Dictionary = rule_summary.get("EffectResultPreview", {})
-	return "%s / effects=%s / modifiers=%s / display_only" % [
-		String(definition.get("display_key", definition.get("rule_id", rule_summary.get("status", "preview")))),
+	return "影响 %s 项 / 修正 %s 项" % [
 		int(effect_preview.get("effect_count", _array_variant(effect_preview.get("items", [])).size())),
 		int(modifier_stack.get("modifier_count", _array_variant(modifier_stack.get("modifiers", [])).size())),
 	]
@@ -244,12 +210,48 @@ static func _rule_summary_label(rule_summary: Dictionary) -> String:
 
 static func _content_pool_label(content_summary: Dictionary) -> String:
 	if content_summary.is_empty():
-		return "pool.preview"
+		return "内容待定"
 	var pool: Dictionary = content_summary.get("ContentPool", {})
-	return "%s / entries=%s / read_only" % [
-		String(pool.get("pool_id", "pool.preview")),
-		int(pool.get("entry_count", _array_variant(pool.get("entries", [])).size())),
-	]
+	return "内容 %s 项" % int(pool.get("entry_count", _array_variant(pool.get("entries", [])).size()))
+
+
+static func _short_text(text: String, max_chars: int) -> String:
+	var cleaned := _replace_engineering_terms(text.strip_edges()).replace("\n", " / ")
+	if cleaned.length() <= max_chars:
+		return cleaned
+	return "%s…" % cleaned.substr(0, max(1, max_chars - 1))
+
+
+static func _join_limited(lines: Array[String], max_lines: int) -> String:
+	var visible: Array[String] = []
+	for line in lines:
+		var cleaned := String(line).strip_edges()
+		if cleaned == "":
+			continue
+		visible.append(cleaned)
+		if visible.size() >= max_lines:
+			break
+	return "\n".join(visible)
+
+
+static func _replace_engineering_terms(text: String) -> String:
+	var result := text
+	result = result.replace("Rule/Modifier", "规则影响")
+	result = result.replace("Rule/Effect/Modifier", "规则影响")
+	result = result.replace("ContentPool", "内容池")
+	result = result.replace("RoomPolicy", "房间规则")
+	result = result.replace("RoomState", "房间状态")
+	result = result.replace("RoomResolutionPreview", "结算预估")
+	result = result.replace("EncounterPreview", "遭遇")
+	result = result.replace("SettlementTriggerPreview", "回收结算")
+	result = result.replace("RunLifecycle", "流程")
+	result = result.replace("fast_return", "快速回传")
+	result = result.replace("display_only", "展示")
+	result = result.replace("read_only", "查看")
+	result = result.replace("preview", "预览")
+	result = result.replace("not_ready", "未就绪")
+	result = result.replace("eligible", "可用")
+	return result
 
 
 static func _array_variant(value: Variant) -> Array:

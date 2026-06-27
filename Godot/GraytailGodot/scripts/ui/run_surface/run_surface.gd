@@ -29,6 +29,13 @@ var encounter_backdrop: PanelContainer
 var right_backdrop: PanelContainer
 var bottom_backdrop: PanelContainer
 var resource_backdrop: PanelContainer
+var scanner_text_mask: PanelContainer
+var room_text_mask: PanelContainer
+var threat_mask: PanelContainer
+var event_mask: PanelContainer
+var reward_mask: PanelContainer
+var player_tag_mask: ColorRect
+var room_hint_softener: ColorRect
 var scanner_glow_layer: ColorRect
 var room_glow_layer: ColorRect
 var protocol_glow_layer: ColorRect
@@ -40,6 +47,7 @@ var scanner_detail_label: Label
 var room_title_label: Label
 var room_body_label: Label
 var objective_label: Label
+var player_tag_label: Label
 var encounter_title_label: Label
 var encounter_body_label: Label
 var encounter_result_label: Label
@@ -73,16 +81,23 @@ func build() -> void:
 	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
+	scanner_text_mask = _add_panel("RunScannerTextMask", Color(0.012, 0.026, 0.030, 0.86), PresentationTheme.color_for_key(&"ui.accent"))
+	room_text_mask = _add_panel("RunRoomTextMask", Color(0.012, 0.026, 0.030, 0.82), PresentationTheme.color_for_key(&"mini.normal"))
+	threat_mask = _add_panel("RunThreatMask", Color(0.040, 0.046, 0.042, 0.92), PresentationTheme.color_for_key(&"ui.warning"))
+	event_mask = _add_panel("RunEventMask", Color(0.026, 0.042, 0.046, 0.90), PresentationTheme.color_for_key(&"ui.accent"))
+	reward_mask = _add_panel("RunRewardMask", Color(0.036, 0.052, 0.046, 0.90), PresentationTheme.color_for_key(&"mini.chest"))
+	player_tag_mask = _add_color_layer("RunPlayerTagMask", Color(0.004, 0.010, 0.012, 0.96))
+	room_hint_softener = _add_color_layer("RunRoomHintSoftener", Color(0.0, 0.0, 0.0, 0.34))
 	scanner_glow_layer = _add_color_layer("RunScannerGlow", Color(0.58, 0.93, 0.76, 0.08))
 	room_glow_layer = _add_color_layer("RunRoomFocusGlow", Color(0.58, 0.93, 0.76, 0.07))
 	protocol_glow_layer = _add_color_layer("RunProtocolWarningGlow", Color(0.94, 0.70, 0.28, 0.08))
 	bottom_key_glow_layer = _add_color_layer("RunBottomKeyGlow", Color(0.58, 0.93, 0.76, 0.06))
 
-	scanner_title_label = _add_label("RunScannerTitle", "区域扫描器", 18, PresentationTheme.color_for_key(&"ui.accent"))
+	scanner_title_label = _add_label("RunScannerTitle", "扫描器", 18, PresentationTheme.color_for_key(&"ui.accent"))
 	scanner_summary_label = _add_label("RunScannerSummary", "扫描器：等待数据", 13, PresentationTheme.text_color())
 	scanner_legend_label = _add_label("RunScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
-	scanner_detail_label = _add_label("RunScannerDetail", "图例：只显示已公开扫描信息。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	scanner_detail_label = _add_label("RunScannerDetail", "已知 / 危险 / 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 	minimap_panel = MiniMapScene.instantiate() as MiniMapPanel
 	minimap_panel.name = "RunScannerMiniMap"
@@ -92,6 +107,7 @@ func build() -> void:
 	room_title_label = _add_label("RunRoomTitle", "当前房间", 22, PresentationTheme.color_for_key(&"ui.accent"))
 	room_body_label = _add_label("RunRoomBody", "等待探索快照。", 13, PresentationTheme.text_color())
 	objective_label = _add_label("RunObjectiveLine", "目标：等待输入。", 13, PresentationTheme.color_for_key(&"ui.warning"))
+	player_tag_label = _add_label("RunPlayerTag", "回收员", 12, PresentationTheme.color_for_key(&"ui.accent"))
 
 	encounter_title_label = _add_label("RunEncounterTitle", "遭遇提示", 18, PresentationTheme.color_for_key(&"ui.warning"))
 	encounter_body_label = _add_label("RunEncounterBody", "等待遭遇公开信息。", 13, PresentationTheme.text_color())
@@ -104,7 +120,7 @@ func build() -> void:
 
 	resource_label = _add_label("RunResourceSummary", "资源：等待数据", 13, PresentationTheme.text_color())
 
-	right_title_label = _add_label("RunProtocolTitle", "协议 / 危险 / 状态", 18, PresentationTheme.color_for_key(&"ui.warning"))
+	right_title_label = _add_label("RunProtocolTitle", "威胁 / 事件 / 奖励", 18, PresentationTheme.color_for_key(&"ui.warning"))
 	right_body_label = _add_label("RunProtocolBody", "协议：--\n压力：--\n危险：--", 13, PresentationTheme.text_color())
 	event_label = _add_label("RunEventStatus", "事件：无待处理事件。", 13, PresentationTheme.text_color())
 	reward_label = _add_label("RunRewardSummary", "奖励：等待记录。", 12, PresentationTheme.color_for_key(&"ui.muted"))
@@ -112,11 +128,11 @@ func build() -> void:
 	layout_label = _add_label("RunLayoutProfileStatus", "", 11, PresentationTheme.color_for_key(&"ui.muted"))
 	layout_label.visible = false
 
-	action_hint_label = _add_label("RunActionHint", "快捷键：E 搜索 / Q 背包 / G 拾取 / M 地图 / Space 清理 / Esc 暂停", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	action_hint_label = _add_label("RunActionHint", "E 搜索  Q 背包  G 拾取  M 地图  Spc 清理  Esc 暂停", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 	action_bar = HBoxContainer.new()
 	action_bar.name = "RunBottomActionButtons"
-	action_bar.add_theme_constant_override("separation", 5)
+	action_bar.add_theme_constant_override("separation", 3)
 	add_child(action_bar)
 	_add_action_button(&"interact", "搜索", func() -> void: interact_requested.emit())
 	_add_action_button(&"inventory", "背包", func() -> void: inventory_requested.emit())
@@ -139,39 +155,34 @@ func build() -> void:
 func apply_surface_model(model: Dictionary) -> void:
 	if not built:
 		build()
-	scanner_legend_label.text = _lines_text(model.get("scanner_legend_lines", []), "P 当前 | ? 未知 | F 标记 | X 撤离")
-	scanner_detail_label.text = String(model.get("scanner_detail", "图例：只显示已公开扫描信息。"))
-	scanner_summary_label.text = String(model.get("scanner_summary", "扫描器：等待公开地图数据。"))
-	room_title_label.text = "%s | %s" % [String(model.get("room_title", "当前房间")), String(model.get("room_coordinate", "(0,0)"))]
-	room_body_label.text = String(model.get("room_summary", "等待探索快照。"))
-	objective_label.text = "目标：%s" % String(model.get("current_objective", "继续探索。"))
-	resource_label.text = "%s\n%s" % [String(model.get("resource_summary", "")), String(model.get("backpack_summary", ""))]
+	scanner_legend_label.text = "P 当前  ? 未知\n! 危险  X 撤离"
+	scanner_detail_label.text = "已公开地图 / 危险 / 撤离"
+	scanner_summary_label.text = _compact_line(String(model.get("scanner_summary", "扫描器：等待公开地图数据。")), 24)
+	room_title_label.text = "%s  %s" % [_compact_line(String(model.get("room_title", "当前房间")), 12), String(model.get("room_coordinate", "(0,0)"))]
+	room_body_label.text = _compact_line(String(model.get("room_summary", "等待探索快照。")), 22)
+	objective_label.text = "目标  %s" % _compact_line(String(model.get("current_objective", "继续探索。")), 18)
+	resource_label.text = _resource_copy(model)
 	var danger_key := StringName(model.get("danger_theme_key", &"ui.warning"))
 	right_title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(danger_key, PresentationTheme.color_for_key(&"ui.warning")))
-	right_body_label.text = "协议：%s\n压力：%s / 100\n危险：%s\n搜索：%s" % [
-		model.get("protocol_level", "--"),
-		model.get("pressure", "--"),
-		String(model.get("danger_label", "--")),
-		String(model.get("search_summary", "")),
-	]
-	event_label.text = String(model.get("event_summary", "事件：无待处理事件。"))
-	reward_label.text = String(model.get("reward_summary", "奖励：等待记录。"))
-	command_feedback_label.text = String(model.get("command_feedback", "操作反馈：等待输入。"))
+	right_body_label.text = _threat_copy(model)
+	event_label.text = "事件\n%s" % _compact_line(String(model.get("event_summary", "无待处理事件。")), 18)
+	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", "等待记录。")), 18)
+	command_feedback_label.text = "反馈  %s" % _compact_line(String(model.get("command_feedback", "等待输入。")), 20)
 
-	var status_text := _lines_text(model.get("status_lines", []), "")
+	var status_text := _lines_text(model.get("status_lines", []), "", 3, 18)
 	if status_text != "":
-		right_body_label.text = status_text
+		right_body_label.text = "威胁\n%s" % status_text
 	right_body_label.tooltip_text = "%s\n%s\n%s\n%s" % [
 		String(model.get("map_domain_summary", "")),
 		String(model.get("run_flow_summary", "")),
 		String(model.get("room_common_rule_summary", "")),
 		String(model.get("rule_effect_modifier_summary", "")),
 	]
-	event_label.text = String(model.get("event_summary", event_label.text))
+	event_label.text = "事件\n%s" % _compact_line(String(model.get("event_summary", event_label.text)), 18)
 	event_label.tooltip_text = String(model.get("event_panel_summary", event_label.text))
-	reward_label.text = String(model.get("reward_summary", reward_label.text))
+	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", reward_label.text)), 18)
 	reward_label.tooltip_text = String(model.get("loot_panel_summary", reward_label.text))
-	action_hint_label.text = "快捷键：E 搜索 / Q 背包 / G 拾取 / M 地图 / Space 清理 / Esc 暂停"
+	action_hint_label.text = "E 搜索  Q 背包  G 拾取  M 地图  Spc 清理  Esc 暂停"
 
 	var profile: Dictionary = model.get("layout_profile", {})
 	layout_label.text = ""
@@ -193,7 +204,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var width: float = float(supported_size.x)
 	var height: float = float(supported_size.y)
 	var margin: float = 16.0 if is_low else 20.0
-	var left_width: float = 352.0 if is_low else (420.0 if is_high else 380.0)
+	var left_width: float = 328.0 if is_low else (420.0 if is_high else 380.0)
 	var right_width: float = 268.0 if is_low else (330.0 if is_high else 296.0)
 	var bottom_height: float = 54.0 if is_low else 58.0
 	var pocket_height: float = 108.0 if is_low else 116.0
@@ -215,20 +226,28 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(encounter_backdrop, Rect2(right_left, encounter_top - 8.0, right_width, encounter_height + 16.0))
 	_set_rect(bottom_backdrop, Rect2(center_left, height - bottom_height - margin, center_width, bottom_height))
 	_set_rect(resource_backdrop, Rect2(margin, height - pocket_height - margin, left_width - margin * 2.0, pocket_height))
+	_set_rect(scanner_text_mask, Rect2(margin, margin + 28.0, left_width - margin * 2.0, 52.0))
+	_set_rect(room_text_mask, Rect2(center_left + 12.0, margin + 10.0, center_width - 24.0, 80.0 if is_low else 92.0))
+	_set_rect(threat_mask, Rect2(right_content_left, margin + 36.0, right_content_width, 90.0))
+	_set_rect(event_mask, Rect2(right_content_left, margin + 138.0, right_content_width, 62.0))
+	_set_rect(reward_mask, Rect2(right_content_left, margin + 210.0, right_content_width, 70.0))
+	_set_rect(player_tag_mask, Rect2(center_left + center_width * 0.5 - 48.0, height * 0.575, 96.0, 26.0))
+	_set_rect(room_hint_softener, Rect2(center_left + center_width * 0.18, margin + 118.0, center_width * 0.64, 72.0))
 	_set_rect(scanner_glow_layer, Rect2(margin, margin + 78.0, left_width - margin * 2.0, scanner_map_height))
 	_set_rect(room_glow_layer, Rect2(center_left + 12.0, margin + 12.0, center_width - 24.0, 82.0 if is_low else 94.0))
 	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 34.0, right_content_width, 264.0))
 	_set_rect(bottom_key_glow_layer, Rect2(center_left + 8.0, height - bottom_height - margin + 8.0, center_width - 16.0, bottom_height - 16.0))
 
 	_set_rect(scanner_title_label, Rect2(margin, margin, left_width - margin * 2.0, 28))
-	_set_rect(scanner_summary_label, Rect2(margin, margin + 30.0, left_width - margin * 2.0, 42))
+	_set_rect(scanner_summary_label, Rect2(margin + 10.0, margin + 34.0, left_width - margin * 2.0 - 20.0, 34))
 	_set_rect(minimap_panel, Rect2(margin, margin + 78.0, left_width - margin * 2.0, scanner_map_height))
-	_set_rect(scanner_legend_label, Rect2(margin, scanner_legend_top, left_width - margin * 2.0, 62))
-	_set_rect(scanner_detail_label, Rect2(margin, scanner_legend_top + 66.0, left_width - margin * 2.0, 86))
+	_set_rect(scanner_legend_label, Rect2(margin, scanner_legend_top, left_width - margin * 2.0, 42))
+	_set_rect(scanner_detail_label, Rect2(margin, scanner_legend_top + 46.0, left_width - margin * 2.0, 42))
 
 	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 10.0, center_width - 36.0, 30))
 	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 42.0, center_width - 36.0, 38))
 	_set_rect(objective_label, Rect2(center_left + 18.0, margin + 78.0, center_width - 36.0, 24))
+	_set_rect(player_tag_label, Rect2(center_left + center_width * 0.5 - 32.0, height * 0.575 + 4.0, 64.0, 18.0))
 	_set_rect(encounter_title_label, Rect2(right_content_left, encounter_top + 6.0, right_content_width, 24))
 	_set_rect(encounter_body_label, Rect2(right_content_left, encounter_top + 34.0, right_content_width, 64.0 if is_low else 72.0))
 	_set_rect(encounter_options_box, Rect2(right_content_left, encounter_top + (104.0 if is_low else 114.0), right_content_width, max(42.0, encounter_height - (158.0 if is_low else 176.0))))
@@ -236,9 +255,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(resource_label, Rect2(margin * 1.5, height - pocket_height + 2.0, left_width - margin * 3.0, pocket_height - 28.0))
 
 	_set_rect(right_title_label, Rect2(right_content_left, margin, right_content_width, 30))
-	_set_rect(right_body_label, Rect2(right_content_left, margin + 38.0, right_content_width, 108))
-	_set_rect(event_label, Rect2(right_content_left, margin + 152.0, right_content_width, 54))
-	_set_rect(reward_label, Rect2(right_content_left, margin + 212.0, right_content_width, 86))
+	_set_rect(right_body_label, Rect2(right_content_left + 10.0, margin + 48.0, right_content_width - 20.0, 66))
+	_set_rect(event_label, Rect2(right_content_left + 10.0, margin + 148.0, right_content_width - 20.0, 40))
+	_set_rect(reward_label, Rect2(right_content_left + 10.0, margin + 220.0, right_content_width - 20.0, 46))
 	_set_rect(command_feedback_label, Rect2(right_content_left, height - 122.0, right_content_width, 66))
 	_set_rect(layout_label, Rect2(right_content_left, height - 46.0, right_content_width, 24))
 	layout_label.visible = false
@@ -344,10 +363,11 @@ func _add_label(node_name: String, text: String, font_size: int, color: Color) -
 func _add_action_button(action_id: StringName, label: String, callback: Callable) -> void:
 	var button := Art10UISkinKitScript.make_bottom_key_button(label, _key_label_for_action(action_id))
 	button.name = "RunAction_%s" % String(action_id)
-	button.custom_minimum_size = Vector2(84, 30)
+	button.custom_minimum_size = Vector2(76, 32)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
-	button.add_theme_font_size_override("font_size", 13)
+	button.add_theme_font_size_override("font_size", 12)
 	_apply_action_button_style(button, &"secondary", true)
 	_apply_key_prompt_icon(button, action_id)
 	action_bar.add_child(button)
@@ -398,7 +418,7 @@ func _apply_actions(actions: Variant) -> void:
 		if not action_buttons.has(action_id):
 			continue
 		var button: Button = action_buttons[action_id]
-		button.text = "%s  %s" % [_key_label_for_action(action_id), _short_action_label(action_id, String(action_data.get("label", button.text)))]
+		button.text = "%s %s" % [_key_label_for_action(action_id), _short_action_label(action_id, String(action_data.get("label", button.text)))]
 		var enabled := bool(action_data.get("enabled", true))
 		var description := String(action_data.get("description", ""))
 		var disabled_reason := String(action_data.get("disabled_reason", ""))
@@ -419,7 +439,7 @@ func _key_label_for_action(action_id: StringName) -> String:
 		&"map":
 			return "M"
 		&"combat":
-			return "Space"
+			return "Spc"
 		&"extract":
 			return "T"
 		&"pause":
@@ -450,9 +470,9 @@ func _short_action_label(action_id: StringName, fallback: String) -> String:
 
 func _apply_encounter_section(section_variant: Variant) -> void:
 	var section := _dict_variant(section_variant)
-	encounter_title_label.text = String(section.get("title", "遭遇槽"))
-	encounter_body_label.text = String(section.get("body", "当前遭遇无公开信息。"))
-	encounter_result_label.text = String(section.get("result_summary", "最近结果：暂无遭遇结果。"))
+	encounter_title_label.text = _compact_line(String(section.get("title", "事件行动")), 10)
+	encounter_body_label.text = _compact_line(String(section.get("body", "当前无公开信息。")), 22)
+	encounter_result_label.text = "结果  %s" % _compact_line(String(section.get("result_summary", "暂无结果。")), 18)
 	_clear_encounter_option_buttons()
 	var options := _array_variant(section.get("options", []))
 	for option_variant in options:
@@ -465,7 +485,7 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 		var requires_confirm := bool(option.get("requires_confirm", false))
 		var title := String(option.get("title", String(option_id)))
 		button.name = "RunEncounterOption_%s" % String(option_id)
-		button.text = "%s%s" % [title, "  [需确认]" if requires_confirm else ""]
+		button.text = "%s%s" % [_compact_line(title, 9), "  确认" if requires_confirm else ""]
 		button.custom_minimum_size = Vector2(240, 32)
 		button.focus_mode = Control.FOCUS_NONE
 		button.disabled = disabled
@@ -480,7 +500,7 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 	if encounter_option_buttons.is_empty():
 		var placeholder := Label.new()
 		placeholder.name = "RunEncounterOptionPlaceholder"
-		placeholder.text = "暂无可执行遭遇选项。"
+		placeholder.text = "暂无可执行行动。"
 		placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		placeholder.add_theme_font_size_override("font_size", 12)
 		placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
@@ -520,6 +540,7 @@ func _apply_art10_text_refresh() -> void:
 		room_title_label,
 		room_body_label,
 		objective_label,
+		player_tag_label,
 		encounter_title_label,
 		encounter_body_label,
 		encounter_result_label,
@@ -533,10 +554,13 @@ func _apply_art10_text_refresh() -> void:
 		action_hint_label,
 	]:
 		if label is Label:
-			Art10UISkinKitScript.apply_label(label)
+			Art10UISkinKitScript.apply_label_token(label, &"hud_small", &"text")
+	for title_label in [scanner_title_label, room_title_label, encounter_title_label, right_title_label]:
+		if title_label is Label:
+			Art10UISkinKitScript.apply_label_token(title_label, &"hud", &"accent")
 	for action_id in action_buttons.keys():
 		var action_button := action_buttons[action_id] as Button
-		Art10UISkinKitScript.apply_button(action_button, &"secondary", 13)
+		Art10UISkinKitScript.apply_button(action_button, &"secondary", 12, &"key")
 		_apply_key_prompt_icon(action_button, StringName(action_id))
 	for button in encounter_option_buttons:
 		Art10UISkinKitScript.apply_button(button, &"primary" if button != null and not button.disabled else &"secondary", 12)
@@ -604,7 +628,7 @@ func _style_modal_children(node: Node) -> void:
 		_style_modal_children(child)
 
 
-func _lines_text(lines: Variant, fallback: String, max_lines: int = 4) -> String:
+func _lines_text(lines: Variant, fallback: String, max_lines: int = 4, max_chars: int = 24) -> String:
 	if not (lines is Array):
 		return fallback
 	var typed_lines: Array = lines
@@ -615,17 +639,34 @@ func _lines_text(lines: Variant, fallback: String, max_lines: int = 4) -> String
 	for index in range(visible_count):
 		if index > 0:
 			text += "\n"
-		text += _shorten_copy(String(typed_lines[index]), 30)
+		text += _shorten_copy(String(typed_lines[index]), max_chars)
 	if typed_lines.size() > visible_count:
-		text += "\n..."
+		text += "\n更多已收起"
 	return Art10UISkinKitScript.sanitize_player_copy(text)
 
 
 func _shorten_copy(text: String, max_chars: int) -> String:
-	var safe := Art10UISkinKitScript.sanitize_player_copy(text)
-	if safe.length() <= max_chars:
-		return safe
-	return "%s..." % safe.substr(0, max_chars)
+	return Art10UISkinKitScript.short_summary(text, max_chars)
+
+
+func _compact_line(text: String, max_chars: int) -> String:
+	return Art10UISkinKitScript.short_summary(text, max_chars)
+
+
+func _threat_copy(model: Dictionary) -> String:
+	return "威胁\n协议 %s | 压力 %s/100\n%s" % [
+		model.get("protocol_level", "--"),
+		model.get("pressure", "--"),
+		_compact_line(String(model.get("danger_label", "--")), 12),
+	]
+
+
+func _resource_copy(model: Dictionary) -> String:
+	var lines := [
+		String(model.get("resource_summary", "")),
+		String(model.get("backpack_summary", "")),
+	]
+	return "物资\n%s" % Art10UISkinKitScript.budgeted_lines_text(lines, 2, 16, false)
 
 
 func _set_rect(control: Control, rect: Rect2) -> void:

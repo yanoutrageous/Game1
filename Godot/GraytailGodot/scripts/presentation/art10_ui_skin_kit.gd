@@ -11,13 +11,46 @@ const CANVAS_SIZE := Vector2(1280, 720)
 
 const FONT_TOKENS := {
 	&"title": 54,
-	&"page_title": 36,
-	&"main_button": 24,
-	&"tab": 16,
-	&"body": 15,
-	&"caption": 12,
+	&"page_title": 38,
+	&"section_title": 22,
+	&"main_button": 26,
+	&"button": 18,
+	&"tab": 17,
+	&"body": 16,
+	&"body_small": 14,
+	&"caption": 13,
 	&"numeric": 18,
-	&"key_prompt": 12,
+	&"key_prompt": 13,
+	&"hud": 15,
+	&"hud_small": 13,
+}
+
+const TEXT_BUDGETS := {
+	&"page_title": {"lines": 1, "chars": 18},
+	&"section_title": {"lines": 1, "chars": 16},
+	&"main_button": {"lines": 2, "chars": 10},
+	&"button": {"lines": 1, "chars": 10},
+	&"tab": {"lines": 1, "chars": 8},
+	&"body": {"lines": 3, "chars": 18},
+	&"body_small": {"lines": 3, "chars": 16},
+	&"caption": {"lines": 2, "chars": 14},
+	&"key_prompt": {"lines": 1, "chars": 8},
+	&"hud": {"lines": 3, "chars": 16},
+	&"hud_small": {"lines": 2, "chars": 14},
+}
+
+const LABEL_SAFE_PADDING := {
+	&"page_title": Vector2(10, 8),
+	&"section_title": Vector2(10, 7),
+	&"main_button": Vector2(12, 8),
+	&"button": Vector2(10, 6),
+	&"tab": Vector2(8, 6),
+	&"body": Vector2(10, 7),
+	&"body_small": Vector2(9, 6),
+	&"caption": Vector2(8, 6),
+	&"key_prompt": Vector2(6, 4),
+	&"hud": Vector2(9, 6),
+	&"hud_small": Vector2(7, 5),
 }
 
 const ICON_SIZES := {
@@ -105,6 +138,21 @@ static func font_size(token: StringName, fallback: int = 15) -> int:
 	return int(value) if value is int else fallback
 
 
+static func font_line_height(token: StringName) -> int:
+	var resolved_size := font_size(token)
+	return resolved_size + _line_spacing_for(resolved_size)
+
+
+static func text_budget(token: StringName) -> Dictionary:
+	var value: Variant = TEXT_BUDGETS.get(token, TEXT_BUDGETS[&"body"])
+	return (value as Dictionary).duplicate(true) if value is Dictionary else TEXT_BUDGETS[&"body"].duplicate(true)
+
+
+static func label_safe_padding(token: StringName) -> Vector2:
+	var value: Variant = LABEL_SAFE_PADDING.get(token, Vector2(8, 6))
+	return value if value is Vector2 else Vector2(8, 6)
+
+
 static func icon_size(token: StringName, fallback: int = 28) -> int:
 	var value: Variant = ICON_SIZES.get(token, fallback)
 	return int(value) if value is int else fallback
@@ -129,6 +177,50 @@ static func sanitize_player_copy(text: String) -> String:
 	while result.find("  ") >= 0:
 		result = result.replace("  ", " ")
 	return result.strip_edges()
+
+
+static func short_summary(text: String, max_chars: int = 18) -> String:
+	var safe := sanitize_player_copy(text)
+	safe = safe.replace("\r", " ")
+	safe = safe.replace("\n", " ")
+	while safe.find("  ") >= 0:
+		safe = safe.replace("  ", " ")
+	safe = safe.strip_edges()
+	if max_chars <= 0 or safe.length() <= max_chars:
+		return safe
+	for separator in ["。", "；", "，", "、", "/", "|", " "]:
+		var index := safe.find(separator)
+		if index > 4 and index <= max_chars:
+			return safe.substr(0, index).strip_edges()
+	return safe.substr(0, max_chars).strip_edges()
+
+
+static func budgeted_lines_text(lines: Array, max_lines: int = -1, max_chars: int = -1, bullet: bool = true) -> String:
+	var resolved_lines := max_lines
+	var resolved_chars := max_chars
+	if resolved_lines <= 0 or resolved_chars <= 0:
+		var budget := text_budget(&"body")
+		if resolved_lines <= 0:
+			resolved_lines = int(budget.get("lines", 3))
+		if resolved_chars <= 0:
+			resolved_chars = int(budget.get("chars", 18))
+	var parts: Array[String] = []
+	var visible_count: int = int(min(lines.size(), resolved_lines))
+	for index in range(visible_count):
+		var line := short_summary(String(lines[index]), resolved_chars)
+		if line == "":
+			continue
+		parts.append("- %s" % line if bullet else line)
+	if lines.size() > visible_count:
+		parts.append("更多内容已收起")
+	return sanitize_player_copy("\n".join(parts))
+
+
+static func readable_section_text(title: String, lines: Array, max_lines: int = 2, max_chars: int = 16) -> String:
+	var body := budgeted_lines_text(lines, max_lines, max_chars, true)
+	if body == "":
+		return sanitize_player_copy(title)
+	return "%s\n%s" % [sanitize_player_copy(title), body]
 
 
 static func status_label(value: Variant) -> String:
@@ -255,6 +347,7 @@ static func apply_label(label: Label, font_size_value: int = -1, font_color: Col
 	label.text = sanitize_player_copy(label.text)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.clip_text = false
+	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	var font := pixel_font()
 	if font is Font:
 		label.add_theme_font_override("font", font as Font)
@@ -619,6 +712,10 @@ static func _line_spacing_for(font_size_value: int) -> int:
 		return 7
 	if font_size_value >= font_size(&"page_title"):
 		return 6
+	if font_size_value >= font_size(&"section_title"):
+		return 5
 	if font_size_value >= font_size(&"main_button"):
 		return 5
+	if font_size_value >= font_size(&"body"):
+		return 4
 	return 3
