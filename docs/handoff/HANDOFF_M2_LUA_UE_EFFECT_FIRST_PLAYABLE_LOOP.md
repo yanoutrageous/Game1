@@ -27,3 +27,12 @@
 - Continue tuning Lua / UE parity numbers in `RunBalanceCatalog`.
 - Replace placeholder content IDs through a future content-table phase.
 - Keep result UI and MetaProgress reading `RunResult` / result snapshot only.
+
+## M2-R2.1 Release Cleanup Notes
+
+- 中文摘要：M2-R2.1 已完成发布前 metadata 清理、Debug heal effect-first 收口、G37 runtime authority 验证脚本对齐，以及 M2 headless runner 覆盖增强；后续仍需可靠前台 QA 后才可声明 manual playtest。
+- Release cleanup restored/removes Godot-generated metadata so the M2 branch can be reviewed without `project.godot`, `.translation`, `.uid`, or `.import` dirty.
+- `debug_heal_full` is now effect-first and keeps the DebugGate / CommandBus entry path intact.
+- G37 runtime authority validation has been aligned with the M2 event path through `RunRuleService` and `RunEffectApplier`.
+- The M2 headless runner now covers normal search, chest, ground loot pickup, event, combat, mine, extract, fail, `RunResult`, and `SettlementInput`.
+- Continue to treat visible Computer Use as PARTIAL until a reliable foreground QA pass covers movement, search, encounter, extract/fail, and menu summary.

@@ -43,6 +43,15 @@ powershell -ExecutionPolicy Bypass -File tools/validate_m2_lua_ue_effect_first_l
   - This is not a manual playtest PASS and does not replace later visible QA.
 - Added a minimal main-menu F1/F2 shortcut handler so visible smoke can enter the existing shortcut routes even when fixed 1280 layout content is partially offscreen in a smaller window.
 
+## M2-R2.1 Release Cleanup / Validation Alignment
+
+- 中文摘要：本节记录 M2 effect-first 发布前清理与验证门对齐；Godot metadata 不进入提交，Debug heal 改为 effect-first，G37 runtime authority 与 M2 回归脚本已同步覆盖新路径。
+- Metadata cleanup: tracked `project.godot` and tracked `asset_manifest.*.translation` were restored to HEAD; untracked `asset_manifest.*.translation` and generated `.gd.uid` files were removed by exact path list. No metadata was staged or committed.
+- Validation alignment: `tools/validate_g37_runtime_authority.ps1` now accepts the M2 event path `EventService -> RunRuleService.apply_event_rule_result -> RunEffectApplier` while preserving the runtime authority checks for `context.phase`, `context.fail_run`, `RunFlowStateContract`, and CommandBus ownership.
+- Debug heal cleanup: `CommandBus.debug_heal_full()` now applies HP restoration through `RunEffectApplier.effect_hp_delta(...)`; it no longer directly writes `context.hp = context.max_hp`.
+- Regression expansion: `tools/godot_m2_lua_ue_effect_first_runner.gd` now covers `standard_10x10`, `hp_delta`, protocol pressure, normal search reward, chest reward, ground loot pickup, event hp/pressure/gold/item effects, combat damage/reward, mine damage/pressure, extract, fail, `RunResult`, `SettlementInput`, and `ui_recalculation_allowed=false`.
+- M2 validation script now checks the expanded runner coverage and the debug heal effect-first boundary.
+
 ## Not Claimed
 
 - No manual playtest PASS unless visible/manual coverage is actually executed.

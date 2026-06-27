@@ -29,6 +29,7 @@ $gameKernel = Read-RepoFile "Godot/GraytailGodot/scripts/core/run/game_kernel.gd
 $combatState = Read-RepoFile "Godot/GraytailGodot/scripts/core/run/combat_state.gd"
 $roomResolver = Read-RepoFile "Godot/GraytailGodot/scripts/core/run/room_resolver.gd"
 $eventService = Read-RepoFile "Godot/GraytailGodot/scripts/core/run/event_service.gd"
+$runRuleService = Read-RepoFile "Godot/GraytailGodot/scripts/core/run/run_rule_service.gd"
 
 Require-Text "RunStateMachine class" $stateMachine "class_name RunStateMachine"
 Require-Text "RunRuntimeController class" $runtimeController "class_name RunRuntimeController"
@@ -42,9 +43,12 @@ Require-Text "RunScene uses runtime controller" $runScene "RunRuntimeControllerS
 Require-Text "RunFlowStateContract projection marker" $flowContract "projection only"
 Require-Text "GameKernel hard disabled" $gameKernel "G37_GAME_KERNEL_RUNTIME_DRIVER_ENABLED := false"
 Require-Text "RuntimeController exposes fail transition" $runtimeController "func fail_run\(reason: String"
-Require-Text "CombatState routes fail authority" $combatState "fail_authority\.fail_run"
+Require-Text "CombatState routes damage through effect applier" $combatState "RunEffectApplierScript\.apply_damage"
 Require-Text "RoomResolver routes fail authority" $roomResolver "runtime_controller\.fail_run"
-Require-Text "EventService carries fail authority" $eventService "CombatState\.apply_damage\(context, 1, `"event_trap`", fail_authority\)"
+Require-Text "EventService routes event result through rule service" $eventService "RunRuleService\.apply_event_rule_result"
+Require-Text "RunRuleService routes event HP through effect applier" $runRuleService "RunEffectApplierScript\.effect_hp_delta"
+Require-Text "RunRuleService routes event pressure through effect applier" $runRuleService "RunEffectApplierScript\.effect_protocol_pressure_delta"
+Require-Text "RunRuleService applies event run effects" $runRuleService "RunEffectApplierScript\.apply_effects\(context, run_effects, fail_authority\)"
 
 if ($commandBus -match 'context\.phase\s*=[^=]') {
     throw "G37 validation failed: CommandBus still writes context.phase directly"

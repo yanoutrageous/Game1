@@ -13,6 +13,7 @@ const REJECTION_CANNOT_EXTRACT := "cannot_extract"
 const REJECTION_NO_EXTRACT_REQUEST := "no_extract_request"
 const EncounterContractScript := preload("res://scripts/core/run/encounter/encounter_contract.gd")
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
+const RunEffectApplierScript := preload("res://scripts/core/run/run_effect_applier.gd")
 
 var context: RunContext
 var runtime_controller
@@ -468,11 +469,14 @@ func debug_spawn_test_item(preferred_location: StringName) -> Dictionary:
 func debug_heal_full() -> Dictionary:
 	if not _has_active_run():
 		return _blocked(&"not_ready", "not_ready")
-	context.hp = context.max_hp
-	context.last_message = "Debug restored HP to full through RunContext."
-	context.record_event(&"debug_command", _active_command_id(), DEFAULT_ACTOR_ID, "debug_command", {"command": "debug_heal_full", "hp": context.hp, "max_hp": context.max_hp})
+	var hp_delta := context.max_hp - context.hp
+	var applied: Dictionary = RunEffectApplierScript.apply_effects(context, [
+		RunEffectApplierScript.effect_hp_delta(hp_delta, "debug_heal_full"),
+	], runtime_controller)
+	context.last_message = "Debug restored HP to full through RunEffectApplier."
+	context.record_event(&"debug_command", _active_command_id(), DEFAULT_ACTOR_ID, "debug_command", {"command": "debug_heal_full", "hp": context.hp, "max_hp": context.max_hp, "hp_delta": hp_delta, "effect_results": applied.get("effect_results", [])})
 	_emit_state()
-	return {"ok": true, "status": &"debug_healed_full", "hp": context.hp, "max_hp": context.max_hp, "actor_id": DEFAULT_ACTOR_ID}
+	return {"ok": bool(applied.get("ok", false)), "status": &"debug_healed_full", "hp": context.hp, "max_hp": context.max_hp, "hp_delta": hp_delta, "effect_results": applied.get("effect_results", []), "actor_id": DEFAULT_ACTOR_ID}
 
 
 func debug_force_extract() -> Dictionary:
