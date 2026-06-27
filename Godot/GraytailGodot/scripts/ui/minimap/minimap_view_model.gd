@@ -82,14 +82,15 @@ static func build_cell_view_model(raw_marker: Dictionary, player_pos: Vector2i =
 	var marker := raw_marker.duplicate(true)
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
-	var revealed := bool(marker.get("revealed", false)) or known_state in [&"explored", &"cleared"]
-	var explored := bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]
+	var return_eligibility: Dictionary = marker.get("return_eligibility", {})
+	var eligible_return := bool(return_eligibility.get("eligible", return_eligibility.get("fast_return", false)))
+	var revealed := bool(marker.get("revealed", false)) or eligible_return or known_state in [&"explored", &"cleared"]
+	var explored := bool(marker.get("explored", false)) or eligible_return or known_state in [&"explored", &"cleared"]
 	var cleared := bool(marker.get("cleared", false)) or known_state == &"cleared"
 	var scanned := bool(marker.get("scanned", false)) or known_state == &"scanned"
 	var flagged := bool(marker.get("flagged", false))
 	var is_current := bool(marker.get("is_current", false)) or (player_pos.x >= 0 and pos == player_pos)
 	var distance: int = abs(pos.x - player_pos.x) + abs(pos.y - player_pos.y) if player_pos.x >= 0 else -1
-	var return_eligibility: Dictionary = marker.get("return_eligibility", {})
 	var room_type := StringName(marker.get("room_type", &"Unknown"))
 	var action := _action_for_cell(is_current, flagged, revealed, explored, cleared, scanned, room_type, distance, return_eligibility)
 	marker["is_current"] = is_current
@@ -125,7 +126,7 @@ static func _action_for_cell(is_current: bool, flagged: bool, revealed: bool, ex
 		if scanned:
 			return {"id": &"inspect", "label": "已扫描，需探索", "enabled": false, "reason": "scanned_not_explored"}
 		return {"id": &"toggle_flag", "label": "标记风险", "enabled": true, "reason": ""}
-	if explored and bool(return_eligibility.get("eligible", return_eligibility.get("fast_return", false))) and room_type != &"Mine":
+	if explored and bool(return_eligibility.get("eligible", return_eligibility.get("fast_return", false))):
 		return {"id": &"fast_return", "label": "回传到此房间", "enabled": true, "reason": ""}
 	if explored and room_type == &"Mine":
 		return {"id": &"inspect", "label": "雷险房仅查看", "enabled": false, "reason": "mine_not_fast_return"}

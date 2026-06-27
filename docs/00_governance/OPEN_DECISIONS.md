@@ -173,3 +173,9 @@ G27A docs-only decision posture:
 ```text
 待确认事项不得写成已确认规则。
 ```
+## M2 Open Follow-up
+
+| decision_id | domain | item | current_status | required_confirmation |
+| --- | --- | --- | --- | --- |
+| OD-M2-001 | run_config | Whether to add a future fixed 7x7 regression map | deferred / P2 | User previously removed `demo_7x7` from current M2 acceptance; future gate can decide whether to add a fixed regression map. |
+| OD-M2-002 | gameplay_scope | Whether Objective / Reward / Pool becomes next real system | future gate | M2 keeps only minimum loop boundaries and does not expand into full Objective / Reward / Pool. |

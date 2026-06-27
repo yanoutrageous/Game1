@@ -63,3 +63,10 @@ Base Docs_Governance = 外部治理快照区，不替代当前仓库事实源。
 Connection = 外部并行交接区，不复制内容入库。
 Godot/GraytailGodot/docs = 工程历史 / 环境证据，不作为当前文档治理入口。
 ```
+## M2 Lua / UE Effect-First Playable Loop
+
+Status: implementation in progress on `godot/m2-lua-ue-effect-first-playable-loop`.
+
+Current M2 scope: align the existing M1 playable loop to Lua / UE prototype effect-first behavior. DeployPrep starts the existing `standard_10x10` route through RunStartConfig / route adapter; RunScene keeps TruthMap / IntelMap separation; HP / pressure / room state / rewards route through effect and ledger boundaries; RunResult is SettlementInput; LongTerm consumes MetaProgress and latest result display-only.
+
+Non-goals: no `demo_7x7`, no full Objective / Reward / Pool, no full LongTerm, no full warehouse, no full equipment/consumable system, no full Rule Engine, no metadata/resource import.

@@ -1,19 +1,13 @@
 extends RefCounted
 class_name ProtocolService
 
-const MAX_PRESSURE := 100
+const RunBalanceCatalogScript := preload("res://scripts/core/run/run_balance_catalog.gd")
+
+const MAX_PRESSURE := RunBalanceCatalogScript.PROTOCOL_PRESSURE_MAX
 
 
 static func level_for_pressure(pressure: int) -> int:
-	if pressure >= 80:
-		return 1
-	if pressure >= 60:
-		return 2
-	if pressure >= 40:
-		return 3
-	if pressure >= 20:
-		return 4
-	return 5
+	return RunBalanceCatalogScript.protocol_level_for_pressure(pressure)
 
 
 static func add_pressure(context: RunContext, amount: int) -> Dictionary:

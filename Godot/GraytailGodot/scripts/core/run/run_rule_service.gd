@@ -8,6 +8,7 @@ const DEFAULT_ACTOR_ID := &"player"
 const EncounterResolverScript := preload("res://scripts/core/run/encounter/encounter_resolver.gd")
 const RuleEffectModifierSchemaScript := preload("res://scripts/core/rules/rule_effect_modifier_schema.gd")
 const ContentDeliverySchemaScript := preload("res://scripts/core/content/content_delivery_schema.gd")
+const RunEffectApplierScript := preload("res://scripts/core/run/run_effect_applier.gd")
 
 
 static func make_rule_result(ok: bool, status: StringName, actor_id: StringName = DEFAULT_ACTOR_ID, reason: String = "", effects: Array = [], messages: Array[String] = [], snapshot_delta: Dictionary = {}, settlement_log_entry: Dictionary = {}, rule_request_id: String = "", produced_events: Array = [], produced_transactions: Array = []) -> Dictionary:
@@ -71,6 +72,8 @@ static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_min
 		return make_rule_result(false, &"search_reward", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
 	var request: Dictionary = _make_rule_request(context, &"search_reward", "search", {"pos": pos, "adjacent_mines": adjacent_mines, "is_chest": is_chest})
 	var black_coin: int = RunRuleContent.default_search_black_coin(context, pos, adjacent_mines, is_chest)
+	var modifier_black_coin_delta: int = _numeric_modifier_delta(context, &"search_reward", "black_coin")
+	black_coin = maxi(0, black_coin + modifier_black_coin_delta)
 	var item_defs: Array[Dictionary] = RunRuleContent.default_search_items(pos, adjacent_mines, is_chest, black_coin)
 	var effects: Array = [
 		_effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "search", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": black_coin}),
@@ -84,6 +87,7 @@ static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_min
 	var result: Dictionary = make_rule_result(true, &"search_reward", DEFAULT_ACTOR_ID, "", effects, ["Search reward resolved."], {}, log_entry)
 	result["gold"] = black_coin
 	result["black_coin_delta"] = black_coin
+	result["modifier_black_coin_delta"] = modifier_black_coin_delta
 	result["items"] = combined_items
 	result["inventory_items"] = item_result.get("inventory_items", [])
 	result["equipped_items"] = item_result.get("equipped_items", [])
@@ -116,11 +120,24 @@ static func apply_combat_reward(context: RunContext, pos: Vector2i, reward_gold:
 	return _finalize_rule(context, request, result, applied)
 
 
-static func apply_event_rule_result(context: RunContext, event_type: StringName, rule_result: Dictionary) -> Dictionary:
+static func apply_event_rule_result(context: RunContext, event_type: StringName, rule_result: Dictionary, fail_authority = null) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return make_rule_result(false, &"event", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
 	var request: Dictionary = _make_rule_request(context, &"event", "event_%s" % String(event_type), {"event_type": event_type, "rule_result": rule_result})
 	var result: Dictionary = rule_result.duplicate(true)
+	var run_effects: Array = []
+	if result.has("hp_delta"):
+		run_effects.append(RunEffectApplierScript.effect_hp_delta(int(result.get("hp_delta", 0)), "event_%s" % String(event_type)))
+	if result.has("pressure_delta"):
+		run_effects.append(RunEffectApplierScript.effect_protocol_pressure_delta(int(result.get("pressure_delta", 0)), "event_%s" % String(event_type)))
+	if result.has("protocol_pressure_delta"):
+		run_effects.append(RunEffectApplierScript.effect_protocol_pressure_delta(int(result.get("protocol_pressure_delta", 0)), "event_%s" % String(event_type)))
+	var run_applied: Dictionary = RunEffectApplierScript.apply_effects(context, run_effects, fail_authority)
+	if not bool(run_applied.get("ok", true)):
+		var run_blocked: Dictionary = make_rule_result(false, &"event", DEFAULT_ACTOR_ID, String(run_applied.get("reason", "blocked")), run_effects, [String(result.get("message", "Event blocked."))])
+		run_blocked["event_type"] = event_type
+		run_blocked["effect_results"] = run_applied.get("effect_results", [])
+		return run_blocked
 	var effects: Array = []
 	var effect_index: int = 1
 	if result.has("spend_black_coin"):
@@ -157,9 +174,15 @@ static func apply_event_rule_result(context: RunContext, event_type: StringName,
 		result["blocked_reason"] = item_result.get("blocked_reason", "")
 	var log_entry: Dictionary = {"type": &"rule_result", "rule_result": &"event", "event_type": event_type, "result": result.duplicate(true)}
 	_append_rule_log(context, log_entry)
-	result.merge(make_rule_result(bool(result.get("ok", true)), &"event", DEFAULT_ACTOR_ID, String(result.get("blocked_reason", "")), effects, [String(result.get("message", "Event resolved."))], {}, log_entry), false)
-	result["effect_results"] = applied.get("effect_results", [])
-	return _finalize_rule(context, request, result, applied)
+	var all_effects: Array = run_effects + effects
+	result.merge(make_rule_result(bool(result.get("ok", true)), &"event", DEFAULT_ACTOR_ID, String(result.get("blocked_reason", "")), all_effects, [String(result.get("message", "Event resolved."))], {}, log_entry), false)
+	result["effect_results"] = run_applied.get("effect_results", []) + applied.get("effect_results", [])
+	var combined_applied: Dictionary = {
+		"produced_transactions": run_applied.get("produced_transactions", []) + applied.get("produced_transactions", []),
+		"transactions": run_applied.get("transactions", []) + applied.get("transactions", []),
+		"effect_results": result["effect_results"],
+	}
+	return _finalize_rule(context, request, result, combined_applied)
 
 
 static func execute_trader_sell_best(context: RunContext) -> Dictionary:
@@ -313,6 +336,12 @@ static func _make_rule_request(context: RunContext, rule_id: StringName, source:
 		"command_id": command_id,
 		"sequence": 0,
 	}
+
+
+static func _numeric_modifier_delta(context: RunContext, rule_id: StringName, field_id: String) -> int:
+	if context == null or context.rule_pipeline == null:
+		return 0
+	return context.rule_pipeline.numeric_delta_for_rule(rule_id, field_id)
 
 
 static func _effect_for_request(request: Dictionary, index: int, effect_type: StringName, source: String, target: Variant, payload: Dictionary) -> Dictionary:

@@ -6,6 +6,7 @@ class_name RunQueryFacade
 
 const EncounterResolverScript := preload("res://scripts/core/run/encounter/encounter_resolver.gd")
 const RunFlowStateContractScript := preload("res://scripts/core/run/run_flow_state_contract.gd")
+const RunResultBuilderScript := preload("res://scripts/core/run/run_result_builder.gd")
 const RuleEffectModifierSchemaScript := preload("res://scripts/core/rules/rule_effect_modifier_schema.gd")
 const ContentDeliverySchemaScript := preload("res://scripts/core/content/content_delivery_schema.gd")
 
@@ -17,6 +18,7 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 	var run_map_snapshot := build_run_map_snapshot(context)
 	var map_result := build_map_result(context)
 	var run_flow_snapshot := build_run_flow_snapshot(context, run_map_snapshot, map_result)
+	var run_result: Dictionary = RunResultBuilderScript.build(context, ledger_snapshot, run_map_snapshot, map_result, run_flow_snapshot)
 	var current_room_detail := get_current_room_detail(context)
 	var rule_summary_preview := build_rule_effect_modifier_summary(context, current_room_detail)
 	var content_delivery_preview := build_content_delivery_summary(context, current_room_detail)
@@ -71,7 +73,12 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 		"RunIntent": run_flow_snapshot.get("RunIntent", {}),
 		"SettlementTriggerPreview": run_flow_snapshot.get("SettlementTriggerPreview", {}),
 		"RunOutcomePreview": run_flow_snapshot.get("RunOutcomePreview", {}),
-		"RunResult": run_flow_snapshot.get("RunResult", {}),
+		"RunResult": run_result,
+		"run_result": run_result.duplicate(true),
+		"settlement_input": run_result.duplicate(true),
+		"SettlementInput": run_result.duplicate(true),
+		"settlement_reads_run_result_only": true,
+		"settlement": context.settlement_result.duplicate(true),
 		"map_summary_preview": map_result.get("map_summary_preview", {}),
 		"current_room_detail": current_room_detail,
 		"room_common_rule_summary_preview": _room_common_rule_summary(current_room_detail),
@@ -108,6 +115,7 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 	var run_map_snapshot := build_run_map_snapshot(context)
 	var map_result_preview := build_map_result(context)
 	var run_flow_snapshot := build_run_flow_snapshot(context, run_map_snapshot, map_result_preview)
+	var run_result: Dictionary = RunResultBuilderScript.build(context, ledger_snapshot, run_map_snapshot, map_result_preview, run_flow_snapshot)
 	var current_room_detail := get_current_room_detail(context)
 	var rule_summary_preview := build_rule_effect_modifier_summary(context, current_room_detail)
 	var content_delivery_preview := build_content_delivery_summary(context, current_room_detail)
@@ -157,7 +165,8 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"RunIntent": run_flow_snapshot.get("RunIntent", {}),
 		"SettlementTriggerPreview": run_flow_snapshot.get("SettlementTriggerPreview", {}),
 		"RunOutcomePreview": run_flow_snapshot.get("RunOutcomePreview", {}),
-		"RunResult": run_flow_snapshot.get("RunResult", {}),
+		"RunResult": run_result,
+		"SettlementInput": run_result.duplicate(true),
 		"map_summary_preview": map_result_preview.get("map_summary_preview", {}),
 		"current_room_detail": current_room_detail,
 		"room_common_rule_summary_preview": _room_common_rule_summary(current_room_detail),

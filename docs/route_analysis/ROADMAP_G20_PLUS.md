@@ -328,3 +328,9 @@ G18-align-R2 is now the active pre-G22 implementation slice on `godot/g18-align-
 - G24 remains foundation-only and not complete LongTerm, real rewards, real gacha, real red dots, real SaveManager, real asset writes, complete Warehouse, or complete Gacha.
 - Gameplay runtime was not run, and no gameplay runtime PASS is claimed.
 - Manual playtest was not run, and no manual playtest PASS is claimed.
+## M2 Latest Planning Minimum Gameplay & Meta Loop
+
+- M2 aligns the existing M1 playable loop with Lua / UE effect-first behavior: visible feedback must correspond to real HP, pressure, asset, room, result, and MetaProgress state changes.
+- It keeps `standard_10x10` as the current playable regression route and does not add `demo_7x7`.
+- It adds a strict contract / validation / handoff set under current docs placement rules.
+- It does not claim full Objective / Reward / Pool, full LongTerm, full warehouse, full Rule Engine, gameplay runtime PASS, or manual playtest PASS unless separately validated.

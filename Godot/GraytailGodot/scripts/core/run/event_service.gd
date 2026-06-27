@@ -2,8 +2,12 @@ extends RefCounted
 class_name EventService
 
 const EVENT_TYPES := [&"trader", &"dice", &"altar", &"trap"]
-const DICE_BET := 20
-const TRAP_POWER_REQ := 8
+const RunBalanceCatalogScript := preload("res://scripts/core/run/run_balance_catalog.gd")
+const RunContentCatalogScript := preload("res://scripts/core/run/run_content_catalog.gd")
+const RunTextCatalogScript := preload("res://scripts/core/run/run_text_catalog.gd")
+
+const DICE_BET := RunBalanceCatalogScript.DICE_BET
+const TRAP_POWER_REQ := RunBalanceCatalogScript.TRAP_POWER_REQUIREMENT
 
 
 static func get_event_type(context: RunContext, pos: Vector2i) -> StringName:
@@ -71,10 +75,10 @@ static func execute_option(context: RunContext, pos: Vector2i, option_id: String
 	var event_type := get_event_type(context, pos)
 	if context.interacted_cells.has(key):
 		context.event_state = get_event_state(context, pos)
-		context.last_message = "Event already resolved."
+		context.last_message = RunTextCatalogScript.event_already_resolved()
 		return {"ok": true, "completed": true, "message": context.last_message}
 	if option_id == &"leave":
-		context.last_message = "Event left unresolved."
+		context.last_message = RunTextCatalogScript.event_left()
 		context.event_state = get_event_state(context, pos)
 		return {"ok": true, "completed": false, "message": context.last_message}
 	var option_available := false
@@ -87,7 +91,7 @@ static func execute_option(context: RunContext, pos: Vector2i, option_id: String
 	if not option_available or not option_enabled:
 		context.blocked_reason = "event_option_unavailable"
 		context.event_state = get_event_state(context, pos)
-		context.last_message = "Event option unavailable."
+		context.last_message = RunTextCatalogScript.event_option_unavailable()
 		return {"ok": false, "completed": false, "blocked_reason": "event_option_unavailable", "reason": "event_option_unavailable", "message": context.last_message}
 
 	var result := {}
@@ -97,7 +101,7 @@ static func execute_option(context: RunContext, pos: Vector2i, option_id: String
 		&"dice":
 			result = _execute_dice(context, pos, option_id)
 		&"altar":
-			result = _execute_altar(context, option_id)
+			result = _execute_altar(context, option_id, fail_authority)
 		&"trap":
 			result = _execute_trap(context, option_id, fail_authority)
 		_:
@@ -126,48 +130,39 @@ static func _execute_dice(context: RunContext, pos: Vector2i, option_id: StringN
 	return RunRuleService.execute_dice_bet(context, pos, DICE_BET)
 
 
-static func _execute_altar(context: RunContext, option_id: StringName) -> Dictionary:
+static func _execute_altar(context: RunContext, option_id: StringName, fail_authority = null) -> Dictionary:
 	if option_id != &"offer_hp":
 		return {"ok": false, "message": "Unknown altar option."}
 	if context.hp <= 10:
 		return {"ok": false, "message": "Not enough HP.", "blocked_reason": "blocked_hp"}
-	context.hp -= 10
 	return RunRuleService.apply_event_rule_result(context, &"altar", {
 		"ok": true,
 		"completed": true,
 		"event_type": &"altar",
-		"hp_delta": -10,
-		"black_coin_delta": 8,
-		"pending_gold_delta": 8,
-		"item_defs": [{
-			"item_id": "altar_relic_%d" % context.turn,
-			"display_name": "Altar Relic",
-			"item_type": &"recovered",
-			"rarity": &"unique",
-			"weight": 1,
-			"base_value": 8,
-			"value_state": &"known_value",
-			"tags": ["altar", "event", "collection"],
-		}],
+		"hp_delta": -RunBalanceCatalogScript.ALTAR_HP_COST,
+		"black_coin_delta": RunBalanceCatalogScript.ALTAR_BLACK_COIN_REWARD,
+		"pending_gold_delta": RunBalanceCatalogScript.ALTAR_BLACK_COIN_REWARD,
+		"item_defs": [RunContentCatalogScript.altar_relic(context)],
 		"status_effects": [{
 			"effect_id": "altar_focus",
 			"duration_type": &"current_run",
 			"remaining": 1,
 			"tags": ["buff", "event"],
 		}],
-		"message": "Altar exchange complete: HP -10, black_coin +8, item +1.",
-	})
+		"message": RunTextCatalogScript.altar_result(),
+	}, fail_authority)
 
 
 static func _execute_trap(context: RunContext, option_id: StringName, fail_authority = null) -> Dictionary:
 	if option_id != &"disarm":
 		return {"ok": false, "message": "Unknown mechanism option."}
 	if context.power >= TRAP_POWER_REQ:
-		var item_defs: Array[Dictionary] = [
-			{"item_id": "trap_cache_common_%d" % context.turn, "display_name": "Mechanism Cache", "item_type": &"recovered", "rarity": &"good", "weight": 1, "base_value": 4, "value_state": &"known_value", "tags": ["trap", "event"]},
-			{"item_id": "trap_cache_low_%d" % context.turn, "display_name": "Mechanism Parts", "item_type": &"recovered", "rarity": &"common", "weight": 1, "base_value": 2, "value_state": &"known_value", "tags": ["trap", "event"]},
-		]
-		return RunRuleService.apply_event_rule_result(context, &"trap", {"ok": true, "completed": true, "event_type": &"trap", "black_coin_delta": 25, "pending_gold_delta": 25, "item_defs": item_defs, "message": "Mechanism opened: black_coin +25, item +2."})
-	CombatState.apply_damage(context, 1, "event_trap", fail_authority)
-	ProtocolService.add_pressure(context, 5)
-	return {"ok": true, "completed": true, "event_type": &"trap", "hp_delta": -1, "pressure_delta": 5, "message": "Mechanism triggered: HP -1, pressure +5."}
+		return RunRuleService.apply_event_rule_result(context, &"trap", {"ok": true, "completed": true, "event_type": &"trap", "black_coin_delta": 25, "pending_gold_delta": 25, "item_defs": RunContentCatalogScript.trap_cache(context), "message": RunTextCatalogScript.trap_success()}, fail_authority)
+	return RunRuleService.apply_event_rule_result(context, &"trap", {
+		"ok": true,
+		"completed": true,
+		"event_type": &"trap",
+		"hp_delta": -RunBalanceCatalogScript.TRAP_FAILURE_DAMAGE,
+		"pressure_delta": RunBalanceCatalogScript.TRAP_PRESSURE_DELTA,
+		"message": RunTextCatalogScript.trap_failure(),
+	}, fail_authority)

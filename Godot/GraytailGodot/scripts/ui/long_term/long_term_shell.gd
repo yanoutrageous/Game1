@@ -6,6 +6,7 @@ const LongTermTabModelScript := preload("res://scripts/ui/long_term/long_term_ta
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 var current_model: Dictionary = {}
+var current_app_snapshot: Dictionary = {}
 var selected_module_id: StringName = &"goals"
 var tab_buttons: Dictionary = {}
 var overview_label: Label
@@ -30,8 +31,9 @@ func build(model: Dictionary = {}) -> void:
 	_refresh_from_model()
 
 
-func apply_snapshot(_snapshot: Dictionary) -> void:
-	current_model = LongTermModelScript.build(selected_module_id, &"app_shell_snapshot_preview")
+func apply_snapshot(snapshot: Dictionary) -> void:
+	current_app_snapshot = snapshot.duplicate(true)
+	current_model = LongTermModelScript.build_from_snapshot(selected_module_id, current_app_snapshot, &"app_shell_snapshot_preview")
 	_refresh_from_model()
 
 
@@ -39,7 +41,7 @@ func show_module(module_id: StringName = &"goals") -> void:
 	selected_module_id = module_id
 	if selected_module_id == &"":
 		selected_module_id = LongTermTabModelScript.default_module_id()
-	current_model = LongTermModelScript.build(selected_module_id)
+	current_model = LongTermModelScript.build_from_snapshot(selected_module_id, current_app_snapshot, &"app_shell_snapshot_preview")
 	_refresh_from_model()
 
 
@@ -148,7 +150,10 @@ func _refresh_from_model() -> void:
 	snapshot_label.text = "档案  %s" % _format_snapshot_section(snapshot.get("profile_snapshot", {}))
 	interface_preview_label.text = "联动  奖励 / 事件 / 跳转"
 	var history_preview: Dictionary = current_model.get("history_preview_panel", {})
+	var runtime_panel: Dictionary = current_model.get("profile_runtime_panel", {})
 	history_preview_label.text = _format_history_preview(history_preview)
+	if not runtime_panel.is_empty():
+		history_preview_label.text += "\n%s" % _format_profile_runtime(runtime_panel)
 	next_stage_label.text = "后续内容已收起到详情。"
 	_refresh_card_grid(content_preview.get("cards", []) as Array)
 	_apply_art10_text_refresh()
@@ -261,6 +266,15 @@ func _format_history_preview(history_preview: Dictionary) -> String:
 		return "历史战绩：待接入"
 	return Art10UISkinKitScript.sanitize_player_copy("战绩\n%s" % [
 		_shorten_copy(String(history_preview.get("summary", "")), 16),
+	])
+
+
+func _format_profile_runtime(runtime_panel: Dictionary) -> String:
+	return Art10UISkinKitScript.sanitize_player_copy("Meta %dG / runs %d / ex %d / fail %d" % [
+		int(runtime_panel.get("gold", 0)),
+		int(runtime_panel.get("run_count", 0)),
+		int(runtime_panel.get("extract_count", 0)),
+		int(runtime_panel.get("fail_count", 0)),
 	])
 
 

@@ -54,6 +54,20 @@ static func build(selected_module_id: StringName = &"goals", source: StringName 
 	}
 
 
+static func build_from_snapshot(selected_module_id: StringName, app_snapshot: Dictionary = {}, source: StringName = &"app_shell_snapshot") -> Dictionary:
+	var model: Dictionary = build(selected_module_id, source)
+	var meta_summary: Dictionary = app_snapshot.get("meta_progress_summary", {})
+	var latest_result: Dictionary = app_snapshot.get("last_result_snapshot", app_snapshot.get("result_snapshot", {}))
+	var profile_runtime_panel := _profile_runtime_panel(meta_summary, latest_result)
+	model["meta_progress_summary"] = meta_summary.duplicate(true)
+	model["latest_run_result_summary"] = _latest_run_result_summary(latest_result)
+	model["profile_runtime_panel"] = profile_runtime_panel
+	var panel: Dictionary = model.get("placeholder_panel", {})
+	panel["profile_runtime_panel"] = profile_runtime_panel.duplicate(true)
+	model["placeholder_panel"] = panel
+	return model
+
+
 static func _overview_summary(modules: Array) -> Dictionary:
 	return {
 		"title": "长期系统内容框架",
@@ -112,6 +126,37 @@ static func _history_preview_panel(snapshot: Dictionary) -> Dictionary:
 		"art_placeholder_id": String(first_record.get("art_placeholder_id", "history_record_placeholder")),
 		"future_data_ref": String(first_record.get("future_data_ref", "future.history.snapshot")),
 		"data_source_ref": String(first_record.get("data_source_ref", "preview.settlement.history")),
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+	}
+
+
+static func _profile_runtime_panel(meta_summary: Dictionary = {}, latest_result: Dictionary = {}) -> Dictionary:
+	return {
+		"title": "M2 MetaProgress / History consumer",
+		"gold": int(meta_summary.get("gold", 0)),
+		"run_count": int(meta_summary.get("run_count", 0)),
+		"extract_count": int(meta_summary.get("extract_count", 0)),
+		"fail_count": int(meta_summary.get("fail_count", 0)),
+		"warehouse_items_count": int(meta_summary.get("warehouse_items_count", 0)),
+		"latest_result_id": String(latest_result.get("result_id", "")),
+		"latest_outcome": String(latest_result.get("outcome", "")),
+		"boundary": "LongTerm consumes MetaProgress summary and latest RunResult display-only; it does not write history, rewards, objectives, assets, or save data.",
+		"read_only": true,
+		"display_only": true,
+		"preview": true,
+		"no_persistence": true,
+	}
+
+
+static func _latest_run_result_summary(latest_result: Dictionary = {}) -> Dictionary:
+	var run_result: Dictionary = latest_result.get("run_result", latest_result.get("RunResult", {}))
+	return {
+		"result_id": String(latest_result.get("result_id", "")),
+		"outcome": String(latest_result.get("outcome", "")),
+		"run_id": String(latest_result.get("run_id", run_result.get("run_id", ""))),
+		"settlement_reads_run_result_only": bool(latest_result.get("settlement_reads_run_result_only", run_result.get("settlement_reads_run_result_only", true))),
 		"read_only": true,
 		"display_only": true,
 		"preview": true,

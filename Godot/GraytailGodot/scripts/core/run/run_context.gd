@@ -5,6 +5,8 @@ class_name RunContext
 # IntelMap = player-known intel.
 # UI reads ViewModels/snapshots, never TruthMap directly.
 
+const RunTextCatalogScript := preload("res://scripts/core/run/run_text_catalog.gd")
+
 var run_id: StringName = &""
 var mode: StringName = &""
 var seed_value: int = 0
@@ -60,6 +62,7 @@ var entered_cells: Dictionary = {}
 var interacted_cells: Dictionary = {}
 var run_stats: Dictionary = {}
 var result_snapshot: Dictionary = {}
+var settlement_result: Dictionary = {}
 var failure_salvage: Dictionary = {}
 var tutorial_triggers: Dictionary = {}
 var tutorial_shown: Dictionary = {}
@@ -125,6 +128,7 @@ func reset() -> void:
 	interacted_cells.clear()
 	run_stats.clear()
 	result_snapshot.clear()
+	settlement_result.clear()
 	failure_salvage.clear()
 	tutorial_triggers.clear()
 	tutorial_shown.clear()
@@ -146,6 +150,7 @@ func start_run(config: Dictionary) -> void:
 	run_event_log = RunEventLog.new()
 	transaction_log = RunTransactionLog.new()
 	rule_pipeline = RunRulePipeline.new()
+	_register_run_modifiers(config)
 	content_defs = ContentDefRegistry.new()
 	content_defs.setup_defaults()
 	asset_ledger = RunAssetLedger.new()
@@ -173,7 +178,7 @@ func start_run(config: Dictionary) -> void:
 	extracted = false
 	failed = false
 	outcome = "Running"
-	last_message = "Run started: %s." % String(run_id)
+	last_message = RunTextCatalogScript.run_started(run_id)
 	intel_map.reveal_cell(player_pos, truth_map)
 	truth_map.mark_explored(player_pos)
 	visited_cells[cell_key(player_pos)] = true
@@ -183,6 +188,15 @@ func start_run(config: Dictionary) -> void:
 	if asset_ledger != null:
 		asset_ledger.sync_compat_fields(self)
 	record_event(RunEventLog.EVENT_RUN_STARTED, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"system")), "run_context", {"mode": mode, "position": player_pos})
+
+
+func _register_run_modifiers(config: Dictionary) -> void:
+	if rule_pipeline == null:
+		return
+	var configured_modifiers: Array = config.get("rule_modifiers", [])
+	for modifier in configured_modifiers:
+		if modifier is Dictionary:
+			rule_pipeline.register_modifier(modifier)
 
 
 func start_tutorial_run() -> void:
@@ -233,6 +247,7 @@ func has_blocking_tutorial_popup() -> bool:
 func fail_run(reason: String) -> void:
 	record_event(RunEventLog.EVENT_RUN_FAILED, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"system")), "run_context", {"reason": reason, "position": player_pos})
 	var settlement := RunRuleService.settle_failure(self)
+	settlement_result = settlement.duplicate(true)
 	failure_salvage = settlement.duplicate(true)
 	failed = true
 	run_active = false
@@ -245,6 +260,7 @@ func fail_run(reason: String) -> void:
 func complete_extract() -> void:
 	record_event(RunEventLog.EVENT_EXTRACTION_SUCCESS, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"player")), "command_bus", {"position": player_pos, "exit_id": exit_id})
 	var settlement := RunRuleService.settle_success(self)
+	settlement_result = settlement.duplicate(true)
 	var extracted_pending := int(settlement.get("black_coin_converted", 0))
 	extracted = true
 	run_active = false

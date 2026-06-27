@@ -5,6 +5,9 @@ class_name RoomResolver
 # G6 replaces the G4 text "Event placeholder resolved" with EventService outcomes.
 
 const RunStateMachineScript := preload("res://scripts/core/run/run_state_machine.gd")
+const RunBalanceCatalogScript := preload("res://scripts/core/run/run_balance_catalog.gd")
+const RunEffectApplierScript := preload("res://scripts/core/run/run_effect_applier.gd")
+const RunTextCatalogScript := preload("res://scripts/core/run/run_text_catalog.gd")
 
 var runtime_controller
 
@@ -39,8 +42,10 @@ func enter_room(context: RunContext) -> Dictionary:
 
 	var first_explore := not context.explored_cells.has(context.cell_key(pos))
 	if first_explore:
-		context.explored_cells[context.cell_key(pos)] = true
-		ProtocolService.add_pressure(context, 2)
+		RunEffectApplierScript.apply_effects(context, [
+			RunEffectApplierScript.effect_room_mark_explored(pos),
+			RunEffectApplierScript.effect_protocol_pressure_delta(RunBalanceCatalogScript.EXPLORE_PRESSURE_DELTA, "room_explore"),
+		], runtime_controller)
 
 	if context.current_room_type == &"Mine":
 		var mine_result := _enter_mine(context, pos)
@@ -49,17 +54,17 @@ func enter_room(context: RunContext) -> Dictionary:
 
 	if context.current_room_type == &"Exit":
 		_record_room_event(context, RunEventLog.EVENT_EXTRACTION_FOUND, {"position": pos, "exit_id": context.exit_id})
-		context.last_message = "Exit room ready. Request extraction."
+		context.last_message = RunTextCatalogScript.exit_ready()
 	elif context.current_room_type == &"Monster" and not context.truth_map.is_cleared(pos):
 		context.enemy_state = CombatState.build_enemy_state(context, pos, context.current_adjacent_mines)
-		context.last_message = "Monster present. Fight is available."
+		context.last_message = RunTextCatalogScript.monster_available()
 	elif context.current_room_type == &"Event" and not context.interacted_cells.has(context.cell_key(pos)):
 		context.event_state = EventService.get_event_state(context, pos)
-		context.last_message = "Event available: %s." % String(context.event_state.get("event_type", &"event"))
+		context.last_message = RunTextCatalogScript.event_available(context.event_state.get("event_type", &"event"))
 	elif context.current_room_type == &"Chest" and not context.searched_cells.has(context.cell_key(pos)):
-		context.last_message = "Chest can be searched."
+		context.last_message = RunTextCatalogScript.chest_searchable()
 	else:
-		context.last_message = "Entered %s room. Adjacent mines: %d." % [String(context.current_room_type), context.current_adjacent_mines]
+		context.last_message = RunTextCatalogScript.entered_room(context.current_room_type, context.current_adjacent_mines)
 	_maybe_trigger_tutorial(context, pos)
 	return {"ok": true, "message": context.last_message}
 
@@ -93,10 +98,7 @@ func search_current_room(context: RunContext) -> Dictionary:
 	_record_room_event(context, RunEventLog.EVENT_ROOM_SEARCHED, {"position": pos, "is_chest": is_chest, "reward": reward.duplicate(true)})
 	var reward_items: Array = reward.get("items", [])
 	var floor_items: Array = reward.get("ground_items", [])
-	if context.blocked_reason != "":
-		context.last_message = "Search complete: +%d black coin, %d items, %d on room floor (%s)." % [int(reward.get("gold", 0)), reward_items.size(), floor_items.size(), context.blocked_reason]
-	else:
-		context.last_message = "Search complete: +%d black coin, +%d items." % [int(reward.get("gold", 0)), reward_items.size()]
+	context.last_message = RunTextCatalogScript.search_complete(int(reward.get("gold", 0)), reward_items.size(), floor_items.size(), context.blocked_reason)
 	return {"ok": true, "message": context.last_message}
 
 
@@ -161,7 +163,7 @@ func fight_current_enemy(context: RunContext) -> Dictionary:
 	context.last_reward = result
 	context.blocked_reason = String(result.get("blocked_reason", ""))
 	context.enemy_state = result.duplicate(true)
-	context.last_message = "Monster cleared: damage %d, reward +%d black coin." % [int(result.get("damage", 0)), int(result.get("reward_gold", 0))]
+	context.last_message = RunTextCatalogScript.monster_cleared(int(result.get("damage", 0)), int(result.get("reward_gold", 0)))
 	_record_room_event(context, RunEventLog.EVENT_COMBAT_RESOLVED, {"position": pos, "result": result.duplicate(true)})
 	return result
 
@@ -176,16 +178,16 @@ func _enter_mine(context: RunContext, pos: Vector2i) -> Dictionary:
 	var key := context.cell_key(pos)
 	if not context.entered_cells.has(key):
 		context.entered_cells[key] = true
-		context.truth_map.mark_triggered(pos)
+		RunEffectApplierScript.apply_effects(context, [RunEffectApplierScript.effect_mine_mark_triggered(pos)], runtime_controller)
 		var damage := CombatState.take_mine_hit(context, runtime_controller)
-		ProtocolService.add_pressure(context, 10)
+		RunEffectApplierScript.apply_effects(context, [RunEffectApplierScript.effect_protocol_pressure_delta(RunBalanceCatalogScript.MINE_PRESSURE_DELTA, "mine_triggered")], runtime_controller)
 		context.run_stats["mine_hits"] = int(context.run_stats.get("mine_hits", 0)) + 1
 		context.intel_map.refresh_revealed_cell(pos, context.truth_map)
-		context.last_message = "Mine triggered: -%d HP, +10 pressure." % damage
+		context.last_message = RunTextCatalogScript.mine_triggered(damage, RunBalanceCatalogScript.MINE_PRESSURE_DELTA)
 		if context.mine_hits_are_fatal and not context.failed:
 			_fail_run(context, "fatal_mine")
 	else:
-		context.last_message = "Triggered mine re-entered; no damage."
+		context.last_message = RunTextCatalogScript.mine_reentered()
 	return {"ok": true, "message": context.last_message}
 
 

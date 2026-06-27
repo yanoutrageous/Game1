@@ -2,28 +2,28 @@ extends RefCounted
 class_name CombatState
 
 const RunStateMachineScript := preload("res://scripts/core/run/run_state_machine.gd")
+const RunBalanceCatalogScript := preload("res://scripts/core/run/run_balance_catalog.gd")
+const RunEffectApplierScript := preload("res://scripts/core/run/run_effect_applier.gd")
 
-const BASE_MINE_DAMAGE := 30
-const MIN_MINE_DAMAGE := 5
+const BASE_MINE_DAMAGE := RunBalanceCatalogScript.BASE_MINE_DAMAGE
+const MIN_MINE_DAMAGE := RunBalanceCatalogScript.MIN_MINE_DAMAGE
 
 
 static func apply_damage(context: RunContext, amount: int, reason: String = "", fail_authority = null) -> int:
 	if context == null:
 		return 0
 	var damage: int = maxi(0, amount)
-	context.hp = maxi(0, context.hp - damage)
-	if context.hp <= 0:
-		_fail_run(context, reason if reason != "" else "hp_depleted", fail_authority)
+	RunEffectApplierScript.apply_damage(context, damage, reason if reason != "" else "hp_depleted", fail_authority)
 	return damage
 
 
 static func take_mine_hit(context: RunContext, fail_authority = null) -> int:
 	if context == null:
 		return 0
-	var damage: int = maxi(MIN_MINE_DAMAGE, BASE_MINE_DAMAGE - context.mine_dmg_reduce)
+	var immune := context.mine_immunity > 0
+	var damage: int = RunBalanceCatalogScript.mine_damage(context.mine_dmg_reduce, immune)
 	if context.mine_immunity > 0:
 		context.mine_immunity -= 1
-		damage = 0
 		context.run_stats["mine_immunity_used"] = int(context.run_stats.get("mine_immunity_used", 0)) + 1
 	apply_damage(context, damage, "mine", fail_authority)
 	return damage
@@ -89,7 +89,7 @@ static func build_enemy_state(context: RunContext, pos: Vector2i, adjacent_mines
 static func preview_reward_gold(context: RunContext, pos: Vector2i) -> int:
 	if context == null:
 		return 0
-	return absi((pos.x * 13 + pos.y * 7 + context.seed_value) % 4)
+	return RunBalanceCatalogScript.monster_reward_black_coin(context, pos)
 
 
 static func build_monster_summary(context: RunContext, pos: Vector2i, adjacent_mines: int) -> Dictionary:

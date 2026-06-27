@@ -72,3 +72,24 @@ source_boundaries:
   base_docs_governance: "external governance snapshot; not current repo fact source"
   connection: "external parallel handoff; no content mirror in Git"
   godot_docs: "engineering history / environment evidence; not current docs governance entry"
+m2_lua_ue_effect_first_playable_loop:
+  status: "implementation_in_progress"
+  branch: "godot/m2-lua-ue-effect-first-playable-loop"
+  contract: "docs/20_product/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_CONTRACT.md"
+  validation: "docs/validation/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_VALIDATION.md"
+  handoff: "docs/handoff/HANDOFF_M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP.md"
+  capabilities:
+    deploy_prep_standard_route_bridge: true
+    effect_first_runtime_application: true
+    centralized_balance_content_text_catalogs: true
+    run_result_as_settlement_input: true
+    truth_map_return_eligibility: true
+    limited_search_reward_modifier_execution: true
+    long_term_display_only_meta_consumer: true
+  non_goals:
+    - "demo_7x7"
+    - "full Objective / Reward / Pool"
+    - "full LongTerm"
+    - "full warehouse"
+    - "full Rule Engine"
+    - "Godot metadata/resource import"
