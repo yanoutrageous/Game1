@@ -131,7 +131,7 @@ static func _run_flow_route_preview(config: Dictionary, run_active: bool) -> Dic
 		"schema_kind": &"RunIntent",
 		"start_bridge": {
 			"target_route": &"run",
-			"route_mode": &"demo_run",
+			"route_mode": &"standard_run",
 			"entry_id": &"deploy_prep_start_bridge",
 			"deploy_config_bridge": true,
 			"uses_existing_route": true,
@@ -159,12 +159,12 @@ static func _run_flow_route_preview(config: Dictionary, run_active: bool) -> Dic
 static func _actions(run_active: bool) -> Dictionary:
 	return {
 		"start": {
-			"label": "开始探索 preview",
-			"tooltip": "只刷新 DeployConfig / RunStartConfig preview；完整出发配置启动未接入。当前可玩探索请从主菜单快速开始进入。",
+			"label": "开始探索",
+			"tooltip": "Build DeployConfig / RunStartConfig and route into the existing standard_10x10 playable run; full deploy bootstrap remains future work.",
 			"disabled": run_active,
 			"run_intent": {
 				"target_route": &"run",
-				"route_mode": &"demo_run",
+				"route_mode": &"standard_run",
 				"entry_id": &"deploy_prep_start_bridge",
 				"deploy_config_bridge": true,
 				"uses_existing_route": true,

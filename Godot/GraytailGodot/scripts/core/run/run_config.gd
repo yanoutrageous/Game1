@@ -49,6 +49,21 @@ static func standard_10x10() -> Dictionary:
 		"backpack_capacity": 10,
 		"failure_salvage_capacity": 1,
 		"black_to_gold_rate": 1.0,
+		"rule_modifiers": [
+			RunModifierSpec.make(
+				"m2_standard_search_black_coin_bonus",
+				"standard_10x10_m2_minimum_loop",
+				50,
+				&"reward",
+				&"search_reward",
+				&"add_black_coin",
+				1,
+				{"scope": &"run"},
+				&"stack",
+				[&"m2_minimum_loop"],
+				"M2 limited real modifier: search reward black_coin +1."
+			),
+		],
 	}
 
 

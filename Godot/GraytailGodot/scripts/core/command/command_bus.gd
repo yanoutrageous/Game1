@@ -316,12 +316,15 @@ func teleport_to_explored(pos: Vector2i) -> Dictionary:
 		context.last_message = "Teleport target is outside the map."
 		_emit_state()
 		return _blocked(&"out_of_bounds", "out_of_bounds")
-	var cell: Dictionary = context.intel_map.get_cell_info(pos)
-	if not bool(cell.get("explored", false)) or bool(cell.get("mine", false)) or bool(cell.get("flagged", false)):
-		context.blocked_reason = "not_explored_safe"
-		context.last_message = "Teleport requires an explored safe room."
+	var eligibility: Dictionary = context.truth_map.get_return_eligibility(pos, context.intel_map)
+	if bool(context.intel_map.get_cell_info(pos).get("flagged", false)):
+		eligibility = {"eligible": false, "reason_code": "flagged", "intent": &"inspect_only"}
+	if not bool(eligibility.get("eligible", false)):
+		var reason := String(eligibility.get("reason_code", "not_return_eligible"))
+		context.blocked_reason = reason
+		context.last_message = "Return blocked: %s." % reason
 		_emit_state()
-		return _blocked(&"not_explored_safe", "not_explored_safe")
+		return _blocked(&"return_blocked", reason)
 
 	context.blocked_reason = ""
 	context.player_pos = pos
@@ -329,7 +332,7 @@ func teleport_to_explored(pos: Vector2i) -> Dictionary:
 	room_resolver.enter_room(context)
 	context.last_message = "Teleported to explored room (%d,%d)." % [pos.x, pos.y]
 	_emit_state()
-	return {"ok": true, "status": &"teleported", "position": pos, "actor_id": DEFAULT_ACTOR_ID}
+	return {"ok": true, "status": &"teleported", "position": pos, "actor_id": DEFAULT_ACTOR_ID, "return_eligibility": eligibility}
 
 
 func request_extract() -> Dictionary:

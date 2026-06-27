@@ -34,3 +34,8 @@
 5. G37/G38 不在本索引中被写成 closed 或 main 已完成。
 6. DOC-GOV-002 不运行 Godot，不新增工程验证结论。
 ```
+# M2 Latest Planning Minimum Gameplay & Meta Loop
+
+| stage | evidence | boundary |
+| --- | --- | --- |
+| M2 | `docs/validation/M2_LATEST_PLANNING_MINIMUM_GAMEPLAY_META_LOOP_VALIDATION.md` | minimum gameplay/meta-loop alignment; no full Objective / Reward / Pool, LongTerm, warehouse, Rule Engine, gameplay runtime PASS, or manual playtest PASS unless separately validated |

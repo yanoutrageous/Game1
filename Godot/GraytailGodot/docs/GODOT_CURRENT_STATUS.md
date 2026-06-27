@@ -619,3 +619,16 @@ G10 is now closed. It does not include complete MetaProgress, Deploy persistence
 G18-align is fast-forward merged to `main`. First `main` commit containing G18-align: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`. G18-align-R2 implementation: `55a048e7419a890cc899bdbd7fae4db4431ddacf`. G18-align-R4B closeout: `70d3735a3ed49dec31ce5a6de73cfdf0829885eb`.
 
 Historical G18-align final merge record: parser smoke PASS only. At that time G22 had not started; this status is superseded by the later G22 completion record.
+## M2 Latest Planning Minimum Gameplay & Meta Loop
+
+Current branch: `godot/m2-latest-planning-minimum-gameplay-meta-loop`.
+
+Godot implementation focus:
+
+- DeployPrep start intent uses existing `standard_10x10` run route.
+- RunResult is exposed as settlement input.
+- Fast return uses TruthMap return eligibility.
+- Standard run has a minimum real search reward modifier.
+- LongTerm consumes MetaProgress/latest result display-only.
+
+Not included: `demo_7x7`, full Objective / Reward / Pool, full LongTerm, full warehouse, full Rule Engine, project metadata/resource changes, gameplay runtime PASS, manual playtest PASS.

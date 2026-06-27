@@ -17,6 +17,7 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 	var run_map_snapshot := build_run_map_snapshot(context)
 	var map_result := build_map_result(context)
 	var run_flow_snapshot := build_run_flow_snapshot(context, run_map_snapshot, map_result)
+	var run_result: Dictionary = run_flow_snapshot.get("RunResult", {})
 	var current_room_detail := get_current_room_detail(context)
 	var rule_summary_preview := build_rule_effect_modifier_summary(context, current_room_detail)
 	var content_delivery_preview := build_content_delivery_summary(context, current_room_detail)
@@ -71,7 +72,10 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 		"RunIntent": run_flow_snapshot.get("RunIntent", {}),
 		"SettlementTriggerPreview": run_flow_snapshot.get("SettlementTriggerPreview", {}),
 		"RunOutcomePreview": run_flow_snapshot.get("RunOutcomePreview", {}),
-		"RunResult": run_flow_snapshot.get("RunResult", {}),
+		"RunResult": run_result,
+		"run_result": run_result.duplicate(true),
+		"settlement_input": run_result.duplicate(true),
+		"settlement_reads_run_result_only": true,
 		"map_summary_preview": map_result.get("map_summary_preview", {}),
 		"current_room_detail": current_room_detail,
 		"room_common_rule_summary_preview": _room_common_rule_summary(current_room_detail),

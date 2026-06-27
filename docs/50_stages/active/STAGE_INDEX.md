@@ -25,3 +25,8 @@
 | DOC-GOV-001 | completed / historical | 旧文档治理阶段，当前治理进入 DOC-GOV-002 |
 | G36 and earlier | historical / closed evidence | 作为历史证据保留，不作为当前 active stage |
 | P2 / G20 governance | historical | 旧治理材料保留；当前治理入口在 `docs/00_governance/` |
+# M2 Latest Planning Minimum Gameplay & Meta Loop
+
+| stage | lane | status | evidence | boundary |
+| --- | --- | --- | --- | --- |
+| M2 | program | implementation / validation pending | `docs/20_product/M2_LATEST_PLANNING_MINIMUM_GAMEPLAY_META_LOOP_CONTRACT.md`; `docs/validation/M2_LATEST_PLANNING_MINIMUM_GAMEPLAY_META_LOOP_VALIDATION.md`; `docs/handoff/HANDOFF_M2_LATEST_PLANNING_MINIMUM_GAMEPLAY_META_LOOP.md` | no `demo_7x7`; no full Objective / Reward / Pool; no full LongTerm / warehouse / Rule Engine; metadata dirty remains isolated |

@@ -60,3 +60,10 @@ G38 / G37S / G37 / G36 不声明 gameplay runtime PASS，也不声明 manual pla
 ## 5. 历史入口状态
 
 `docs/DOCS_INDEX.md`、`docs/PROJECT_BASELINE.md`、`docs/ENGINEERING_STATUS.md`、`docs/NEXT_HANDOFF.md` 保留为历史扩展证据，不再作为当前第一入口。
+## M2 Latest Planning Minimum Gameplay & Meta Loop
+
+- Contract: `docs/20_product/M2_LATEST_PLANNING_MINIMUM_GAMEPLAY_META_LOOP_CONTRACT.md`
+- Validation: `docs/validation/M2_LATEST_PLANNING_MINIMUM_GAMEPLAY_META_LOOP_VALIDATION.md`
+- Handoff: `docs/handoff/HANDOFF_M2_LATEST_PLANNING_MINIMUM_GAMEPLAY_META_LOOP.md`
+- Validation script: `tools/validate_m2_latest_planning_minimum_loop.ps1`
+- Headless runner: `tools/godot_m2_minimum_loop_runner.gd`

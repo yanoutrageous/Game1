@@ -532,6 +532,8 @@ func _shell_snapshot() -> Dictionary:
 	var snapshot: Dictionary = {}
 	if run_context != null:
 		snapshot = run_context.get_status_snapshot()
+		if not run_context.result_snapshot.is_empty():
+			snapshot["last_result_snapshot"] = run_context.result_snapshot.duplicate(true)
 	snapshot["meta_progress_summary"] = _meta_progress_summary()
 	snapshot["run_scene_responsibility_budget"] = RunSceneResponsibilityBudgetScript.describe()
 	return snapshot
@@ -561,6 +563,7 @@ func _show_deploy_shell(selected_tab: StringName = &"config") -> void:
 func _show_long_term_shell(entry_id: StringName = &"tasks") -> void:
 	screen_state = SCREEN_LONG_TERM
 	_set_gameplay_visible(false)
+	ui_shell.call("apply_snapshot", _shell_snapshot())
 	ui_shell.call("show_long_term", entry_id)
 	run_overlay_root.visible = false
 	_hide_runtime_popups()

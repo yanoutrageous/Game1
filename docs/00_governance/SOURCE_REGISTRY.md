@@ -137,3 +137,12 @@ README.md
 ```
 
 旧文件不强制重命名；归档候选不得移动、不得删除，不能作为本轮执行授权。
+# M2 Latest Planning Source Registration
+
+| source_id | source_type | external_path | usage |
+| --- | --- | --- | --- |
+| M2-SRC-RUN-MAP | Base Docs external planning original | `D:\AGAME1\Base Docs\局内地图本体与生成规则策划案.md` | M2 map / KnownMap / return eligibility source reference only |
+| M2-SRC-RUN-FLOW | Base Docs external planning original | `D:\AGAME1\Base Docs\局内流程与状态流转规则策划案.md` | M2 run loop / RunResult / settlement handoff source reference only |
+| M2-SRC-ROOM | Base Docs external planning original | `D:\AGAME1\Base Docs\房间类型、标签与遭遇通用规则策划案.md` | M2 room feedback / encounter source reference only |
+| M2-SRC-RULE | Base Docs external planning original | `D:\AGAME1\Base Docs\规则、效果、Modifier 与内容投放通用系统策划案.md` | M2 limited modifier source reference only |
+| M2-SRC-DEPLOY | Base Docs external planning original | `D:\AGAME1\Base Docs\出发探索界面与出勤准备规则策划修正案.md` | M2 DeployPrep five-tab and RunStartConfig source reference only |

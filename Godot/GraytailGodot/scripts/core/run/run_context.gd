@@ -146,6 +146,7 @@ func start_run(config: Dictionary) -> void:
 	run_event_log = RunEventLog.new()
 	transaction_log = RunTransactionLog.new()
 	rule_pipeline = RunRulePipeline.new()
+	_register_run_modifiers(config)
 	content_defs = ContentDefRegistry.new()
 	content_defs.setup_defaults()
 	asset_ledger = RunAssetLedger.new()
@@ -183,6 +184,15 @@ func start_run(config: Dictionary) -> void:
 	if asset_ledger != null:
 		asset_ledger.sync_compat_fields(self)
 	record_event(RunEventLog.EVENT_RUN_STARTED, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"system")), "run_context", {"mode": mode, "position": player_pos})
+
+
+func _register_run_modifiers(config: Dictionary) -> void:
+	if rule_pipeline == null:
+		return
+	var configured_modifiers: Array = config.get("rule_modifiers", [])
+	for modifier in configured_modifiers:
+		if modifier is Dictionary:
+			rule_pipeline.register_modifier(modifier)
 
 
 func start_tutorial_run() -> void:

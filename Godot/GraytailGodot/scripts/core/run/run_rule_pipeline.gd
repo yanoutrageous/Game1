@@ -74,6 +74,7 @@ func register_modifier(spec: Dictionary) -> Dictionary:
 func apply_modifiers(rule_context: Dictionary, default_rule_result: Dictionary) -> Dictionary:
 	var final_result: Dictionary = default_rule_result.duplicate(true)
 	var applied: Array[Dictionary] = []
+	var modifier_result_delta: Dictionary = {}
 	var rule_id: StringName = StringName(rule_context.get("rule_id", &""))
 	var stable_modifiers: Array = modifiers.duplicate(true)
 	stable_modifiers.sort_custom(RunModifierSpec.compare_stable)
@@ -81,8 +82,15 @@ func apply_modifiers(rule_context: Dictionary, default_rule_result: Dictionary) 
 		if StringName(modifier.get("target_rule", &"")) != rule_id:
 			continue
 		applied.append(modifier.duplicate(true))
+		var operation := StringName(modifier.get("operation", &""))
+		if operation in [&"add_black_coin", &"add_int", &"add_numeric"]:
+			var key := String(modifier.get("field", "black_coin"))
+			if operation == &"add_black_coin":
+				key = "black_coin"
+			modifier_result_delta[key] = int(modifier_result_delta.get(key, 0)) + int(modifier.get("value", 0))
 	final_result["rule_request_id"] = String(rule_context.get("rule_request_id", ""))
 	final_result["applied_modifiers"] = applied
+	final_result["modifier_result_delta"] = modifier_result_delta
 	final_result["produced_effects"] = final_result.get("effects", []).duplicate(true)
 	final_result["produced_events"] = final_result.get("produced_events", []).duplicate(true)
 	final_result["produced_transactions"] = final_result.get("produced_transactions", []).duplicate(true)
@@ -91,6 +99,22 @@ func apply_modifiers(rule_context: Dictionary, default_rule_result: Dictionary) 
 	final_result["ModifierStackPreview"] = RunModifierSpec.stack_preview(applied)
 	final_result["read_only_preview_summary"] = true
 	return final_result
+
+
+func numeric_delta_for_rule(rule_id: StringName, field_id: String) -> int:
+	var total := 0
+	var stable_modifiers: Array = modifiers.duplicate(true)
+	stable_modifiers.sort_custom(RunModifierSpec.compare_stable)
+	for modifier in stable_modifiers:
+		if StringName(modifier.get("target_rule", &"")) != rule_id:
+			continue
+		var operation := StringName(modifier.get("operation", &""))
+		var modifier_field := String(modifier.get("field", "black_coin"))
+		if operation == &"add_black_coin" and field_id == "black_coin":
+			total += int(modifier.get("value", 0))
+		elif operation in [&"add_int", &"add_numeric"] and modifier_field == field_id:
+			total += int(modifier.get("value", 0))
+	return total
 
 
 func resolve(context: RunContext, rule_id: StringName, payload: Dictionary, default_rule_result: Dictionary, command: Dictionary = {}) -> Dictionary:

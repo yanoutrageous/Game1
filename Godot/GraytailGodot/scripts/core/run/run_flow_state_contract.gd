@@ -191,11 +191,11 @@ static func build_start_intent_preview(payload: Dictionary = {}) -> Dictionary:
 	return {
 		"intent_id": &"start_existing_route",
 		"target_route": &"run",
-		"fallback_route_mode": StringName(payload.get("route_mode", &"demo_run")),
+		"fallback_route_mode": StringName(payload.get("route_mode", &"standard_run")),
 		"deploy_config_bridge": bool(payload.get("deploy_config_bridge", false)),
 		"supported_now": true,
 		"disabled_reason": &"",
-		"boundary": "Uses existing demo/standard run route; does not create a real deploy-config RunBootstrapper.",
+		"boundary": "Uses existing standard_10x10 route from DeployPrep RunStartConfig; full deploy-config RunBootstrapper remains future work.",
 		"read_only": true,
 		"display_only": true,
 		"preview": true,
@@ -270,10 +270,15 @@ static func build_run_outcome_preview(context: RunContext = null, settlement_tri
 
 
 static func build_run_result_draft(context: RunContext = null, map_result: Dictionary = {}, outcome_preview: Dictionary = {}) -> Dictionary:
+	var lifecycle_state: StringName = _lifecycle_state_for(context)
+	var terminal: bool = lifecycle_state in [LIFECYCLE_EXTRACTED, LIFECYCLE_FAILED, LIFECYCLE_ABANDONED]
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"schema_kind": &"RunResult",
-		"draft_only": true,
+		"draft_only": not terminal,
+		"authoritative_when_terminal": terminal,
+		"settlement_single_input": terminal,
+		"settlement_reads_run_result_only": true,
 		"run_id": _run_id_for(context),
 		"mode": _mode_for(context),
 		"outcome_preview": outcome_preview.duplicate(true),

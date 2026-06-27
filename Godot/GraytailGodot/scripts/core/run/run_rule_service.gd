@@ -71,6 +71,8 @@ static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_min
 		return make_rule_result(false, &"search_reward", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
 	var request: Dictionary = _make_rule_request(context, &"search_reward", "search", {"pos": pos, "adjacent_mines": adjacent_mines, "is_chest": is_chest})
 	var black_coin: int = RunRuleContent.default_search_black_coin(context, pos, adjacent_mines, is_chest)
+	var modifier_black_coin_delta: int = _numeric_modifier_delta(context, &"search_reward", "black_coin")
+	black_coin = maxi(0, black_coin + modifier_black_coin_delta)
 	var item_defs: Array[Dictionary] = RunRuleContent.default_search_items(pos, adjacent_mines, is_chest, black_coin)
 	var effects: Array = [
 		_effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "search", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": black_coin}),
@@ -84,6 +86,7 @@ static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_min
 	var result: Dictionary = make_rule_result(true, &"search_reward", DEFAULT_ACTOR_ID, "", effects, ["Search reward resolved."], {}, log_entry)
 	result["gold"] = black_coin
 	result["black_coin_delta"] = black_coin
+	result["modifier_black_coin_delta"] = modifier_black_coin_delta
 	result["items"] = combined_items
 	result["inventory_items"] = item_result.get("inventory_items", [])
 	result["equipped_items"] = item_result.get("equipped_items", [])
@@ -313,6 +316,12 @@ static func _make_rule_request(context: RunContext, rule_id: StringName, source:
 		"command_id": command_id,
 		"sequence": 0,
 	}
+
+
+static func _numeric_modifier_delta(context: RunContext, rule_id: StringName, field_id: String) -> int:
+	if context == null or context.rule_pipeline == null:
+		return 0
+	return context.rule_pipeline.numeric_delta_for_rule(rule_id, field_id)
 
 
 static func _effect_for_request(request: Dictionary, index: int, effect_type: StringName, source: String, target: Variant, payload: Dictionary) -> Dictionary:
