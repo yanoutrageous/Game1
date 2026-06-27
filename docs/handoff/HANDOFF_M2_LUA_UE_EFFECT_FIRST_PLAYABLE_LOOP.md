@@ -22,6 +22,7 @@
 
 ## Follow-up
 
+- Visible Computer Use smoke was PARTIAL: F1 entered `standard_10x10`, but follow-up key coverage still needs reliable foreground QA.
 - Run full visible standard route smoke when GUI control is available.
 - Continue tuning Lua / UE parity numbers in `RunBalanceCatalog`.
 - Replace placeholder content IDs through a future content-table phase.

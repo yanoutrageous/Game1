@@ -40,6 +40,32 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	_refresh_meta_summary()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	match key_event.keycode:
+		KEY_F1:
+			if _emit_shortcut_index(0):
+				get_viewport().set_input_as_handled()
+		KEY_F2:
+			if _emit_shortcut_index(1):
+				get_viewport().set_input_as_handled()
+
+
+func _emit_shortcut_index(index: int) -> bool:
+	var shortcuts := _array_from(current_model, "shortcuts")
+	if index < 0 or index >= shortcuts.size():
+		return false
+	var raw_shortcut: Variant = shortcuts[index]
+	if not (raw_shortcut is Dictionary):
+		return false
+	_emit_entry((raw_shortcut as Dictionary).duplicate(true))
+	return true
+
+
 func _build_backdrop() -> void:
 	_add_color_rect(self, "MainMenuBackdrop", Rect2(0, 0, 1280, 720), Color(0.018, 0.035, 0.040, 1.0))
 	var visuals := _dictionary_from(current_model.get("art09_visuals", {}))
