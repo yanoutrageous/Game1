@@ -1,15 +1,17 @@
-﻿# Closed Stage Index
+# Closed Stage Index
 
 文档状态：阶段索引
 适用范围：历史阶段证据归属
-最后更新：2026/06/26
+最后更新：2026/06/27
 
-本索引只登记历史证据位置，不删除、不移动、不重写历史 handoff / validation / summary。
+本索引只登记历史证据位置，不删除、不移动、不重写历史 handoff / validation / summary。G37 / G37S / G38 尚未在本索引中登记为 closed。
 
 ## 近期关闭 / 历史阶段
 
 | stage | status | primary evidence |
 | --- | --- | --- |
+| DOC-GOV-001 | completed / historical governance | `docs/00_governance/DOC_GOV_001_EXECUTION_REPORT.md` |
+| G36 | earlier runtime architecture / save profile evidence | `docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`、`docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md` |
 | G35 | closed / historical | `docs/validation/G35_RUNTIME_SAFETY_OWNERSHIP_CLEANUP_VALIDATION.md`、`docs/handoff/HANDOFF_G35_RUNTIME_SAFETY_OWNERSHIP_CLEANUP.md` |
 | G34 | closed / historical | `docs/validation/G34_RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_VALIDATION.md`、`docs/handoff/HANDOFF_G34_RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM.md` |
 | G33 | closed / historical | `docs/validation/G33_ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_VALIDATION.md`、`docs/handoff/HANDOFF_G33_ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE.md` |
@@ -40,4 +42,4 @@
 | --- | --- |
 | G1-G9 | `docs/branch_changes/`、`docs/audits/`、`docs/handoff/`、`docs/lua_audit/`、`Godot/GraytailGodot/docs/` |
 
-早期阶段保留为历史证据；DOC-GOV-001 不迁移、不删除、不改写其正文。
+早期阶段保留为历史证据；DOC-GOV-002 不迁移、不删除、不改写其正文。

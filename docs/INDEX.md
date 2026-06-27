@@ -1,10 +1,10 @@
-﻿# Game1 Docs Index
+# Game1 Docs Index
 
 文档状态：当前索引入口
 适用范围：仓库 `docs` 当前入口、最近阶段、验证与治理跳转
-最后更新：2026/06/26
+最后更新：2026/06/27
 
-本文件是短索引，不复制完整历史正文。旧的 G27A-G35/G36 堆叠说明保留在对应 validation / handoff / contract 原文中。
+本文件是短索引，不复制完整历史正文。历史 validation / handoff / audit / branch change / stage summary 原文保留原位，通过索引读取。
 
 ## 1. 第一入口
 
@@ -22,13 +22,14 @@ docs/00_governance/DUPLICATE_DOC_LEDGER.md
 
 | 阶段 | 状态 | 入口 |
 | --- | --- | --- |
-| G38 | current runtime architecture finalization / release gate pending | `docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md`、`docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md`、`docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md`、`tools/validate_g38_runtime_architecture_finalization.ps1` |
-| G37S | current validation / handoff supplement | `docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md`、`docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md`、`tools/validate_g37_runtime_authority_supplement.ps1` |
+| DOC-GOV-002 | active / docs-only governance | `docs/README.md`、`docs/INDEX.md`、`docs/00_governance/DOC_PLACEMENT_STANDARD.md`、`docs/00_governance/DUPLICATE_DOC_LEDGER.md` |
+| G38 | current runtime architecture finalization / release gate pending | `docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md`、`docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md`、`docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md` |
+| G37S | current validation / handoff supplement | `docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md`、`docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md` |
 | G37 | current engineering evidence / release gate pending | `docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md`、`docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md`、`docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md` |
-| DOC-GOV-001 | active / docs-only governance | `docs/00_governance/DOC_PLACEMENT_STANDARD.md`、`docs/00_governance/DUPLICATE_DOC_LEDGER.md` |
-| G36 | current engineering evidence / release gate pending | `docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md`、`docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`、`docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md` |
+| G36 | earlier runtime architecture / save profile evidence | `docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md`、`docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`、`docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md` |
+| DOC-GOV-001 | completed / historical governance | `docs/00_governance/DOC_GOV_001_EXECUTION_REPORT.md` |
 
-G38 / G37S / G37 不声明 gameplay runtime PASS，也不声明 manual playtest PASS。DOC-GOV-001 不新增玩法规则。
+G38 / G37S / G37 / G36 不声明 gameplay runtime PASS，也不声明 manual playtest PASS。DOC-GOV-002 不新增玩法规则。
 
 ## 3. 近期历史阶段
 
@@ -52,6 +53,9 @@ G38 / G37S / G37 不声明 gameplay runtime PASS，也不声明 manual playtest 
 | `docs/60_interfaces/` | Connection 外部交接登记 |
 | `docs/70_sources/` | Base Docs / UI reference 来源登记 |
 | `docs/90_archive/` | 历史和旧体系说明 |
+| `docs/validation/` | 阶段验证原文 |
+| `docs/handoff/` | 阶段交接原文 |
+| `docs/audits/`、`docs/branch_changes/`、`docs/stage_summaries/` | 历史证据层 |
 
 ## 5. 历史入口状态
 

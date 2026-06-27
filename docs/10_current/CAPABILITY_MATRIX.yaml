@@ -1,121 +1,71 @@
-﻿document_status: current_summary
-last_updated: "2026/06/26"
-scope: "G38 runtime architecture finalization and recent engineering evidence summary"
-
-g38_runtime_architecture_finalization:
-  stage: "G38-R2 Runtime Architecture Consolidation Finalization"
-  status: "branch_implementation_pending_release_gate"
-  contract: "docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md"
-  validation: "docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md"
-  handoff: "docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md"
-  validation_script: "tools/validate_g38_runtime_architecture_finalization.ps1"
-  implemented_foundation_interfaces:
-    - "RunSceneResponsibilityBudget"
-    - "RunSceneInputRouter"
-    - "RunSceneRouteController"
-    - "RunSceneCommandFeedback"
-    - "RunSceneResultController"
-    - "RunSceneDebugBridge debug meta wrapper"
-    - "GameKernel compatibility facade decision"
-  not_complete:
-    - "complete RunFlow rewrite"
-    - "active-run persistence"
-    - "runtime profile switching"
-    - "Objective / Reward / Pool"
-    - "complete settlement / economy"
-    - "complete warehouse"
-    - "complete Rule engine"
-    - "gameplay runtime PASS"
-    - "manual playtest PASS"
-
-g37s_runtime_authority_supplement:
-  stage: "G37S-R2 Runtime Authority Validation / Handoff Supplement"
-  status: "validation_handoff_supplement"
-  validation: "docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md"
-  handoff: "docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md"
-  validation_script: "tools/validate_g37_runtime_authority_supplement.ps1"
-  modifies_runtime_code: false
-  next_recommended_stage: "G38 RunScene Decomposition / App Runtime Boundary Cleanup"
-  deferred:
-    - "RunScene decomposition"
-    - "GameKernel deprecation or real ownership handoff"
-    - "Modifier / Effect real execution migration"
-    - "TruthMap split"
-    - ".gitattributes / LFS / binary asset policy"
-
-g37_runtime_authority:
-  stage: "G37-R2 Runtime Authority / RunFlow Execution Consolidation"
-  status: "branch_implementation_pending_release_gate"
-  contract: "docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md"
-  validation: "docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md"
-  handoff: "docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md"
-  implemented_foundation_interfaces:
-    - "RunRuntimeController"
-    - "RunStateMachine"
-    - "CommandBus lifecycle delegation"
-    - "RunScene orchestration ownership"
-    - "RunFlowStateContract projection-only boundary"
-    - "GameKernel runtime-driver hard disable"
-  not_complete:
-    - "complete RunFlow rewrite"
-    - "active-run persistence"
-    - "SaveManager runtime ownership migration"
-    - "new gameplay systems"
-    - "gameplay runtime PASS"
-    - "manual playtest PASS"
+document_status: current_summary
+last_updated: "2026/06/27"
+scope: "DOC-GOV-002 documentation governance and G38/G37S/G37 current repository evidence summary"
 
 current_docs_governance:
-  stage: "DOC-GOV-001 Document Governance Standardization & Deduplication"
+  stage: "DOC-GOV-002 Docs Entry / Index / README / Historical Layer Governance"
   status: "active_docs_only_governance"
   primary_entries:
     - "docs/README.md"
     - "docs/INDEX.md"
     - "docs/00_governance/DOC_PLACEMENT_STANDARD.md"
     - "docs/00_governance/DUPLICATE_DOC_LEDGER.md"
+    - "docs/00_governance/SOURCE_REGISTRY.md"
   boundaries:
     - "no Base Docs modification"
     - "no Base Docs_Governance modification"
     - "no Connection modification"
+    - "no Base Art modification"
     - "no engineering code modification"
-    - "no Godot scene/resource/metadata/project.godot modification"
+    - "no Godot scene/resource/data/project.godot/uid/translation/import metadata modification"
     - "no gameplay rule creation"
+    - "no stage/commit/push"
 
 latest_engineering_evidence:
-  stage: "G36-R2 Runtime Architecture Consolidation & Save/Profile Foundation"
-  status: "current_engineering_evidence_release_gate_pending"
-  contract: "docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md"
-  validation: "docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md"
-  handoff: "docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md"
-  implemented_foundation_interfaces:
-    - "SaveManager"
-    - "SaveProfileManifest"
-    - "SaveImportStaging"
-    - "SaveProfilePreview"
-    - "RunSceneMetaCommitter"
-    - "RunSceneDebugBridge"
-    - "RunSceneUIBridge"
-    - "RunStartConfig"
-    - "RunStartRouteAdapter"
-    - "DebugGate"
-  not_complete:
-    - "complete SaveManager UI"
-    - "active-run persistence"
-    - "runtime profile switching"
-    - "complete RunBootstrapper"
-    - "new gameplay systems"
-    - "gameplay runtime PASS"
-    - "manual playtest PASS"
+  g38:
+    stage: "G38-R2 Runtime Architecture Consolidation Finalization"
+    status: "current_runtime_architecture_finalization_release_gate_pending"
+    contract: "docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md"
+    validation: "docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md"
+    handoff: "docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md"
+    not_complete:
+      - "complete RunFlow rewrite"
+      - "active-run persistence"
+      - "Objective / Reward / Pool"
+      - "complete settlement / economy"
+      - "complete warehouse"
+      - "complete Rule engine"
+      - "gameplay runtime PASS"
+      - "manual playtest PASS"
+  g37s:
+    stage: "G37S-R2 Runtime Authority Validation / Handoff Supplement"
+    status: "validation_handoff_supplement"
+    validation: "docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md"
+    handoff: "docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md"
+    modifies_runtime_code: false
+  g37:
+    stage: "G37-R2 Runtime Authority / RunFlow Execution Consolidation"
+    status: "current_engineering_evidence_release_gate_pending"
+    contract: "docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md"
+    validation: "docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md"
+    handoff: "docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md"
+    not_complete:
+      - "complete RunFlow rewrite"
+      - "active-run persistence"
+      - "SaveManager runtime ownership migration"
+      - "new gameplay systems"
+      - "gameplay runtime PASS"
+      - "manual playtest PASS"
+  g36:
+    stage: "G36-R2 Runtime Architecture Consolidation & Save/Profile Foundation"
+    status: "earlier_runtime_architecture_save_profile_evidence"
+    contract: "docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md"
+    validation: "docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md"
+    handoff: "docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md"
 
-historical_closed_stages:
-  g27a: "asset-domain / warehouse-view contract foundation"
-  g28a: "item asset content / warehouse-view content contract"
-  g29: "DeployPrep revision preview/display-only content"
-  g30: "LongTerm asset interface preview/display-only content"
-  g31: "run map / room state preview/display-only content"
-  g32: "run flow / state transition preview/display-only content"
-  g33: "room type / tag / encounter common-rule preview content"
-  g34: "rule/effect/modifier/content-delivery preview content"
-  g35: "runtime safety / ownership cleanup"
+historical_governance:
+  doc_gov_001: "completed_historical_governance"
+  p2_g20_governance: "historical_governance_evidence"
 
 source_boundaries:
   base_docs: "external planning originals / user archive; not deduplicated or modified"

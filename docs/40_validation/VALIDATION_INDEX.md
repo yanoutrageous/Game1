@@ -1,8 +1,8 @@
-﻿# Validation Index
+# Validation Index
 
 文档状态：验证索引
 适用范围：仓库验证记录入口
-最后更新：2026/06/26
+最后更新：2026/06/27
 
 验证记录只证明其明确验证范围。Godot headless project-load/parser smoke PASS 不等于 gameplay runtime PASS；manual playtest 未运行时不得写成 PASS。
 
@@ -10,8 +10,11 @@
 
 | stage | evidence | boundary |
 | --- | --- | --- |
-| DOC-GOV-001 | `docs/00_governance/DOC_GOV_001_EXECUTION_REPORT.md` | docs-only governance 自检；不运行 Godot；不提交；不 push |
-| G36 | `docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md` | runtime architecture / save profile foundation；不声明 gameplay runtime PASS / manual playtest PASS |
+| DOC-GOV-002 | `docs/00_governance/DOC_GOV_002_EXECUTION_REPORT.md` | docs-only governance 自检；不运行 Godot；不 stage / commit / push |
+| G38 | `docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md` | runtime architecture finalization；release gate pending；不声明 gameplay runtime PASS / manual playtest PASS |
+| G37S | `docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md` | validation / handoff supplement；不修改 runtime code；不扩大 G37 结论 |
+| G37 | `docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md` | runtime authority / RunFlow execution consolidation；release gate pending；不声明 gameplay runtime PASS / manual playtest PASS |
+| G36 | `docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md` | earlier runtime architecture / save profile foundation evidence |
 | G35 | `docs/validation/G35_RUNTIME_SAFETY_OWNERSHIP_CLEANUP_VALIDATION.md` | runtime safety / ownership cleanup |
 | G34 | `docs/validation/G34_RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_VALIDATION.md` | rule/effect/modifier/content-delivery preview content |
 | G33 | `docs/validation/G33_ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_VALIDATION.md` | room type/tag/encounter common-rule preview content |
@@ -28,5 +31,6 @@
 2. 本索引不复制完整验证正文。
 3. 本索引不扩大验证结论。
 4. gameplay runtime PASS 和 manual playtest PASS 必须有对应实际验证记录，否则不得声明。
-5. DOC-GOV-001 不运行 Godot，不新增工程验证结论。
+5. G37/G38 不在本索引中被写成 closed 或 main 已完成。
+6. DOC-GOV-002 不运行 Godot，不新增工程验证结论。
 ```

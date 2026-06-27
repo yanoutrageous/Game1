@@ -1,8 +1,8 @@
-# DOC-GOV-001 Document Placement Standard
+# DOC-GOV-002 Document Placement Standard
 
 文档状态：当前治理规则
 适用范围：仓库文档入口、阶段完成文档、重复文档状态、外部来源边界
-最后更新：2026/06/26
+最后更新：2026/06/27
 
 本文件只规定仓库文档如何落位、引用和标记状态；不新增玩法规则，不替代产品契约、验证记录、Base Docs 原件或用户确认。
 
@@ -72,7 +72,18 @@ Godot/GraytailGodot/docs = Godot 工程历史 / 环境证据区。
 6. 历史快照只作证据，不作为当前事实源。
 ```
 
-## 6. 禁止项
+## 6. 根目录旧文件处理规则
+
+```text
+1. `docs` 根目录不作为新文档长期堆放区。
+2. 既有根目录旧文件不删除、不移动、不重命名。
+3. 旧文件状态先登记到 `DUPLICATE_DOC_LEDGER.md` 和 `SOURCE_REGISTRY.md`。
+4. `current_entry` 只保留给 `docs/README.md`、`docs/INDEX.md`、`docs/10_current/*` 和 `docs/00_governance/*`。
+5. historical_status / historical_handoff / legacy_design / legacy_ue / legacy_lua / legacy_integration / deprecated_reference / needs_archive_decision 只表示读取状态，不表示删除或移动授权。
+6. 未来归档候选必须另起阶段、另行审计，并明确目标路径、引用修正和回滚方式。
+```
+
+## 7. 禁止项
 
 ```text
 1. 不从 UI 图片反推规则。
@@ -81,4 +92,30 @@ Godot/GraytailGodot/docs = Godot 工程历史 / 环境证据区。
 4. 不把历史文档改写成新规则。
 5. 不新增玩法规则。
 6. 不把未确认内容写成定案。
+```
+
+## 8. 新文档命名与摘要规则
+
+新文档在能判断类型时直接按目录职责落位，并优先使用以下命名模式：
+
+```text
+Gxx_主题_CONTRACT.md
+Gxx_主题_VALIDATION.md
+HANDOFF_Gxx_主题.md
+ARTxx_主题.md
+DOC_GOV_xxx_主题.md
+README.md
+*_INDEX.md
+*_REGISTRY.md
+```
+
+执行要求：
+
+```text
+1. 旧文件不强制重命名。
+2. 当前入口中文优先。
+3. 当前 contract / validation / handoff 至少提供中文摘要。
+4. 历史英文文档不强制全文翻译。
+5. 旧文档如继续被当前索引引用，应至少有中文状态说明。
+6. 归档候选不是删除建议，不得移动、不得删除；只能作为未来治理阶段候选。
 ```
