@@ -94,3 +94,15 @@ Validation: `docs/validation/M3R_ITEM_USABILITY_COMPLETION_VALIDATION.md`.
 Handoff: `docs/handoff/HANDOFF_M3R_ITEM_USABILITY_COMPLETION.md`.
 
 Non-goals: no complete warehouse economy, no complete LongTerm system, no complete Codex research, no complete equipment strengthening, no full Objective / Reward / Pool, no complete Rule Engine, no project metadata/resource import, no gameplay runtime PASS, and no manual long playtest PASS.
+
+## M3H Item Loop Hardening
+
+Status: implementation in progress on `godot/m3h-item-loop-hardening-metadata-hygiene`.
+
+Current M3H scope: M3/M3R boundary hardening for in-run equipment registration, carry-in equipment validity, unused consumable failure salvage, abandon settlement semantics, `safe_yield` / `long_term_gold` naming, and generated metadata hygiene.
+
+Contract: `docs/20_product/M3H_ITEM_LOOP_HARDENING_CONTRACT.md`.
+Validation: `docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md`.
+Handoff: `docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md`.
+
+Non-goals: no complete warehouse economy, no complete equipment strengthening, no full Objective / Reward / Pool, no complete Rule Engine, no Godot metadata/resource import, no gameplay runtime PASS, and no manual playtest PASS.

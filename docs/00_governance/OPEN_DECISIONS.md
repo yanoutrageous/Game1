@@ -2,6 +2,10 @@
 
 M3 minimum item pack / drop loop open decisions:
 
+- `OD-M3H-001`: in-run acquired equipment requires extraction / registration before it can be equipped in a future run.
+- `OD-M3H-002`: abandon routes to the real `settle_abandon` branch, but safe_yield conversion remains pending / undecided and grants no long-term gold.
+- `OD-M3H-003`: historical `gold_coin` compatibility remains internal to the run ledger; player-facing semantics distinguish `safe_yield` from `long_term_gold`.
+- `OD-M3H-004`: Godot generated metadata remains excluded from the M3H implementation commit.
 - `OD-M3-001`: final unique collectible acquisition and duplicate policy remains deferred; M3 blocks ordinary unique drops.
 - `OD-M3-002`: complete warehouse management, sale UI, filtering, and equipment loadout remain deferred to a later audited gate.
 - `OD-M3-003`: abandon settlement safe_yield conversion remains undecided; M3 records it as pending future rule and does not grant long-term gold.

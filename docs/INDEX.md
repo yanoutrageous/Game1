@@ -83,3 +83,11 @@ G38 / G37S / G37 / G36 不声明 gameplay runtime PASS，也不声明 manual pla
 - Handoff: `docs/handoff/HANDOFF_M3R_ITEM_USABILITY_COMPLETION.md`
 - Validation script: `tools/validate_m3r_item_usability_completion.ps1`
 - Headless runner: `tools/godot_m3r_item_usability_completion_runner.gd`
+
+## M3H Item Loop Hardening
+
+- Contract: `docs/20_product/M3H_ITEM_LOOP_HARDENING_CONTRACT.md`
+- Validation: `docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md`
+- Handoff: `docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md`
+- Validation script: `tools/validate_m3h_item_loop_hardening.ps1`
+- Headless runner: `tools/godot_m3h_item_loop_hardening_runner.gd`

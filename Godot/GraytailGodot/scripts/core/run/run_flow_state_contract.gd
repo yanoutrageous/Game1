@@ -97,6 +97,7 @@ static func build_run_state(context: RunContext = null) -> Dictionary:
 		"run_active": _bool_from_context(context, "run_active"),
 		"extracted": _bool_from_context(context, "extracted"),
 		"failed": _bool_from_context(context, "failed"),
+		"abandoned": _bool_from_context(context, "abandoned"),
 		"blocked_reason": _string_from_context(context, "blocked_reason"),
 		"flow_boundary": "read-only public run state; no SaveManager or active-run persistence",
 		"read_only": true,
@@ -220,11 +221,13 @@ static func build_abandon_intent_preview(context: RunContext = null) -> Dictiona
 	var has_active: bool = context != null and bool(context.run_active)
 	return {
 		"intent_id": &"abandon_run_preview",
-		"supported_now": false,
-		"disabled_reason": &"settlement_runtime_not_connected",
+		"supported_now": has_active,
+		"disabled_reason": &"" if has_active else &"no_active_run",
 		"has_active_run": has_active,
 		"strong_confirm_required": has_active,
-		"boundary": "Abandon is strong-confirm intent only; no real abandon settlement or persistence write.",
+		"settlement_branch": &"settle_abandon",
+		"safe_yield_state": &"pending_undecided",
+		"boundary": "Abandon is a strong-confirm intent that routes to the real settle_abandon branch; it is neither success nor normal failure, and safe_yield remains pending/undecided under current rules.",
 		"read_only": true,
 		"display_only": true,
 		"preview": true,
@@ -301,6 +304,8 @@ static func build_run_result_draft(context: RunContext = null, map_result: Dicti
 static func _lifecycle_state_for(context: RunContext = null) -> StringName:
 	if context == null or not bool(context.run_started):
 		return LIFECYCLE_INITIALIZED
+	if bool(context.abandoned):
+		return LIFECYCLE_ABANDONED
 	if bool(context.failed):
 		return LIFECYCLE_FAILED
 	if bool(context.extracted):
@@ -363,6 +368,8 @@ static func _bool_from_context(context: RunContext, field: String) -> bool:
 			return bool(context.extracted)
 		"failed":
 			return bool(context.failed)
+		"abandoned":
+			return bool(context.abandoned)
 		_:
 			return false
 

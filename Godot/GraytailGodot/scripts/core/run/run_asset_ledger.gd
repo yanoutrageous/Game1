@@ -125,10 +125,24 @@ func create_item_instance(item_def: Dictionary, location_state: StringName, room
 		"unique_drop_allowed": bool(item_def.get("unique_drop_allowed", false)),
 		"source": String(item_def.get("source", "")),
 		"source_label": String(item_def.get("source_label", item_def.get("source", ""))),
+		"carry_in_equipment": bool(item_def.get("carry_in_equipment", false)),
+		"carry_in_consumable": bool(item_def.get("carry_in_consumable", false)),
+		"registered_for_run": bool(item_def.get("registered_for_run", false)),
+		"acquired_in_run": bool(item_def.get("acquired_in_run", false)),
+		"equip_allowed_now": bool(item_def.get("equip_allowed_now", false)),
 		"visual_only": bool(item_def.get("visual_only", false)),
 		"location_state": location_state,
 		"room_pos": room_pos,
 	}
+	if bool(normalized.get("carry_in_equipment", false)):
+		normalized["registered_for_run"] = true
+		normalized["equip_allowed_now"] = true
+		normalized["acquired_in_run"] = false
+	if bool(normalized.get("carry_in_consumable", false)):
+		normalized["registered_for_run"] = true
+		normalized["acquired_in_run"] = false
+	if bool(normalized.get("acquired_in_run", false)) and bool(normalized.get("can_equip", false)):
+		normalized["equip_allowed_now"] = false
 	item_instances[instance_id] = normalized
 	if location_state == LOCATION_ROOM_FLOOR:
 		_register_room_floor_item(instance_id, room_pos)
@@ -144,6 +158,9 @@ func add_reward_items(item_defs: Array, preferred_location: StringName, room_pos
 		var item_def: Dictionary = raw_def.duplicate(true)
 		if source != "":
 			item_def["source"] = source
+		if not bool(item_def.get("registered_for_run", false)):
+			item_def["acquired_in_run"] = true
+			item_def["equip_allowed_now"] = false
 		var target_location := StringName(item_def.get("reward_location", preferred_location))
 		if bool(item_def.get("is_unique", false)) and not bool(item_def.get("unique_drop_allowed", false)):
 			blocked_reasons.append("unique_not_allowed_in_ordinary_drop")
@@ -152,8 +169,8 @@ func add_reward_items(item_defs: Array, preferred_location: StringName, room_pos
 			ground_items.append(create_item_instance(item_def, LOCATION_ROOM_FLOOR, room_pos))
 			continue
 		if target_location == LOCATION_EQUIPPED and bool(item_def.get("can_equip", false)):
-			equipped_items.append(create_item_instance(item_def, LOCATION_EQUIPPED, room_pos))
-			continue
+			target_location = LOCATION_INVENTORY
+			blocked_reasons.append("equipment_requires_extraction_registration")
 		var capacity_check := can_fit_item(item_def)
 		if bool(capacity_check.get("ok", false)):
 			inventory_items.append(create_item_instance(item_def, LOCATION_INVENTORY, room_pos))
@@ -232,6 +249,10 @@ func equip_inventory_item(instance_id: String) -> Dictionary:
 		return {"ok": false, "status": &"not_in_inventory", "reason": "item_not_in_inventory"}
 	if not bool(item.get("can_equip", false)):
 		return {"ok": false, "status": &"blocked_type", "reason": "item_not_equippable"}
+	if not bool(item.get("registered_for_run", false)) and not bool(item.get("carry_in_equipment", false)):
+		return {"ok": false, "status": &"blocked_registration", "reason": "equipment_requires_extraction_registration", "item": item.duplicate(true), "capacity": get_capacity_snapshot()}
+	if not bool(item.get("equip_allowed_now", false)):
+		return {"ok": false, "status": &"blocked_registration", "reason": "equipment_requires_extraction_registration", "item": item.duplicate(true), "capacity": get_capacity_snapshot()}
 	item["location_state"] = LOCATION_EQUIPPED
 	item_instances[instance_id] = item
 	settlement_log.append({"type": &"equip", "instance_id": instance_id})
@@ -339,8 +360,10 @@ func settle_success() -> Dictionary:
 		"run_black_coin_converted": black_before,
 		"safe_yield": safe_before,
 		"safe_yield_retained": safe_before,
+		"safe_yield_state": &"retained",
 		"gold_coin_gained": long_term_gold_gained,
 		"long_term_gold_gained": long_term_gold_gained,
+		"currency_semantics": _currency_semantics(),
 		"currency_delta": {"black_coin": -black_before, "gold_coin": converted_gold, "safe_yield": safe_before, "long_term_gold": long_term_gold_gained},
 		"extracted_items": extracted_items,
 		"warehouse_items": extracted_items,
@@ -404,9 +427,11 @@ func settle_failure() -> Dictionary:
 		"pending_gold_lost": black_before,
 		"safe_yield": safe_before,
 		"safe_yield_retained": safe_before,
+		"safe_yield_state": &"retained",
 		"gold_coin_retained": safe_before,
 		"gold_coin_gained": safe_before,
 		"long_term_gold_gained": safe_before,
+		"currency_semantics": _currency_semantics(),
 		"salvage_capacity": failure_salvage_capacity,
 		"settlement_pool": candidates,
 		"salvaged_items": salvaged_items,
@@ -453,6 +478,7 @@ func settle_abandon(reason: String = "abandoned") -> Dictionary:
 		"safe_yield_state": &"pending_undecided",
 		"gold_coin_gained": 0,
 		"long_term_gold_gained": 0,
+		"currency_semantics": _currency_semantics(),
 		"lost_items": lost_items,
 		"lost_item_count": lost_items.size() + room_floor_lost_items.size(),
 		"lost_item_value": _sum_item_value(lost_items) + _sum_item_value(room_floor_lost_items),
@@ -521,6 +547,11 @@ func _starting_item_def(raw_item: Dictionary, source: String) -> Dictionary:
 	result["source"] = String(result.get("source", source))
 	result["source_label"] = String(result.get("source_label", source))
 	result["reward_location"] = &"inventory"
+	result["registered_for_run"] = true
+	result["acquired_in_run"] = false
+	result["equip_allowed_now"] = source == "carry_in_equipment"
+	result["carry_in_equipment"] = source == "carry_in_equipment"
+	result["carry_in_consumable"] = source == "carry_in_consumable"
 	return result
 
 
@@ -608,6 +639,7 @@ func get_public_snapshot(current_pos: Vector2i) -> Dictionary:
 	return {
 		"currencies": currency_balances.duplicate(true),
 		"currency_definitions": currency_definitions.duplicate(true),
+		"currency_semantics": _currency_semantics(),
 		"black_coin": get_currency(CURRENCY_BLACK),
 		"gold_coin": get_currency(CURRENCY_GOLD),
 		"run_black_coin": get_currency(CURRENCY_BLACK),
@@ -635,6 +667,15 @@ func sync_compat_fields(context: RunContext) -> void:
 	var compat_items := get_inventory_and_equipped_items(true)
 	context.parts = compat_items.size()
 	context.carried_items = compat_items
+
+
+func _currency_semantics() -> Dictionary:
+	return {
+		"black_coin": "run black coin; converted or lost by settlement outcome",
+		"safe_yield": "in-run safe yield; internally compatible with gold_coin",
+		"gold_coin": "compatibility alias for safe_yield inside the run ledger",
+		"long_term_gold": "meta progression currency written after settlement",
+	}
 
 
 func room_key(pos: Vector2i) -> String:

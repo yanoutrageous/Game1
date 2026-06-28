@@ -1,5 +1,13 @@
 # DOC-GOV-002 Source Registry
 
+# M3H Source Registration
+
+| source_id | source_type | external_path | usage |
+| --- | --- | --- | --- |
+| M3H-SRC-M3-CONTRACT | repository product contract | `docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md` | M3 item/drop/settlement boundary reference |
+| M3H-SRC-M3R-CONTRACT | repository product contract | `docs/20_product/M3R_ITEM_USABILITY_COMPLETION_CONTRACT.md` | M3R warehouse-lite/loadout/carry-in boundary reference |
+| M3H-SRC-DOC-PLACEMENT | repository governance rule | `docs/00_governance/DOC_PLACEMENT_STANDARD.md` | Document placement rule source; no external source body copied |
+
 # M3R Source Registration
 
 | source_id | source_type | external_path | usage |

@@ -141,3 +141,24 @@ m3r_item_usability_completion:
     - "Godot metadata/resource import"
     - "gameplay runtime PASS"
     - "manual long playtest PASS"
+m3h_item_loop_hardening:
+  status: "implementation_in_progress"
+  branch: "godot/m3h-item-loop-hardening-metadata-hygiene"
+  contract: "docs/20_product/M3H_ITEM_LOOP_HARDENING_CONTRACT.md"
+  validation: "docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md"
+  handoff: "docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md"
+  capabilities:
+    in_run_equipment_registration_block: true
+    carry_in_equipment_current_run_active: true
+    unused_consumable_failure_salvage_candidate: true
+    abandon_settle_abandon_branch: true
+    safe_yield_long_term_gold_semantics: true
+    generated_metadata_excluded: true
+  non_goals:
+    - "complete warehouse economy"
+    - "complete equipment strengthening"
+    - "full Objective / Reward / Pool"
+    - "complete Rule Engine"
+    - "Godot metadata/resource import"
+    - "gameplay runtime PASS"
+    - "manual playtest PASS"

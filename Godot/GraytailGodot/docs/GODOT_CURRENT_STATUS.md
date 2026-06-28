@@ -9,6 +9,16 @@ M3 is the current implementation slice on branch `godot/m3-minimum-item-drop-loo
 - Current validation: G35/G36/G37/G38/M2/M3 static validators PASS; G37S supplement is blocked only by its G37/G38 diff allowlist under active M3 changes; Godot project-load/parser, G37 command sequence, M2 runner, and M3 runner PASS with shutdown resource-leak warnings.
 - Not implemented: `demo_7x7`, complete warehouse, complete equipment/loadout, Objective/Reward/Pool, complete Rule Engine, gameplay runtime, manual playtest.
 
+# M3H Item Loop Hardening Status
+
+M3H is the current M3/M3R hardening slice on branch `godot/m3h-item-loop-hardening-metadata-hygiene`.
+
+- Scope: in-run equipment registration block, carry-in equipment validity, unused consumable failure salvage candidate, abandon `settle_abandon` semantics, `safe_yield` / `long_term_gold` naming, and generated metadata exclusion.
+- Product contract: `docs/20_product/M3H_ITEM_LOOP_HARDENING_CONTRACT.md`.
+- Godot scope: `RunAssetLedger`, `RunFlowStateContract`, M3H runner and validation script.
+- Validation target: M3/M3R/M3H validators and runners plus Godot headless project-load/parser smoke.
+- Not implemented: complete warehouse economy, complete equipment strengthening, Objective/Reward/Pool, complete Rule Engine, gameplay runtime, manual playtest.
+
 # G38 Runtime Architecture Consolidation Finalization Status
 
 G38-R2 is the current implementation slice on branch `godot/g38-runtime-architecture-finalization`.

@@ -51,3 +51,9 @@
 | stage | evidence | boundary |
 | --- | --- | --- |
 | M3R | `docs/validation/M3R_ITEM_USABILITY_COMPLETION_VALIDATION.md` | M3 supplement for Warehouse Lite, Codex Lite, Equipment Loadout, Consumable Carry-In, and minimal profile/permit/protocol/talent hooks; no complete warehouse, complete LongTerm, complete Codex research, complete equipment strengthening, gameplay runtime PASS, or manual long playtest PASS |
+
+# M3H Item Loop Hardening
+
+| stage | evidence | boundary |
+| --- | --- | --- |
+| M3H | `docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md` | M3/M3R hardening for in-run equipment registration, abandon settlement semantics, currency naming, and metadata hygiene; no complete warehouse/equipment/Objective/Reward/Pool/Rule Engine, gameplay runtime PASS, or manual playtest PASS |
