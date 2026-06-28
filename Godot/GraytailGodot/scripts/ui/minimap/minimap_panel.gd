@@ -23,8 +23,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	layout_profile = profile.duplicate(true)
 	var is_low := bool(layout_profile.get("is_low_resolution", false))
 	var is_high := bool(layout_profile.get("is_high_resolution", false))
-	marker_size = Vector2(26, 26) if is_low else (Vector2(32, 32) if is_high else Vector2(28, 28))
-	marker_font_size = 12 if is_low else (15 if is_high else 13)
+	marker_size = Vector2(30, 30) if is_low else (Vector2(42, 42) if is_high else Vector2(36, 36))
+	marker_font_size = 13 if is_low else (17 if is_high else 15)
+	_apply_child_layout()
 	_rebuild_grid()
 	queue_redraw()
 
@@ -37,7 +38,7 @@ func clear() -> void:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	tooltip_text = "点击打开区域扫描器回顾"
+	tooltip_text = "点击打开大地图"
 	var placeholder := get_node_or_null("PlaceholderLabel") as Label
 	if placeholder != null:
 		placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -57,6 +58,7 @@ func _rebuild_grid() -> void:
 	var placeholder := get_node_or_null("PlaceholderLabel") as Label
 	if grid == null:
 		return
+	_apply_child_layout()
 	grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	for child in grid.get_children():
@@ -65,7 +67,7 @@ func _rebuild_grid() -> void:
 	if view_model == null:
 		if placeholder != null:
 			placeholder.add_theme_font_size_override("font_size", marker_font_size)
-			placeholder.text = "区域扫描图：暂无情报"
+			placeholder.text = "扫描图：暂无公开情报"
 		return
 
 	grid.columns = max(1, view_model.width)
@@ -75,7 +77,7 @@ func _rebuild_grid() -> void:
 	if placeholder != null:
 		placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		placeholder.add_theme_font_size_override("font_size", marker_font_size)
-		placeholder.text = "扫描图：点击放大"
+		placeholder.text = "扫描图：点击展开"
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) -> void:
@@ -104,3 +106,23 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		label.text = String(marker.get("label", "?"))
 		label.tooltip_text = String(marker.get("tooltip", ContentDB.get_placeholder_label(asset_id) if asset_id != &"" else "未知房间"))
 		grid.add_child(label)
+
+
+func _apply_child_layout() -> void:
+	var grid := get_node_or_null("Grid") as GridContainer
+	var placeholder := get_node_or_null("PlaceholderLabel") as Label
+	var panel_size := size
+	if panel_size.x <= 0.0:
+		panel_size.x = 220.0
+	if panel_size.y <= 0.0:
+		panel_size.y = 220.0
+	if grid != null:
+		grid.offset_left = 8.0
+		grid.offset_top = 8.0
+		grid.offset_right = panel_size.x - 8.0
+		grid.offset_bottom = panel_size.y - 32.0
+	if placeholder != null:
+		placeholder.offset_left = 8.0
+		placeholder.offset_top = panel_size.y - 30.0
+		placeholder.offset_right = panel_size.x - 8.0
+		placeholder.offset_bottom = panel_size.y - 4.0

@@ -73,7 +73,8 @@ func build() -> void:
 	name = "RunSurface"
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	z_index = 5
+	z_as_relative = false
+	z_index = 180
 
 	left_backdrop = _add_panel("RunScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.025, 0.045, 0.05, 0.78), PresentationTheme.color_for_key(&"mini.normal"))
@@ -87,6 +88,8 @@ func build() -> void:
 	event_mask = _add_panel("RunEventMask", Color(0.026, 0.042, 0.046, 0.90), PresentationTheme.color_for_key(&"ui.accent"))
 	reward_mask = _add_panel("RunRewardMask", Color(0.036, 0.052, 0.046, 0.90), PresentationTheme.color_for_key(&"mini.chest"))
 	player_tag_mask = _add_color_layer("RunPlayerTagMask", Color(0.004, 0.010, 0.012, 0.96))
+	player_tag_mask.z_as_relative = false
+	player_tag_mask.z_index = 420
 	room_hint_softener = _add_color_layer("RunRoomHintSoftener", Color(0.0, 0.0, 0.0, 0.34))
 	scanner_glow_layer = _add_color_layer("RunScannerGlow", Color(0.58, 0.93, 0.76, 0.08))
 	room_glow_layer = _add_color_layer("RunRoomFocusGlow", Color(0.58, 0.93, 0.76, 0.07))
@@ -108,6 +111,8 @@ func build() -> void:
 	room_body_label = _add_label("RunRoomBody", "等待探索快照。", 13, PresentationTheme.text_color())
 	objective_label = _add_label("RunObjectiveLine", "目标：等待输入。", 13, PresentationTheme.color_for_key(&"ui.warning"))
 	player_tag_label = _add_label("RunPlayerTag", "回收员", 12, PresentationTheme.color_for_key(&"ui.accent"))
+	player_tag_label.z_as_relative = false
+	player_tag_label.z_index = 421
 
 	encounter_title_label = _add_label("RunEncounterTitle", "遭遇提示", 18, PresentationTheme.color_for_key(&"ui.warning"))
 	encounter_body_label = _add_label("RunEncounterBody", "等待遭遇公开信息。", 13, PresentationTheme.text_color())
@@ -203,67 +208,73 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		hud.visible = false
 	var width: float = float(supported_size.x)
 	var height: float = float(supported_size.y)
-	var margin: float = 16.0 if is_low else 20.0
-	var left_width: float = 328.0 if is_low else (420.0 if is_high else 380.0)
-	var right_width: float = 268.0 if is_low else (330.0 if is_high else 296.0)
-	var bottom_height: float = 54.0 if is_low else 58.0
-	var pocket_height: float = 108.0 if is_low else 116.0
+	var margin: float = 14.0 if is_low else 18.0
+	var left_width: float = 292.0 if is_low else (360.0 if is_high else 320.0)
+	var right_width: float = 272.0 if is_low else (332.0 if is_high else 300.0)
+	var status_height: float = 204.0 if is_low else (244.0 if is_high else 226.0)
+	var encounter_height: float = 144.0 if is_low else (184.0 if is_high else 164.0)
+	var bottom_height: float = 58.0 if is_low else 64.0
+	var pocket_height: float = 90.0 if is_low else 98.0
 	var center_left: float = left_width + margin
-	var center_right: float = width - right_width - margin
+	var center_right: float = width - margin
 	var center_width: float = max(360.0, center_right - center_left)
-	var right_left: float = width - right_width
+	var right_left: float = width - right_width - margin
 	var right_content_left: float = right_left + margin
 	var right_content_width: float = right_width - margin * 2.0
-	var scanner_map_height: float = min(240.0 if is_low else 276.0, height * 0.34)
+	var scanner_map_height: float = min(276.0 if is_low else (340.0 if is_high else 306.0), height * 0.45)
 	var scanner_legend_top: float = margin + 84.0 + scanner_map_height
-	var encounter_top: float = margin + (316.0 if is_low else 340.0)
-	var encounter_bottom: float = height - 132.0
-	var encounter_height: float = max(206.0 if is_low else 236.0, encounter_bottom - encounter_top)
+	var encounter_top: float = margin + status_height + 10.0
+	var room_info_width: float = min(center_width - right_width - margin, 560.0 if is_low else (680.0 if is_high else 620.0))
+	room_info_width = max(360.0, room_info_width)
+	var room_info_height: float = 84.0 if is_low else 94.0
+	var bottom_top: float = height - bottom_height - margin
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
-	_set_rect(right_backdrop, Rect2(right_left, 0, right_width, height))
-	_set_rect(center_backdrop, Rect2(center_left, margin, center_width, 98.0 if is_low else 112.0))
-	_set_rect(encounter_backdrop, Rect2(right_left, encounter_top - 8.0, right_width, encounter_height + 16.0))
-	_set_rect(bottom_backdrop, Rect2(center_left, height - bottom_height - margin, center_width, bottom_height))
+	_set_rect(right_backdrop, Rect2(right_left, margin, right_width, status_height))
+	_set_rect(center_backdrop, Rect2(center_left, margin, room_info_width, room_info_height))
+	_set_rect(encounter_backdrop, Rect2(right_left, encounter_top, right_width, encounter_height))
+	_set_rect(bottom_backdrop, Rect2(center_left, bottom_top, center_width, bottom_height))
 	_set_rect(resource_backdrop, Rect2(margin, height - pocket_height - margin, left_width - margin * 2.0, pocket_height))
 	_set_rect(scanner_text_mask, Rect2(margin, margin + 28.0, left_width - margin * 2.0, 52.0))
-	_set_rect(room_text_mask, Rect2(center_left + 12.0, margin + 10.0, center_width - 24.0, 80.0 if is_low else 92.0))
-	_set_rect(threat_mask, Rect2(right_content_left, margin + 36.0, right_content_width, 90.0))
-	_set_rect(event_mask, Rect2(right_content_left, margin + 138.0, right_content_width, 62.0))
-	_set_rect(reward_mask, Rect2(right_content_left, margin + 210.0, right_content_width, 70.0))
-	_set_rect(player_tag_mask, Rect2(center_left + center_width * 0.5 - 48.0, height * 0.575, 96.0, 26.0))
-	_set_rect(room_hint_softener, Rect2(center_left + center_width * 0.18, margin + 118.0, center_width * 0.64, 72.0))
+	_set_rect(room_text_mask, Rect2(center_left + 12.0, margin + 10.0, room_info_width - 24.0, room_info_height - 14.0))
+	_set_rect(threat_mask, Rect2(right_content_left, margin + 34.0, right_content_width, 64.0 if is_low else 74.0))
+	_set_rect(event_mask, Rect2(right_content_left, margin + (108.0 if is_low else 122.0), right_content_width, 44.0 if is_low else 48.0))
+	_set_rect(reward_mask, Rect2(right_content_left, margin + (158.0 if is_low else 176.0), right_content_width, 38.0 if is_low else 46.0))
+	var player_label_x: float = center_left + center_width * 0.34 - 60.0
+	var player_label_y: float = height * 0.585
+	_set_rect(player_tag_mask, Rect2(player_label_x, player_label_y, 120.0, 46.0))
+	_set_rect(room_hint_softener, Rect2(center_left + center_width * 0.27, margin + 106.0, center_width * 0.46, 56.0))
 	_set_rect(scanner_glow_layer, Rect2(margin, margin + 78.0, left_width - margin * 2.0, scanner_map_height))
-	_set_rect(room_glow_layer, Rect2(center_left + 12.0, margin + 12.0, center_width - 24.0, 82.0 if is_low else 94.0))
-	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 34.0, right_content_width, 264.0))
-	_set_rect(bottom_key_glow_layer, Rect2(center_left + 8.0, height - bottom_height - margin + 8.0, center_width - 16.0, bottom_height - 16.0))
+	_set_rect(room_glow_layer, Rect2(center_left + 12.0, margin + 12.0, room_info_width - 24.0, room_info_height - 16.0))
+	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 30.0, right_content_width, status_height - 44.0))
+	_set_rect(bottom_key_glow_layer, Rect2(center_left + 8.0, bottom_top + 8.0, center_width - 16.0, bottom_height - 16.0))
 
 	_set_rect(scanner_title_label, Rect2(margin, margin, left_width - margin * 2.0, 28))
 	_set_rect(scanner_summary_label, Rect2(margin + 10.0, margin + 34.0, left_width - margin * 2.0 - 20.0, 34))
 	_set_rect(minimap_panel, Rect2(margin, margin + 78.0, left_width - margin * 2.0, scanner_map_height))
-	_set_rect(scanner_legend_label, Rect2(margin, scanner_legend_top, left_width - margin * 2.0, 42))
-	_set_rect(scanner_detail_label, Rect2(margin, scanner_legend_top + 46.0, left_width - margin * 2.0, 42))
+	_set_rect(scanner_legend_label, Rect2(margin, scanner_legend_top, left_width - margin * 2.0, 38))
+	_set_rect(scanner_detail_label, Rect2(margin, scanner_legend_top + 40.0, left_width - margin * 2.0, 38))
 
-	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 10.0, center_width - 36.0, 30))
-	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 42.0, center_width - 36.0, 38))
-	_set_rect(objective_label, Rect2(center_left + 18.0, margin + 78.0, center_width - 36.0, 24))
-	_set_rect(player_tag_label, Rect2(center_left + center_width * 0.5 - 32.0, height * 0.575 + 4.0, 64.0, 18.0))
-	_set_rect(encounter_title_label, Rect2(right_content_left, encounter_top + 6.0, right_content_width, 24))
-	_set_rect(encounter_body_label, Rect2(right_content_left, encounter_top + 34.0, right_content_width, 64.0 if is_low else 72.0))
-	_set_rect(encounter_options_box, Rect2(right_content_left, encounter_top + (104.0 if is_low else 114.0), right_content_width, max(42.0, encounter_height - (158.0 if is_low else 176.0))))
-	_set_rect(encounter_result_label, Rect2(right_content_left, encounter_top + encounter_height - (44.0 if is_low else 52.0), right_content_width, 38.0 if is_low else 44.0))
+	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 10.0, room_info_width - 36.0, 28))
+	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 40.0, room_info_width - 36.0, 30))
+	_set_rect(objective_label, Rect2(center_left + 18.0, margin + 68.0, room_info_width - 36.0, 22))
+	_set_rect(player_tag_label, Rect2(player_label_x + 18.0, player_label_y + 22.0, 84.0, 18.0))
+	_set_rect(encounter_title_label, Rect2(right_content_left, encounter_top + 8.0, right_content_width, 24))
+	_set_rect(encounter_body_label, Rect2(right_content_left, encounter_top + 34.0, right_content_width, 42.0 if is_low else 52.0))
+	_set_rect(encounter_options_box, Rect2(right_content_left, encounter_top + (82.0 if is_low else 92.0), right_content_width, max(34.0, encounter_height - (124.0 if is_low else 138.0))))
+	_set_rect(encounter_result_label, Rect2(right_content_left, encounter_top + encounter_height - (38.0 if is_low else 42.0), right_content_width, 34.0 if is_low else 38.0))
 	_set_rect(resource_label, Rect2(margin * 1.5, height - pocket_height + 2.0, left_width - margin * 3.0, pocket_height - 28.0))
 
 	_set_rect(right_title_label, Rect2(right_content_left, margin, right_content_width, 30))
-	_set_rect(right_body_label, Rect2(right_content_left + 10.0, margin + 48.0, right_content_width - 20.0, 66))
-	_set_rect(event_label, Rect2(right_content_left + 10.0, margin + 148.0, right_content_width - 20.0, 40))
-	_set_rect(reward_label, Rect2(right_content_left + 10.0, margin + 220.0, right_content_width - 20.0, 46))
-	_set_rect(command_feedback_label, Rect2(right_content_left, height - 122.0, right_content_width, 66))
+	_set_rect(right_body_label, Rect2(right_content_left + 10.0, margin + 42.0, right_content_width - 20.0, 54.0 if is_low else 64.0))
+	_set_rect(event_label, Rect2(right_content_left + 10.0, margin + (114.0 if is_low else 128.0), right_content_width - 20.0, 36.0))
+	_set_rect(reward_label, Rect2(right_content_left + 10.0, margin + (164.0 if is_low else 182.0), right_content_width - 20.0, 36.0))
+	_set_rect(command_feedback_label, Rect2(right_content_left, encounter_top + encounter_height + 10.0, right_content_width, 54.0))
 	_set_rect(layout_label, Rect2(right_content_left, height - 46.0, right_content_width, 24))
 	layout_label.visible = false
 
-	_set_rect(action_hint_label, Rect2(center_left + 18.0, height - bottom_height - margin - 26.0, center_width - 36.0, 22))
-	_set_rect(action_bar, Rect2(center_left + 12.0, height - bottom_height - margin + 10.0, center_width - 24.0, bottom_height - 18.0))
+	_set_rect(action_hint_label, Rect2(center_left + 18.0, bottom_top - 25.0, center_width - 36.0, 22))
+	_set_rect(action_bar, Rect2(center_left + 12.0, bottom_top + 10.0, center_width - 24.0, bottom_height - 18.0))
 	_set_rect(feedback_slot, Rect2(0, 0, width, height))
 	_set_rect(overlay_slot, Rect2(0, 0, width, height))
 	_set_rect(modal_slot, Rect2(0, 0, width, height))
@@ -363,7 +374,7 @@ func _add_label(node_name: String, text: String, font_size: int, color: Color) -
 func _add_action_button(action_id: StringName, label: String, callback: Callable) -> void:
 	var button := Art10UISkinKitScript.make_bottom_key_button(label, _key_label_for_action(action_id))
 	button.name = "RunAction_%s" % String(action_id)
-	button.custom_minimum_size = Vector2(76, 32)
+	button.custom_minimum_size = Vector2(92, 34)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
@@ -423,7 +434,7 @@ func _apply_actions(actions: Variant) -> void:
 		var description := String(action_data.get("description", ""))
 		var disabled_reason := String(action_data.get("disabled_reason", ""))
 		button.disabled = not enabled
-		button.tooltip_text = description if enabled or disabled_reason == "" else "%s\n禁用：%s" % [description, disabled_reason]
+		button.tooltip_text = description if enabled or disabled_reason == "" else "%s\n暂不可用：%s" % [description, disabled_reason]
 		_apply_action_button_style(button, StringName(action_data.get("tone", &"secondary")), enabled)
 		_apply_key_prompt_icon(button, action_id)
 

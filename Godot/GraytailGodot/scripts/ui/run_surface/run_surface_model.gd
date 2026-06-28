@@ -447,7 +447,7 @@ static func _action_tone(action_id: StringName) -> StringName:
 
 static func event_modal_text(event_state: Dictionary) -> String:
 	if event_state.is_empty():
-		return "事件通道：暂无待处理事件。\n提示：事件判定仍由现有 run_scene / CommandBus 路径处理。"
+		return "事件：当前没有待处理事件。"
 	var event_type := String(event_state.get("event_type", event_state.get("type", "event")))
 	var options: Array = _array_variant(event_state.get("options", []))
 	var lines: Array[String] = []
@@ -461,7 +461,7 @@ static func event_modal_text(event_state: Dictionary) -> String:
 		var option_label := String(option.get("label", option.get("id", "option")))
 		var enabled_text := "可执行" if bool(option.get("enabled", true)) else "暂不可用"
 		lines.append("- %s [%s]" % [option_label, enabled_text])
-	lines.append("边界：这里只展示事件表层，规则分支不在 UI 中判定。")
+	lines.append("提示：选择后会回到当前探索节奏。")
 	return _join_lines(lines)
 
 
@@ -469,7 +469,7 @@ static func loot_modal_text(reward: Dictionary, last_message: String = "") -> St
 	var reward_text := RunUIViewModel.reward_text(reward, last_message)
 	if reward_text == "":
 		reward_text = "暂无新的回收记录。"
-	return "回收记录\n%s\n\n提示：拾取、丢弃和容量检查仍通过现有背包/地面物品路径。" % reward_text
+	return "回收记录\n%s\n\n提示：容量不足时物品会留在当前房间。" % reward_text
 
 
 static func extract_modal_text(snapshot: Dictionary) -> String:
@@ -583,21 +583,13 @@ static func _monster_summary_text(monster_summary: Dictionary) -> String:
 
 static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary, room_detail: Dictionary = {}, return_eligibility: Dictionary = {}, run_flow_snapshot: Dictionary = {}, rule_effect_summary: Dictionary = {}, content_delivery_summary: Dictionary = {}) -> Array[String]:
 	var lifecycle: Dictionary = _dict_variant(run_flow_snapshot.get("RunLifecycle", {}))
-	var settlement_trigger: Dictionary = _dict_variant(run_flow_snapshot.get("SettlementTriggerPreview", {}))
+	var state_label := _run_state_label(String(lifecycle.get("state", snapshot.get("phase", "running"))))
+	var return_label := "可回传" if bool(return_eligibility.get("eligible", false)) else "不可回传"
 	return [
-		"协议 %s | 封锁压力 %s/100 | %s" % [snapshot.get("protocol_level", 5), snapshot.get("pressure", 0), String(lifecycle.get("state", "running"))],
+		"协议 %s | 压力 %s/100 | %s" % [snapshot.get("protocol_level", 5), snapshot.get("pressure", 0), state_label],
 		"房间 %s | 周边雷险 %s | %s" % [_room_label(room_type), adjacent_mines, _danger_label(room_type, adjacent_mines)],
-		"%s" % _search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
-		"回传 %s / %s | 状态 %s" % [
-			"可用" if bool(return_eligibility.get("eligible", false)) else "不可用",
-			String(return_eligibility.get("reason_code", "unknown")),
-			String(room_detail.get("known_state", "unknown")),
-		],
-		"规则 %s | 池 %s | 结算 %s" % [
-			_rule_label(rule_effect_summary),
-			_content_pool_label(content_delivery_summary),
-			String(settlement_trigger.get("trigger_state", "not_ready")),
-		],
+		_search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
+		"地图 %s | %s" % [_known_state_label(String(room_detail.get("known_state", "unknown"))), return_label],
 	]
 
 
@@ -671,43 +663,43 @@ static func _scanner_markers(minimap_view_model: MiniMapViewModel) -> Array:
 
 static func _map_domain_summary(run_map_snapshot: Dictionary) -> String:
 	if run_map_snapshot.is_empty():
-		return "RunMapSnapshot: unavailable"
+		return "地图：暂无公开摘要。"
 	var run_map: Dictionary = _dict_variant(run_map_snapshot.get("RunMap", {}))
 	var summary: Dictionary = _dict_variant(run_map_snapshot.get("map_summary_preview", {}))
-	return "RunMapSnapshot: %sx%s | %s | display_only" % [
+	return "地图：%sx%s | %s" % [
 		run_map.get("width", 0),
 		run_map.get("height", 0),
-		String(summary.get("map_kind", "classic_rect_minesweeper")),
+		_map_kind_label(String(summary.get("map_kind", "classic_rect_minesweeper"))),
 	]
 
 
 static func _run_flow_summary(run_flow_snapshot: Dictionary) -> String:
 	if run_flow_snapshot.is_empty():
-		return "RunFlowSnapshot: unavailable"
+		return "流程：探索中。"
 	var lifecycle: Dictionary = _dict_variant(run_flow_snapshot.get("RunLifecycle", {}))
 	var state: Dictionary = _dict_variant(run_flow_snapshot.get("RunState", {}))
-	return "RunFlowSnapshot: %s | phase=%s | display_only" % [
-		String(lifecycle.get("state", "initialized")),
-		String(state.get("phase", "idle")),
+	return "流程：%s | %s" % [
+		_run_state_label(String(lifecycle.get("state", "initialized"))),
+		_phase_label(String(state.get("phase", "idle"))),
 	]
 
 
 static func _room_state_detail(room_detail: Dictionary) -> String:
 	if room_detail.is_empty():
-		return "RoomState: unavailable"
-	return "RoomState: %s / %s / %s" % [
-		String(room_detail.get("room_type_key", "unknown")),
-		String(room_detail.get("known_state", "unknown")),
-		String(room_detail.get("visibility", "unknown")),
+		return "房间：暂无公开状态。"
+	return "房间：%s / %s / %s" % [
+		_room_label(StringName(room_detail.get("room_type_key", "Unknown"))),
+		_known_state_label(String(room_detail.get("known_state", "unknown"))),
+		_visibility_label(String(room_detail.get("visibility", "unknown"))),
 	]
 
 
 static func _room_common_rule_summary(room_detail: Dictionary) -> String:
 	if room_detail.is_empty():
-		return "RoomCommonRule: unavailable"
+		return "房间规则：暂无公开摘要。"
 	var tags: Array = _array_variant(room_detail.get("RoomTag", []))
-	return "RoomCommonRule: type=%s | tags=%s | policy=%s | display_only" % [
-		String(room_detail.get("room_type_key", "unknown")),
+	return "房间规则：%s | 标签 %s | %s" % [
+		_room_label(StringName(room_detail.get("room_type_key", "Unknown"))),
 		tags.size(),
 		_room_policy_compact(room_detail),
 	]
@@ -715,22 +707,17 @@ static func _room_common_rule_summary(room_detail: Dictionary) -> String:
 
 static func _encounter_preview_summary(room_detail: Dictionary) -> String:
 	if room_detail.is_empty():
-		return "EncounterPreview: unavailable"
-	return "EncounterPreview: %s | slot=%s | display_only" % [
+		return "遭遇：暂无公开摘要。"
+	return "遭遇：%s | 主要交互位" % [
 		_encounter_preview_compact(room_detail),
-		String(_dict_variant(room_detail.get("RoomContentSlot", {})).get("slot_id", "primary_encounter")),
 	]
 
 
 static func _room_resolution_summary(room_detail: Dictionary) -> String:
 	if room_detail.is_empty():
-		return "RoomResolutionPreview: unavailable"
+		return "结算预览：暂无。"
 	var resolution: Dictionary = _dict_variant(room_detail.get("RoomResolutionPreview", {}))
-	return "RoomResolutionPreview: %s | loot_runtime=%s | objective_runtime=%s" % [
-		String(resolution.get("schema_kind", "RoomResolutionPreview")),
-		str(false),
-		str(false),
-	]
+	return "结算预览：%s" % _settlement_state_label(String(resolution.get("schema_kind", "pending")))
 
 
 static func _room_policy_compact(room_detail: Dictionary) -> String:
@@ -756,28 +743,22 @@ static func _encounter_preview_compact(room_detail: Dictionary) -> String:
 
 static func _return_eligibility_summary(return_eligibility: Dictionary) -> String:
 	if return_eligibility.is_empty():
-		return "return_eligibility: unavailable"
-	return "return_eligibility: %s / %s" % [
-		str(bool(return_eligibility.get("eligible", false))),
-		String(return_eligibility.get("reason_code", "unknown")),
-	]
+		return "回传：暂无公开目标。"
+	return "回传：%s" % ("可用" if bool(return_eligibility.get("eligible", false)) else RunUIViewModel.reason_label(String(return_eligibility.get("reason_code", ""))))
 
 
 static func _settlement_trigger_summary(run_flow_snapshot: Dictionary) -> String:
 	if run_flow_snapshot.is_empty():
-		return "SettlementTriggerPreview: unavailable"
+		return "结算：尚未触发。"
 	var trigger: Dictionary = _dict_variant(run_flow_snapshot.get("SettlementTriggerPreview", {}))
-	return "SettlementTriggerPreview: %s / writes_warehouse=%s" % [
-		String(trigger.get("trigger_state", "not_ready")),
-		str(bool(trigger.get("writes_warehouse", false))),
-	]
+	return "结算：%s" % _settlement_state_label(String(trigger.get("trigger_state", "not_ready")))
 
 
 static func _rule_effect_modifier_summary(rule_effect_summary: Dictionary, content_delivery_summary: Dictionary) -> String:
 	if rule_effect_summary.is_empty() and content_delivery_summary.is_empty():
-		return "Rule/Effect/Modifier: unavailable"
-	return "Rule/Effect/Modifier: %s | effects=%s | modifiers=%s | pool=%s | display_only" % [
-		_rule_label(rule_effect_summary),
+		return "规则：暂无公开影响。"
+	return "规则：%s | 效果 %s | 修正 %s | %s" % [
+		_rule_player_label(rule_effect_summary),
 		_effect_count(rule_effect_summary),
 		_modifier_count(rule_effect_summary),
 		_content_pool_label(content_delivery_summary),
@@ -804,8 +785,98 @@ static func _modifier_count(rule_effect_summary: Dictionary) -> int:
 static func _content_pool_label(content_delivery_summary: Dictionary) -> String:
 	var pool: Dictionary = _dict_variant(content_delivery_summary.get("ContentPool", {}))
 	if pool.is_empty():
-		return "pool.preview"
-	return "%s entries=%s" % [String(pool.get("pool_id", "pool.preview")), int(pool.get("entry_count", _array_variant(pool.get("entries", [])).size()))]
+		return "投放待定"
+	return "投放 %s 项" % int(pool.get("entry_count", _array_variant(pool.get("entries", [])).size()))
+
+
+static func _run_state_label(state: String) -> String:
+	match state:
+		"running":
+			return "探索中"
+		"initialized":
+			return "已就绪"
+		"completed":
+			return "已完成"
+		"failed":
+			return "已失败"
+		"abandoned":
+			return "已中止"
+		_:
+			return "探索中"
+
+
+static func _phase_label(phase: String) -> String:
+	match phase:
+		"idle":
+			return "待行动"
+		"confirm_extract":
+			return "确认撤离"
+		"combat":
+			return "清理威胁"
+		"event":
+			return "处理事件"
+		_:
+			return "行动中"
+
+
+static func _known_state_label(state: String) -> String:
+	match state:
+		"known", "revealed", "visible":
+			return "已公开"
+		"explored", "visited":
+			return "已探索"
+		"cleared":
+			return "已清理"
+		"hidden", "unknown":
+			return "未知"
+		_:
+			return "待确认"
+
+
+static func _visibility_label(state: String) -> String:
+	match state:
+		"visible", "revealed":
+			return "可见"
+		"hidden":
+			return "隐藏"
+		"scanned":
+			return "已扫描"
+		_:
+			return "待确认"
+
+
+static func _map_kind_label(kind: String) -> String:
+	match kind:
+		"classic_rect_minesweeper":
+			return "矩形雷险区"
+		_:
+			return "探索地图"
+
+
+static func _settlement_state_label(state: String) -> String:
+	match state:
+		"ready":
+			return "可结算"
+		"not_ready", "pending":
+			return "未触发"
+		"success":
+			return "已结算"
+		_:
+			return "待确认"
+
+
+static func _rule_player_label(rule_effect_summary: Dictionary) -> String:
+	var definition: Dictionary = _dict_variant(rule_effect_summary.get("RuleDefinition", {}))
+	if definition.is_empty():
+		return "当前房间"
+	var display_key := String(definition.get("display_key", definition.get("rule_id", "")))
+	if display_key.find("search") >= 0:
+		return "搜索"
+	if display_key.find("combat") >= 0 or display_key.find("monster") >= 0:
+		return "清理威胁"
+	if display_key.find("loot") >= 0 or display_key.find("reward") >= 0:
+		return "回收"
+	return "当前房间"
 
 
 static func _interact_hint(room_type: StringName, search_data: Dictionary, has_event: bool) -> String:

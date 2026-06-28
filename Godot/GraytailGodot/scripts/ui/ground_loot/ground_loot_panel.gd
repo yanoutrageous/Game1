@@ -101,7 +101,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		for item: Dictionary in ground_items:
 			_add_item_row(item)
 	if tooltip_label != null:
-		tooltip_label.text = "选择物品可查看说明；拾取会检查背包容量，容量不足时显示 blocked_capacity。"
+		tooltip_label.text = "选择物品查看效果；拾取会检查背包容量，容量不足时物品保留在地面。"
 		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
 
 
@@ -176,7 +176,7 @@ func _add_item_row(item: Dictionary) -> void:
 	pickup_button.name = "GroundLootPickupButton"
 	pickup_button.focus_mode = Control.FOCUS_NONE
 	pickup_button.text = "拾取"
-	pickup_button.tooltip_text = "拾取到背包；容量不足时会显示 blocked_capacity 并保留在地面。"
+	pickup_button.tooltip_text = "拾取到背包；容量不足时保留在地面。"
 	Art10UISkinKitScript.apply_button(pickup_button, &"primary", 13)
 	var instance_id: String = String(item.get("instance_id", ""))
 	pickup_button.pressed.connect(func() -> void: pickup_item_requested.emit(instance_id))

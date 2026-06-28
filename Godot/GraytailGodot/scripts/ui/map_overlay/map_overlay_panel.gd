@@ -1,6 +1,8 @@
 extends Control
 class_name MapOverlayPanel
 
+const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+
 signal cell_action_requested(marker: Dictionary)
 
 var view_model: MiniMapViewModel
@@ -26,7 +28,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var actual_size: Vector2i = layout_profile.get("actual_viewport_size", Vector2i(int(supported_size.x), int(supported_size.y)))
 	var width: float = float(max(1, actual_size.x))
 	var height: float = float(max(1, actual_size.y))
-	marker_size = Vector2(38, 38) if is_low else (Vector2(48, 48) if is_high else Vector2(42, 42))
+	marker_size = Vector2(44, 44) if is_low else (Vector2(58, 58) if is_high else Vector2(50, 50))
 	title_font_size = 18 if is_low else (22 if is_high else 20)
 	footer_font_size = 12 if is_low else (15 if is_high else 13)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -36,8 +38,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	offset_bottom = 0.0
 	var panel := get_node_or_null("Panel") as Control
 	if panel != null:
-		var panel_width: float = min(width - 48.0, 560.0 if is_low else (640.0 if is_high else 600.0))
-		var panel_height: float = min(height - 48.0, 560.0 if is_low else (680.0 if is_high else 600.0))
+		var panel_width: float = min(width - 48.0, 760.0 if is_low else (940.0 if is_high else 840.0))
+		var panel_height: float = min(height - 48.0, 620.0 if is_low else (780.0 if is_high else 680.0))
 		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		_set_rect(panel, Rect2((width - panel_width) * 0.5, (height - panel_height) * 0.5, panel_width, panel_height))
 	_rebuild_grid()
@@ -87,7 +89,7 @@ func _rebuild_grid() -> void:
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		title.add_theme_font_size_override("font_size", title_font_size)
-		title.text = "区域扫描器回顾"
+		title.text = "展开地图 / 区域扫描"
 	if detail != null:
 		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
 		detail.add_theme_font_size_override("font_size", 13 if footer_font_size <= 13 else 14)
@@ -98,7 +100,7 @@ func _rebuild_grid() -> void:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		footer.add_theme_font_size_override("font_size", footer_font_size)
 		footer.add_theme_constant_override("line_spacing", 2)
-		footer.text = "左键选中格子：未知格只标记风险，已探索安全格才尝试回传；Esc 关闭大地图。"
+		footer.text = "左键选中格子；未知格可标记风险，已探索安全格可尝试回传；Esc 关闭。"
 
 	if footer != null and selected_feedback_text != "":
 		footer.text += "\n" + selected_feedback_text
@@ -154,16 +156,15 @@ func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var accepted: bool = bool(result.get("accepted", result.get("ok", false)))
 	var reason: String = String(result.get("reason_code", result.get("reason", "")))
-	var command_id: String = String(result.get("command_id", "map_action"))
 	if accepted:
-		selected_feedback_text = "扫描记录：已选择 (%d,%d)，命令 %s 已接受。" % [pos.x, pos.y, command_id]
+		selected_feedback_text = "地图记录：已选择 (%d,%d)，操作已确认。" % [pos.x, pos.y]
 	else:
-		selected_feedback_text = "扫描记录：已选择 (%d,%d)，命令 %s 被阻止：%s" % [pos.x, pos.y, command_id, reason]
+		selected_feedback_text = "地图记录：已选择 (%d,%d)，%s" % [pos.x, pos.y, RunUIViewModel.reason_label(reason)]
 	_rebuild_grid()
 
 
 func show_open_feedback(source: StringName) -> void:
-	selected_feedback_text = "扫描记录：从 %s 打开。先选格子查看原因，再执行标记或回传。" % String(source)
+	selected_feedback_text = "扫描记录：已打开大地图。先选格子查看状态，再决定标记或回传。"
 	_rebuild_grid()
 
 
@@ -194,5 +195,5 @@ func _ensure_detail_label() -> Label:
 
 func _selected_detail_text() -> String:
 	if selected_marker.is_empty():
-		return "选中格详情：点击任意格子查看状态、允许动作、阻止原因。"
+		return "选中格详情：点击任意格子查看公开状态、风险标记和可用行动。"
 	return String(selected_marker.get("detail_text", "选中格详情不可用。"))

@@ -56,7 +56,10 @@ func build() -> void:
 
 	summary_label = Label.new()
 	summary_label.name = "InventorySummary"
-	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	summary_label.clip_text = true
+	summary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	summary_label.custom_minimum_size = Vector2(0, 44)
 	summary_label.add_theme_font_size_override("font_size", 13)
 	summary_label.add_theme_constant_override("line_spacing", 2)
 	root.add_child(summary_label)
@@ -68,7 +71,9 @@ func build() -> void:
 
 	tooltip_label = Label.new()
 	tooltip_label.name = "InventoryItemTooltip"
-	tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tooltip_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	tooltip_label.clip_text = true
+	tooltip_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tooltip_label.custom_minimum_size = Vector2(500, 120)
 	tooltip_label.add_theme_font_size_override("font_size", 13)
 	tooltip_label.add_theme_constant_override("line_spacing", 2)
@@ -76,7 +81,9 @@ func build() -> void:
 
 	last_result_label = Label.new()
 	last_result_label.name = "InventoryCommandResult"
-	last_result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	last_result_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+	last_result_label.clip_text = true
+	last_result_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.add_child(last_result_label)
 
 
@@ -85,15 +92,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		build()
 	var inventory_items: Array = _array_from(snapshot, "inventory_items")
 	var equipped_items: Array = _array_from(snapshot, "equipped_items")
-	summary_label.text = "背包容量：%s/%s | 待结算黑币：%s | 安全金币：%s | 背包物品：%s | 已装备：%s" % [
-		snapshot.get("backpack_used", 0),
-		snapshot.get("backpack_capacity", 0),
-		snapshot.get("black_coin", 0),
-		snapshot.get("gold_coin", 0),
-		inventory_items.size(),
-		equipped_items.size(),
-	]
-	summary_label.text = "Backpack %s/%s | run_black_coin %s | safe_yield %s | long_term_gold preview %s | items %s | equipped %s" % [
+	summary_label.text = "背包 %s/%s  黑币 %s  安全收益 %s\n长期金币 %s  物品 %s  装备 %s" % [
 		snapshot.get("backpack_used", 0),
 		snapshot.get("backpack_capacity", 0),
 		snapshot.get("run_black_coin", snapshot.get("black_coin", 0)),
@@ -107,9 +106,12 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		child.queue_free()
 	if inventory_items.is_empty() and equipped_items.is_empty():
 		var empty_label := Label.new()
-		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		empty_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
+		empty_label.clip_text = true
+		empty_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		empty_label.custom_minimum_size = Vector2(0, 72)
 		empty_label.add_theme_constant_override("line_spacing", 2)
-		empty_label.text = "背包为空。搜索、物资箱、异常体或事件奖励可能获得物品；容量不足时物品会留在当前房间地面。"
+		empty_label.text = "背包为空。\n搜索、物资箱或事件可能获得物品。\n空间不足时物品会留在地面。"
 		Art10UISkinKitScript.apply_label(empty_label, 13, PresentationTheme.text_color())
 		item_list.add_child(empty_label)
 	else:
@@ -118,7 +120,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		for item: Dictionary in equipped_items:
 			_add_item_row(item, false)
 	if tooltip_label != null:
-		tooltip_label.text = "选择物品可查看说明；背包物品可丢弃到当前房间地面，已装备物品暂不可从此面板丢弃。"
+		tooltip_label.text = "选择物品查看效果。\n背包物品可丢弃；消耗品可直接使用。"
 		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
 
 
@@ -201,10 +203,10 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	var use_button := Button.new()
 	use_button.name = "InventoryUseButton"
 	use_button.focus_mode = Control.FOCUS_NONE
-	use_button.text = "Use"
+	use_button.text = "使用"
 	var can_use := can_drop and bool(item.get("can_consume", false))
 	use_button.disabled = not can_use
-	use_button.tooltip_text = "Use consumable through CommandBus." if can_use else "Only consumables in backpack can be used."
+	use_button.tooltip_text = "使用当前消耗品。" if can_use else "只有背包中的消耗品可使用。"
 	Art10UISkinKitScript.apply_button(use_button, &"primary" if can_use else &"secondary", 13)
 	use_button.pressed.connect(func() -> void: use_item_requested.emit(instance_id))
 	row.add_child(use_button)
