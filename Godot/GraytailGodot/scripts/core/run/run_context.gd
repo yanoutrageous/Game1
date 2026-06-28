@@ -71,6 +71,14 @@ var tutorial_popup: Dictionary = {}
 var run_instance_sequence: int = 0
 var debug_used: bool = false
 var debug_commands: Array[Dictionary] = []
+var run_start_config: Dictionary = {}
+var profile_fields: Dictionary = {}
+var profile_level: int = 1
+var profile_exp: int = 0
+var permit_level: int = 1
+var protocol_difficulty: int = 5
+var talent_interface: Array = []
+var active_talent_effects: Array = []
 
 
 func reset() -> void:
@@ -137,6 +145,14 @@ func reset() -> void:
 	tutorial_popup.clear()
 	debug_used = false
 	debug_commands.clear()
+	run_start_config.clear()
+	profile_fields.clear()
+	profile_level = 1
+	profile_exp = 0
+	permit_level = 1
+	protocol_difficulty = 5
+	talent_interface.clear()
+	active_talent_effects.clear()
 
 
 func start_run(config: Dictionary) -> void:
@@ -155,6 +171,14 @@ func start_run(config: Dictionary) -> void:
 	_register_run_modifiers(config)
 	content_defs = ContentDefRegistry.new()
 	content_defs.setup_defaults()
+	run_start_config = config.get("run_start_config", {}).duplicate(true) if config.get("run_start_config", {}) is Dictionary else {}
+	profile_fields = config.get("profile_fields", {}).duplicate(true) if config.get("profile_fields", {}) is Dictionary else {}
+	profile_level = int(config.get("profile_level", profile_fields.get("profile_level", 1)))
+	profile_exp = int(config.get("profile_exp", profile_fields.get("profile_exp", 0)))
+	permit_level = int(config.get("permit_level", profile_fields.get("permit_level", 1)))
+	protocol_difficulty = int(config.get("protocol_difficulty", profile_fields.get("protocol_difficulty", 5)))
+	talent_interface = config.get("talent_interface", []).duplicate(true) if config.get("talent_interface", []) is Array else []
+	active_talent_effects = config.get("active_talent_effects", []).duplicate(true) if config.get("active_talent_effects", []) is Array else []
 	asset_ledger = RunAssetLedger.new()
 	asset_ledger.setup(config)
 	query_facade = RunQueryFacade.new()
@@ -170,6 +194,9 @@ func start_run(config: Dictionary) -> void:
 	max_hp = int(config.get("max_hp", 100))
 	hp = max_hp
 	power = int(config.get("power", 5))
+	mine_immunity = int(config.get("mine_immunity", 0))
+	mine_dmg_reduce = int(config.get("mine_dmg_reduce", 0))
+	protocol_level = int(config.get("protocol_level", config.get("protocol_difficulty", 5)))
 	mine_hits_are_fatal = bool(config.get("mine_hits_are_fatal", false))
 	move_requires_revealed = bool(config.get("move_requires_revealed", false))
 	reveal_on_move = bool(config.get("reveal_on_move", true))

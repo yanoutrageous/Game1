@@ -48,6 +48,12 @@ func default_meta_progress() -> Dictionary:
 		"schema_version": 1,
 		"gold": 0,
 		"warehouse_items": [],
+		"profile_level": 1,
+		"profile_exp": 0,
+		"permit_level": 1,
+		"protocol_difficulty": 5,
+		"talent_points": 0,
+		"talent_flags": [],
 		"run_count": 0,
 		"extract_count": 0,
 		"fail_count": 0,
@@ -116,6 +122,12 @@ func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Diction
 	result["schema_version"] = int(data.get("schema_version", result.get("schema_version", 1)))
 	result["gold"] = maxi(0, int(data.get("gold", result.get("gold", 0))))
 	result["warehouse_items"] = _array_from(data.get("warehouse_items", result.get("warehouse_items", [])))
+	result["profile_level"] = maxi(1, int(data.get("profile_level", result.get("profile_level", 1))))
+	result["profile_exp"] = maxi(0, int(data.get("profile_exp", result.get("profile_exp", 0))))
+	result["permit_level"] = maxi(1, int(data.get("permit_level", result.get("permit_level", 1))))
+	result["protocol_difficulty"] = maxi(1, int(data.get("protocol_difficulty", result.get("protocol_difficulty", 5))))
+	result["talent_points"] = maxi(0, int(data.get("talent_points", result.get("talent_points", 0))))
+	result["talent_flags"] = _array_from(data.get("talent_flags", result.get("talent_flags", [])))
 	result["run_count"] = maxi(0, int(data.get("run_count", result.get("run_count", 0))))
 	result["extract_count"] = maxi(0, int(data.get("extract_count", result.get("extract_count", 0))))
 	result["fail_count"] = maxi(0, int(data.get("fail_count", result.get("fail_count", 0))))

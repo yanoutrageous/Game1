@@ -328,7 +328,7 @@ func _on_start_preview_pressed() -> void:
 	var config := _config()
 	current_model["run_start_config"] = DeployConfigScript.build_run_start_config(config)
 	current_model["preview_lines"] = DeployConfigScript.build_preview_lines(config)
-	current_model["action_message"] = "开始探索已刷新；当前仍复用标准探索入口。"
+	current_model["action_message"] = "开始探索：已使用 M3R 仓库携带配置，并复用标准探索入口。"
 	_refresh_view()
 	var start_action := _action("start")
 	var run_payload := _dictionary_from(start_action.get("run_intent", {}))

@@ -36,6 +36,7 @@ func setup(config: Dictionary) -> void:
 	failure_salvage_capacity = int(config.get("failure_salvage_capacity", 1))
 	black_to_gold_rate = float(config.get("black_to_gold_rate", 1.0))
 	_define_default_currencies()
+	_add_starting_loadout(config)
 
 
 func reset() -> void:
@@ -490,6 +491,76 @@ func add_status_effect(effect: Dictionary) -> void:
 		"can_persist_later": bool(effect.get("can_persist_later", false)),
 	}
 	status_effects.append(normalized)
+
+
+func _add_starting_loadout(config: Dictionary) -> void:
+	var selected_equipment: Array = config.get("selected_equipment_items", [])
+	var selected_consumables: Array = config.get("selected_consumable_items", [])
+	for raw_item in selected_equipment:
+		if raw_item is Dictionary:
+			var item := create_item_instance(_starting_item_def(raw_item, "carry_in_equipment"), LOCATION_EQUIPPED)
+			_apply_equipment_passive(item)
+			settlement_log.append({"type": &"carry_in_equipment", "instance_id": item.get("instance_id", ""), "item_id": item.get("item_id", "")})
+	for raw_item in selected_consumables:
+		if raw_item is Dictionary:
+			var item_def := _starting_item_def(raw_item, "carry_in_consumable")
+			var capacity_check := can_fit_item(item_def)
+			if bool(capacity_check.get("ok", false)):
+				var item := create_item_instance(item_def, LOCATION_INVENTORY)
+				settlement_log.append({"type": &"carry_in_consumable", "instance_id": item.get("instance_id", ""), "item_id": item.get("item_id", "")})
+			else:
+				settlement_log.append({"type": &"carry_in_blocked", "item_id": item_def.get("item_id", ""), "reason": capacity_check.get("reason", "blocked_capacity")})
+	var talent_effects: Array = config.get("active_talent_effects", [])
+	for effect in talent_effects:
+		if effect is Dictionary:
+			_apply_talent_passive(effect)
+
+
+func _starting_item_def(raw_item: Dictionary, source: String) -> Dictionary:
+	var result := raw_item.duplicate(true)
+	result["source"] = String(result.get("source", source))
+	result["source_label"] = String(result.get("source_label", source))
+	result["reward_location"] = &"inventory"
+	return result
+
+
+func _apply_equipment_passive(item: Dictionary) -> void:
+	var effect_kind := String(item.get("effect_kind", ""))
+	var amount := int(item.get("effect_amount", 0))
+	if effect_kind == "" or amount == 0:
+		return
+	match effect_kind:
+		"backpack_capacity":
+			backpack_capacity += amount
+		"salvage_capacity":
+			failure_salvage_capacity += amount
+	add_status_effect({
+		"effect_id": "equipment_%s_%s" % [String(item.get("item_id", "item")), effect_kind],
+		"duration_type": &"current_run",
+		"remaining": 1,
+		"tags": ["equipment", effect_kind],
+	})
+	settlement_log.append({"type": &"equipment_passive", "item_id": item.get("item_id", ""), "effect_kind": effect_kind, "effect_amount": amount})
+
+
+func _apply_talent_passive(effect: Dictionary) -> void:
+	var effect_kind := String(effect.get("effect_kind", ""))
+	var amount := int(effect.get("effect_amount", 0))
+	match effect_kind:
+		"backpack_capacity":
+			backpack_capacity += amount
+		"salvage_capacity":
+			failure_salvage_capacity += amount
+		_:
+			pass
+	if effect_kind != "" and amount != 0:
+		add_status_effect({
+			"effect_id": "talent_%s" % String(effect.get("talent_id", effect_kind)),
+			"duration_type": &"current_run",
+			"remaining": 1,
+			"tags": ["talent", effect_kind],
+		})
+		settlement_log.append({"type": &"talent_passive", "talent_id": effect.get("talent_id", ""), "effect_kind": effect_kind, "effect_amount": amount})
 
 
 func get_room_floor_items(pos: Vector2i) -> Array[Dictionary]:

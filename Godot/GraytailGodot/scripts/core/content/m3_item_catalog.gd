@@ -29,12 +29,12 @@ static func all_items() -> Array[Dictionary]:
 
 static func equipment_items() -> Array[Dictionary]:
 	return [
-		item("eq_scanner_frame", "Field Scanner Frame", TYPE_EQUIPMENT, "Reveals nearby risk hints when supported.", 2, 36, &"tier_2", ["equipment", "scanner"], SOURCE_CHEST, {"can_equip": true, "equipment_slot": "tool"}),
-		item("eq_pressure_gasket", "Pressure Gasket", TYPE_EQUIPMENT, "A rugged seal that can support later pressure mitigation.", 2, 32, &"tier_2", ["equipment", "pressure"], SOURCE_CHEST, {"can_equip": true, "equipment_slot": "gear"}),
-		item("eq_salvage_hook", "Salvage Hook", TYPE_EQUIPMENT, "Improves recovery handling in later tuning.", 2, 30, &"tier_2", ["equipment", "salvage"], SOURCE_SEARCH, {"can_equip": true, "equipment_slot": "tool"}),
-		item("eq_shock_liner", "Shock Liner", TYPE_EQUIPMENT, "Protective liner reserved for mine damage tuning.", 3, 42, &"tier_3", ["equipment", "mine"], SOURCE_MONSTER, {"can_equip": true, "equipment_slot": "armor"}),
-		item("eq_black_box", "Black Box Recorder", TYPE_EQUIPMENT, "Records loss and salvage context for settlement.", 2, 44, &"tier_3", ["equipment", "record"], SOURCE_EVENT, {"can_equip": true, "equipment_slot": "device"}),
-		item("eq_carry_rig", "Carry Rig", TYPE_EQUIPMENT, "Backpack capacity interface placeholder.", 3, 48, &"tier_3", ["equipment", "capacity"], SOURCE_ALTAR, {"can_equip": true, "equipment_slot": "rig"}),
+		item("eq_scanner_frame", "Signal Needle Frame", TYPE_EQUIPMENT, "Equipped next run: adds scan hint state.", 2, 36, &"tier_2", ["equipment", "scanner"], SOURCE_CHEST, {"can_equip": true, "equipment_slot": "tool", "effect_kind": "scan_hint", "effect_amount": 1}),
+		item("eq_pressure_gasket", "Insulated Sleeve", TYPE_EQUIPMENT, "Equipped next run: reduces protocol pressure spikes.", 2, 32, &"tier_2", ["equipment", "pressure"], SOURCE_CHEST, {"can_equip": true, "equipment_slot": "gear", "effect_kind": "protocol_pressure_reduce", "effect_amount": 3}),
+		item("eq_salvage_hook", "Recovery Bag Hook", TYPE_EQUIPMENT, "Equipped next run: increases failure salvage capacity.", 2, 30, &"tier_2", ["equipment", "salvage"], SOURCE_SEARCH, {"can_equip": true, "equipment_slot": "tool", "effect_kind": "salvage_capacity", "effect_amount": 1}),
+		item("eq_shock_liner", "Old Vest Liner", TYPE_EQUIPMENT, "Equipped next run: reduces mine damage.", 3, 42, &"tier_3", ["equipment", "mine"], SOURCE_MONSTER, {"can_equip": true, "equipment_slot": "armor", "effect_kind": "mine_damage_reduce", "effect_amount": 10}),
+		item("eq_black_box", "Black Box Recorder", TYPE_EQUIPMENT, "Equipped next run: improves failure salvage review.", 2, 44, &"tier_3", ["equipment", "record"], SOURCE_EVENT, {"can_equip": true, "equipment_slot": "device", "effect_kind": "salvage_capacity", "effect_amount": 1}),
+		item("eq_carry_rig", "Carry Rig", TYPE_EQUIPMENT, "Equipped next run: backpack capacity +2.", 3, 48, &"tier_3", ["equipment", "capacity"], SOURCE_ALTAR, {"can_equip": true, "equipment_slot": "rig", "effect_kind": "backpack_capacity", "effect_amount": 2}),
 	]
 
 

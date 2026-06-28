@@ -42,8 +42,8 @@ func start_tutorial_run(context: RunContext) -> Dictionary:
 	return start_run(context, RunConfig.tutorial_5x5())
 
 
-func start_standard_run(context: RunContext) -> Dictionary:
-	return start_run(context, RunConfig.standard_10x10())
+func start_standard_run(context: RunContext, run_start_config: Dictionary = {}) -> Dictionary:
+	return start_run(context, RunConfig.standard_10x10(run_start_config))
 
 
 func request_extract(context: RunContext, can_extract: bool, command_id: String = "", actor_id: StringName = &"player") -> Dictionary:

@@ -116,3 +116,28 @@ m3_minimum_item_drop_loop:
     - "Godot metadata/resource import"
     - "gameplay runtime PASS"
     - "manual playtest PASS"
+m3r_item_usability_completion:
+  status: "implementation_in_progress"
+  branch: "godot/m3r-item-usability-completion"
+  contract: "docs/20_product/M3R_ITEM_USABILITY_COMPLETION_CONTRACT.md"
+  validation: "docs/validation/M3R_ITEM_USABILITY_COMPLETION_VALIDATION.md"
+  handoff: "docs/handoff/HANDOFF_M3R_ITEM_USABILITY_COMPLETION.md"
+  capabilities:
+    warehouse_lite_real_meta_consumer: true
+    codex_lite_from_warehouse_items: true
+    deploy_prep_real_minimal_loadout: true
+    equipment_carry_in_runtime_state: true
+    consumable_carry_in_runtime_inventory: true
+    run_start_config_loadout_fields: true
+    minimal_profile_permit_protocol_talent_hooks: true
+    m3_settlement_boundary_preserved: true
+  non_goals:
+    - "complete warehouse economy"
+    - "complete LongTerm"
+    - "complete Codex research"
+    - "complete equipment strengthening"
+    - "full Objective / Reward / Pool"
+    - "complete Rule Engine"
+    - "Godot metadata/resource import"
+    - "gameplay runtime PASS"
+    - "manual long playtest PASS"

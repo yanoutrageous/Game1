@@ -1,5 +1,17 @@
 # DOC-GOV-002 Source Registry
 
+# M3R Source Registration
+
+| source_id | source_type | external_path | usage |
+| --- | --- | --- | --- |
+| M3R-SRC-MINIMUM-ITEM-PACK | Base Docs external planning original | `D:\AGAME1\Base Docs\最小物品包与掉落闭环内容策划案.md` | Primary M3R item category, drop, warehouse, salvage, equipment, consumable, talent, profile, permit, and protocol source reference only |
+| M3R-SRC-DEPLOY-PREP | Base Docs external planning original | `D:\AGAME1\Base Docs\出发探索界面与出勤准备规则策划修正案.md` | DeployPrep warehouse/loadout/RunStartConfig source reference only |
+| M3R-SRC-ASSET-MODEL | Base Docs external planning original | `D:\AGAME1\Base Docs\物品资产模型与内容映射规则策划案.md` | Item asset type and warehouse/codex boundary source reference only |
+| M3R-SRC-LONG-TERM-ASSET | Base Docs external planning original | `D:\AGAME1\Base Docs\长期系统整合与资产接口规则策划案.md` | LongTerm/Codex/Warehouse relationship source reference only |
+| M3R-SRC-LONG-TERM-CONTENT | Base Docs external planning original | `D:\AGAME1\Base Docs\长期系统内容补全策划案.md` | LongTerm content boundary source reference only |
+| M3R-SRC-SETTLEMENT-HISTORY | Base Docs external planning original | `D:\AGAME1\Base Docs\本局结算报告与历史战绩系统.md` | Settlement item-flow and warehouse-update source reference only |
+| M3R-SRC-RULE-EFFECT | Base Docs external planning original | `D:\AGAME1\Base Docs\规则、效果、Modifier 与内容投放通用系统策划案.md` | Minimal effect/talent/interface hook source reference only |
+
 文档状态：当前来源注册表
 适用范围：仓库文档入口、外部来源、历史快照和证据归属
 最后更新：2026/06/27

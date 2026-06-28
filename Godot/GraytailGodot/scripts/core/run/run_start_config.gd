@@ -11,6 +11,27 @@ const SUPPORTED_PREVIEW_FIELDS := [
 	"region_id",
 	"source_page",
 	"run_origin",
+	"selected_loadout",
+	"carried_consumables",
+	"selected_equipment_items",
+	"selected_consumable_items",
+	"selected_equipment_ids",
+	"selected_consumable_ids",
+	"equipment_effects",
+	"warehouse_lite",
+	"codex_lite",
+	"bag_used",
+	"bag_limit",
+	"backpack_capacity",
+	"failure_salvage_capacity",
+	"profile_fields",
+	"talent_interface",
+	"active_talent_effects",
+	"profile_level",
+	"profile_exp",
+	"permit_level",
+	"protocol_difficulty",
+	"mine_dmg_reduce",
 	"preview",
 	"display_only",
 	"read_only",
@@ -27,9 +48,28 @@ static func default_config() -> Dictionary:
 		"uses_existing_route": true,
 		"unsupported_config_fields": [],
 		"fallback_reason": "",
-		"preview": true,
-		"display_only": true,
-		"read_only": true,
+		"selected_equipment_items": [],
+		"selected_consumable_items": [],
+		"selected_equipment_ids": [],
+		"selected_consumable_ids": [],
+		"equipment_effects": [],
+		"warehouse_lite": {},
+		"codex_lite": {},
+		"bag_used": 0,
+		"bag_limit": 10,
+		"backpack_capacity": 10,
+		"failure_salvage_capacity": 1,
+		"profile_fields": {},
+		"talent_interface": [],
+		"active_talent_effects": [],
+		"profile_level": 1,
+		"profile_exp": 0,
+		"permit_level": 1,
+		"protocol_difficulty": 5,
+		"mine_dmg_reduce": 0,
+		"preview": false,
+		"display_only": false,
+		"read_only": false,
 	}
 
 
@@ -52,6 +92,9 @@ static func normalize(payload: Dictionary) -> Dictionary:
 	result["source_page"] = StringName(payload.get("source_page", result.get("source_page", &"unknown")))
 	result["profile_id"] = str(payload.get("profile_id", result.get("profile_id", "default")))
 	result["config_id"] = str(preview.get("config_id", payload.get("config_id", result.get("config_id", "standard_10x10"))))
+	for key in SUPPORTED_PREVIEW_FIELDS:
+		if preview.has(key):
+			result[key] = preview[key]
 	var requested_route := StringName(payload.get("route_mode", _route_mode_from_preview(preview)))
 	if not SUPPORTED_ROUTE_MODES.has(requested_route):
 		result["fallback_reason"] = "unsupported_route_mode:%s" % str(requested_route)
@@ -60,9 +103,9 @@ static func normalize(payload: Dictionary) -> Dictionary:
 		result["fallback_reason"] = "unsupported_config_fields"
 	result["route_mode"] = requested_route
 	result["uses_existing_route"] = true
-	result["preview"] = true
-	result["display_only"] = true
-	result["read_only"] = true
+	result["preview"] = bool(preview.get("preview", false))
+	result["display_only"] = bool(preview.get("display_only", false))
+	result["read_only"] = bool(preview.get("read_only", false))
 	return result
 
 
@@ -77,9 +120,9 @@ static func validate(config: Dictionary) -> Dictionary:
 		"ok": issues.is_empty(),
 		"issues": issues,
 		"config": normalized,
-		"read_only": true,
-		"display_only": true,
-		"preview": true,
+		"read_only": bool(normalized.get("read_only", false)),
+		"display_only": bool(normalized.get("display_only", false)),
+		"preview": bool(normalized.get("preview", false)),
 	}
 
 

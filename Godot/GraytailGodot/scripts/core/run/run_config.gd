@@ -1,6 +1,8 @@
 extends RefCounted
 class_name RunConfig
 
+const M3RItemUsabilityModelScript := preload("res://scripts/core/content/m3r_item_usability_model.gd")
+
 
 static func tutorial_5x5() -> Dictionary:
 	return {
@@ -29,8 +31,8 @@ static func tutorial_5x5() -> Dictionary:
 	}
 
 
-static func standard_10x10() -> Dictionary:
-	return {
+static func standard_10x10(run_start_config: Dictionary = {}) -> Dictionary:
+	var config := {
 		"id": &"standard_10x10",
 		"mode": &"standard",
 		"width": 10,
@@ -65,6 +67,11 @@ static func standard_10x10() -> Dictionary:
 			),
 		],
 	}
+	if not run_start_config.is_empty():
+		var patch := M3RItemUsabilityModelScript.runtime_config_patch(run_start_config)
+		for key in patch.keys():
+			config[key] = patch[key]
+	return config
 
 
 static func _tutorial_manual_map() -> Dictionary:

@@ -40,8 +40,8 @@ func start_tutorial_run(room_resolver: RoomResolver) -> Dictionary:
 	return _with_actor(result)
 
 
-func start_standard_run(room_resolver: RoomResolver) -> Dictionary:
-	var result: Dictionary = state_machine.start_standard_run(context)
+func start_standard_run(room_resolver: RoomResolver, run_start_config: Dictionary = {}) -> Dictionary:
+	var result: Dictionary = state_machine.start_standard_run(context, run_start_config)
 	_enter_room_after_start(room_resolver)
 	return _with_actor(result)
 

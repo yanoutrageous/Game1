@@ -115,14 +115,15 @@ func apply_settlement(result_snapshot: Dictionary) -> Dictionary:
 	var is_success := outcome == "Extracted" or outcome == "Training Complete" or settlement_outcome == "success"
 	var is_failure := outcome == "Failed" or settlement_outcome == "failure"
 	var is_abandon := outcome == "Abandoned" or settlement_outcome == "abandon"
+	var warehouse_items: Array = _array_from(data.get("warehouse_items", []))
+	warehouse_items = _remove_carry_in_items(warehouse_items, result_snapshot)
 
 	data["run_count"] = int(data.get("run_count", 0)) + 1
 	if is_success:
 		data["extract_count"] = int(data.get("extract_count", 0)) + 1
 		data["gold"] = int(data.get("gold", 0)) + _settlement_gold(result_snapshot, settlement)
-		var warehouse_items: Array = _array_from(data.get("warehouse_items", []))
 		for item in _array_from(settlement.get("warehouse_lite", result_snapshot.get("warehouse_lite", []))):
-			warehouse_items.append(_minimal_item_record(item))
+			_upsert_warehouse_item(warehouse_items, _minimal_item_record(item))
 		data["warehouse_items"] = warehouse_items
 	elif is_failure:
 		data["fail_count"] = int(data.get("fail_count", 0)) + 1
@@ -132,12 +133,14 @@ func apply_settlement(result_snapshot: Dictionary) -> Dictionary:
 			var failure_salvage: Dictionary = _dictionary_from(result_snapshot.get("failure_salvage", {}))
 			salvage = _array_from(failure_salvage.get("salvaged_items", []))
 		if not salvage.is_empty():
-			var warehouse_items: Array = _array_from(data.get("warehouse_items", []))
 			for item in salvage:
-				warehouse_items.append(_minimal_item_record(item))
+				_upsert_warehouse_item(warehouse_items, _minimal_item_record(item))
+			data["warehouse_items"] = warehouse_items
+		else:
 			data["warehouse_items"] = warehouse_items
 	elif is_abandon:
 		data["abandon_count"] = int(data.get("abandon_count", 0)) + 1
+		data["warehouse_items"] = warehouse_items
 	var run_debug_commands: Array = _array_from(result_snapshot.get("debug_commands", []))
 	if not run_debug_commands.is_empty():
 		for debug_entry in run_debug_commands:
@@ -173,6 +176,12 @@ func get_summary() -> Dictionary:
 		"long_term_gold": int(data.get("gold", 0)),
 		"warehouse_items_count": warehouse_items.size(),
 		"warehouse_items": warehouse_items.duplicate(true),
+		"profile_level": maxi(1, int(data.get("profile_level", 1))),
+		"profile_exp": maxi(0, int(data.get("profile_exp", 0))),
+		"permit_level": maxi(1, int(data.get("permit_level", 1))),
+		"protocol_difficulty": maxi(1, int(data.get("protocol_difficulty", 5))),
+		"talent_points": maxi(0, int(data.get("talent_points", 0))),
+		"talent_flags": _array_from(data.get("talent_flags", [])),
 		"run_count": int(data.get("run_count", 0)),
 		"extract_count": int(data.get("extract_count", 0)),
 		"fail_count": int(data.get("fail_count", 0)),
@@ -292,10 +301,55 @@ func _minimal_item_record(item: Variant) -> Dictionary:
 		"source": str(source.get("source", "settlement")),
 		"source_label": str(source.get("source_label", source.get("source", "settlement"))),
 		"tags": _array_from(source.get("tags", [])),
+		"can_sell": bool(source.get("can_sell", true)),
 		"can_consume": bool(source.get("can_consume", false)),
 		"can_equip": bool(source.get("can_equip", false)),
 		"can_store": bool(source.get("can_store", true)),
+		"can_carry": bool(source.get("can_equip", false)) or bool(source.get("can_consume", false)),
+		"effect_kind": str(source.get("effect_kind", "")),
+		"effect_amount": int(source.get("effect_amount", 0)),
+		"equipment_slot": str(source.get("equipment_slot", "")),
 	}
+
+
+func _remove_carry_in_items(warehouse_items: Array, result_snapshot: Dictionary) -> Array:
+	var run_start_config: Dictionary = _dictionary_from(result_snapshot.get("run_start_config", {}))
+	if run_start_config.is_empty():
+		var run_result: Dictionary = _dictionary_from(result_snapshot.get("run_result", result_snapshot.get("RunResult", {})))
+		run_start_config = _dictionary_from(run_result.get("run_start_config", {}))
+	var carry_ids: Dictionary = {}
+	for raw_item in _array_from(run_start_config.get("selected_equipment_items", [])):
+		var item := _dictionary_from(raw_item)
+		var instance_id := str(item.get("instance_id", ""))
+		if instance_id != "":
+			carry_ids[instance_id] = true
+	for raw_item in _array_from(run_start_config.get("selected_consumable_items", [])):
+		var item := _dictionary_from(raw_item)
+		var instance_id := str(item.get("instance_id", ""))
+		if instance_id != "":
+			carry_ids[instance_id] = true
+	if carry_ids.is_empty():
+		return warehouse_items
+	var result: Array = []
+	for raw_item in warehouse_items:
+		var item := _dictionary_from(raw_item)
+		if carry_ids.has(str(item.get("instance_id", ""))):
+			continue
+		result.append(item)
+	return result
+
+
+func _upsert_warehouse_item(warehouse_items: Array, item: Dictionary) -> void:
+	var instance_id := str(item.get("instance_id", ""))
+	if instance_id == "":
+		warehouse_items.append(item)
+		return
+	for index in range(warehouse_items.size()):
+		var existing := _dictionary_from(warehouse_items[index])
+		if str(existing.get("instance_id", "")) == instance_id:
+			warehouse_items[index] = item
+			return
+	warehouse_items.append(item)
 
 
 func _record_debug_marker(command: String, payload: Dictionary = {}) -> void:

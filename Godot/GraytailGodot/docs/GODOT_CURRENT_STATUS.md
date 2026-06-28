@@ -645,3 +645,20 @@ Godot implementation focus:
 - LongTerm consumes MetaProgress/latest result display-only.
 
 Not included: `demo_7x7`, full Objective / Reward / Pool, full LongTerm, full warehouse, full Rule Engine, project metadata/resource changes, gameplay runtime PASS, manual playtest PASS.
+
+## M3R Item Usability Completion
+
+Current branch: `godot/m3r-item-usability-completion`.
+
+Godot implementation focus:
+
+- Warehouse Lite reads real `MetaProgressAdapter` `warehouse_items`.
+- Codex Lite derives discovered/undiscovered entries from warehouse item data.
+- DeployPrep builds a minimal real loadout from selected equipment and consumables.
+- `RunStartConfig` / `RunConfig` carry selected loadout data into the next standard run.
+- Carry-in equipment enters runtime equipped state and exposes supported passive effects.
+- Carry-in consumables enter runtime inventory and can be consumed through the command/ledger flow.
+- Settlement and MetaProgress preserve M3 black coin, safe yield, warehouse writeback, and failure salvage boundaries.
+- Profile, permit, protocol, and talent fields are exposed as minimum interfaces only.
+
+Not included: complete Warehouse economy, complete LongTerm, complete Codex research, complete equipment strengthening, complete consumable shop, full Objective / Reward / Pool, complete Rule Engine, project metadata/resource changes, gameplay runtime PASS, or manual long playtest PASS.

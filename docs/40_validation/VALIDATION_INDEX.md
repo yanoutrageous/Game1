@@ -45,3 +45,9 @@
 | stage | evidence | boundary |
 | --- | --- | --- |
 | M3 | `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md` | GroundLoot-first item/drop loop, consumables, income layers, settlement boundaries; no full warehouse/equipment/Objective/Reward/Pool/Rule Engine or manual playtest PASS |
+
+# M3R Item Usability Completion
+
+| stage | evidence | boundary |
+| --- | --- | --- |
+| M3R | `docs/validation/M3R_ITEM_USABILITY_COMPLETION_VALIDATION.md` | M3 supplement for Warehouse Lite, Codex Lite, Equipment Loadout, Consumable Carry-In, and minimal profile/permit/protocol/talent hooks; no complete warehouse, complete LongTerm, complete Codex research, complete equipment strengthening, gameplay runtime PASS, or manual long playtest PASS |

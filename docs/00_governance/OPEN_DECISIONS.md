@@ -190,3 +190,13 @@ G27A docs-only decision posture:
 | --- | --- | --- | --- | --- |
 | OD-M2-001 | run_config | Whether to add a future fixed 7x7 regression map | deferred / P2 | User previously removed `demo_7x7` from current M2 acceptance; future gate can decide whether to add a fixed regression map. |
 | OD-M2-002 | gameplay_scope | Whether Objective / Reward / Pool becomes next real system | future gate | M2 keeps only minimum loop boundaries and does not expand into full Objective / Reward / Pool. |
+
+## M3R Open Follow-up
+
+| decision_id | domain | item | current_status | required_confirmation |
+| --- | --- | --- | --- | --- |
+| OD-M3R-001 | warehouse | Complete warehouse economy, sale confirmation, and sorting/filtering depth | deferred / future gate | M3R only delivers Warehouse Lite real read/loadout use. |
+| OD-M3R-002 | codex | Complete Codex research, rewards, red dots, and collection scoring | deferred / future gate | M3R only derives Codex Lite discovery from warehouse items. |
+| OD-M3R-003 | equipment | Equipment strengthening, upgrade economy, and full equipment UI | deferred / future gate | M3R only proves minimum carry-in runtime hooks. |
+| OD-M3R-004 | consumable | Consumable shop economy and full purchase/claim loop | deferred / future gate | M3R only proves warehouse-selected consumable carry-in and use. |
+| OD-M3R-005 | profile_permission_protocol | Full 50-level profile, permit table, protocol matrix, and talent tree | deferred / future gate | M3R keeps minimum fields and a few real hooks only. |

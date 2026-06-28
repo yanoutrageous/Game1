@@ -36,3 +36,9 @@
 | stage | lane | status | evidence | boundary |
 | --- | --- | --- | --- | --- |
 | M3 | program | implementation / validation pending | `docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md`; `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md`; `docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md` | minimum item/drop loop; no complete warehouse/equipment, full Objective / Reward / Pool, complete Rule Engine, gameplay runtime PASS, or manual playtest PASS |
+
+# M3R Item Usability Completion
+
+| stage | lane | status | evidence | boundary |
+| --- | --- | --- | --- | --- |
+| M3R | program | implementation / validation pending | `docs/20_product/M3R_ITEM_USABILITY_COMPLETION_CONTRACT.md`; `docs/validation/M3R_ITEM_USABILITY_COMPLETION_VALIDATION.md`; `docs/handoff/HANDOFF_M3R_ITEM_USABILITY_COMPLETION.md` | M3 usability supplement; Warehouse Lite / Codex Lite / equipment and consumable carry-in only; no complete warehouse economy, complete LongTerm, complete Codex research, complete equipment strengthening, gameplay runtime PASS, or manual long playtest PASS |

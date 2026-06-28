@@ -44,7 +44,7 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 		&"start_tutorial_run":
 			action_result = start_tutorial_run()
 		&"start_standard_run":
-			action_result = start_standard_run()
+			action_result = start_standard_run(command_payload)
 		&"move_by":
 			action_result = move_by(command_payload.get("delta", Vector2i.ZERO))
 		&"attempt_room_transition":
@@ -73,6 +73,10 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = drop_inventory_item(String(command_payload.get("instance_id", "")))
 		&"use_consumable", &"use_item":
 			action_result = use_consumable(String(command_payload.get("instance_id", "")))
+		&"equip_item":
+			action_result = equip_item(String(command_payload.get("instance_id", "")))
+		&"unequip_item":
+			action_result = unequip_item(String(command_payload.get("instance_id", "")))
 		&"abandon_run":
 			action_result = abandon_run(String(command_payload.get("reason", "player_abandoned")))
 		&"request_extract":
@@ -149,10 +153,10 @@ func start_tutorial_run() -> Dictionary:
 	return result
 
 
-func start_standard_run() -> Dictionary:
+func start_standard_run(payload: Dictionary = {}) -> Dictionary:
 	if runtime_controller == null:
 		return _blocked(&"not_ready", "runtime_controller_missing")
-	var result: Dictionary = runtime_controller.start_standard_run(room_resolver)
+	var result: Dictionary = runtime_controller.start_standard_run(room_resolver, payload.get("run_start_config", {}))
 	_emit_state()
 	return result
 
@@ -323,6 +327,42 @@ func use_consumable(instance_id: String = "") -> Dictionary:
 	else:
 		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
 		context.last_message = "Use blocked: %s." % context.blocked_reason
+	_emit_state()
+	return result
+
+
+func equip_item(instance_id: String = "") -> Dictionary:
+	if not _can_accept_command():
+		return _blocked(&"blocked", "command_blocked")
+	if context == null or context.asset_ledger == null:
+		return _blocked(&"not_ready", "not_ready")
+	var result: Dictionary = context.asset_ledger.equip_inventory_item(instance_id)
+	context.asset_ledger.sync_compat_fields(context)
+	if bool(result.get("ok", false)):
+		context.blocked_reason = ""
+		var item: Dictionary = result.get("item", {})
+		context.last_message = "Equipped item: %s." % String(item.get("display_name", item.get("item_id", "item")))
+	else:
+		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
+		context.last_message = "Equip blocked: %s." % context.blocked_reason
+	_emit_state()
+	return result
+
+
+func unequip_item(instance_id: String = "") -> Dictionary:
+	if not _can_accept_command():
+		return _blocked(&"blocked", "command_blocked")
+	if context == null or context.asset_ledger == null:
+		return _blocked(&"not_ready", "not_ready")
+	var result: Dictionary = context.asset_ledger.unequip_item(instance_id)
+	context.asset_ledger.sync_compat_fields(context)
+	if bool(result.get("ok", false)):
+		context.blocked_reason = ""
+		var item: Dictionary = result.get("item", {})
+		context.last_message = "Unequipped item: %s." % String(item.get("display_name", item.get("item_id", "item")))
+	else:
+		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
+		context.last_message = "Unequip blocked: %s." % context.blocked_reason
 	_emit_state()
 	return result
 

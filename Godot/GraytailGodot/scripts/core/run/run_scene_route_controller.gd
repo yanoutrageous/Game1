@@ -19,7 +19,10 @@ static func start_from_payload(payload: Dictionary, command_bus) -> Dictionary:
 			"player_reset_requested": false,
 		}
 	var command_id := RunStartRouteAdapterScript.route_command_from_payload(payload)
-	var result: Dictionary = command_bus.dispatch(command_id)
+	var result: Dictionary = command_bus.dispatch(command_id, {
+		"run_start_config": payload.get("run_start_config", {}),
+		"route_payload": payload.duplicate(true),
+	})
 	return {
 		"ok": bool(result.get("ok", false)),
 		"command_id": command_id,

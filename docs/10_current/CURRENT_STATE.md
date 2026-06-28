@@ -82,3 +82,15 @@ Validation: `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md`.
 Handoff: `docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md`.
 
 Non-goals: no `demo_7x7`, no complete warehouse, no complete equipment/loadout system, no full Objective / Reward / Pool, no complete Rule Engine, no project metadata/resource import, no gameplay runtime PASS, and no manual playtest PASS.
+
+## M3R Item Usability Completion
+
+Status: implementation in progress on `godot/m3r-item-usability-completion`.
+
+Current M3R scope: M3 supplement that makes the minimum item pack usable after warehouse writeback. It adds Warehouse Lite, Codex Lite, DeployPrep real minimal loadout, equipment carry-in, consumable carry-in, selected loadout propagation through `RunStartConfig` / `RunConfig`, and minimal profile / permit / protocol / talent interfaces.
+
+Contract: `docs/20_product/M3R_ITEM_USABILITY_COMPLETION_CONTRACT.md`.
+Validation: `docs/validation/M3R_ITEM_USABILITY_COMPLETION_VALIDATION.md`.
+Handoff: `docs/handoff/HANDOFF_M3R_ITEM_USABILITY_COMPLETION.md`.
+
+Non-goals: no complete warehouse economy, no complete LongTerm system, no complete Codex research, no complete equipment strengthening, no full Objective / Reward / Pool, no complete Rule Engine, no project metadata/resource import, no gameplay runtime PASS, and no manual long playtest PASS.

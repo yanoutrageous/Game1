@@ -19,9 +19,9 @@ static func payload_from_route_payload(payload: Dictionary) -> Dictionary:
 	result["unsupported_config_fields"] = normalized.get("unsupported_config_fields", [])
 	result["fallback_reason"] = normalized.get("fallback_reason", "")
 	result["boundary"] = "existing_run_route_only_no_run_bootstrapper"
-	result["read_only"] = true
-	result["display_only"] = true
-	result["preview"] = true
+	result["read_only"] = bool(normalized.get("read_only", false))
+	result["display_only"] = bool(normalized.get("display_only", false))
+	result["preview"] = bool(normalized.get("preview", false))
 	return result
 
 
@@ -54,7 +54,7 @@ static func route_status(payload: Dictionary) -> Dictionary:
 		"uses_existing_route": true,
 		"unsupported_config_fields": normalized.get("unsupported_config_fields", []),
 		"fallback_reason": normalized.get("fallback_reason", ""),
-		"read_only": true,
-		"display_only": true,
-		"preview": true,
+		"read_only": bool(normalized.get("read_only", false)),
+		"display_only": bool(normalized.get("display_only", false)),
+		"preview": bool(normalized.get("preview", false)),
 	}
