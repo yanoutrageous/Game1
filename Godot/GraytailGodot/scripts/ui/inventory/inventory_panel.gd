@@ -7,6 +7,7 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal drop_item_requested(instance_id: String)
+signal use_item_requested(instance_id: String)
 signal close_requested
 
 var title_label: Label
@@ -89,6 +90,15 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		snapshot.get("backpack_capacity", 0),
 		snapshot.get("black_coin", 0),
 		snapshot.get("gold_coin", 0),
+		inventory_items.size(),
+		equipped_items.size(),
+	]
+	summary_label.text = "Backpack %s/%s | run_black_coin %s | safe_yield %s | long_term_gold preview %s | items %s | equipped %s" % [
+		snapshot.get("backpack_used", 0),
+		snapshot.get("backpack_capacity", 0),
+		snapshot.get("run_black_coin", snapshot.get("black_coin", 0)),
+		snapshot.get("safe_yield", snapshot.get("gold_coin", 0)),
+		snapshot.get("long_term_gold_preview", 0),
 		inventory_items.size(),
 		equipped_items.size(),
 	]
@@ -188,6 +198,16 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	drop_button.tooltip_text = "丢弃到当前房间地面，稍后可从地面物品重新拾取。" if can_drop else "已装备物品暂不可从此面板丢弃。"
 	Art10UISkinKitScript.apply_button(drop_button, &"danger" if can_drop else &"secondary", 13)
 	var instance_id: String = String(item.get("instance_id", ""))
+	var use_button := Button.new()
+	use_button.name = "InventoryUseButton"
+	use_button.focus_mode = Control.FOCUS_NONE
+	use_button.text = "Use"
+	var can_use := can_drop and bool(item.get("can_consume", false))
+	use_button.disabled = not can_use
+	use_button.tooltip_text = "Use consumable through CommandBus." if can_use else "Only consumables in backpack can be used."
+	Art10UISkinKitScript.apply_button(use_button, &"primary" if can_use else &"secondary", 13)
+	use_button.pressed.connect(func() -> void: use_item_requested.emit(instance_id))
+	row.add_child(use_button)
 	drop_button.pressed.connect(func() -> void: drop_item_requested.emit(instance_id))
 	row.add_child(drop_button)
 

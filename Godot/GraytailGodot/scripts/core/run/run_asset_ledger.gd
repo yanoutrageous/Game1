@@ -13,6 +13,8 @@ const LOCATION_LOST := &"lost"
 
 const CURRENCY_BLACK := &"black_coin"
 const CURRENCY_GOLD := &"gold_coin"
+const CURRENCY_SAFE_YIELD := &"gold_coin"
+const CURRENCY_LONG_TERM_GOLD := &"long_term_gold"
 const RARITY_TIERS := [&"common", &"good", &"rare", &"epic", &"legendary", &"mythic", &"unique"]
 
 var currency_definitions: Dictionary = {}
@@ -52,9 +54,11 @@ func reset() -> void:
 
 func _define_default_currencies() -> void:
 	define_currency(CURRENCY_BLACK, "Black Coin", &"run", true, true, false, &"convert_on_extract")
-	define_currency(CURRENCY_GOLD, "Gold Coin", &"meta", false, true, true, &"persist_or_snapshot")
+	define_currency(CURRENCY_GOLD, "Safe Yield", &"settlement", true, true, true, &"retain_on_success_or_failure")
+	define_currency(CURRENCY_LONG_TERM_GOLD, "Long Term Gold", &"meta", false, false, true, &"write_after_settlement")
 	currency_balances[CURRENCY_BLACK] = int(currency_balances.get(CURRENCY_BLACK, 0))
 	currency_balances[CURRENCY_GOLD] = int(currency_balances.get(CURRENCY_GOLD, 0))
+	currency_balances[CURRENCY_LONG_TERM_GOLD] = int(currency_balances.get(CURRENCY_LONG_TERM_GOLD, 0))
 
 
 func define_currency(currency_id: StringName, display_name: String, scope: StringName, can_gain_in_run: bool, can_spend_in_run: bool, can_persist_to_meta: bool, settlement_rule: StringName) -> void:
@@ -93,14 +97,18 @@ func create_item_instance(item_def: Dictionary, location_state: StringName, room
 	var instance_id := String(item_def.get("instance_id", "item_%04d_%s" % [next_instance_index, String(item_def.get("item_id", "unknown"))]))
 	next_instance_index += 1
 	var rarity := _normalize_rarity(StringName(item_def.get("rarity", &"common")))
-	var item_type := StringName(item_def.get("item_type", &"recovered"))
+	var item_type := StringName(item_def.get("item_type", &"collectible"))
 	var unique_item := rarity == &"unique" or bool(item_def.get("is_unique", false))
 	var normalized := {
 		"instance_id": instance_id,
 		"item_id": String(item_def.get("item_id", item_def.get("id", "unknown_item"))),
 		"display_name": String(item_def.get("display_name", item_def.get("item_id", item_def.get("id", "Unknown Item")))),
+		"short_description": String(item_def.get("short_description", "")),
+		"icon_fallback": String(item_def.get("icon_fallback", "")),
 		"item_type": item_type,
+		"main_type": StringName(item_def.get("main_type", item_type)),
 		"rarity": rarity,
+		"collectible_level": int(item_def.get("collectible_level", 0)),
 		"weight": maxi(0, int(item_def.get("weight", 1))),
 		"value_state": StringName(item_def.get("value_state", &"known_value")),
 		"base_value": maxi(0, int(item_def.get("base_value", item_def.get("value", 0)))),
@@ -109,8 +117,13 @@ func create_item_instance(item_def: Dictionary, location_state: StringName, room
 		"can_store": bool(item_def.get("can_store", true)),
 		"can_equip": bool(item_def.get("can_equip", false)),
 		"can_consume": bool(item_def.get("can_consume", false)),
+		"effect_kind": String(item_def.get("effect_kind", "")),
+		"effect_amount": int(item_def.get("effect_amount", 0)),
+		"equipment_slot": String(item_def.get("equipment_slot", "")),
 		"is_unique": unique_item,
+		"unique_drop_allowed": bool(item_def.get("unique_drop_allowed", false)),
 		"source": String(item_def.get("source", "")),
+		"source_label": String(item_def.get("source_label", item_def.get("source", ""))),
 		"visual_only": bool(item_def.get("visual_only", false)),
 		"location_state": location_state,
 		"room_pos": room_pos,
@@ -131,6 +144,9 @@ func add_reward_items(item_defs: Array, preferred_location: StringName, room_pos
 		if source != "":
 			item_def["source"] = source
 		var target_location := StringName(item_def.get("reward_location", preferred_location))
+		if bool(item_def.get("is_unique", false)) and not bool(item_def.get("unique_drop_allowed", false)):
+			blocked_reasons.append("unique_not_allowed_in_ordinary_drop")
+			continue
 		if target_location == LOCATION_ROOM_FLOOR:
 			ground_items.append(create_item_instance(item_def, LOCATION_ROOM_FLOOR, room_pos))
 			continue
@@ -191,6 +207,20 @@ func drop_inventory_item(instance_id: String, room_pos: Vector2i) -> Dictionary:
 	_register_room_floor_item(instance_id, room_pos)
 	settlement_log.append({"type": &"drop", "instance_id": instance_id, "room_pos": room_pos})
 	return {"ok": true, "status": &"dropped", "item": item.duplicate(true), "capacity": get_capacity_snapshot()}
+
+
+func consume_inventory_item(instance_id: String) -> Dictionary:
+	if not item_instances.has(instance_id):
+		return {"ok": false, "status": &"not_found", "reason": "item_not_found"}
+	var item: Dictionary = item_instances[instance_id]
+	if StringName(item.get("location_state", &"")) != LOCATION_INVENTORY:
+		return {"ok": false, "status": &"not_in_inventory", "reason": "item_not_in_inventory"}
+	if not bool(item.get("can_consume", false)):
+		return {"ok": false, "status": &"blocked_type", "reason": "item_not_consumable", "item": item.duplicate(true)}
+	item["location_state"] = LOCATION_LOST
+	item_instances[instance_id] = item
+	settlement_log.append({"type": &"consume_item", "instance_id": instance_id, "item_id": item.get("item_id", ""), "effect_kind": item.get("effect_kind", "")})
+	return {"ok": true, "status": &"consumed", "item": item.duplicate(true), "capacity": get_capacity_snapshot()}
 
 
 func equip_inventory_item(instance_id: String) -> Dictionary:
@@ -260,6 +290,7 @@ func build_failure_preview() -> Dictionary:
 			remaining -= weight
 	return {
 		"gold_coin": get_currency(CURRENCY_GOLD),
+		"safe_yield": get_currency(CURRENCY_GOLD),
 		"black_coin_lost": get_currency(CURRENCY_BLACK),
 		"pending_gold_lost": get_currency(CURRENCY_BLACK),
 		"salvage_capacity": failure_salvage_capacity,
@@ -274,24 +305,23 @@ func build_failure_preview() -> Dictionary:
 
 func settle_success() -> Dictionary:
 	var black_before := get_currency(CURRENCY_BLACK)
+	var safe_before := get_currency(CURRENCY_GOLD)
 	var converted_gold := int(floor(float(black_before) * black_to_gold_rate))
+	var long_term_gold_gained := converted_gold + safe_before
 	currency_balances[CURRENCY_BLACK] = 0
 	if converted_gold > 0:
 		add_currency(CURRENCY_GOLD, converted_gold, "extract_settlement")
+	if long_term_gold_gained > 0:
+		add_currency(CURRENCY_LONG_TERM_GOLD, long_term_gold_gained, "settlement_writeback_preview")
 	var extracted_items: Array[Dictionary] = []
-	var consumed_items: Array[Dictionary] = []
 	var floor_lost_items: Array[Dictionary] = []
 	for instance_id in item_instances.keys():
 		var item: Dictionary = item_instances[instance_id]
 		var location := StringName(item.get("location_state", &""))
 		if location in [LOCATION_INVENTORY, LOCATION_EQUIPPED]:
-			if bool(item.get("can_consume", false)) or StringName(item.get("item_type", &"")) == &"consumable":
-				item["location_state"] = LOCATION_LOST
-				consumed_items.append(item.duplicate(true))
-			else:
-				item["location_state"] = LOCATION_WAREHOUSE
-				extracted_items.append(item.duplicate(true))
-				warehouse_lite.append(item.duplicate(true))
+			item["location_state"] = LOCATION_WAREHOUSE
+			extracted_items.append(item.duplicate(true))
+			warehouse_lite.append(item.duplicate(true))
 			item_instances[instance_id] = item
 		elif location == LOCATION_ROOM_FLOOR:
 			_unregister_room_floor_item(String(instance_id), item.get("room_pos", Vector2i.ZERO))
@@ -299,14 +329,20 @@ func settle_success() -> Dictionary:
 			floor_lost_items.append(item.duplicate(true))
 			item_instances[instance_id] = item
 	var effect_result := settle_status_effects()
-	settlement_log.append({"type": &"settle_success", "black_coin_converted": black_before, "gold_coin_gained": converted_gold})
+	settlement_log.append({"type": &"settle_success", "black_coin_converted": black_before, "safe_yield_retained": safe_before, "long_term_gold_gained": long_term_gold_gained})
 	return {
 		"outcome": &"success",
+		"settlement_outcome": &"success",
+		"run_black_coin": black_before,
 		"black_coin_converted": black_before,
-		"gold_coin_gained": converted_gold,
-		"currency_delta": {"black_coin": -black_before, "gold_coin": converted_gold},
+		"run_black_coin_converted": black_before,
+		"safe_yield": safe_before,
+		"safe_yield_retained": safe_before,
+		"gold_coin_gained": long_term_gold_gained,
+		"long_term_gold_gained": long_term_gold_gained,
+		"currency_delta": {"black_coin": -black_before, "gold_coin": converted_gold, "safe_yield": safe_before, "long_term_gold": long_term_gold_gained},
 		"extracted_items": extracted_items,
-		"consumables_cleared": consumed_items,
+		"warehouse_items": extracted_items,
 		"room_floor_lost_items": floor_lost_items,
 		"warehouse_lite": warehouse_lite.duplicate(true),
 		"status_effects": effect_result,
@@ -316,7 +352,10 @@ func settle_success() -> Dictionary:
 
 func settle_failure() -> Dictionary:
 	var black_before := get_currency(CURRENCY_BLACK)
+	var safe_before := get_currency(CURRENCY_GOLD)
 	currency_balances[CURRENCY_BLACK] = 0
+	if safe_before > 0:
+		add_currency(CURRENCY_LONG_TERM_GOLD, safe_before, "failure_safe_yield_writeback_preview")
 	var candidates := _settlement_candidate_items()
 	for candidate in candidates:
 		var candidate_id := String(candidate.get("instance_id", ""))
@@ -330,7 +369,6 @@ func settle_failure() -> Dictionary:
 	var remaining := failure_salvage_capacity
 	var salvaged_items: Array[Dictionary] = []
 	var lost_items: Array[Dictionary] = []
-	var consumables_cleared: Array[Dictionary] = []
 	var room_floor_lost_items: Array[Dictionary] = []
 	for instance_id in item_instances.keys():
 		var item: Dictionary = item_instances[instance_id]
@@ -339,10 +377,6 @@ func settle_failure() -> Dictionary:
 			_unregister_room_floor_item(String(instance_id), item.get("room_pos", Vector2i.ZERO))
 			item["location_state"] = LOCATION_LOST
 			room_floor_lost_items.append(item.duplicate(true))
-			item_instances[instance_id] = item
-		elif location in [LOCATION_INVENTORY, LOCATION_EQUIPPED] and (bool(item.get("can_consume", false)) or StringName(item.get("item_type", &"")) == &"consumable"):
-			item["location_state"] = LOCATION_LOST
-			consumables_cleared.append(item.duplicate(true))
 			item_instances[instance_id] = item
 	for candidate in candidates:
 		var candidate_id := String(candidate.get("instance_id", ""))
@@ -360,22 +394,68 @@ func settle_failure() -> Dictionary:
 			lost_items.append(item.duplicate(true))
 		item_instances[candidate_id] = item
 	var effect_result := settle_status_effects()
-	settlement_log.append({"type": &"settle_failure", "black_coin_lost": black_before, "salvaged_item_count": salvaged_items.size()})
+	settlement_log.append({"type": &"settle_failure", "black_coin_lost": black_before, "safe_yield_retained": safe_before, "salvaged_item_count": salvaged_items.size()})
 	return {
 		"outcome": &"failure",
+		"settlement_outcome": &"failure",
+		"run_black_coin": black_before,
 		"black_coin_lost": black_before,
 		"pending_gold_lost": black_before,
-		"gold_coin_retained": get_currency(CURRENCY_GOLD),
+		"safe_yield": safe_before,
+		"safe_yield_retained": safe_before,
+		"gold_coin_retained": safe_before,
+		"gold_coin_gained": safe_before,
+		"long_term_gold_gained": safe_before,
 		"salvage_capacity": failure_salvage_capacity,
 		"settlement_pool": candidates,
 		"salvaged_items": salvaged_items,
 		"salvaged_item": {} if salvaged_items.is_empty() else salvaged_items[0],
 		"salvaged_item_count": salvaged_items.size(),
 		"lost_items": lost_items,
-		"lost_item_count": lost_items.size() + room_floor_lost_items.size() + consumables_cleared.size(),
-		"lost_item_value": _sum_item_value(lost_items) + _sum_item_value(room_floor_lost_items) + _sum_item_value(consumables_cleared),
+		"lost_item_count": lost_items.size() + room_floor_lost_items.size(),
+		"lost_item_value": _sum_item_value(lost_items) + _sum_item_value(room_floor_lost_items),
 		"room_floor_lost_items": room_floor_lost_items,
-		"consumables_cleared": consumables_cleared,
+		"warehouse_lite": warehouse_lite.duplicate(true),
+		"status_effects": effect_result,
+		"settlement_log": settlement_log.duplicate(true),
+	}
+
+
+func settle_abandon(reason: String = "abandoned") -> Dictionary:
+	var black_before := get_currency(CURRENCY_BLACK)
+	var safe_before := get_currency(CURRENCY_GOLD)
+	currency_balances[CURRENCY_BLACK] = 0
+	var lost_items: Array[Dictionary] = []
+	var room_floor_lost_items: Array[Dictionary] = []
+	for instance_id in item_instances.keys():
+		var item: Dictionary = item_instances[instance_id]
+		var location := StringName(item.get("location_state", &""))
+		if location == LOCATION_ROOM_FLOOR:
+			_unregister_room_floor_item(String(instance_id), item.get("room_pos", Vector2i.ZERO))
+			item["location_state"] = LOCATION_LOST
+			room_floor_lost_items.append(item.duplicate(true))
+			item_instances[instance_id] = item
+		elif location in [LOCATION_INVENTORY, LOCATION_EQUIPPED]:
+			item["location_state"] = LOCATION_LOST
+			lost_items.append(item.duplicate(true))
+			item_instances[instance_id] = item
+	var effect_result := settle_status_effects()
+	settlement_log.append({"type": &"settle_abandon", "reason": reason, "black_coin_lost": black_before, "safe_yield_state": "pending_undecided"})
+	return {
+		"outcome": &"abandon",
+		"settlement_outcome": &"abandon",
+		"reason": reason,
+		"run_black_coin": black_before,
+		"black_coin_lost": black_before,
+		"safe_yield": safe_before,
+		"safe_yield_pending": safe_before,
+		"safe_yield_state": &"pending_undecided",
+		"gold_coin_gained": 0,
+		"long_term_gold_gained": 0,
+		"lost_items": lost_items,
+		"lost_item_count": lost_items.size() + room_floor_lost_items.size(),
+		"lost_item_value": _sum_item_value(lost_items) + _sum_item_value(room_floor_lost_items),
+		"room_floor_lost_items": room_floor_lost_items,
 		"warehouse_lite": warehouse_lite.duplicate(true),
 		"status_effects": effect_result,
 		"settlement_log": settlement_log.duplicate(true),
@@ -459,6 +539,10 @@ func get_public_snapshot(current_pos: Vector2i) -> Dictionary:
 		"currency_definitions": currency_definitions.duplicate(true),
 		"black_coin": get_currency(CURRENCY_BLACK),
 		"gold_coin": get_currency(CURRENCY_GOLD),
+		"run_black_coin": get_currency(CURRENCY_BLACK),
+		"safe_yield": get_currency(CURRENCY_GOLD),
+		"long_term_gold": get_currency(CURRENCY_LONG_TERM_GOLD),
+		"long_term_gold_preview": get_currency(CURRENCY_LONG_TERM_GOLD),
 		"backpack_capacity": backpack_capacity,
 		"backpack_used": get_backpack_used(),
 		"backpack_remaining": maxi(0, backpack_capacity - get_backpack_used()),
@@ -477,7 +561,7 @@ func sync_compat_fields(context: RunContext) -> void:
 		return
 	context.pending_gold = get_currency(CURRENCY_BLACK)
 	context.safe_gold = get_currency(CURRENCY_GOLD)
-	var compat_items := get_inventory_and_equipped_items(false)
+	var compat_items := get_inventory_and_equipped_items(true)
 	context.parts = compat_items.size()
 	context.carried_items = compat_items
 
@@ -506,8 +590,6 @@ func _settlement_candidate_items() -> Array[Dictionary]:
 	for item in item_instances.values():
 		var location := StringName(item.get("location_state", &""))
 		if not (location in [LOCATION_INVENTORY, LOCATION_EQUIPPED]):
-			continue
-		if bool(item.get("can_consume", false)) or StringName(item.get("item_type", &"")) == &"consumable":
 			continue
 		result.append(item.duplicate(true))
 	return result

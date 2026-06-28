@@ -10,7 +10,7 @@ const SCHEMA_VERSION := 1
 static func build(context: RunContext, ledger_snapshot: Dictionary = {}, run_map_snapshot: Dictionary = {}, map_result: Dictionary = {}, run_flow_snapshot: Dictionary = {}) -> Dictionary:
 	if context == null:
 		return default_result()
-	var terminal := bool(context.extracted or context.failed or not context.run_active)
+	var terminal := bool(context.extracted or context.failed or context.abandoned or not context.run_active)
 	var settlement: Dictionary = context.settlement_result.duplicate(true)
 	var carried_items: Array = _array(ledger_snapshot.get("inventory_items", []))
 	var room_floor_items: Array = _array(ledger_snapshot.get("room_floor_items", []))
@@ -21,6 +21,10 @@ static func build(context: RunContext, ledger_snapshot: Dictionary = {}, run_map
 		"run_id": context.run_id,
 		"mode": context.mode,
 		"outcome": context.outcome,
+		"settlement_outcome": settlement.get("outcome", ""),
+		"extracted": context.extracted,
+		"failed": context.failed,
+		"abandoned": context.abandoned,
 		"terminal": terminal,
 		"authoritative_when_terminal": terminal,
 		"settlement_single_input": terminal,
@@ -34,6 +38,11 @@ static func build(context: RunContext, ledger_snapshot: Dictionary = {}, run_map
 		"safe_gold": context.safe_gold,
 		"black_coin": ledger_snapshot.get("black_coin", context.pending_gold),
 		"gold_coin": ledger_snapshot.get("gold_coin", context.safe_gold),
+		"run_black_coin": ledger_snapshot.get("run_black_coin", context.pending_gold),
+		"safe_yield": ledger_snapshot.get("safe_yield", context.safe_gold),
+		"long_term_gold": ledger_snapshot.get("long_term_gold", 0),
+		"long_term_gold_gained": settlement.get("long_term_gold_gained", 0),
+		"safe_yield_retained": settlement.get("safe_yield_retained", settlement.get("safe_yield", 0)),
 		"backpack_capacity": ledger_snapshot.get("backpack_capacity", 0),
 		"backpack_used": ledger_snapshot.get("backpack_used", carried_items.size()),
 		"carried_items": carried_items,

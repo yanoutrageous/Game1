@@ -363,6 +363,7 @@ func _build_run_overlay() -> void:
 	inventory_panel = InventoryPanelScript.new() as Control
 	inventory_panel.name = "InventoryPanel"
 	inventory_panel.connect("drop_item_requested", _on_inventory_drop_requested)
+	inventory_panel.connect("use_item_requested", _on_inventory_use_requested)
 	inventory_panel.connect("close_requested", func() -> void: inventory_panel.call("hide_panel"))
 	surface_overlay_slot.add_child(inventory_panel)
 
@@ -747,6 +748,18 @@ func _drop_inventory_from_ui(instance_id: String = "") -> void:
 	_refresh_view_models()
 
 
+func _use_inventory_item_from_ui(instance_id: String = "") -> void:
+	var payload: Dictionary = {"source": "ui"}
+	if instance_id != "":
+		payload["instance_id"] = instance_id
+	var result := _dispatch_command(&"use_item", payload)
+	if inventory_panel != null:
+		inventory_panel.call("show_command_result", result)
+	if ground_loot_panel != null:
+		ground_loot_panel.call("show_command_result", result)
+	_refresh_view_models()
+
+
 func _show_inventory_panel() -> void:
 	if inventory_panel == null:
 		return
@@ -767,6 +780,10 @@ func _show_ground_loot_panel() -> void:
 
 func _on_inventory_drop_requested(instance_id: String) -> void:
 	_drop_inventory_from_ui(instance_id)
+
+
+func _on_inventory_use_requested(instance_id: String) -> void:
+	_use_inventory_item_from_ui(instance_id)
 
 
 func _on_ground_loot_pickup_requested(instance_id: String) -> void:

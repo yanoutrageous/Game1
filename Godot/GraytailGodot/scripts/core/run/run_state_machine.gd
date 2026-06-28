@@ -6,6 +6,7 @@ const TRANSITION_REQUEST_EXTRACT := &"request_extract"
 const TRANSITION_CONFIRM_EXTRACT := &"confirm_extract"
 const TRANSITION_CANCEL_EXTRACT := &"cancel_extract"
 const TRANSITION_FAIL := &"fail"
+const TRANSITION_ABANDON := &"abandon"
 const TRANSITION_RESTART := &"restart"
 
 
@@ -89,6 +90,13 @@ func fail_run(context: RunContext, reason: String = "forced_failure") -> Diction
 		return _blocked(&"not_ready", "not_ready")
 	context.fail_run(reason)
 	return {"ok": true, "status": &"failed", "transition": TRANSITION_FAIL, "reason": reason, "result_snapshot": context.result_snapshot.duplicate(true)}
+
+
+func abandon_run(context: RunContext, reason: String = "player_abandoned") -> Dictionary:
+	if context == null:
+		return _blocked(&"not_ready", "not_ready")
+	context.abandon_run(reason)
+	return {"ok": true, "status": &"abandoned", "transition": TRANSITION_ABANDON, "reason": reason, "result_snapshot": context.result_snapshot.duplicate(true)}
 
 
 func force_extract(context: RunContext) -> Dictionary:

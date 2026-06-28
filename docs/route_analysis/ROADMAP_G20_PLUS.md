@@ -1,3 +1,15 @@
+# M3 Route Update
+
+Current active slice: M3 Minimum Item Pack & Drop Loop.
+
+- M3 adds the minimum item taxonomy and content pack at `Godot/GraytailGodot/scripts/core/content/m3_item_catalog.gd`.
+- M3 aligns search, chest, monster, event, altar, and debug test drops to GroundLoot-first semantics.
+- M3 supports backpack pickup/drop/repick, consumable use, trader safe_yield, and success/failure/abandon settlement boundaries.
+- M3 documents the contract at `docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md`, validation at `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md`, and handoff at `docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md`.
+- M3 does not implement `demo_7x7`, complete warehouse, complete equipment/loadout, full Objective / Reward / Pool, complete Rule Engine, gameplay runtime PASS, or manual playtest PASS.
+- Next gate should validate G35/G36/G37/G37S/G38, M2, and M3 scripts/runners before commit/push.
+- Any G38 or older route wording below this update is historical unless explicitly reopened.
+
 # G38 Route Update
 
 Current active slice: G38-R2 Runtime Architecture Consolidation Finalization.

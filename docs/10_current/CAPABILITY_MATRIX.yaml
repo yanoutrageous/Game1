@@ -93,3 +93,26 @@ m2_lua_ue_effect_first_playable_loop:
     - "full warehouse"
     - "full Rule Engine"
     - "Godot metadata/resource import"
+m3_minimum_item_drop_loop:
+  status: "implementation_in_progress"
+  branch: "godot/m3-minimum-item-drop-loop"
+  contract: "docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md"
+  validation: "docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md"
+  handoff: "docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md"
+  capabilities:
+    minimum_item_catalog: true
+    ground_loot_first_rewards: true
+    backpack_pickup_drop_repick: true
+    consumable_use_command_flow: true
+    income_layers_run_black_safe_yield_long_term_gold: true
+    success_failure_abandon_settlement: true
+    display_only_ui_alignment: true
+  non_goals:
+    - "demo_7x7"
+    - "complete warehouse"
+    - "complete equipment / loadout"
+    - "full Objective / Reward / Pool"
+    - "complete Rule Engine"
+    - "Godot metadata/resource import"
+    - "gameplay runtime PASS"
+    - "manual playtest PASS"

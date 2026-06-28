@@ -114,6 +114,7 @@ func apply_settlement(result_snapshot: Dictionary) -> Dictionary:
 	var settlement_outcome := str(settlement.get("outcome", ""))
 	var is_success := outcome == "Extracted" or outcome == "Training Complete" or settlement_outcome == "success"
 	var is_failure := outcome == "Failed" or settlement_outcome == "failure"
+	var is_abandon := outcome == "Abandoned" or settlement_outcome == "abandon"
 
 	data["run_count"] = int(data.get("run_count", 0)) + 1
 	if is_success:
@@ -125,6 +126,7 @@ func apply_settlement(result_snapshot: Dictionary) -> Dictionary:
 		data["warehouse_items"] = warehouse_items
 	elif is_failure:
 		data["fail_count"] = int(data.get("fail_count", 0)) + 1
+		data["gold"] = int(data.get("gold", 0)) + _settlement_gold(result_snapshot, settlement)
 		var salvage: Array = _array_from(settlement.get("salvaged_items", []))
 		if salvage.is_empty():
 			var failure_salvage: Dictionary = _dictionary_from(result_snapshot.get("failure_salvage", {}))
@@ -134,6 +136,8 @@ func apply_settlement(result_snapshot: Dictionary) -> Dictionary:
 			for item in salvage:
 				warehouse_items.append(_minimal_item_record(item))
 			data["warehouse_items"] = warehouse_items
+	elif is_abandon:
+		data["abandon_count"] = int(data.get("abandon_count", 0)) + 1
 	var run_debug_commands: Array = _array_from(result_snapshot.get("debug_commands", []))
 	if not run_debug_commands.is_empty():
 		for debug_entry in run_debug_commands:
@@ -166,11 +170,13 @@ func get_summary() -> Dictionary:
 	return {
 		"schema_version": int(data.get("schema_version", 1)),
 		"gold": int(data.get("gold", 0)),
+		"long_term_gold": int(data.get("gold", 0)),
 		"warehouse_items_count": warehouse_items.size(),
 		"warehouse_items": warehouse_items.duplicate(true),
 		"run_count": int(data.get("run_count", 0)),
 		"extract_count": int(data.get("extract_count", 0)),
 		"fail_count": int(data.get("fail_count", 0)),
+		"abandon_count": int(data.get("abandon_count", 0)),
 		"debug_used": bool(data.get("debug_used", false)),
 		"debug_commands": _array_from(data.get("debug_commands", [])),
 		"last_commit": last_commit.duplicate(true),
@@ -276,9 +282,19 @@ func _minimal_item_record(item: Variant) -> Dictionary:
 		"instance_id": str(source.get("instance_id", source.get("item_id", "item"))),
 		"item_id": str(source.get("item_id", source.get("id", "item"))),
 		"display_name": str(source.get("display_name", source.get("item_id", "item"))),
+		"short_description": str(source.get("short_description", "")),
+		"item_type": str(source.get("item_type", "collectible")),
+		"main_type": str(source.get("main_type", source.get("item_type", "collectible"))),
 		"rarity": str(source.get("rarity", "common")),
+		"collectible_level": int(source.get("collectible_level", 0)),
+		"weight": maxi(0, int(source.get("weight", 0))),
 		"base_value": maxi(0, int(source.get("base_value", source.get("value", 0)))),
 		"source": str(source.get("source", "settlement")),
+		"source_label": str(source.get("source_label", source.get("source", "settlement"))),
+		"tags": _array_from(source.get("tags", [])),
+		"can_consume": bool(source.get("can_consume", false)),
+		"can_equip": bool(source.get("can_equip", false)),
+		"can_store": bool(source.get("can_store", true)),
 	}
 
 

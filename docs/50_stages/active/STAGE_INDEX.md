@@ -30,3 +30,9 @@
 | stage | lane | status | evidence | boundary |
 | --- | --- | --- | --- | --- |
 | M2 | program | implementation / validation pending | `docs/20_product/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_CONTRACT.md`; `docs/validation/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_VALIDATION.md`; `docs/handoff/HANDOFF_M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP.md` | effect-first Lua / UE parity; no full Objective / Reward / Pool; no full LongTerm / warehouse / Rule Engine; metadata dirty remains isolated |
+
+# M3 Minimum Item Pack & Drop Loop
+
+| stage | lane | status | evidence | boundary |
+| --- | --- | --- | --- | --- |
+| M3 | program | implementation / validation pending | `docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md`; `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md`; `docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md` | minimum item/drop loop; no complete warehouse/equipment, full Objective / Reward / Pool, complete Rule Engine, gameplay runtime PASS, or manual playtest PASS |

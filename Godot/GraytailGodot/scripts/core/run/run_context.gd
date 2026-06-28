@@ -55,6 +55,7 @@ var outcome: String = "Idle"
 var run_active: bool = false
 var extracted: bool = false
 var failed: bool = false
+var abandoned: bool = false
 var visited_cells: Dictionary = {}
 var explored_cells: Dictionary = {}
 var searched_cells: Dictionary = {}
@@ -121,6 +122,7 @@ func reset() -> void:
 	run_active = false
 	extracted = false
 	failed = false
+	abandoned = false
 	visited_cells.clear()
 	explored_cells.clear()
 	searched_cells.clear()
@@ -177,6 +179,7 @@ func start_run(config: Dictionary) -> void:
 	run_active = true
 	extracted = false
 	failed = false
+	abandoned = false
 	outcome = "Running"
 	last_message = RunTextCatalogScript.run_started(run_id)
 	intel_map.reveal_cell(player_pos, truth_map)
@@ -237,7 +240,7 @@ func get_current_pos() -> Vector2i:
 
 
 func can_accept_command() -> bool:
-	return run_active and not failed and not extracted and phase != &"idle" and not has_blocking_tutorial_popup()
+	return run_active and not failed and not extracted and not abandoned and phase != &"idle" and not has_blocking_tutorial_popup()
 
 
 func has_blocking_tutorial_popup() -> bool:
@@ -268,6 +271,19 @@ func complete_extract() -> void:
 	outcome = "Extracted" if mode != &"tutorial" else "Training Complete"
 	result_snapshot = build_result_snapshot()
 	result_snapshot["extracted_pending_gold"] = extracted_pending
+	result_snapshot["settlement"] = settlement
+
+
+func abandon_run(reason: String = "player_abandoned") -> void:
+	record_event(&"run_abandoned", String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"player")), "run_context", {"reason": reason, "position": player_pos})
+	var settlement := RunRuleService.settle_abandon(self, reason)
+	settlement_result = settlement.duplicate(true)
+	abandoned = true
+	run_active = false
+	phase = &"abandoned"
+	outcome = "Abandoned"
+	last_message = "Run abandoned: %s." % reason
+	result_snapshot = build_result_snapshot()
 	result_snapshot["settlement"] = settlement
 
 

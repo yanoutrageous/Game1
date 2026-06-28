@@ -67,3 +67,11 @@ G38 / G37S / G37 / G36 不声明 gameplay runtime PASS，也不声明 manual pla
 - Handoff: `docs/handoff/HANDOFF_M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP.md`
 - Validation script: `tools/validate_m2_lua_ue_effect_first_loop.ps1`
 - Headless runner: `tools/godot_m2_lua_ue_effect_first_runner.gd`
+
+## M3 Minimum Item Pack & Drop Loop
+
+- Contract: `docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md`
+- Validation: `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md`
+- Handoff: `docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md`
+- Validation script: `tools/validate_m3_minimum_item_drop_loop.ps1`
+- Headless runner: `tools/godot_m3_minimum_item_drop_loop_runner.gd`

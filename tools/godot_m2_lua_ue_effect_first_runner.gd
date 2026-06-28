@@ -74,13 +74,14 @@ func _validate_standard_context(context) -> void:
 
 func _validate_chest_reward_path(context) -> void:
 	var before_black: int = context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK)
-	var before_items: int = context.asset_ledger.get_items_by_location(RunAssetLedger.LOCATION_INVENTORY).size()
-	var chest_result: Dictionary = RunRuleServiceScript.apply_search_reward(context, Vector2i(1, 1), 2, true)
+	var chest_pos := Vector2i(1, 1)
+	var before_floor_items: int = context.asset_ledger.get_room_floor_items(chest_pos).size()
+	var chest_result: Dictionary = RunRuleServiceScript.apply_search_reward(context, chest_pos, 2, true)
 	_require_ok(chest_result, "chest search reward")
 	if context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK) <= before_black:
 		_fail("chest reward did not update black coin")
-	if context.asset_ledger.get_items_by_location(RunAssetLedger.LOCATION_INVENTORY).size() <= before_items:
-		_fail("chest reward did not add backpack item")
+	if context.asset_ledger.get_room_floor_items(chest_pos).size() <= before_floor_items:
+		_fail("chest reward did not create GroundLoot item")
 
 
 func _validate_ground_pickup_path(context, controller) -> void:
@@ -103,7 +104,7 @@ func _validate_event_effect_path(context, controller) -> void:
 	var before_hp: int = context.hp
 	var before_pressure: int = context.pressure
 	var before_black: int = context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK)
-	var before_items: int = context.asset_ledger.get_items_by_location(RunAssetLedger.LOCATION_INVENTORY).size()
+	var before_floor_items: int = context.asset_ledger.get_room_floor_items(context.get_current_pos()).size()
 	var event_item := RunContentCatalogScript.item_def("m2_runner_event_item", "M2 Runner Event Item", &"runner_test", 2, &"common", ["m2_runner", "event"])
 	var result: Dictionary = RunRuleServiceScript.apply_event_rule_result(context, &"trap", {
 		"ok": true,
@@ -122,8 +123,8 @@ func _validate_event_effect_path(context, controller) -> void:
 		_fail("event protocol pressure did not change")
 	if context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK) <= before_black:
 		_fail("event black coin did not change")
-	if context.asset_ledger.get_items_by_location(RunAssetLedger.LOCATION_INVENTORY).size() <= before_items:
-		_fail("event item effect did not add backpack item")
+	if context.asset_ledger.get_room_floor_items(context.get_current_pos()).size() <= before_floor_items:
+		_fail("event item effect did not create GroundLoot item")
 
 
 func _validate_combat_reward_path(context, controller) -> void:
@@ -132,10 +133,13 @@ func _validate_combat_reward_path(context, controller) -> void:
 	if context.hp != before_hp - 2:
 		_fail("combat damage did not use HP effect path")
 	var before_black: int = context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK)
+	var before_floor_items: int = context.asset_ledger.get_room_floor_items(context.get_current_pos()).size()
 	var result: Dictionary = RunRuleServiceScript.apply_combat_reward(context, context.get_current_pos(), 12)
 	_require_ok(result, "combat reward")
 	if context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK) <= before_black:
 		_fail("combat reward did not update black coin")
+	if context.asset_ledger.get_room_floor_items(context.get_current_pos()).size() <= before_floor_items:
+		_fail("combat reward did not create GroundLoot item")
 
 
 func _validate_mine_effect_path(context, controller) -> void:

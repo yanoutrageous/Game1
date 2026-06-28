@@ -1,3 +1,14 @@
+# M3 Open Decisions Update
+
+M3 minimum item pack / drop loop open decisions:
+
+- `OD-M3-001`: final unique collectible acquisition and duplicate policy remains deferred; M3 blocks ordinary unique drops.
+- `OD-M3-002`: complete warehouse management, sale UI, filtering, and equipment loadout remain deferred to a later audited gate.
+- `OD-M3-003`: abandon settlement safe_yield conversion remains undecided; M3 records it as pending future rule and does not grant long-term gold.
+- `OD-M3-004`: Objective / Reward / Pool integration remains deferred; M3 only provides item/drop/settlement data usable by later systems.
+- `OD-M3-005`: manual playtest PASS remains unclaimed until a visible audit/playtest gate is run.
+- Any M2 / G38 / older decision wording below this update is historical unless explicitly reopened.
+
 # G38 Open Decisions Update
 
 G38-R2 runtime architecture finalization decisions:

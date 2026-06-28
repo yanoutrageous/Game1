@@ -81,6 +81,10 @@ func fail_run(reason: String = "forced_failure") -> Dictionary:
 	return _with_actor(state_machine.fail_run(context, reason))
 
 
+func abandon_run(reason: String = "player_abandoned") -> Dictionary:
+	return _with_actor(state_machine.abandon_run(context, reason))
+
+
 func debug_force_fail(reason: String = "debug_forced_failure") -> Dictionary:
 	var result: Dictionary = fail_run(reason)
 	if context != null:

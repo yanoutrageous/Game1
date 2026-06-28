@@ -211,7 +211,7 @@ static func right_summary_preview(config: Dictionary) -> Dictionary:
 			"购买但未带入：%s" % _join_array(loadout.get("purchased_not_carried", []), "无"),
 			"已配置物品数量：%d" % int(loadout.get("configured_item_count", 0)),
 			"背包容量：%d / %d" % [int(config.get("bag_used", 0)), int(config.get("bag_limit", 12))],
-			"本局携带消耗品将在本局结束后默认清空。",
+			"未使用消耗品按结算结果处理：success warehouse / failure salvage candidate。",
 		],
 		"effect": [
 			"装备效果 preview：只显示效果类型，不显示正式数值。",
@@ -226,7 +226,7 @@ static func right_summary_preview(config: Dictionary) -> Dictionary:
 		"risk": [
 			"真实地图未生成；Boss / 撤离点 / 房间内容未探明。",
 			"高风险目标失败可能失去目标奖励；本轮不实现奖励系统。",
-			"本局携带消耗品将在本局结束后默认清空。",
+			"未使用消耗品按结算结果处理：success warehouse / failure salvage candidate。",
 			"放弃不等于成功撤离；真实放弃结算未接入。",
 			"作业许可 / 保险 / 托运：%s" % String(permission_interface.get("state_label", "后续接口 / locked state")),
 			"真实资产 / 存档 / 结算未接入，不会写入仓库或历史。",
@@ -332,7 +332,7 @@ static func _warehouse_attendance_preview() -> Dictionary:
 		"label": "仓库出勤 preview",
 		"main_item_types": ["装备", "消耗品", "藏品", "特殊物"],
 		"metadata_only": ["唯一", "外观", "抽奖物", "任务物", "委托物", "样本", "未判断价值", "图鉴条目", "研究解锁"],
-		"consumable_note": "本局携带消耗品将在本局结束后默认清空。",
+		"consumable_note": "未使用消耗品按结算结果处理：success warehouse / failure salvage candidate。",
 		"allowed_draft_actions": ["加入出勤", "移出出勤", "穿戴", "卸下", "出售 preview", "查看详情", "只读跳转"],
 		"blocked_actions": ["真实出售", "批量整理", "真实仓库写入"],
 		"display_only": true,
@@ -382,7 +382,7 @@ static func _loadout_preview() -> Dictionary:
 		"configured_item_count": 4,
 		"bag_summary": "背包容量 3 / 12",
 		"preset_note": "预设、清空、重置只保留 preview 口径。",
-		"consumable_note": "本局携带消耗品将在本局结束后默认清空。",
+		"consumable_note": "未使用消耗品按结算结果处理：success warehouse / failure salvage candidate。",
 		"display_only": true,
 		"read_only": true,
 	}

@@ -1,3 +1,14 @@
+# M3 Minimum Item Pack & Drop Loop Status
+
+M3 is the current implementation slice on branch `godot/m3-minimum-item-drop-loop`.
+
+- Scope: minimum item taxonomy/content pack, GroundLoot-first rewards, backpack pickup/drop/repick, consumable use, trader safe_yield, and success/failure/abandon settlement boundaries.
+- Product contract: `docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md`.
+- Godot scope: `M3ItemCatalog`, `RunContentCatalog`, `ContentDefRegistry`, `RunAssetLedger`, `RunAssetEffectHandler`, `RunRuleService`, `CommandBus`, `RunContext`, `RunRuntimeController`, `RunStateMachine`, `RunQueryFacade`, `RunResultBuilder`, `MetaProgressAdapter`, Inventory/GroundLoot display, and Run UI summary wording.
+- Validation target: G35/G36/G37/G37S/G38 validators, M2 validator/runner, M3 validator/runner, and Godot headless project-load/parser smoke.
+- Current validation: G35/G36/G37/G38/M2/M3 static validators PASS; G37S supplement is blocked only by its G37/G38 diff allowlist under active M3 changes; Godot project-load/parser, G37 command sequence, M2 runner, and M3 runner PASS with shutdown resource-leak warnings.
+- Not implemented: `demo_7x7`, complete warehouse, complete equipment/loadout, Objective/Reward/Pool, complete Rule Engine, gameplay runtime, manual playtest.
+
 # G38 Runtime Architecture Consolidation Finalization Status
 
 G38-R2 is the current implementation slice on branch `godot/g38-runtime-architecture-finalization`.

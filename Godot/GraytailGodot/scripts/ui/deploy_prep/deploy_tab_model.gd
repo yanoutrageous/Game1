@@ -90,7 +90,7 @@ static func build_tabs() -> Array:
 			[
 				_card("field_knife", "野外短刀 / 已拥有", "装备", "owned", "可出勤、可装备 preview。", "只显示装备 / 卸下 intent，不做真实装备 mutation。", ["主类型：装备", "状态：可出勤 / 已配置", "动作：装备 / 卸下 preview"], ["查看出勤配置"], FILTER_WAREHOUSE_EQUIPMENT),
 				_card("patched_vest", "补丁防护背心 / 已配置", "装备", "configured", "防护位装备 preview。", "已配置状态只存在于 DeployPrep draft，不写 AssetLedger。", ["主类型：装备", "状态：已配置", "出售：需先移出出勤"], ["移出出勤 preview"], FILTER_WAREHOUSE_EQUIPMENT),
-				_card("first_aid", "简易急救包 / 消耗品", "消耗品", "owned", "可加入出勤 draft。", "本局携带消耗品将在本局结束后默认清空。", ["主类型：消耗品", "数量：2", "状态：可出勤 / 可出售"], ["加入出勤 preview"], FILTER_WAREHOUSE_CONSUMABLE),
+				_card("first_aid", "简易急救包 / 消耗品", "消耗品", "owned", "可加入出勤 draft。", "M3 起未使用消耗品成功时进入仓库，失败时进入可抢救候选；本页仍不写真实仓库。", ["主类型：消耗品", "数量：2", "状态：可出勤 / 可出售", "结算：成功入仓 / 失败抢救候选"], ["加入出勤 preview"], FILTER_WAREHOUSE_CONSUMABLE),
 				_card("sealed_relic", "封存藏品 / 唯一", "藏品", "locked", "唯一是藏品稀有档，不是主类型。", "唯一藏品不可通过常规出售逻辑出售；只保留收藏 / 图鉴关联。", ["主类型：藏品", "rarity：唯一", "出售：禁止"], ["前往收藏说明"], FILTER_WAREHOUSE_COLLECTIBLE),
 				_card("commission_token", "委托标记物 / 特殊物", "特殊物", "owned", "委托来源用 tag/source 表示。", "特殊物可作为目标条件提示，不实现真实目标系统。", ["主类型：特殊物", "source：委托", "目标相关：是"], ["前往目标"], FILTER_WAREHOUSE_SPECIAL),
 				_card("warehouse_status", "仓库状态摘要", "状态", "preview", "ownership-first 状态汇总。", "展示可出勤、可出售、已配置、锁定、新获得等标签，不执行任何仓库写入。", ["可出勤：3", "可出售：2", "已配置：2", "未判断：1"], ["查看右侧摘要"], FILTER_WAREHOUSE_STATUS),
@@ -171,7 +171,7 @@ static func build_tabs() -> Array:
 				_card("loadout_map_summary", "地图摘要", "配置", "preview", "地图 / 难度 / 区域汇总。", "真实地图内容仍在开始探索后生成。", ["地图：常规扫雷", "难度：普通", "区域：灰尾外围"], ["返回地图"], FILTER_LOADOUT_MAP),
 				_card("loadout_objective_summary", "目标摘要", "配置", "preview", "已选目标 / 委托汇总。", "只显示本局目标 draft，不写长期目标系统。", ["目标：回收补给箱", "匹配：可用", "奖励类型：资源 / 藏品引用"], ["返回目标"], FILTER_LOADOUT_OBJECTIVE),
 				_card("loadout_equipment_summary", "装备摘要", "配置", "preview", "已带装备汇总。", "装备合法性只在 preview 中显示，不执行真实装备锁定。", ["野外短刀", "补丁防护背心", "冲突：无"], ["返回仓库"], FILTER_LOADOUT_EQUIPMENT),
-				_card("loadout_consumable_summary", "消耗品摘要", "配置", "preview", "已带消耗品和地图拓扑说明。", "消耗品本局结束默认清空；探测相邻房间由地图拓扑解释。", ["简易急救包 x2", "照明棒组 x1", "拓扑：常规扫雷 8 邻域说明"], ["返回仓库"], FILTER_LOADOUT_CONSUMABLE),
+				_card("loadout_consumable_summary", "消耗品摘要", "配置", "preview", "已带消耗品和地图拓扑说明。", "未使用消耗品按结算结果处理：成功入仓，失败进入 salvage candidate。", ["简易急救包 x2", "照明棒组 x1", "拓扑：常规扫雷 8 邻域说明", "结算：成功入仓 / 失败抢救候选"], ["返回仓库"], FILTER_LOADOUT_CONSUMABLE),
 				_card("loadout_special_summary", "特殊物摘要", "配置", "preview", "特殊物 / 委托物引用。", "只显示目标相关状态，不写仓库或目标进度。", ["委托标记物", "目标相关：是", "状态：已配置"], ["返回目标"], FILTER_LOADOUT_SPECIAL),
 				_card("loadout_bag_capacity", "背包容量", "配置", "preview", "统一使用背包容量口径。", "不新增补给容量；购买但未带入的物品不计入本局配置。", ["背包容量：3 / 12", "购买未带入：1", "超限：否"], ["查看风险"], FILTER_LOADOUT_BAG),
 				_card("loadout_validity", "配置合法性", "配置", "preview", "开始探索前合法性摘要。", "只做 display-only 校验提示，不启动真实 RunFlow。", ["地图：已选", "目标：可用", "不可出勤物：无", "需要二次确认：否"], ["查看摘要"], FILTER_LOADOUT_VALIDITY),

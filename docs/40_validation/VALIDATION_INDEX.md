@@ -39,3 +39,9 @@
 | stage | evidence | boundary |
 | --- | --- | --- |
 | M2 | `docs/validation/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_VALIDATION.md` | Lua / UE effect-first playable loop alignment; no full Objective / Reward / Pool, LongTerm, warehouse, Rule Engine, gameplay runtime PASS, or manual playtest PASS unless separately validated |
+
+# M3 Minimum Item Pack & Drop Loop
+
+| stage | evidence | boundary |
+| --- | --- | --- |
+| M3 | `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md` | GroundLoot-first item/drop loop, consumables, income layers, settlement boundaries; no full warehouse/equipment/Objective/Reward/Pool/Rule Engine or manual playtest PASS |

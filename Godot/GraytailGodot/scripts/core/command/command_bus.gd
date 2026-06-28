@@ -14,6 +14,7 @@ const REJECTION_NO_EXTRACT_REQUEST := "no_extract_request"
 const EncounterContractScript := preload("res://scripts/core/run/encounter/encounter_contract.gd")
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
 const RunEffectApplierScript := preload("res://scripts/core/run/run_effect_applier.gd")
+const M3ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
 
 var context: RunContext
 var runtime_controller
@@ -70,6 +71,10 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = pickup_ground_item(String(command_payload.get("instance_id", "")))
 		&"drop_inventory_item":
 			action_result = drop_inventory_item(String(command_payload.get("instance_id", "")))
+		&"use_consumable", &"use_item":
+			action_result = use_consumable(String(command_payload.get("instance_id", "")))
+		&"abandon_run":
+			action_result = abandon_run(String(command_payload.get("reason", "player_abandoned")))
 		&"request_extract":
 			action_result = request_extract()
 		&"confirm_extract":
@@ -307,6 +312,31 @@ func drop_inventory_item(instance_id: String = "") -> Dictionary:
 	return result
 
 
+func use_consumable(instance_id: String = "") -> Dictionary:
+	if not _can_accept_command():
+		return _blocked(&"blocked", "command_blocked")
+	var result: Dictionary = RunRuleService.use_consumable(context, instance_id)
+	context.last_reward = result.duplicate(true)
+	if bool(result.get("ok", false)):
+		context.blocked_reason = ""
+		context.last_message = String(result.get("message", "Consumable used."))
+	else:
+		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
+		context.last_message = "Use blocked: %s." % context.blocked_reason
+	_emit_state()
+	return result
+
+
+func abandon_run(reason: String = "player_abandoned") -> Dictionary:
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.abandon_run(reason)
+	_emit_state()
+	if bool(result.get("ok", false)) and context != null and context.result_snapshot.has("outcome"):
+		result_available.emit(context.result_snapshot)
+	return result
+
+
 func teleport_to_explored(pos: Vector2i) -> Dictionary:
 	if not _can_accept_command():
 		return _blocked(&"blocked", "command_blocked")
@@ -445,18 +475,8 @@ func debug_spawn_test_item(preferred_location: StringName) -> Dictionary:
 	var location := preferred_location
 	if not (location in [RunAssetLedger.LOCATION_ROOM_FLOOR, RunAssetLedger.LOCATION_INVENTORY]):
 		location = RunAssetLedger.LOCATION_ROOM_FLOOR
-	var item_def := {
-		"item_id": "m1_debug_relic",
-		"display_name": "M1 Debug Relic",
-		"item_type": &"debug_test_item",
-		"rarity": &"rare",
-		"weight": 1,
-		"base_value": 25,
-		"tags": [&"debug", &"m1"],
-		"can_sell": false,
-		"can_store": true,
-		"source": "m1_debug_panel",
-	}
+	var item_def := M3ItemCatalogScript.debug_item()
+	item_def["source"] = "debug_command"
 	var result: Dictionary = context.asset_ledger.add_reward_items([item_def], location, context.get_current_pos(), "debug_command")
 	context.asset_ledger.sync_compat_fields(context)
 	context.last_reward = result.duplicate(true)

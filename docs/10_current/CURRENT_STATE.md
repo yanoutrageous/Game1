@@ -70,3 +70,15 @@ Status: implementation in progress on `godot/m2-lua-ue-effect-first-playable-loo
 Current M2 scope: align the existing M1 playable loop to Lua / UE prototype effect-first behavior. DeployPrep starts the existing `standard_10x10` route through RunStartConfig / route adapter; RunScene keeps TruthMap / IntelMap separation; HP / pressure / room state / rewards route through effect and ledger boundaries; RunResult is SettlementInput; LongTerm consumes MetaProgress and latest result display-only.
 
 Non-goals: no `demo_7x7`, no full Objective / Reward / Pool, no full LongTerm, no full warehouse, no full equipment/consumable system, no full Rule Engine, no metadata/resource import.
+
+## M3 Minimum Item Pack & Drop Loop
+
+Status: implementation in progress on `godot/m3-minimum-item-drop-loop`.
+
+Current M3 scope: minimum item taxonomy and content pack, GroundLoot-first reward placement, backpack pickup/drop/repick, consumable use, three income layers (`run_black_coin`, `safe_yield`, `long_term_gold`), success/failure/abandon settlement boundaries, and read-only UI display alignment.
+
+Contract: `docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md`.
+Validation: `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md`.
+Handoff: `docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md`.
+
+Non-goals: no `demo_7x7`, no complete warehouse, no complete equipment/loadout system, no full Objective / Reward / Pool, no complete Rule Engine, no project metadata/resource import, no gameplay runtime PASS, and no manual playtest PASS.

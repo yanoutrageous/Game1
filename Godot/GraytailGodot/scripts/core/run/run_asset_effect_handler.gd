@@ -10,9 +10,11 @@ const EFFECT_ADD_REWARD_ITEMS := &"asset.add_reward_items"
 const EFFECT_ADD_STATUS_EFFECT := &"asset.add_status_effect"
 const EFFECT_PICKUP_GROUND_ITEM := &"asset.pickup_ground_item"
 const EFFECT_DROP_INVENTORY_ITEM := &"asset.drop_inventory_item"
+const EFFECT_CONSUME_INVENTORY_ITEM := &"asset.consume_inventory_item"
 const EFFECT_SELL_BEST_INVENTORY_ITEM := &"asset.sell_best_inventory_item"
 const EFFECT_SETTLE_SUCCESS := &"asset.settle_success"
 const EFFECT_SETTLE_FAILURE := &"asset.settle_failure"
+const EFFECT_SETTLE_ABANDON := &"asset.settle_abandon"
 
 
 static func apply_effects(context: RunContext, effects: Array) -> Dictionary:
@@ -65,12 +67,16 @@ static func apply_effect(context: RunContext, effect: Dictionary) -> Dictionary:
 			result = _with_effect_type(context.asset_ledger.pickup_ground_item(String(payload.get("instance_id", "")), payload.get("room_pos", context.get_current_pos())), effect_type)
 		EFFECT_DROP_INVENTORY_ITEM:
 			result = _with_effect_type(context.asset_ledger.drop_inventory_item(String(payload.get("instance_id", "")), payload.get("room_pos", context.get_current_pos())), effect_type)
+		EFFECT_CONSUME_INVENTORY_ITEM:
+			result = _with_effect_type(context.asset_ledger.consume_inventory_item(String(payload.get("instance_id", ""))), effect_type)
 		EFFECT_SELL_BEST_INVENTORY_ITEM:
 			result = _with_effect_type(context.asset_ledger.sell_best_inventory_item(), effect_type)
 		EFFECT_SETTLE_SUCCESS:
 			result = _with_effect_type(context.asset_ledger.settle_success(), effect_type, true)
 		EFFECT_SETTLE_FAILURE:
 			result = _with_effect_type(context.asset_ledger.settle_failure(), effect_type, true)
+		EFFECT_SETTLE_ABANDON:
+			result = _with_effect_type(context.asset_ledger.settle_abandon(String(payload.get("reason", "abandoned"))), effect_type, true)
 		_:
 			result = {"ok": false, "status": &"unknown_effect", "reason": "unknown_asset_effect", "effect_type": effect_type}
 	var after: Dictionary = _asset_summary(context)
@@ -120,7 +126,7 @@ static func _record_events_for_effect(context: RunContext, effect: Dictionary, e
 			context.record_event(RunEventLog.EVENT_ITEM_PICKED_UP, command_id, actor_id, source, {"item": _dictionary_from_variant(result.get("item", {}))})
 		EFFECT_DROP_INVENTORY_ITEM:
 			context.record_event(RunEventLog.EVENT_ITEM_DROPPED, command_id, actor_id, source, {"item": _dictionary_from_variant(result.get("item", {}))})
-		EFFECT_SETTLE_SUCCESS, EFFECT_SETTLE_FAILURE:
+		EFFECT_SETTLE_SUCCESS, EFFECT_SETTLE_FAILURE, EFFECT_SETTLE_ABANDON:
 			context.record_event(RunEventLog.EVENT_SETTLEMENT_COMPLETED, command_id, actor_id, source, {"outcome": result.get("outcome", ""), "settlement": result.duplicate(true)})
 
 
@@ -149,7 +155,9 @@ static func _currency_delta_for_effect(effect_type: StringName, payload: Diction
 		EFFECT_SETTLE_SUCCESS:
 			return _dictionary_from_variant(result.get("currency_delta", {}))
 		EFFECT_SETTLE_FAILURE:
-			return {"black_coin": -int(result.get("black_coin_lost", 0)), "gold_coin": 0}
+			return {"black_coin": -int(result.get("black_coin_lost", 0)), "safe_yield": int(result.get("safe_yield_retained", 0)), "long_term_gold": int(result.get("long_term_gold_gained", 0))}
+		EFFECT_SETTLE_ABANDON:
+			return {"black_coin": -int(result.get("black_coin_lost", 0)), "safe_yield": 0, "long_term_gold": 0}
 	return {}
 
 
@@ -168,6 +176,10 @@ static func _item_moves_for_effect(effect_type: StringName, result: Dictionary) 
 			var drop_item: Dictionary = result.get("item", {})
 			if not drop_item.is_empty():
 				moves.append({"instance_id": drop_item.get("instance_id", ""), "from": RunAssetLedger.LOCATION_INVENTORY, "to": RunAssetLedger.LOCATION_ROOM_FLOOR})
+		EFFECT_CONSUME_INVENTORY_ITEM:
+			var consumed_item: Dictionary = result.get("item", {})
+			if not consumed_item.is_empty():
+				moves.append({"instance_id": consumed_item.get("instance_id", ""), "from": RunAssetLedger.LOCATION_INVENTORY, "to": RunAssetLedger.LOCATION_LOST})
 		EFFECT_SELL_BEST_INVENTORY_ITEM:
 			var sold_item: Dictionary = result.get("sold_item", {})
 			if not sold_item.is_empty():
@@ -180,6 +192,11 @@ static func _item_moves_for_effect(effect_type: StringName, result: Dictionary) 
 		EFFECT_SETTLE_FAILURE:
 			for item in result.get("salvaged_items", []):
 				moves.append({"instance_id": item.get("instance_id", ""), "to": RunAssetLedger.LOCATION_WAREHOUSE})
+			for item in result.get("lost_items", []):
+				moves.append({"instance_id": item.get("instance_id", ""), "to": RunAssetLedger.LOCATION_LOST})
+			for item in result.get("room_floor_lost_items", []):
+				moves.append({"instance_id": item.get("instance_id", ""), "from": RunAssetLedger.LOCATION_ROOM_FLOOR, "to": RunAssetLedger.LOCATION_LOST})
+		EFFECT_SETTLE_ABANDON:
 			for item in result.get("lost_items", []):
 				moves.append({"instance_id": item.get("instance_id", ""), "to": RunAssetLedger.LOCATION_LOST})
 			for item in result.get("room_floor_lost_items", []):
