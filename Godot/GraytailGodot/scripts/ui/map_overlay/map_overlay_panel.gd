@@ -2,6 +2,7 @@ extends Control
 class_name MapOverlayPanel
 
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 
 signal cell_action_requested(marker: Dictionary)
 
@@ -28,9 +29,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var actual_size: Vector2i = layout_profile.get("actual_viewport_size", Vector2i(int(supported_size.x), int(supported_size.y)))
 	var width: float = float(max(1, actual_size.x))
 	var height: float = float(max(1, actual_size.y))
-	marker_size = Vector2(44, 44) if is_low else (Vector2(58, 58) if is_high else Vector2(50, 50))
-	title_font_size = 18 if is_low else (22 if is_high else 20)
-	footer_font_size = 12 if is_low else (15 if is_high else 13)
+	title_font_size = 16 if is_low else (20 if is_high else 18)
+	footer_font_size = 11 if is_low else (13 if is_high else 12)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	offset_left = 0.0
 	offset_top = 0.0
@@ -38,10 +38,14 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	offset_bottom = 0.0
 	var panel := get_node_or_null("Panel") as Control
 	if panel != null:
-		var panel_width: float = min(width - 48.0, 760.0 if is_low else (940.0 if is_high else 840.0))
-		var panel_height: float = min(height - 48.0, 620.0 if is_low else (780.0 if is_high else 680.0))
+		var left_rail_width: float = UILayerContractScript.run_left_width(layout_profile)
+		var panel_width: float = max(240.0, left_rail_width - 28.0)
+		var panel_height: float = min(height * 0.52, 346.0 if is_low else (430.0 if is_high else 380.0))
+		var cell_size: float = floor((panel_width - 24.0) / 10.0)
+		marker_size = Vector2(cell_size, cell_size)
 		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		_set_rect(panel, Rect2((width - panel_width) * 0.5, (height - panel_height) * 0.5, panel_width, panel_height))
+		_set_rect(panel, Rect2(14.0, 10.0, panel_width, panel_height))
+		_apply_overlay_panel_style(panel)
 	_rebuild_grid()
 
 
@@ -64,7 +68,23 @@ func toggle_overlay() -> void:
 
 func _ready() -> void:
 	visible = false
+	_apply_layer_order()
 	_rebuild_grid()
+
+
+func _apply_layer_order() -> void:
+	z_as_relative = true
+	z_index = 0
+	var dimmer := get_node_or_null("Dimmer") as CanvasItem
+	if dimmer != null:
+		dimmer.z_as_relative = true
+		dimmer.z_index = 0
+		if dimmer is Control:
+			(dimmer as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var panel := get_node_or_null("Panel") as CanvasItem
+	if panel != null:
+		panel.z_as_relative = true
+		panel.z_index = 10
 
 
 func _input(event: InputEvent) -> void:
@@ -82,6 +102,8 @@ func _rebuild_grid() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
+	grid.add_theme_constant_override("h_separation", 2)
+	grid.add_theme_constant_override("v_separation", 2)
 
 	for child in grid.get_children():
 		child.queue_free()
@@ -89,10 +111,10 @@ func _rebuild_grid() -> void:
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		title.add_theme_font_size_override("font_size", title_font_size)
-		title.text = "展开地图 / 区域扫描"
+		title.text = "扫描图"
 	if detail != null:
 		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
-		detail.add_theme_font_size_override("font_size", 13 if footer_font_size <= 13 else 14)
+		detail.add_theme_font_size_override("font_size", 11 if footer_font_size <= 12 else 12)
 		detail.add_theme_constant_override("line_spacing", 2)
 		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		detail.text = _selected_detail_text()
@@ -100,7 +122,7 @@ func _rebuild_grid() -> void:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		footer.add_theme_font_size_override("font_size", footer_font_size)
 		footer.add_theme_constant_override("line_spacing", 2)
-		footer.text = "左键选中格子；未知格可标记风险，已探索安全格可尝试回传；Esc 关闭。"
+		footer.text = "Esc 关闭"
 
 	if footer != null and selected_feedback_text != "":
 		footer.text += "\n" + selected_feedback_text
@@ -121,8 +143,10 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	button.custom_minimum_size = marker_size
 	button.focus_mode = Control.FOCUS_NONE
 	button.text = String(marker.get("label", "?"))
-	button.tooltip_text = String(marker.get("detail_text", marker.get("tooltip", "cell")))
+	button.tooltip_text = ""
 	button.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
+	button.add_theme_font_size_override("font_size", maxi(10, int(marker_size.x * 0.45)))
+	_apply_marker_button_style(button, theme_key)
 	if asset_ref is Texture2D:
 		button.icon = asset_ref
 		button.expand_icon = false
@@ -137,6 +161,50 @@ func _set_rect(control: Control, rect: Rect2) -> void:
 	control.offset_top = rect.position.y
 	control.offset_right = rect.position.x + rect.size.x
 	control.offset_bottom = rect.position.y + rect.size.y
+
+
+func _apply_overlay_panel_style(control: Control) -> void:
+	if not (control is PanelContainer):
+		return
+	var panel := control as PanelContainer
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.006, 0.014, 0.016, 0.96)
+	style.border_color = PresentationTheme.color_for_key(&"ui.accent")
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 3
+	style.corner_radius_top_right = 3
+	style.corner_radius_bottom_left = 3
+	style.corner_radius_bottom_right = 3
+	style.content_margin_left = 8
+	style.content_margin_top = 6
+	style.content_margin_right = 8
+	style.content_margin_bottom = 6
+	panel.add_theme_stylebox_override("panel", style)
+
+
+func _apply_marker_button_style(button: Button, theme_key: StringName) -> void:
+	var border := PresentationTheme.color_for_key(theme_key)
+	button.add_theme_stylebox_override("normal", _marker_style(Color(0.018, 0.026, 0.030, 0.92), border, 1))
+	button.add_theme_stylebox_override("hover", _marker_style(Color(0.038, 0.054, 0.060, 0.98), border, 1))
+	button.add_theme_stylebox_override("pressed", _marker_style(Color(0.010, 0.020, 0.024, 1.0), border, 2))
+
+
+func _marker_style(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.border_width_left = border_width
+	style.border_width_top = border_width
+	style.border_width_right = border_width
+	style.border_width_bottom = border_width
+	style.corner_radius_top_left = 2
+	style.corner_radius_top_right = 2
+	style.corner_radius_bottom_left = 2
+	style.corner_radius_bottom_right = 2
+	return style
 
 
 func _event_matches_key(event: InputEvent, keycodes: Array) -> bool:
@@ -164,7 +232,7 @@ func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 
 
 func show_open_feedback(source: StringName) -> void:
-	selected_feedback_text = "扫描记录：已打开大地图。先选格子查看状态，再决定标记或回传。"
+	selected_feedback_text = "地图已展开。"
 	_rebuild_grid()
 
 
@@ -184,7 +252,7 @@ func _ensure_detail_label() -> Label:
 		return detail
 	detail = Label.new()
 	detail.name = "Detail"
-	detail.custom_minimum_size = Vector2(0, 86)
+	detail.custom_minimum_size = Vector2(0, 34)
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(detail)
 	var grid := get_node_or_null("Panel/Content/Grid")
@@ -195,5 +263,5 @@ func _ensure_detail_label() -> Label:
 
 func _selected_detail_text() -> String:
 	if selected_marker.is_empty():
-		return "选中格详情：点击任意格子查看公开状态、风险标记和可用行动。"
+		return "点击格子查看状态。"
 	return String(selected_marker.get("detail_text", "选中格详情不可用。"))

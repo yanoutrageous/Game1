@@ -4,7 +4,9 @@ class_name RunSurface
 const HUDScene := preload("res://scenes/ui/hud/hud.tscn")
 const MiniMapScene := preload("res://scenes/ui/minimap/minimap_panel.tscn")
 const PresentationTheme := preload("res://scripts/presentation/presentation_theme.gd")
+const PresentationMapping := preload("res://scripts/presentation/presentation_mapping.gd")
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
@@ -29,6 +31,7 @@ var encounter_backdrop: PanelContainer
 var right_backdrop: PanelContainer
 var bottom_backdrop: PanelContainer
 var resource_backdrop: PanelContainer
+var room_background_layer: TextureRect
 var scanner_text_mask: PanelContainer
 var room_text_mask: PanelContainer
 var threat_mask: PanelContainer
@@ -40,6 +43,7 @@ var scanner_glow_layer: ColorRect
 var room_glow_layer: ColorRect
 var protocol_glow_layer: ColorRect
 var bottom_key_glow_layer: ColorRect
+var right_game_fill_layer: ColorRect
 var scanner_title_label: Label
 var scanner_summary_label: Label
 var scanner_legend_label: Label
@@ -56,6 +60,7 @@ var right_title_label: Label
 var right_body_label: Label
 var event_label: Label
 var reward_label: Label
+var command_feedback_art: TextureRect
 var command_feedback_label: Label
 var layout_label: Label
 var action_hint_label: Label
@@ -64,6 +69,17 @@ var action_bar: HBoxContainer
 var action_buttons: Dictionary = {}
 var encounter_option_buttons: Array[Button] = []
 var built := false
+
+const LAYER_ROOM_BACKGROUND := 0
+const LAYER_SCENE_TINT := 10
+const LAYER_STRUCTURAL_PANEL := 30
+const LAYER_PANEL_TEXTURE := 36
+const LAYER_CONTENT_MASK := 44
+const LAYER_CONTENT := 60
+const LAYER_INTERACTION := 78
+const LAYER_BOTTOM_BAR := 90
+const LAYER_OVERLAY := 120
+const LAYER_MODAL := 150
 
 
 func build() -> void:
@@ -77,7 +93,9 @@ func build() -> void:
 	z_index = 180
 
 	left_backdrop = _add_panel("RunScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
-	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.025, 0.045, 0.05, 0.78), PresentationTheme.color_for_key(&"mini.normal"))
+	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"))
+	center_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"), 1))
+	room_background_layer = _add_texture_rect_from_ref("RunRoomBackgroundFill", _room_background_ref(&"Normal"), 0.88)
 	encounter_backdrop = _add_panel("RunEncounterSlot", Color(0.018, 0.034, 0.038, 0.88), PresentationTheme.color_for_key(&"ui.warning"))
 	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
@@ -95,8 +113,9 @@ func build() -> void:
 	room_glow_layer = _add_color_layer("RunRoomFocusGlow", Color(0.58, 0.93, 0.76, 0.07))
 	protocol_glow_layer = _add_color_layer("RunProtocolWarningGlow", Color(0.94, 0.70, 0.28, 0.08))
 	bottom_key_glow_layer = _add_color_layer("RunBottomKeyGlow", Color(0.58, 0.93, 0.76, 0.06))
+	right_game_fill_layer = _add_color_layer("RunRightGameAreaFill", Color(0.012, 0.020, 0.022, 0.78))
 
-	scanner_title_label = _add_label("RunScannerTitle", "扫描器", 18, PresentationTheme.color_for_key(&"ui.accent"))
+	scanner_title_label = _add_label("RunScannerTitle", "小地图", 18, PresentationTheme.color_for_key(&"ui.accent"))
 	scanner_summary_label = _add_label("RunScannerSummary", "扫描器：等待数据", 13, PresentationTheme.text_color())
 	scanner_legend_label = _add_label("RunScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
@@ -104,12 +123,14 @@ func build() -> void:
 
 	minimap_panel = MiniMapScene.instantiate() as MiniMapPanel
 	minimap_panel.name = "RunScannerMiniMap"
+	minimap_panel.clip_contents = true
 	minimap_panel.open_map_requested.connect(func() -> void: map_requested.emit(&"surface_minimap"))
 	add_child(minimap_panel)
 
 	room_title_label = _add_label("RunRoomTitle", "当前房间", 22, PresentationTheme.color_for_key(&"ui.accent"))
 	room_body_label = _add_label("RunRoomBody", "等待探索快照。", 13, PresentationTheme.text_color())
 	objective_label = _add_label("RunObjectiveLine", "目标：等待输入。", 13, PresentationTheme.color_for_key(&"ui.warning"))
+	objective_label.visible = false
 	player_tag_label = _add_label("RunPlayerTag", "回收员", 12, PresentationTheme.color_for_key(&"ui.accent"))
 	player_tag_label.z_as_relative = false
 	player_tag_label.z_index = 421
@@ -125,10 +146,13 @@ func build() -> void:
 
 	resource_label = _add_label("RunResourceSummary", "资源：等待数据", 13, PresentationTheme.text_color())
 
-	right_title_label = _add_label("RunProtocolTitle", "威胁 / 事件 / 奖励", 18, PresentationTheme.color_for_key(&"ui.warning"))
+	right_title_label = _add_label("RunProtocolTitle", "协议状态", 18, PresentationTheme.color_for_key(&"ui.warning"))
 	right_body_label = _add_label("RunProtocolBody", "协议：--\n压力：--\n危险：--", 13, PresentationTheme.text_color())
 	event_label = _add_label("RunEventStatus", "事件：无待处理事件。", 13, PresentationTheme.text_color())
 	reward_label = _add_label("RunRewardSummary", "奖励：等待记录。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	reward_label.visible = false
+	reward_mask.visible = false
+	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art09ManifestAssetMappingScript.feedback_bar_ref(&"neutral"), 0.86)
 	command_feedback_label = _add_label("RunCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
 	layout_label = _add_label("RunLayoutProfileStatus", "", 11, PresentationTheme.color_for_key(&"ui.muted"))
 	layout_label.visible = false
@@ -155,39 +179,43 @@ func build() -> void:
 	feedback_slot = _add_slot("RunFeedbackSlot")
 	overlay_slot = _add_slot("RunOverlaySlot")
 	modal_slot = _add_slot("RunModalSlot")
+	_apply_layer_order()
 
 
 func apply_surface_model(model: Dictionary) -> void:
 	if not built:
 		build()
-	scanner_legend_label.text = "P 当前  ? 未知\n! 危险  X 撤离"
-	scanner_detail_label.text = "已公开地图 / 危险 / 撤离"
+	scanner_title_label.text = "小地图"
+	scanner_legend_label.text = "状态\n血量 / 战力 / 黑币 / 金币"
+	scanner_detail_label.text = "背包\n点击或按 Q 展开"
 	scanner_summary_label.text = _compact_line(String(model.get("scanner_summary", "扫描器：等待公开地图数据。")), 24)
 	room_title_label.text = "%s  %s" % [_compact_line(String(model.get("room_title", "当前房间")), 12), String(model.get("room_coordinate", "(0,0)"))]
 	room_body_label.text = _compact_line(String(model.get("room_summary", "等待探索快照。")), 22)
-	objective_label.text = "目标  %s" % _compact_line(String(model.get("current_objective", "继续探索。")), 18)
+	objective_label.text = ""
+	objective_label.visible = false
+	_apply_texture_ref(room_background_layer, _room_background_ref(StringName(model.get("room_type", &"Normal"))), 0.88)
 	resource_label.text = _resource_copy(model)
 	var danger_key := StringName(model.get("danger_theme_key", &"ui.warning"))
 	right_title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(danger_key, PresentationTheme.color_for_key(&"ui.warning")))
 	right_body_label.text = _threat_copy(model)
-	event_label.text = "事件\n%s" % _compact_line(String(model.get("event_summary", "无待处理事件。")), 18)
-	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", "等待记录。")), 18)
-	command_feedback_label.text = "反馈  %s" % _compact_line(String(model.get("command_feedback", "等待输入。")), 20)
+	event_label.text = "事件\n%s" % _compact_line(String(model.get("event_summary", "无待处理事件。")), 14)
+	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", "等待记录。")), 14)
+	command_feedback_label.text = _feedback_copy(String(model.get("command_feedback", "等待输入。")))
 
 	var status_text := _lines_text(model.get("status_lines", []), "", 3, 18)
 	if status_text != "":
-		right_body_label.text = "威胁\n%s" % status_text
+		right_body_label.text = "协议\n%s" % _compact_line(status_text.replace("\n", " / "), 28)
 	right_body_label.tooltip_text = "%s\n%s\n%s\n%s" % [
 		String(model.get("map_domain_summary", "")),
 		String(model.get("run_flow_summary", "")),
 		String(model.get("room_common_rule_summary", "")),
 		String(model.get("rule_effect_modifier_summary", "")),
 	]
-	event_label.text = "事件\n%s" % _compact_line(String(model.get("event_summary", event_label.text)), 18)
+	event_label.text = "事件\n%s" % _compact_line(String(model.get("event_summary", event_label.text)), 14)
 	event_label.tooltip_text = String(model.get("event_panel_summary", event_label.text))
-	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", reward_label.text)), 18)
+	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", reward_label.text)), 14)
 	reward_label.tooltip_text = String(model.get("loot_panel_summary", reward_label.text))
-	action_hint_label.text = "E 搜索  Q 背包  G 拾取  M 地图  Spc 清理  Esc 暂停"
+	action_hint_label.text = "当前交互提示"
 
 	var profile: Dictionary = model.get("layout_profile", {})
 	layout_label.text = ""
@@ -209,72 +237,85 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var width: float = float(supported_size.x)
 	var height: float = float(supported_size.y)
 	var margin: float = 14.0 if is_low else 18.0
-	var left_width: float = 292.0 if is_low else (360.0 if is_high else 320.0)
-	var right_width: float = 272.0 if is_low else (332.0 if is_high else 300.0)
-	var status_height: float = 204.0 if is_low else (244.0 if is_high else 226.0)
-	var encounter_height: float = 144.0 if is_low else (184.0 if is_high else 164.0)
-	var bottom_height: float = 58.0 if is_low else 64.0
-	var pocket_height: float = 90.0 if is_low else 98.0
-	var center_left: float = left_width + margin
+	var left_width: float = UILayerContractScript.run_left_width(profile)
+	var rail_content_left: float = margin + 12.0
+	var rail_content_width: float = left_width - rail_content_left - margin
+	var right_card_width: float = 210.0 if is_low else (270.0 if is_high else 244.0)
+	var right_card_height: float = 96.0 if is_low else (126.0 if is_high else 110.0)
+	var bottom_info_height: float = 34.0 if is_low else 40.0
+	var bottom_key_height: float = 66.0 if is_low else 72.0
+	var center_left: float = left_width + margin * 0.5
 	var center_right: float = width - margin
-	var center_width: float = max(360.0, center_right - center_left)
-	var right_left: float = width - right_width - margin
+	var center_width: float = max(520.0, center_right - center_left)
+	var right_left: float = width - right_card_width - margin
 	var right_content_left: float = right_left + margin
-	var right_content_width: float = right_width - margin * 2.0
-	var scanner_map_height: float = min(276.0 if is_low else (340.0 if is_high else 306.0), height * 0.45)
-	var scanner_legend_top: float = margin + 84.0 + scanner_map_height
-	var encounter_top: float = margin + status_height + 10.0
-	var room_info_width: float = min(center_width - right_width - margin, 560.0 if is_low else (680.0 if is_high else 620.0))
-	room_info_width = max(360.0, room_info_width)
-	var room_info_height: float = 84.0 if is_low else 94.0
-	var bottom_top: float = height - bottom_height - margin
+	var right_content_width: float = right_card_width - margin * 2.0
+	var scanner_map_height: float = min(rail_content_width, height * 0.48)
+	var scanner_stats_top: float = margin + 82.0 + scanner_map_height + 12.0
+	var backpack_top: float = scanner_stats_top + (102.0 if is_low else 118.0)
+	var room_info_width: float = min(max(340.0, center_width * 0.46), right_left - center_left - margin)
+	var room_info_height: float = 58.0 if is_low else 68.0
+	var bottom_key_top: float = height - bottom_key_height - margin
+	var bottom_info_top: float = bottom_key_top - bottom_info_height - 10.0
+	var game_area_height: float = max(360.0, bottom_key_top - margin - 4.0)
+	var encounter_width: float = 172.0 if is_low else 214.0
+	var encounter_height: float = 60.0 if is_low else 72.0
+	var encounter_left: float = min(center_left + center_width * 0.56, right_left - encounter_width - margin)
+	var encounter_top: float = max(margin + room_info_height + 24.0, height * 0.52 - encounter_height * 0.5)
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
-	_set_rect(right_backdrop, Rect2(right_left, margin, right_width, status_height))
-	_set_rect(center_backdrop, Rect2(center_left, margin, room_info_width, room_info_height))
-	_set_rect(encounter_backdrop, Rect2(right_left, encounter_top, right_width, encounter_height))
-	_set_rect(bottom_backdrop, Rect2(center_left, bottom_top, center_width, bottom_height))
-	_set_rect(resource_backdrop, Rect2(margin, height - pocket_height - margin, left_width - margin * 2.0, pocket_height))
-	_set_rect(scanner_text_mask, Rect2(margin, margin + 28.0, left_width - margin * 2.0, 52.0))
+	_set_rect(right_backdrop, Rect2(right_left, margin, right_card_width, right_card_height))
+	_set_rect(center_backdrop, Rect2(center_left, margin, center_width, game_area_height))
+	_set_rect(room_background_layer, Rect2(center_left, margin, center_width, game_area_height))
+	_set_rect(encounter_backdrop, Rect2(encounter_left, encounter_top, encounter_width, encounter_height))
+	_set_rect(bottom_backdrop, Rect2(center_left, bottom_key_top, center_width, bottom_key_height))
+	_set_rect(resource_backdrop, Rect2(rail_content_left, scanner_stats_top, rail_content_width, 92.0 if is_low else 108.0))
+	_set_rect(scanner_text_mask, Rect2(rail_content_left, margin + 30.0, rail_content_width, 42.0))
 	_set_rect(room_text_mask, Rect2(center_left + 12.0, margin + 10.0, room_info_width - 24.0, room_info_height - 14.0))
-	_set_rect(threat_mask, Rect2(right_content_left, margin + 34.0, right_content_width, 64.0 if is_low else 74.0))
-	_set_rect(event_mask, Rect2(right_content_left, margin + (108.0 if is_low else 122.0), right_content_width, 44.0 if is_low else 48.0))
-	_set_rect(reward_mask, Rect2(right_content_left, margin + (158.0 if is_low else 176.0), right_content_width, 38.0 if is_low else 46.0))
+	_set_rect(threat_mask, Rect2(right_content_left, margin + 34.0, right_content_width, 42.0 if is_low else 50.0))
+	_set_rect(event_mask, Rect2(right_content_left, margin + (78.0 if is_low else 90.0), right_content_width, 24.0 if is_low else 30.0))
+	_set_rect(reward_mask, Rect2(0, 0, 0, 0))
 	var player_label_x: float = center_left + center_width * 0.34 - 60.0
 	var player_label_y: float = height * 0.585
 	_set_rect(player_tag_mask, Rect2(player_label_x, player_label_y, 120.0, 46.0))
-	_set_rect(room_hint_softener, Rect2(center_left + center_width * 0.27, margin + 106.0, center_width * 0.46, 56.0))
-	_set_rect(scanner_glow_layer, Rect2(margin, margin + 78.0, left_width - margin * 2.0, scanner_map_height))
-	_set_rect(room_glow_layer, Rect2(center_left + 12.0, margin + 12.0, room_info_width - 24.0, room_info_height - 16.0))
-	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 30.0, right_content_width, status_height - 44.0))
-	_set_rect(bottom_key_glow_layer, Rect2(center_left + 8.0, bottom_top + 8.0, center_width - 16.0, bottom_height - 16.0))
+	_set_rect(room_hint_softener, Rect2(encounter_left - 10.0, encounter_top - 10.0, encounter_width + 20.0, encounter_height + 20.0))
+	_set_rect(scanner_glow_layer, Rect2(rail_content_left, margin + 78.0, rail_content_width, scanner_map_height))
+	_set_rect(room_glow_layer, Rect2(center_left + 12.0, margin + 12.0, center_width - 24.0, game_area_height - 24.0))
+	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 30.0, right_content_width, right_card_height - 44.0))
+	_set_rect(bottom_key_glow_layer, Rect2(center_left + 8.0, bottom_key_top + 8.0, center_width - 16.0, bottom_key_height - 16.0))
+	_set_rect(right_game_fill_layer, Rect2(0, 0, 0, 0))
 
-	_set_rect(scanner_title_label, Rect2(margin, margin, left_width - margin * 2.0, 28))
-	_set_rect(scanner_summary_label, Rect2(margin + 10.0, margin + 34.0, left_width - margin * 2.0 - 20.0, 34))
-	_set_rect(minimap_panel, Rect2(margin, margin + 78.0, left_width - margin * 2.0, scanner_map_height))
-	_set_rect(scanner_legend_label, Rect2(margin, scanner_legend_top, left_width - margin * 2.0, 38))
-	_set_rect(scanner_detail_label, Rect2(margin, scanner_legend_top + 40.0, left_width - margin * 2.0, 38))
+	_set_rect(scanner_title_label, Rect2(rail_content_left, margin, rail_content_width, 28))
+	_set_rect(scanner_summary_label, Rect2(rail_content_left + 8.0, margin + 34.0, rail_content_width - 16.0, 34))
+	_set_rect(minimap_panel, Rect2(rail_content_left, margin + 78.0, rail_content_width, scanner_map_height))
+	minimap_panel.apply_layout_profile(profile)
+	_set_rect(scanner_legend_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 12.0, rail_content_width - 16.0, 44.0))
+	_set_rect(scanner_detail_label, Rect2(rail_content_left + 8.0, backpack_top, rail_content_width - 16.0, 58.0))
 
-	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 10.0, room_info_width - 36.0, 28))
-	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 40.0, room_info_width - 36.0, 30))
-	_set_rect(objective_label, Rect2(center_left + 18.0, margin + 68.0, room_info_width - 36.0, 22))
+	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 10.0, room_info_width - 36.0, 24))
+	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 34.0, room_info_width - 36.0, 22))
+	_set_rect(objective_label, Rect2(0, 0, 0, 0))
 	_set_rect(player_tag_label, Rect2(player_label_x + 18.0, player_label_y + 22.0, 84.0, 18.0))
-	_set_rect(encounter_title_label, Rect2(right_content_left, encounter_top + 8.0, right_content_width, 24))
-	_set_rect(encounter_body_label, Rect2(right_content_left, encounter_top + 34.0, right_content_width, 42.0 if is_low else 52.0))
-	_set_rect(encounter_options_box, Rect2(right_content_left, encounter_top + (82.0 if is_low else 92.0), right_content_width, max(34.0, encounter_height - (124.0 if is_low else 138.0))))
-	_set_rect(encounter_result_label, Rect2(right_content_left, encounter_top + encounter_height - (38.0 if is_low else 42.0), right_content_width, 34.0 if is_low else 38.0))
-	_set_rect(resource_label, Rect2(margin * 1.5, height - pocket_height + 2.0, left_width - margin * 3.0, pocket_height - 28.0))
+	_set_rect(encounter_title_label, Rect2(encounter_left + 12.0, encounter_top + 8.0, encounter_width - 24.0, 22.0))
+	_set_rect(encounter_body_label, Rect2(encounter_left + 12.0, encounter_top + 32.0, encounter_width - 24.0, 22.0))
+	_set_rect(encounter_options_box, Rect2(encounter_left + 12.0, encounter_top + encounter_height - 28.0, encounter_width - 24.0, 24.0))
+	_set_rect(encounter_result_label, Rect2(0, 0, 0, 0))
+	_set_rect(resource_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 58.0, rail_content_width - 16.0, 34.0))
 
 	_set_rect(right_title_label, Rect2(right_content_left, margin, right_content_width, 30))
-	_set_rect(right_body_label, Rect2(right_content_left + 10.0, margin + 42.0, right_content_width - 20.0, 54.0 if is_low else 64.0))
-	_set_rect(event_label, Rect2(right_content_left + 10.0, margin + (114.0 if is_low else 128.0), right_content_width - 20.0, 36.0))
-	_set_rect(reward_label, Rect2(right_content_left + 10.0, margin + (164.0 if is_low else 182.0), right_content_width - 20.0, 36.0))
-	_set_rect(command_feedback_label, Rect2(right_content_left, encounter_top + encounter_height + 10.0, right_content_width, 54.0))
+	_set_rect(right_body_label, Rect2(right_content_left + 10.0, margin + 40.0, right_content_width - 20.0, 36.0 if is_low else 44.0))
+	_set_rect(event_label, Rect2(right_content_left + 10.0, margin + (76.0 if is_low else 88.0), right_content_width - 20.0, 22.0))
+	_set_rect(reward_label, Rect2(0, 0, 0, 0))
+	var feedback_width: float = min(center_width * 0.46, 460.0 if is_low else 560.0)
+	var feedback_left: float = center_left + center_width * 0.5 - feedback_width * 0.5
+	_set_rect(command_feedback_art, Rect2(feedback_left, bottom_info_top, feedback_width, bottom_info_height))
+	_set_rect(command_feedback_label, Rect2(feedback_left + 18.0, bottom_info_top + 7.0, feedback_width - 36.0, bottom_info_height - 12.0))
 	_set_rect(layout_label, Rect2(right_content_left, height - 46.0, right_content_width, 24))
 	layout_label.visible = false
 
-	_set_rect(action_hint_label, Rect2(center_left + 18.0, bottom_top - 25.0, center_width - 36.0, 22))
-	_set_rect(action_bar, Rect2(center_left + 12.0, bottom_top + 10.0, center_width - 24.0, bottom_height - 18.0))
+	_set_rect(action_hint_label, Rect2(0, 0, 0, 0))
+	action_hint_label.visible = false
+	_set_rect(action_bar, Rect2(center_left + 12.0, bottom_key_top + 10.0, center_width - 24.0, bottom_key_height - 18.0))
 	_set_rect(feedback_slot, Rect2(0, 0, width, height))
 	_set_rect(overlay_slot, Rect2(0, 0, width, height))
 	_set_rect(modal_slot, Rect2(0, 0, width, height))
@@ -287,11 +328,16 @@ func show_command_feedback(result: Dictionary) -> void:
 	var text := RunUIViewModel.command_result_text(result)
 	if text == "":
 		text = "操作完成。" if accepted else "操作受阻。"
-	command_feedback_label.text = Art10UISkinKitScript.sanitize_player_copy(text)
+	command_feedback_label.text = _feedback_copy(text)
+	var feedback_state := &"neutral"
 	if not accepted:
-		var tween := create_tween()
-		tween.tween_property(command_feedback_label, "modulate", Color(1.0, 0.55, 0.35, 1.0), 0.06)
-		tween.tween_property(command_feedback_label, "modulate", Color(1.0, 1.0, 1.0, 1.0), 0.18)
+		feedback_state = &"warning"
+	_apply_texture_ref(command_feedback_art, Art09ManifestAssetMappingScript.feedback_bar_ref(feedback_state), 0.90)
+	var pulse_state := &"ready"
+	if not accepted:
+		pulse_state = &"warning"
+	Art10UISkinKitScript.play_feedback_pulse(command_feedback_label, pulse_state)
+	Art10UISkinKitScript.play_feedback_pulse(command_feedback_art, pulse_state, 0.42)
 
 
 func get_hud() -> Hud:
@@ -330,6 +376,56 @@ func apply_legacy_modal_style(panel: PanelContainer, theme_key: StringName = &"u
 	var accent := PresentationTheme.color_for_key(theme_key, PresentationTheme.color_for_key(&"ui.accent"))
 	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.015, 0.028, 0.032, 0.96), accent, 2))
 	_style_modal_children(panel)
+
+
+func _apply_layer_order() -> void:
+	UILayerContractScript.apply_layer(room_background_layer, &"background")
+	UILayerContractScript.apply_layer(center_backdrop, &"background", 2)
+	UILayerContractScript.apply_layer(right_game_fill_layer, &"gameplay_viewport")
+	UILayerContractScript.apply_layer(room_glow_layer, &"gameplay_viewport", 2)
+	UILayerContractScript.apply_layer(room_hint_softener, &"gameplay_viewport", 4)
+
+	for item in [left_backdrop, bottom_backdrop, resource_backdrop, right_backdrop, encounter_backdrop]:
+		UILayerContractScript.apply_layer(item, &"content_panel")
+	for item in [scanner_glow_layer, protocol_glow_layer, bottom_key_glow_layer]:
+		UILayerContractScript.apply_layer(item, &"panel_texture")
+	for item in [scanner_text_mask, threat_mask, event_mask, reward_mask, player_tag_mask]:
+		UILayerContractScript.apply_layer(item, &"status_card", -4)
+
+	UILayerContractScript.apply_layer(minimap_panel, &"content_text")
+	for item in [
+		scanner_title_label,
+		scanner_summary_label,
+		scanner_legend_label,
+		scanner_detail_label,
+		resource_label,
+		right_title_label,
+		right_body_label,
+		event_label,
+		reward_label,
+		layout_label,
+		action_hint_label,
+	]:
+		UILayerContractScript.apply_layer(item, &"content_text", 6)
+
+	UILayerContractScript.apply_layer(room_text_mask, &"floating_info", -8)
+	for item in [room_title_label, room_body_label, objective_label, player_tag_label, encounter_title_label, encounter_body_label, encounter_result_label, encounter_options_box]:
+		UILayerContractScript.apply_layer(item, &"floating_info")
+	UILayerContractScript.apply_layer(command_feedback_art, &"floating_info", 4)
+	UILayerContractScript.apply_layer(command_feedback_label, &"floating_info", 5)
+
+	UILayerContractScript.apply_layer(action_bar, &"action_bar", 4)
+	UILayerContractScript.apply_layer(feedback_slot, &"overlay")
+	UILayerContractScript.apply_layer(overlay_slot, &"overlay", 10)
+	UILayerContractScript.apply_layer(modal_slot, &"modal")
+
+
+func _set_layer(item: Variant, layer: int) -> void:
+	if not (item is CanvasItem):
+		return
+	var canvas_item := item as CanvasItem
+	canvas_item.z_as_relative = false
+	canvas_item.z_index = layer
 
 
 func apply_legacy_button_style(button: Button, tone: StringName = &"secondary") -> void:
@@ -371,10 +467,41 @@ func _add_label(node_name: String, text: String, font_size: int, color: Color) -
 	return label
 
 
+func _add_texture_rect_from_ref(node_name: String, asset_ref: Dictionary, alpha: float = 1.0) -> TextureRect:
+	var texture_rect := TextureRect.new()
+	texture_rect.name = node_name
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	texture_rect.modulate = Color(1.0, 1.0, 1.0, alpha)
+	_apply_texture_ref(texture_rect, asset_ref, alpha)
+	add_child(texture_rect)
+	return texture_rect
+
+
+func _apply_texture_ref(texture_rect: TextureRect, asset_ref: Dictionary, alpha: float = 1.0) -> void:
+	if texture_rect == null:
+		return
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	if texture != null:
+		texture_rect.texture = texture
+	texture_rect.modulate = Color(1.0, 1.0, 1.0, alpha)
+
+
+func _room_background_ref(room_type: StringName) -> Dictionary:
+	var visual := PresentationMapping.room_visual_from_snapshot({"current_room": room_type})
+	return Art09ManifestAssetMappingScript.asset_ref(
+		StringName(visual.get("background_asset_id", &"room.background.normal")),
+		&"room.background.normal",
+		&"room_background",
+		room_type
+	)
+
+
 func _add_action_button(action_id: StringName, label: String, callback: Callable) -> void:
 	var button := Art10UISkinKitScript.make_bottom_key_button(label, _key_label_for_action(action_id))
 	button.name = "RunAction_%s" % String(action_id)
-	button.custom_minimum_size = Vector2(92, 34)
+	button.custom_minimum_size = Vector2(106, 42)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
@@ -434,7 +561,7 @@ func _apply_actions(actions: Variant) -> void:
 		var description := String(action_data.get("description", ""))
 		var disabled_reason := String(action_data.get("disabled_reason", ""))
 		button.disabled = not enabled
-		button.tooltip_text = description if enabled or disabled_reason == "" else "%s\n暂不可用：%s" % [description, disabled_reason]
+		button.tooltip_text = ""
 		_apply_action_button_style(button, StringName(action_data.get("tone", &"secondary")), enabled)
 		_apply_key_prompt_icon(button, action_id)
 
@@ -566,9 +693,21 @@ func _apply_art10_text_refresh() -> void:
 	]:
 		if label is Label:
 			Art10UISkinKitScript.apply_label_token(label, &"hud_small", &"text")
+			label.clip_text = true
+			label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for title_label in [scanner_title_label, room_title_label, encounter_title_label, right_title_label]:
 		if title_label is Label:
 			Art10UISkinKitScript.apply_label_token(title_label, &"hud", &"accent")
+			title_label.clip_text = true
+			title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	if command_feedback_label is Label:
+		command_feedback_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		command_feedback_label.clip_text = true
+		command_feedback_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	for left_label in [scanner_summary_label, scanner_legend_label, scanner_detail_label, resource_label]:
+		if left_label is Label:
+			left_label.clip_text = true
+			left_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for action_id in action_buttons.keys():
 		var action_button := action_buttons[action_id] as Button
 		Art10UISkinKitScript.apply_button(action_button, &"secondary", 12, &"key")
@@ -662,6 +801,13 @@ func _shorten_copy(text: String, max_chars: int) -> String:
 
 func _compact_line(text: String, max_chars: int) -> String:
 	return Art10UISkinKitScript.short_summary(text, max_chars)
+
+
+func _feedback_copy(text: String) -> String:
+	var summary := _compact_line(text, 26)
+	if summary == "":
+		summary = "等待输入"
+	return "主信息栏  %s" % summary
 
 
 func _threat_copy(model: Dictionary) -> String:

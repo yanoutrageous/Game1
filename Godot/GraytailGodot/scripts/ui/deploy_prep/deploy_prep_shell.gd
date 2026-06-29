@@ -6,6 +6,7 @@ const DeployConfigScript := preload("res://scripts/ui/deploy_prep/deploy_config.
 const DeployPrepModelScript := preload("res://scripts/ui/deploy_prep/deploy_prep_model.gd")
 const DeployTabModelScript := preload("res://scripts/ui/deploy_prep/deploy_tab_model.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
+const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
@@ -43,6 +44,7 @@ func build(model: Dictionary = {}) -> void:
 	_build_content_panel()
 	_build_summary_panel()
 	_build_action_panel()
+	_apply_layer_order()
 	_refresh_view()
 
 
@@ -89,6 +91,18 @@ func _clear_children() -> void:
 	abandon_button = null
 
 
+func _apply_layer_order() -> void:
+	for child in get_children():
+		if child is CanvasItem:
+			var canvas_item := child as CanvasItem
+			canvas_item.z_as_relative = false
+			canvas_item.z_index = _layer_for_node(child)
+
+
+func _layer_for_node(node: Node) -> int:
+	return UILayerContractScript.layer_for_page_node(node)
+
+
 func _build_backdrop() -> void:
 	_add_color_rect(self, "DeployPrepBackdrop", Rect2(0, 0, 1280, 720), Color(0.016, 0.032, 0.038, 1.0))
 	_add_color_rect(self, "DeployControlRoomGlow", Rect2(32, 112, 1210, 548), Color(0.10, 0.26, 0.30, 0.10))
@@ -100,22 +114,35 @@ func _build_backdrop() -> void:
 	_add_panel(self, "DeployCenterCardFrame", Art10UISkinKitScript.rect(&"deploy", "center_column"), &"surface")
 	_add_panel(self, "DeploySummaryFrame", Art10UISkinKitScript.rect(&"deploy", "summary_column"), &"summary")
 	var art09_refs := _art09_asset_refs()
-	_add_texture_rect_from_ref(self, "Art09DeployMainPanel", Rect2(334, 150, 600, 472), _asset_ref_from(art09_refs, "panels", "main"), 0.18)
-	_add_texture_rect_from_ref(self, "Art09DeploySummaryPanel", Rect2(958, 150, 278, 472), _asset_ref_from(art09_refs, "panels", "summary"), 0.20)
-	_add_color_rect(self, "DeployMapAtmosphere", Rect2(64, 206, 226, 220), Color(0.12, 0.20, 0.19, 0.34))
-	_add_color_rect(self, "DeployCharacterReadiness", Rect2(84, 180, 86, 226), Color(0.54, 0.84, 0.68, 0.12))
-	_add_color_rect(self, "DeployCharacterSilhouette", Rect2(108, 206, 72, 174), Color(0.16, 0.24, 0.22, 0.78))
-	_add_color_rect(self, "DeployMapHorizon", Rect2(84, 364, 188, 3), Art10UISkinKitScript.color(&"gold"))
-	_add_label_token(self, "DeployPrepTitle", Rect2(46, 34, 250, 48), String(current_model.get("title", "出发探索")), &"page_title", &"warning")
-	_add_label_token(self, "DeployPrepSubtitle", Rect2(304, 36, 620, 32), "选择路线、整备物资，然后进入当前可玩探索。", &"body", &"caption")
+	_add_texture_rect_from_ref(self, "Art09DeployMainPanel", Rect2(326, 130, 598, 514), _asset_ref_from(art09_refs, "panels", "main"), 0.18)
+	_add_texture_rect_from_ref(self, "Art09DeploySummaryPanel", Rect2(946, 130, 292, 514), _asset_ref_from(art09_refs, "panels", "summary"), 0.20)
+	_add_color_rect(self, "DeployMapAtmosphere", Rect2(64, 190, 226, 250), Color(0.12, 0.20, 0.19, 0.34))
+	_add_color_rect(self, "DeployCharacterReadiness", Rect2(74, 170, 176, 286), Color(0.54, 0.84, 0.68, 0.10))
+	_add_color_rect(self, "DeployCharacterSilhouette", Rect2(110, 214, 92, 190), Color(0.16, 0.24, 0.22, 0.52))
+	_add_texture_rect_from_ref(self, "DeployPlayerSprite", Rect2(76, 198, 174, 194), Art09ManifestAssetMappingScript.player_sprite_ref(&"idle"), 1.0)
+	_add_color_rect(self, "DeployMapHorizon", Rect2(72, 422, 204, 3), Art10UISkinKitScript.color(&"gold"))
+	_add_label_token(self, "DeployPrepTitle", Rect2(46, 34, 250, 48), "出发探索", &"page_title", &"warning")
+	_add_label_token(self, "DeployPrepSubtitle", Rect2(304, 36, 620, 32), "", &"body", &"caption")
+	_add_button(self, "DeployNavMainButton", Rect2(46, 86, 104, 34), "主菜单", Callable(self, "_request_back_to_main"))
+	_add_button(self, "DeployNavLongTermButton", Rect2(160, 86, 120, 34), "长期系统", Callable(self, "_request_long_term"))
+	_trim_intro_copy()
+
+
+func _request_back_to_main() -> void:
+	if get_parent() != null and get_parent().has_method("show_main"):
+		get_parent().call("show_main")
+
+
+func _request_long_term() -> void:
+	if get_parent() != null and get_parent().has_method("show_long_term"):
+		get_parent().call("show_long_term")
 
 
 func _build_tab_panel() -> void:
 	var tab_row := HBoxContainer.new()
 	tab_row.name = "DeployTopTabRow"
-	var row_rect := Art10UISkinKitScript.rect(&"deploy", "tab_row")
-	_set_rect(tab_row, row_rect)
-	tab_row.add_theme_constant_override("separation", 8)
+	_set_rect(tab_row, Rect2(350, 78, 548, 48))
+	tab_row.add_theme_constant_override("separation", 6)
 	add_child(tab_row)
 	for raw_tab in _array_from(current_model, "tabs"):
 		if raw_tab is Dictionary:
@@ -126,7 +153,7 @@ func _build_tab_panel() -> void:
 			button.text = String(tab.get("label", tab_id))
 			button.tooltip_text = String(tab.get("subtitle", ""))
 			button.toggle_mode = true
-			button.custom_minimum_size = Vector2(122, 44)
+			button.custom_minimum_size = Vector2(100, 42)
 			_apply_art09_button_icon(button, _dictionary_from(tab.get("art09_asset_ref", {})), &"tab")
 			var captured_tab := tab_id
 			button.pressed.connect(func() -> void: show_tab(captured_tab))
@@ -135,56 +162,109 @@ func _build_tab_panel() -> void:
 			tab_buttons[tab_id] = button
 
 
+func _trim_intro_copy() -> void:
+	var subtitle := get_node_or_null("DeployPrepSubtitle") as Label
+	if subtitle != null:
+		subtitle.text = ""
+
+
 func _build_content_panel() -> void:
-	_add_label_token(self, "DeployLeftHeading", Rect2(66, 172, 220, 26), "探索整备", &"tab", &"accent")
-	tab_body_label = _add_label_token(self, "DeployTabBody", Rect2(66, 430, 224, 66), "", &"body_small", &"text")
+	_add_label_token(self, "DeployLeftHeading", Rect2(66, 154, 220, 26), "探索整备", &"tab", &"accent")
+	tab_body_label = _add_label_token(self, "DeployTabBody", Rect2(66, 464, 224, 42), "", &"body_small", &"text")
 	_add_label_token(self, "DeployLoadoutHeading", Rect2(66, 554, 220, 22), "携带槽", &"caption", &"muted")
 	_add_icon_slot(self, "DeployLoadoutSlotA", Rect2(66, 580, 48, 48), "装备")
 	_add_icon_slot(self, "DeployLoadoutSlotB", Rect2(124, 580, 48, 48), "药剂")
 	_add_icon_slot(self, "DeployLoadoutSlotC", Rect2(182, 580, 48, 48), "工具")
-	tab_title_label = _add_label_token(self, "DeployTabTitle", Rect2(362, 170, 530, 34), "", &"main_button", &"accent")
-	filter_heading_label = _add_label_token(self, "DeployFilterHeading", Rect2(362, 212, 210, 24), "二级筛选", &"caption", &"warning")
-	card_heading_label = _add_label_token(self, "DeployCardHeading", Rect2(362, 268, 240, 24), "路线 / 目标", &"tab", &"warning")
-	filter_heading_label.text = "筛选"
+	tab_title_label = _add_label_token(self, "DeployTabTitle", Rect2(350, 142, 548, 34), "", &"main_button", &"accent")
+	filter_heading_label = _add_label_token(self, "DeployFilterHeading", Rect2(350, 184, 80, 24), "筛选", &"caption", &"warning")
+	card_heading_label = _add_label_token(self, "DeployCardHeading", Rect2(350, 246, 240, 24), "路线 / 目标", &"tab", &"warning")
 	card_heading_label.text = "路线 / 目标"
 	card_scroll = ScrollContainer.new()
 	card_scroll.name = "DeployCardScroll"
-	_set_rect(card_scroll, Rect2(362, 300, 350, 272))
+	_set_rect(card_scroll, Rect2(350, 274, 548, 264))
 	card_scroll.clip_contents = true
 	add_child(card_scroll)
 	card_list_container = VBoxContainer.new()
 	card_list_container.name = "DeployCardList"
 	card_list_container.add_theme_constant_override("separation", 8)
 	card_scroll.add_child(card_list_container)
-	_add_panel(self, "DeployDetailFrame", Rect2(728, 298, 178, 274), &"card")
-	detail_label = _add_label_token(self, "DeployCardDetail", Rect2(742, 312, 150, 210), "", &"body_small", &"text")
-	preview_label = _add_label_token(self, "DeployConfigPreview", Rect2(362, 586, 530, 26), "", &"caption", &"muted")
+	_add_panel(self, "DeployDetailFrame", Rect2(350, 552, 548, 82), &"card")
+	detail_label = _add_label_token(self, "DeployCardDetail", Rect2(366, 564, 516, 52), "", &"body_small", &"text")
+	preview_label = _add_label_token(self, "DeployConfigPreview", Rect2(350, 642, 548, 20), "", &"caption", &"muted")
+	_add_label_token(self, "DeployLeftStatus", Rect2(66, 548, 220, 36), "整备完成", &"caption", &"muted")
+	for node_name in [
+		"DeployLoadoutHeading",
+		"DeployLoadoutSlotA",
+		"DeployLoadoutSlotB",
+		"DeployLoadoutSlotC",
+		"DeployLoadoutSlotALabel",
+		"DeployLoadoutSlotBLabel",
+		"DeployLoadoutSlotCLabel",
+	]:
+		var node := get_node_or_null(node_name)
+		if node is CanvasItem:
+			(node as CanvasItem).visible = false
 
 
 func _build_summary_panel() -> void:
-	_add_label_token(self, "DeploySummaryHeading", Rect2(984, 172, 220, 30), "出发摘要", &"tab", &"accent")
-	_add_panel(self, "DeploySummaryBlockA", Rect2(974, 202, 244, 64), &"card")
-	_add_panel(self, "DeploySummaryBlockB", Rect2(974, 266, 244, 64), &"card")
-	_add_panel(self, "DeploySummaryBlockC", Rect2(974, 448, 244, 54), &"card")
-	_add_panel(self, "DeploySummaryBlockD", Rect2(974, 506, 244, 54), &"warning")
-	summary_label = _add_label_token(self, "DeploySummaryText", Rect2(984, 210, 220, 48), "", &"body_small", &"text")
-	config_label = _add_label_token(self, "DeployConfigText", Rect2(984, 272, 220, 48), "", &"body_small", &"text")
-	_add_label_token(self, "DeploySlotHeading", Rect2(984, 364, 220, 22), "装备 / 消耗品", &"caption", &"warning")
-	_add_icon_slot(self, "DeployEquipSlotA", Rect2(984, 392, 48, 48), "武器")
-	_add_icon_slot(self, "DeployEquipSlotB", Rect2(1042, 392, 48, 48), "护具")
-	_add_icon_slot(self, "DeployItemSlotA", Rect2(1100, 392, 48, 48), "补给")
-	_add_icon_slot(self, "DeployItemSlotB", Rect2(1158, 392, 48, 48), "钥匙")
-	effect_label = _add_label_token(self, "DeployEffectText", Rect2(984, 456, 220, 42), "", &"body_small", &"text")
-	risk_label = _add_label_token(self, "DeployRiskText", Rect2(984, 514, 220, 42), "", &"caption", &"warning")
+	_add_label_token(self, "DeploySummaryHeading", Rect2(974, 132, 236, 30), "出发摘要", &"tab", &"accent")
+	_add_panel(self, "DeploySummaryBlockA", Rect2(964, 162, 256, 58), &"card")
+	_add_panel(self, "DeploySummaryBlockB", Rect2(964, 224, 256, 58), &"card")
+	_add_panel(self, "DeploySummaryBlockC", Rect2(964, 410, 256, 50), &"card")
+	_add_panel(self, "DeploySummaryBlockD", Rect2(964, 464, 256, 50), &"warning")
+	summary_label = _add_label_token(self, "DeploySummaryText", Rect2(976, 170, 232, 42), "", &"body_small", &"text")
+	config_label = _add_label_token(self, "DeployConfigText", Rect2(976, 232, 232, 42), "", &"body_small", &"text")
+	_add_label_token(self, "DeploySlotHeading", Rect2(976, 312, 232, 22), "装备 / 消耗品", &"caption", &"warning")
+	_add_icon_slot(self, "DeployEquipSlotA", Rect2(976, 340, 50, 50), "武器")
+	_add_icon_slot(self, "DeployEquipSlotB", Rect2(1036, 340, 50, 50), "护具")
+	_add_icon_slot(self, "DeployItemSlotA", Rect2(1096, 340, 50, 50), "补给")
+	_add_icon_slot(self, "DeployItemSlotB", Rect2(1156, 340, 50, 50), "钥匙")
+	effect_label = _add_label_token(self, "DeployEffectText", Rect2(976, 416, 232, 38), "", &"body_small", &"text")
+	risk_label = _add_label_token(self, "DeployRiskText", Rect2(976, 470, 232, 38), "", &"caption", &"warning")
+	_compact_summary_column()
 
 
 func _build_action_panel() -> void:
 	_add_color_rect(self, "DeployStartButtonGlow", Rect2(948, 614, 298, 84), Color(0.94, 0.70, 0.28, 0.14))
+	var art09_refs := _art09_asset_refs()
+	_add_texture_rect_from_ref(self, "Art15DeployStartButtonTexture", Rect2(958, 620, 278, 72), _asset_ref_from(art09_refs, "buttons", "confirm"), 0.24)
 	start_button = _add_button(self, "DeployStartButton", Rect2(958, 628, 278, 64), "开始探索", _on_start_preview_pressed)
-	continue_button = _add_button(self, "DeployContinueButton", Rect2(362, 640, 120, 38), "继续", _on_continue_preview_pressed)
-	abandon_button = _add_button(self, "DeployAbandonButton", Rect2(492, 640, 120, 38), "放弃", _on_abandon_preview_pressed)
+	continue_button = _add_button(self, "DeployContinueButton", Rect2(966, 558, 126, 40), "继续", _on_continue_preview_pressed)
+	abandon_button = _add_button(self, "DeployAbandonButton", Rect2(1102, 558, 126, 40), "终止", _on_abandon_preview_pressed)
 	action_message_label = _add_label_token(self, "DeployActionMessage", Rect2(630, 642, 304, 38), "", &"caption", &"muted")
 	_set_rect(start_button, Rect2(958, 620, 278, 72))
+	_set_rect(continue_button, Rect2(966, 558, 126, 40))
+	_set_rect(abandon_button, Rect2(1102, 558, 126, 40))
+	_set_rect(action_message_label, Rect2(362, 640, 520, 38))
+	continue_button.text = "继续"
+	abandon_button.text = "终止"
+
+
+func _compact_summary_column() -> void:
+	var rects := {
+		"DeploySummaryHeading": Rect2(974, 132, 236, 30),
+		"DeploySummaryBlockA": Rect2(964, 162, 256, 58),
+		"DeploySummaryBlockB": Rect2(964, 224, 256, 58),
+		"DeploySummaryBlockC": Rect2(964, 410, 256, 50),
+		"DeploySummaryBlockD": Rect2(964, 464, 256, 50),
+		"DeploySummaryText": Rect2(976, 170, 232, 42),
+		"DeployConfigText": Rect2(976, 232, 232, 42),
+		"DeploySlotHeading": Rect2(976, 312, 232, 22),
+		"DeployEquipSlotA": Rect2(976, 340, 50, 50),
+		"DeployEquipSlotB": Rect2(1036, 340, 50, 50),
+		"DeployItemSlotA": Rect2(1096, 340, 50, 50),
+		"DeployItemSlotB": Rect2(1156, 340, 50, 50),
+		"DeployEquipSlotALabel": Rect2(976, 393, 50, 16),
+		"DeployEquipSlotBLabel": Rect2(1036, 393, 50, 16),
+		"DeployItemSlotALabel": Rect2(1096, 393, 50, 16),
+		"DeployItemSlotBLabel": Rect2(1156, 393, 50, 16),
+		"DeployEffectText": Rect2(976, 416, 232, 38),
+		"DeployRiskText": Rect2(976, 470, 232, 38),
+	}
+	for node_name in rects.keys():
+		var node := get_node_or_null(String(node_name)) as Control
+		if node != null:
+			_set_rect(node, rects[node_name])
 
 
 func _refresh_view() -> void:
@@ -220,23 +300,20 @@ func _refresh_filter_buttons(tab: Dictionary) -> void:
 				button.get_parent().remove_child(button)
 			button.queue_free()
 	filter_buttons.clear()
-	var x := 472.0
-	var y := 210.0
+	var x := 350.0
+	var y := 214.0
 	var selected_filter := StringName(current_model.get("selected_filter", DeployTabModelScript.FILTER_ALL))
 	for raw_filter in _array_from(tab, "secondary_filters"):
 		if raw_filter is Dictionary:
 			var filter := raw_filter as Dictionary
 			var filter_id := StringName(filter.get("id", DeployTabModelScript.FILTER_ALL))
 			var captured_filter := filter_id
-			var button := _add_button(self, "DeployFilter_%s" % String(filter_id), Rect2(x, y, 96, 30), String(filter.get("label", filter_id)), func() -> void: _on_filter_pressed(captured_filter))
+			var button := _add_button(self, "DeployFilter_%s" % String(filter_id), Rect2(x, y, 68, 30), String(filter.get("label", filter_id)), func() -> void: _on_filter_pressed(captured_filter))
 			button.toggle_mode = true
 			button.button_pressed = filter_id == selected_filter
 			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if button.button_pressed else &"normal"), &"caption", &"tab")
 			filter_buttons.append(button)
-			x += 104.0
-			if x > 828.0:
-				x = 472.0
-				y += 34.0
+			x += 72.0
 
 
 func _refresh_card_buttons() -> void:
@@ -254,8 +331,10 @@ func _refresh_card_buttons() -> void:
 			var card := raw_card as Dictionary
 			var card_id := StringName(card.get("id", &""))
 			var state := StringName(card.get("state", &"preview"))
-			var label := "%s\n%s" % [
-				_shorten_copy(String(card.get("title", card_id)), 14),
+			var selected := card_id == selected_card
+			var label := "%s  %s\n地图节点 · %s" % [
+				"◆" if selected else "◇",
+				_shorten_copy(String(card.get("title", card_id)), 13),
 				Art10UISkinKitScript.status_label(state),
 			]
 			var captured_card := card_id
@@ -263,9 +342,9 @@ func _refresh_card_buttons() -> void:
 			button.name = "DeployCard_%s" % String(card_id)
 			button.text = label
 			button.tooltip_text = String(card.get("summary", ""))
-			button.custom_minimum_size = Vector2(330, 62)
+			button.custom_minimum_size = Vector2(500, 78 if selected else 68)
 			button.toggle_mode = true
-			button.button_pressed = card_id == selected_card
+			button.button_pressed = selected
 			_apply_art09_button_icon(button, _dictionary_from(card.get("art09_asset_ref", {})), &"slot")
 			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(state, button.button_pressed), &"body", &"slot")
 			button.pressed.connect(func() -> void: _on_card_pressed(captured_card))
@@ -297,7 +376,7 @@ func _refresh_actions() -> void:
 	continue_button.text = "继续"
 	continue_button.disabled = bool(continue_action.get("disabled", true))
 	continue_button.tooltip_text = String(continue_action.get("tooltip", ""))
-	abandon_button.text = "放弃"
+	abandon_button.text = "终止"
 	abandon_button.disabled = bool(abandon_action.get("disabled", true))
 	abandon_button.tooltip_text = String(abandon_action.get("tooltip", ""))
 	var art09_refs := _art09_asset_refs()
@@ -305,8 +384,10 @@ func _refresh_actions() -> void:
 	_apply_art09_button_icon(continue_button, _asset_ref_from(art09_refs, "buttons", "loadout"), &"button")
 	_apply_art09_button_icon(abandon_button, _asset_ref_from(art09_refs, "buttons", "back_main"), &"button")
 	Art10UISkinKitScript.apply_button_token(start_button, &"gold", &"main_button", &"large_nav")
-	Art10UISkinKitScript.apply_button_token(continue_button, &"secondary", &"caption", &"button")
-	Art10UISkinKitScript.apply_button_token(abandon_button, &"danger", &"caption", &"button")
+	Art10UISkinKitScript.apply_button_token(continue_button, &"primary" if not continue_button.disabled else &"secondary", &"caption", &"button")
+	Art10UISkinKitScript.apply_button_token(abandon_button, &"warning" if not abandon_button.disabled else &"danger", &"caption", &"button")
+	continue_button.modulate = Color(1.0, 1.0, 1.0, 0.96)
+	abandon_button.modulate = Color(1.0, 0.94, 0.84, 0.96)
 	var message := String(current_model.get("action_message", ""))
 	if bool(current_model.get("abandon_confirm_visible", false)):
 		message = String(abandon_action.get("confirm_copy", "再次点击只会关闭提示，不执行放弃。"))
@@ -328,7 +409,7 @@ func _on_start_preview_pressed() -> void:
 	var config := _config()
 	current_model["run_start_config"] = DeployConfigScript.build_run_start_config(config)
 	current_model["preview_lines"] = DeployConfigScript.build_preview_lines(config)
-	current_model["action_message"] = "开始探索：已使用 M3R 仓库携带配置，并复用标准探索入口。"
+	current_model["action_message"] = "开始探索：已使用当前携带配置。"
 	_refresh_view()
 	var start_action := _action("start")
 	var run_payload := _dictionary_from(start_action.get("run_intent", {}))
@@ -348,7 +429,7 @@ func _on_abandon_preview_pressed() -> void:
 	if bool(current_model.get("abandon_confirm_visible", false)):
 		current_model = DeployPrepModelScript.model_with_action_message(current_model, "已关闭放弃确认；没有执行放弃。", false)
 	else:
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, "放弃当前探索需要强确认；本轮不执行真实放弃。", true)
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "放弃当前探索需要确认；本轮不执行真实放弃。", true)
 	_refresh_view()
 
 
@@ -410,7 +491,12 @@ func _dictionary_from(value: Variant) -> Dictionary:
 
 
 func _art09_asset_refs() -> Dictionary:
-	return _dictionary_from((_config()).get("art09_asset_refs", {}))
+	var refs := _dictionary_from((_config()).get("art09_asset_refs", {}))
+	var button_refs := _dictionary_from(refs.get("buttons", {}))
+	var panel_refs := _dictionary_from(refs.get("panels", {}))
+	if button_refs.has("confirm") and panel_refs.has("main"):
+		return refs
+	return Art09ManifestAssetMappingScript.deploy_prep_asset_refs()
 
 
 func _asset_ref_from(source: Dictionary, group_id: String, entry_id: String) -> Dictionary:

@@ -3,6 +3,7 @@ class_name MainMenuShell
 
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const MainMenuModelScript := preload("res://scripts/ui/main_menu/main_menu_model.gd")
+const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
@@ -26,6 +27,7 @@ func build(model: Dictionary = {}) -> void:
 	_build_notice_panel()
 	_build_meta_summary_panel()
 	_build_shortcut_panel()
+	_apply_layer_order()
 
 
 func _clear_children() -> void:
@@ -33,6 +35,18 @@ func _clear_children() -> void:
 		remove_child(child)
 		child.queue_free()
 	meta_summary_label = null
+
+
+func _apply_layer_order() -> void:
+	for child in get_children():
+		if child is CanvasItem:
+			var canvas_item := child as CanvasItem
+			canvas_item.z_as_relative = false
+			canvas_item.z_index = _layer_for_node(child)
+
+
+func _layer_for_node(node: Node) -> int:
+	return UILayerContractScript.layer_for_page_node(node)
 
 
 func apply_snapshot(snapshot: Dictionary) -> void:
@@ -78,7 +92,7 @@ func _build_backdrop() -> void:
 	_add_color_rect(self, "BaseHallDoorLeft", Rect2(76, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
 	_add_color_rect(self, "BaseHallDoorRight", Rect2(282, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
 	_add_color_rect(self, "BaseHallForegroundRail", Rect2(56, 512, 642, 3), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
-	_add_panel(self, "MainMenuNarrativeFrame", Rect2(46, 66, 690, 548), &"deep")
+	_add_panel(self, "MainMenuNarrativeFrame", Rect2(46, 66, 690, 548), &"soft")
 	_add_color_rect(self, "BaseAtmosphereLayer", Rect2(70, 210, 640, 266), Color(0.10, 0.19, 0.17, 0.28))
 	_add_color_rect(self, "BaseFloorLine", Rect2(86, 486, 598, 4), PresentationTheme.color_for_key(&"ui.warning", Color(0.94, 0.7, 0.28, 1.0)))
 	_add_label_token(self, "MainMenuTitle", Art10UISkinKitScript.rect(&"main_menu", "title"), String(current_model.get("title", "灰尾回收")), &"title", &"warning")
@@ -92,6 +106,7 @@ func _build_role_panel() -> void:
 	_add_color_rect(self, "CharacterCapeLayer", Rect2(112, 242, 160, 226), Color(0.10, 0.18, 0.16, 0.92))
 	_add_color_rect(self, "CharacterSilhouette", Rect2(132, 210, 122, 258), Color(0.20, 0.31, 0.27, 0.94))
 	_add_color_rect(self, "CharacterHead", Rect2(146, 184, 92, 82), Color(0.23, 0.34, 0.30, 0.94))
+	_add_texture_rect_from_ref(self, "MainMenuPlayerSprite", Rect2(110, 236, 150, 168), Art09ManifestAssetMappingScript.player_sprite_ref(&"idle"), 1.0)
 	_add_color_rect(self, "CharacterTool", Rect2(248, 250, 10, 210), Art10UISkinKitScript.color(&"gold"))
 	_add_color_rect(self, "CharacterEquipmentLine", Rect2(104, 462, 188, 3), Art10UISkinKitScript.color(&"accent"))
 	_add_label_token(self, "CharacterDisplayLabel", Rect2(110, 474, 184, 28), "探索员整备", &"tab", &"text")
@@ -141,6 +156,7 @@ func _build_notice_panel() -> void:
 	notice_panel.add_theme_constant_override("separation", 4)
 	add_child(notice_panel)
 	_add_panel(self, "MainMenuNoticeFrame", Art10UISkinKitScript.rect(&"main_menu", "notice"), &"summary")
+	_add_texture_rect_from_ref(self, "Art15MainMenuNoticeTexture", Art10UISkinKitScript.rect(&"main_menu", "notice"), Art09ManifestAssetMappingScript.feedback_panel_ref(&"event"), 0.24)
 	move_child(notice_panel, get_child_count() - 1)
 	_add_section_label(notice_panel, "公告")
 	for notice in _array_from(current_model, "notices").slice(0, 1):
@@ -153,6 +169,7 @@ func _build_notice_panel() -> void:
 
 func _build_meta_summary_panel() -> void:
 	_add_panel(self, "MainMenuMetaFrame", Rect2(354, 414, 320, 82), &"soft")
+	_add_texture_rect_from_ref(self, "Art15MainMenuMetaTexture", Rect2(354, 414, 320, 82), Art09ManifestAssetMappingScript.panel_ref(&"terminal"), 0.18)
 	_add_label_token(self, "MainMenuMetaSummaryHeading", Rect2(372, 430, 220, 22), "行动记录", &"caption", &"muted")
 	meta_summary_label = _add_label_token(self, "MainMenuMetaSummary", Rect2(372, 454, 282, 36), "", &"caption", &"text")
 	_refresh_meta_summary()

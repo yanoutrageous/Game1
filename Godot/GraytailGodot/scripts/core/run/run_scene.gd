@@ -260,8 +260,8 @@ func _build_run_overlay() -> void:
 	minimap_panel = run_surface.get_minimap_panel()
 	var surface_overlay_slot: Control = run_surface.get_overlay_slot()
 
-	debug_toggle_button = _add_button(run_overlay_root, "DebugToggleButton", Rect2(1010, 226, 170, 34), "Dev Debug", func() -> void: _toggle_debug_panel())
-	debug_toggle_button.visible = m1_debug_panel_enabled
+	debug_toggle_button = _add_button(run_overlay_root, "DebugToggleButton", Rect2(1010, 226, 170, 34), "诊断", func() -> void: _toggle_debug_panel())
+	debug_toggle_button.visible = false
 	debug_toggle_button.disabled = not m1_debug_panel_enabled
 	debug_toggle_button.tooltip_text = "m1_debug_panel=true; dev/test-only cheat panel"
 	debug_panel = PanelContainer.new()
@@ -472,7 +472,7 @@ func _build_runtime_modals() -> void:
 	pause_status_label.text = "本面板只暂停 UI 并提供设置入口；继续会返回当前局，不写本地持久化偏好。"
 	pause_content.add_child(pause_status_label)
 	if m1_debug_panel_enabled:
-		_add_menu_button(pause_content, "Dev Debug Panel", func() -> void: _open_debug_panel_from_pause())
+		_add_menu_button(pause_content, "诊断面板", func() -> void: _open_debug_panel_from_pause())
 	_add_menu_button(pause_content, "继续", func() -> void: pause_panel.visible = false)
 	_add_menu_button(pause_content, "设置说明", func() -> void: _open_settings_from_pause())
 	_add_menu_button(pause_content, "关闭", func() -> void: pause_panel.visible = false)
