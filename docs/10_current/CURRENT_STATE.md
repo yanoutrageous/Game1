@@ -63,6 +63,34 @@ Base Docs_Governance = 外部治理快照区，不替代当前仓库事实源。
 Connection = 外部并行交接区，不复制内容入库。
 Godot/GraytailGodot/docs = 工程历史 / 环境证据，不作为当前文档治理入口。
 ```
+
+## 7. M4 Repository Synchronization
+
+Status: active repository sync / branch governance / Godot metadata validation on `godot/m4-repository-sync-metadata-validation`.
+
+Current known main:
+
+```text
+main = origin/main = e9c17cb784aadba37c67c07a6a3716f0b75e38cb
+```
+
+Current active merge candidate:
+
+```text
+godot/art15-art17-visual-ui-cleanup = 7d405ccc9f0ad656a62cadcf9c9e27096a4d5434
+topology: main...ART = 0 / 2, fast-forward candidate
+status: whitespace follow-up complete; pending clean Godot validation and ART release gate
+```
+
+M4 records:
+
+```text
+docs/00_governance/BRANCH_GOVERNANCE_LEDGER.md
+docs/00_governance/M4_REPOSITORY_SYNC_METADATA_POLICY.md
+tools/validate_m4_repository_sync.ps1
+```
+
+M4 does not push main, does not delete branches, does not touch protective stash, and does not declare gameplay runtime PASS or manual playtest PASS.
 ## M2 Lua / UE Effect-First Playable Loop
 
 Status: implementation in progress on `godot/m2-lua-ue-effect-first-playable-loop`.
