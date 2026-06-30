@@ -79,4 +79,3 @@ Given the dedup result, the lowest-risk visible import batch for Slice 2 is:
 - `ui_title_plate\ui_title_signal_lost.png`
 
 This batch avoids duplicating existing runtime assets and targets feedback / settlement visual gaps with direct visible impact. It should still be verified against existing runtime SHA and manifest path before copying.
-

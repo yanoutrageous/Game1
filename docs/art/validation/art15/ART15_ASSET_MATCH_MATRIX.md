@@ -74,4 +74,3 @@
 | `Base Art\M1\Lua demo.mp4` / M1 PNG | 运行态结构参考，不是素材源 | `reference_only` |
 | `Draw\30_game_ready\**\debug_detected_boxes.png` | 检测调试图 | `reference_only` / forbidden import |
 | `D:\A GAME\26.5.30 GameJam\Draw\Art.zip` | 旧压缩包，本阶段禁止解压 | `defer` / forbidden this stage |
-

@@ -70,4 +70,3 @@ Slice 2 导入完成后应满足：
 - 新增 `godot_path` 文件存在。
 - 没有外部 runtime hardcode。
 - 未修改 core/run、core/command、core/save。
-

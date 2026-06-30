@@ -72,4 +72,3 @@ Before copying any new PNG into `Godot/GraytailGodot/assets`, later slices must 
 2. Whether an asset_id already exists in `asset_manifest.csv`.
 3. Whether the desired change is actually a wiring / visual_key problem.
 4. Whether the candidate source is reference-only or debug-only.
-
