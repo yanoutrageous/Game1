@@ -1,10 +1,21 @@
 # M4 Repository Sync Metadata Policy
 
-文档状态：M4 metadata 策略裁决
+文档状态：M4 / M4S metadata 策略裁决
 适用范围：Godot generated metadata、ART15/17 准入、clean checkout 验证流程
 最后更新：2026/06/30
 
-本文件只定义 M4 的仓库同步和 metadata 处理口径，不替代具体 release gate，不声明 gameplay runtime PASS 或 manual playtest PASS。
+本文件只定义 M4 / M4S 的仓库同步和 metadata 处理口径，不替代具体 release gate，不声明 gameplay runtime PASS 或 manual playtest PASS。
+
+## 0. M4S 当前裁决摘要
+
+```text
+M4 main final hash: 786c898388896eb6654e3a3a96fe4aef5cdb32fe
+M4S branch: godot/m4s-metadata-branch-clean-checkout-finalization
+M4S goal: finalize generated metadata policy, branch governance, validator portability, and clean checkout parser validation.
+Base Docs / Base Art / Connection: external read-only sources; not deduplicated, rewritten, staged, or imported by this repository policy.
+```
+
+M4S does not change gameplay rules, RunFlow, M3 item drop logic, G39 route logic, or ART UI visual content. It only finalizes repository metadata and branch governance handling.
 
 ## 1. Dirty 归属裁决
 
@@ -17,6 +28,14 @@
 | `.gd.uid` | `Godot/GraytailGodot/scripts/**/*.gd.uid` | Godot generated script UID metadata | 当前仓库已有 tracked uid，也存在 untracked uid。以 clean checkout 可验证为优先；不得提交 `.godot/` cache。是否纳入缺失 uid 需独立 metadata gate。 |
 | `.translation` | `Godot/GraytailGodot/data/assets/asset_manifest.*.translation` | Godot generated translation metadata | 默认不纳入 ART / M4 工具提交。tracked dirty 应恢复，untracked generated 应精确删除，除非另有资源导入 gate 证明需要版本控制。 |
 | `.godot/` | `Godot/GraytailGodot/.godot/` | editor/import cache | 必须 ignore，不入库。clean checkout parser 验证可先生成 cache，但不得提交。 |
+
+M4S follow-up:
+
+```text
+.gitignore now ignores untracked generated script UID sidecars and untracked asset_manifest.*.translation sidecars.
+Tracked .gd.uid and tracked asset_manifest.*.translation files remain tracked historical metadata; this policy does not delete or untrack them.
+Generated modifications to tracked project.godot or tracked translation sidecars must be restored unless a later explicit project metadata gate approves them.
+```
 
 ## 2. project.godot 策略
 
@@ -55,6 +74,7 @@ clean checkout 直接 project-load 可能缺少 .godot/global_script_class_cache
 是否将缺失 .gd.uid 纳入版本控制，应以 clean checkout editor/import + project-load 验证为准。
 M4 本轮不把 .gd.uid 与 ART 内容混合提交。
 缺失 uid 若被证明是 clean checkout parser 的必要条件，应走独立 metadata gate。
+M4S 默认不提交本轮 untracked .gd.uid；它们由 Godot 4.6.3 editor/import 可重复生成，并由 `.gitignore` 排除。
 ```
 
 ## 4. .translation 策略
@@ -66,6 +86,7 @@ asset_manifest.*.translation 视为 Godot generated metadata。
 当前没有证据证明它们是 ART15/17 或 M4 governance 所需的手写资产。
 tracked dirty 不应提交；untracked generated translation 不应入库。
 不得使用 git clean；只能按精确清单 restore / Remove-Item。
+M4S 默认不删除 tracked translation 文件；是否从仓库移除既有 tracked translation sidecar 必须另开 metadata cleanup gate。
 ```
 
 ## 5. Clean Checkout Godot 验证流程
@@ -134,6 +155,28 @@ ART15/17 分支不得夹带 project.godot / .translation / .uid / .import metada
 ART15/17 验证应包含 ART15R layout、ART17 screen layering、G39 navigation boundary、M4 repository sync 和 Godot editor/import + project-load。
 validate_art15_core_art_asset_pipeline.ps1 若作为纯 ART15 gate 不接受 combined ART15/17 的 run_scene/UI 改动，应记录为 legacy/pure-gate mismatch，不能用作单独放行证据。
 ```
+
+## 8. M4S validator and clean checkout policy
+
+M4S adds:
+
+```text
+tools/validate_m4s_metadata_branch_clean_checkout.ps1
+```
+
+The M4S validator checks:
+
+```text
+1. The working branch is not direct main.
+2. main and origin/main are readable and match the expected M4 baseline hash.
+3. generated metadata policy files exist.
+4. .gitignore covers untracked Godot generated metadata sidecars.
+5. staged content does not include project.godot, .gd.uid, .translation, .import, .godot cache, Base Docs, Base Art, or Connection.
+6. branch governance ledger records M4S.
+7. Godot editor/import + project-load smoke can be run with -RunGodot; otherwise the validator explicitly reports NOT RUN.
+```
+
+M4S also updates `tools/validate_art15_core_art_asset_pipeline.ps1` so it no longer requires the exact root `D:\AGAME1\_repo_cache\Game1_work`; it resolves the active git worktree root and validates repository-relative structure.
 
 ## 7. 当前推荐下一步
 

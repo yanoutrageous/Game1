@@ -29,6 +29,7 @@ docs/00_governance/DUPLICATE_DOC_LEDGER.md
 | G36 | earlier runtime architecture / save profile evidence | `docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md`、`docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`、`docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md` |
 | DOC-GOV-001 | completed / historical governance | `docs/00_governance/DOC_GOV_001_EXECUTION_REPORT.md` |
 | M4 | repository sync / branch governance / metadata validation | `docs/00_governance/BRANCH_GOVERNANCE_LEDGER.md`、`docs/00_governance/M4_REPOSITORY_SYNC_METADATA_POLICY.md`、`tools/validate_m4_repository_sync.ps1` |
+| M4S | metadata / branch governance / clean checkout finalization | `docs/00_governance/BRANCH_GOVERNANCE_LEDGER.md`、`docs/00_governance/M4_REPOSITORY_SYNC_METADATA_POLICY.md`、`tools/validate_m4s_metadata_branch_clean_checkout.ps1` |
 
 G38 / G37S / G37 / G36 不声明 gameplay runtime PASS，也不声明 manual playtest PASS。DOC-GOV-002 不新增玩法规则。
 

@@ -23,6 +23,8 @@ UE/Graytail/*.sdf
 Godot/**/.godot/
 Godot/**/.import/
 Godot/**/*.import
+Godot/**/*.gd.uid
+Godot/**/data/assets/asset_manifest.*.translation
 Godot/**/editor_data/
 Godot/**/export.cfg
 Godot/**/export_presets.cfg

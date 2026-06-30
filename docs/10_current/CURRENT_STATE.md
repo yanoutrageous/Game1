@@ -1,21 +1,22 @@
 # Current State
 
 文档状态：当前事实摘要
-适用范围：DOC-GOV-002 文档治理阶段与 G38 / G37S / G37 最新仓库文档证据摘要
-最后更新：2026/06/27
+适用范围：M4S 仓库 metadata / 分支治理 / 干净检出验证收尾与当前工程证据摘要
+最后更新：2026/06/30
 
 本文件只汇总当前事实入口，不替代验证记录、历史 handoff、产品契约或外部策划来源。
 
-## 1. 当前文档治理阶段
+## 1. 当前仓库治理阶段
 
 ```text
-当前执行阶段：DOC-GOV-002 仓库 docs 入口、索引、README 与历史层归属治理
-阶段性质：docs-only governance / documentation standardization
-当前仓库分支观测：main
-staged 观测：empty
+当前执行阶段：M4S Repository Metadata / Branch Governance / Clean Checkout Finalization
+阶段性质：metadata policy / branch governance / clean checkout validation
+当前 M4 main: 786c898388896eb6654e3a3a96fe4aef5cdb32fe
+当前 M4S branch: godot/m4s-metadata-branch-clean-checkout-finalization
+staged policy: only M4S docs/tools/ignore/attributes may be staged
 ```
 
-DOC-GOV-002 只处理仓库文档入口、索引、README、历史层归属和后续文档落位规则。DOC-GOV-001 已完成并作为历史治理证据保留。
+M4S 只处理 Godot generated metadata 归属、分支治理台账、validator worktree 可移植性、clean checkout 验证和 Git ignore / binary policy。M4S 不修改 gameplay、RunFlow、M3 item drop、G39 navigation route logic 或 ART UI visual content。
 
 ## 2. 当前工程文档证据链
 
@@ -64,22 +65,24 @@ Connection = 外部并行交接区，不复制内容入库。
 Godot/GraytailGodot/docs = 工程历史 / 环境证据，不作为当前文档治理入口。
 ```
 
-## 7. M4 Repository Synchronization
+## 7. M4 / M4S Repository Synchronization
 
-Status: active repository sync / branch governance / Godot metadata validation on `godot/m4-repository-sync-metadata-validation`.
+Status: M4 main complete; M4S metadata / branch / clean checkout finalization active on `godot/m4s-metadata-branch-clean-checkout-finalization`.
 
 Current known main:
 
 ```text
-main = origin/main = e9c17cb784aadba37c67c07a6a3716f0b75e38cb
+main = origin/main = 786c898388896eb6654e3a3a96fe4aef5cdb32fe
 ```
 
-Current active merge candidate:
+Current branch status:
 
 ```text
-godot/art15-art17-visual-ui-cleanup = 7d405ccc9f0ad656a62cadcf9c9e27096a4d5434
-topology: main...ART = 0 / 2, fast-forward candidate
-status: whitespace follow-up complete; pending clean Godot validation and ART release gate
+godot/art15-art17-visual-ui-cleanup = merged / already-merged-keep
+godot/g39-navigation-boundary-route-closure = merged / already-merged-keep
+godot/m4-repository-sync-metadata-validation = superseded by M4 main
+godot/latest-verifiable-state = superseded by M4 main
+godot/m4s-metadata-branch-clean-checkout-finalization = active governance finalization branch
 ```
 
 M4 records:
@@ -88,9 +91,10 @@ M4 records:
 docs/00_governance/BRANCH_GOVERNANCE_LEDGER.md
 docs/00_governance/M4_REPOSITORY_SYNC_METADATA_POLICY.md
 tools/validate_m4_repository_sync.ps1
+tools/validate_m4s_metadata_branch_clean_checkout.ps1
 ```
 
-M4 does not push main, does not delete branches, does not touch protective stash, and does not declare gameplay runtime PASS or manual playtest PASS.
+M4S does not push main, does not delete branches, does not touch protective stash, and does not declare gameplay runtime PASS or manual playtest PASS.
 ## M2 Lua / UE Effect-First Playable Loop
 
 Status: implementation in progress on `godot/m2-lua-ue-effect-first-playable-loop`.

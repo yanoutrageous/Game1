@@ -1,0 +1,8 @@
+# Binary assets and validation screenshots stay binary in Git.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+
+# Godot binary resources should not be line-ending normalized.
+*.res binary

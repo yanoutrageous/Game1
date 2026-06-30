@@ -1,6 +1,6 @@
 # M4 Branch Governance Ledger
 
-文档状态：M4 仓库同步 / 分支治理台账
+文档状态：M4 / M4S 仓库同步 / 分支治理台账
 适用范围：当前本地与 origin 分支的审计、合并候选判断、清理建议
 最后更新：2026/06/30
 
@@ -11,9 +11,9 @@
 ```text
 repo: D:\AGAME1\_repo_cache\Game1_work
 fetch: git fetch --prune 已执行
-main: e9c17cb784aadba37c67c07a6a3716f0b75e38cb
-origin/main: e9c17cb784aadba37c67c07a6a3716f0b75e38cb
-fetch 前后 origin/main: unchanged
+main: 786c898388896eb6654e3a3a96fe4aef5cdb32fe
+origin/main: 786c898388896eb6654e3a3a96fe4aef5cdb32fe
+M4S working branch: godot/m4s-metadata-branch-clean-checkout-finalization
 protective stash: stash@{0} exists / read-only observed / untouched
 ```
 
@@ -33,9 +33,12 @@ protective stash: stash@{0} exists / read-only observed / untouched
 
 | 分支 | hash | main...branch | merged into main | 分类 | 结论 |
 | --- | --- | --- | --- | --- | --- |
-| `main` / `origin/main` | `e9c17cb` | `0 / 0` | yes | current-main | 当前本地已知主线。 |
-| `godot/g39-navigation-boundary-route-closure` | `e9c17cb` | `0 / 0` | yes | current-main | 与 main 等价。 |
-| `godot/art15-art17-visual-ui-cleanup` | `7d405cc` | `0 / 2` | no | active-merge-candidate | 拓扑可 fast-forward；whitespace follow-up 已完成，仍需 Godot clean validation 后进入 ART release gate。 |
+| `main` / `origin/main` | `786c898` | `0 / 0` | yes | current-main | M4 完成后的当前主线；包含 G39、ART15/17、M4 repository sync governance。 |
+| `godot/g39-navigation-boundary-route-closure` | `e9c17cb` | included in main history | yes | already-merged-keep | 已被 M4 main 包含，保留分支证据。 |
+| `godot/art15-art17-visual-ui-cleanup` | `7d405cc` | included in main history | yes | already-merged-keep | ART15/17 已进入 M4 main；保留分支证据，不再作为待合入阻塞。 |
+| `godot/latest-verifiable-state` | `786c898` | `0 / 0` | yes | superseded-by-main | 临时最新可验证整合分支，内容已等价于 M4 main，可保留至后续归档阶段。 |
+| `godot/m4-repository-sync-metadata-validation` | `195f29b` | content cherry-picked into M4 main as `786c898` | yes | superseded-by-main | M4 docs/tools 治理内容已进入 M4 main；原分支保留历史证据。 |
+| `godot/m4s-metadata-branch-clean-checkout-finalization` | pending | ahead of M4 main | no | active-governance-finalization | M4S 当前执行分支，只允许 metadata policy、branch governance、validator、ignore/attributes 与 clean checkout 证据。 |
 | `docs/doc-gov-001` | `634ffa6` | `20 / 0` | yes | already-merged-keep | 已包含于 main，保留历史分支。 |
 | `docs/doc-gov-002` | `909a71a` | `10 / 1` | no | needs-human-decision | 含 ART-12 文档治理 backlog，需人工决定是否仍有未合入价值。 |
 | `godot/g9-ui-final-integration` | local `eb9f5d6`, origin `ad1aeae` | local ahead origin | yes to main lineage | needs-human-decision | 本地与远端不同步，且历史 UI 分支已被后续 main 覆盖；不得自动删除或 force push。 |
@@ -93,27 +96,28 @@ godot/prototype-foundation
 godot/lua-parity-p0
 ```
 
-## 5. ART15/17 合并判断
+## 5. ART15/17 / latest-verifiable-state / M4S 判断
 
 ```text
-merge-base(main, godot/art15-art17-visual-ui-cleanup) = e9c17cb784aadba37c67c07a6a3716f0b75e38cb
-rev-list --left-right --count main...godot/art15-art17-visual-ui-cleanup = 0 1
+M4 main final hash = 786c898388896eb6654e3a3a96fe4aef5cdb32fe
+ART15/17 final branch hash = 7d405ccc9f0ad656a62cadcf9c9e27096a4d5434
+latest-verifiable-state = 786c898388896eb6654e3a3a96fe4aef5cdb32fe
+M4 repository sync governance source branch = 195f29b8844e96d83d3fb6645f64f96c2455bfb9
 ```
 
 结论：
 
 ```text
-ART15/17 分支拓扑上可以 fast-forward。
-ART15/17 分支不包含 project.godot / .translation / .uid / .import / scene / resource metadata。
-ART15/17 分支已通过 whitespace follow-up 修复 4 个 markdown EOF error，仍需 Godot clean validation 后进入 release gate。
+ART15/17 已进入 M4 main，不再是待合入 blocker。
+latest-verifiable-state 与 M4 main 等价，可视为临时验证分支，后续可由独立分支治理阶段归档。
+M4S 不修改 gameplay / ART UI content / G39 route logic，只补齐 metadata policy、ignore/attributes、validator portability 与 clean checkout 验证。
 ```
 
 当前症状解释：
 
 ```text
-main 已包含后续 G39 路线，但 ART15/17 仍停留在 main 之后的独立提交。
-因此当前 main 可能出现调用关系已前进、ART 完整实现未合入的视觉层缺口。
-这与“美术线完成后未 push / 未合入 main，随后 G39 继续推进”的假设一致。
+历史症状已解释为：G39 main 曾先行包含调用关系，而 ART15/17 完整实现尚未进入当时 main。
+M4 main 786c898 已收敛该问题；M4S 继续处理生成 metadata 和 clean checkout 验证。
 ```
 
 ## 6. 不执行项

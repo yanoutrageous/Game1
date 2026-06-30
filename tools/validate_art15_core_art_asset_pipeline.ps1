@@ -24,9 +24,18 @@ function Require-File([string]$Path) {
     }
 }
 
-$repoRoot = (git rev-parse --show-toplevel).Trim()
-if ($repoRoot -replace "\\", "/" -ne "D:/AGAME1/_repo_cache/Game1_work") {
-    Add-Failure "Unexpected git root: $repoRoot"
+$repoRootRaw = (git rev-parse --show-toplevel).Trim()
+if ([string]::IsNullOrWhiteSpace($repoRootRaw)) {
+    Add-Failure "Unable to resolve git root."
+} else {
+    $repoRoot = (Resolve-Path -LiteralPath $repoRootRaw).Path
+    Set-Location -LiteralPath $repoRoot
+    if (-not (Test-Path -LiteralPath "Godot/GraytailGodot/project.godot" -PathType Leaf)) {
+        Add-Failure "Missing Godot project at expected repository-relative path: Godot/GraytailGodot/project.godot"
+    }
+    if (-not (Test-Path -LiteralPath "Godot/GraytailGodot/data/assets/asset_manifest.csv" -PathType Leaf)) {
+        Add-Failure "Missing asset manifest at expected repository-relative path: Godot/GraytailGodot/data/assets/asset_manifest.csv"
+    }
 }
 
 $requiredDocs = @(
