@@ -145,6 +145,10 @@ static func main_menu_background_ref() -> Dictionary:
 	return Art09ManifestAssetMappingScript.main_menu_background_ref()
 
 
+static func player_sprite_ref(state: StringName = &"idle") -> Dictionary:
+	return Art09ManifestAssetMappingScript.player_sprite_ref(state)
+
+
 static func main_menu_entry_icon_ref(entry_id: StringName) -> Dictionary:
 	match entry_id:
 		&"deploy":
@@ -173,6 +177,22 @@ static func deploy_card_asset_ref(card_id: StringName, category: String, filter_
 
 static func inventory_item_icon_ref(item: Dictionary) -> Dictionary:
 	return Art09ManifestAssetMappingScript.inventory_item_icon_ref(item)
+
+
+static func feedback_bar_ref(state: StringName = &"neutral") -> Dictionary:
+	return Art09ManifestAssetMappingScript.feedback_bar_ref(state)
+
+
+static func feedback_panel_ref(state: StringName = &"event") -> Dictionary:
+	return Art09ManifestAssetMappingScript.feedback_panel_ref(state)
+
+
+static func result_title_ref(state: StringName = &"success") -> Dictionary:
+	return Art09ManifestAssetMappingScript.result_title_ref(state)
+
+
+static func panel_ref(role: StringName = &"terminal") -> Dictionary:
+	return Art09ManifestAssetMappingScript.panel_ref(role)
 
 
 static func key_prompt_ref(action_id: StringName, rendered: bool = false) -> Dictionary:

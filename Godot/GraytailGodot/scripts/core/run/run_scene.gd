@@ -16,6 +16,7 @@ const InventoryPanelScript := preload("res://scripts/ui/inventory/inventory_pane
 const GroundLootPanelScript := preload("res://scripts/ui/ground_loot/ground_loot_panel.gd")
 const DevDiagnosticsPanelScript := preload("res://scripts/ui/dev/dev_diagnostics_panel.gd")
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
+const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const G10ArtSmokeRegistry := preload("res://scripts/presentation/g10_art_smoke_registry.gd")
 const RunSurfaceScript := preload("res://scripts/ui/run_surface/run_surface.gd")
 const RunSurfaceModel := preload("res://scripts/ui/run_surface/run_surface_model.gd")
@@ -214,6 +215,7 @@ func _build_playfield_visuals() -> void:
 	player_controller = PlayerScene.instantiate() as PlayerController
 	player_controller.name = "PlayerController"
 	player_layer.add_child(player_controller)
+	_suppress_runtime_scene_labels()
 
 
 func _build_accessible_ui() -> void:
@@ -1071,6 +1073,7 @@ func _refresh_view_models() -> void:
 	var snapshot := _shell_snapshot()
 	var layout_profile: Dictionary = _current_layout_profile()
 	_apply_runtime_modal_layout(layout_profile)
+	_apply_game_stage_layout(layout_profile)
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	var minimap_vm := RunSceneUIBridgeScript.minimap_from_snapshot_or_intel(snapshot, run_context)
 	if run_surface != null:
@@ -1099,6 +1102,7 @@ func _refresh_view_models() -> void:
 		room_controller.configure(PresentationMapping.room_visual_from_snapshot(snapshot))
 	if player_controller != null:
 		player_controller.set_visual_asset(&"sprite.player.default")
+	_suppress_runtime_scene_labels()
 	if hud != null:
 		hud.apply_layout_profile(layout_profile)
 		hud.apply_view_model(HUDViewModel.build_from_snapshot(snapshot))
@@ -1128,6 +1132,49 @@ func _refresh_view_models() -> void:
 		_sync_debug_coordinates()
 	if result_panel != null and bool(snapshot.get("run_active", false)):
 		result_panel.hide_result()
+
+
+func _apply_game_stage_layout(layout_profile: Dictionary) -> void:
+	var room_layer := get_node_or_null("RoomLayer") as Node2D
+	var player_layer := get_node_or_null("PlayerLayer") as Node2D
+	if room_layer == null or player_layer == null:
+		return
+	var viewport_size := UILayerContractScript.viewport_size_from_profile(layout_profile)
+	var width: float = maxf(1.0, viewport_size.x)
+	var height: float = maxf(1.0, viewport_size.y)
+	var left_width: float = UILayerContractScript.run_left_width(layout_profile)
+	var gameplay_width: float = maxf(1.0, width - left_width)
+	var room_visual_size := Vector2(576.0, 324.0)
+	var room_visual_center := Vector2(640.0, 360.0)
+	if room_controller != null:
+		var background_sprite := room_controller.get_node_or_null("Background/BackgroundSprite") as Sprite2D
+		if background_sprite != null:
+			room_visual_center = background_sprite.position
+			if background_sprite.texture != null:
+				room_visual_size = background_sprite.texture.get_size() * background_sprite.scale.abs()
+	var bottom_overlay_budget: float = maxf(96.0, height * 0.15)
+	var target_height: float = maxf(1.0, height - bottom_overlay_budget - 18.0)
+	var scale_value: float = maxf(gameplay_width / maxf(1.0, room_visual_size.x), target_height / maxf(1.0, room_visual_size.y))
+	scale_value = clampf(scale_value, 0.90, 1.82)
+	var gameplay_center := Vector2(left_width + gameplay_width * 0.50, target_height * 0.52 + 10.0)
+	var origin := gameplay_center - room_visual_center * scale_value
+	room_layer.position = origin
+	player_layer.position = origin
+	room_layer.scale = Vector2(scale_value, scale_value)
+	player_layer.scale = Vector2(scale_value, scale_value)
+
+
+func _suppress_runtime_scene_labels() -> void:
+	if room_controller != null:
+		var room_title := room_controller.get_node_or_null("RoomTitle") as Label
+		if room_title != null:
+			room_title.visible = false
+			room_title.text = ""
+	if player_controller != null:
+		var player_label := player_controller.get_node_or_null("Label") as Label
+		if player_label != null:
+			player_label.visible = false
+			player_label.text = ""
 
 
 func _current_layout_profile() -> Dictionary:
@@ -1217,14 +1264,9 @@ func _open_map_from_ui(source: StringName = &"button") -> void:
 
 
 func _toggle_debug_panel() -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
 	if debug_panel != null:
-		if not debug_panel.visible:
-			_sync_debug_coordinates()
-			_apply_debug_panel_layout(_current_layout_profile())
-		debug_panel.visible = not debug_panel.visible
+		debug_panel.visible = false
+	get_viewport().gui_release_focus()
 
 
 func _open_debug_panel_from_pause() -> void:
@@ -1234,14 +1276,10 @@ func _open_debug_panel_from_pause() -> void:
 
 
 func _open_debug_panel() -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
 	if debug_panel == null:
 		return
-	_sync_debug_coordinates()
-	_apply_debug_panel_layout(_current_layout_profile())
-	debug_panel.visible = true
+	debug_panel.visible = false
+	get_viewport().gui_release_focus()
 
 
 func _close_debug_panel() -> void:

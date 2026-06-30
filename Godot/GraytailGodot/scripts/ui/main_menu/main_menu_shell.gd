@@ -38,15 +38,44 @@ func _clear_children() -> void:
 
 
 func _apply_layer_order() -> void:
-	for child in get_children():
-		if child is CanvasItem:
-			var canvas_item := child as CanvasItem
-			canvas_item.z_as_relative = false
-			canvas_item.z_index = _layer_for_node(child)
+	_establish_page_layer_roots()
+	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
+		var root_name := StringName(root_name_variant)
+		var root := get_node_or_null(String(root_name)) as Control
+		if root == null:
+			continue
+		UILayerContractScript.configure_root(root, UILayerContractScript.page_root_role(root_name))
+		for child in root.get_children():
+			UILayerContractScript.apply_local_layer(child, _local_layer_for_node(child, root_name))
 
 
 func _layer_for_node(node: Node) -> int:
 	return UILayerContractScript.layer_for_page_node(node)
+
+
+func _establish_page_layer_roots() -> void:
+	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
+		var root_name := StringName(root_name_variant)
+		UILayerContractScript.ensure_root(self, root_name, UILayerContractScript.page_root_role(root_name))
+	for child in get_children().duplicate():
+		if UILayerContractScript.is_page_root_name(StringName(child.name)):
+			continue
+		var target_root_name := UILayerContractScript.page_root_for_node(child)
+		var target_root := get_node_or_null(String(target_root_name)) as Control
+		if target_root == null:
+			continue
+		remove_child(child)
+		target_root.add_child(child)
+	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
+		var root_name := StringName(root_name_variant)
+		var root := get_node_or_null(String(root_name)) as Control
+		if root != null and root.get_parent() == self:
+			move_child(root, get_child_count() - 1)
+
+
+func _local_layer_for_node(node: Node, root_name: StringName) -> int:
+	var root_layer := UILayerContractScript.layer(UILayerContractScript.page_root_role(root_name))
+	return maxi(0, _layer_for_node(node) - root_layer)
 
 
 func apply_snapshot(snapshot: Dictionary) -> void:
@@ -92,12 +121,10 @@ func _build_backdrop() -> void:
 	_add_color_rect(self, "BaseHallDoorLeft", Rect2(76, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
 	_add_color_rect(self, "BaseHallDoorRight", Rect2(282, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
 	_add_color_rect(self, "BaseHallForegroundRail", Rect2(56, 512, 642, 3), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
-	_add_panel(self, "MainMenuNarrativeFrame", Rect2(46, 66, 690, 548), &"soft")
 	_add_color_rect(self, "BaseAtmosphereLayer", Rect2(70, 210, 640, 266), Color(0.10, 0.19, 0.17, 0.28))
 	_add_color_rect(self, "BaseFloorLine", Rect2(86, 486, 598, 4), PresentationTheme.color_for_key(&"ui.warning", Color(0.94, 0.7, 0.28, 1.0)))
 	_add_label_token(self, "MainMenuTitle", Art10UISkinKitScript.rect(&"main_menu", "title"), String(current_model.get("title", "灰尾回收")), &"title", &"warning")
-	_add_label_token(self, "MainMenuSubtitle", Rect2(78, 126, 610, 42), "基地门厅 / 任务入口", &"body", &"text")
-	_add_label_token(self, "MainMenuSceneHint", Rect2(354, 208, 300, 34), "基地入口已就绪", &"section_title", &"caption")
+	_add_label_token(self, "MainMenuSubtitle", Rect2(78, 126, 320, 30), "基地门厅", &"body", &"text")
 
 
 func _build_role_panel() -> void:
@@ -110,7 +137,6 @@ func _build_role_panel() -> void:
 	_add_color_rect(self, "CharacterTool", Rect2(248, 250, 10, 210), Art10UISkinKitScript.color(&"gold"))
 	_add_color_rect(self, "CharacterEquipmentLine", Rect2(104, 462, 188, 3), Art10UISkinKitScript.color(&"accent"))
 	_add_label_token(self, "CharacterDisplayLabel", Rect2(110, 474, 184, 28), "探索员整备", &"tab", &"text")
-	_add_label_token(self, "OutfitShortcutHint", Rect2(354, 312, 286, 26), "整备完成", &"caption", &"accent")
 
 
 func _build_top_entrance_panel() -> void:

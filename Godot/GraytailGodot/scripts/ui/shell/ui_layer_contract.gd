@@ -13,12 +13,35 @@ const ACTION_BAR := 96
 const OVERLAY := 124
 const MODAL := 160
 
-const RUN_LEFT_RATIO := 0.245
-const RUN_LEFT_MIN := 292.0
-const RUN_LEFT_MAX := 392.0
+const RUN_LEFT_RATIO := 0.30
+const RUN_LEFT_MIN := 340.0
+const RUN_LEFT_MAX := 580.0
 const RUN_STATUS_WIDTH_LOW := 210.0
 const RUN_STATUS_WIDTH_STANDARD := 244.0
 const RUN_STATUS_WIDTH_HIGH := 270.0
+
+const PAGE_ROOT_ORDER := [
+	&"BackgroundRoot",
+	&"DecorationRoot",
+	&"CharacterRoot",
+	&"MainContentRoot",
+	&"SideStatusRoot",
+	&"PrimaryActionRoot",
+	&"FloatingInfoRoot",
+	&"OverlayRoot",
+	&"ModalRoot",
+]
+
+const RUN_ROOT_ORDER := [
+	&"RunGameStageRoot",
+	&"RunLeftInfoRailRoot",
+	&"RunTopRightStatusRoot",
+	&"RunFloatingInfoRoot",
+	&"RunInteractionPromptRoot",
+	&"RunActionOverlayRoot",
+	&"RunOverlayRoot",
+	&"RunModalRoot",
+]
 
 
 static func layer(role: StringName, fallback: int = CONTENT_PANEL) -> int:
@@ -55,6 +78,126 @@ static func apply_layer(item: Variant, role: StringName, offset: int = 0) -> voi
 	var canvas_item := item as CanvasItem
 	canvas_item.z_as_relative = false
 	canvas_item.z_index = layer(role) + offset
+
+
+static func apply_local_layer(item: Variant, local_index: int = 0) -> void:
+	if not (item is CanvasItem):
+		return
+	var canvas_item := item as CanvasItem
+	canvas_item.z_as_relative = true
+	canvas_item.z_index = local_index
+
+
+static func ensure_root(parent: Control, root_name: StringName, role: StringName, offset: int = 0) -> Control:
+	var root := parent.get_node_or_null(String(root_name)) as Control
+	if root == null:
+		root = Control.new()
+		root.name = String(root_name)
+		parent.add_child(root)
+	configure_root(root, role, offset)
+	return root
+
+
+static func configure_root(root: Control, role: StringName, offset: int = 0) -> void:
+	if root == null:
+		return
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.offset_left = 0.0
+	root.offset_top = 0.0
+	root.offset_right = 0.0
+	root.offset_bottom = 0.0
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	apply_layer(root, role, offset)
+
+
+static func is_page_root_name(root_name: StringName) -> bool:
+	return PAGE_ROOT_ORDER.has(root_name)
+
+
+static func page_root_role(root_name: StringName) -> StringName:
+	match root_name:
+		&"BackgroundRoot":
+			return &"background"
+		&"DecorationRoot":
+			return &"gameplay_viewport"
+		&"CharacterRoot":
+			return &"character_display"
+		&"SideStatusRoot":
+			return &"status_card"
+		&"PrimaryActionRoot":
+			return &"action_bar"
+		&"FloatingInfoRoot":
+			return &"floating_info"
+		&"OverlayRoot":
+			return &"overlay"
+		&"ModalRoot":
+			return &"modal"
+		_:
+			return &"content_panel"
+
+
+static func page_root_for_node(node: Node) -> StringName:
+	var resolved_layer := layer_for_page_node(node)
+	if resolved_layer <= BACKGROUND:
+		return &"BackgroundRoot"
+	if resolved_layer < CONTENT_PANEL:
+		return &"DecorationRoot"
+	if resolved_layer == CHARACTER_DISPLAY:
+		return &"CharacterRoot"
+	if resolved_layer >= MODAL:
+		return &"ModalRoot"
+	if resolved_layer >= OVERLAY:
+		return &"OverlayRoot"
+	if resolved_layer >= ACTION_BAR:
+		return &"PrimaryActionRoot"
+	if resolved_layer >= FLOATING_INFO:
+		return &"FloatingInfoRoot"
+	if resolved_layer >= STATUS_CARD:
+		return &"SideStatusRoot"
+	return &"MainContentRoot"
+
+
+static func is_run_root_name(root_name: StringName) -> bool:
+	return RUN_ROOT_ORDER.has(root_name) or root_name == &"RunRoomViewportRoot"
+
+
+static func run_root_role(root_name: StringName) -> StringName:
+	match root_name:
+		&"RunGameStageRoot", &"RunRoomViewportRoot":
+			return &"gameplay_viewport"
+		&"RunLeftInfoRailRoot":
+			return &"content_panel"
+		&"RunTopRightStatusRoot":
+			return &"status_card"
+		&"RunFloatingInfoRoot", &"RunInteractionPromptRoot":
+			return &"floating_info"
+		&"RunActionOverlayRoot":
+			return &"action_bar"
+		&"RunOverlayRoot":
+			return &"overlay"
+		&"RunModalRoot":
+			return &"modal"
+		_:
+			return &"gameplay_viewport"
+
+
+static func run_root_for_node(node: Node) -> StringName:
+	var node_name := String(node.name)
+	if node_name.find("Modal") >= 0:
+		return &"RunModalRoot"
+	if node_name.find("Overlay") >= 0 or node_name.find("FeedbackSlot") >= 0:
+		return &"RunOverlayRoot"
+	if node_name.find("Bottom") >= 0 or node_name.find("Action") >= 0 or node_name.find("Key") >= 0:
+		return &"RunActionOverlayRoot"
+	if node_name.find("Encounter") >= 0 or node_name.find("PlayerTag") >= 0:
+		return &"RunInteractionPromptRoot"
+	if node_name.find("CommandFeedback") >= 0 or node_name.find("RoomText") >= 0 or node_name.find("RoomTitle") >= 0 or node_name.find("RoomBody") >= 0 or node_name.find("Objective") >= 0:
+		return &"RunFloatingInfoRoot"
+	if node_name.find("Protocol") >= 0 or node_name.find("Threat") >= 0 or node_name.find("Event") >= 0 or node_name.find("Reward") >= 0 or node_name.find("Right") >= 0:
+		return &"RunTopRightStatusRoot"
+	if node_name.find("Scanner") >= 0 or node_name.find("MiniMap") >= 0 or node_name.find("Resource") >= 0 or node_name.find("Left") >= 0:
+		return &"RunLeftInfoRailRoot"
+	return &"RunRoomViewportRoot"
 
 
 static func layer_for_page_node(node: Node, fallback: int = CONTENT_PANEL) -> int:

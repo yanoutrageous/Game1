@@ -38,7 +38,7 @@ func clear() -> void:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	tooltip_text = "点击打开大地图"
+	tooltip_text = ""
 	var placeholder := get_node_or_null("PlaceholderLabel") as Label
 	if placeholder != null:
 		placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -46,11 +46,7 @@ func _ready() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		var mouse_button: InputEventMouseButton = event
-		if mouse_button.button_index == MOUSE_BUTTON_LEFT and mouse_button.pressed:
-			open_map_requested.emit()
-			accept_event()
+	_emit_open_map_from_mouse_event(event)
 
 
 func _rebuild_grid() -> void:
@@ -66,18 +62,39 @@ func _rebuild_grid() -> void:
 
 	if view_model == null:
 		if placeholder != null:
+			placeholder.visible = true
+			placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 			placeholder.add_theme_font_size_override("font_size", marker_font_size)
-			placeholder.text = "扫描图：暂无公开情报"
+			placeholder.text = "点击展开地图"
 		return
 
+	_apply_marker_scale_for_view_model()
 	grid.columns = max(1, view_model.width)
 	for marker in view_model.room_markers:
 		_add_marker_node(grid, marker, marker_size)
 
 	if placeholder != null:
+		placeholder.visible = false
 		placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		placeholder.add_theme_font_size_override("font_size", marker_font_size)
-		placeholder.text = "扫描图：点击展开"
+		placeholder.text = ""
+
+
+func _apply_marker_scale_for_view_model() -> void:
+	if view_model == null:
+		return
+	var panel_size := size
+	if panel_size.x <= 0.0:
+		panel_size.x = 260.0
+	if panel_size.y <= 0.0:
+		panel_size.y = 220.0
+	var columns: float = float(max(1, view_model.width))
+	var rows: float = float(max(1, view_model.height))
+	var grid_gap: float = 2.0
+	var cell_width: float = floor((panel_size.x - 16.0 - grid_gap * maxf(0.0, columns - 1.0)) / columns)
+	var cell_height: float = floor((panel_size.y - 16.0 - grid_gap * maxf(0.0, rows - 1.0)) / rows)
+	marker_size = Vector2(clampf(cell_width, 20.0, 56.0), clampf(cell_height, 18.0, 48.0))
+	marker_font_size = clampi(int(min(marker_size.x, marker_size.y) * 0.62), 11, 20)
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) -> void:
@@ -92,20 +109,34 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		icon.texture = asset_ref
 		icon.custom_minimum_size = size
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		icon.tooltip_text = String(marker.get("tooltip", ContentDB.get_placeholder_label(asset_id)))
+		icon.mouse_filter = Control.MOUSE_FILTER_STOP
+		icon.tooltip_text = ""
+		icon.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
 		grid.add_child(icon)
 	else:
 		var label := Label.new()
+		var label_text := String(marker.get("label", "?"))
 		label.custom_minimum_size = size
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		label.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
+		label.mouse_filter = Control.MOUSE_FILTER_STOP
+		var marker_color := PresentationTheme.color_for_key(theme_key)
+		if label_text == "?":
+			marker_color = Color(0.72, 0.94, 0.82, 0.92)
+		label.add_theme_color_override("font_color", marker_color)
 		label.add_theme_font_size_override("font_size", marker_font_size)
-		label.text = String(marker.get("label", "?"))
-		label.tooltip_text = String(marker.get("tooltip", ContentDB.get_placeholder_label(asset_id) if asset_id != &"" else "未知房间"))
+		label.text = label_text
+		label.tooltip_text = ""
+		label.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
 		grid.add_child(label)
+
+
+func _emit_open_map_from_mouse_event(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse_button: InputEventMouseButton = event
+		if mouse_button.button_index == MOUSE_BUTTON_LEFT and mouse_button.pressed:
+			open_map_requested.emit()
+			accept_event()
 
 
 func _apply_child_layout() -> void:
@@ -120,7 +151,7 @@ func _apply_child_layout() -> void:
 		grid.offset_left = 8.0
 		grid.offset_top = 8.0
 		grid.offset_right = panel_size.x - 8.0
-		grid.offset_bottom = panel_size.y - 32.0
+		grid.offset_bottom = panel_size.y - 8.0
 	if placeholder != null:
 		placeholder.offset_left = 8.0
 		placeholder.offset_top = panel_size.y - 30.0

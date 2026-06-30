@@ -10,6 +10,16 @@ const FALLBACK_PANEL := &"ui.hud.panel.protocol"
 const FALLBACK_BACKGROUND := &"room.background.normal"
 
 const MAIN_MENU_BACKGROUND := &"ui.main_menu.background.no_text"
+const PLAYER_SPRITE_DEFAULT := &"sprite.player.default"
+
+const PANEL_ASSET_BY_ROLE := {
+	&"terminal": &"ui.panel.terminal_main",
+	&"hud_left": &"ui.hud.panel.left",
+	&"protocol": &"ui.hud.panel.protocol",
+	&"bottom_bar": &"ui.hud.bottom_bar",
+	&"warning": &"ui.hud.bar.warning",
+	&"frame": &"ui.hud.bar.frame",
+}
 
 const KEY_PROMPT_BY_ACTION := {
 	&"interact": &"ui.key_prompt.e",
@@ -55,6 +65,28 @@ const ITEM_ICON_BY_KIND := {
 	&"ore": &"item.recovered.ore",
 }
 
+const FEEDBACK_ASSET_BY_STATE := {
+	&"neutral": &"ui.feedback.bar.dark",
+	&"success": &"ui.feedback.bar.dark",
+	&"ready": &"ui.feedback.bar.dark",
+	&"search": &"ui.feedback.event_prompt",
+	&"event": &"ui.feedback.event_prompt",
+	&"reward": &"ui.feedback.event_prompt",
+	&"warning": &"ui.feedback.bar.red",
+	&"danger": &"ui.feedback.bar.red",
+	&"blocked": &"ui.feedback.bar.red",
+}
+
+const RESULT_TITLE_BY_STATE := {
+	&"extract_confirm": &"ui.result.title.extract_confirm",
+	&"success": &"ui.result.title.extraction_success",
+	&"failure": &"ui.result.title.signal_lost",
+	&"failed": &"ui.result.title.signal_lost",
+	&"signal_lost": &"ui.result.title.signal_lost",
+	&"abandon": &"ui.result.title.signal_lost",
+	&"abandoned": &"ui.result.title.signal_lost",
+}
+
 
 static func asset_ref(asset_id: StringName, fallback_asset_id: StringName, role: StringName, state: StringName = &"", rendered: bool = true) -> Dictionary:
 	return {
@@ -69,6 +101,10 @@ static func asset_ref(asset_id: StringName, fallback_asset_id: StringName, role:
 
 static func main_menu_background_ref() -> Dictionary:
 	return asset_ref(MAIN_MENU_BACKGROUND, FALLBACK_BACKGROUND, &"main_menu_background", &"no_text")
+
+
+static func player_sprite_ref(state: StringName = &"idle") -> Dictionary:
+	return asset_ref(PLAYER_SPRITE_DEFAULT, PLAYER_SPRITE_DEFAULT, &"player_sprite", state)
 
 
 static func key_prompt_ref(action_id: StringName, rendered: bool = false) -> Dictionary:
@@ -90,6 +126,22 @@ static func deploy_panel_ref(role: StringName) -> Dictionary:
 
 static func item_icon_ref(kind: StringName) -> Dictionary:
 	return asset_ref(ITEM_ICON_BY_KIND.get(kind, ITEM_ICON_BY_KIND[&"consumable"]), FALLBACK_ICON, &"item_icon", kind)
+
+
+static func feedback_bar_ref(state: StringName = &"neutral") -> Dictionary:
+	return asset_ref(FEEDBACK_ASSET_BY_STATE.get(state, FEEDBACK_ASSET_BY_STATE[&"neutral"]), FALLBACK_PANEL, &"feedback_bar", state)
+
+
+static func feedback_panel_ref(state: StringName = &"event") -> Dictionary:
+	return asset_ref(FEEDBACK_ASSET_BY_STATE.get(state, FEEDBACK_ASSET_BY_STATE[&"event"]), FALLBACK_PANEL, &"feedback_panel", state)
+
+
+static func result_title_ref(state: StringName = &"success") -> Dictionary:
+	return asset_ref(RESULT_TITLE_BY_STATE.get(state, RESULT_TITLE_BY_STATE[&"success"]), FALLBACK_PANEL, &"result_title_plate", state)
+
+
+static func panel_ref(role: StringName = &"terminal") -> Dictionary:
+	return asset_ref(PANEL_ASSET_BY_ROLE.get(role, PANEL_ASSET_BY_ROLE[&"terminal"]), FALLBACK_PANEL, &"panel_texture", role)
 
 
 static func deploy_prep_asset_refs() -> Dictionary:

@@ -65,10 +65,10 @@ const COLORS := {
 	&"text": Color(0.89, 0.94, 0.88, 1.0),
 	&"muted": Color(0.56, 0.67, 0.62, 1.0),
 	&"caption": Color(0.68, 0.76, 0.70, 1.0),
-	&"panel": Color(0.020, 0.041, 0.046, 0.93),
-	&"panel_deep": Color(0.010, 0.022, 0.028, 0.97),
-	&"panel_soft": Color(0.050, 0.078, 0.074, 0.88),
-	&"slot": Color(0.038, 0.064, 0.064, 0.95),
+	&"panel": Color(0.020, 0.041, 0.046, 0.34),
+	&"panel_deep": Color(0.010, 0.022, 0.028, 0.40),
+	&"panel_soft": Color(0.050, 0.078, 0.074, 0.22),
+	&"slot": Color(0.038, 0.064, 0.064, 0.34),
 	&"gold": Color(0.94, 0.70, 0.28, 1.0),
 	&"gold_dark": Color(0.28, 0.18, 0.06, 0.96),
 	&"accent": Color(0.58, 0.93, 0.76, 1.0),
@@ -95,34 +95,42 @@ const VISUAL_STATE_TONES := {
 	&"pending": &"warning",
 }
 
+const MOTION_FALLBACKS := {
+	&"feedback_pulse": &"static_state_tint",
+	&"panel_open": &"instant_visible",
+	&"pickup_feedback": &"static_state_tint",
+	&"capacity_blocked": &"warning_tint",
+	&"reward_feedback": &"accent_tint",
+}
+
 const MAIN_MENU_RECTS := {
 	"title": Rect2(72, 48, 620, 78),
 	"role": Rect2(82, 178, 238, 352),
 	"entry_stack": Rect2(760, 122, 438, 372),
 	"notice": Rect2(76, 532, 584, 84),
-	"bottom_key_bar": Rect2(72, 638, 704, 50),
+	"bottom_key_bar": Rect2(72, 638, 344, 50),
 }
 
 const DEPLOY_RECTS := {
-	"left_column": Rect2(42, 150, 272, 472),
-	"center_column": Rect2(334, 150, 600, 472),
-	"summary_column": Rect2(958, 150, 278, 472),
-	"tab_row": Rect2(330, 84, 720, 48),
-	"bottom_key_bar": Rect2(334, 642, 600, 48),
+	"left_column": Rect2(42, 120, 272, 538),
+	"center_column": Rect2(326, 112, 598, 548),
+	"summary_column": Rect2(946, 96, 292, 562),
+	"tab_row": Rect2(350, 78, 548, 48),
+	"bottom_key_bar": Rect2(350, 642, 548, 48),
 }
 
 const LONG_TERM_RECTS := {
-	"profile_column": Rect2(44, 158, 260, 470),
-	"card_grid": Rect2(326, 158, 564, 470),
-	"detail_column": Rect2(912, 158, 326, 470),
-	"tab_row": Rect2(300, 88, 760, 48),
+	"profile_column": Rect2(44, 120, 260, 538),
+	"card_grid": Rect2(326, 112, 564, 548),
+	"detail_column": Rect2(912, 96, 326, 562),
+	"tab_row": Rect2(326, 78, 564, 48),
 }
 
 const RUN_RECTS := {
-	"left_scanner": Rect2(0, 0, 374, 720),
-	"right_status": Rect2(990, 0, 290, 720),
-	"center_room": Rect2(398, 18, 570, 112),
-	"bottom_key_bar": Rect2(404, 634, 560, 58),
+	"left_scanner": Rect2(0, 0, 384, 720),
+	"right_status": Rect2(1038, 14, 226, 106),
+	"center_room": Rect2(391, 14, 875, 534),
+	"bottom_key_bar": Rect2(391, 648, 875, 58),
 }
 
 
@@ -311,6 +319,10 @@ static func _sanitize_engineering_copy(text: String) -> String:
 		"deploy_prep_projection": "出发摘要",
 		"projection_type": "路线摘要",
 		"standard_10x10": "标准探索",
+		"M3R minimal": "标准探索",
+		"selected_equ": "装备已选",
+		"no full dep": "待确认",
+		"full dep": "完整配置",
 		"RewardBundle": "奖励包",
 		"events": "事件",
 		"required_permission": "许可条件",
@@ -574,6 +586,57 @@ static func controlled_button_icon(button: Button, icon_token: StringName = &"bu
 	button.add_theme_constant_override("icon_max_width", icon_size(icon_token))
 
 
+static func reduce_motion_enabled() -> bool:
+	if ProjectSettings.has_setting("accessibility/reduce_motion"):
+		return bool(ProjectSettings.get_setting("accessibility/reduce_motion"))
+	if ProjectSettings.has_setting("display/window/reduce_motion"):
+		return bool(ProjectSettings.get_setting("display/window/reduce_motion"))
+	return false
+
+
+static func motion_duration(default_duration: float, reduced_duration: float = 0.0) -> float:
+	return reduced_duration if reduce_motion_enabled() else default_duration
+
+
+static func feedback_color(state: StringName = &"warning") -> Color:
+	match state:
+		&"success", &"ready", &"reward":
+			return color(&"accent")
+		&"danger", &"blocked":
+			return color(&"danger")
+		&"warning":
+			return color(&"warning")
+		_:
+			return color(&"accent")
+
+
+static func animation_fallback_key(animation_key: StringName) -> StringName:
+	return MOTION_FALLBACKS.get(animation_key, &"instant_visible")
+
+
+static func play_feedback_pulse(control: Control, state: StringName = &"warning", strength: float = 1.0) -> void:
+	if control == null:
+		return
+	var target := Color(1.0, 1.0, 1.0, 1.0).lerp(feedback_color(state), clampf(strength, 0.0, 1.0))
+	if reduce_motion_enabled():
+		control.modulate = target
+		return
+	var tween := control.create_tween()
+	tween.tween_property(control, "modulate", target, motion_duration(0.06))
+	tween.tween_property(control, "modulate", Color(1.0, 1.0, 1.0, 1.0), motion_duration(0.18))
+
+
+static func play_panel_open(control: Control) -> void:
+	if control == null:
+		return
+	if reduce_motion_enabled():
+		control.modulate = Color(1.0, 1.0, 1.0, 1.0)
+		return
+	control.modulate.a = 0.0
+	var tween := control.create_tween()
+	tween.tween_property(control, "modulate:a", 1.0, motion_duration(0.12))
+
+
 static func panel_style(tone: StringName = &"surface") -> StyleBoxFlat:
 	var bg := color(&"panel")
 	var border := color(&"accent")
@@ -585,19 +648,19 @@ static func panel_style(tone: StringName = &"surface") -> StyleBoxFlat:
 			border = color(&"muted")
 			padding = 12
 		&"summary":
-			bg = Color(0.044, 0.058, 0.058, 0.96)
+			bg = Color(0.044, 0.058, 0.058, 0.30)
 			border = color(&"warning")
 			padding = 12
 		&"notice":
-			bg = Color(0.052, 0.061, 0.048, 0.96)
+			bg = Color(0.052, 0.061, 0.048, 0.28)
 			border = color(&"gold")
 			padding = 10
 		&"card":
-			bg = Color(0.030, 0.052, 0.056, 0.94)
+			bg = Color(0.030, 0.052, 0.056, 0.28)
 			border = Color(0.24, 0.36, 0.34, 1.0)
 			padding = 10
 		&"selected":
-			bg = Color(0.050, 0.078, 0.066, 0.98)
+			bg = Color(0.050, 0.078, 0.066, 0.50)
 			border = color(&"accent")
 			border_width = 2
 			padding = 10
@@ -611,24 +674,24 @@ static func panel_style(tone: StringName = &"surface") -> StyleBoxFlat:
 			border_width = 2
 			padding = 12
 		&"reward":
-			bg = Color(0.20, 0.13, 0.04, 0.96)
+			bg = Color(0.20, 0.13, 0.04, 0.44)
 			border = color(&"gold")
 			border_width = 2
 		&"ready":
-			bg = Color(0.044, 0.078, 0.052, 0.96)
+			bg = Color(0.044, 0.078, 0.052, 0.44)
 			border = color(&"accent")
 			border_width = 2
 		&"new":
-			bg = Color(0.050, 0.066, 0.088, 0.96)
+			bg = Color(0.050, 0.066, 0.088, 0.44)
 			border = Color(0.55, 0.78, 0.96, 1.0)
 		&"locked":
-			bg = Color(0.020, 0.026, 0.028, 0.84)
+			bg = Color(0.020, 0.026, 0.028, 0.36)
 			border = color(&"disabled")
 		&"warning":
-			bg = Color(0.068, 0.050, 0.026, 0.94)
+			bg = Color(0.068, 0.050, 0.026, 0.44)
 			border = color(&"warning")
 		&"danger":
-			bg = Color(0.060, 0.032, 0.032, 0.92)
+			bg = Color(0.060, 0.032, 0.032, 0.44)
 			border = color(&"danger")
 		&"soft":
 			bg = color(&"panel_soft")

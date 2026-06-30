@@ -2,10 +2,15 @@ extends Control
 class_name ResultPanel
 
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
+const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const LEGACY_RESULT_VALIDATION_MARKERS := ["Outcome:", "Mode:", "Moves:", "Mine Hits:", "Monsters Defeated:", "Failure Pending Lost:", "Failure Salvaged Items:", "Carried Items:", "Carried Value:", "Safe Gold:", "Final HP:", "Final Pressure:", "Black Coin:", "Gold Coin:", "Warehouse Lite Items:", "Room Floor Lost:", "Settlement Log Entries:"]
 
 signal return_main_requested
 signal return_deploy_requested
+
+var result_title_art: TextureRect
 
 
 func _ready() -> void:
@@ -33,10 +38,9 @@ func show_summary(snapshot: Dictionary) -> void:
 	# salvaged_item_count, settlement_log, and currency/item movement data.
 	var model: Dictionary = RunUIViewModel.result_summary(snapshot)
 	set_result_summary(String(model.get("title", "结算")), String(model.get("summary", "")))
+	_apply_result_title_plate(_result_state_from_snapshot(snapshot))
 	visible = true
-	modulate.a = 0.0
-	var tween: Tween = create_tween()
-	tween.tween_property(self, "modulate:a", 1.0, 0.12)
+	Art10UISkinKitScript.play_panel_open(self)
 
 
 func hide_result() -> void:
@@ -44,16 +48,26 @@ func hide_result() -> void:
 
 
 func _ensure_backdrop() -> void:
-	if get_node_or_null("Backdrop") != null:
-		return
-	var backdrop := ColorRect.new()
-	backdrop.name = "Backdrop"
-	backdrop.color = PresentationTheme.panel_color()
-	backdrop.position = Vector2(-8, -8)
-	backdrop.size = Vector2(636, 456)
-	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(backdrop)
-	move_child(backdrop, 0)
+	var backdrop := get_node_or_null("Backdrop") as ColorRect
+	if backdrop == null:
+		backdrop = ColorRect.new()
+		backdrop.name = "Backdrop"
+		backdrop.color = PresentationTheme.panel_color()
+		backdrop.position = Vector2(-8, -8)
+		backdrop.size = Vector2(636, 456)
+		backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(backdrop)
+		move_child(backdrop, 0)
+	result_title_art = get_node_or_null("ResultTitlePlate") as TextureRect
+	if result_title_art == null:
+		result_title_art = TextureRect.new()
+		result_title_art.name = "ResultTitlePlate"
+		result_title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		result_title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		result_title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		result_title_art.modulate = Color(1.0, 1.0, 1.0, 0.94)
+		add_child(result_title_art)
+		move_child(result_title_art, 1)
 
 
 func _ensure_actions() -> void:
@@ -105,8 +119,36 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var backdrop := get_node_or_null("Backdrop") as ColorRect
 	if backdrop != null:
 		backdrop.size = size + Vector2(16, 16)
+	if result_title_art != null:
+		result_title_art.position = Vector2(18, 8)
+		result_title_art.size = Vector2(250 if is_low else (300 if is_high else 270), 96)
 	var actions := get_node_or_null("ResultActions") as HBoxContainer
 	if actions != null:
 		actions.offset_top = size.y - 32.0
 		actions.offset_right = size.x - 20.0
 		actions.offset_bottom = size.y + 8.0
+
+
+func _apply_result_title_plate(state: StringName) -> void:
+	if result_title_art == null:
+		_ensure_backdrop()
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(PresentationMappingScript.result_title_ref(state))
+	if texture != null and result_title_art != null:
+		result_title_art.texture = texture
+		result_title_art.visible = true
+
+
+func _result_state_from_snapshot(snapshot: Dictionary) -> StringName:
+	var outcome := String(snapshot.get("outcome", ""))
+	var settlement_outcome := String(snapshot.get("settlement_outcome", ""))
+	var settlement_variant: Variant = snapshot.get("settlement", {})
+	if settlement_variant is Dictionary:
+		var settlement: Dictionary = settlement_variant
+		settlement_outcome = String(settlement.get("outcome", settlement_outcome))
+	if outcome == "Extracted" or settlement_outcome == "success":
+		return &"success"
+	if outcome == "Failed" or settlement_outcome == "failure":
+		return &"failure"
+	if outcome == "Abandoned" or settlement_outcome == "abandon":
+		return &"abandon"
+	return &"extract_confirm"

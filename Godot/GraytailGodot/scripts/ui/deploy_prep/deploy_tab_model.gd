@@ -48,10 +48,10 @@ static func build_tabs() -> Array:
 		_tab(
 			TAB_MAP,
 			"地图",
-			"选择去哪、地图规则、难度和区域；真实地图内容 defer_until_run_start。",
+			"选择去哪、地图规则、难度和区域。",
 			[
 				"地图页只表达模式、难度、区域、解锁、模糊风险 / 收益和配置适配。",
-				"seed_policy = defer_until_run_start；不提前生成真实地图布局、Boss、撤离点或房间内容。",
+				"真实房间、Boss、撤离点和事件进入当局后确认。",
 				"地图拓扑可影响消耗品说明，例如相邻房间由矩形 / 蜂窝 / 特殊规则解释。",
 			],
 			[
@@ -63,7 +63,7 @@ static func build_tabs() -> Array:
 				_filter(FILTER_MAP_RECOMMENDED, "推荐"),
 			],
 			[
-				_card("map_classic_edge", "灰尾外围 / 常规扫雷", "地图", "preview", "当前默认可选地图模式。", "显示地图模式、难度、区域、基础规则和 seed policy；不生成真实地图内容。", ["模式：常规扫雷", "难度：普通", "区域：灰尾外围", "seed_policy = defer_until_run_start"], ["查看出勤配置"], FILTER_MAP_CLASSIC),
+				_card("map_classic_edge", "灰尾外围 / 常规扫雷", "地图", "preview", "当前默认可选地图模式。", "显示地图模式、难度、区域和基础规则；真实房间进入当局后确认。", ["模式：常规扫雷", "难度：普通", "区域：灰尾外围", "路线：当局内生成"], ["查看出勤配置"], FILTER_MAP_CLASSIC),
 				_card("map_honeycomb_trial", "蜂窝扫雷 / 拓扑预留", "地图", "locked", "蜂窝邻接规则 display-only。", "只说明消耗品相邻房间效果将按 6 邻域解释，不披露真实房间分布。", ["模式：蜂窝扫雷", "状态：后续开放", "探测说明：相邻房间由拓扑解释"], ["查看消耗品效果"], FILTER_MAP_HONEYCOMB),
 				_card("map_special_rule_fog", "雾区规则 / 特殊规则", "地图", "locked", "特殊规则后续开放。", "只显示特殊条件、风险倾向和收益倾向，不生成事件房或怪物房。", ["解锁：未满足", "风险倾向：较高", "收益倾向：较高"], ["查看目标匹配"], FILTER_MAP_SPECIAL),
 				_card("map_unlocked_route", "已解锁区域", "地图", "preview", "区域解锁状态 preview。", "只显示是否可选；不写长期解锁或真实地图状态。", ["已解锁：灰尾外围", "未解锁：深层矿脉", "后续开放：雾区 / 多层地图"], ["查看图鉴说明"], FILTER_MAP_UNLOCKED),

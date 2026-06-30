@@ -56,19 +56,50 @@ func get_selected_module_id() -> StringName:
 
 
 func _apply_layer_order() -> void:
-	for child in get_children():
-		if child is CanvasItem:
-			var canvas_item := child as CanvasItem
-			canvas_item.z_as_relative = false
-			canvas_item.z_index = _layer_for_node(child)
+	_establish_page_layer_roots()
+	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
+		var root_name := StringName(root_name_variant)
+		var root := get_node_or_null(String(root_name)) as Control
+		if root == null:
+			continue
+		UILayerContractScript.configure_root(root, UILayerContractScript.page_root_role(root_name))
+		for child in root.get_children():
+			UILayerContractScript.apply_local_layer(child, _local_layer_for_node(child, root_name))
 
 
 func _layer_for_node(node: Node) -> int:
 	return UILayerContractScript.layer_for_page_node(node)
 
 
+func _establish_page_layer_roots() -> void:
+	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
+		var root_name := StringName(root_name_variant)
+		UILayerContractScript.ensure_root(self, root_name, UILayerContractScript.page_root_role(root_name))
+	for child in get_children().duplicate():
+		if UILayerContractScript.is_page_root_name(StringName(child.name)):
+			continue
+		var target_root_name := UILayerContractScript.page_root_for_node(child)
+		var target_root := get_node_or_null(String(target_root_name)) as Control
+		if target_root == null:
+			continue
+		remove_child(child)
+		target_root.add_child(child)
+	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
+		var root_name := StringName(root_name_variant)
+		var root := get_node_or_null(String(root_name)) as Control
+		if root != null and root.get_parent() == self:
+			move_child(root, get_child_count() - 1)
+
+
+func _local_layer_for_node(node: Node, root_name: StringName) -> int:
+	var root_layer := UILayerContractScript.layer(UILayerContractScript.page_root_role(root_name))
+	return maxi(0, _layer_for_node(node) - root_layer)
+
+
 func _build_static_layout() -> void:
 	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.016, 0.030, 0.036, 1.0))
+	_add_texture_rect_from_ref(self, "LongTermRoomBackground", Rect2(0, 0, 1280, 720), Art09ManifestAssetMappingScript.asset_ref(&"room.background.normal", &"room.background.normal", &"room_background", &"archive"), 0.50)
+	_add_color_rect(self, "LongTermBackdropShade", Rect2(0, 0, 1280, 720), Color(0.0, 0.0, 0.0, 0.20))
 	_add_color_rect(self, "LongTermArchiveRoomGlow", Rect2(38, 112, 1202, 548), Color(0.13, 0.18, 0.20, 0.20))
 	_add_color_rect(self, "LongTermArchiveWall", Rect2(326, 130, 564, 514), Color(0.06, 0.09, 0.09, 0.28))
 	_add_color_rect(self, "LongTermProfileMask", Rect2(60, 170, 228, 450), Color(0.0, 0.0, 0.0, 0.20))
@@ -76,7 +107,7 @@ func _build_static_layout() -> void:
 	_add_color_rect(self, "LongTermShelfLineA", Rect2(342, 248, 526, 2), Color(0.94, 0.70, 0.28, 0.26))
 	_add_color_rect(self, "LongTermShelfLineB", Rect2(342, 386, 526, 2), Color(0.94, 0.70, 0.28, 0.18))
 	_add_color_rect(self, "LongTermShelfLineC", Rect2(342, 524, 526, 2), Color(0.94, 0.70, 0.28, 0.14))
-	_add_color_rect(self, "LongTermDetailLamp", Rect2(912, 122, 326, 4), Art10UISkinKitScript.color(&"gold"))
+	_add_color_rect(self, "LongTermDetailLamp", Rect2(912, 106, 326, 4), Art10UISkinKitScript.color(&"gold"))
 	_add_panel(self, "LongTermProfileColumn", Art10UISkinKitScript.rect(&"long_term", "profile_column"), &"deep")
 	_add_panel(self, "LongTermCardGridColumn", Art10UISkinKitScript.rect(&"long_term", "card_grid"), &"surface")
 	_add_panel(self, "LongTermDetailColumn", Art10UISkinKitScript.rect(&"long_term", "detail_column"), &"summary")
@@ -107,41 +138,41 @@ func _build_static_layout() -> void:
 	child_preview_label = _add_label_token(self, "LongTermChildPreview", Rect2(66, 574, 214, 32), "", &"caption", &"text")
 	history_preview_label = _add_label_token(self, "LongTermHistoryPreview", Rect2(66, 614, 214, 26), "", &"caption", &"muted")
 
-	_add_label_token(self, "LongTermGridHeading", Rect2(348, 146, 320, 28), "收藏与记录", &"tab", &"warning")
+	_add_label_token(self, "LongTermGridHeading", Rect2(348, 126, 320, 28), "收藏与记录", &"tab", &"warning")
 	card_grid_container = GridContainer.new()
 	card_grid_container.name = "LongTermCardGrid"
 	card_grid_container.columns = 3
 	card_grid_container.add_theme_constant_override("h_separation", 10)
 	card_grid_container.add_theme_constant_override("v_separation", 10)
-	_set_rect(card_grid_container, Rect2(348, 184, 516, 418))
+	_set_rect(card_grid_container, Rect2(348, 164, 516, 456))
 	add_child(card_grid_container)
-	next_stage_label = _add_label_token(self, "LongTermNextStage", Rect2(348, 610, 516, 20), "", &"caption", &"muted")
+	next_stage_label = _add_label_token(self, "LongTermNextStage", Rect2(348, 626, 516, 20), "", &"caption", &"muted")
 
-	_add_panel(self, "LongTermDetailStatusBlock", Rect2(936, 164, 258, 58), &"surface")
-	_add_panel(self, "LongTermDetailInfoBlock", Rect2(936, 234, 258, 86), &"deep")
-	_add_panel(self, "LongTermDetailUnlockBlock", Rect2(936, 332, 258, 62), &"warning")
-	_add_panel(self, "LongTermDetailLinkBlock", Rect2(936, 406, 258, 100), &"surface")
-	module_title_label = _add_label_token(self, "LongTermModuleTitle", Rect2(940, 132, 250, 30), "", &"section_title", &"warning")
-	module_state_label = _add_label_token(self, "LongTermModuleState", Rect2(950, 176, 230, 32), "", &"body_small", &"muted")
-	module_body_label = _add_label_token(self, "LongTermModuleBody", Rect2(950, 248, 230, 54), "", &"body_small", &"text")
-	module_reason_label = _add_label_token(self, "LongTermModuleReason", Rect2(950, 344, 230, 34), "", &"caption", &"warning")
-	snapshot_label = _add_label_token(self, "LongTermSnapshotPreview", Rect2(950, 422, 230, 42), "", &"caption", &"text")
-	interface_preview_label = _add_label_token(self, "LongTermInterfacePreview", Rect2(950, 470, 230, 28), "", &"caption", &"muted")
+	_add_panel(self, "LongTermDetailStatusBlock", Rect2(936, 120, 258, 58), &"surface")
+	_add_panel(self, "LongTermDetailInfoBlock", Rect2(936, 186, 258, 74), &"deep")
+	_add_panel(self, "LongTermDetailUnlockBlock", Rect2(936, 268, 258, 58), &"warning")
+	_add_panel(self, "LongTermDetailLinkBlock", Rect2(936, 334, 258, 116), &"surface")
+	module_title_label = _add_label_token(self, "LongTermModuleTitle", Rect2(940, 84, 250, 30), "", &"section_title", &"warning")
+	module_state_label = _add_label_token(self, "LongTermModuleState", Rect2(950, 132, 230, 32), "", &"body_small", &"muted")
+	module_body_label = _add_label_token(self, "LongTermModuleBody", Rect2(950, 198, 230, 44), "", &"body_small", &"text")
+	module_reason_label = _add_label_token(self, "LongTermModuleReason", Rect2(950, 280, 230, 32), "", &"caption", &"warning")
+	snapshot_label = _add_label_token(self, "LongTermSnapshotPreview", Rect2(950, 350, 230, 42), "", &"caption", &"text")
+	interface_preview_label = _add_label_token(self, "LongTermInterfacePreview", Rect2(950, 404, 230, 28), "", &"caption", &"muted")
 	_compact_detail_column()
 
 
 func _compact_detail_column() -> void:
 	var rects := {
-		"LongTermDetailStatusBlock": Rect2(936, 164, 258, 58),
-		"LongTermDetailInfoBlock": Rect2(936, 234, 258, 86),
-		"LongTermDetailUnlockBlock": Rect2(936, 332, 258, 62),
-		"LongTermDetailLinkBlock": Rect2(936, 406, 258, 100),
-		"LongTermModuleTitle": Rect2(940, 132, 250, 30),
-		"LongTermModuleState": Rect2(950, 176, 230, 32),
-		"LongTermModuleBody": Rect2(950, 248, 230, 54),
-		"LongTermModuleReason": Rect2(950, 344, 230, 34),
-		"LongTermSnapshotPreview": Rect2(950, 422, 230, 42),
-		"LongTermInterfacePreview": Rect2(950, 470, 230, 28),
+		"LongTermDetailStatusBlock": Rect2(936, 120, 258, 58),
+		"LongTermDetailInfoBlock": Rect2(936, 186, 258, 74),
+		"LongTermDetailUnlockBlock": Rect2(936, 268, 258, 58),
+		"LongTermDetailLinkBlock": Rect2(936, 334, 258, 116),
+		"LongTermModuleTitle": Rect2(940, 84, 250, 30),
+		"LongTermModuleState": Rect2(950, 132, 230, 32),
+		"LongTermModuleBody": Rect2(950, 198, 230, 44),
+		"LongTermModuleReason": Rect2(950, 280, 230, 32),
+		"LongTermSnapshotPreview": Rect2(950, 350, 230, 42),
+		"LongTermInterfacePreview": Rect2(950, 404, 230, 28),
 	}
 	for node_name in rects.keys():
 		var node := get_node_or_null(String(node_name)) as Control
@@ -234,6 +265,7 @@ func _refresh_from_model() -> void:
 	_refresh_card_grid(content_preview.get("cards", []) as Array)
 	_apply_art10_text_refresh()
 	_refresh_tab_buttons()
+	_apply_layer_order()
 
 
 func _refresh_card_grid(cards: Array) -> void:

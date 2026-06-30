@@ -81,17 +81,17 @@ static func build_from_snapshot(selected_module_id: StringName, app_snapshot: Di
 
 static func _overview_summary(modules: Array) -> Dictionary:
 	return {
-		"title": "闀挎湡绯荤粺鍐呭妗嗘灦",
+		"title": "长期系统档案",
 		"state": "foundation",
 		"module_count": modules.size(),
-		"message": "LongTerm keeps six primary modules, with secondary groups, cards, slots, and art/data keys. M3R upgrades the Codex module to consume Codex Lite from real warehouse_items.",
+		"message": "当前展示档案、图鉴、研究、资历、拍卖和收藏入口。",
 		"modules": [
-			"鐩爣",
-			"鍥鹃壌",
-			"鐮旂┒",
-			"涓汉璧勫巻",
-			"鎶藉",
-			"鏀惰棌 / 澶栬",
+			"目标",
+			"图鉴",
+			"研究",
+			"个人资历",
+			"拍卖",
+			"收藏 / 外观",
 		],
 	}
 

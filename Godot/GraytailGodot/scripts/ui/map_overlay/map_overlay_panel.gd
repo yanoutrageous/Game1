@@ -36,26 +36,35 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	offset_top = 0.0
 	offset_right = 0.0
 	offset_bottom = 0.0
+	var dimmer := get_node_or_null("Dimmer") as ColorRect
+	if dimmer != null:
+		dimmer.color = Color(0.0, 0.0, 0.0, 0.28)
 	var panel := get_node_or_null("Panel") as Control
 	if panel != null:
-		var left_rail_width: float = UILayerContractScript.run_left_width(layout_profile)
-		var panel_width: float = max(240.0, left_rail_width - 28.0)
-		var panel_height: float = min(height * 0.52, 346.0 if is_low else (430.0 if is_high else 380.0))
-		var cell_size: float = floor((panel_width - 24.0) / 10.0)
-		marker_size = Vector2(cell_size, cell_size)
+		var panel_width: float = min(width * 0.972, 1840.0 if is_high else 1248.0)
+		var panel_height: float = min(height * 0.940, 1000.0 if is_high else 684.0)
+		panel_width = max(panel_width, 900.0 if not is_low else 780.0)
+		panel_height = max(panel_height, 560.0 if not is_low else 500.0)
+		var cell_width: float = floor((panel_width - 36.0) / 10.0)
+		var cell_height: float = floor((panel_height - 118.0) / 10.0)
+		marker_size = Vector2(maxf(44.0, cell_width), maxf(40.0, cell_height))
 		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		_set_rect(panel, Rect2(14.0, 10.0, panel_width, panel_height))
+		_set_rect(panel, Rect2((width - panel_width) * 0.5, (height - panel_height) * 0.5, panel_width, panel_height))
 		_apply_overlay_panel_style(panel)
 	_rebuild_grid()
 
 
 func show_overlay() -> void:
 	visible = true
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	if get_parent() != null:
+		get_parent().move_child(self, get_parent().get_child_count() - 1)
 	_rebuild_grid()
 
 
 func hide_overlay() -> void:
 	visible = false
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	get_viewport().gui_release_focus()
 
 
@@ -68,6 +77,7 @@ func toggle_overlay() -> void:
 
 func _ready() -> void:
 	visible = false
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_apply_layer_order()
 	_rebuild_grid()
 
@@ -104,6 +114,8 @@ func _rebuild_grid() -> void:
 		return
 	grid.add_theme_constant_override("h_separation", 2)
 	grid.add_theme_constant_override("v_separation", 2)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	for child in grid.get_children():
 		child.queue_free()
@@ -111,7 +123,7 @@ func _rebuild_grid() -> void:
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		title.add_theme_font_size_override("font_size", title_font_size)
-		title.text = "扫描图"
+		title.text = "地图"
 	if detail != null:
 		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
 		detail.add_theme_font_size_override("font_size", 11 if footer_font_size <= 12 else 12)
@@ -139,13 +151,17 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	var asset_id := StringName(marker.get("asset_id", &""))
 	var asset_ref := ContentDB.get_asset_ref(asset_id)
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
+	var label_text := String(marker.get("label", "?"))
 	var button := Button.new()
 	button.custom_minimum_size = marker_size
 	button.focus_mode = Control.FOCUS_NONE
-	button.text = String(marker.get("label", "?"))
+	button.text = label_text
 	button.tooltip_text = ""
-	button.add_theme_color_override("font_color", PresentationTheme.color_for_key(theme_key))
-	button.add_theme_font_size_override("font_size", maxi(10, int(marker_size.x * 0.45)))
+	var marker_color := PresentationTheme.color_for_key(theme_key)
+	if label_text == "?":
+		marker_color = Color(0.58, 0.72, 0.68, 0.74)
+	button.add_theme_color_override("font_color", marker_color)
+	button.add_theme_font_size_override("font_size", maxi(12, int(min(marker_size.x, marker_size.y) * 0.52)))
 	_apply_marker_button_style(button, theme_key)
 	if asset_ref is Texture2D:
 		button.icon = asset_ref
@@ -168,7 +184,7 @@ func _apply_overlay_panel_style(control: Control) -> void:
 		return
 	var panel := control as PanelContainer
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.006, 0.014, 0.016, 0.96)
+	style.bg_color = Color(0.006, 0.014, 0.016, 0.94)
 	style.border_color = PresentationTheme.color_for_key(&"ui.accent")
 	style.border_width_left = 1
 	style.border_width_top = 1

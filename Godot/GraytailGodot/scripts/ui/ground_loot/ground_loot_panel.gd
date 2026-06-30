@@ -2,6 +2,8 @@ extends PanelContainer
 class_name GroundLootPanel
 
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
+const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal pickup_item_requested(instance_id: String)
@@ -110,10 +112,15 @@ func show_command_result(result: Dictionary) -> void:
 		return
 	last_result_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.command_result_text(result))
 	Art10UISkinKitScript.apply_label(last_result_label, 13, PresentationTheme.color_for_key(&"ui.accent"))
+	var pulse_state := &"ready"
+	if not bool(result.get("accepted", result.get("ok", false))):
+		pulse_state = &"warning"
+	Art10UISkinKitScript.play_feedback_pulse(last_result_label, pulse_state)
 
 
 func show_panel() -> void:
 	visible = true
+	Art10UISkinKitScript.play_panel_open(self)
 
 
 func hide_panel() -> void:
@@ -166,6 +173,7 @@ func _add_item_row(item: Dictionary) -> void:
 	item_button.focus_mode = Control.FOCUS_NONE
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
+	_apply_art09_item_icon(item_button, item)
 	Art10UISkinKitScript.apply_button(item_button, &"secondary", 13)
 	item_button.pressed.connect(func() -> void:
 		tooltip_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.item_tooltip(item))
@@ -188,3 +196,12 @@ func _array_from(source: Dictionary, key: String) -> Array:
 	if raw is Array:
 		return (raw as Array).duplicate(true)
 	return []
+
+
+func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
+	var asset_ref := PresentationMappingScript.inventory_item_icon_ref(item)
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	if texture == null:
+		return
+	button.icon = texture
+	Art10UISkinKitScript.controlled_button_icon(button, &"slot")

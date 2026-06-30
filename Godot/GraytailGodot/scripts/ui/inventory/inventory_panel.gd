@@ -129,10 +129,15 @@ func show_command_result(result: Dictionary) -> void:
 		return
 	last_result_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.command_result_text(result))
 	Art10UISkinKitScript.apply_label(last_result_label, 13, PresentationTheme.color_for_key(&"ui.accent"))
+	var pulse_state := &"ready"
+	if not bool(result.get("accepted", result.get("ok", false))):
+		pulse_state = &"warning"
+	Art10UISkinKitScript.play_feedback_pulse(last_result_label, pulse_state)
 
 
 func show_panel() -> void:
 	visible = true
+	Art10UISkinKitScript.play_panel_open(self)
 
 
 func hide_panel() -> void:

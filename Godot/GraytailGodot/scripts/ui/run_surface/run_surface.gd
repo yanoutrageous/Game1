@@ -24,6 +24,15 @@ var minimap_panel: MiniMapPanel
 var overlay_slot: Control
 var modal_slot: Control
 var feedback_slot: Control
+var run_game_stage_root: Control
+var run_room_viewport_root: Control
+var run_left_info_rail_root: Control
+var run_top_right_status_root: Control
+var run_floating_info_root: Control
+var run_interaction_prompt_root: Control
+var run_action_overlay_root: Control
+var run_overlay_root: Control
+var run_modal_root: Control
 
 var left_backdrop: PanelContainer
 var center_backdrop: PanelContainer
@@ -44,6 +53,7 @@ var room_glow_layer: ColorRect
 var protocol_glow_layer: ColorRect
 var bottom_key_glow_layer: ColorRect
 var right_game_fill_layer: ColorRect
+var player_sprite_layer: TextureRect
 var scanner_title_label: Label
 var scanner_summary_label: Label
 var scanner_legend_label: Label
@@ -93,30 +103,36 @@ func build() -> void:
 	z_index = 180
 
 	left_backdrop = _add_panel("RunScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
+	left_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.78), PresentationTheme.color_for_key(&"ui.accent"), 1))
 	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"))
 	center_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"), 1))
 	room_background_layer = _add_texture_rect_from_ref("RunRoomBackgroundFill", _room_background_ref(&"Normal"), 0.88)
 	encounter_backdrop = _add_panel("RunEncounterSlot", Color(0.018, 0.034, 0.038, 0.88), PresentationTheme.color_for_key(&"ui.warning"))
+	encounter_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.72), PresentationTheme.color_for_key(&"ui.accent"), 1))
 	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
+	right_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.72), PresentationTheme.color_for_key(&"ui.warning"), 1))
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
+	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.78), PresentationTheme.color_for_key(&"ui.accent"), 1))
 	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
+	resource_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.54), PresentationTheme.color_for_key(&"mini.chest"), 1))
 	scanner_text_mask = _add_panel("RunScannerTextMask", Color(0.012, 0.026, 0.030, 0.86), PresentationTheme.color_for_key(&"ui.accent"))
 	room_text_mask = _add_panel("RunRoomTextMask", Color(0.012, 0.026, 0.030, 0.82), PresentationTheme.color_for_key(&"mini.normal"))
 	threat_mask = _add_panel("RunThreatMask", Color(0.040, 0.046, 0.042, 0.92), PresentationTheme.color_for_key(&"ui.warning"))
 	event_mask = _add_panel("RunEventMask", Color(0.026, 0.042, 0.046, 0.90), PresentationTheme.color_for_key(&"ui.accent"))
 	reward_mask = _add_panel("RunRewardMask", Color(0.036, 0.052, 0.046, 0.90), PresentationTheme.color_for_key(&"mini.chest"))
 	player_tag_mask = _add_color_layer("RunPlayerTagMask", Color(0.004, 0.010, 0.012, 0.96))
-	player_tag_mask.z_as_relative = false
-	player_tag_mask.z_index = 420
 	room_hint_softener = _add_color_layer("RunRoomHintSoftener", Color(0.0, 0.0, 0.0, 0.34))
 	scanner_glow_layer = _add_color_layer("RunScannerGlow", Color(0.58, 0.93, 0.76, 0.08))
-	room_glow_layer = _add_color_layer("RunRoomFocusGlow", Color(0.58, 0.93, 0.76, 0.07))
+	room_glow_layer = _add_color_layer("RunRoomFocusGlow", Color(0.58, 0.93, 0.76, 0.025))
 	protocol_glow_layer = _add_color_layer("RunProtocolWarningGlow", Color(0.94, 0.70, 0.28, 0.08))
 	bottom_key_glow_layer = _add_color_layer("RunBottomKeyGlow", Color(0.58, 0.93, 0.76, 0.06))
 	right_game_fill_layer = _add_color_layer("RunRightGameAreaFill", Color(0.012, 0.020, 0.022, 0.78))
+	player_sprite_layer = _add_texture_rect_from_ref("RunPlayerSprite", Art09ManifestAssetMappingScript.player_sprite_ref(&"idle"), 1.0)
+	if player_sprite_layer != null:
+		player_sprite_layer.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 
 	scanner_title_label = _add_label("RunScannerTitle", "小地图", 18, PresentationTheme.color_for_key(&"ui.accent"))
-	scanner_summary_label = _add_label("RunScannerSummary", "扫描器：等待数据", 13, PresentationTheme.text_color())
+	scanner_summary_label = _add_label("RunScannerSummary", "", 13, PresentationTheme.text_color())
 	scanner_legend_label = _add_label("RunScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
 
 	scanner_detail_label = _add_label("RunScannerDetail", "已知 / 危险 / 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
@@ -132,8 +148,6 @@ func build() -> void:
 	objective_label = _add_label("RunObjectiveLine", "目标：等待输入。", 13, PresentationTheme.color_for_key(&"ui.warning"))
 	objective_label.visible = false
 	player_tag_label = _add_label("RunPlayerTag", "回收员", 12, PresentationTheme.color_for_key(&"ui.accent"))
-	player_tag_label.z_as_relative = false
-	player_tag_label.z_index = 421
 
 	encounter_title_label = _add_label("RunEncounterTitle", "遭遇提示", 18, PresentationTheme.color_for_key(&"ui.warning"))
 	encounter_body_label = _add_label("RunEncounterBody", "等待遭遇公开信息。", 13, PresentationTheme.text_color())
@@ -186,11 +200,11 @@ func apply_surface_model(model: Dictionary) -> void:
 	if not built:
 		build()
 	scanner_title_label.text = "小地图"
-	scanner_legend_label.text = "状态\n血量 / 战力 / 黑币 / 金币"
-	scanner_detail_label.text = "背包\n点击或按 Q 展开"
-	scanner_summary_label.text = _compact_line(String(model.get("scanner_summary", "扫描器：等待公开地图数据。")), 24)
-	room_title_label.text = "%s  %s" % [_compact_line(String(model.get("room_title", "当前房间")), 12), String(model.get("room_coordinate", "(0,0)"))]
-	room_body_label.text = _compact_line(String(model.get("room_summary", "等待探索快照。")), 22)
+	scanner_legend_label.text = "生命 100  |  战力 0\n黑币 0  |  金币 0"
+	scanner_detail_label.text = "背包  Q 展开"
+	scanner_summary_label.text = ""
+	room_title_label.text = ""
+	room_body_label.text = ""
 	objective_label.text = ""
 	objective_label.visible = false
 	_apply_texture_ref(room_background_layer, _room_background_ref(StringName(model.get("room_type", &"Normal"))), 0.88)
@@ -215,7 +229,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	event_label.tooltip_text = String(model.get("event_panel_summary", event_label.text))
 	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", reward_label.text)), 14)
 	reward_label.tooltip_text = String(model.get("loot_panel_summary", reward_label.text))
-	action_hint_label.text = "当前交互提示"
+	action_hint_label.text = ""
 
 	var profile: Dictionary = model.get("layout_profile", {})
 	layout_label.text = ""
@@ -238,84 +252,88 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var height: float = float(supported_size.y)
 	var margin: float = 14.0 if is_low else 18.0
 	var left_width: float = UILayerContractScript.run_left_width(profile)
+	var gameplay_left: float = left_width
+	var gameplay_width: float = max(1.0, width - gameplay_left)
 	var rail_content_left: float = margin + 12.0
-	var rail_content_width: float = left_width - rail_content_left - margin
+	var rail_content_width: float = max(220.0, left_width - rail_content_left - margin)
 	var right_card_width: float = 210.0 if is_low else (270.0 if is_high else 244.0)
 	var right_card_height: float = 96.0 if is_low else (126.0 if is_high else 110.0)
 	var bottom_info_height: float = 34.0 if is_low else 40.0
 	var bottom_key_height: float = 66.0 if is_low else 72.0
-	var center_left: float = left_width + margin * 0.5
-	var center_right: float = width - margin
-	var center_width: float = max(520.0, center_right - center_left)
+	var center_left: float = gameplay_left
+	var center_width: float = gameplay_width
 	var right_left: float = width - right_card_width - margin
 	var right_content_left: float = right_left + margin
 	var right_content_width: float = right_card_width - margin * 2.0
-	var scanner_map_height: float = min(rail_content_width, height * 0.48)
-	var scanner_stats_top: float = margin + 82.0 + scanner_map_height + 12.0
+	var scanner_map_top: float = margin + 44.0
+	var scanner_map_height: float = min(height * 0.52, max(250.0, rail_content_width * 1.06))
+	var scanner_stats_top: float = scanner_map_top + scanner_map_height + 12.0
 	var backpack_top: float = scanner_stats_top + (102.0 if is_low else 118.0)
-	var room_info_width: float = min(max(340.0, center_width * 0.46), right_left - center_left - margin)
-	var room_info_height: float = 58.0 if is_low else 68.0
+	var bottom_key_left: float = gameplay_left + margin
+	var bottom_key_width: float = max(420.0, gameplay_width - margin * 2.0)
 	var bottom_key_top: float = height - bottom_key_height - margin
 	var bottom_info_top: float = bottom_key_top - bottom_info_height - 10.0
-	var game_area_height: float = max(360.0, bottom_key_top - margin - 4.0)
-	var encounter_width: float = 172.0 if is_low else 214.0
-	var encounter_height: float = 60.0 if is_low else 72.0
-	var encounter_left: float = min(center_left + center_width * 0.56, right_left - encounter_width - margin)
-	var encounter_top: float = max(margin + room_info_height + 24.0, height * 0.52 - encounter_height * 0.5)
+	var bottom_info_width: float = min(bottom_key_width * 0.74, 680.0 if is_high else 620.0)
+	var bottom_info_left: float = gameplay_left + gameplay_width * 0.5 - bottom_info_width * 0.5
+	var encounter_width: float = 164.0 if is_low else 196.0
+	var encounter_height: float = 44.0 if is_low else 50.0
+	var encounter_left: float = clampf(gameplay_left + gameplay_width * 0.58, gameplay_left + margin, width - encounter_width - margin)
+	var encounter_top: float = clampf(height * 0.52 - encounter_height * 0.5, margin + 110.0, bottom_info_top - encounter_height - 12.0)
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(right_left, margin, right_card_width, right_card_height))
-	_set_rect(center_backdrop, Rect2(center_left, margin, center_width, game_area_height))
-	_set_rect(room_background_layer, Rect2(center_left, margin, center_width, game_area_height))
-	_set_rect(encounter_backdrop, Rect2(encounter_left, encounter_top, encounter_width, encounter_height))
-	_set_rect(bottom_backdrop, Rect2(center_left, bottom_key_top, center_width, bottom_key_height))
-	_set_rect(resource_backdrop, Rect2(rail_content_left, scanner_stats_top, rail_content_width, 92.0 if is_low else 108.0))
-	_set_rect(scanner_text_mask, Rect2(rail_content_left, margin + 30.0, rail_content_width, 42.0))
-	_set_rect(room_text_mask, Rect2(center_left + 12.0, margin + 10.0, room_info_width - 24.0, room_info_height - 14.0))
+	_set_rect(center_backdrop, Rect2(0, 0, 0, 0))
+	_set_rect(room_background_layer, Rect2(0, 0, 0, 0))
+	_set_rect(encounter_backdrop, Rect2(0, 0, 0, 0))
+	_set_rect(bottom_backdrop, Rect2(bottom_key_left, bottom_key_top, bottom_key_width, bottom_key_height))
+	_set_rect(resource_backdrop, Rect2(rail_content_left, scanner_stats_top, rail_content_width, 92.0 if is_low else 104.0))
+	_set_rect(scanner_text_mask, Rect2(rail_content_left, backpack_top, rail_content_width, 48.0))
+	_set_rect(room_text_mask, Rect2(0, 0, 0, 0))
 	_set_rect(threat_mask, Rect2(right_content_left, margin + 34.0, right_content_width, 42.0 if is_low else 50.0))
 	_set_rect(event_mask, Rect2(right_content_left, margin + (78.0 if is_low else 90.0), right_content_width, 24.0 if is_low else 30.0))
 	_set_rect(reward_mask, Rect2(0, 0, 0, 0))
-	var player_label_x: float = center_left + center_width * 0.34 - 60.0
-	var player_label_y: float = height * 0.585
-	_set_rect(player_tag_mask, Rect2(player_label_x, player_label_y, 120.0, 46.0))
-	_set_rect(room_hint_softener, Rect2(encounter_left - 10.0, encounter_top - 10.0, encounter_width + 20.0, encounter_height + 20.0))
-	_set_rect(scanner_glow_layer, Rect2(rail_content_left, margin + 78.0, rail_content_width, scanner_map_height))
-	_set_rect(room_glow_layer, Rect2(center_left + 12.0, margin + 12.0, center_width - 24.0, game_area_height - 24.0))
+	_set_rect(player_sprite_layer, Rect2(0, 0, 0, 0))
+	_set_rect(player_tag_mask, Rect2(0, 0, 0, 0))
+	_set_rect(room_hint_softener, Rect2(0, 0, 0, 0))
+	_set_rect(scanner_glow_layer, Rect2(0, 0, 0, 0))
+	_set_rect(room_glow_layer, Rect2(0, 0, 0, 0))
 	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 30.0, right_content_width, right_card_height - 44.0))
-	_set_rect(bottom_key_glow_layer, Rect2(center_left + 8.0, bottom_key_top + 8.0, center_width - 16.0, bottom_key_height - 16.0))
+	_set_rect(bottom_key_glow_layer, Rect2(bottom_key_left + 8.0, bottom_key_top + 8.0, bottom_key_width - 16.0, bottom_key_height - 16.0))
 	_set_rect(right_game_fill_layer, Rect2(0, 0, 0, 0))
+	center_backdrop.visible = false
+	room_background_layer.visible = false
+	player_sprite_layer.visible = false
+	room_glow_layer.visible = false
 
 	_set_rect(scanner_title_label, Rect2(rail_content_left, margin, rail_content_width, 28))
-	_set_rect(scanner_summary_label, Rect2(rail_content_left + 8.0, margin + 34.0, rail_content_width - 16.0, 34))
-	_set_rect(minimap_panel, Rect2(rail_content_left, margin + 78.0, rail_content_width, scanner_map_height))
+	_set_rect(scanner_summary_label, Rect2(0, 0, 0, 0))
+	_set_rect(minimap_panel, Rect2(rail_content_left, scanner_map_top, rail_content_width, scanner_map_height))
 	minimap_panel.apply_layout_profile(profile)
-	_set_rect(scanner_legend_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 12.0, rail_content_width - 16.0, 44.0))
-	_set_rect(scanner_detail_label, Rect2(rail_content_left + 8.0, backpack_top, rail_content_width - 16.0, 58.0))
+	_set_rect(scanner_legend_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 10.0, rail_content_width - 16.0, 48.0))
+	_set_rect(scanner_detail_label, Rect2(rail_content_left + 8.0, backpack_top + 10.0, rail_content_width - 16.0, 24.0))
 
-	_set_rect(room_title_label, Rect2(center_left + 18.0, margin + 10.0, room_info_width - 36.0, 24))
-	_set_rect(room_body_label, Rect2(center_left + 18.0, margin + 34.0, room_info_width - 36.0, 22))
+	_set_rect(room_title_label, Rect2(0, 0, 0, 0))
+	_set_rect(room_body_label, Rect2(0, 0, 0, 0))
 	_set_rect(objective_label, Rect2(0, 0, 0, 0))
-	_set_rect(player_tag_label, Rect2(player_label_x + 18.0, player_label_y + 22.0, 84.0, 18.0))
-	_set_rect(encounter_title_label, Rect2(encounter_left + 12.0, encounter_top + 8.0, encounter_width - 24.0, 22.0))
-	_set_rect(encounter_body_label, Rect2(encounter_left + 12.0, encounter_top + 32.0, encounter_width - 24.0, 22.0))
-	_set_rect(encounter_options_box, Rect2(encounter_left + 12.0, encounter_top + encounter_height - 28.0, encounter_width - 24.0, 24.0))
+	_set_rect(player_tag_label, Rect2(0, 0, 0, 0))
+	_set_rect(encounter_title_label, Rect2(0, 0, 0, 0))
+	_set_rect(encounter_body_label, Rect2(0, 0, 0, 0))
+	_set_rect(encounter_options_box, Rect2(encounter_left + 10.0, encounter_top + 8.0, encounter_width - 20.0, encounter_height - 16.0))
 	_set_rect(encounter_result_label, Rect2(0, 0, 0, 0))
-	_set_rect(resource_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 58.0, rail_content_width - 16.0, 34.0))
+	_set_rect(resource_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 62.0, rail_content_width - 16.0, 26.0))
 
 	_set_rect(right_title_label, Rect2(right_content_left, margin, right_content_width, 30))
 	_set_rect(right_body_label, Rect2(right_content_left + 10.0, margin + 40.0, right_content_width - 20.0, 36.0 if is_low else 44.0))
 	_set_rect(event_label, Rect2(right_content_left + 10.0, margin + (76.0 if is_low else 88.0), right_content_width - 20.0, 22.0))
 	_set_rect(reward_label, Rect2(0, 0, 0, 0))
-	var feedback_width: float = min(center_width * 0.46, 460.0 if is_low else 560.0)
-	var feedback_left: float = center_left + center_width * 0.5 - feedback_width * 0.5
-	_set_rect(command_feedback_art, Rect2(feedback_left, bottom_info_top, feedback_width, bottom_info_height))
-	_set_rect(command_feedback_label, Rect2(feedback_left + 18.0, bottom_info_top + 7.0, feedback_width - 36.0, bottom_info_height - 12.0))
+	_set_rect(command_feedback_art, Rect2(bottom_info_left, bottom_info_top, bottom_info_width, bottom_info_height))
+	_set_rect(command_feedback_label, Rect2(bottom_info_left + 18.0, bottom_info_top + 7.0, bottom_info_width - 36.0, bottom_info_height - 12.0))
 	_set_rect(layout_label, Rect2(right_content_left, height - 46.0, right_content_width, 24))
 	layout_label.visible = false
 
 	_set_rect(action_hint_label, Rect2(0, 0, 0, 0))
 	action_hint_label.visible = false
-	_set_rect(action_bar, Rect2(center_left + 12.0, bottom_key_top + 10.0, center_width - 24.0, bottom_key_height - 18.0))
+	_set_rect(action_bar, Rect2(bottom_key_left + 12.0, bottom_key_top + 10.0, bottom_key_width - 24.0, bottom_key_height - 18.0))
 	_set_rect(feedback_slot, Rect2(0, 0, width, height))
 	_set_rect(overlay_slot, Rect2(0, 0, width, height))
 	_set_rect(modal_slot, Rect2(0, 0, width, height))
@@ -332,7 +350,7 @@ func show_command_feedback(result: Dictionary) -> void:
 	var feedback_state := &"neutral"
 	if not accepted:
 		feedback_state = &"warning"
-	_apply_texture_ref(command_feedback_art, Art09ManifestAssetMappingScript.feedback_bar_ref(feedback_state), 0.90)
+	_apply_texture_ref(command_feedback_art, Art09ManifestAssetMappingScript.feedback_bar_ref(feedback_state), 0.58)
 	var pulse_state := &"ready"
 	if not accepted:
 		pulse_state = &"warning"
@@ -379,45 +397,104 @@ func apply_legacy_modal_style(panel: PanelContainer, theme_key: StringName = &"u
 
 
 func _apply_layer_order() -> void:
-	UILayerContractScript.apply_layer(room_background_layer, &"background")
-	UILayerContractScript.apply_layer(center_backdrop, &"background", 2)
-	UILayerContractScript.apply_layer(right_game_fill_layer, &"gameplay_viewport")
-	UILayerContractScript.apply_layer(room_glow_layer, &"gameplay_viewport", 2)
-	UILayerContractScript.apply_layer(room_hint_softener, &"gameplay_viewport", 4)
+	_establish_run_layer_roots()
+	for root in _run_layer_roots():
+		if root == null:
+			continue
+		var root_name := StringName(root.name)
+		if root_name == &"RunRoomViewportRoot":
+			root.set_anchors_preset(Control.PRESET_FULL_RECT)
+			root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			UILayerContractScript.apply_local_layer(root, 0)
+		else:
+			UILayerContractScript.configure_root(root, UILayerContractScript.run_root_role(root_name))
+		for child in root.get_children():
+			UILayerContractScript.apply_local_layer(child, _local_run_layer_for_node(child))
 
-	for item in [left_backdrop, bottom_backdrop, resource_backdrop, right_backdrop, encounter_backdrop]:
-		UILayerContractScript.apply_layer(item, &"content_panel")
-	for item in [scanner_glow_layer, protocol_glow_layer, bottom_key_glow_layer]:
-		UILayerContractScript.apply_layer(item, &"panel_texture")
-	for item in [scanner_text_mask, threat_mask, event_mask, reward_mask, player_tag_mask]:
-		UILayerContractScript.apply_layer(item, &"status_card", -4)
 
-	UILayerContractScript.apply_layer(minimap_panel, &"content_text")
-	for item in [
-		scanner_title_label,
-		scanner_summary_label,
-		scanner_legend_label,
-		scanner_detail_label,
-		resource_label,
-		right_title_label,
-		right_body_label,
-		event_label,
-		reward_label,
-		layout_label,
-		action_hint_label,
-	]:
-		UILayerContractScript.apply_layer(item, &"content_text", 6)
+func _establish_run_layer_roots() -> void:
+	run_game_stage_root = UILayerContractScript.ensure_root(self, &"RunGameStageRoot", &"gameplay_viewport")
+	run_room_viewport_root = UILayerContractScript.ensure_root(run_game_stage_root, &"RunRoomViewportRoot", &"gameplay_viewport")
+	run_room_viewport_root.z_as_relative = true
+	run_room_viewport_root.z_index = 0
+	run_left_info_rail_root = UILayerContractScript.ensure_root(self, &"RunLeftInfoRailRoot", &"content_panel")
+	run_top_right_status_root = UILayerContractScript.ensure_root(self, &"RunTopRightStatusRoot", &"status_card")
+	run_floating_info_root = UILayerContractScript.ensure_root(self, &"RunFloatingInfoRoot", &"floating_info")
+	run_interaction_prompt_root = UILayerContractScript.ensure_root(self, &"RunInteractionPromptRoot", &"floating_info")
+	run_action_overlay_root = UILayerContractScript.ensure_root(self, &"RunActionOverlayRoot", &"action_bar")
+	run_overlay_root = UILayerContractScript.ensure_root(self, &"RunOverlayRoot", &"overlay")
+	run_modal_root = UILayerContractScript.ensure_root(self, &"RunModalRoot", &"modal")
 
-	UILayerContractScript.apply_layer(room_text_mask, &"floating_info", -8)
-	for item in [room_title_label, room_body_label, objective_label, player_tag_label, encounter_title_label, encounter_body_label, encounter_result_label, encounter_options_box]:
-		UILayerContractScript.apply_layer(item, &"floating_info")
-	UILayerContractScript.apply_layer(command_feedback_art, &"floating_info", 4)
-	UILayerContractScript.apply_layer(command_feedback_label, &"floating_info", 5)
+	for child in get_children().duplicate():
+		if UILayerContractScript.is_run_root_name(StringName(child.name)):
+			continue
+		var target_root := _run_target_root_for_node(child)
+		if target_root == null:
+			continue
+		remove_child(child)
+		target_root.add_child(child)
 
-	UILayerContractScript.apply_layer(action_bar, &"action_bar", 4)
-	UILayerContractScript.apply_layer(feedback_slot, &"overlay")
-	UILayerContractScript.apply_layer(overlay_slot, &"overlay", 10)
-	UILayerContractScript.apply_layer(modal_slot, &"modal")
+	for root_name_variant in UILayerContractScript.RUN_ROOT_ORDER:
+		var root_name := StringName(root_name_variant)
+		var root := get_node_or_null(String(root_name)) as Control
+		if root != null and root.get_parent() == self:
+			move_child(root, get_child_count() - 1)
+
+
+func _run_layer_roots() -> Array:
+	return [
+		run_game_stage_root,
+		run_room_viewport_root,
+		run_left_info_rail_root,
+		run_top_right_status_root,
+		run_floating_info_root,
+		run_interaction_prompt_root,
+		run_action_overlay_root,
+		run_overlay_root,
+		run_modal_root,
+	]
+
+
+func _run_target_root_for_node(node: Node) -> Control:
+	var target_name := UILayerContractScript.run_root_for_node(node)
+	match target_name:
+		&"RunRoomViewportRoot":
+			return run_room_viewport_root
+		&"RunLeftInfoRailRoot":
+			return run_left_info_rail_root
+		&"RunTopRightStatusRoot":
+			return run_top_right_status_root
+		&"RunFloatingInfoRoot":
+			return run_floating_info_root
+		&"RunInteractionPromptRoot":
+			return run_interaction_prompt_root
+		&"RunActionOverlayRoot":
+			return run_action_overlay_root
+		&"RunOverlayRoot":
+			return run_overlay_root
+		&"RunModalRoot":
+			return run_modal_root
+		_:
+			return run_room_viewport_root
+
+
+func _local_run_layer_for_node(node: Node) -> int:
+	var node_name := String(node.name)
+	if node_name.find("BackgroundFill") >= 0:
+		return 0
+	if node_name.find("PlayerSprite") >= 0:
+		return 4
+	if node_name.find("MiniMap") >= 0:
+		return 5
+	if node_name.find("SignalPanel") >= 0 or node_name.find("GameAreaFill") >= 0:
+		return 1
+	if node_name.find("Glow") >= 0 or node_name.find("Softener") >= 0:
+		return 2
+	if node_name.find("Mask") >= 0 or node_name.find("Backdrop") >= 0 or node_name.find("Rail") >= 0 or node_name.find("Surface") >= 0 or node_name.find("Pocket") >= 0 or node_name.find("Slot") >= 0:
+		return 0
+	if node is Label or node is Button or node is Container:
+		return 4
+	return 1
 
 
 func _set_layer(item: Variant, layer: int) -> void:
@@ -501,11 +578,11 @@ func _room_background_ref(room_type: StringName) -> Dictionary:
 func _add_action_button(action_id: StringName, label: String, callback: Callable) -> void:
 	var button := Art10UISkinKitScript.make_bottom_key_button(label, _key_label_for_action(action_id))
 	button.name = "RunAction_%s" % String(action_id)
-	button.custom_minimum_size = Vector2(106, 42)
+	button.custom_minimum_size = Vector2(112, 46)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
-	button.add_theme_font_size_override("font_size", 12)
+	button.add_theme_font_size_override("font_size", 13)
 	_apply_action_button_style(button, &"secondary", true)
 	_apply_key_prompt_icon(button, action_id)
 	action_bar.add_child(button)
@@ -710,7 +787,7 @@ func _apply_art10_text_refresh() -> void:
 			left_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for action_id in action_buttons.keys():
 		var action_button := action_buttons[action_id] as Button
-		Art10UISkinKitScript.apply_button(action_button, &"secondary", 12, &"key")
+		Art10UISkinKitScript.apply_button(action_button, &"secondary", 13, &"key")
 		_apply_key_prompt_icon(action_button, StringName(action_id))
 	for button in encounter_option_buttons:
 		Art10UISkinKitScript.apply_button(button, &"primary" if button != null and not button.disabled else &"secondary", 12)
@@ -806,8 +883,8 @@ func _compact_line(text: String, max_chars: int) -> String:
 func _feedback_copy(text: String) -> String:
 	var summary := _compact_line(text, 26)
 	if summary == "":
-		summary = "等待输入"
-	return "主信息栏  %s" % summary
+		summary = "待命"
+	return summary
 
 
 func _threat_copy(model: Dictionary) -> String:
@@ -819,11 +896,7 @@ func _threat_copy(model: Dictionary) -> String:
 
 
 func _resource_copy(model: Dictionary) -> String:
-	var lines := [
-		String(model.get("resource_summary", "")),
-		String(model.get("backpack_summary", "")),
-	]
-	return "物资\n%s" % Art10UISkinKitScript.budgeted_lines_text(lines, 2, 16, false)
+	return "物资  暂无待回收"
 
 
 func _set_rect(control: Control, rect: Rect2) -> void:
