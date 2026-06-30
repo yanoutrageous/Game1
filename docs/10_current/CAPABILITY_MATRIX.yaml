@@ -162,3 +162,26 @@ m3h_item_loop_hardening:
     - "Godot metadata/resource import"
     - "gameplay runtime PASS"
     - "manual playtest PASS"
+g39_navigation_boundary_route_closure:
+  status: "implementation_in_progress"
+  branch: "godot/g39-navigation-boundary-route-closure"
+  contract: "docs/20_product/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_CONTRACT.md"
+  validation: "docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md"
+  handoff: "docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md"
+  capabilities:
+    app_shell_navigation_intent_boundary: true
+    deploy_long_term_route_closure: true
+    deploy_start_run_host_route: true
+    pause_continue_settings_exit_boundary: true
+    exit_current_run_abandon_authority: true
+    result_return_route_closure: true
+    modal_esc_close_priority: true
+    dirty_art_metadata_exclusion: true
+  non_goals:
+    - "complete settings system"
+    - "Save/Profile UI"
+    - "Objective / Reward / Pool"
+    - "ART import"
+    - "project metadata/resource import"
+    - "gameplay runtime PASS"
+    - "manual long playtest PASS"

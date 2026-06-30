@@ -106,3 +106,15 @@ Validation: `docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md`.
 Handoff: `docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md`.
 
 Non-goals: no complete warehouse economy, no complete equipment strengthening, no full Objective / Reward / Pool, no complete Rule Engine, no Godot metadata/resource import, no gameplay runtime PASS, and no manual playtest PASS.
+
+## G39 Navigation Boundary Route Closure
+
+Status: implementation in progress on `godot/g39-navigation-boundary-route-closure`.
+
+Current G39 scope: close the AppShell / NavigationIntent / PageRouter route loop across MainMenu, DeployPrep, LongTerm, and run start; align RunScene pause/settings/exit-current-run through runtime authority; keep Result return routes unified; and add basic modal/Esc close priority.
+
+Contract: `docs/20_product/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_CONTRACT.md`.
+Validation: `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md`.
+Handoff: `docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md`.
+
+Non-goals: no full settings system, no Save/Profile UI, no Objective / Reward / Pool, no ART import, no project metadata/resource import, no gameplay runtime PASS, and no manual long playtest PASS.

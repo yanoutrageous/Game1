@@ -48,3 +48,9 @@
 | stage | lane | status | evidence | boundary |
 | --- | --- | --- | --- | --- |
 | M3H | program | implementation / validation pending | `docs/20_product/M3H_ITEM_LOOP_HARDENING_CONTRACT.md`; `docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md`; `docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md` | M3/M3R boundary hardening; no complete warehouse economy, complete equipment strengthening, full Objective / Reward / Pool, complete Rule Engine, gameplay runtime PASS, or manual playtest PASS |
+
+# G39 Navigation Boundary Route Closure
+
+| stage | lane | status | evidence | boundary |
+| --- | --- | --- | --- | --- |
+| G39 | program | implementation / validation pending | `docs/20_product/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_CONTRACT.md`; `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md`; `docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md` | RunScene / AppShell navigation boundary closure; no ART resources/screenshots, project metadata, complete settings system, Save/Profile UI, gameplay runtime PASS, or manual long playtest PASS |

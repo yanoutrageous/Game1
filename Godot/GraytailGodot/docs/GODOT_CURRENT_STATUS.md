@@ -672,3 +672,19 @@ Godot implementation focus:
 - Profile, permit, protocol, and talent fields are exposed as minimum interfaces only.
 
 Not included: complete Warehouse economy, complete LongTerm, complete Codex research, complete equipment strengthening, complete consumable shop, full Objective / Reward / Pool, complete Rule Engine, project metadata/resource changes, gameplay runtime PASS, or manual long playtest PASS.
+
+## G39 Navigation Boundary Route Closure
+
+Current branch: `godot/g39-navigation-boundary-route-closure`.
+
+Godot implementation focus:
+
+- AppShell connects MainMenu, DeployPrep, and LongTerm navigation through `NavigationIntent` / `PageRouter`.
+- DeployPrep and LongTerm emit route intents instead of directly calling parent page methods.
+- DeployPrep start run remains a host route into RunScene.
+- RunScene pause supports continue, settings placeholder, guarded return, and two-step exit current run.
+- Exit current run delegates to CommandBus/runtime authority through `abandon_run`.
+- Result return routes to DeployPrep or MainMenu without recalculating settlement.
+- Esc/modal close priority covers map overlay, inventory, ground loot, event, loot, extract, result, pause, diagnostics, and debug surfaces.
+
+Not included: complete settings system, Save/Profile UI, Objective / Reward / Pool, complete warehouse, ART import, project metadata/resource changes, gameplay runtime PASS, or manual long playtest PASS.

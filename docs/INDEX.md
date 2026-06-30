@@ -91,3 +91,11 @@ G38 / G37S / G37 / G36 不声明 gameplay runtime PASS，也不声明 manual pla
 - Handoff: `docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md`
 - Validation script: `tools/validate_m3h_item_loop_hardening.ps1`
 - Headless runner: `tools/godot_m3h_item_loop_hardening_runner.gd`
+
+## G39 Navigation Boundary Route Closure
+
+- Contract: `docs/20_product/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_CONTRACT.md`
+- Validation: `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md`
+- Handoff: `docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md`
+- Validation script: `tools/validate_g39_navigation_boundary.ps1`
+- Headless runner: `tools/godot_g39_navigation_boundary_runner.gd`

@@ -57,3 +57,9 @@
 | stage | evidence | boundary |
 | --- | --- | --- |
 | M3H | `docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md` | M3/M3R hardening for in-run equipment registration, abandon settlement semantics, currency naming, and metadata hygiene; no complete warehouse/equipment/Objective/Reward/Pool/Rule Engine, gameplay runtime PASS, or manual playtest PASS |
+
+# G39 Navigation Boundary Route Closure
+
+| stage | evidence | boundary |
+| --- | --- | --- |
+| G39 | `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md` | AppShell/PageRouter/RunScene navigation boundary and critical route closure; no full settings, Save/Profile UI, Objective/Reward/Pool, ART import, gameplay runtime PASS, or manual long playtest PASS |

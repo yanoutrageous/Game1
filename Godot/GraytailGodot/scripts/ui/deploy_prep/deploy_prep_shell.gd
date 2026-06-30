@@ -11,6 +11,7 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal deploy_start_intent_requested(intent: Dictionary)
+signal navigation_intent_requested(intent: Dictionary)
 
 var current_model: Dictionary = {}
 var current_snapshot: Dictionary = {}
@@ -129,13 +130,19 @@ func _build_backdrop() -> void:
 
 
 func _request_back_to_main() -> void:
-	if get_parent() != null and get_parent().has_method("show_main"):
-		get_parent().call("show_main")
+	navigation_intent_requested.emit(NavigationIntentScript.make(
+		NavigationIntentScript.TARGET_MAIN_MENU,
+		&"deploy_prep",
+		{"source_page": &"deploy_prep"}
+	))
 
 
 func _request_long_term() -> void:
-	if get_parent() != null and get_parent().has_method("show_long_term"):
-		get_parent().call("show_long_term")
+	navigation_intent_requested.emit(NavigationIntentScript.make_long_term(
+		&"deploy_prep",
+		&"goals",
+		{"source_page": &"deploy_prep", "preview_only": false}
+	))
 
 
 func _build_tab_panel() -> void:

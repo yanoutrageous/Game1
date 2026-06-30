@@ -110,6 +110,7 @@ var screen_state: StringName = SCREEN_MAIN_MENU
 var current_layout_profile_id: StringName = &"desktop"
 var last_command_result: Dictionary = {}
 var m1_debug_panel_enabled: bool = false
+var pause_exit_confirm_pending: bool = false
 
 
 func _ready() -> void:
@@ -473,9 +474,11 @@ func _build_runtime_modals() -> void:
 	pause_content.add_child(pause_status_label)
 	if m1_debug_panel_enabled:
 		_add_menu_button(pause_content, "诊断面板", func() -> void: _open_debug_panel_from_pause())
-	_add_menu_button(pause_content, "继续", func() -> void: pause_panel.visible = false)
+	_add_menu_button(pause_content, "继续", func() -> void: _continue_from_pause())
 	_add_menu_button(pause_content, "设置说明", func() -> void: _open_settings_from_pause())
-	_add_menu_button(pause_content, "关闭", func() -> void: pause_panel.visible = false)
+	_add_menu_button(pause_content, "返回出发", func() -> void: _return_from_pause_to_deploy())
+	_add_menu_button(pause_content, "返回主菜单", func() -> void: _return_from_pause_to_main())
+	_add_menu_button(pause_content, "退出当前局", func() -> void: _request_abandon_from_pause())
 	_apply_runtime_modal_layout(_current_layout_profile())
 
 
@@ -604,6 +607,7 @@ func _set_gameplay_visible(visible: bool) -> void:
 func _show_pause_panel() -> void:
 	if pause_panel == null:
 		return
+	pause_exit_confirm_pending = false
 	if pause_status_label != null and run_context != null:
 		var snapshot: Dictionary = run_context.get_status_snapshot()
 		pause_status_label.text = "暂停中。当前阶段=%s，房间=%s。点击继续返回当前局；设置入口不保存偏好。" % [
@@ -615,19 +619,81 @@ func _show_pause_panel() -> void:
 
 
 func _open_settings_from_pause() -> void:
+	pause_exit_confirm_pending = false
 	if pause_status_label != null:
 		pause_status_label.text = "设置说明：后续可接入音量、可访问性和 UI 减法；本阶段不写本地持久化偏好。"
+
+
+func _continue_from_pause() -> void:
+	pause_exit_confirm_pending = false
+	if pause_panel != null:
+		pause_panel.visible = false
+	get_viewport().gui_release_focus()
+
+
+func _return_from_pause_to_deploy() -> void:
+	if _has_active_run_for_pause_exit():
+		pause_exit_confirm_pending = false
+		if pause_status_label != null:
+			pause_status_label.text = "Active run is still running. Use Exit current run first, then return to DeployPrep."
+		return
+	if pause_panel != null:
+		pause_panel.visible = false
+	_show_deploy_shell(&"config")
+
+
+func _return_from_pause_to_main() -> void:
+	if _has_active_run_for_pause_exit():
+		pause_exit_confirm_pending = false
+		if pause_status_label != null:
+			pause_status_label.text = "Active run is still running. Use Exit current run first, then return to MainMenu."
+		return
+	if pause_panel != null:
+		pause_panel.visible = false
+	_show_main_menu()
+
+
+func _request_abandon_from_pause() -> void:
+	if not _has_active_run_for_pause_exit():
+		pause_exit_confirm_pending = false
+		if pause_status_label != null:
+			pause_status_label.text = "No active run is available to abandon. Return to DeployPrep or MainMenu is allowed."
+		return
+	if not pause_exit_confirm_pending:
+		pause_exit_confirm_pending = true
+		if pause_status_label != null:
+			pause_status_label.text = "Press Exit current run again to abandon through runtime authority and open the result page."
+		return
+	pause_exit_confirm_pending = false
+	if pause_panel != null:
+		pause_panel.visible = false
+	var result := _dispatch_command(&"abandon_run", {"reason": "player_pause_exit_current_run", "source": "pause_panel"})
+	if bool(result.get("ok", false)) and result_panel != null and not result_panel.visible and run_context != null:
+		if not run_context.result_snapshot.is_empty():
+			_on_result_available(run_context.result_snapshot)
+
+
+func _has_active_run_for_pause_exit() -> bool:
+	if run_context == null:
+		return false
+	var snapshot: Dictionary = run_context.get_status_snapshot()
+	if bool(snapshot.get("run_active", false)):
+		return true
+	var phase := StringName(snapshot.get("phase", &""))
+	return phase in [&"running", &"event", &"combat", &"extract_pending"]
 
 
 func _return_from_result_to_main() -> void:
 	if result_panel != null:
 		result_panel.hide_result()
+	get_viewport().gui_release_focus()
 	_show_main_menu()
 
 
 func _return_from_result_to_deploy() -> void:
 	if result_panel != null:
 		result_panel.hide_result()
+	get_viewport().gui_release_focus()
 	_show_deploy_shell(&"config")
 
 
@@ -915,6 +981,7 @@ func _is_runtime_modal_open() -> bool:
 		(event_panel != null and event_panel.visible)
 		or (loot_panel != null and loot_panel.visible)
 		or (extract_panel != null and extract_panel.visible)
+		or (map_overlay_panel != null and map_overlay_panel.visible)
 		or (inventory_panel != null and inventory_panel.visible)
 		or (ground_loot_panel != null and ground_loot_panel.visible)
 		or (result_panel != null and result_panel.visible)
@@ -928,11 +995,17 @@ func _close_top_runtime_modal() -> bool:
 	if debug_panel != null and debug_panel.visible:
 		_close_debug_panel()
 		return true
+	if map_overlay_panel != null and map_overlay_panel.visible:
+		map_overlay_panel.hide_overlay()
+		get_viewport().gui_release_focus()
+		return true
 	if inventory_panel != null and inventory_panel.visible:
 		inventory_panel.call("hide_panel")
+		get_viewport().gui_release_focus()
 		return true
 	if ground_loot_panel != null and ground_loot_panel.visible:
 		ground_loot_panel.call("hide_panel")
+		get_viewport().gui_release_focus()
 		return true
 	if event_panel != null and event_panel.visible:
 		event_panel.visible = false
@@ -943,8 +1016,13 @@ func _close_top_runtime_modal() -> bool:
 	if extract_panel != null and extract_panel.visible:
 		_cancel_extract_from_ui()
 		return true
+	if result_panel != null and result_panel.visible:
+		_return_from_result_to_deploy()
+		return true
 	if pause_panel != null and pause_panel.visible:
+		pause_exit_confirm_pending = false
 		pause_panel.visible = false
+		get_viewport().gui_release_focus()
 		return true
 	if dev_diagnostics_panel != null and dev_diagnostics_panel.visible:
 		dev_diagnostics_panel.call("hide_panel")

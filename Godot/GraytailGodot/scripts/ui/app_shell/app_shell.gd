@@ -100,6 +100,8 @@ func _build_deploy_prep() -> void:
 	deploy_page.name = "DeployPrepShell"
 	add_child(deploy_page)
 	deploy_page.call("build")
+	if deploy_page.has_signal("navigation_intent_requested"):
+		deploy_page.connect("navigation_intent_requested", _on_navigation_intent_requested)
 	if deploy_page.has_signal("deploy_start_intent_requested"):
 		deploy_page.connect("deploy_start_intent_requested", _on_deploy_start_intent_requested)
 
@@ -109,6 +111,8 @@ func _build_long_term() -> void:
 	long_term_page.name = "LongTermShell"
 	add_child(long_term_page)
 	long_term_page.call("build")
+	if long_term_page.has_signal("navigation_intent_requested"):
+		long_term_page.connect("navigation_intent_requested", _on_navigation_intent_requested)
 
 
 func _build_placeholder_page(page_name: String, title: String, body: String) -> Control:
@@ -165,6 +169,8 @@ func _on_navigation_intent_requested(intent: Dictionary) -> void:
 		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER:
 			var deploy_payload := NavigationIntentScript.payload(intent)
 			show_deploy(StringName(deploy_payload.get("tab", &"overview")))
+			if deploy_page != null and deploy_page.has_method("apply_route_payload"):
+				deploy_page.call("apply_route_payload", deploy_payload)
 		PageRouterScript.PAGE_LONG_TERM:
 			var long_term_payload := NavigationIntentScript.payload(intent)
 			show_long_term(StringName(long_term_payload.get("module_id", long_term_payload.get("entry_id", &"goals"))))

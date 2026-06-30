@@ -1,11 +1,14 @@
 extends Control
 class_name LongTermShell
 
+const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const LongTermModelScript := preload("res://scripts/ui/long_term/long_term_model.gd")
 const LongTermTabModelScript := preload("res://scripts/ui/long_term/long_term_tab_model.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+
+signal navigation_intent_requested(intent: Dictionary)
 
 var current_model: Dictionary = {}
 var current_app_snapshot: Dictionary = {}
@@ -174,13 +177,18 @@ func _on_module_tab_pressed(module_id: StringName) -> void:
 
 
 func _request_back_to_main() -> void:
-	if get_parent() != null and get_parent().has_method("show_main"):
-		get_parent().call("show_main")
+	navigation_intent_requested.emit(NavigationIntentScript.make(
+		NavigationIntentScript.TARGET_MAIN_MENU,
+		&"long_term",
+		{"source_page": &"long_term"}
+	))
 
 
 func _request_deploy() -> void:
-	if get_parent() != null and get_parent().has_method("show_deploy"):
-		get_parent().call("show_deploy")
+	navigation_intent_requested.emit(NavigationIntentScript.make_deploy(
+		&"long_term",
+		{"tab": &"config", "source_page": &"long_term", "preview_only": false}
+	))
 
 
 func _request_appearance_settings() -> void:
