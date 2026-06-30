@@ -6,6 +6,18 @@
 
 本文件只汇总当前事实入口，不替代验证记录、历史 handoff、产品契约或外部策划来源。
 
+## 0. M5 Minimum Item Pack & Drop Loop Full Content
+
+Status: implementation in progress on `godot/m5-item-drop-loop-full-content`.
+
+Current M5 scope: complete the minimum item pack and drop loop over the existing playable route. It adds M5 equipment, consumables, collectibles, monster-exclusive drops, unique locked concept display, GroundLoot-first drops, backpack replacement, consumable use, trader/dice/altar branches, success/failure/abandon settlement semantics, and Warehouse Lite / Codex Lite / DeployPrep alignment.
+
+Contract: `docs/20_product/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_CONTRACT.md`.
+Validation: `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md`.
+Handoff: `docs/handoff/HANDOFF_M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT.md`.
+
+Non-goals: complete warehouse economy, complete equipment strengthening, full Objective / Reward / Pool, complete Rule Engine, formal art import, project metadata/resource import, gameplay runtime PASS, and manual playtest PASS.
+
 ## 1. 当前仓库治理阶段
 
 ```text

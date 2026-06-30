@@ -63,6 +63,19 @@ static func altar_result() -> String:
 	return "Altar exchange complete: HP -10, black_coin +8, item +1."
 
 
+static func altar_stage_result(stage: int, hp_cost: int, black_coin: int, completed: bool) -> String:
+	var suffix := " Sequence complete." if completed else " Sequence can continue."
+	return "Altar stage %d: HP -%d, black_coin +%d, item +1.%s" % [stage, hp_cost, black_coin, suffix]
+
+
+static func trader_treatment_result(cost: int, hp: int) -> String:
+	return "Trader treatment: black_coin -%d, HP +%d." % [cost, hp]
+
+
+static func trader_info_result(cost: int) -> String:
+	return "Trader info: black_coin -%d, nearby clue recorded." % cost
+
+
 static func trap_success() -> String:
 	return "Mechanism opened: black_coin +25, item +2."
 

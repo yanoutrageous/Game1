@@ -185,16 +185,19 @@ static func apply_event_rule_result(context: RunContext, event_type: StringName,
 	return _finalize_rule(context, request, result, combined_applied)
 
 
-static func execute_trader_sell_best(context: RunContext) -> Dictionary:
+static func execute_trader_sell_best(context: RunContext, confirm_high_value: bool = false) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return make_rule_result(false, &"trader_sell", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
-	var request: Dictionary = _make_rule_request(context, &"trader_sell", "event_trader", {"pos": context.get_current_pos()})
-	var effects: Array = [_effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SELL_BEST_INVENTORY_ITEM, "event_trader", context.get_current_pos(), {})]
+	var request: Dictionary = _make_rule_request(context, &"trader_sell", "event_trader", {"pos": context.get_current_pos(), "confirm_high_value": confirm_high_value})
+	var effects: Array = [_effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SELL_BEST_INVENTORY_ITEM, "event_trader", context.get_current_pos(), {"confirm_high_value": confirm_high_value})]
 	var applied: Dictionary = RunAssetEffectHandler.apply_effects(context, effects)
 	var sold: Dictionary = _dictionary_from_variant(applied.get("last_result", {}))
 	if not bool(sold.get("ok", false)):
 		var reason: String = String(sold.get("reason", "no_sellable_inventory_item"))
-		return make_rule_result(false, &"trader_sell", DEFAULT_ACTOR_ID, reason, effects, ["No sellable inventory item."])
+		var blocked := make_rule_result(false, &"trader_sell", DEFAULT_ACTOR_ID, reason, effects, ["Trader sale blocked: %s." % reason])
+		blocked["candidate_item"] = sold.get("candidate_item", {})
+		blocked["message"] = "Trader sale blocked: %s." % reason
+		return blocked
 	var gold_coin: int = int(sold.get("gold_coin", 0))
 	var result: Dictionary = make_rule_result(true, &"trader_sell", DEFAULT_ACTOR_ID, "", effects, ["Trader sale complete."])
 	result["completed"] = true
@@ -206,6 +209,43 @@ static func execute_trader_sell_best(context: RunContext) -> Dictionary:
 	result["sold_item"] = sold.get("sold_item", {})
 	result["message"] = "Trader sale complete: safe_yield +%d. Long-term gold writes only at settlement." % gold_coin
 	return _finalize_rule(context, request, result, applied)
+
+
+static func execute_trader_treatment(context: RunContext, cost: int, hp_restore: int) -> Dictionary:
+	if context == null or context.asset_ledger == null:
+		return make_rule_result(false, &"trader_treatment", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	if context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK) < cost:
+		return make_rule_result(false, &"trader_treatment", DEFAULT_ACTOR_ID, "not_enough_black_coin", [], ["Trader treatment needs black_coin."])
+	if context.hp >= context.max_hp:
+		return make_rule_result(false, &"trader_treatment", DEFAULT_ACTOR_ID, "hp_already_full", [], ["Trader treatment needs missing HP."])
+	return apply_event_rule_result(context, &"trader", {
+		"ok": true,
+		"completed": true,
+		"event_type": &"trader",
+		"spend_black_coin": cost,
+		"hp_delta": hp_restore,
+		"message": RunTextCatalog.trader_treatment_result(cost, hp_restore),
+	})
+
+
+static func execute_trader_info(context: RunContext, cost: int) -> Dictionary:
+	if context == null or context.asset_ledger == null:
+		return make_rule_result(false, &"trader_info", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	if context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK) < cost:
+		return make_rule_result(false, &"trader_info", DEFAULT_ACTOR_ID, "not_enough_black_coin", [], ["Trader info needs black_coin."])
+	return apply_event_rule_result(context, &"trader", {
+		"ok": true,
+		"completed": true,
+		"event_type": &"trader",
+		"spend_black_coin": cost,
+		"status_effects": [{
+			"effect_id": "trader_info_hint",
+			"duration_type": &"current_run",
+			"remaining": 1,
+			"tags": ["info", "event", "trader"],
+		}],
+		"message": RunTextCatalog.trader_info_result(cost),
+	})
 
 
 static func execute_dice_bet(context: RunContext, pos: Vector2i, bet: int) -> Dictionary:
@@ -257,6 +297,24 @@ static func pickup_ground_item(context: RunContext, instance_id: String = "") ->
 	var applied: Dictionary = RunAssetEffectHandler.apply_effects(context, [effect])
 	var result: Dictionary = _dictionary_from_variant(applied.get("last_result", {}))
 	result.merge(make_rule_result(bool(result.get("ok", false)), &"pickup_ground_item", DEFAULT_ACTOR_ID, String(result.get("reason", "")), [effect], [String(result.get("message", "Pickup resolved."))]), false)
+	result["effect_results"] = applied.get("effect_results", [])
+	return _finalize_rule(context, request, result, applied)
+
+
+static func replace_ground_item(context: RunContext, ground_instance_id: String = "", drop_instance_id: String = "") -> Dictionary:
+	if context == null or context.asset_ledger == null:
+		return make_rule_result(false, &"replace_ground_item", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	var target_ground_id: String = ground_instance_id
+	if target_ground_id == "":
+		var floor_items: Array[Dictionary] = context.asset_ledger.get_room_floor_items(context.get_current_pos())
+		if floor_items.is_empty():
+			return make_rule_result(false, &"replace_ground_item", DEFAULT_ACTOR_ID, "no_room_floor_items", [], ["No room floor items."])
+		target_ground_id = String(floor_items[0].get("instance_id", ""))
+	var request: Dictionary = _make_rule_request(context, &"replace_ground_item", "replace", {"ground_instance_id": target_ground_id, "drop_instance_id": drop_instance_id, "room_pos": context.get_current_pos()})
+	var effect: Dictionary = _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_REPLACE_GROUND_ITEM, "replace", context.get_current_pos(), {"ground_instance_id": target_ground_id, "drop_instance_id": drop_instance_id, "room_pos": context.get_current_pos()})
+	var applied: Dictionary = RunAssetEffectHandler.apply_effects(context, [effect])
+	var result: Dictionary = _dictionary_from_variant(applied.get("last_result", {}))
+	result.merge(make_rule_result(bool(result.get("ok", false)), &"replace_ground_item", DEFAULT_ACTOR_ID, String(result.get("reason", "")), [effect], [String(result.get("message", "Replace resolved."))]), false)
 	result["effect_results"] = applied.get("effect_results", [])
 	return _finalize_rule(context, request, result, applied)
 
@@ -369,6 +427,10 @@ static func _apply_consumable_effect(context: RunContext, item: Dictionary, run_
 		"pressure_reduce":
 			run_effects.append(RunEffectApplierScript.effect_protocol_pressure_delta(-amount, "consumable_pressure_reduce"))
 			return RunEffectApplierScript.apply_effects(context, run_effects)
+		"heal_pressure_reduce":
+			run_effects.append(RunEffectApplierScript.effect_hp_delta(amount, "consumable_heal"))
+			run_effects.append(RunEffectApplierScript.effect_protocol_pressure_delta(-maxi(0, int(item.get("pressure_amount", amount))), "consumable_pressure_reduce"))
+			return RunEffectApplierScript.apply_effects(context, run_effects)
 		"scan":
 			var revealed := _reveal_nearby_for_consumable(context)
 			context.record_event(&"consumable_scan", String(context.active_command.get("command_id", "")), DEFAULT_ACTOR_ID, "consumable", {"revealed": revealed, "item_id": item.get("item_id", "")})
@@ -413,6 +475,8 @@ static func _consumable_message(item: Dictionary, effect_result: Dictionary) -> 
 			return "Used %s: HP restored." % name
 		"pressure_reduce":
 			return "Used %s: protocol pressure reduced." % name
+		"heal_pressure_reduce":
+			return "Used %s: HP restored and protocol pressure reduced." % name
 		"scan":
 			return "Used %s: nearby rooms scanned." % name
 		"mine_immunity":

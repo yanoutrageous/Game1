@@ -7,6 +7,7 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal pickup_item_requested(instance_id: String)
+signal replace_item_requested(instance_id: String)
 signal close_requested
 
 var title_label: Label
@@ -189,6 +190,14 @@ func _add_item_row(item: Dictionary) -> void:
 	var instance_id: String = String(item.get("instance_id", ""))
 	pickup_button.pressed.connect(func() -> void: pickup_item_requested.emit(instance_id))
 	row.add_child(pickup_button)
+	var replace_button := Button.new()
+	replace_button.name = "GroundLootReplaceButton"
+	replace_button.focus_mode = Control.FOCUS_NONE
+	replace_button.text = "Replace"
+	replace_button.tooltip_text = "Drop the lowest-value backpack item that makes room, then pick up this floor item."
+	Art10UISkinKitScript.apply_button(replace_button, &"secondary", 13)
+	replace_button.pressed.connect(func() -> void: replace_item_requested.emit(instance_id))
+	row.add_child(replace_button)
 
 
 func _array_from(source: Dictionary, key: String) -> Array:

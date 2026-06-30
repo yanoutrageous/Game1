@@ -25,13 +25,14 @@ static func monster_trophy(pos: Vector2i, reward_gold: int) -> Dictionary:
 	return drop
 
 
-static func altar_relic(context: RunContext) -> Dictionary:
+static func altar_relic(context: RunContext, stage: int = 1) -> Dictionary:
 	var turn := 0 if context == null else context.turn
-	var drops := M3ItemCatalogScript.deterministic_drop(&"altar", Vector2i(turn, turn), turn, 1)
+	var drops := M3ItemCatalogScript.deterministic_drop(&"altar", Vector2i(turn + stage, turn), turn + stage * 7, 1)
 	if drops.is_empty():
 		return {}
 	var drop: Dictionary = drops[0]
-	drop["instance_id"] = "altar_drop_%d_%s" % [turn, String(drop.get("item_id", "item"))]
+	drop["instance_id"] = "altar_drop_%d_%d_%s" % [turn, stage, String(drop.get("item_id", "item"))]
+	drop["altar_stage"] = stage
 	return drop
 
 

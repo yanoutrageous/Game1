@@ -101,3 +101,11 @@ G38 / G37S / G37 / G36 不声明 gameplay runtime PASS，也不声明 manual pla
 - Handoff: `docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md`
 - Validation script: `tools/validate_g39_navigation_boundary.ps1`
 - Headless runner: `tools/godot_g39_navigation_boundary_runner.gd`
+
+## M5 Minimum Item Pack & Drop Loop Full Content
+
+- Contract: `docs/20_product/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_CONTRACT.md`
+- Validation: `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md`
+- Handoff: `docs/handoff/HANDOFF_M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT.md`
+- Validation script: `tools/validate_m5_item_drop_loop_full_content.ps1`
+- Headless runner: `tools/godot_m5_item_drop_loop_full_content_runner.gd`

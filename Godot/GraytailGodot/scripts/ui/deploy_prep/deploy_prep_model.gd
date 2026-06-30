@@ -262,7 +262,7 @@ static func _loadout_cards(config: Dictionary, selected_filter: StringName) -> A
 	var capacity := {
 		"used": int(config.get("bag_used", 0)),
 		"limit": int(config.get("bag_limit", config.get("backpack_capacity", 10))),
-		"failure_salvage_capacity": int(config.get("failure_salvage_capacity", 1)),
+		"failure_salvage_capacity": int(config.get("failure_salvage_capacity", 4)),
 	}
 	if selected_filter == DeployTabModelScript.FILTER_ALL or selected_filter == DeployTabModelScript.FILTER_LOADOUT_EQUIPMENT:
 		cards.append({
@@ -301,12 +301,12 @@ static func _loadout_cards(config: Dictionary, selected_filter: StringName) -> A
 			"title": "Carry capacity",
 			"category": "Loadout",
 			"state": "valid" if int(capacity.get("used", 0)) <= int(capacity.get("limit", 0)) else "over_limit",
-			"summary": "Carry weight %d / %d; failure salvage capacity %d." % [int(capacity.get("used", 0)), int(capacity.get("limit", 0)), int(capacity.get("failure_salvage_capacity", 1))],
+			"summary": "Carry weight %d / %d; failure salvage capacity %d." % [int(capacity.get("used", 0)), int(capacity.get("limit", 0)), int(capacity.get("failure_salvage_capacity", 4))],
 			"detail": "Capacity is derived from profile hooks, selected equipment effects, and selected consumable weight.",
 			"lines": [
 				"bag_used=%d" % int(capacity.get("used", 0)),
 				"bag_limit=%d" % int(capacity.get("limit", 0)),
-				"failure_salvage_capacity=%d" % int(capacity.get("failure_salvage_capacity", 1)),
+				"failure_salvage_capacity=%d" % int(capacity.get("failure_salvage_capacity", 4)),
 			],
 			"link_preview": ["RunStartConfig", "Settlement salvage"],
 			"preview": false,

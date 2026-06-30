@@ -1,5 +1,16 @@
 # M3 Minimum Item Pack & Drop Loop Status
 
+# M5 Minimum Item Pack & Drop Loop Full Content Status
+
+M5 is the current implementation slice on branch `godot/m5-item-drop-loop-full-content`.
+
+- Scope: M5 item pack, GroundLoot-first drops, backpack replacement, consumable use, trader/dice/altar minimum event branches, success/failure/abandon settlement semantics, and Warehouse Lite / Codex Lite / DeployPrep alignment.
+- Product contract: `docs/20_product/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_CONTRACT.md`.
+- Godot scope: `M3ItemCatalog`, `M3RItemUsabilityModel`, `RunAssetLedger`, `RunAssetEffectHandler`, `RunRuleService`, `EventService`, `CommandBus`, `GroundLootPanel`, DeployPrep model/config, and M5 validation runner.
+- Not implemented: complete warehouse economy, complete equipment strengthening, Objective/Reward/Pool, complete Rule Engine, formal art import, gameplay runtime, manual playtest.
+
+# M3 Minimum Item Pack & Drop Loop Status
+
 M3 is the current implementation slice on branch `godot/m3-minimum-item-drop-loop`.
 
 - Scope: minimum item taxonomy/content pack, GroundLoot-first rewards, backpack pickup/drop/repick, consumable use, trader safe_yield, and success/failure/abandon settlement boundaries.

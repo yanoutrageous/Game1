@@ -373,6 +373,7 @@ func _build_run_overlay() -> void:
 	ground_loot_panel = GroundLootPanelScript.new() as Control
 	ground_loot_panel.name = "GroundLootPanel"
 	ground_loot_panel.connect("pickup_item_requested", _on_ground_loot_pickup_requested)
+	ground_loot_panel.connect("replace_item_requested", _on_ground_loot_replace_requested)
 	ground_loot_panel.connect("close_requested", func() -> void: ground_loot_panel.call("hide_panel"))
 	surface_overlay_slot.add_child(ground_loot_panel)
 
@@ -804,6 +805,18 @@ func _pickup_floor_from_ui(instance_id: String = "") -> void:
 	_refresh_view_models()
 
 
+func _replace_floor_from_ui(instance_id: String = "") -> void:
+	var payload: Dictionary = {"source": "ui"}
+	if instance_id != "":
+		payload["ground_instance_id"] = instance_id
+	var result := _dispatch_command(&"replace_ground_item", payload)
+	if ground_loot_panel != null:
+		ground_loot_panel.call("show_command_result", result)
+	if inventory_panel != null:
+		inventory_panel.call("show_command_result", result)
+	_refresh_view_models()
+
+
 func _drop_inventory_from_ui(instance_id: String = "") -> void:
 	var payload: Dictionary = {"source": "ui"}
 	if instance_id != "":
@@ -856,6 +869,10 @@ func _on_inventory_use_requested(instance_id: String) -> void:
 
 func _on_ground_loot_pickup_requested(instance_id: String) -> void:
 	_pickup_floor_from_ui(instance_id)
+
+
+func _on_ground_loot_replace_requested(instance_id: String) -> void:
+	_replace_floor_from_ui(instance_id)
 
 
 func _show_event_panel(event_state: Dictionary) -> void:

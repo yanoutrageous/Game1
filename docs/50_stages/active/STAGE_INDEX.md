@@ -54,3 +54,9 @@
 | stage | lane | status | evidence | boundary |
 | --- | --- | --- | --- | --- |
 | G39 | program | implementation / validation pending | `docs/20_product/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_CONTRACT.md`; `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md`; `docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md` | RunScene / AppShell navigation boundary closure; no ART resources/screenshots, project metadata, complete settings system, Save/Profile UI, gameplay runtime PASS, or manual long playtest PASS |
+
+# M5 Minimum Item Pack & Drop Loop Full Content
+
+| stage | lane | status | evidence | boundary |
+| --- | --- | --- | --- | --- |
+| M5 | program | implementation / validation pending | `docs/20_product/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_CONTRACT.md`; `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md`; `docs/handoff/HANDOFF_M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT.md` | M5 item pack/drop loop completion; no complete warehouse economy, complete equipment strengthening, full Objective/Reward/Pool, complete Rule Engine, gameplay runtime PASS, or manual playtest PASS |

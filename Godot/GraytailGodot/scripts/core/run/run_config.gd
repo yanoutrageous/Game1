@@ -20,7 +20,7 @@ static func tutorial_5x5() -> Dictionary:
 		"reveal_on_move": true,
 		"move_requires_revealed": false,
 		"backpack_capacity": 10,
-		"failure_salvage_capacity": 1,
+		"failure_salvage_capacity": 4,
 		"black_to_gold_rate": 1.0,
 		"use_loadout": false,
 		"apply_meta_progress": false,
@@ -49,7 +49,7 @@ static func standard_10x10(run_start_config: Dictionary = {}) -> Dictionary:
 		"reveal_on_move": true,
 		"move_requires_revealed": false,
 		"backpack_capacity": 10,
-		"failure_salvage_capacity": 1,
+		"failure_salvage_capacity": 4,
 		"black_to_gold_rate": 1.0,
 		"rule_modifiers": [
 			RunModifierSpec.make(

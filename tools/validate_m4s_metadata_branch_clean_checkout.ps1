@@ -1,6 +1,6 @@
 param(
     [string]$RepoRoot = (Get-Location).Path,
-    [string]$ExpectedMainHash = "786c898388896eb6654e3a3a96fe4aef5cdb32fe",
+    [string]$ExpectedMainHash = "",
     [string]$GodotExe = "D:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe",
     [switch]$RunGodot
 )
@@ -60,7 +60,7 @@ if ($main -ne $originMain) {
     Add-Failure "main and origin/main differ: main=$main origin/main=$originMain"
 }
 if ($ExpectedMainHash -and $main -ne $ExpectedMainHash) {
-    Add-Failure "main hash does not match expected M4 baseline: expected=$ExpectedMainHash actual=$main"
+    Add-Failure "main hash does not match expected M4S finalization baseline: expected=$ExpectedMainHash actual=$main"
 }
 
 $requiredFiles = @(

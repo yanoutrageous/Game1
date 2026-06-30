@@ -10,6 +10,7 @@ const EFFECT_ADD_REWARD_ITEMS := &"asset.add_reward_items"
 const EFFECT_ADD_STATUS_EFFECT := &"asset.add_status_effect"
 const EFFECT_PICKUP_GROUND_ITEM := &"asset.pickup_ground_item"
 const EFFECT_DROP_INVENTORY_ITEM := &"asset.drop_inventory_item"
+const EFFECT_REPLACE_GROUND_ITEM := &"asset.replace_ground_item"
 const EFFECT_CONSUME_INVENTORY_ITEM := &"asset.consume_inventory_item"
 const EFFECT_SELL_BEST_INVENTORY_ITEM := &"asset.sell_best_inventory_item"
 const EFFECT_SETTLE_SUCCESS := &"asset.settle_success"
@@ -67,10 +68,12 @@ static func apply_effect(context: RunContext, effect: Dictionary) -> Dictionary:
 			result = _with_effect_type(context.asset_ledger.pickup_ground_item(String(payload.get("instance_id", "")), payload.get("room_pos", context.get_current_pos())), effect_type)
 		EFFECT_DROP_INVENTORY_ITEM:
 			result = _with_effect_type(context.asset_ledger.drop_inventory_item(String(payload.get("instance_id", "")), payload.get("room_pos", context.get_current_pos())), effect_type)
+		EFFECT_REPLACE_GROUND_ITEM:
+			result = _with_effect_type(context.asset_ledger.replace_ground_item_with_inventory_item(String(payload.get("ground_instance_id", payload.get("instance_id", ""))), String(payload.get("drop_instance_id", "")), payload.get("room_pos", context.get_current_pos())), effect_type)
 		EFFECT_CONSUME_INVENTORY_ITEM:
 			result = _with_effect_type(context.asset_ledger.consume_inventory_item(String(payload.get("instance_id", ""))), effect_type)
 		EFFECT_SELL_BEST_INVENTORY_ITEM:
-			result = _with_effect_type(context.asset_ledger.sell_best_inventory_item(), effect_type)
+			result = _with_effect_type(context.asset_ledger.sell_best_inventory_item(bool(payload.get("confirm_high_value", false))), effect_type)
 		EFFECT_SETTLE_SUCCESS:
 			result = _with_effect_type(context.asset_ledger.settle_success(), effect_type, true)
 		EFFECT_SETTLE_FAILURE:
@@ -126,6 +129,8 @@ static func _record_events_for_effect(context: RunContext, effect: Dictionary, e
 			context.record_event(RunEventLog.EVENT_ITEM_PICKED_UP, command_id, actor_id, source, {"item": _dictionary_from_variant(result.get("item", {}))})
 		EFFECT_DROP_INVENTORY_ITEM:
 			context.record_event(RunEventLog.EVENT_ITEM_DROPPED, command_id, actor_id, source, {"item": _dictionary_from_variant(result.get("item", {}))})
+		EFFECT_REPLACE_GROUND_ITEM:
+			context.record_event(RunEventLog.EVENT_ITEM_PICKED_UP, command_id, actor_id, source, {"item": _dictionary_from_variant(result.get("item", {})), "dropped_item": _dictionary_from_variant(result.get("dropped_item", {})), "replacement": true})
 		EFFECT_SETTLE_SUCCESS, EFFECT_SETTLE_FAILURE, EFFECT_SETTLE_ABANDON:
 			context.record_event(RunEventLog.EVENT_SETTLEMENT_COMPLETED, command_id, actor_id, source, {"outcome": result.get("outcome", ""), "settlement": result.duplicate(true)})
 
@@ -176,6 +181,13 @@ static func _item_moves_for_effect(effect_type: StringName, result: Dictionary) 
 			var drop_item: Dictionary = result.get("item", {})
 			if not drop_item.is_empty():
 				moves.append({"instance_id": drop_item.get("instance_id", ""), "from": RunAssetLedger.LOCATION_INVENTORY, "to": RunAssetLedger.LOCATION_ROOM_FLOOR})
+		EFFECT_REPLACE_GROUND_ITEM:
+			var replaced_item: Dictionary = result.get("item", {})
+			var replaced_drop: Dictionary = result.get("dropped_item", {})
+			if not replaced_drop.is_empty():
+				moves.append({"instance_id": replaced_drop.get("instance_id", ""), "from": RunAssetLedger.LOCATION_INVENTORY, "to": RunAssetLedger.LOCATION_ROOM_FLOOR})
+			if not replaced_item.is_empty():
+				moves.append({"instance_id": replaced_item.get("instance_id", ""), "from": RunAssetLedger.LOCATION_ROOM_FLOOR, "to": RunAssetLedger.LOCATION_INVENTORY})
 		EFFECT_CONSUME_INVENTORY_ITEM:
 			var consumed_item: Dictionary = result.get("item", {})
 			if not consumed_item.is_empty():

@@ -9,7 +9,7 @@ const GROUP_COLLECTIBLE := &"collectible"
 const GROUP_SPECIAL := &"special"
 
 const BASE_BACKPACK_CAPACITY := 10
-const BASE_FAILURE_SALVAGE_CAPACITY := 1
+const BASE_FAILURE_SALVAGE_CAPACITY := 4
 
 
 static func normalize_warehouse_items(meta_summary: Dictionary = {}) -> Array[Dictionary]:
@@ -157,6 +157,19 @@ static func build_codex_lite(meta_summary: Dictionary = {}) -> Dictionary:
 			"source": M3ItemCatalogScript.SOURCE_MONSTER,
 			"level": int(catalog_item.get("collectible_level", 0)),
 			"summary": "Monster material not yet recovered.",
+		})
+	for unique_item in M3ItemCatalogScript.unique_concept_items():
+		var unique_id := str(unique_item.get("item_id", ""))
+		undiscovered.append({
+			"codex_id": unique_id,
+			"item_id": unique_id,
+			"display_name": str(unique_item.get("display_name", "Locked unique")),
+			"discovered": false,
+			"source": "gacha_only_future",
+			"level": int(unique_item.get("collectible_level", 7)),
+			"rarity": "unique",
+			"summary": "Unique concept is locked to future gacha-only acquisition; ordinary search, chest, monster, event, and altar drops cannot create it.",
+			"locked_reason": "unique_gacha_only_future",
 		})
 	return {
 		"title": "Codex Lite",
@@ -342,42 +355,46 @@ static func _apply_default_item_effects(item: Dictionary) -> void:
 static func _default_effect_kind(item_id: String, item_type: StringName) -> String:
 	if item_type == GROUP_EQUIPMENT:
 		match item_id:
-			"eq_carry_rig":
+			"eq_recovery_bag":
 				return "backpack_capacity"
-			"eq_salvage_hook", "eq_black_box":
+			"eq_signal_pin":
 				return "salvage_capacity"
-			"eq_shock_liner":
+			"eq_old_vest":
 				return "mine_damage_reduce"
-			"eq_pressure_gasket":
+			"eq_insulated_sleeve":
 				return "protocol_pressure_reduce"
-			"eq_scanner_frame":
+			"eq_goggles":
 				return "scan_hint"
+			"eq_edge_opener":
+				return "safe_yield"
 	return ""
 
 
 static func _default_effect_amount(item_id: String, item_type: StringName) -> int:
 	if item_type == GROUP_EQUIPMENT:
 		match item_id:
-			"eq_carry_rig":
+			"eq_recovery_bag":
 				return 2
-			"eq_salvage_hook", "eq_black_box":
+			"eq_signal_pin":
 				return 1
-			"eq_shock_liner":
+			"eq_old_vest":
 				return 10
-			"eq_pressure_gasket":
+			"eq_insulated_sleeve":
 				return 3
-			"eq_scanner_frame":
+			"eq_goggles":
 				return 1
+			"eq_edge_opener":
+				return 2
 	return 0
 
 
 static func _default_equipment_slot(item_id: String) -> String:
 	match item_id:
-		"eq_shock_liner":
+		"eq_old_vest":
 			return "armor"
-		"eq_carry_rig":
+		"eq_recovery_bag":
 			return "rig"
-		"eq_black_box":
+		"eq_goggles", "eq_signal_pin":
 			return "device"
 	return "tool"
 

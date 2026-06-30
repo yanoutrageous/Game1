@@ -32,18 +32,30 @@ static func get_event_options(context: RunContext, pos: Vector2i, event_type: St
 		return [{"id": &"leave", "label": "Close", "enabled": true}]
 	match event_type:
 		&"trader":
+			var best_sell := _best_sellable_item(context)
+			var has_sellable := not best_sell.is_empty()
+			var high_value := has_sellable and int(best_sell.get("base_value", 0)) >= RunBalanceCatalogScript.TRADER_HIGH_VALUE_CONFIRM_THRESHOLD
+			var black_coin := _run_black_coin(context)
+			var missing_hp := context != null and context.hp < context.max_hp
 			return [
-				{"id": &"sell_best_item", "label": "Sell top inventory", "enabled": context != null and context.carried_items.size() > 0},
+				{"id": &"sell_best_item", "label": "Sell top backpack item", "enabled": has_sellable and not high_value, "disabled_reason": "high_value_sale_requires_confirmation" if high_value else "no_sellable_inventory_item"},
+				{"id": &"confirm_high_value_sale", "label": "Confirm high-value sale", "enabled": high_value, "disabled_reason": "no_high_value_sale_candidate"},
+				{"id": &"buy_treatment", "label": "Buy treatment", "enabled": black_coin >= RunBalanceCatalogScript.TRADER_TREATMENT_COST and missing_hp, "disabled_reason": "need_black_coin_or_missing_hp"},
+				{"id": &"buy_info", "label": "Buy route info", "enabled": black_coin >= RunBalanceCatalogScript.TRADER_INFO_COST, "disabled_reason": "need_black_coin"},
 				{"id": &"leave", "label": "Leave market", "enabled": true},
 			]
 		&"dice":
+			var dice_coin := _run_black_coin(context)
 			return [
-				{"id": &"bet_small", "label": "Wager 20 black coin", "enabled": context != null and context.pending_gold >= DICE_BET},
+				{"id": &"bet_small", "label": "Wager 20 black coin", "enabled": dice_coin >= DICE_BET, "disabled_reason": "need_20_run_black_coin"},
 				{"id": &"leave", "label": "Leave dice table", "enabled": true},
 			]
 		&"altar":
+			var stage_index := _altar_stage_index(context)
+			var hp_cost := RunBalanceCatalogScript.altar_hp_cost_for_stage(stage_index)
+			var stage_label := "Offer %d HP (stage %d/5)" % [hp_cost, stage_index + 1]
 			return [
-				{"id": &"offer_hp", "label": "Pay 10 HP", "enabled": context != null and context.hp > 10},
+				{"id": &"offer_hp", "label": stage_label, "enabled": context != null and context.hp - hp_cost >= 1, "disabled_reason": "hp_must_remain_at_least_1"},
 				{"id": &"leave", "label": "Leave altar", "enabled": true},
 			]
 		&"trap":
@@ -119,9 +131,16 @@ static func execute_option(context: RunContext, pos: Vector2i, option_id: String
 
 
 static func _execute_trader(context: RunContext, option_id: StringName) -> Dictionary:
-	if option_id != &"sell_best_item":
-		return {"ok": false, "message": "Unknown trader option."}
-	return RunRuleService.execute_trader_sell_best(context)
+	match option_id:
+		&"sell_best_item":
+			return RunRuleService.execute_trader_sell_best(context, false)
+		&"confirm_high_value_sale":
+			return RunRuleService.execute_trader_sell_best(context, true)
+		&"buy_treatment":
+			return RunRuleService.execute_trader_treatment(context, RunBalanceCatalogScript.TRADER_TREATMENT_COST, 18)
+		&"buy_info":
+			return RunRuleService.execute_trader_info(context, RunBalanceCatalogScript.TRADER_INFO_COST)
+	return {"ok": false, "message": "Unknown trader option."}
 
 
 static func _execute_dice(context: RunContext, pos: Vector2i, option_id: StringName) -> Dictionary:
@@ -133,23 +152,29 @@ static func _execute_dice(context: RunContext, pos: Vector2i, option_id: StringN
 static func _execute_altar(context: RunContext, option_id: StringName, fail_authority = null) -> Dictionary:
 	if option_id != &"offer_hp":
 		return {"ok": false, "message": "Unknown altar option."}
-	if context.hp <= 10:
+	var stage_index := _altar_stage_index(context)
+	var hp_cost := RunBalanceCatalogScript.altar_hp_cost_for_stage(stage_index)
+	var black_coin_reward := RunBalanceCatalogScript.altar_black_coin_reward_for_stage(stage_index)
+	if context.hp - hp_cost < 1:
 		return {"ok": false, "message": "Not enough HP.", "blocked_reason": "blocked_hp"}
+	context.run_stats["altar_stage"] = stage_index + 1
+	var completed := stage_index + 1 >= RunBalanceCatalogScript.ALTAR_HP_COSTS.size()
 	return RunRuleService.apply_event_rule_result(context, &"altar", {
 		"ok": true,
-		"completed": true,
+		"completed": completed,
 		"event_type": &"altar",
-		"hp_delta": -RunBalanceCatalogScript.ALTAR_HP_COST,
-		"black_coin_delta": RunBalanceCatalogScript.ALTAR_BLACK_COIN_REWARD,
-		"pending_gold_delta": RunBalanceCatalogScript.ALTAR_BLACK_COIN_REWARD,
-		"item_defs": [RunContentCatalogScript.altar_relic(context)],
+		"altar_stage": stage_index + 1,
+		"hp_delta": -hp_cost,
+		"black_coin_delta": black_coin_reward,
+		"pending_gold_delta": black_coin_reward,
+		"item_defs": [RunContentCatalogScript.altar_relic(context, stage_index + 1)],
 		"status_effects": [{
 			"effect_id": "altar_focus",
 			"duration_type": &"current_run",
 			"remaining": 1,
 			"tags": ["buff", "event"],
 		}],
-		"message": RunTextCatalogScript.altar_result(),
+		"message": RunTextCatalogScript.altar_stage_result(stage_index + 1, hp_cost, black_coin_reward, completed),
 	}, fail_authority)
 
 
@@ -166,3 +191,23 @@ static func _execute_trap(context: RunContext, option_id: StringName, fail_autho
 		"pressure_delta": RunBalanceCatalogScript.TRAP_PRESSURE_DELTA,
 		"message": RunTextCatalogScript.trap_failure(),
 	}, fail_authority)
+
+
+static func _run_black_coin(context: RunContext) -> int:
+	if context == null:
+		return 0
+	if context.asset_ledger != null:
+		return context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK)
+	return int(context.pending_gold)
+
+
+static func _best_sellable_item(context: RunContext) -> Dictionary:
+	if context == null or context.asset_ledger == null:
+		return {}
+	return context.asset_ledger.get_best_sellable_inventory_item()
+
+
+static func _altar_stage_index(context: RunContext) -> int:
+	if context == null:
+		return 0
+	return clampi(int(context.run_stats.get("altar_stage", 0)), 0, RunBalanceCatalogScript.ALTAR_HP_COSTS.size() - 1)

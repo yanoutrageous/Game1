@@ -63,3 +63,9 @@
 | stage | evidence | boundary |
 | --- | --- | --- |
 | G39 | `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md` | AppShell/PageRouter/RunScene navigation boundary and critical route closure; no full settings, Save/Profile UI, Objective/Reward/Pool, ART import, gameplay runtime PASS, or manual long playtest PASS |
+
+# M5 Minimum Item Pack & Drop Loop Full Content
+
+| stage | evidence | boundary |
+| --- | --- | --- |
+| M5 | `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md` | Minimum item pack and drop loop full content; no complete warehouse economy, complete equipment strengthening, full Objective/Reward/Pool, complete Rule Engine, gameplay runtime PASS, or manual playtest PASS |

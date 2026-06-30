@@ -14,10 +14,25 @@ const MINE_PRESSURE_DELTA := 10
 const TRAP_PRESSURE_DELTA := 5
 const ALTAR_HP_COST := 10
 const ALTAR_BLACK_COIN_REWARD := 8
+const ALTAR_HP_COSTS := [10, 15, 25, 35, 50]
+const ALTAR_BLACK_COIN_REWARDS := [2, 5, 8, 10, 15]
 const TRAP_POWER_REQUIREMENT := 8
 const TRAP_FAILURE_DAMAGE := 1
 const DICE_BET := 20
+const TRADER_TREATMENT_COST := 12
+const TRADER_INFO_COST := 6
+const TRADER_HIGH_VALUE_CONFIRM_THRESHOLD := 60
 const PROTOCOL_PRESSURE_MAX := 100
+
+
+static func altar_hp_cost_for_stage(stage_index: int) -> int:
+	var clamped := clampi(stage_index, 0, ALTAR_HP_COSTS.size() - 1)
+	return int(ALTAR_HP_COSTS[clamped])
+
+
+static func altar_black_coin_reward_for_stage(stage_index: int) -> int:
+	var clamped := clampi(stage_index, 0, ALTAR_BLACK_COIN_REWARDS.size() - 1)
+	return int(ALTAR_BLACK_COIN_REWARDS[clamped])
 
 
 static func mine_damage(mine_damage_reduce: int, immune: bool) -> int:

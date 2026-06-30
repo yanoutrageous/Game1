@@ -69,6 +69,8 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = select_encounter_option(StringName(command_payload.get("option_id", &"default")))
 		&"pickup_ground_item":
 			action_result = pickup_ground_item(String(command_payload.get("instance_id", "")))
+		&"replace_ground_item":
+			action_result = replace_ground_item(String(command_payload.get("ground_instance_id", command_payload.get("instance_id", ""))), String(command_payload.get("drop_instance_id", "")))
 		&"drop_inventory_item":
 			action_result = drop_inventory_item(String(command_payload.get("instance_id", "")))
 		&"use_consumable", &"use_item":
@@ -296,6 +298,26 @@ func pickup_ground_item(instance_id: String = "") -> Dictionary:
 	else:
 		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
 		context.last_message = "Pickup blocked: %s." % context.blocked_reason
+	_emit_state()
+	return result
+
+
+func replace_ground_item(ground_instance_id: String = "", drop_instance_id: String = "") -> Dictionary:
+	if not _can_accept_command():
+		return _blocked(&"blocked", "command_blocked")
+	var result: Dictionary = RunRuleService.replace_ground_item(context, ground_instance_id, drop_instance_id)
+	context.last_reward = result.duplicate(true)
+	if bool(result.get("ok", false)):
+		context.blocked_reason = ""
+		var item: Dictionary = result.get("item", {})
+		var dropped: Dictionary = result.get("dropped_item", {})
+		context.last_message = "Replaced floor item: picked %s, dropped %s." % [
+			String(item.get("display_name", item.get("item_id", "item"))),
+			String(dropped.get("display_name", dropped.get("item_id", "item"))),
+		]
+	else:
+		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
+		context.last_message = "Replace blocked: %s." % context.blocked_reason
 	_emit_state()
 	return result
 

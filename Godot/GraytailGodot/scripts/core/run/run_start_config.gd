@@ -58,7 +58,7 @@ static func default_config() -> Dictionary:
 		"bag_used": 0,
 		"bag_limit": 10,
 		"backpack_capacity": 10,
-		"failure_salvage_capacity": 1,
+		"failure_salvage_capacity": 4,
 		"profile_fields": {},
 		"talent_interface": [],
 		"active_talent_effects": [],

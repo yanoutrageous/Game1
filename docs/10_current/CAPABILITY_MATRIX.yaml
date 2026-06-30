@@ -72,6 +72,30 @@ source_boundaries:
   base_docs_governance: "external governance snapshot; not current repo fact source"
   connection: "external parallel handoff; no content mirror in Git"
   godot_docs: "engineering history / environment evidence; not current docs governance entry"
+m5_minimum_item_pack_drop_loop_full_content:
+  status: "implementation_in_progress"
+  branch: "godot/m5-item-drop-loop-full-content"
+  contract: "docs/20_product/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_CONTRACT.md"
+  validation: "docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md"
+  handoff: "docs/handoff/HANDOFF_M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT.md"
+  capabilities:
+    m5_item_catalog: true
+    unique_gacha_only_locked_display: true
+    ground_loot_first_rewards: true
+    backpack_pickup_drop_repick_replace: true
+    consumable_use_command_flow: true
+    trader_dice_altar_minimum_events: true
+    success_failure_abandon_settlement_semantics: true
+    warehouse_codex_deployprep_alignment: true
+  non_goals:
+    - "complete warehouse economy"
+    - "complete equipment strengthening"
+    - "full Objective / Reward / Pool"
+    - "complete Rule Engine"
+    - "formal art import"
+    - "Godot metadata/resource import"
+    - "gameplay runtime PASS"
+    - "manual playtest PASS"
 m2_lua_ue_effect_first_playable_loop:
   status: "implementation_in_progress"
   branch: "godot/m2-lua-ue-effect-first-playable-loop"
