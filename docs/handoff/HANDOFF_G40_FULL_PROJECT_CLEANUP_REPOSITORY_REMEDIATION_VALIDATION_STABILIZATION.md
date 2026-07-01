@@ -2,7 +2,7 @@
 
 Status: in-progress handoff after G40 Slice 13.
 
-Chinese summary: G40 has established current topology, repo docs entrypoints, dirty-state tooling, a validation entrypoint, Slice 9A report consolidation, restricted Slice 9B stale-checkout archive execution, and pushed G40 branch commits. Slice 12 restored `project.godot` to HEAD by audit decision, leaving the active repo clean. Slice 13 ran the approved in-boundary non-Godot validation chain. Registered worktree, cache/profile, active repo duplicate, and reference-blocked decisions still require later gates.
+Chinese summary: G40 has established current topology, repo docs entrypoints, dirty-state tooling, a validation entrypoint, Slice 9A report consolidation, restricted Slice 9B stale-checkout archive execution, and pushed G40 branch commits. Slice 12 restored `project.godot` to HEAD by audit decision, leaving the active repo clean. Slice 13 ran the approved in-boundary non-Godot validation chain. Slice 14 moved the remaining root `Godot` shell and 20260622 root audit reports into their canonical G40 areas. Registered worktree, cache/profile, active repo duplicate, and reference-blocked decisions still require later gates.
 
 ## Current State
 
@@ -47,7 +47,9 @@ generated metadata
 - Reference-blocked duplicate rows remain unresolved.
 - Godot smoke is not run in G40 Slice 13 because no `D:\AGAME1`-local Godot executable is available and `D:\Godot` is forbidden by the G40 boundary.
 - M5/G39 static validators passed in Slice 13; their runtime runners were not run and are not claimed.
-- G40 branch commit and push are complete through Slice 12 at `7a8ed12108a857264aeec4ed3b06f126dc9df7d5`.
+- Slice 14 moved `D:\AGAME1\Godot` to `D:\AGAME1\external\godot_reference\Godot`; this is not the active Godot project.
+- Slice 14 moved `D:\AGAME1\AGAME1_code_audit_delivery_report_20260622.*` to `D:\AGAME1\reports\code_audit_20260622`.
+- G40 branch commit and push were complete through Slice 13 at `1d574ae1afa2d35a89a1fa755a7cca279a9fc9cd` before this Slice 14 status update.
 - Main was not merged or pushed.
 
 ## Slice 13 Validation Evidence

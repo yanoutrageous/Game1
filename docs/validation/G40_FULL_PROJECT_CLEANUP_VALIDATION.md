@@ -49,6 +49,7 @@ gameplay_runtime_pass_claimed=false
 | Slice 11 | complete with notes | Post-push status docs synchronized; `project.godot` decision deferred to Slice 12 |
 | Slice 12 | complete with notes | Audit chose restore-to-HEAD for `project.godot`; patch evidence preserved at `D:\AGAME1\reports\g40\project_godot_dirty.patch`; active repo dirty count returned to 0 |
 | Slice 13 | complete with notes | Audit approved in-boundary non-Godot validation; static M3/M3R/M3H/M4S/M5/G36/G37/G38/G39 validators passed; Godot and runtime runners not run because no `D:\AGAME1`-local Godot executable is available and `D:\Godot` is forbidden |
+| Slice 14 | complete with notes | Empty legacy `D:\AGAME1\Godot` shell moved to `D:\AGAME1\external\godot_reference\Godot`; root `AGAME1_code_audit_delivery_report_20260622.*` files moved to `D:\AGAME1\reports\code_audit_20260622`; topology validator updated |
 
 ## Current Tool Markers
 
@@ -80,6 +81,8 @@ G39 navigation boundary validation=PASS
 - No manual playtest PASS is claimed.
 - No duplicate files have been deleted; Slice 9B archived only two approved non-registered stale checkout directories.
 - Root G40 reports have been moved into `D:\AGAME1\reports\g40` by Slice 9A.
+- Root 20260622 code-audit delivery files have been moved into `D:\AGAME1\reports\code_audit_20260622` by Slice 14.
+- The legacy `D:\AGAME1\Godot` directory shell has been moved into `D:\AGAME1\external\godot_reference\Godot` by Slice 14. It is not the active Godot project.
 - Slice 9B archived two non-registered stale checkout directories:
   - `D:\AGAME1\archive\stale_checkouts\Game_git_compare`
   - `D:\AGAME1\archive\stale_checkouts\Game_feature_editor_playable_prototype`

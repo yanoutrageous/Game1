@@ -11,6 +11,8 @@ Status: current source registry after G40 Slice 4.
 | Base art | `D:\AGAME1\sources\art` | `D:\AGAME1\Base Art` | protected art source | not runtime asset unless imported by gate |
 | Draw/candidate art | `D:\AGAME1\sources\draw` | `D:\AGAME1\Draw` | candidate/source art | not runtime asset unless imported by gate |
 | Connection handoff | `D:\AGAME1\handoff\connection` | `D:\AGAME1\Connection` | external handoff | register only; do not copy content into repo |
+| Legacy Godot shell | `D:\AGAME1\external\godot_reference\Godot` | `D:\AGAME1\Godot` | external reference | not active project; not runtime executable source |
+| Code audit 20260622 | `D:\AGAME1\reports\code_audit_20260622` | `D:\AGAME1\AGAME1_code_audit_delivery_report_20260622.*` | historical report | not current project truth |
 
 ## Legacy Path Labels
 
@@ -29,6 +31,12 @@ Status: current source registry after G40 Slice 4.
 - Legacy path before G40: `D:\AGAME1\Connection`
   Moved to: `D:\AGAME1\handoff\connection`
   Do not use as current canonical path: `D:\AGAME1\Connection`
+- Legacy path before G40: `D:\AGAME1\Godot`
+  Moved to: `D:\AGAME1\external\godot_reference\Godot`
+  Do not use as current active Godot project path: `D:\AGAME1\Godot`
+- Legacy root report files before G40: `D:\AGAME1\AGAME1_code_audit_delivery_report_20260622.*`
+  Moved to: `D:\AGAME1\reports\code_audit_20260622`
+  Treat as historical audit delivery artifacts, not current project truth.
 
 ## Active Repo
 

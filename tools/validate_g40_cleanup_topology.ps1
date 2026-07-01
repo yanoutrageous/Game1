@@ -31,10 +31,10 @@ Write-Output "phase=in_progress"
 foreach ($path in @("active","sources","handoff","archive","reports","workflow","tools","external","_repo_cache")) {
     Check-Exists (Join-Path $AgameRoot $path) "topology_$path"
 }
-foreach ($path in @("sources\docs","sources\docs_governance","sources\art","sources\draw","handoff\connection","handoff\packages","reports\codex_reports","workflow\codex_workflow")) {
+foreach ($path in @("sources\docs","sources\docs_governance","sources\art","sources\draw","handoff\connection","handoff\packages","reports\codex_reports","reports\code_audit_20260622","workflow\codex_workflow","external\godot_reference","external\godot_reference\Godot")) {
     Check-Exists (Join-Path $AgameRoot $path) "canonical_$($path -replace '\\','_')"
 }
-foreach ($path in @("Base Docs","Base Docs_Governance","Base Art","Draw","Connection","handoff_packages","_codex_reports","_codex_workflow")) {
+foreach ($path in @("Base Docs","Base Docs_Governance","Base Art","Draw","Connection","handoff_packages","_codex_reports","_codex_workflow","Godot")) {
     Check-LegacyAbsent (Join-Path $AgameRoot $path) "legacy_$($path -replace '[^A-Za-z0-9]','_')"
 }
 
@@ -43,8 +43,8 @@ Check-Exists (Join-Path $AgameRoot "_repo_cache\Game1_work\docs\README.md") "rep
 Check-Exists (Join-Path $AgameRoot "_repo_cache\Game1_work\docs\00_governance\DOC_PLACEMENT_STANDARD.md") "doc_placement_standard"
 
 Write-Output "repo_cache_still_present=allowed_in_progress"
-Write-Output "D_AGAME1_Godot_still_present=pending_legacy_external_candidate"
-Write-Output "root_g40_reports_still_present=allowed_until_report_consolidation_slice"
+Write-Output "D_AGAME1_Godot=relocated_to_external_godot_reference"
+Write-Output "root_code_audit_20260622_reports=relocated_to_reports_code_audit_20260622"
 
 if ($failures -gt 0) {
     Write-Output "G40_TOPOLOGY_VALIDATION_RESULT=FAIL"
