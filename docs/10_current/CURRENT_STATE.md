@@ -1,6 +1,6 @@
 # Current State
 
-Document status: current summary after G40 Slice 19 residual duplicate final-disposition classification.
+Document status: current summary after G40 Slice 20 workflow duplicate blocker classification.
 
 ## Repository
 
@@ -76,6 +76,7 @@ Moved legacy source/handoff roots:
 - Slice 17 duplicate evidence refresh: regenerated current duplicate-state evidence after Slice 15/16 topology and worktree cleanup; no delete, move, archive, cache cleanup, protected-source cleanup, or active-repo duplicate cleanup was performed.
 - Slice 18 generated-cache duplicate policy closure: classified 10002 existing workflow Edge CDP generated-cache duplicate rows as `generated-ignore / processed_by_policy_no_delete`; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete.
 - Slice 19 residual duplicate final-disposition classification: classified 3003 existing canonical/protected-source residual rows as final non-destructive dispositions; no file was deleted, moved, archived, copied, or marked safe to delete. It left 109 tracked active-repo duplicate-review rows and 94 historical/reference/workflow-state rows as explicit later gate inputs.
+- Slice 20 workflow duplicate blocker classification: classified the 94 workflow historical/reference/workflow-state rows as final non-destructive workflow-retained dispositions; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete. It left only the 109 tracked active-repo duplicate-review rows as the remaining duplicate gate input.
 
 Slice 9B archived two approved non-registered stale checkouts:
 
@@ -159,6 +160,26 @@ true_unresolved_rows_after_slice19=203
 
 Slice 19 does not physically remediate active repo duplicate assets, historical report archive candidates, reference-blocked rows, workflow state rows, or workflow receipt rows.
 
+Slice 20 classified the workflow duplicate blocker subset without deleting or moving any file. Current Slice 20 evidence files:
+
+```text
+D:\AGAME1\reports\g40\workflow_blocker_final_disposition_after_slice20.csv
+D:\AGAME1\reports\g40\workflow_blocker_final_disposition_after_slice20.md
+D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice20.md
+```
+
+Slice 20 workflow blocker classification counts:
+
+```text
+workflow_blocker_final_disposition_rows=94
+workflow_transport_generated_reference_retained_rows=81
+workflow_record_retained_rows=13
+workflow_blocker_physical_action=none
+active_repo_duplicate_review_remaining=109
+```
+
+Slice 20 does not physically remediate active repo duplicate assets. Those 109 tracked active-repo rows remain the current duplicate-review gate input.
+
 G40 branch commit/push evidence:
 
 ```text
@@ -202,7 +223,7 @@ Slice 15 reduced registered worktree ambiguity. It left one dirty generated-meta
 
 Slice 16 resolved the remaining registered dirty generated-metadata worktree. The exact cleanup and removal evidence is recorded at `D:\AGAME1\reports\g40\worktree_dirty_metadata_resolution_log.md`. Current `git worktree list --porcelain` shows only the active repo `D:\AGAME1\_repo_cache\Game1_work`.
 
-Slice 17 refreshed duplicate evidence only. Slice 18 policy-closed only the audited workflow Edge CDP generated-cache subset as `generated-ignore / processed_by_policy_no_delete`. Slice 19 classified already-final canonical/protected-source rows as final non-destructive dispositions. Active repo duplicate-review rows and historical/reference/workflow-state rows remain current evidence requiring later audited policy decisions.
+Slice 17 refreshed duplicate evidence only. Slice 18 policy-closed only the audited workflow Edge CDP generated-cache subset as `generated-ignore / processed_by_policy_no_delete`. Slice 19 classified already-final canonical/protected-source rows as final non-destructive dispositions. Slice 20 classified workflow blocker rows as retained workflow/generated evidence. The remaining duplicate-review evidence is now the 109 tracked active-repo rows requiring a later audited asset-reference decision.
 
 G40 is a cleanup and validation stabilization stage. Latest gameplay baseline before G40 is M5 at `aa57a4270e047ef83020c333b30af225aa1a5ffb`; G40 does not claim new gameplay content.
 

@@ -1,5 +1,5 @@
 document_status: current_capability_matrix
-updated_by: G40 Slice 19
+updated_by: G40 Slice 20
 
 repository:
   active_repo_path: "D:\\AGAME1\\_repo_cache\\Game1_work"
@@ -51,6 +51,12 @@ g40_cleanup:
   active_repo_duplicate_review_remaining_19: 109
   historical_reference_workflow_state_blockers_remaining_19: 94
   true_unresolved_duplicate_rows_after_slice19: 203
+  workflow_blocker_final_disposition_20: complete_with_notes
+  workflow_blocker_final_disposition_rows_20: 94
+  workflow_transport_generated_reference_retained_rows_20: 81
+  workflow_record_retained_rows_20: 13
+  workflow_blocker_physical_action_20: none
+  active_repo_duplicate_review_remaining_20: 109
   branch_commit_push: complete
   slice_10_commit_hash: "ad883310232ca9756371fb68eb3d0176a56e809e"
   slice_11_commit_hash: "fac8310c970260c333cb3b716d43b3024e161a75"
@@ -132,5 +138,6 @@ validation:
     - duplicate_execution_partial_remaining_manual_and_reference_review
     - generated_cache_duplicates_policy_closed_after_slice18_without_delete
     - residual_canonical_and_protected_duplicates_classified_after_slice19_without_delete
-    - duplicate_state_still_has_active_repo_and_historical_reference_workflow_state_residuals
+    - workflow_duplicate_blockers_classified_after_slice20_without_delete
+    - duplicate_state_still_has_active_repo_duplicate_review_residuals
     - godot_project_load_parser_smoke_not_run_due_boundary

@@ -183,6 +183,46 @@ try {
                     $slice19BadReferenceRows.Count -ne 0) {
                     $failures += 1
                 }
+
+                $slice20WorkflowDisposition = Join-Path $AgameRoot "reports\g40\workflow_blocker_final_disposition_after_slice20.csv"
+                if (Test-Path -LiteralPath $slice20WorkflowDisposition) {
+                    $slice20Rows = @(Import-Csv -LiteralPath $slice20WorkflowDisposition)
+                    $slice20TransportRows = @($slice20Rows | Where-Object {
+                        $_.slice20_final_category -eq "generated-ignore" -and
+                        $_.slice20_action -eq "reference_retained_no_delete" -and
+                        $_.current_file_path -like "D:\AGAME1\workflow\codex_workflow\transports\edge_cdp_bridge\*"
+                    })
+                    $slice20RecordRows = @($slice20Rows | Where-Object {
+                        $_.slice20_final_category -eq "canonical" -and
+                        $_.slice20_action -eq "workflow_record_retained_no_archive" -and
+                        $_.current_file_path -notlike "D:\AGAME1\workflow\codex_workflow\transports\edge_cdp_bridge\*"
+                    })
+                    $slice20BadRows = @($slice20Rows | Where-Object {
+                        $_.slice20_physical_action -ne "none" -or
+                        $_.slice20_status -ne "final_non_destructive_workflow_disposition" -or
+                        $_.actual_current_exists -ne "True" -or
+                        $_.current_root_category -ne "workflow" -or
+                        $_.active_repo -eq "True" -or
+                        -not $_.current_file_path.StartsWith("D:\AGAME1\workflow\codex_workflow\")
+                    })
+
+                    Write-Output "duplicate_workflow_blocker_final_disposition_after_slice20=OK $slice20WorkflowDisposition"
+                    Write-Output "duplicate_workflow_blocker_final_disposition_rows_after_slice20=$($slice20Rows.Count)"
+                    Write-Output "duplicate_workflow_transport_retained_rows_after_slice20=$($slice20TransportRows.Count)"
+                    Write-Output "duplicate_workflow_record_retained_rows_after_slice20=$($slice20RecordRows.Count)"
+                    Write-Output "duplicate_workflow_blocker_bad_rows_after_slice20=$($slice20BadRows.Count)"
+                    Write-Output "duplicate_remaining_active_repo_review_after_slice20=$($slice19ActiveRows.Count)"
+                    Write-Output "duplicate_slice20_physical_action=none"
+                    if ($slice20Rows.Count -ne 94 -or
+                        $slice20TransportRows.Count -ne 81 -or
+                        $slice20RecordRows.Count -ne 13 -or
+                        $slice20BadRows.Count -ne 0 -or
+                        $slice19ActiveRows.Count -ne 109) {
+                        $failures += 1
+                    }
+                } else {
+                    Write-Output "duplicate_workflow_blocker_final_disposition_after_slice20=MISSING $slice20WorkflowDisposition"
+                }
             } else {
                 Write-Output "duplicate_residual_final_disposition_after_slice19=MISSING $slice19Disposition"
             }
