@@ -1,6 +1,6 @@
 # Current State
 
-Document status: current summary after G40 Slice 16 dirty worktree resolution.
+Document status: current summary after G40 Slice 17 duplicate evidence refresh.
 
 ## Repository
 
@@ -73,6 +73,7 @@ Moved legacy source/handoff roots:
 - Slice 14 root residual topology cleanup: moved the empty legacy `D:\AGAME1\Godot` shell to `D:\AGAME1\external\godot_reference\Godot` and moved the root 20260622 audit report pair to `D:\AGAME1\reports\code_audit_20260622`.
 - Slice 15 registered worktree cleanup: removed five clean non-active registered worktrees with `git worktree remove` without `--force`; the dirty generated-metadata worktree retained at that point was resolved in Slice 16.
 - Slice 16 dirty generated-metadata worktree cleanup: restored tracked generated `.translation` files by exact path, removed exact untracked generated `.translation` and verified `.gd.uid` files, then removed the clean registered worktree with `git worktree remove` without `--force`.
+- Slice 17 duplicate evidence refresh: regenerated current duplicate-state evidence after Slice 15/16 topology and worktree cleanup; no delete, move, archive, cache cleanup, protected-source cleanup, or active-repo duplicate cleanup was performed.
 
 Slice 9B archived two approved non-registered stale checkouts:
 
@@ -82,6 +83,31 @@ D:\AGAME1\archive\stale_checkouts\Game_feature_editor_playable_prototype
 ```
 
 Generated cache/profile rows, protected/source rows, active repo duplicates, and reference blockers are recorded in `D:\AGAME1\reports\g40`. Registered worktree cleanup is resolved; the only registered worktree is the active repo.
+
+Slice 17 refreshed the stale duplicate evidence because earlier reports still contained paths removed by later topology/worktree cleanup. Current evidence files:
+
+```text
+D:\AGAME1\reports\g40\duplicate_resolution_plan_current_paths_after_slice16.csv
+D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice16.md
+D:\AGAME1\reports\g40\remaining_manual_decisions_after_slice16.md
+D:\AGAME1\reports\g40\remaining_reference_blockers_after_slice16.md
+```
+
+Slice 17 current duplicate-state counts:
+
+```text
+previous_manifest_total_rows=23306
+currently_existing_rows=13208
+missing_after_topology_worktree_cleanup=10098
+unclassified_missing_path_column_rows=0
+remaining_needs_manual_decision=109
+remaining_blocked_by_reference=155
+protected_source_rows_still_present=670
+active_repo_rows_still_present=1394
+workflow_cache_report_rows_still_present=11136
+```
+
+Missing rows are evidence-labelled `no_longer_present_after_topology_worktree_cleanup`; Slice 17 does not claim they were deleted by Slice 17.
 
 G40 branch commit/push evidence:
 
@@ -125,6 +151,8 @@ Slice 14 removed the remaining root `D:\AGAME1\Godot` ambiguity by moving its em
 Slice 15 reduced registered worktree ambiguity. It left one dirty generated-metadata worktree for a separate audited gate; Slice 16 subsequently resolved and removed that worktree.
 
 Slice 16 resolved the remaining registered dirty generated-metadata worktree. The exact cleanup and removal evidence is recorded at `D:\AGAME1\reports\g40\worktree_dirty_metadata_resolution_log.md`. Current `git worktree list --porcelain` shows only the active repo `D:\AGAME1\_repo_cache\Game1_work`.
+
+Slice 17 refreshed duplicate evidence only. Protected source rows, active repo duplicate rows, workflow/cache/report rows, and reference blockers remain current evidence requiring later audited policy decisions.
 
 G40 is a cleanup and validation stabilization stage. Latest gameplay baseline before G40 is M5 at `aa57a4270e047ef83020c333b30af225aa1a5ffb`; G40 does not claim new gameplay content.
 

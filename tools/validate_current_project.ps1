@@ -62,6 +62,37 @@ try {
     Write-Output "gameplay_runtime_pass_claimed=false"
     Write-Output "clean_worktree_required=false"
 
+    $slice17Manifest = Join-Path $AgameRoot "reports\g40\duplicate_resolution_plan_current_paths_after_slice16.csv"
+    if (Test-Path -LiteralPath $slice17Manifest) {
+        $slice17Rows = @(Import-Csv -LiteralPath $slice17Manifest)
+        $slice17Existing = @($slice17Rows | Where-Object { $_.actual_current_exists -eq "True" })
+        $slice17Missing = @($slice17Rows | Where-Object {
+            $_.actual_current_exists -ne "True" -and
+            $_.presence_status_after_slice16 -ne "path_unclassified_missing_columns"
+        })
+        $slice17Unclassified = @($slice17Rows | Where-Object {
+            $_.presence_status_after_slice16 -eq "path_unclassified_missing_columns"
+        })
+        $slice17Manual = @($slice17Existing | Where-Object { $_.decision -eq "needs_manual_decision" })
+        $slice17Blocked = @($slice17Existing | Where-Object { $_.blocked_by_reference -eq "True" })
+        $slice17Protected = @($slice17Existing | Where-Object { $_.protected -eq "True" })
+        $slice17Active = @($slice17Existing | Where-Object { $_.active_repo -eq "True" })
+        $slice17Workflow = @($slice17Existing | Where-Object { $_.current_root_category -eq "workflow" })
+
+        Write-Output "duplicate_manifest_after_slice16=OK $slice17Manifest"
+        Write-Output "duplicate_manifest_after_slice16_total_rows=$($slice17Rows.Count)"
+        Write-Output "duplicate_manifest_after_slice16_existing_rows=$($slice17Existing.Count)"
+        Write-Output "duplicate_manifest_after_slice16_missing_rows=$($slice17Missing.Count)"
+        Write-Output "duplicate_manifest_after_slice16_unclassified_rows=$($slice17Unclassified.Count)"
+        Write-Output "duplicate_remaining_needs_manual_decision_after_slice16=$($slice17Manual.Count)"
+        Write-Output "duplicate_remaining_blocked_by_reference_after_slice16=$($slice17Blocked.Count)"
+        Write-Output "duplicate_protected_source_rows_still_present_after_slice16=$($slice17Protected.Count)"
+        Write-Output "duplicate_active_repo_rows_still_present_after_slice16=$($slice17Active.Count)"
+        Write-Output "duplicate_workflow_cache_report_rows_still_present_after_slice16=$($slice17Workflow.Count)"
+    } else {
+        Write-Output "duplicate_manifest_after_slice16=MISSING $slice17Manifest"
+    }
+
     if ($staged.Count -gt 0) {
         Write-Output "staged_warning=staged files exist; G40 slices should keep staged empty until commit gate"
     }
