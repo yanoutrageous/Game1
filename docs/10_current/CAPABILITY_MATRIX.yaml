@@ -1,5 +1,5 @@
 document_status: current_capability_matrix
-updated_by: G40 Slice 11
+updated_by: G40 Slice 12
 
 repository:
   active_repo_path: "D:\\AGAME1\\_repo_cache\\Game1_work"
@@ -28,6 +28,7 @@ g40_cleanup:
   branch_commit_push: complete
   branch_commit_hash: "ad883310232ca9756371fb68eb3d0176a56e809e"
   main_merge_push: not_performed
+  project_godot_restore_12: complete
   final_cleanup_execution: pass_with_notes
   final_validation: pass_with_notes
 
@@ -59,9 +60,9 @@ known_unfinished_systems:
   ci_pipeline: not_in_scope_unless_later_gate
 
 dirty_state:
-  pre_existing_project_godot_dirty: true
-  project_godot_dirty_status: pre_existing_unresolved_not_cleaned_by_slice_6
-  project_godot_decision_gate: pending_metadata_config_gate
+  pre_existing_project_godot_dirty: false
+  project_godot_dirty_status: restored_to_head_by_g40_slice_12
+  project_godot_decision_gate: completed_restore_to_head
   project_godot_patch: "D:\\AGAME1\\reports\\g40\\project_godot_dirty.patch"
   staged_files_expected_now: false
   protective_stash_touched: false
@@ -82,6 +83,5 @@ validation:
   g40_validation_doc: "docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md"
   g40_handoff_doc: "docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md"
   pass_with_notes_reasons:
-    - pre_existing_project_godot_dirty
     - g40_cleanup_in_progress
     - duplicate_execution_partial_remaining_manual_and_reference_review

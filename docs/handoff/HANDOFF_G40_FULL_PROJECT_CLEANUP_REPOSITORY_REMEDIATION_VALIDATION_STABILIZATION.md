@@ -1,8 +1,8 @@
 # Handoff G40 Full Project Cleanup / Repository Remediation / Validation Stabilization
 
-Status: in-progress handoff after G40 Slice 11.
+Status: in-progress handoff after G40 Slice 12.
 
-Chinese summary: G40 has established current topology, repo docs entrypoints, dirty-state tooling, a validation entrypoint, Slice 9A report consolidation, restricted Slice 9B stale-checkout archive execution, and a pushed G40 docs/tools branch commit. Registered worktree, cache/profile, active repo duplicate, reference-blocked, and `project.godot` config decisions still require later gates.
+Chinese summary: G40 has established current topology, repo docs entrypoints, dirty-state tooling, a validation entrypoint, Slice 9A report consolidation, restricted Slice 9B stale-checkout archive execution, and pushed G40 branch commits. Slice 12 restored `project.godot` to HEAD by audit decision, leaving the active repo clean. Registered worktree, cache/profile, active repo duplicate, and reference-blocked decisions still require later gates.
 
 ## Current State
 
@@ -20,10 +20,9 @@ expected_marker: G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
 ## Next Required Gates
 
 1. Remaining duplicate / registered-worktree / cache-profile cleanup cannot run without later audit approval.
-2. `project.godot` remediation requires a separate metadata/config decision gate.
-3. Optional Godot/M5/G39 runtime validation requires a later explicit validation gate.
-4. No main merge/push is authorized by this handoff.
-5. No final completion claim is authorized until remaining G40 notes are resolved or explicitly accepted.
+2. Optional Godot/M5/G39 runtime validation requires a later explicit validation gate.
+3. No main merge/push is authorized by this handoff.
+4. No final completion claim is authorized until remaining G40 notes are resolved or explicitly accepted.
 
 ## Do Not Stage Without Later Approval
 
@@ -40,7 +39,7 @@ generated metadata
 
 ## Current Unresolved Items
 
-- `project.godot` is pre-existing dirty and unresolved.
+- `project.godot` was restored to HEAD in Slice 12 after audit approval; prior patch evidence remains at `D:\AGAME1\reports\g40\project_godot_dirty.patch`.
 - Root G40 working reports are consolidated into `D:\AGAME1\reports\g40`.
 - Slice 9B archived `Game_git_compare` and `Game_feature_editor_playable_prototype` to `D:\AGAME1\archive\stale_checkouts`.
 - Registered worktrees were not removed.
@@ -48,6 +47,7 @@ generated metadata
 - Reference-blocked duplicate rows remain unresolved.
 - Godot smoke is not run in G40 Slice 11.
 - G40 branch commit and push are complete at `ad883310232ca9756371fb68eb3d0176a56e809e`.
+- G40 Slice 12 docs status update is expected after the restore decision.
 - Main was not merged or pushed.
 
 ## Validation Command

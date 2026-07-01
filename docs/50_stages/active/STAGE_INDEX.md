@@ -18,7 +18,7 @@ Status: current active stage index after G40 Slice 11.
 | Origin G40 branch head | `ad883310232ca9756371fb68eb3d0176a56e809e` |
 | Base HEAD / main / origin/main at G40 start | `aa57a4270e047ef83020c333b30af225aa1a5ffb` |
 | Latest gameplay baseline before G40 | M5 item pack / drop loop full content baseline |
-| Pre-existing unresolved dirty | `Godot/GraytailGodot/project.godot` |
+| Pre-existing project config dirty | Restored to HEAD in G40 Slice 12; patch retained at `D:\AGAME1\reports\g40\project_godot_dirty.patch` |
 
 ## Not Active
 

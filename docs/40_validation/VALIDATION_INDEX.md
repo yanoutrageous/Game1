@@ -21,10 +21,10 @@ G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
 Known PASS_WITH_NOTES reasons:
 
 ```text
-pre_existing_project_godot_dirty=true
 g40_cleanup_in_progress=true
 duplicate_execution_partial=true
 duplicate_remaining_manual_and_reference_review=true
+project_godot_restored_to_head=true
 manual_playtest_claimed=false
 gameplay_runtime_pass_claimed=false
 ```
@@ -45,7 +45,7 @@ gameplay_runtime_pass_claimed=false
 - Gameplay runtime PASS must cite an actual runtime validation run.
 - Manual playtest PASS must cite an actual manual playtest record.
 - G40 does not claim new gameplay capability.
-- G40 does not clean `project.godot` unless a later metadata/config remediation gate approves it.
+- G40 Slice 12 restored `project.godot` to HEAD after an explicit metadata/config decision gate. The prior patch remains in `D:\AGAME1\reports\g40\project_godot_dirty.patch`.
 
 ## Historical Validation Originals
 
@@ -62,7 +62,7 @@ Recent historical/current evidence pointers:
 
 | Stage | Evidence | Boundary |
 | --- | --- | --- |
-| G40 | `docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md` | Current cleanup validation is IN_PROGRESS / PASS_WITH_NOTES; branch commit/push complete at `ad883310232ca9756371fb68eb3d0176a56e809e`; `project.godot`, residual duplicate decisions, and smoke remain pending later gates |
+| G40 | `docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md` | Current cleanup validation is IN_PROGRESS / PASS_WITH_NOTES; branch commit/push complete at `ad883310232ca9756371fb68eb3d0176a56e809e`; `project.godot` restored in Slice 12; residual duplicate decisions and smoke remain pending later gates |
 | M5 | `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md` | Latest gameplay baseline before G40; no manual playtest PASS unless explicitly recorded |
 | G39 | `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md` | Navigation boundary closure; no full settings/Profile UI |
 | G38 | `docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md` | Runtime architecture finalization evidence |

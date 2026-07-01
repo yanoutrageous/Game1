@@ -14,13 +14,13 @@ base_head_at_g40_start: aa57a4270e047ef83020c333b30af225aa1a5ffb
 main_origin_main: aa57a4270e047ef83020c333b30af225aa1a5ffb
 ```
 
-Pre-existing dirty state:
+Pre-existing dirty state at G40 start:
 
 ```text
 Godot/GraytailGodot/project.godot
 ```
 
-That dirty file is not part of G40 Slice 4 documentation changes and must not be staged unless a later gate explicitly approves metadata/config remediation.
+Slice 12 audit chose to restore this file to HEAD instead of committing Godot editor/config changes. The prior patch remains preserved at `D:\AGAME1\reports\g40\project_godot_dirty.patch`.
 
 ## Root topology after G40 Slice 3
 
@@ -68,6 +68,7 @@ Moved legacy source/handoff roots:
 - Slice 9B duplicate / stale worktree / historical report cleanup: complete with notes.
 - Slice 10 G40 docs/tools commit and branch push: complete.
 - Slice 11 post-push status synchronization: complete with notes.
+- Slice 12 `project.godot` metadata/config decision: restored to HEAD; active repo dirty count returned to 0.
 
 Slice 9B archived two approved non-registered stale checkouts:
 
@@ -117,6 +118,6 @@ G40 is a cleanup and validation stabilization stage. Latest gameplay baseline be
 
 - No gameplay runtime PASS is claimed by G40.
 - No manual playtest PASS is claimed by G40.
-- `Godot/GraytailGodot/project.godot` remains pre-existing dirty and unresolved; this requires a separate metadata/config decision gate.
+- `Godot/GraytailGodot/project.godot` was restored to HEAD in Slice 12; G40 keeps the captured patch as evidence and does not accept the 4.6 editor rewrite in this branch.
 - G40 is cleanup / governance / validation-stabilization work, not a gameplay feature implementation stage.
 - Complete LongTerm, Objective / Reward / Pool, full Rule Engine, full Warehouse, full art productization, and CI remain outside G40 unless a later gate says otherwise.

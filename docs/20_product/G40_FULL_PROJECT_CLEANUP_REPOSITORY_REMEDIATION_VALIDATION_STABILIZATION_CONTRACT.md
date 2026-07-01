@@ -1,8 +1,8 @@
 # G40 Full Project Cleanup / Repository Remediation / Validation Stabilization Contract
 
-Status: in progress / PASS_WITH_NOTES after G40 Slice 11.
+Status: in progress / PASS_WITH_NOTES after G40 Slice 12.
 
-Chinese summary: G40 is the project cleanup and validation-stabilization stage. It reorganizes current entrypoints, documents source boundaries, records duplicate and dirty-state policy, and prepares reliable validation gates. The G40 docs/tools branch has been committed and pushed, but G40 remains PASS_WITH_NOTES because project config and residual duplicate decisions remain unresolved.
+Chinese summary: G40 is the project cleanup and validation-stabilization stage. It reorganizes current entrypoints, documents source boundaries, records duplicate and dirty-state policy, and prepares reliable validation gates. The G40 branch has been committed and pushed, and Slice 12 restored `project.godot` to HEAD. G40 remains PASS_WITH_NOTES because residual duplicate/manual/reference decisions and optional runtime validations remain unresolved.
 
 ## Objective
 
@@ -61,18 +61,18 @@ Legacy paths are retained only as labeled moved/superseded mappings. They are no
 
 ## Dirty-State Policy
 
-`Godot/GraytailGodot/project.godot` is pre-existing dirty at G40 start.
+`Godot/GraytailGodot/project.godot` was pre-existing dirty at G40 start.
 
-Current policy:
+Slice 12 policy:
 
 ```text
-status: pre_existing_unresolved
+status: restored_to_head
 patch evidence: D:\AGAME1\reports\g40\project_godot_dirty.patch
-not cleaned by Slice 6/7/8
-not staged unless a later metadata/config remediation gate approves it
+decision: restore rather than accept unowned Godot 4.6 editor/config rewrite
+current active repo dirty count: 0
 ```
 
-Generated metadata cleanup tools are dry-run by default. Slice 9A does not execute any metadata cleanup.
+Generated metadata cleanup tools are dry-run by default unless a later explicit gate approves mutation.
 
 ## Report Consolidation Policy
 
@@ -142,4 +142,4 @@ G40 does not:
 - Slice 10 branch commit/push is complete.
 - Later main merge/push gate, if G40 is accepted.
 - Godot smoke, if later gate approves it.
-- Separate metadata/config decision gate for `project.godot` dirty handling.
+- Optional later Godot 4.6/project config adoption gate, if a product/config owner wants to accept the restored diff deliberately.
