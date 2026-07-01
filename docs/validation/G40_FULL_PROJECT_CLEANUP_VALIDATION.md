@@ -1,6 +1,6 @@
 # G40 Full Project Cleanup Validation
 
-Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 18.
+Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 19.
 
 Chinese summary: G40 validation currently confirms the cleanup state is explainable and current validation tools work. It does not yet mean the project is fully clean, and it does not claim gameplay runtime PASS or manual playtest PASS.
 
@@ -17,6 +17,7 @@ g40_cleanup_in_progress=true
 duplicate_execution_partial=true
 slice_17_duplicate_state_refresh_complete=true
 slice_18_generated_cache_policy_closure_complete=true
+slice_19_residual_final_disposition_complete=true
 duplicate_manifest_after_slice16_total_rows=23306
 duplicate_manifest_after_slice16_existing_rows=13208
 duplicate_manifest_after_slice16_missing_rows=10098
@@ -26,6 +27,11 @@ generated_cache_policy_action_after_slice18=processed_by_policy_no_delete
 generated_cache_deleted_after_slice18=false
 generated_cache_archived_after_slice18=false
 existing_rows_not_policy_closed_after_slice18=3206
+residual_final_non_destructive_disposition_rows_after_slice19=3003
+residual_final_physical_action_after_slice19=none
+active_repo_duplicate_review_remaining_after_slice19=109
+historical_reference_workflow_state_blockers_remaining_after_slice19=94
+true_unresolved_rows_after_slice19=203
 remaining_needs_manual_decision_after_slice16=109
 remaining_blocked_by_reference_after_slice16=155
 protected_source_rows_still_present_after_slice16=670
@@ -71,6 +77,7 @@ gameplay_runtime_pass_claimed=false
 | Slice 16 | complete with notes | Dirty generated-metadata worktree cleaned by exact list and removed with `git worktree remove` without `--force`; evidence recorded in `D:\AGAME1\reports\g40\worktree_dirty_metadata_resolution_log.md`; current registered worktree list is active-only |
 | Slice 17 | complete with notes | Duplicate evidence refreshed after Slice 15/16 topology and worktree cleanup; refreshed reports written under `D:\AGAME1\reports\g40`; no delete/move/archive/cache cleanup was performed |
 | Slice 18 | complete with notes | 10002 workflow Edge CDP generated-cache duplicate rows classified as `generated-ignore / processed_by_policy_no_delete`; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete |
+| Slice 19 | complete with notes | 3003 canonical/protected-source residual rows classified as final non-destructive dispositions; 109 active-repo duplicate-review rows and 94 historical/reference/workflow-state rows remain explicit later gate inputs; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete |
 
 ## Current Tool Markers
 
@@ -131,8 +138,19 @@ G39 navigation boundary validation=PASS
   - evidence CSV: `D:\AGAME1\reports\g40\generated_cache_duplicate_policy_closure_after_slice17.csv`
   - summary: `D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice18.md`
 - Slice 18 does not resolve active repo duplicates, protected source duplicates, reference-blocked rows, workflow `not_actionable_in_9b`, or workflow state/receipt manual-decision rows.
+- Slice 19 classifies only already-final canonical/protected-source residual rows:
+  - final non-destructive disposition rows: 3003
+  - physical action: none
+  - active repo duplicate-review rows still requiring asset-reference audit: 109
+  - historical/reference/workflow-state rows still requiring later decision: 94
+  - true unresolved rows after Slice 19 classification: 203
+  - evidence: `D:\AGAME1\reports\g40\residual_duplicate_final_disposition_after_slice19.md`
+  - evidence CSV: `D:\AGAME1\reports\g40\residual_duplicate_final_disposition_after_slice19.csv`
+  - active repo blocker CSV: `D:\AGAME1\reports\g40\active_repo_duplicate_review_remaining_after_slice19.csv`
+  - reference/workflow blocker CSV: `D:\AGAME1\reports\g40\reference_or_workflow_state_blockers_remaining_after_slice19.csv`
+  - summary: `D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice19.md`
 - No files were deleted; `delete_execution_log.csv` is header-only.
-- Remaining manual decisions and reference blockers are recorded in refreshed Slice 17 reports under `D:\AGAME1\reports\g40`.
+- Remaining active-repo asset/reference decisions and historical/reference/workflow-state blockers are recorded in refreshed Slice 19 reports under `D:\AGAME1\reports\g40`.
 - G40 docs/tools branch commit and push are complete:
   - `ad883310232ca9756371fb68eb3d0176a56e809e`
   - `fac8310c970260c333cb3b716d43b3024e161a75`
@@ -146,6 +164,6 @@ G39 navigation boundary validation=PASS
 
 The following must wait for later audited slices:
 
-1. Later decision on remaining protected/source duplicates, active repo duplicate rows, workflow not-actionable/state rows, and reference blockers, using the Slice 17/18 refreshed duplicate reports rather than stale Slice 9B counts.
+1. Later decision on the 109 active-repo duplicate-review rows and 94 historical/reference/workflow-state rows, using the Slice 19 reports rather than stale Slice 9B counts.
 2. Godot headless smoke, if a later gate supplies or approves an in-boundary executable path.
 3. Main merge/push gate, if and when G40 is accepted.

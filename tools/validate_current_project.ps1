@@ -135,6 +135,57 @@ try {
             if ($slice18Rows.Count -ne 10002 -or $slice18BadRows.Count -ne 0) {
                 $failures += 1
             }
+
+            $slice19Disposition = Join-Path $AgameRoot "reports\g40\residual_duplicate_final_disposition_after_slice19.csv"
+            $slice19ActiveReview = Join-Path $AgameRoot "reports\g40\active_repo_duplicate_review_remaining_after_slice19.csv"
+            $slice19ReferenceBlockers = Join-Path $AgameRoot "reports\g40\reference_or_workflow_state_blockers_remaining_after_slice19.csv"
+            if ((Test-Path -LiteralPath $slice19Disposition) -and
+                (Test-Path -LiteralPath $slice19ActiveReview) -and
+                (Test-Path -LiteralPath $slice19ReferenceBlockers)) {
+                $slice19FinalRows = @(Import-Csv -LiteralPath $slice19Disposition)
+                $slice19ActiveRows = @(Import-Csv -LiteralPath $slice19ActiveReview)
+                $slice19ReferenceRows = @(Import-Csv -LiteralPath $slice19ReferenceBlockers)
+                $slice19BadFinalRows = @($slice19FinalRows | Where-Object {
+                    $_.slice19_physical_action -ne "none" -or
+                    $_.slice19_status -ne "final_non_destructive_disposition" -or
+                    ($_.slice19_final_category -ne "canonical" -and $_.slice19_final_category -ne "protected-source") -or
+                    ($_.decision -ne "canonical_keep" -and $_.decision -ne "protected_source_keep") -or
+                    $_.decision -eq "needs_manual_decision" -or
+                    $_.decision -eq "historical_report_archive_candidate" -or
+                    $_.action_category -eq "active_repo_duplicate_review" -or
+                    $_.action_category -eq "archive_candidate" -or
+                    $_.action_category -eq "blocked_archive_candidate"
+                })
+                $slice19BadActiveRows = @($slice19ActiveRows | Where-Object {
+                    $_.slice19_physical_action -ne "none" -or
+                    $_.slice19_status -ne "requires_asset_reference_decision" -or
+                    $_.decision -ne "needs_manual_decision"
+                })
+                $slice19BadReferenceRows = @($slice19ReferenceRows | Where-Object {
+                    $_.slice19_physical_action -ne "none" -or
+                    $_.slice19_status -ne "requires_reference_or_workflow_state_decision" -or
+                    $_.decision -ne "historical_report_archive_candidate"
+                })
+
+                Write-Output "duplicate_residual_final_disposition_after_slice19=OK $slice19Disposition"
+                Write-Output "duplicate_residual_final_disposition_rows_after_slice19=$($slice19FinalRows.Count)"
+                Write-Output "duplicate_residual_final_disposition_bad_rows_after_slice19=$($slice19BadFinalRows.Count)"
+                Write-Output "duplicate_active_repo_review_remaining_after_slice19=$($slice19ActiveRows.Count)"
+                Write-Output "duplicate_active_repo_review_bad_rows_after_slice19=$($slice19BadActiveRows.Count)"
+                Write-Output "duplicate_reference_or_workflow_state_blockers_after_slice19=$($slice19ReferenceRows.Count)"
+                Write-Output "duplicate_reference_or_workflow_state_bad_rows_after_slice19=$($slice19BadReferenceRows.Count)"
+                Write-Output "duplicate_slice19_physical_action=none"
+                if ($slice19FinalRows.Count -ne 3003 -or
+                    $slice19ActiveRows.Count -ne 109 -or
+                    $slice19ReferenceRows.Count -ne 94 -or
+                    $slice19BadFinalRows.Count -ne 0 -or
+                    $slice19BadActiveRows.Count -ne 0 -or
+                    $slice19BadReferenceRows.Count -ne 0) {
+                    $failures += 1
+                }
+            } else {
+                Write-Output "duplicate_residual_final_disposition_after_slice19=MISSING $slice19Disposition"
+            }
         } else {
             Write-Output "duplicate_generated_cache_policy_closure_after_slice18=MISSING $slice18Closure"
         }

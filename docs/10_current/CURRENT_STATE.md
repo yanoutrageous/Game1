@@ -1,6 +1,6 @@
 # Current State
 
-Document status: current summary after G40 Slice 18 generated-cache duplicate policy closure.
+Document status: current summary after G40 Slice 19 residual duplicate final-disposition classification.
 
 ## Repository
 
@@ -75,6 +75,7 @@ Moved legacy source/handoff roots:
 - Slice 16 dirty generated-metadata worktree cleanup: restored tracked generated `.translation` files by exact path, removed exact untracked generated `.translation` and verified `.gd.uid` files, then removed the clean registered worktree with `git worktree remove` without `--force`.
 - Slice 17 duplicate evidence refresh: regenerated current duplicate-state evidence after Slice 15/16 topology and worktree cleanup; no delete, move, archive, cache cleanup, protected-source cleanup, or active-repo duplicate cleanup was performed.
 - Slice 18 generated-cache duplicate policy closure: classified 10002 existing workflow Edge CDP generated-cache duplicate rows as `generated-ignore / processed_by_policy_no_delete`; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete.
+- Slice 19 residual duplicate final-disposition classification: classified 3003 existing canonical/protected-source residual rows as final non-destructive dispositions; no file was deleted, moved, archived, copied, or marked safe to delete. It left 109 tracked active-repo duplicate-review rows and 94 historical/reference/workflow-state rows as explicit later gate inputs.
 
 Slice 9B archived two approved non-registered stale checkouts:
 
@@ -83,7 +84,7 @@ D:\AGAME1\archive\stale_checkouts\Game_git_compare
 D:\AGAME1\archive\stale_checkouts\Game_feature_editor_playable_prototype
 ```
 
-Generated cache/profile duplicate rows are policy-closed only where Slice 18 explicitly records `generated-ignore / processed_by_policy_no_delete`. Protected/source rows, active repo duplicates, workflow not-actionable/state rows, and reference blockers remain visible residual evidence in `D:\AGAME1\reports\g40`. Registered worktree cleanup is resolved; the only registered worktree is the active repo.
+Generated cache/profile duplicate rows are policy-closed only where Slice 18 explicitly records `generated-ignore / processed_by_policy_no_delete`. Slice 19 classifies only already-final canonical/protected-source rows as final non-destructive dispositions. Active repo duplicate-review rows and historical/reference/workflow-state rows remain visible residual evidence in `D:\AGAME1\reports\g40`. Registered worktree cleanup is resolved; the only registered worktree is the active repo.
 
 Slice 17 refreshed the stale duplicate evidence because earlier reports still contained paths removed by later topology/worktree cleanup. Current evidence files:
 
@@ -136,6 +137,28 @@ active_repo_rows_still_present=1394
 
 Slice 18 does not imply that active repo duplicates, protected source duplicates, reference-blocked rows, workflow `not_actionable_in_9b`, or workflow state/receipt manual-decision rows are resolved.
 
+Slice 19 classified the audited canonical/protected-source residual subset without deleting or moving any file. Current Slice 19 evidence files:
+
+```text
+D:\AGAME1\reports\g40\residual_duplicate_final_disposition_after_slice19.csv
+D:\AGAME1\reports\g40\residual_duplicate_final_disposition_after_slice19.md
+D:\AGAME1\reports\g40\active_repo_duplicate_review_remaining_after_slice19.csv
+D:\AGAME1\reports\g40\reference_or_workflow_state_blockers_remaining_after_slice19.csv
+D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice19.md
+```
+
+Slice 19 residual duplicate classification counts:
+
+```text
+residual_final_non_destructive_disposition_rows=3003
+residual_final_physical_action=none
+active_repo_duplicate_review_remaining=109
+historical_reference_workflow_state_blockers_remaining=94
+true_unresolved_rows_after_slice19=203
+```
+
+Slice 19 does not physically remediate active repo duplicate assets, historical report archive candidates, reference-blocked rows, workflow state rows, or workflow receipt rows.
+
 G40 branch commit/push evidence:
 
 ```text
@@ -179,7 +202,7 @@ Slice 15 reduced registered worktree ambiguity. It left one dirty generated-meta
 
 Slice 16 resolved the remaining registered dirty generated-metadata worktree. The exact cleanup and removal evidence is recorded at `D:\AGAME1\reports\g40\worktree_dirty_metadata_resolution_log.md`. Current `git worktree list --porcelain` shows only the active repo `D:\AGAME1\_repo_cache\Game1_work`.
 
-Slice 17 refreshed duplicate evidence only. Slice 18 policy-closed only the audited workflow Edge CDP generated-cache subset as `generated-ignore / processed_by_policy_no_delete`. Protected source rows, active repo duplicate rows, workflow not-actionable/state rows, and reference blockers remain current evidence requiring later audited policy decisions.
+Slice 17 refreshed duplicate evidence only. Slice 18 policy-closed only the audited workflow Edge CDP generated-cache subset as `generated-ignore / processed_by_policy_no_delete`. Slice 19 classified already-final canonical/protected-source rows as final non-destructive dispositions. Active repo duplicate-review rows and historical/reference/workflow-state rows remain current evidence requiring later audited policy decisions.
 
 G40 is a cleanup and validation stabilization stage. Latest gameplay baseline before G40 is M5 at `aa57a4270e047ef83020c333b30af225aa1a5ffb`; G40 does not claim new gameplay content.
 
