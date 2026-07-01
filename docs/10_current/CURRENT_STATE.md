@@ -1,6 +1,6 @@
 # Current State
 
-Document status: current summary after G40 Slice 17 duplicate evidence refresh.
+Document status: current summary after G40 Slice 18 generated-cache duplicate policy closure.
 
 ## Repository
 
@@ -74,6 +74,7 @@ Moved legacy source/handoff roots:
 - Slice 15 registered worktree cleanup: removed five clean non-active registered worktrees with `git worktree remove` without `--force`; the dirty generated-metadata worktree retained at that point was resolved in Slice 16.
 - Slice 16 dirty generated-metadata worktree cleanup: restored tracked generated `.translation` files by exact path, removed exact untracked generated `.translation` and verified `.gd.uid` files, then removed the clean registered worktree with `git worktree remove` without `--force`.
 - Slice 17 duplicate evidence refresh: regenerated current duplicate-state evidence after Slice 15/16 topology and worktree cleanup; no delete, move, archive, cache cleanup, protected-source cleanup, or active-repo duplicate cleanup was performed.
+- Slice 18 generated-cache duplicate policy closure: classified 10002 existing workflow Edge CDP generated-cache duplicate rows as `generated-ignore / processed_by_policy_no_delete`; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete.
 
 Slice 9B archived two approved non-registered stale checkouts:
 
@@ -82,7 +83,7 @@ D:\AGAME1\archive\stale_checkouts\Game_git_compare
 D:\AGAME1\archive\stale_checkouts\Game_feature_editor_playable_prototype
 ```
 
-Generated cache/profile rows, protected/source rows, active repo duplicates, and reference blockers are recorded in `D:\AGAME1\reports\g40`. Registered worktree cleanup is resolved; the only registered worktree is the active repo.
+Generated cache/profile duplicate rows are policy-closed only where Slice 18 explicitly records `generated-ignore / processed_by_policy_no_delete`. Protected/source rows, active repo duplicates, workflow not-actionable/state rows, and reference blockers remain visible residual evidence in `D:\AGAME1\reports\g40`. Registered worktree cleanup is resolved; the only registered worktree is the active repo.
 
 Slice 17 refreshed the stale duplicate evidence because earlier reports still contained paths removed by later topology/worktree cleanup. Current evidence files:
 
@@ -108,6 +109,32 @@ workflow_cache_report_rows_still_present=11136
 ```
 
 Missing rows are evidence-labelled `no_longer_present_after_topology_worktree_cleanup`; Slice 17 does not claim they were deleted by Slice 17.
+
+Slice 18 classified the audited workflow/browser generated-cache subset without deleting or moving any file. Current Slice 18 evidence files:
+
+```text
+D:\AGAME1\reports\g40\generated_cache_duplicate_policy_closure_after_slice17.csv
+D:\AGAME1\reports\g40\generated_cache_duplicate_policy_closure_after_slice17.md
+D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice18.md
+```
+
+Slice 18 generated-cache policy closure counts:
+
+```text
+generated_cache_policy_closed_rows=10002
+generated_cache_policy_decision=generated-ignore
+generated_cache_policy_action=processed_by_policy_no_delete
+generated_cache_deleted=false
+generated_cache_archived=false
+generated_cache_moved=false
+existing_rows_not_policy_closed_by_slice18=3206
+remaining_needs_manual_decision=109
+remaining_blocked_by_reference=155
+protected_source_rows_still_present=670
+active_repo_rows_still_present=1394
+```
+
+Slice 18 does not imply that active repo duplicates, protected source duplicates, reference-blocked rows, workflow `not_actionable_in_9b`, or workflow state/receipt manual-decision rows are resolved.
 
 G40 branch commit/push evidence:
 
@@ -152,7 +179,7 @@ Slice 15 reduced registered worktree ambiguity. It left one dirty generated-meta
 
 Slice 16 resolved the remaining registered dirty generated-metadata worktree. The exact cleanup and removal evidence is recorded at `D:\AGAME1\reports\g40\worktree_dirty_metadata_resolution_log.md`. Current `git worktree list --porcelain` shows only the active repo `D:\AGAME1\_repo_cache\Game1_work`.
 
-Slice 17 refreshed duplicate evidence only. Protected source rows, active repo duplicate rows, workflow/cache/report rows, and reference blockers remain current evidence requiring later audited policy decisions.
+Slice 17 refreshed duplicate evidence only. Slice 18 policy-closed only the audited workflow Edge CDP generated-cache subset as `generated-ignore / processed_by_policy_no_delete`. Protected source rows, active repo duplicate rows, workflow not-actionable/state rows, and reference blockers remain current evidence requiring later audited policy decisions.
 
 G40 is a cleanup and validation stabilization stage. Latest gameplay baseline before G40 is M5 at `aa57a4270e047ef83020c333b30af225aa1a5ffb`; G40 does not claim new gameplay content.
 

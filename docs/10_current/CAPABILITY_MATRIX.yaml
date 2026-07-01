@@ -1,5 +1,5 @@
 document_status: current_capability_matrix
-updated_by: G40 Slice 17
+updated_by: G40 Slice 18
 
 repository:
   active_repo_path: "D:\\AGAME1\\_repo_cache\\Game1_work"
@@ -33,6 +33,18 @@ g40_cleanup:
   duplicate_protected_source_rows_still_present_after_slice16: 670
   duplicate_active_repo_rows_still_present_after_slice16: 1394
   duplicate_workflow_cache_report_rows_still_present_after_slice16: 11136
+  generated_cache_duplicate_policy_closure_18: complete_with_notes
+  generated_cache_policy_closed_rows_18: 10002
+  generated_cache_policy_decision_18: generated-ignore
+  generated_cache_policy_action_18: processed_by_policy_no_delete
+  generated_cache_deleted_18: false
+  generated_cache_archived_18: false
+  generated_cache_moved_18: false
+  duplicate_existing_rows_not_policy_closed_after_slice18: 3206
+  duplicate_remaining_needs_manual_decision_after_slice18: 109
+  duplicate_remaining_blocked_by_reference_after_slice18: 155
+  duplicate_protected_source_rows_still_present_after_slice18: 670
+  duplicate_active_repo_rows_still_present_after_slice18: 1394
   branch_commit_push: complete
   slice_10_commit_hash: "ad883310232ca9756371fb68eb3d0176a56e809e"
   slice_11_commit_hash: "fac8310c970260c333cb3b716d43b3024e161a75"
@@ -112,5 +124,6 @@ validation:
   pass_with_notes_reasons:
     - g40_cleanup_in_progress
     - duplicate_execution_partial_remaining_manual_and_reference_review
-    - duplicate_state_refreshed_after_slice16_still_has_current_residuals
+    - generated_cache_duplicates_policy_closed_after_slice18_without_delete
+    - duplicate_state_still_has_active_protected_reference_and_workflow_residuals
     - godot_project_load_parser_smoke_not_run_due_boundary

@@ -89,6 +89,55 @@ try {
         Write-Output "duplicate_protected_source_rows_still_present_after_slice16=$($slice17Protected.Count)"
         Write-Output "duplicate_active_repo_rows_still_present_after_slice16=$($slice17Active.Count)"
         Write-Output "duplicate_workflow_cache_report_rows_still_present_after_slice16=$($slice17Workflow.Count)"
+
+        $slice18Closure = Join-Path $AgameRoot "reports\g40\generated_cache_duplicate_policy_closure_after_slice17.csv"
+        if (Test-Path -LiteralPath $slice18Closure) {
+            $slice18Rows = @(Import-Csv -LiteralPath $slice18Closure)
+            $slice18BadRows = @($slice18Rows | Where-Object {
+                $_.slice18_decision -ne "generated-ignore" -or
+                $_.slice18_action -ne "processed_by_policy_no_delete" -or
+                $_.slice18_physical_action -ne "none" -or
+                $_.slice18_deleted -ne "False" -or
+                $_.slice18_archived -ne "False"
+            })
+            $slice18PathSet = @{}
+            foreach ($row in $slice18Rows) {
+                if (-not [string]::IsNullOrWhiteSpace($row.current_file_path)) {
+                    $slice18PathSet[$row.current_file_path] = $true
+                }
+            }
+            $slice18RemainingExisting = @($slice17Existing | Where-Object {
+                -not $slice18PathSet.ContainsKey($_.current_file_path)
+            })
+            $slice18Manual = @($slice18RemainingExisting | Where-Object { $_.decision -eq "needs_manual_decision" })
+            $slice18Blocked = @($slice18RemainingExisting | Where-Object { $_.blocked_by_reference -eq "True" })
+            $slice18Protected = @($slice18RemainingExisting | Where-Object { $_.protected -eq "True" })
+            $slice18Active = @($slice18RemainingExisting | Where-Object { $_.active_repo -eq "True" })
+            $slice18WorkflowNotActionable = @($slice18RemainingExisting | Where-Object {
+                $_.current_root_category -eq "workflow" -and $_.block_reason_9b -eq "not_actionable_in_9b"
+            })
+            $slice18WorkflowStateReceipt = @($slice18RemainingExisting | Where-Object {
+                $_.current_root_category -eq "workflow" -and $_.block_reason_9b -eq "workflow_state_policy_or_receipt_manual_decision"
+            })
+
+            Write-Output "duplicate_generated_cache_policy_closure_after_slice18=OK $slice18Closure"
+            Write-Output "duplicate_generated_cache_policy_closed_after_slice18=$($slice18Rows.Count)"
+            Write-Output "duplicate_generated_cache_policy_bad_rows_after_slice18=$($slice18BadRows.Count)"
+            Write-Output "duplicate_generated_cache_deleted_after_slice18=false"
+            Write-Output "duplicate_generated_cache_archived_after_slice18=false"
+            Write-Output "duplicate_existing_rows_not_policy_closed_after_slice18=$($slice18RemainingExisting.Count)"
+            Write-Output "duplicate_remaining_needs_manual_decision_after_slice18=$($slice18Manual.Count)"
+            Write-Output "duplicate_remaining_blocked_by_reference_after_slice18=$($slice18Blocked.Count)"
+            Write-Output "duplicate_protected_source_rows_still_present_after_slice18=$($slice18Protected.Count)"
+            Write-Output "duplicate_active_repo_rows_still_present_after_slice18=$($slice18Active.Count)"
+            Write-Output "duplicate_workflow_not_actionable_rows_after_slice18=$($slice18WorkflowNotActionable.Count)"
+            Write-Output "duplicate_workflow_state_receipt_rows_after_slice18=$($slice18WorkflowStateReceipt.Count)"
+            if ($slice18Rows.Count -ne 10002 -or $slice18BadRows.Count -ne 0) {
+                $failures += 1
+            }
+        } else {
+            Write-Output "duplicate_generated_cache_policy_closure_after_slice18=MISSING $slice18Closure"
+        }
     } else {
         Write-Output "duplicate_manifest_after_slice16=MISSING $slice17Manifest"
     }

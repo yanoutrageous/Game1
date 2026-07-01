@@ -1,6 +1,6 @@
 # G40 Full Project Cleanup Validation
 
-Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 17.
+Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 18.
 
 Chinese summary: G40 validation currently confirms the cleanup state is explainable and current validation tools work. It does not yet mean the project is fully clean, and it does not claim gameplay runtime PASS or manual playtest PASS.
 
@@ -16,10 +16,16 @@ Reasons:
 g40_cleanup_in_progress=true
 duplicate_execution_partial=true
 slice_17_duplicate_state_refresh_complete=true
+slice_18_generated_cache_policy_closure_complete=true
 duplicate_manifest_after_slice16_total_rows=23306
 duplicate_manifest_after_slice16_existing_rows=13208
 duplicate_manifest_after_slice16_missing_rows=10098
 duplicate_manifest_after_slice16_unclassified_rows=0
+generated_cache_policy_closed_after_slice18=10002
+generated_cache_policy_action_after_slice18=processed_by_policy_no_delete
+generated_cache_deleted_after_slice18=false
+generated_cache_archived_after_slice18=false
+existing_rows_not_policy_closed_after_slice18=3206
 remaining_needs_manual_decision_after_slice16=109
 remaining_blocked_by_reference_after_slice16=155
 protected_source_rows_still_present_after_slice16=670
@@ -64,6 +70,7 @@ gameplay_runtime_pass_claimed=false
 | Slice 15 | complete with notes | Five clean non-active registered worktrees removed with `git worktree remove` without `--force`; one dirty generated-metadata worktree was left for Slice 16 |
 | Slice 16 | complete with notes | Dirty generated-metadata worktree cleaned by exact list and removed with `git worktree remove` without `--force`; evidence recorded in `D:\AGAME1\reports\g40\worktree_dirty_metadata_resolution_log.md`; current registered worktree list is active-only |
 | Slice 17 | complete with notes | Duplicate evidence refreshed after Slice 15/16 topology and worktree cleanup; refreshed reports written under `D:\AGAME1\reports\g40`; no delete/move/archive/cache cleanup was performed |
+| Slice 18 | complete with notes | 10002 workflow Edge CDP generated-cache duplicate rows classified as `generated-ignore / processed_by_policy_no_delete`; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete |
 
 ## Current Tool Markers
 
@@ -113,6 +120,17 @@ G39 navigation boundary validation=PASS
   - protected source rows still present: 670
   - active repo rows still present: 1394
   - workflow/cache/report rows still present: 11136
+- Slice 18 policy-closed only the audited workflow/browser generated-cache subset:
+  - generated-cache rows classified as `generated-ignore / processed_by_policy_no_delete`: 10002
+  - deleted: false
+  - archived: false
+  - moved: false
+  - profile/cache cleanup: false
+  - existing rows not policy-closed by Slice 18: 3206
+  - evidence: `D:\AGAME1\reports\g40\generated_cache_duplicate_policy_closure_after_slice17.md`
+  - evidence CSV: `D:\AGAME1\reports\g40\generated_cache_duplicate_policy_closure_after_slice17.csv`
+  - summary: `D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice18.md`
+- Slice 18 does not resolve active repo duplicates, protected source duplicates, reference-blocked rows, workflow `not_actionable_in_9b`, or workflow state/receipt manual-decision rows.
 - No files were deleted; `delete_execution_log.csv` is header-only.
 - Remaining manual decisions and reference blockers are recorded in refreshed Slice 17 reports under `D:\AGAME1\reports\g40`.
 - G40 docs/tools branch commit and push are complete:
@@ -128,6 +146,6 @@ G39 navigation boundary validation=PASS
 
 The following must wait for later audited slices:
 
-1. Later decision on generated cache/profile duplicates, protected/source duplicates, active repo duplicate rows, and reference blockers, using the Slice 17 refreshed duplicate reports rather than stale Slice 9B counts.
+1. Later decision on remaining protected/source duplicates, active repo duplicate rows, workflow not-actionable/state rows, and reference blockers, using the Slice 17/18 refreshed duplicate reports rather than stale Slice 9B counts.
 2. Godot headless smoke, if a later gate supplies or approves an in-boundary executable path.
 3. Main merge/push gate, if and when G40 is accepted.
