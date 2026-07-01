@@ -1,6 +1,6 @@
 # G40 Full Project Cleanup Validation
 
-Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 13.
+Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 15.
 
 Chinese summary: G40 validation currently confirms the cleanup state is explainable and current validation tools work. It does not yet mean the project is fully clean, and it does not claim gameplay runtime PASS or manual playtest PASS.
 
@@ -24,6 +24,8 @@ final Godot smoke pending
 slice_13_non_godot_validation_complete=true
 godot_smoke_slice_13=not_run_no_in_boundary_godot_executable
 runtime_runners_slice_13=not_run_no_in_boundary_godot_executable
+slice_15_registered_clean_worktree_cleanup_complete=true
+remaining_registered_dirty_worktree=D:\AGAME1\_repo_cache\Game1_m4_latest_release_gate_20260630
 branch commit/push complete
 main merge/push not performed
 manual_playtest_claimed=false
@@ -50,6 +52,7 @@ gameplay_runtime_pass_claimed=false
 | Slice 12 | complete with notes | Audit chose restore-to-HEAD for `project.godot`; patch evidence preserved at `D:\AGAME1\reports\g40\project_godot_dirty.patch`; active repo dirty count returned to 0 |
 | Slice 13 | complete with notes | Audit approved in-boundary non-Godot validation; static M3/M3R/M3H/M4S/M5/G36/G37/G38/G39 validators passed; Godot and runtime runners not run because no `D:\AGAME1`-local Godot executable is available and `D:\Godot` is forbidden |
 | Slice 14 | complete with notes | Empty legacy `D:\AGAME1\Godot` shell moved to `D:\AGAME1\external\godot_reference\Godot`; root `AGAME1_code_audit_delivery_report_20260622.*` files moved to `D:\AGAME1\reports\code_audit_20260622`; topology validator updated |
+| Slice 15 | complete with notes | Five clean non-active registered worktrees removed with `git worktree remove` without `--force`; dirty generated-metadata worktree `D:\AGAME1\_repo_cache\Game1_m4_latest_release_gate_20260630` remains pending a separate gate |
 
 ## Current Tool Markers
 
@@ -86,7 +89,8 @@ G39 navigation boundary validation=PASS
 - Slice 9B archived two non-registered stale checkout directories:
   - `D:\AGAME1\archive\stale_checkouts\Game_git_compare`
   - `D:\AGAME1\archive\stale_checkouts\Game_feature_editor_playable_prototype`
-- No registered worktree was removed.
+- Slice 15 removed five clean non-active registered worktrees with `git worktree remove` without `--force`.
+- One dirty generated-metadata registered worktree remains pending a separate gate: `D:\AGAME1\_repo_cache\Game1_m4_latest_release_gate_20260630`.
 - No files were deleted; `delete_execution_log.csv` is header-only.
 - Remaining manual decisions and reference blockers are recorded in `D:\AGAME1\reports\g40`.
 - G40 docs/tools branch commit and push are complete:
@@ -102,6 +106,6 @@ G39 navigation boundary validation=PASS
 
 The following must wait for later audited slices:
 
-1. Later decision on registered worktrees, generated cache/profile duplicates, protected/source duplicates, and reference blockers.
+1. Later decision on the remaining dirty generated-metadata worktree, generated cache/profile duplicates, protected/source duplicates, and reference blockers.
 2. Godot headless smoke, if a later gate supplies or approves an in-boundary executable path.
 3. Main merge/push gate, if and when G40 is accepted.

@@ -46,6 +46,23 @@ Write-Output "repo_cache_still_present=allowed_in_progress"
 Write-Output "D_AGAME1_Godot=relocated_to_external_godot_reference"
 Write-Output "root_code_audit_20260622_reports=relocated_to_reports_code_audit_20260622"
 
+foreach ($path in @(
+    "_repo_cache\Game1_art15_whitespace_fix",
+    "_repo_cache\Game1_m4_art_validation",
+    "_repo_cache\Game1_m4_main_ff_20260630",
+    "_repo_cache\Game1_m4_repository_sync",
+    "_repo_cache\Game1_m4s_clean_checkout_validate_2"
+)) {
+    Check-LegacyAbsent (Join-Path $AgameRoot $path) "removed_worktree_$($path -replace '[^A-Za-z0-9]','_')"
+}
+
+$pendingDirtyWorktree = Join-Path $AgameRoot "_repo_cache\Game1_m4_latest_release_gate_20260630"
+if (Test-Path -LiteralPath $pendingDirtyWorktree) {
+    Write-Output "pending_dirty_generated_metadata_worktree=present_pending_gate $pendingDirtyWorktree"
+} else {
+    Write-Output "pending_dirty_generated_metadata_worktree=absent_or_resolved $pendingDirtyWorktree"
+}
+
 if ($failures -gt 0) {
     Write-Output "G40_TOPOLOGY_VALIDATION_RESULT=FAIL"
     exit 1

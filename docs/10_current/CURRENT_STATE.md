@@ -71,6 +71,7 @@ Moved legacy source/handoff roots:
 - Slice 12 `project.godot` metadata/config decision: restored to HEAD; active repo dirty count returned to 0.
 - Slice 13 final non-Godot validation boundary: complete with notes.
 - Slice 14 root residual topology cleanup: moved the empty legacy `D:\AGAME1\Godot` shell to `D:\AGAME1\external\godot_reference\Godot` and moved the root 20260622 audit report pair to `D:\AGAME1\reports\code_audit_20260622`.
+- Slice 15 registered worktree cleanup: removed five clean non-active registered worktrees with `git worktree remove` without `--force`; retained the dirty generated-metadata worktree for a separate gate.
 
 Slice 9B archived two approved non-registered stale checkouts:
 
@@ -119,6 +120,8 @@ G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
 Slice 13 validated the active repo with only in-boundary, non-Godot commands. The validation set included G40 dirty-state/topology/reference checks plus static M3/M3R/M3H/M4S/M5/G36/G37/G38/G39 validators. Godot project-load/parser smoke and Godot-backed runtime runners were not run because no `D:\AGAME1`-local Godot executable was available and the G40 boundary forbids `D:\Godot`.
 
 Slice 14 removed the remaining root `D:\AGAME1\Godot` ambiguity by moving its empty directory shell into `D:\AGAME1\external\godot_reference\Godot`. The moved folder is not the active Godot project and is not a runtime executable source. Historical `AGAME1_code_audit_delivery_report_20260622.*` files now live under `D:\AGAME1\reports\code_audit_20260622`.
+
+Slice 15 reduced registered worktree ambiguity. The active repo remains `D:\AGAME1\_repo_cache\Game1_work`. The only remaining non-active registered worktree is `D:\AGAME1\_repo_cache\Game1_m4_latest_release_gate_20260630`, which has generated Godot metadata dirty and must be handled by a separate audited gate.
 
 G40 is a cleanup and validation stabilization stage. Latest gameplay baseline before G40 is M5 at `aa57a4270e047ef83020c333b30af225aa1a5ffb`; G40 does not claim new gameplay content.
 

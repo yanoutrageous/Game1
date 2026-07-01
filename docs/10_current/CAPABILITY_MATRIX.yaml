@@ -35,6 +35,9 @@ g40_cleanup:
   root_residual_topology_cleanup_14: complete
   legacy_godot_root_status: relocated_to_external_godot_reference
   code_audit_20260622_status: relocated_to_reports_code_audit_20260622
+  registered_clean_worktree_cleanup_15: complete_with_notes
+  registered_clean_worktrees_removed_15: 5
+  remaining_registered_dirty_worktree: "D:\\AGAME1\\_repo_cache\\Game1_m4_latest_release_gate_20260630"
   final_cleanup_execution: pass_with_notes
   final_validation: pass_with_notes
 
@@ -51,6 +54,8 @@ topology:
     legacy_godot_reference: "D:\\AGAME1\\external\\godot_reference\\Godot"
     code_audit_20260622: "D:\\AGAME1\\reports\\code_audit_20260622"
   legacy_paths_are_canonical: false
+  non_active_registered_worktrees_remaining:
+    - "D:\\AGAME1\\_repo_cache\\Game1_m4_latest_release_gate_20260630"
 
 validation_claims:
   gameplay_runtime_pass_claimed_by_g40: false
