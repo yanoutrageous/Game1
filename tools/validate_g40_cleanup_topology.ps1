@@ -51,16 +51,35 @@ foreach ($path in @(
     "_repo_cache\Game1_m4_art_validation",
     "_repo_cache\Game1_m4_main_ff_20260630",
     "_repo_cache\Game1_m4_repository_sync",
-    "_repo_cache\Game1_m4s_clean_checkout_validate_2"
+    "_repo_cache\Game1_m4s_clean_checkout_validate_2",
+    "_repo_cache\Game1_m4_latest_release_gate_20260630"
 )) {
     Check-LegacyAbsent (Join-Path $AgameRoot $path) "removed_worktree_$($path -replace '[^A-Za-z0-9]','_')"
 }
 
 $pendingDirtyWorktree = Join-Path $AgameRoot "_repo_cache\Game1_m4_latest_release_gate_20260630"
 if (Test-Path -LiteralPath $pendingDirtyWorktree) {
-    Write-Output "pending_dirty_generated_metadata_worktree=present_pending_gate $pendingDirtyWorktree"
+    Write-Output "dirty_generated_metadata_worktree=STILL_PRESENT $pendingDirtyWorktree"
+    $warnings += 1
 } else {
-    Write-Output "pending_dirty_generated_metadata_worktree=absent_or_resolved $pendingDirtyWorktree"
+    Write-Output "dirty_generated_metadata_worktree=resolved_absent $pendingDirtyWorktree"
+}
+
+$activeRepo = Join-Path $AgameRoot "_repo_cache\Game1_work"
+if (Test-Path -LiteralPath (Join-Path $activeRepo ".git")) {
+    $worktreeLines = git -C $activeRepo worktree list --porcelain
+    $worktreePaths = @($worktreeLines | Where-Object { $_ -like "worktree *" } | ForEach-Object { $_.Substring(9) })
+    $activeRepoNormalized = $activeRepo.Replace("\", "/")
+    $nonActiveWorktrees = @($worktreePaths | Where-Object { $_.Replace("\", "/") -ne $activeRepoNormalized })
+    if ($nonActiveWorktrees.Count -eq 0) {
+        Write-Output "registered_worktrees=active_only"
+    } else {
+        Write-Output "registered_worktrees=non_active_present $($nonActiveWorktrees -join ';')"
+        $warnings += 1
+    }
+} else {
+    Write-Output "registered_worktrees=active_repo_git_missing"
+    $failures += 1
 }
 
 if ($failures -gt 0) {
