@@ -1,211 +1,80 @@
-document_status: current_summary
-last_updated: "2026/06/27"
-scope: "DOC-GOV-002 documentation governance and G38/G37S/G37 current repository evidence summary"
+document_status: current_capability_matrix
+updated_by: G40 Slice 6
 
-current_docs_governance:
-  stage: "DOC-GOV-002 Docs Entry / Index / README / Historical Layer Governance"
-  status: "active_docs_only_governance"
-  primary_entries:
-    - "docs/README.md"
-    - "docs/INDEX.md"
-    - "docs/00_governance/DOC_PLACEMENT_STANDARD.md"
-    - "docs/00_governance/DUPLICATE_DOC_LEDGER.md"
-    - "docs/00_governance/SOURCE_REGISTRY.md"
-  boundaries:
-    - "no Base Docs modification"
-    - "no Base Docs_Governance modification"
-    - "no Connection modification"
-    - "no Base Art modification"
-    - "no engineering code modification"
-    - "no Godot scene/resource/data/project.godot/uid/translation/import metadata modification"
-    - "no gameplay rule creation"
-    - "no stage/commit/push"
+repository:
+  active_repo_path: "D:\\AGAME1\\_repo_cache\\Game1_work"
+  godot_project_path: "D:\\AGAME1\\_repo_cache\\Game1_work\\Godot\\GraytailGodot"
+  current_branch: "godot/g40-full-project-cleanup-validation-stabilization"
+  g40_base_head: "aa57a4270e047ef83020c333b30af225aa1a5ffb"
 
-latest_engineering_evidence:
-  g38:
-    stage: "G38-R2 Runtime Architecture Consolidation Finalization"
-    status: "current_runtime_architecture_finalization_release_gate_pending"
-    contract: "docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md"
-    validation: "docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md"
-    handoff: "docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md"
-    not_complete:
-      - "complete RunFlow rewrite"
-      - "active-run persistence"
-      - "Objective / Reward / Pool"
-      - "complete settlement / economy"
-      - "complete warehouse"
-      - "complete Rule engine"
-      - "gameplay runtime PASS"
-      - "manual playtest PASS"
-  g37s:
-    stage: "G37S-R2 Runtime Authority Validation / Handoff Supplement"
-    status: "validation_handoff_supplement"
-    validation: "docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md"
-    handoff: "docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md"
-    modifies_runtime_code: false
-  g37:
-    stage: "G37-R2 Runtime Authority / RunFlow Execution Consolidation"
-    status: "current_engineering_evidence_release_gate_pending"
-    contract: "docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md"
-    validation: "docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md"
-    handoff: "docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md"
-    not_complete:
-      - "complete RunFlow rewrite"
-      - "active-run persistence"
-      - "SaveManager runtime ownership migration"
-      - "new gameplay systems"
-      - "gameplay runtime PASS"
-      - "manual playtest PASS"
-  g36:
-    stage: "G36-R2 Runtime Architecture Consolidation & Save/Profile Foundation"
-    status: "earlier_runtime_architecture_save_profile_evidence"
-    contract: "docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md"
-    validation: "docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md"
-    handoff: "docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md"
+g40_cleanup:
+  current_state_freeze: complete
+  full_inventory: complete
+  duplicate_decision_register: complete
+  top_level_topology_rebuild: complete
+  active_repo_entrypoints: complete
+  path_reference_migration: complete
+  dirty_state_tools: complete
+  unified_validation_entrypoint: complete
+  documentation_closeout_scaffold: complete
+  report_consolidation_9a: complete
+  duplicate_stale_cleanup_9b: complete_with_notes
+  stale_checkout_archived_count_9b: 2
+  duplicate_cleanup_remaining_manual_rows: 18188
+  duplicate_cleanup_remaining_reference_blocker_rows: 1463
+  final_cleanup_execution: pending
+  final_validation: pending
 
-historical_governance:
-  doc_gov_001: "completed_historical_governance"
-  p2_g20_governance: "historical_governance_evidence"
+topology:
+  active_repo_physically_moved: false
+  active_repo_pointer: "D:\\AGAME1\\active\\Game1_work.pointer.md"
+  source_roots_moved: true
+  source_roots:
+    docs: "D:\\AGAME1\\sources\\docs"
+    docs_governance: "D:\\AGAME1\\sources\\docs_governance"
+    art: "D:\\AGAME1\\sources\\art"
+    draw: "D:\\AGAME1\\sources\\draw"
+    connection: "D:\\AGAME1\\handoff\\connection"
+  legacy_paths_are_canonical: false
 
-source_boundaries:
-  base_docs: "external planning originals / user archive; not deduplicated or modified"
-  base_docs_governance: "external governance snapshot; not current repo fact source"
-  connection: "external parallel handoff; no content mirror in Git"
-  godot_docs: "engineering history / environment evidence; not current docs governance entry"
-m5_minimum_item_pack_drop_loop_full_content:
-  status: "implementation_in_progress"
-  branch: "godot/m5-item-drop-loop-full-content"
-  contract: "docs/20_product/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_CONTRACT.md"
-  validation: "docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md"
-  handoff: "docs/handoff/HANDOFF_M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT.md"
-  capabilities:
-    m5_item_catalog: true
-    unique_gacha_only_locked_display: true
-    ground_loot_first_rewards: true
-    backpack_pickup_drop_repick_replace: true
-    consumable_use_command_flow: true
-    trader_dice_altar_minimum_events: true
-    success_failure_abandon_settlement_semantics: true
-    warehouse_codex_deployprep_alignment: true
-  non_goals:
-    - "complete warehouse economy"
-    - "complete equipment strengthening"
-    - "full Objective / Reward / Pool"
-    - "complete Rule Engine"
-    - "formal art import"
-    - "Godot metadata/resource import"
-    - "gameplay runtime PASS"
-    - "manual playtest PASS"
-m2_lua_ue_effect_first_playable_loop:
-  status: "implementation_in_progress"
-  branch: "godot/m2-lua-ue-effect-first-playable-loop"
-  contract: "docs/20_product/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_CONTRACT.md"
-  validation: "docs/validation/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_VALIDATION.md"
-  handoff: "docs/handoff/HANDOFF_M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP.md"
-  capabilities:
-    deploy_prep_standard_route_bridge: true
-    effect_first_runtime_application: true
-    centralized_balance_content_text_catalogs: true
-    run_result_as_settlement_input: true
-    truth_map_return_eligibility: true
-    limited_search_reward_modifier_execution: true
-    long_term_display_only_meta_consumer: true
-  non_goals:
-    - "demo_7x7"
-    - "full Objective / Reward / Pool"
-    - "full LongTerm"
-    - "full warehouse"
-    - "full Rule Engine"
-    - "Godot metadata/resource import"
-m3_minimum_item_drop_loop:
-  status: "implementation_in_progress"
-  branch: "godot/m3-minimum-item-drop-loop"
-  contract: "docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md"
-  validation: "docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md"
-  handoff: "docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md"
-  capabilities:
-    minimum_item_catalog: true
-    ground_loot_first_rewards: true
-    backpack_pickup_drop_repick: true
-    consumable_use_command_flow: true
-    income_layers_run_black_safe_yield_long_term_gold: true
-    success_failure_abandon_settlement: true
-    display_only_ui_alignment: true
-  non_goals:
-    - "demo_7x7"
-    - "complete warehouse"
-    - "complete equipment / loadout"
-    - "full Objective / Reward / Pool"
-    - "complete Rule Engine"
-    - "Godot metadata/resource import"
-    - "gameplay runtime PASS"
-    - "manual playtest PASS"
-m3r_item_usability_completion:
-  status: "implementation_in_progress"
-  branch: "godot/m3r-item-usability-completion"
-  contract: "docs/20_product/M3R_ITEM_USABILITY_COMPLETION_CONTRACT.md"
-  validation: "docs/validation/M3R_ITEM_USABILITY_COMPLETION_VALIDATION.md"
-  handoff: "docs/handoff/HANDOFF_M3R_ITEM_USABILITY_COMPLETION.md"
-  capabilities:
-    warehouse_lite_real_meta_consumer: true
-    codex_lite_from_warehouse_items: true
-    deploy_prep_real_minimal_loadout: true
-    equipment_carry_in_runtime_state: true
-    consumable_carry_in_runtime_inventory: true
-    run_start_config_loadout_fields: true
-    minimal_profile_permit_protocol_talent_hooks: true
-    m3_settlement_boundary_preserved: true
-  non_goals:
-    - "complete warehouse economy"
-    - "complete LongTerm"
-    - "complete Codex research"
-    - "complete equipment strengthening"
-    - "full Objective / Reward / Pool"
-    - "complete Rule Engine"
-    - "Godot metadata/resource import"
-    - "gameplay runtime PASS"
-    - "manual long playtest PASS"
-m3h_item_loop_hardening:
-  status: "implementation_in_progress"
-  branch: "godot/m3h-item-loop-hardening-metadata-hygiene"
-  contract: "docs/20_product/M3H_ITEM_LOOP_HARDENING_CONTRACT.md"
-  validation: "docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md"
-  handoff: "docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md"
-  capabilities:
-    in_run_equipment_registration_block: true
-    carry_in_equipment_current_run_active: true
-    unused_consumable_failure_salvage_candidate: true
-    abandon_settle_abandon_branch: true
-    safe_yield_long_term_gold_semantics: true
-    generated_metadata_excluded: true
-  non_goals:
-    - "complete warehouse economy"
-    - "complete equipment strengthening"
-    - "full Objective / Reward / Pool"
-    - "complete Rule Engine"
-    - "Godot metadata/resource import"
-    - "gameplay runtime PASS"
-    - "manual playtest PASS"
-g39_navigation_boundary_route_closure:
-  status: "implementation_in_progress"
-  branch: "godot/g39-navigation-boundary-route-closure"
-  contract: "docs/20_product/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_CONTRACT.md"
-  validation: "docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md"
-  handoff: "docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md"
-  capabilities:
-    app_shell_navigation_intent_boundary: true
-    deploy_long_term_route_closure: true
-    deploy_start_run_host_route: true
-    pause_continue_settings_exit_boundary: true
-    exit_current_run_abandon_authority: true
-    result_return_route_closure: true
-    modal_esc_close_priority: true
-    dirty_art_metadata_exclusion: true
-  non_goals:
-    - "complete settings system"
-    - "Save/Profile UI"
-    - "Objective / Reward / Pool"
-    - "ART import"
-    - "project metadata/resource import"
-    - "gameplay runtime PASS"
-    - "manual long playtest PASS"
+validation_claims:
+  gameplay_runtime_pass_claimed_by_g40: false
+  manual_playtest_pass_claimed_by_g40: false
+  godot_smoke_required_later: true
+  unified_validation_entrypoint_pending: false
+  unified_current_project_entrypoint: pass_with_notes
+
+known_unfinished_systems:
+  complete_long_term: not_in_scope_for_g40
+  objective_reward_pool: not_in_scope_for_g40
+  complete_rule_engine: not_in_scope_for_g40
+  complete_warehouse_economy: not_in_scope_for_g40
+  full_art_productization: not_in_scope_for_g40
+  ci_pipeline: not_in_scope_unless_later_gate
+
+dirty_state:
+  pre_existing_project_godot_dirty: true
+  project_godot_dirty_status: pre_existing_unresolved_not_cleaned_by_slice_6
+  project_godot_patch: "D:\\AGAME1\\reports\\g40\\project_godot_dirty.patch"
+  staged_files_expected_now: false
+  protective_stash_touched: false
+
+g40_tools:
+  inspect_dirty_state: "tools/inspect_dirty_state.ps1"
+  validate_current_project: "tools/validate_current_project.ps1"
+  scan_g40_path_references: "tools/scan_g40_path_references.ps1"
+  validate_g40_cleanup_topology: "tools/validate_g40_cleanup_topology.ps1"
+  clean_generated_dirty_state: "tools/clean_generated_dirty_state.ps1"
+  prepare_validation_clean_state: "tools/prepare_validation_clean_state.ps1"
+  slice_6_apply_modes_used: false
+  mutation_performed_by_tools: false
+
+validation:
+  unified_current_project_entrypoint: "tools/validate_current_project.ps1"
+  current_expected_marker: "G40_UNIFIED_VALIDATION=PASS_WITH_NOTES"
+  g40_validation_doc: "docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md"
+  g40_handoff_doc: "docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md"
+  pass_with_notes_reasons:
+    - pre_existing_project_godot_dirty
+    - g40_cleanup_in_progress
+    - duplicate_execution_partial_remaining_manual_and_reference_review

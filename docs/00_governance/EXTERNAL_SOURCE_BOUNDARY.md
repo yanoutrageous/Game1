@@ -1,78 +1,56 @@
 # External Planning And Handoff Source Boundary
 
-文档状态：当前治理规则
-适用范围：`D:\AGAME1\Base Docs`、`D:\AGAME1\Connection` 与仓库 `docs` 的读取、引用和归档边界
-最后更新：2026/06/23
+Status: current governance rule after G40 Slice 5.
 
-本文件记录外部策划原件区与并行交接区的当前治理口径，不新增玩法规则，不授权工程实现，不替代外部原件。
+This document defines how the repository cites external planning, art, and handoff material after the G40 topology rebuild. It does not copy source bodies into Git and does not authorize runtime asset import.
 
-## 1. Base Docs 口径
+## Current External Roots
 
 ```text
-1. D:\AGAME1\Base Docs 是当前策划文档完成归档后的只读事实来源之一。
-2. 其中的目录、文件名、归档位置和内容版本可由用户在仓库外独立更新。
-3. 外部变化属于用户已完成的策划整理结果，不视为异常、blocker 或待回滚内容。
-4. 查找策划依据时，应先只读扫描 Base Docs，并按主题、相近文件名、更新时间和文档状态定位当前归档文件。
-5. 不得假设旧提示词中的文件路径仍是唯一有效路径。
-6. 不得修改、移动、删除、重命名、复制、清理 Base Docs 中的任何内容。
-7. 未获单独明确授权，不得把 Base Docs 内容复制或同步到仓库。
+D:\AGAME1\sources\docs
+D:\AGAME1\sources\docs_governance
+D:\AGAME1\sources\art
+D:\AGAME1\sources\draw
+D:\AGAME1\handoff\connection
 ```
 
-仓库中既有 `docs/design_sources/` 和 `docs/70_sources/` 内容，是此前阶段在当时授权下形成的历史导入或冻结快照。它们保留历史证据价值，但：
+## Legacy Path Labels
 
-```text
-1. 不自动跟随 Base Docs 更新。
-2. 不覆盖当前外部原件。
-3. 不作为当前文件名或归档位置仍有效的证明。
-4. 未获新授权不得刷新、补齐或新增副本。
-```
+- Legacy path before G40: `D:\AGAME1\Base Docs`
+  Moved to: `D:\AGAME1\sources\docs`
+  Do not use as current canonical path: `D:\AGAME1\Base Docs`
+- Legacy path before G40: `D:\AGAME1\Base Docs_Governance`
+  Moved to: `D:\AGAME1\sources\docs_governance`
+  Do not use as current canonical path: `D:\AGAME1\Base Docs_Governance`
+- Legacy path before G40: `D:\AGAME1\Base Art`
+  Moved to: `D:\AGAME1\sources\art`
+  Do not use as current canonical path: `D:\AGAME1\Base Art`
+- Legacy path before G40: `D:\AGAME1\Draw`
+  Moved to: `D:\AGAME1\sources\draw`
+  Do not use as current canonical path: `D:\AGAME1\Draw`
+- Legacy path before G40: `D:\AGAME1\Connection`
+  Moved to: `D:\AGAME1\handoff\connection`
+  Do not use as current canonical path: `D:\AGAME1\Connection`
 
-## 2. Connection 口径
+## Source Use Rules
 
-```text
-1. D:\AGAME1\Connection 是 Planning / Program / Art 并行更新的交接区。
-2. 本轮及后续默认只读，不写入、不清理、不回滚、不移动、不覆盖。
-3. Connection 文件不得进入 Git。
-4. Connection 文件不得作为 Godot 资源导入。
-5. 仓库只登记外部路径、只读观测哈希、更新时间和使用边界，不保存内容镜像。
-6. Connection 内容不自动成为策划定案、工程任务、验收结论或执行授权。
-```
+1. Planning originals under `D:\AGAME1\sources\docs` are protected source material. Register and cite them; do not rewrite or copy their bodies into repo docs.
+2. Governance snapshots under `D:\AGAME1\sources\docs_governance` are external snapshots. They are not the current repository fact source.
+3. Art sources under `D:\AGAME1\sources\art` and `D:\AGAME1\sources\draw` are not runtime assets unless an approved art import gate imports them.
+4. Handoff material under `D:\AGAME1\handoff\connection` is an external collaboration area. Register paths and hashes when needed; do not import content into Git by default.
+5. Repository facts live under `D:\AGAME1\_repo_cache\Game1_work\docs`, implementation evidence, and committed code.
 
-## 3. 当前读取顺序
+## Current Read Order
 
-```text
-1. 工程当前事实：仓库 current status、validation、handoff 和实现证据。
-2. 策划当前事实：只读扫描 D:\AGAME1\Base Docs 后定位的当前归档文档。
-3. 并行交接信息：只读扫描 D:\AGAME1\Connection 后定位的当前交接文件。
-4. 仓库历史导入或冻结快照：只用于解释历史阶段，不替代当前外部来源。
-```
+1. Repository current state, validation, handoff, and implementation evidence.
+2. Registered external source paths under `D:\AGAME1\sources`.
+3. Registered handoff paths under `D:\AGAME1\handoff\connection`.
+4. Historical snapshots only for explaining prior stages, not for overriding current source roots.
 
-## 4. 文件名变化处理
+## Forbidden Reverse Inference
 
-当旧引用路径不存在或名称不完全一致时：
-
-```text
-1. 不把缺少旧路径判定为资料丢失。
-2. 在对应外部根目录内按主题词、相近文件名和更新时间只读查找。
-3. 同时检查文档状态、替代关系和归档说明。
-4. 仍无法唯一定位时，登记待确认，不自行复制、重命名或重建外部文件。
-```
-
-## 5. 2026/06/23 只读观测
-
-| 来源 | 当前观测 | 仓库处理 |
-| --- | --- | --- |
-| `D:\AGAME1\Base Docs` | 25 个文件，其中 15 个文本、10 个图片 | 当前外部只读来源；既有历史快照冻结，不刷新 |
-| `D:\AGAME1\Connection` | 10 个文件；Planning 当前为空目录 | 当前外部只读交接区；仓库不保留内容镜像 |
-
-以上数量只是 2026/06/23 的只读观测，不限制外部目录后续由用户或并行工作流更新。
-
-## 6. 禁止反推
-
-```text
-1. 不从 UI 图片反推规则。
-2. 不从工程临时实现反推策划定案。
-3. 不从 Connection 交接内容反推已授权任务。
-4. 不从仓库历史快照反推外部当前归档位置。
-5. 不把哈希登记视为内容批准、执行授权或验收结论。
-```
+1. Do not infer rules from UI images alone.
+2. Do not infer planning approval from temporary engineering implementation.
+3. Do not infer task authorization from handoff material.
+4. Do not infer current canonical external paths from pre-G40 legacy paths.
+5. Do not treat hash registration as content approval, execution authorization, or acceptance.

@@ -1,111 +1,63 @@
 # Game1 Docs Index
 
-文档状态：当前索引入口
-适用范围：仓库 `docs` 当前入口、最近阶段、验证与治理跳转
-最后更新：2026/06/27
-
-本文件是短索引，不复制完整历史正文。历史 validation / handoff / audit / branch change / stage summary 原文保留原位，通过索引读取。
-
-## 1. 第一入口
+Current docs entrypoints:
 
 ```text
 docs/README.md
 docs/10_current/CURRENT_STATE.md
-docs/10_current/NEXT_ACTION.md
 docs/10_current/CAPABILITY_MATRIX.yaml
-docs/00_governance/SOURCE_REGISTRY.md
+docs/10_current/AUDIT_SCOPE.md
+docs/10_current/KNOWN_UNFINISHED_SYSTEMS.md
+docs/10_current/G40_HEALTH_ISSUE_CLOSURE_MATRIX.md
 docs/00_governance/DOC_PLACEMENT_STANDARD.md
 docs/00_governance/DUPLICATE_DOC_LEDGER.md
+docs/00_governance/SOURCE_REGISTRY.md
 ```
 
-## 2. 当前阶段入口
+Current G40 validation / cleanup helper tools:
 
-| 阶段 | 状态 | 入口 |
-| --- | --- | --- |
-| DOC-GOV-002 | active / docs-only governance | `docs/README.md`、`docs/INDEX.md`、`docs/00_governance/DOC_PLACEMENT_STANDARD.md`、`docs/00_governance/DUPLICATE_DOC_LEDGER.md` |
-| G38 | current runtime architecture finalization / release gate pending | `docs/20_product/RUNTIME_ARCHITECTURE_FINALIZATION_CONTRACT.md`、`docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md`、`docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md` |
-| G37S | current validation / handoff supplement | `docs/validation/G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md`、`docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_VALIDATION_SUPPLEMENT.md` |
-| G37 | current engineering evidence / release gate pending | `docs/20_product/RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_CONTRACT.md`、`docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md`、`docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md` |
-| G36 | earlier runtime architecture / save profile evidence | `docs/20_product/RUNTIME_ARCHITECTURE_SAVE_PROFILE_FOUNDATION_CONTRACT.md`、`docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`、`docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md` |
-| DOC-GOV-001 | completed / historical governance | `docs/00_governance/DOC_GOV_001_EXECUTION_REPORT.md` |
-| M4 | repository sync / branch governance / metadata validation | `docs/00_governance/BRANCH_GOVERNANCE_LEDGER.md`、`docs/00_governance/M4_REPOSITORY_SYNC_METADATA_POLICY.md`、`tools/validate_m4_repository_sync.ps1` |
-| M4S | metadata / branch governance / clean checkout finalization | `docs/00_governance/BRANCH_GOVERNANCE_LEDGER.md`、`docs/00_governance/M4_REPOSITORY_SYNC_METADATA_POLICY.md`、`tools/validate_m4s_metadata_branch_clean_checkout.ps1` |
+```text
+tools/validate_current_project.ps1
+tools/inspect_dirty_state.ps1
+tools/scan_g40_path_references.ps1
+tools/validate_g40_cleanup_topology.ps1
+tools/clean_generated_dirty_state.ps1
+tools/prepare_validation_clean_state.ps1
+```
 
-G38 / G37S / G37 / G36 不声明 gameplay runtime PASS，也不声明 manual playtest PASS。DOC-GOV-002 不新增玩法规则。
+Current validation entrypoint:
 
-## 3. 近期历史阶段
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/validate_current_project.ps1
+```
 
-| 阶段 | 状态 | 索引 |
-| --- | --- | --- |
-| G30-G35 | closed / historical evidence | `docs/40_validation/VALIDATION_INDEX.md`、`docs/50_stages/closed/STAGE_INDEX.md` |
-| G27A-G29 | closed / historical evidence | `docs/50_stages/closed/STAGE_INDEX.md` |
-| G20-G26 | historical evidence | `docs/validation/`、`docs/handoff/`、`docs/route_analysis/ROADMAP_G20_PLUS.md` |
-| G10-G19 | historical evidence | `docs/stage_summaries/STAGE_SUMMARY_INDEX.md` |
+Current stage:
 
-## 4. 目录跳转
+```text
+G40 = Full Project Cleanup, Repository Remediation & Validation Stabilization
+branch = godot/g40-full-project-cleanup-validation-stabilization
+```
 
-| 目录 | 用途 |
-| --- | --- |
-| `docs/00_governance/` | 当前治理规则、来源、重复台账、生命周期 |
-| `docs/10_current/` | 当前状态、下一步、能力矩阵 |
-| `docs/20_product/` | 产品 / 工程契约 |
-| `docs/30_engineering/` | 工程文档入口与 Godot docs 注册 |
-| `docs/40_validation/` | 验证索引 |
-| `docs/50_stages/` | 阶段 active / closed 索引 |
-| `docs/60_interfaces/` | Connection 外部交接登记 |
-| `docs/70_sources/` | Base Docs / UI reference 来源登记 |
-| `docs/90_archive/` | 历史和旧体系说明 |
-| `docs/validation/` | 阶段验证原文 |
-| `docs/handoff/` | 阶段交接原文 |
-| `docs/audits/`、`docs/branch_changes/`、`docs/stage_summaries/` | 历史证据层 |
+G40 current facts:
 
-## 5. 历史入口状态
+- `D:\AGAME1` topology is being rebuilt into active / sources / handoff / archive / reports / workflow / tools / external.
+- Active repo remains physically at `D:\AGAME1\_repo_cache\Game1_work`.
+- External source paths moved by G40 are registered in `docs/00_governance/SOURCE_REGISTRY.md`.
+- Duplicate decisions are tracked outside the repo during G40 in `D:\AGAME1\reports\g40\duplicate_resolution_plan.csv` and `D:\AGAME1\reports\g40\cleanup_decisions.md`.
+- `project.godot` dirty is pre-existing and not part of Slice 4 docs changes.
 
-`docs/DOCS_INDEX.md`、`docs/PROJECT_BASELINE.md`、`docs/ENGINEERING_STATUS.md`、`docs/NEXT_HANDOFF.md` 保留为历史扩展证据，不再作为当前第一入口。
-## M2 Latest Planning Minimum Gameplay & Meta Loop
+Recent engineering evidence remains in product/validation/handoff files. This index does not upgrade historical validation into gameplay runtime PASS or manual playtest PASS.
 
-- Contract: `docs/20_product/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_CONTRACT.md`
-- Validation: `docs/validation/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_VALIDATION.md`
-- Handoff: `docs/handoff/HANDOFF_M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP.md`
-- Validation script: `tools/validate_m2_lua_ue_effect_first_loop.ps1`
-- Headless runner: `tools/godot_m2_lua_ue_effect_first_runner.gd`
+Important non-goals are listed in:
 
-## M3 Minimum Item Pack & Drop Loop
+```text
+docs/10_current/KNOWN_UNFINISHED_SYSTEMS.md
+```
 
-- Contract: `docs/20_product/M3_MINIMUM_ITEM_DROP_LOOP_CONTRACT.md`
-- Validation: `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md`
-- Handoff: `docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md`
-- Validation script: `tools/validate_m3_minimum_item_drop_loop.ps1`
-- Headless runner: `tools/godot_m3_minimum_item_drop_loop_runner.gd`
+Current G40 stage docs:
 
-## M3R Item Usability Completion
-
-- Contract: `docs/20_product/M3R_ITEM_USABILITY_COMPLETION_CONTRACT.md`
-- Validation: `docs/validation/M3R_ITEM_USABILITY_COMPLETION_VALIDATION.md`
-- Handoff: `docs/handoff/HANDOFF_M3R_ITEM_USABILITY_COMPLETION.md`
-- Validation script: `tools/validate_m3r_item_usability_completion.ps1`
-- Headless runner: `tools/godot_m3r_item_usability_completion_runner.gd`
-
-## M3H Item Loop Hardening
-
-- Contract: `docs/20_product/M3H_ITEM_LOOP_HARDENING_CONTRACT.md`
-- Validation: `docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md`
-- Handoff: `docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md`
-- Validation script: `tools/validate_m3h_item_loop_hardening.ps1`
-- Headless runner: `tools/godot_m3h_item_loop_hardening_runner.gd`
-
-## G39 Navigation Boundary Route Closure
-
-- Contract: `docs/20_product/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_CONTRACT.md`
-- Validation: `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md`
-- Handoff: `docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md`
-- Validation script: `tools/validate_g39_navigation_boundary.ps1`
-- Headless runner: `tools/godot_g39_navigation_boundary_runner.gd`
-
-## M5 Minimum Item Pack & Drop Loop Full Content
-
-- Contract: `docs/20_product/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_CONTRACT.md`
-- Validation: `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md`
-- Handoff: `docs/handoff/HANDOFF_M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT.md`
-- Validation script: `tools/validate_m5_item_drop_loop_full_content.ps1`
-- Headless runner: `tools/godot_m5_item_drop_loop_full_content_runner.gd`
+```text
+docs/20_product/G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION_CONTRACT.md
+docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md
+docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md
+```

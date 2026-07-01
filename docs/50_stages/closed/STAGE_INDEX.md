@@ -1,45 +1,25 @@
 # Closed Stage Index
 
-文档状态：阶段索引
-适用范围：历史阶段证据归属
-最后更新：2026/06/27
+Status: readable closed-stage summary after G40 Slice 7.
 
-本索引只登记历史证据位置，不删除、不移动、不重写历史 handoff / validation / summary。G37 / G37S / G38 尚未在本索引中登记为 closed。
+This index points to historical evidence. It does not rewrite historical validation or handoff originals.
 
-## 近期关闭 / 历史阶段
+## Recent Closed / Baseline Stages
 
-| stage | status | primary evidence |
-| --- | --- | --- |
-| DOC-GOV-001 | completed / historical governance | `docs/00_governance/DOC_GOV_001_EXECUTION_REPORT.md` |
-| G36 | earlier runtime architecture / save profile evidence | `docs/validation/G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE_VALIDATION.md`、`docs/handoff/HANDOFF_G36_RUNTIME_ARCHITECTURE_SAVE_PROFILE.md` |
-| G35 | closed / historical | `docs/validation/G35_RUNTIME_SAFETY_OWNERSHIP_CLEANUP_VALIDATION.md`、`docs/handoff/HANDOFF_G35_RUNTIME_SAFETY_OWNERSHIP_CLEANUP.md` |
-| G34 | closed / historical | `docs/validation/G34_RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM_VALIDATION.md`、`docs/handoff/HANDOFF_G34_RULE_EFFECT_MODIFIER_CONTENT_DELIVERY_COMMON_SYSTEM.md` |
-| G33 | closed / historical | `docs/validation/G33_ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE_VALIDATION.md`、`docs/handoff/HANDOFF_G33_ROOM_TYPE_TAG_ENCOUNTER_COMMON_RULE.md` |
-| G32 | closed / historical | `docs/validation/G32_RUN_FLOW_STATE_TRANSITION_FULL_CONTENT_VALIDATION.md`、`docs/handoff/HANDOFF_G32_RUN_FLOW_STATE_TRANSITION_FULL_CONTENT.md` |
-| G31 | closed / historical | `docs/validation/G31_RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION_VALIDATION.md`、`docs/handoff/HANDOFF_G31_RUN_MAP_DOMAIN_ROOM_STATE_FOUNDATION.md` |
-| G30 | closed / historical | `docs/validation/G30_LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT_VALIDATION.md`、`docs/handoff/HANDOFF_G30_LONG_TERM_SYSTEM_ASSET_INTERFACE_FULL_CONTENT.md` |
-| G29 | closed / historical | `docs/20_product/DEPLOY_PREP_REVISION_FULL_CONTENT_CONTRACT.md` |
-| G28A | closed / historical | `docs/20_product/ITEM_ASSET_CONTENT_AND_WAREHOUSE_VIEW_CONTRACT.md` |
-| G27A | closed / historical | `docs/20_product/ASSET_DOMAIN_AND_WAREHOUSE_VIEW_CONTRACT.md` |
-| G26 | closed / historical | `docs/validation/G26_ENGINEERING_ARCHITECTURE_STRUCTURE_READINESS_VALIDATION.md`、`docs/handoff/HANDOFF_G26_ENGINEERING_ARCHITECTURE_STRUCTURE_READINESS.md` |
-| G25 | closed / merged | `docs/validation/G25_UI_STRUCTURE_PLAYABLE_ROUTE_VALIDATION.md`、`docs/handoff/HANDOFF_G25_UI_STRUCTURE_PLAYABLE_ROUTE.md` |
-| G24 | closed / merged | `docs/validation/G24_LONG_TERM_CONTENT_FRAMEWORK_FOUNDATION_VALIDATION.md`、`docs/handoff/HANDOFF_G24_LONG_TERM_CONTENT_FRAMEWORK_FOUNDATION.md` |
-| G23 | closed / merged | `docs/validation/G23_SETTLEMENT_HISTORY_SNAPSHOT_FOUNDATION_VALIDATION.md`、`docs/handoff/HANDOFF_G23_SETTLEMENT_HISTORY_SNAPSHOT_FOUNDATION.md` |
-| G22 | closed / merged | `docs/validation/G22_DEPLOY_PREP_FULL_MODULE_CONTENT_PREVIEW_VALIDATION.md`、`docs/handoff/HANDOFF_G22_DEPLOY_PREP_FULL_MODULE_CONTENT_PREVIEW.md` |
-| G21 | closed / merged | `docs/validation/G21_ASSET_ITEM_FLOW_CONTRACT_VALIDATION.md`、`docs/handoff/HANDOFF_G21_ASSET_ITEM_FLOW_CONTRACT.md` |
-| G20 | closed / docs-only governance | `docs/validation/G20_PROJECT_KNOWLEDGE_GOVERNANCE_VALIDATION.md`、`docs/handoff/HANDOFF_G20_PROJECT_KNOWLEDGE_GOVERNANCE.md` |
+| Stage | Status | Primary evidence | Boundary |
+| --- | --- | --- | --- |
+| M5 | closed / merged baseline before G40 | `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md`; `docs/handoff/HANDOFF_M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT.md` | Latest gameplay baseline before G40; no new G40 gameplay claim |
+| G39 | closed / route closure evidence | `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md`; `docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md` | Navigation boundary closure; no full settings/Profile UI |
+| M3H | closed / item loop hardening evidence | `docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md`; `docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md` | Item loop hardening; no full warehouse/Rule Engine |
+| M3R | closed / item usability evidence | `docs/validation/M3R_ITEM_USABILITY_COMPLETION_VALIDATION.md`; `docs/handoff/HANDOFF_M3R_ITEM_USABILITY_COMPLETION.md` | Usability supplement; no complete LongTerm/Codex/equipment economy |
+| M3 | closed / minimum item-drop loop evidence | `docs/validation/M3_MINIMUM_ITEM_DROP_LOOP_VALIDATION.md`; `docs/handoff/HANDOFF_M3_MINIMUM_ITEM_DROP_LOOP.md` | GroundLoot-first minimum loop |
+| M2 | closed / playable loop evidence | `docs/validation/M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP_VALIDATION.md`; `docs/handoff/HANDOFF_M2_LUA_UE_EFFECT_FIRST_PLAYABLE_LOOP.md` | Lua / UE effect-first playable loop alignment |
+| G38 | closed evidence | `docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md`; `docs/handoff/HANDOFF_G38_RUNTIME_ARCHITECTURE_FINALIZATION.md` | Runtime architecture evidence |
+| G37 | closed evidence | `docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md`; `docs/handoff/HANDOFF_G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION.md` | Runtime authority evidence |
+| G36 and earlier | historical evidence | `docs/validation/`; `docs/handoff/`; `docs/stage_summaries/` | Historical stage evidence only |
 
-## G10-G19 汇总
+## Archive Rule
 
-| range | evidence |
-| --- | --- |
-| G10-G19 | `docs/stage_summaries/STAGE_SUMMARY_INDEX.md` |
-| route analysis | `docs/route_analysis/ROUTE_ANALYSIS_G10_TO_G19.md`、`docs/route_analysis/ROADMAP_G20_PLUS.md` |
-
-## 早期阶段
-
-| range | evidence |
-| --- | --- |
-| G1-G9 | `docs/branch_changes/`、`docs/audits/`、`docs/handoff/`、`docs/lua_audit/`、`Godot/GraytailGodot/docs/` |
-
-早期阶段保留为历史证据；DOC-GOV-002 不迁移、不删除、不改写其正文。
+- Keep validation and handoff originals in their original folders unless a later archive gate explicitly moves them.
+- Do not use this index to claim gameplay runtime PASS or manual playtest PASS.
+- Do not use this index to delete duplicate historical evidence.

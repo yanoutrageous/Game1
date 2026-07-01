@@ -1,121 +1,74 @@
-# DOC-GOV-002 Document Placement Standard
+# Document Placement Standard
 
-文档状态：当前治理规则
-适用范围：仓库文档入口、阶段完成文档、重复文档状态、外部来源边界
-最后更新：2026/06/27
+Status: current governance rule after G40 Slice 4.
 
-本文件只规定仓库文档如何落位、引用和标记状态；不新增玩法规则，不替代产品契约、验证记录、Base Docs 原件或用户确认。
-
-## 1. 权威入口
-
-| 区域 | 当前定位 | 写入规则 |
-| --- | --- | --- |
-| `D:\AGAME1\_repo_cache\Game1_work\docs` | 当前仓库文档事实入口 | 新增仓库文档默认直接按类型落位 |
-| `D:\AGAME1\_repo_cache\Game1_work\docs\README.md` | 文档树第一阅读入口 | 说明目录职责和写入边界 |
-| `D:\AGAME1\_repo_cache\Game1_work\docs\INDEX.md` | 当前索引入口 | 保持短索引，不长期堆叠完整阶段正文 |
-| `D:\AGAME1\_repo_cache\Game1_work\docs\10_current` | 当前事实摘要和下一步 | 只记录当前状态、下一 gate、能力状态 |
-| `D:\AGAME1\_repo_cache\Game1_work\docs\00_governance` | 当前文档治理入口 | 保存来源、生命周期、重复台账、落位标准 |
-
-## 2. 外部来源边界
+Current repository docs entrypoint:
 
 ```text
-Base Docs = 用户注入内容 / 外部策划原件 / 个人阅读与留档区。
-Base Docs_Governance = Base Docs 的非破坏式整理副本区 / 索引区 / 历史快照区。
-Connection = 外部并行交接区。
-Godot/GraytailGodot/docs = Godot 工程历史 / 环境证据区。
+D:\AGAME1\_repo_cache\Game1_work\docs
 ```
 
-- `D:\AGAME1\Base Docs` 不参与仓库去重，不由仓库覆盖，不移动、不重命名、不删除、不改写正文。
-- `D:\AGAME1\Base Docs_Governance` 不替代当前仓库事实源；其中 `06_工程仓库docs参考` 是历史参考快照。
-- `D:\AGAME1\Connection` 只作为外部交接资料读取，不复制内容入库，不写入 Git，不导入 Godot。
-- `Godot/GraytailGodot/docs` 只保留工程历史和环境证据；当前阶段治理入口在仓库 `docs`。
+Current external source roots:
 
-## 3. 新增文档落位规则
+```text
+D:\AGAME1\sources\docs
+D:\AGAME1\sources\docs_governance
+D:\AGAME1\sources\art
+D:\AGAME1\sources\draw
+D:\AGAME1\handoff\connection
+```
 
-| 文档类型 | 落位 |
+Legacy path before G40: `D:\AGAME1\Base Docs`
+Moved to: `D:\AGAME1\sources\docs`
+Do not use as current canonical path: `D:\AGAME1\Base Docs`
+
+Legacy path before G40: `D:\AGAME1\Connection`
+Moved to: `D:\AGAME1\handoff\connection`
+Do not use as current canonical path: `D:\AGAME1\Connection`
+
+## Placement Rules
+
+| Document type | Location |
 | --- | --- |
-| 当前入口 / 当前状态 | `docs/10_current/` |
-| 文档治理规则、来源、重复台账 | `docs/00_governance/` |
-| 产品契约 / 内容边界 | `docs/20_product/` |
-| 工程说明、ADR、Godot 文档注册 | `docs/30_engineering/` |
-| 验证索引 | `docs/40_validation/` |
-| 阶段索引 | `docs/50_stages/active/` 或 `docs/50_stages/closed/` |
-| Connection 外部接口登记 | `docs/60_interfaces/connection/` |
-| Base Docs / UI reference 来源登记 | `docs/70_sources/` |
-| 历史说明 / 生成报告 / 旧体系入口 | `docs/90_archive/` |
-| 阶段验证原文 | `docs/validation/` |
-| 阶段 handoff 原文 | `docs/handoff/` |
+| Current state / next step / capability matrix | `docs/10_current/` |
+| Governance / source / lifecycle / duplicate ledgers | `docs/00_governance/` |
+| Product contracts / planning rules / system boundaries | `docs/20_product/` |
+| Engineering notes / ADR / Godot docs registry | `docs/30_engineering/` |
+| Validation index | `docs/40_validation/VALIDATION_INDEX.md` |
+| Active stage index | `docs/50_stages/active/STAGE_INDEX.md` |
+| Closed stage index | `docs/50_stages/closed/STAGE_INDEX.md` |
+| Stage validation originals | `docs/validation/` |
+| Stage handoff originals | `docs/handoff/` |
+| Connection source registration | `docs/60_interfaces/connection/` |
+| Base Docs / UI reference source registration | `docs/70_sources/` |
+| Historical / legacy / generated-report explanations | `docs/90_archive/` |
 
-仅来源不明、外部导入待判定或需要用户确认归属的材料可进入临时 inbox；不得长期堆积。当前仓库未设置常驻 inbox 时，不新建 inbox。
+## External Source Rules
 
-## 4. 阶段完成文档规则
+- Base Docs are user-injected original source content. Do not copy or rewrite source bodies into repo docs.
+- Base Docs Governance is an external snapshot, not the current repository fact source.
+- Connection is an external handoff area. Register paths and hashes when needed; do not import content into Git by default.
+- Base Art / Draw are source/candidate material unless separately imported into runtime assets by an approved art gate.
 
-每个阶段完成后至少保留：
-
-```text
-1. product / contract 文档，若该阶段产生产品或工程契约。
-2. validation 文档，记录实际验证命令、结果和边界。
-3. handoff 文档，记录下一 gate、未实现内容和禁止误读项。
-4. stage index 记录，标明 active / closed / historical。
-```
-
-原始 validation / handoff 不搬迁、不覆盖；通过 `docs/40_validation/VALIDATION_INDEX.md` 和 `docs/50_stages/*/STAGE_INDEX.md` 指向。
-
-## 5. 重复文档处理规则
+## Naming Guidance
 
 ```text
-1. 重复文档不删除，先登记状态。
-2. 当前入口中文优先。
-3. 历史英文文档不强制全文翻译。
-4. 当前 contract / validation / handoff 至少应有中文摘要。
-5. 旧入口可追加短状态说明，但不全文重写历史正文。
-6. 历史快照只作证据，不作为当前事实源。
-```
-
-## 6. 根目录旧文件处理规则
-
-```text
-1. `docs` 根目录不作为新文档长期堆放区。
-2. 既有根目录旧文件不删除、不移动、不重命名。
-3. 旧文件状态先登记到 `DUPLICATE_DOC_LEDGER.md` 和 `SOURCE_REGISTRY.md`。
-4. `current_entry` 只保留给 `docs/README.md`、`docs/INDEX.md`、`docs/10_current/*` 和 `docs/00_governance/*`。
-5. historical_status / historical_handoff / legacy_design / legacy_ue / legacy_lua / legacy_integration / deprecated_reference / needs_archive_decision 只表示读取状态，不表示删除或移动授权。
-6. 未来归档候选必须另起阶段、另行审计，并明确目标路径、引用修正和回滚方式。
-```
-
-## 7. 禁止项
-
-```text
-1. 不从 UI 图片反推规则。
-2. 不从工程临时实现反推策划定案。
-3. 不把 Base Docs_Governance 快照写成当前事实源。
-4. 不把历史文档改写成新规则。
-5. 不新增玩法规则。
-6. 不把未确认内容写成定案。
-```
-
-## 8. 新文档命名与摘要规则
-
-新文档在能判断类型时直接按目录职责落位，并优先使用以下命名模式：
-
-```text
-Gxx_主题_CONTRACT.md
-Gxx_主题_VALIDATION.md
-HANDOFF_Gxx_主题.md
-ARTxx_主题.md
-DOC_GOV_xxx_主题.md
+Gxx_TOPIC_CONTRACT.md
+Gxx_TOPIC_VALIDATION.md
+HANDOFF_Gxx_TOPIC.md
+ARTxx_TOPIC.md
+DOC_GOV_xxx_TOPIC.md
 README.md
 *_INDEX.md
 *_REGISTRY.md
 ```
 
-执行要求：
+## New Document Principles
 
-```text
-1. 旧文件不强制重命名。
-2. 当前入口中文优先。
-3. 当前 contract / validation / handoff 至少提供中文摘要。
-4. 历史英文文档不强制全文翻译。
-5. 旧文档如继续被当前索引引用，应至少有中文状态说明。
-6. 归档候选不是删除建议，不得移动、不得删除；只能作为未来治理阶段候选。
-```
+1. If type is known, place it directly in the correct directory.
+2. Do not keep long-lived new docs in the docs root.
+3. Do not copy Base Docs bodies to solve citation problems.
+4. Register duplicate content in `DUPLICATE_DOC_LEDGER.md` before deletion or archive.
+5. Current entrypoints prefer Chinese summaries where practical; historical English files are not forcibly translated.
+6. New contract / validation / handoff documents should include at least a Chinese summary.
+7. Do not rewrite old validation / handoff into current facts; downgrade or label through indexes.
