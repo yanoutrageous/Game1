@@ -1,6 +1,6 @@
 # Validation Index
 
-Status: current validation index after G40 Slice 9B.
+Status: current validation index after G40 Slice 11.
 
 ## Current Validation Entrypoint
 
@@ -62,7 +62,7 @@ Recent historical/current evidence pointers:
 
 | Stage | Evidence | Boundary |
 | --- | --- | --- |
-| G40 | `docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md` | Current cleanup validation is IN_PROGRESS / PASS_WITH_NOTES; final cleanup and smoke pending |
+| G40 | `docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md` | Current cleanup validation is IN_PROGRESS / PASS_WITH_NOTES; branch commit/push complete at `ad883310232ca9756371fb68eb3d0176a56e809e`; `project.godot`, residual duplicate decisions, and smoke remain pending later gates |
 | M5 | `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md` | Latest gameplay baseline before G40; no manual playtest PASS unless explicitly recorded |
 | G39 | `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md` | Navigation boundary closure; no full settings/Profile UI |
 | G38 | `docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md` | Runtime architecture finalization evidence |

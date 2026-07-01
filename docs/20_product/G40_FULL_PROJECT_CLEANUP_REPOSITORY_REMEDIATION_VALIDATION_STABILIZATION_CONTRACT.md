@@ -1,8 +1,8 @@
 # G40 Full Project Cleanup / Repository Remediation / Validation Stabilization Contract
 
-Status: in progress after G40 Slice 9B.
+Status: in progress / PASS_WITH_NOTES after G40 Slice 11.
 
-Chinese summary: G40 is the project cleanup and validation-stabilization stage. It reorganizes current entrypoints, documents source boundaries, records duplicate and dirty-state policy, and prepares reliable validation gates. It does not implement gameplay features and does not claim final cleanup completion yet.
+Chinese summary: G40 is the project cleanup and validation-stabilization stage. It reorganizes current entrypoints, documents source boundaries, records duplicate and dirty-state policy, and prepares reliable validation gates. The G40 docs/tools branch has been committed and pushed, but G40 remains PASS_WITH_NOTES because project config and residual duplicate decisions remain unresolved.
 
 ## Objective
 
@@ -23,6 +23,9 @@ Active repo: D:\AGAME1\_repo_cache\Game1_work
 Godot project: D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot
 Repo docs: D:\AGAME1\_repo_cache\Game1_work\docs
 Current validation entrypoint: tools/validate_current_project.ps1
+Current G40 branch head: ad883310232ca9756371fb68eb3d0176a56e809e
+Current origin G40 branch head: ad883310232ca9756371fb68eb3d0176a56e809e
+Main/origin main baseline: aa57a4270e047ef83020c333b30af225aa1a5ffb
 ```
 
 ## Topology Rules
@@ -92,6 +95,18 @@ D:\AGAME1\_repo_cache\Game_feature_editor_playable_prototype -> D:\AGAME1\archiv
 
 No files were deleted, no registered Git worktree was removed, and no active repository content was cleaned.
 
+## Branch Commit / Push Status
+
+Slice 10 committed and pushed the G40 docs/tools validation entrypoint state:
+
+```text
+commit: ad883310232ca9756371fb68eb3d0176a56e809e
+message: chore(project): stabilize G40 cleanup validation entrypoints
+branch: origin/godot/g40-full-project-cleanup-validation-stabilization
+```
+
+Slice 11 records this status only. It does not merge or push main.
+
 ## Validation Policy
 
 Current validation command:
@@ -124,6 +139,7 @@ G40 does not:
 ## Pending Before Final Completion
 
 - Later cleanup gates: registered worktree lifecycle, generated cache/profile policy, active repo duplicate review, reference-blocked rows, and manual decisions.
-- Slice 10: audited final validation and commit/push gate.
+- Slice 10 branch commit/push is complete.
+- Later main merge/push gate, if G40 is accepted.
 - Godot smoke, if later gate approves it.
-- Final decision on `project.godot` dirty handling.
+- Separate metadata/config decision gate for `project.godot` dirty handling.

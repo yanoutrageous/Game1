@@ -1,11 +1,14 @@
 document_status: current_capability_matrix
-updated_by: G40 Slice 6
+updated_by: G40 Slice 11
 
 repository:
   active_repo_path: "D:\\AGAME1\\_repo_cache\\Game1_work"
   godot_project_path: "D:\\AGAME1\\_repo_cache\\Game1_work\\Godot\\GraytailGodot"
   current_branch: "godot/g40-full-project-cleanup-validation-stabilization"
+  current_branch_head: "ad883310232ca9756371fb68eb3d0176a56e809e"
+  origin_current_branch_head: "ad883310232ca9756371fb68eb3d0176a56e809e"
   g40_base_head: "aa57a4270e047ef83020c333b30af225aa1a5ffb"
+  main_origin_main: "aa57a4270e047ef83020c333b30af225aa1a5ffb"
 
 g40_cleanup:
   current_state_freeze: complete
@@ -22,8 +25,11 @@ g40_cleanup:
   stale_checkout_archived_count_9b: 2
   duplicate_cleanup_remaining_manual_rows: 18188
   duplicate_cleanup_remaining_reference_blocker_rows: 1463
-  final_cleanup_execution: pending
-  final_validation: pending
+  branch_commit_push: complete
+  branch_commit_hash: "ad883310232ca9756371fb68eb3d0176a56e809e"
+  main_merge_push: not_performed
+  final_cleanup_execution: pass_with_notes
+  final_validation: pass_with_notes
 
 topology:
   active_repo_physically_moved: false
@@ -55,6 +61,7 @@ known_unfinished_systems:
 dirty_state:
   pre_existing_project_godot_dirty: true
   project_godot_dirty_status: pre_existing_unresolved_not_cleaned_by_slice_6
+  project_godot_decision_gate: pending_metadata_config_gate
   project_godot_patch: "D:\\AGAME1\\reports\\g40\\project_godot_dirty.patch"
   staged_files_expected_now: false
   protective_stash_touched: false

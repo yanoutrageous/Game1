@@ -1,6 +1,6 @@
 # G40 Full Project Cleanup Validation
 
-Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 9B.
+Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 11.
 
 Chinese summary: G40 validation currently confirms the cleanup state is explainable and current validation tools work. It does not yet mean the project is fully clean, and it does not claim gameplay runtime PASS or manual playtest PASS.
 
@@ -20,7 +20,8 @@ remaining_manual_decision_rows=18188
 remaining_reference_blocker_rows=1463
 root G40 working reports consolidated to D:\AGAME1\reports\g40
 final Godot smoke pending
-final commit/push pending
+branch commit/push complete
+main merge/push not performed
 manual_playtest_claimed=false
 gameplay_runtime_pass_claimed=false
 ```
@@ -40,6 +41,8 @@ gameplay_runtime_pass_claimed=false
 | Slice 8 | complete | G40 contract / validation / handoff scaffold |
 | Slice 9A | complete | Root G40 working reports consolidated to `D:\AGAME1\reports\g40`; no duplicate/stale cleanup executed |
 | Slice 9B | complete with notes | Current-path manifest generated; two non-registered stale checkout directories archived; no deletes |
+| Slice 10 | complete | Commit `ad883310232ca9756371fb68eb3d0176a56e809e` pushed to `origin/godot/g40-full-project-cleanup-validation-stabilization`; main untouched |
+| Slice 11 | complete with notes | Post-push status docs synchronized; `project.godot` left for a separate metadata/config decision gate |
 
 ## Current Tool Markers
 
@@ -66,6 +69,10 @@ G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
 - No registered worktree was removed.
 - No files were deleted; `delete_execution_log.csv` is header-only.
 - Remaining manual decisions and reference blockers are recorded in `D:\AGAME1\reports\g40`.
+- G40 docs/tools branch commit and push are complete:
+  - `ad883310232ca9756371fb68eb3d0176a56e809e`
+  - `origin/godot/g40-full-project-cleanup-validation-stabilization`
+- `main` was not merged or pushed by G40.
 - `Godot/GraytailGodot/project.godot` remains unresolved pre-existing dirty.
 - Protective stash has not been touched.
 
@@ -74,6 +81,6 @@ G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
 The following must wait for later audited slices:
 
 1. Later decision on registered worktrees, generated cache/profile duplicates, protected/source duplicates, and reference blockers.
-2. Any `project.godot` or generated metadata remediation.
+2. Separate metadata/config decision gate for `project.godot` remediation: restore, accept-and-commit, or leave documented.
 3. Godot headless smoke, if approved by the later gate.
-4. Final commit / push.
+4. Main merge/push gate, if and when G40 is accepted.

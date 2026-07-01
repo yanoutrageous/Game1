@@ -1,6 +1,6 @@
 # Active Stage Index
 
-Status: current active stage index after G40 Slice 7.
+Status: current active stage index after G40 Slice 11.
 
 ## Active Stage
 
@@ -14,6 +14,8 @@ Status: current active stage index after G40 Slice 7.
 | --- | --- |
 | Active repo | `D:\AGAME1\_repo_cache\Game1_work` |
 | Current G40 branch | `godot/g40-full-project-cleanup-validation-stabilization` |
+| Current G40 branch head | `ad883310232ca9756371fb68eb3d0176a56e809e` |
+| Origin G40 branch head | `ad883310232ca9756371fb68eb3d0176a56e809e` |
 | Base HEAD / main / origin/main at G40 start | `aa57a4270e047ef83020c333b30af225aa1a5ffb` |
 | Latest gameplay baseline before G40 | M5 item pack / drop loop full content baseline |
 | Pre-existing unresolved dirty | `Godot/GraytailGodot/project.godot` |

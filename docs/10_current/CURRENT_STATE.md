@@ -1,6 +1,6 @@
 # Current State
 
-Document status: current summary after G40 Slice 9B.
+Document status: current summary after G40 Slice 11.
 
 ## Repository
 
@@ -8,7 +8,10 @@ Document status: current summary after G40 Slice 9B.
 active_repo: D:\AGAME1\_repo_cache\Game1_work
 godot_project: D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot
 branch: godot/g40-full-project-cleanup-validation-stabilization
+branch_head: ad883310232ca9756371fb68eb3d0176a56e809e
+origin_branch_head: ad883310232ca9756371fb68eb3d0176a56e809e
 base_head_at_g40_start: aa57a4270e047ef83020c333b30af225aa1a5ffb
+main_origin_main: aa57a4270e047ef83020c333b30af225aa1a5ffb
 ```
 
 Pre-existing dirty state:
@@ -63,6 +66,8 @@ Moved legacy source/handoff roots:
 - Slice 8 G40 contract / validation / handoff scaffold: complete.
 - Slice 9A G40 working report consolidation: complete.
 - Slice 9B duplicate / stale worktree / historical report cleanup: complete with notes.
+- Slice 10 G40 docs/tools commit and branch push: complete.
+- Slice 11 post-push status synchronization: complete with notes.
 
 Slice 9B archived two approved non-registered stale checkouts:
 
@@ -72,6 +77,14 @@ D:\AGAME1\archive\stale_checkouts\Game_feature_editor_playable_prototype
 ```
 
 Remaining registered worktrees, generated cache/profile rows, protected/source rows, active repo duplicates, and reference blockers are recorded in `D:\AGAME1\reports\g40`.
+
+G40 branch commit/push evidence:
+
+```text
+commit: ad883310232ca9756371fb68eb3d0176a56e809e
+branch: origin/godot/g40-full-project-cleanup-validation-stabilization
+main_status: not merged / not pushed by G40
+```
 
 ## Current G40 tools
 
@@ -104,5 +117,6 @@ G40 is a cleanup and validation stabilization stage. Latest gameplay baseline be
 
 - No gameplay runtime PASS is claimed by G40.
 - No manual playtest PASS is claimed by G40.
+- `Godot/GraytailGodot/project.godot` remains pre-existing dirty and unresolved; this requires a separate metadata/config decision gate.
 - G40 is cleanup / governance / validation-stabilization work, not a gameplay feature implementation stage.
 - Complete LongTerm, Objective / Reward / Pool, full Rule Engine, full Warehouse, full art productization, and CI remain outside G40 unless a later gate says otherwise.
