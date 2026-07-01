@@ -1,12 +1,12 @@
 document_status: current_capability_matrix
-updated_by: G40 Slice 12
+updated_by: G40 Slice 13
 
 repository:
   active_repo_path: "D:\\AGAME1\\_repo_cache\\Game1_work"
   godot_project_path: "D:\\AGAME1\\_repo_cache\\Game1_work\\Godot\\GraytailGodot"
   current_branch: "godot/g40-full-project-cleanup-validation-stabilization"
-  current_branch_head: "ad883310232ca9756371fb68eb3d0176a56e809e"
-  origin_current_branch_head: "ad883310232ca9756371fb68eb3d0176a56e809e"
+  slice_13_validation_base_head: "7a8ed12108a857264aeec4ed3b06f126dc9df7d5"
+  origin_branch_head_at_slice_13_validation: "7a8ed12108a857264aeec4ed3b06f126dc9df7d5"
   g40_base_head: "aa57a4270e047ef83020c333b30af225aa1a5ffb"
   main_origin_main: "aa57a4270e047ef83020c333b30af225aa1a5ffb"
 
@@ -26,9 +26,12 @@ g40_cleanup:
   duplicate_cleanup_remaining_manual_rows: 18188
   duplicate_cleanup_remaining_reference_blocker_rows: 1463
   branch_commit_push: complete
-  branch_commit_hash: "ad883310232ca9756371fb68eb3d0176a56e809e"
+  slice_10_commit_hash: "ad883310232ca9756371fb68eb3d0176a56e809e"
+  slice_11_commit_hash: "fac8310c970260c333cb3b716d43b3024e161a75"
+  slice_12_commit_hash: "7a8ed12108a857264aeec4ed3b06f126dc9df7d5"
   main_merge_push: not_performed
   project_godot_restore_12: complete
+  final_non_godot_validation_13: complete_with_notes
   final_cleanup_execution: pass_with_notes
   final_validation: pass_with_notes
 
@@ -48,6 +51,11 @@ validation_claims:
   gameplay_runtime_pass_claimed_by_g40: false
   manual_playtest_pass_claimed_by_g40: false
   godot_smoke_required_later: true
+  godot_smoke_slice_13: not_run_no_in_boundary_godot_executable
+  m5_static_validator_slice_13: pass
+  g39_static_validator_slice_13: pass
+  m5_runtime_runner_slice_13: not_run_no_in_boundary_godot_executable
+  g39_runtime_runner_slice_13: not_run_no_in_boundary_godot_executable
   unified_validation_entrypoint_pending: false
   unified_current_project_entrypoint: pass_with_notes
 
@@ -85,3 +93,4 @@ validation:
   pass_with_notes_reasons:
     - g40_cleanup_in_progress
     - duplicate_execution_partial_remaining_manual_and_reference_review
+    - godot_project_load_parser_smoke_not_run_due_boundary

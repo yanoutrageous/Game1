@@ -1,6 +1,6 @@
 # G40 Full Project Cleanup Validation
 
-Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 12.
+Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 13.
 
 Chinese summary: G40 validation currently confirms the cleanup state is explainable and current validation tools work. It does not yet mean the project is fully clean, and it does not claim gameplay runtime PASS or manual playtest PASS.
 
@@ -21,6 +21,9 @@ project_godot_restored_to_head=true
 active_repo_dirty_count=0
 root G40 working reports consolidated to D:\AGAME1\reports\g40
 final Godot smoke pending
+slice_13_non_godot_validation_complete=true
+godot_smoke_slice_13=not_run_no_in_boundary_godot_executable
+runtime_runners_slice_13=not_run_no_in_boundary_godot_executable
 branch commit/push complete
 main merge/push not performed
 manual_playtest_claimed=false
@@ -45,6 +48,7 @@ gameplay_runtime_pass_claimed=false
 | Slice 10 | complete | Commit `ad883310232ca9756371fb68eb3d0176a56e809e` pushed to `origin/godot/g40-full-project-cleanup-validation-stabilization`; main untouched |
 | Slice 11 | complete with notes | Post-push status docs synchronized; `project.godot` decision deferred to Slice 12 |
 | Slice 12 | complete with notes | Audit chose restore-to-HEAD for `project.godot`; patch evidence preserved at `D:\AGAME1\reports\g40\project_godot_dirty.patch`; active repo dirty count returned to 0 |
+| Slice 13 | complete with notes | Audit approved in-boundary non-Godot validation; static M3/M3R/M3H/M4S/M5/G36/G37/G38/G39 validators passed; Godot and runtime runners not run because no `D:\AGAME1`-local Godot executable is available and `D:\Godot` is forbidden |
 
 ## Current Tool Markers
 
@@ -56,11 +60,22 @@ G40_TOPOLOGY_VALIDATION_RESULT=PASS_WITH_NOTES
 G40_GENERATED_DIRTY_DRY_RUN=PASS
 G40_VALIDATION_CLEAN_STATE_DRY_RUN=PASS_WITH_NOTES
 G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
+M3 minimum item drop loop validation=PASS
+M3R item usability completion validation=PASS
+M3H item loop hardening validation=PASS
+M4S_METADATA_BRANCH_CLEAN_CHECKOUT=PASS
+M5 item drop loop full content validation=PASS
+G36_RUNTIME_ARCHITECTURE_VALIDATION=PASS
+G37_RUNTIME_AUTHORITY_VALIDATION=PASS
+G37_RUNTIME_AUTHORITY_SUPPLEMENT_VALIDATION=PASS
+G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION=PASS
+G39 navigation boundary validation=PASS
 ```
 
 ## Boundaries
 
-- No Godot smoke has been run by G40 Slice 9A.
+- No Godot smoke has been run by G40 Slice 13. Audit did not grant a `D:\Godot` exception, no Godot executable was found under `D:\AGAME1`, and the G40 boundary forbids `D:\Godot`.
+- M5 and G39 static validators passed in Slice 13; M5/G39 Godot-backed runtime runners were not run for the same boundary reason.
 - No gameplay runtime PASS is claimed.
 - No manual playtest PASS is claimed.
 - No duplicate files have been deleted; Slice 9B archived only two approved non-registered stale checkout directories.
@@ -73,6 +88,8 @@ G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
 - Remaining manual decisions and reference blockers are recorded in `D:\AGAME1\reports\g40`.
 - G40 docs/tools branch commit and push are complete:
   - `ad883310232ca9756371fb68eb3d0176a56e809e`
+  - `fac8310c970260c333cb3b716d43b3024e161a75`
+  - `7a8ed12108a857264aeec4ed3b06f126dc9df7d5`
   - `origin/godot/g40-full-project-cleanup-validation-stabilization`
 - `main` was not merged or pushed by G40.
 - `Godot/GraytailGodot/project.godot` was restored to HEAD in Slice 12 after audit approval; the prior dirty patch remains preserved in `D:\AGAME1\reports\g40\project_godot_dirty.patch`.
@@ -83,5 +100,5 @@ G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
 The following must wait for later audited slices:
 
 1. Later decision on registered worktrees, generated cache/profile duplicates, protected/source duplicates, and reference blockers.
-2. Godot headless smoke, if approved by the later gate.
+2. Godot headless smoke, if a later gate supplies or approves an in-boundary executable path.
 3. Main merge/push gate, if and when G40 is accepted.

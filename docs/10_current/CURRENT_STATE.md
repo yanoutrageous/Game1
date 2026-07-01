@@ -1,6 +1,6 @@
 # Current State
 
-Document status: current summary after G40 Slice 11.
+Document status: current summary after G40 Slice 13 validation boundary.
 
 ## Repository
 
@@ -8,8 +8,8 @@ Document status: current summary after G40 Slice 11.
 active_repo: D:\AGAME1\_repo_cache\Game1_work
 godot_project: D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot
 branch: godot/g40-full-project-cleanup-validation-stabilization
-branch_head: ad883310232ca9756371fb68eb3d0176a56e809e
-origin_branch_head: ad883310232ca9756371fb68eb3d0176a56e809e
+slice_13_validation_base_head: 7a8ed12108a857264aeec4ed3b06f126dc9df7d5
+origin_branch_head_at_slice_13_validation: 7a8ed12108a857264aeec4ed3b06f126dc9df7d5
 base_head_at_g40_start: aa57a4270e047ef83020c333b30af225aa1a5ffb
 main_origin_main: aa57a4270e047ef83020c333b30af225aa1a5ffb
 ```
@@ -69,6 +69,7 @@ Moved legacy source/handoff roots:
 - Slice 10 G40 docs/tools commit and branch push: complete.
 - Slice 11 post-push status synchronization: complete with notes.
 - Slice 12 `project.godot` metadata/config decision: restored to HEAD; active repo dirty count returned to 0.
+- Slice 13 final non-Godot validation boundary: complete with notes.
 
 Slice 9B archived two approved non-registered stale checkouts:
 
@@ -82,7 +83,9 @@ Remaining registered worktrees, generated cache/profile rows, protected/source r
 G40 branch commit/push evidence:
 
 ```text
-commit: ad883310232ca9756371fb68eb3d0176a56e809e
+slice_10_commit: ad883310232ca9756371fb68eb3d0176a56e809e
+slice_11_commit: fac8310c970260c333cb3b716d43b3024e161a75
+slice_12_commit: 7a8ed12108a857264aeec4ed3b06f126dc9df7d5
 branch: origin/godot/g40-full-project-cleanup-validation-stabilization
 main_status: not merged / not pushed by G40
 ```
@@ -111,6 +114,8 @@ Expected current marker:
 ```text
 G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
 ```
+
+Slice 13 validated the active repo with only in-boundary, non-Godot commands. The validation set included G40 dirty-state/topology/reference checks plus static M3/M3R/M3H/M4S/M5/G36/G37/G38/G39 validators. Godot project-load/parser smoke and Godot-backed runtime runners were not run because no `D:\AGAME1`-local Godot executable was available and the G40 boundary forbids `D:\Godot`.
 
 G40 is a cleanup and validation stabilization stage. Latest gameplay baseline before G40 is M5 at `aa57a4270e047ef83020c333b30af225aa1a5ffb`; G40 does not claim new gameplay content.
 
