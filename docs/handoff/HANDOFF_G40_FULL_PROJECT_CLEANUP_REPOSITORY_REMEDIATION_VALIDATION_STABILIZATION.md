@@ -1,8 +1,8 @@
 # Handoff G40 Full Project Cleanup / Repository Remediation / Validation Stabilization
 
-Status: in-progress handoff after G40 Slice 20.
+Status: in-progress handoff after G40 Slice 21.
 
-Chinese summary: G40 has established current topology, repo docs entrypoints, dirty-state tooling, a validation entrypoint, Slice 9A report consolidation, restricted Slice 9B stale-checkout archive execution, and pushed G40 branch commits. Slice 12 restored `project.godot` to HEAD by audit decision, leaving the active repo clean. Slice 13 ran the approved in-boundary non-Godot validation chain. Slice 14 moved the remaining root `Godot` shell and 20260622 root audit reports into their canonical G40 areas. Slice 15 removed five clean non-active registered worktrees with `git worktree remove` without `--force`. Slice 16 resolved and removed the remaining dirty generated-metadata registered worktree. Slice 17 refreshed duplicate-state evidence after those topology/worktree changes. Slice 18 policy-closed 10002 workflow Edge CDP generated-cache duplicate rows as `generated-ignore / processed_by_policy_no_delete`, with no deletion, movement, archive, copy, or cache cleanup. Slice 19 classified 3003 canonical/protected-source residual duplicate rows as final non-destructive dispositions. Slice 20 classified 94 workflow blocker rows as retained workflow/generated evidence. The remaining duplicate gate is now narrowed to 109 tracked active-repo duplicate-review rows.
+Chinese summary: G40 has established current topology, repo docs entrypoints, dirty-state tooling, a validation entrypoint, Slice 9A report consolidation, restricted Slice 9B stale-checkout archive execution, and pushed G40 branch commits. Slice 12 restored `project.godot` to HEAD by audit decision, leaving the active repo clean. Slice 13 ran the approved in-boundary non-Godot validation chain. Slice 14 moved the remaining root `Godot` shell and 20260622 root audit reports into their canonical G40 areas. Slice 15 removed five clean non-active registered worktrees with `git worktree remove` without `--force`. Slice 16 resolved and removed the remaining dirty generated-metadata registered worktree. Slice 17 refreshed duplicate-state evidence after those topology/worktree changes. Slice 18 policy-closed 10002 workflow Edge CDP generated-cache duplicate rows as `generated-ignore / processed_by_policy_no_delete`, with no deletion, movement, archive, copy, or cache cleanup. Slice 19 classified 3003 canonical/protected-source residual duplicate rows as final non-destructive dispositions. Slice 20 classified 94 workflow blocker rows as retained workflow/generated evidence. Slice 21 classified the remaining 109 tracked active-repo duplicate-review rows as retained final dispositions for G40 accounting. Future physical consolidation is a separate asset-reference migration / art asset dedupe topic, not a G40 blocker.
 
 ## Current State
 
@@ -20,7 +20,7 @@ registered_worktree_topology: active_only
 
 ## Next Required Gates
 
-1. Remaining duplicate decisions cannot run without later audit approval and must use the Slice 19 refreshed reports, not stale Slice 9B counts.
+1. Physical active-repo asset dedupe cannot run without a later dedicated asset-reference migration / art asset dedupe gate. Slice 21 only closed G40 duplicate accounting by retained disposition.
 2. Optional Godot/M5/G39 runtime validation requires a later explicit validation gate and an allowed in-boundary Godot executable path.
 3. No main merge/push is authorized by this handoff.
 4. No final completion claim is authorized until remaining G40 notes are resolved or explicitly accepted.
@@ -70,7 +70,7 @@ generated metadata
   - summary: `D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice18.md`
 - Slice 19 classified 3003 canonical/protected-source residual rows as final non-destructive dispositions:
   - physical action: none
-  - active repo duplicate-review rows still requiring asset-reference audit: 109
+  - active repo duplicate-review rows still requiring asset-reference audit before Slice 21: 109
   - historical/reference/workflow-state rows still requiring later decision: 94
   - true unresolved rows after Slice 19 classification: 203
   - evidence: `D:\AGAME1\reports\g40\residual_duplicate_final_disposition_after_slice19.md`
@@ -85,7 +85,18 @@ generated metadata
   - evidence: `D:\AGAME1\reports\g40\workflow_blocker_final_disposition_after_slice20.md`
   - evidence CSV: `D:\AGAME1\reports\g40\workflow_blocker_final_disposition_after_slice20.csv`
   - summary: `D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice20.md`
-- The remaining duplicate-review set is 109 tracked active-repo rows requiring a later asset-reference audit.
+- Slice 21 classified the 109 tracked active-repo duplicate-review rows as retained final dispositions:
+  - active runtime assets retained: 75
+  - legacy/reference assets retained for future migration decision: 14
+  - validation screenshot evidence retained: 9
+  - UE placeholder `.gitkeep` rows retained: 10
+  - runtime font retained: 1
+  - physical action: none
+  - delete/move/archive/copy approvals: 0
+  - unresolved duplicate-review rows for G40 accounting: 0
+  - evidence: `D:\AGAME1\reports\g40\active_repo_duplicate_final_disposition_after_slice21.md`
+  - evidence CSV: `D:\AGAME1\reports\g40\active_repo_duplicate_final_disposition_after_slice21.csv`
+  - summary: `D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice21.md`
 - Godot smoke is not run in G40 Slice 13 because no `D:\AGAME1`-local Godot executable is available and `D:\Godot` is forbidden by the G40 boundary.
 - M5/G39 static validators passed in Slice 13; their runtime runners were not run and are not claimed.
 - Slice 14 moved `D:\AGAME1\Godot` to `D:\AGAME1\external\godot_reference\Godot`; this is not the active Godot project.
@@ -136,5 +147,6 @@ G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
 - Do not run Godot unless a later validation gate explicitly approves it.
 - Do not modify `D:\AGAME1\sources` or `D:\AGAME1\handoff` source bodies.
 - Do not delete or archive files based only on duplicate evidence.
-- Do not use stale Slice 9B duplicate counts for cleanup decisions; use the Slice 19 refreshed reports.
+- Do not use stale Slice 9B duplicate counts for cleanup decisions; use the Slice 17-21 refreshed reports.
+- Slice 21 retained active-repo duplicate assets; do not describe them as physically deduplicated, removed, cleaned, or safe to delete.
 - Do not claim gameplay runtime PASS or manual playtest PASS.

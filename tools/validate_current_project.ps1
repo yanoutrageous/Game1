@@ -56,8 +56,8 @@ try {
     Write-Output "staged_count=$($staged.Count)"
     Write-Output "pre_existing_project_godot_dirty=$([bool]$projectGodotDirty)"
     Write-Output "g40_cleanup_in_progress=true"
-    Write-Output "duplicate_execution_partial=true"
-    Write-Output "duplicate_remaining_manual_and_reference_review=true"
+    Write-Output "duplicate_execution_partial=false"
+    Write-Output "duplicate_remaining_manual_and_reference_review=false"
     Write-Output "manual_playtest_claimed=false"
     Write-Output "gameplay_runtime_pass_claimed=false"
     Write-Output "clean_worktree_required=false"
@@ -218,6 +218,84 @@ try {
                         $slice20RecordRows.Count -ne 13 -or
                         $slice20BadRows.Count -ne 0 -or
                         $slice19ActiveRows.Count -ne 109) {
+                        $failures += 1
+                    }
+
+                    $slice21ActiveRepoDisposition = Join-Path $AgameRoot "reports\g40\active_repo_duplicate_final_disposition_after_slice21.csv"
+                    if (Test-Path -LiteralPath $slice21ActiveRepoDisposition) {
+                        $slice21Rows = @(Import-Csv -LiteralPath $slice21ActiveRepoDisposition)
+                        $slice21RuntimeRows = @($slice21Rows | Where-Object {
+                            $_.slice21_final_category -eq "canonical" -and
+                            $_.slice21_final_action -eq "active_runtime_asset_retained"
+                        })
+                        $slice21ReferenceRows = @($slice21Rows | Where-Object {
+                            $_.slice21_final_category -eq "external-reference" -and
+                            $_.slice21_final_action -eq "future_asset_migration_decision_required"
+                        })
+                        $slice21ValidationRows = @($slice21Rows | Where-Object {
+                            $_.slice21_final_category -eq "validation-evidence" -and
+                            $_.slice21_final_action -eq "validation_evidence_retained"
+                        })
+                        $slice21PlaceholderRows = @($slice21Rows | Where-Object {
+                            $_.slice21_final_category -eq "protected-source" -and
+                            $_.slice21_final_action -eq "placeholder_retained"
+                        })
+                        $slice21FontRows = @($slice21Rows | Where-Object {
+                            $_.slice21_final_category -eq "canonical" -and
+                            $_.slice21_final_action -eq "runtime_font_retained"
+                        })
+                        $slice21FutureMigrationRows = @($slice21Rows | Where-Object {
+                            $_.slice21_future_asset_migration_required -eq "true"
+                        })
+                        $slice21MissingRows = @($slice21Rows | Where-Object {
+                            -not (Test-Path -LiteralPath $_.current_file_path)
+                        })
+                        $slice21OutsideRepoRows = @($slice21Rows | Where-Object {
+                            -not $_.current_file_path.StartsWith($repoPath)
+                        })
+                        $slice21BadExtRows = @($slice21Rows | Where-Object {
+                            @(".png", ".gitkeep", ".otf") -notcontains [IO.Path]::GetExtension($_.current_file_path).ToLowerInvariant()
+                        })
+                        $slice21BadRows = @($slice21Rows | Where-Object {
+                            $_.slice21_physical_action -ne "none" -or
+                            $_.slice21_delete_approved -ne "false" -or
+                            $_.slice21_move_approved -ne "false" -or
+                            $_.slice21_archive_approved -ne "false" -or
+                            $_.slice21_copy_approved -ne "false" -or
+                            $_.slice21_g40_accounting_status -ne "retained_final_disposition"
+                        })
+
+                        Write-Output "duplicate_active_repo_final_disposition_after_slice21=OK $slice21ActiveRepoDisposition"
+                        Write-Output "duplicate_active_repo_final_disposition_rows_after_slice21=$($slice21Rows.Count)"
+                        Write-Output "duplicate_active_repo_runtime_asset_retained_rows_after_slice21=$($slice21RuntimeRows.Count)"
+                        Write-Output "duplicate_active_repo_external_reference_retained_rows_after_slice21=$($slice21ReferenceRows.Count)"
+                        Write-Output "duplicate_active_repo_validation_evidence_retained_rows_after_slice21=$($slice21ValidationRows.Count)"
+                        Write-Output "duplicate_active_repo_placeholder_retained_rows_after_slice21=$($slice21PlaceholderRows.Count)"
+                        Write-Output "duplicate_active_repo_runtime_font_retained_rows_after_slice21=$($slice21FontRows.Count)"
+                        Write-Output "duplicate_active_repo_future_asset_migration_required_rows_after_slice21=$($slice21FutureMigrationRows.Count)"
+                        Write-Output "duplicate_active_repo_missing_rows_after_slice21=$($slice21MissingRows.Count)"
+                        Write-Output "duplicate_active_repo_outside_repo_rows_after_slice21=$($slice21OutsideRepoRows.Count)"
+                        Write-Output "duplicate_active_repo_bad_extension_rows_after_slice21=$($slice21BadExtRows.Count)"
+                        Write-Output "duplicate_active_repo_bad_rows_after_slice21=$($slice21BadRows.Count)"
+                        Write-Output "duplicate_remaining_duplicate_review_after_slice21=0"
+                        Write-Output "duplicate_slice21_physical_action=none"
+                        Write-Output "duplicate_slice21_physical_dedupe_performed=false"
+                        Write-Output "future_asset_reference_migration_required=true"
+                        if ($slice21Rows.Count -ne 109 -or
+                            $slice21RuntimeRows.Count -ne 75 -or
+                            $slice21ReferenceRows.Count -ne 14 -or
+                            $slice21ValidationRows.Count -ne 9 -or
+                            $slice21PlaceholderRows.Count -ne 10 -or
+                            $slice21FontRows.Count -ne 1 -or
+                            $slice21FutureMigrationRows.Count -ne 14 -or
+                            $slice21MissingRows.Count -ne 0 -or
+                            $slice21OutsideRepoRows.Count -ne 0 -or
+                            $slice21BadExtRows.Count -ne 0 -or
+                            $slice21BadRows.Count -ne 0) {
+                            $failures += 1
+                        }
+                    } else {
+                        Write-Output "duplicate_active_repo_final_disposition_after_slice21=MISSING $slice21ActiveRepoDisposition"
                         $failures += 1
                     }
                 } else {

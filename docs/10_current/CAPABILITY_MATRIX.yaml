@@ -1,5 +1,5 @@
 document_status: current_capability_matrix
-updated_by: G40 Slice 20
+updated_by: G40 Slice 21
 
 repository:
   active_repo_path: "D:\\AGAME1\\_repo_cache\\Game1_work"
@@ -57,6 +57,17 @@ g40_cleanup:
   workflow_record_retained_rows_20: 13
   workflow_blocker_physical_action_20: none
   active_repo_duplicate_review_remaining_20: 109
+  active_repo_duplicate_final_disposition_21: complete_with_notes
+  active_repo_duplicate_final_disposition_rows_21: 109
+  active_runtime_asset_retained_rows_21: 75
+  external_reference_future_asset_migration_rows_21: 14
+  validation_evidence_retained_rows_21: 9
+  protected_source_placeholder_retained_rows_21: 10
+  runtime_font_retained_rows_21: 1
+  active_repo_duplicate_physical_action_21: none
+  active_repo_duplicate_delete_move_archive_copy_approvals_21: 0
+  duplicate_review_unresolved_for_g40_accounting_after_slice21: 0
+  future_asset_reference_migration_required_after_slice21: true
   branch_commit_push: complete
   slice_10_commit_hash: "ad883310232ca9756371fb68eb3d0176a56e809e"
   slice_11_commit_hash: "fac8310c970260c333cb3b716d43b3024e161a75"
@@ -135,9 +146,9 @@ validation:
   g40_handoff_doc: "docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md"
   pass_with_notes_reasons:
     - g40_cleanup_in_progress
-    - duplicate_execution_partial_remaining_manual_and_reference_review
     - generated_cache_duplicates_policy_closed_after_slice18_without_delete
     - residual_canonical_and_protected_duplicates_classified_after_slice19_without_delete
     - workflow_duplicate_blockers_classified_after_slice20_without_delete
-    - duplicate_state_still_has_active_repo_duplicate_review_residuals
+    - active_repo_duplicates_closed_by_retained_disposition_after_slice21
+    - future_asset_reference_migration_required_outside_g40
     - godot_project_load_parser_smoke_not_run_due_boundary

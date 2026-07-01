@@ -1,6 +1,6 @@
 # G40 Full Project Cleanup Validation
 
-Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 20.
+Status: IN_PROGRESS / PASS_WITH_NOTES after G40 Slice 21.
 
 Chinese summary: G40 validation currently confirms the cleanup state is explainable and current validation tools work. It does not yet mean the project is fully clean, and it does not claim gameplay runtime PASS or manual playtest PASS.
 
@@ -14,11 +14,12 @@ Reasons:
 
 ```text
 g40_cleanup_in_progress=true
-duplicate_execution_partial=true
+duplicate_execution_partial=false
 slice_17_duplicate_state_refresh_complete=true
 slice_18_generated_cache_policy_closure_complete=true
 slice_19_residual_final_disposition_complete=true
 slice_20_workflow_blocker_final_disposition_complete=true
+slice_21_active_repo_duplicate_retained_disposition_complete=true
 duplicate_manifest_after_slice16_total_rows=23306
 duplicate_manifest_after_slice16_existing_rows=13208
 duplicate_manifest_after_slice16_missing_rows=10098
@@ -37,6 +38,14 @@ workflow_blocker_final_disposition_rows_after_slice20=94
 workflow_transport_generated_reference_retained_rows_after_slice20=81
 workflow_record_retained_rows_after_slice20=13
 active_repo_duplicate_review_remaining_after_slice20=109
+active_repo_duplicate_final_disposition_rows_after_slice21=109
+active_runtime_asset_retained_rows_after_slice21=75
+external_reference_future_asset_migration_rows_after_slice21=14
+validation_evidence_retained_rows_after_slice21=9
+protected_source_placeholder_retained_rows_after_slice21=10
+runtime_font_retained_rows_after_slice21=1
+duplicate_review_unresolved_for_g40_accounting_after_slice21=0
+future_asset_reference_migration_required_after_slice21=true
 remaining_needs_manual_decision_after_slice16=109
 remaining_blocked_by_reference_after_slice16=155
 protected_source_rows_still_present_after_slice16=670
@@ -84,6 +93,7 @@ gameplay_runtime_pass_claimed=false
 | Slice 18 | complete with notes | 10002 workflow Edge CDP generated-cache duplicate rows classified as `generated-ignore / processed_by_policy_no_delete`; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete |
 | Slice 19 | complete with notes | 3003 canonical/protected-source residual rows classified as final non-destructive dispositions; 109 active-repo duplicate-review rows and 94 historical/reference/workflow-state rows remain explicit later gate inputs; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete |
 | Slice 20 | complete with notes | 94 workflow blocker rows classified as retained workflow/generated evidence; 109 tracked active-repo duplicate-review rows remain the only duplicate-review gate input; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete |
+| Slice 21 | complete with notes | 109 active-repo duplicate-review rows classified as retained final dispositions for G40 accounting; no file was deleted, moved, archived, copied, restored, imported, cleaned, or marked safe to delete; future physical consolidation requires a separate asset-reference migration / art asset dedupe gate |
 
 ## Current Tool Markers
 
@@ -147,7 +157,7 @@ G39 navigation boundary validation=PASS
 - Slice 19 classifies only already-final canonical/protected-source residual rows:
   - final non-destructive disposition rows: 3003
   - physical action: none
-  - active repo duplicate-review rows still requiring asset-reference audit: 109
+  - active repo duplicate-review rows still requiring asset-reference audit before Slice 21: 109
   - historical/reference/workflow-state rows still requiring later decision: 94
   - true unresolved rows after Slice 19 classification: 203
   - evidence: `D:\AGAME1\reports\g40\residual_duplicate_final_disposition_after_slice19.md`
@@ -160,10 +170,24 @@ G39 navigation boundary validation=PASS
   - Edge/CDP transport generated/reference-retained rows: 81
   - workflow state/policy/receipt/report retained rows: 13
   - physical action: none
-  - active repo duplicate-review rows still requiring asset-reference audit: 109
+  - active repo duplicate-review rows still requiring asset-reference audit before Slice 21: 109
   - evidence: `D:\AGAME1\reports\g40\workflow_blocker_final_disposition_after_slice20.md`
   - evidence CSV: `D:\AGAME1\reports\g40\workflow_blocker_final_disposition_after_slice20.csv`
   - summary: `D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice20.md`
+- Slice 21 classifies active-repo duplicate-review rows as retained final dispositions:
+  - active-repo rows classified: 109
+  - active runtime assets retained: 75
+  - legacy/reference assets retained for future migration decision: 14
+  - validation screenshot evidence retained: 9
+  - UE placeholder `.gitkeep` rows retained: 10
+  - runtime font retained: 1
+  - physical action: none
+  - delete/move/archive/copy approvals: 0
+  - unresolved duplicate-review rows for G40 accounting: 0
+  - future asset-reference migration required: true
+  - evidence: `D:\AGAME1\reports\g40\active_repo_duplicate_final_disposition_after_slice21.md`
+  - evidence CSV: `D:\AGAME1\reports\g40\active_repo_duplicate_final_disposition_after_slice21.csv`
+  - summary: `D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice21.md`
 - No files were deleted; `delete_execution_log.csv` is header-only.
 - Remaining active-repo asset/reference decisions are recorded in refreshed Slice 19/20 reports under `D:\AGAME1\reports\g40`.
 - G40 docs/tools branch commit and push are complete:
@@ -179,6 +203,6 @@ G39 navigation boundary validation=PASS
 
 The following must wait for later audited slices:
 
-1. Later decision on the 109 active-repo duplicate-review rows using the Slice 19/20 reports rather than stale Slice 9B counts.
+1. Future asset-reference migration / art asset dedupe, if physical consolidation of retained active-repo duplicate assets is desired. This is outside G40 and requires a separate gate.
 2. Godot headless smoke, if a later gate supplies or approves an in-boundary executable path.
 3. Main merge/push gate, if and when G40 is accepted.

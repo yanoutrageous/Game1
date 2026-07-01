@@ -1,6 +1,6 @@
 # Current State
 
-Document status: current summary after G40 Slice 20 workflow duplicate blocker classification.
+Document status: current summary after G40 Slice 21 active-repo duplicate retained classification.
 
 ## Repository
 
@@ -76,7 +76,8 @@ Moved legacy source/handoff roots:
 - Slice 17 duplicate evidence refresh: regenerated current duplicate-state evidence after Slice 15/16 topology and worktree cleanup; no delete, move, archive, cache cleanup, protected-source cleanup, or active-repo duplicate cleanup was performed.
 - Slice 18 generated-cache duplicate policy closure: classified 10002 existing workflow Edge CDP generated-cache duplicate rows as `generated-ignore / processed_by_policy_no_delete`; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete.
 - Slice 19 residual duplicate final-disposition classification: classified 3003 existing canonical/protected-source residual rows as final non-destructive dispositions; no file was deleted, moved, archived, copied, or marked safe to delete. It left 109 tracked active-repo duplicate-review rows and 94 historical/reference/workflow-state rows as explicit later gate inputs.
-- Slice 20 workflow duplicate blocker classification: classified the 94 workflow historical/reference/workflow-state rows as final non-destructive workflow-retained dispositions; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete. It left only the 109 tracked active-repo duplicate-review rows as the remaining duplicate gate input.
+- Slice 20 workflow duplicate blocker classification: classified the 94 workflow historical/reference/workflow-state rows as final non-destructive workflow-retained dispositions; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete. At that point it left only the 109 tracked active-repo duplicate-review rows as the duplicate gate input before Slice 21.
+- Slice 21 active-repo duplicate retained classification: classified the remaining 109 tracked active-repo duplicate-review rows as retained final dispositions for G40 accounting; no file was deleted, moved, archived, copied, restored, imported, cleaned, or marked safe to delete. Future physical consolidation requires a separate asset-reference migration / art asset dedupe gate.
 
 Slice 9B archived two approved non-registered stale checkouts:
 
@@ -85,7 +86,7 @@ D:\AGAME1\archive\stale_checkouts\Game_git_compare
 D:\AGAME1\archive\stale_checkouts\Game_feature_editor_playable_prototype
 ```
 
-Generated cache/profile duplicate rows are policy-closed only where Slice 18 explicitly records `generated-ignore / processed_by_policy_no_delete`. Slice 19 classifies only already-final canonical/protected-source rows as final non-destructive dispositions. Active repo duplicate-review rows and historical/reference/workflow-state rows remain visible residual evidence in `D:\AGAME1\reports\g40`. Registered worktree cleanup is resolved; the only registered worktree is the active repo.
+Generated cache/profile duplicate rows are policy-closed only where Slice 18 explicitly records `generated-ignore / processed_by_policy_no_delete`. Slice 19 classifies only already-final canonical/protected-source rows as final non-destructive dispositions. Slice 20 classifies workflow blockers as retained workflow/generated evidence. Slice 21 classifies the remaining active-repo duplicate-review rows as retained final dispositions, not as physical dedupe. Registered worktree cleanup is resolved; the only registered worktree is the active repo.
 
 Slice 17 refreshed the stale duplicate evidence because earlier reports still contained paths removed by later topology/worktree cleanup. Current evidence files:
 
@@ -178,7 +179,32 @@ workflow_blocker_physical_action=none
 active_repo_duplicate_review_remaining=109
 ```
 
-Slice 20 does not physically remediate active repo duplicate assets. Those 109 tracked active-repo rows remain the current duplicate-review gate input.
+Slice 20 does not physically remediate active repo duplicate assets. Those 109 tracked active-repo rows remained the duplicate-review gate input until Slice 21 retained classification.
+
+Slice 21 classified the active-repo duplicate-review subset without deleting or moving any file. Current Slice 21 evidence files:
+
+```text
+D:\AGAME1\reports\g40\active_repo_duplicate_final_disposition_after_slice21.csv
+D:\AGAME1\reports\g40\active_repo_duplicate_final_disposition_after_slice21.md
+D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice21.md
+```
+
+Slice 21 active-repo duplicate retained classification counts:
+
+```text
+active_repo_duplicate_final_disposition_rows=109
+active_runtime_asset_retained_rows=75
+external_reference_future_asset_migration_rows=14
+validation_evidence_retained_rows=9
+protected_source_placeholder_retained_rows=10
+runtime_font_retained_rows=1
+active_repo_duplicate_physical_action=none
+delete_move_archive_copy_approvals=0
+duplicate_review_unresolved_for_g40_accounting=0
+future_asset_reference_migration_required=true
+```
+
+Slice 21 does not physically remediate active repo duplicate assets. It closes G40 duplicate accounting by retained disposition only. Physical asset consolidation remains a future non-G40 asset-reference migration / art asset dedupe decision.
 
 G40 branch commit/push evidence:
 
@@ -223,7 +249,7 @@ Slice 15 reduced registered worktree ambiguity. It left one dirty generated-meta
 
 Slice 16 resolved the remaining registered dirty generated-metadata worktree. The exact cleanup and removal evidence is recorded at `D:\AGAME1\reports\g40\worktree_dirty_metadata_resolution_log.md`. Current `git worktree list --porcelain` shows only the active repo `D:\AGAME1\_repo_cache\Game1_work`.
 
-Slice 17 refreshed duplicate evidence only. Slice 18 policy-closed only the audited workflow Edge CDP generated-cache subset as `generated-ignore / processed_by_policy_no_delete`. Slice 19 classified already-final canonical/protected-source rows as final non-destructive dispositions. Slice 20 classified workflow blocker rows as retained workflow/generated evidence. The remaining duplicate-review evidence is now the 109 tracked active-repo rows requiring a later audited asset-reference decision.
+Slice 17 refreshed duplicate evidence only. Slice 18 policy-closed only the audited workflow Edge CDP generated-cache subset as `generated-ignore / processed_by_policy_no_delete`. Slice 19 classified already-final canonical/protected-source rows as final non-destructive dispositions. Slice 20 classified workflow blocker rows as retained workflow/generated evidence. Slice 21 classified the 109 tracked active-repo rows as retained final dispositions for G40 accounting. Future physical asset consolidation requires a separate asset-reference migration / art asset dedupe gate.
 
 G40 is a cleanup and validation stabilization stage. Latest gameplay baseline before G40 is M5 at `aa57a4270e047ef83020c333b30af225aa1a5ffb`; G40 does not claim new gameplay content.
 
