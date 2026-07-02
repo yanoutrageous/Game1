@@ -92,3 +92,20 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
   `screenshots/slice3/godot_run_hud_after_slice3_minimap_hud32_pass16_smoke.png`.
 - Result: `PARTIAL`. The imported 32px player marker is visible in the smoke
   screenshot, but the 10x10 HUD minimap remains dense and below the UE floor.
+
+## Applied ART21R2 Map Overlay Tile Pass
+
+- Source set: existing `D:\AGAME1\sources\draw\30_game_ready\icons\64`
+  imports already registered as `ui.art19.map64.*`.
+- Runtime target: `Godot/GraytailGodot/assets/ui/art19/map64`.
+- Applied states: `unknown`, `explored`, `scanned`, `player`, `exit`, `mine`,
+  and `chest`.
+- `flagged` and `event` stay on the existing ART21 map assets because ART20
+  left `map_overlay_event_marker_64` blocked and there is no approved ART19 64px
+  event/flag runtime asset in the current manifest.
+- Evidence screenshots:
+  `screenshots/slice6/godot_map_overlay_art19_map64_pass27_smoke.png` and
+  `screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png`.
+- Result: `PARTIAL`. The map cells are no longer the small generated empty
+  ART21 squares, but the modal frame and dense unknown-cell wall still fall below
+  the UE-floor Map Overlay target.

@@ -19,6 +19,7 @@ $requiredFiles = @(
     "docs/art/validation/art21r2/ui_placement_contract_v3.csv",
     "docs/art/validation/art21r2/ART21R2_SLICE2_MAIN_MENU_PHYSICAL_BOARD_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE3_RUN_INPUT_AND_LAYER_REPORT.md",
+    "docs/art/validation/art21r2/ART21R2_SLICE6_MAP_OVERLAY_TILE_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_DRAW_SLICE_AUDIT.md"
 )
 
@@ -62,7 +63,9 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_after_start_explore_direct_deploy_prep_pass26_q_input_check.png",
     "screenshots/slice3/godot_run_hud_before_q_inventory_pass26_smoke.png",
     "screenshots/slice3/godot_run_hud_q_inventory_open_pass26_smoke.png",
-    "screenshots/slice3/godot_run_hud_m_map_open_pass26_smoke.png"
+    "screenshots/slice3/godot_run_hud_m_map_open_pass26_smoke.png",
+    "screenshots/slice6/godot_map_overlay_art19_map64_pass27_smoke.png",
+    "screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -179,6 +182,7 @@ $requiredSlots = @(
     "run_hud.keyboard_q_inventory",
     "map_overlay.map_panel",
     "map_overlay.map_cell_unknown",
+    "map_overlay.map_cell_explored",
     "map_overlay.map_marker_event",
     "inventory.inventory_panel_frame",
     "ground_loot.ground_loot_panel_frame",
@@ -218,7 +222,9 @@ $requiredDrawAuditPatterns = @(
     "magenta-background root sheets",
     "minimap_hud_cut_manifest.csv",
     "map_overlay_event_marker_64",
-    "candidate crop with purple remnants is not runtime-ready evidence"
+    "candidate crop with purple remnants is not runtime-ready evidence",
+    "Applied ART21R2 Map Overlay Tile Pass",
+    "ui.art19.map64.*"
 )
 foreach ($pattern in $requiredDrawAuditPatterns) {
     if ($drawSliceAudit -notmatch [regex]::Escape($pattern)) {
@@ -342,8 +348,12 @@ $requiredManifestIds = @(
     'ui.art21r2.minimap.hud.explored',
     'ui.art21r2.minimap.hud.scanned',
     'ui.art19.map64.player',
+    'ui.art19.map64.unknown',
     'ui.art19.map64.explored',
-    'ui.art19.map64.scanned'
+    'ui.art19.map64.scanned',
+    'ui.art19.map64.mine',
+    'ui.art19.map64.chest',
+    'ui.art19.map64.exit'
 )
 foreach ($assetId in $requiredManifestIds) {
     if ($manifest -notmatch [regex]::Escape($assetId)) {
@@ -354,7 +364,14 @@ foreach ($assetId in $requiredManifestIds) {
 $requiredRuntimeAssets = @(
     "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_player_32.png",
     "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_explored_32.png",
-    "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_scanned_32.png"
+    "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_scanned_32.png",
+    "Godot/GraytailGodot/assets/ui/art19/map64/player_marker_64.png",
+    "Godot/GraytailGodot/assets/ui/art19/map64/unknown_cell_64.png",
+    "Godot/GraytailGodot/assets/ui/art19/map64/explored_cell_64.png",
+    "Godot/GraytailGodot/assets/ui/art19/map64/scanned_cell_64.png",
+    "Godot/GraytailGodot/assets/ui/art19/map64/mine_icon_64.png",
+    "Godot/GraytailGodot/assets/ui/art19/map64/chest_icon_64.png",
+    "Godot/GraytailGodot/assets/ui/art19/map64/exit_icon_64.png"
 )
 foreach ($assetPath in $requiredRuntimeAssets) {
     $fullPath = Join-Path $root $assetPath
@@ -370,6 +387,26 @@ $mapOverlayPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/map_overlay/ma
 $mapOverlay = Get-Content -LiteralPath $mapOverlayPath -Raw
 if ($mapOverlay -notmatch 'transparent_style_box') {
     Fail "map_overlay_panel.gd should use transparent hitboxes for image-backed map cells."
+}
+if ($mapOverlay -notmatch '_map_overlay_asset_ref_for_marker') {
+    Fail "map_overlay_panel.gd should route map overlay cells through the ART21R2 asset ref helper."
+}
+if ($mapOverlay -notmatch 'art19_map64_ref') {
+    Fail "map_overlay_panel.gd should use draw-derived ART19 64px assets for large map overlay cells."
+}
+
+$slice6MapOverlayReport = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_SLICE6_MAP_OVERLAY_TILE_REPORT.md") -Raw
+$requiredSlice6MapOverlayPatterns = @(
+    "Status: PARTIAL",
+    "art19_map64_ref",
+    "godot_map_overlay_art19_map64_pass27_smoke.png",
+    "godot_map_overlay_art19_map64_selected_pass27_smoke.png",
+    "No generated replacement art was introduced"
+)
+foreach ($pattern in $requiredSlice6MapOverlayPatterns) {
+    if ($slice6MapOverlayReport -notmatch [regex]::Escape($pattern)) {
+        Fail "ART21R2 Slice 6 Map Overlay report missing required evidence: $pattern"
+    }
 }
 
 $miniMapPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/minimap/minimap_panel.gd"

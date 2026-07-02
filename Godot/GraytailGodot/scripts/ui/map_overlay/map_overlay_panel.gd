@@ -167,7 +167,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	button.add_theme_color_override("font_color", marker_color)
 	button.add_theme_font_size_override("font_size", maxi(12, int(min(marker_size.x, marker_size.y) * 0.52)))
 	_apply_marker_button_style(button, theme_key)
-	var texture := Art09ManifestAssetMappingScript.resolve_texture(Art21UIPlacementContractScript.map_ref(_art21_marker_state(marker)))
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(_map_overlay_asset_ref_for_marker(marker))
 	if texture != null:
 		button.icon = texture
 		button.expand_icon = false
@@ -222,6 +222,15 @@ func _art21_marker_state(marker: Dictionary) -> StringName:
 	if bool(marker.get("scanned", false)) or int(marker.get("adjacent_mines", -1)) > 0:
 		return &"scanned"
 	return &"explored"
+
+
+func _map_overlay_asset_ref_for_marker(marker: Dictionary) -> Dictionary:
+	var state := _art21_marker_state(marker)
+	match state:
+		&"flagged", &"event":
+			return Art21UIPlacementContractScript.map_ref(state)
+		_:
+			return Art09ManifestAssetMappingScript.art19_map64_ref(state)
 
 
 func _marker_style(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
