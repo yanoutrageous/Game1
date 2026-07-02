@@ -191,14 +191,14 @@ func _apply_art21_panel_frame() -> void:
 		return
 	var style := StyleBoxTexture.new()
 	style.texture = texture
-	style.texture_margin_left = 28
-	style.texture_margin_top = 28
-	style.texture_margin_right = 28
-	style.texture_margin_bottom = 28
-	style.content_margin_left = 18
-	style.content_margin_top = 18
-	style.content_margin_right = 18
-	style.content_margin_bottom = 18
+	style.texture_margin_left = 38
+	style.texture_margin_top = 38
+	style.texture_margin_right = 38
+	style.texture_margin_bottom = 38
+	style.content_margin_left = 30
+	style.content_margin_top = 30
+	style.content_margin_right = 30
+	style.content_margin_bottom = 30
 	style.draw_center = true
 	add_theme_stylebox_override("panel", style)
 

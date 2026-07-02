@@ -20,6 +20,7 @@ $requiredFiles = @(
     "docs/art/validation/art21r2/ART21R2_SLICE2_MAIN_MENU_PHYSICAL_BOARD_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE3_RUN_INPUT_AND_LAYER_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE6_MAP_OVERLAY_TILE_REPORT.md",
+    "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_FRAME_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_DRAW_SLICE_AUDIT.md"
 )
 
@@ -65,7 +66,10 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_run_hud_q_inventory_open_pass26_smoke.png",
     "screenshots/slice3/godot_run_hud_m_map_open_pass26_smoke.png",
     "screenshots/slice6/godot_map_overlay_art19_map64_pass27_smoke.png",
-    "screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png"
+    "screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png",
+    "screenshots/slice6/godot_inventory_zujian3_modal_frame_pass28_smoke.png",
+    "screenshots/slice6/godot_ground_loot_zujian3_modal_frame_pass28_smoke.png",
+    "screenshots/slice6/godot_result_zujian3_modal_frame_pass28_smoke.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -224,7 +228,10 @@ $requiredDrawAuditPatterns = @(
     "map_overlay_event_marker_64",
     "candidate crop with purple remnants is not runtime-ready evidence",
     "Applied ART21R2 Map Overlay Tile Pass",
-    "ui.art19.map64.*"
+    "ui.art19.map64.*",
+    "Applied ART21R2 Modal Frame Pass",
+    "modal_cut_dry_run_plan.csv",
+    "purple-like pixels from 3690 to 0"
 )
 foreach ($pattern in $requiredDrawAuditPatterns) {
     if ($drawSliceAudit -notmatch [regex]::Escape($pattern)) {
@@ -330,6 +337,12 @@ $requiredPlacementPatterns = @(
     'ui\.art21r2\.run\.left_info_rail\.frame',
     'ui\.art21r2\.run\.status_card\.frame',
     'ui\.art21r2\.run\.bottom_overlay\.frame',
+    'ui\.art21r2\.modal\.inventory\.frame',
+    'ui\.art21r2\.modal\.ground_loot\.frame',
+    'ui\.art21r2\.modal\.result\.frame',
+    'art21r2\.modal\.inventory\.frame',
+    'art21r2\.modal\.ground_loot\.frame',
+    'art21r2\.modal\.result\.frame',
     'run_hud\.left_info_rail'
 )
 foreach ($pattern in $requiredPlacementPatterns) {
@@ -347,6 +360,9 @@ $requiredManifestIds = @(
     'ui.art21r2.minimap.hud.player',
     'ui.art21r2.minimap.hud.explored',
     'ui.art21r2.minimap.hud.scanned',
+    'ui.art21r2.modal.inventory.frame',
+    'ui.art21r2.modal.ground_loot.frame',
+    'ui.art21r2.modal.result.frame',
     'ui.art19.map64.player',
     'ui.art19.map64.unknown',
     'ui.art19.map64.explored',
@@ -365,6 +381,9 @@ $requiredRuntimeAssets = @(
     "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_player_32.png",
     "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_explored_32.png",
     "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_scanned_32.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/modal/ui_art21r2_modal_inventory_frame.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/modal/ui_art21r2_modal_ground_loot_frame.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/modal/ui_art21r2_modal_result_frame.png",
     "Godot/GraytailGodot/assets/ui/art19/map64/player_marker_64.png",
     "Godot/GraytailGodot/assets/ui/art19/map64/unknown_cell_64.png",
     "Godot/GraytailGodot/assets/ui/art19/map64/explored_cell_64.png",
@@ -380,6 +399,113 @@ foreach ($assetPath in $requiredRuntimeAssets) {
     }
     if ((Get-Item -LiteralPath $fullPath).Length -le 0) {
         Fail "ART21R2 runtime minimap HUD asset is empty: $assetPath"
+    }
+}
+
+$modalCutToolPath = Join-Path $root "tools/art21r2_cut_modal_assets.py"
+if (-not (Test-Path -LiteralPath $modalCutToolPath -PathType Leaf)) {
+    Fail "Missing ART21R2 modal cut tool: tools/art21r2_cut_modal_assets.py"
+}
+$modalCutTool = Get-Content -LiteralPath $modalCutToolPath -Raw
+$requiredModalToolPatterns = @(
+    'modal_cut_dry_run_plan.csv',
+    '--write-runtime',
+    '--force',
+    'dark_purple_fringe',
+    'ui.art21r2.modal.inventory.frame',
+    'ui.art21r2.modal.ground_loot.frame',
+    'ui.art21r2.modal.result.frame'
+)
+foreach ($pattern in $requiredModalToolPatterns) {
+    if ($modalCutTool -notmatch [regex]::Escape($pattern)) {
+        Fail "ART21R2 modal cut tool missing required pattern: $pattern"
+    }
+}
+
+$modalManifestRoot = "D:\AGAME1\sources\art\ART-21R2\_manifest"
+$requiredModalManifestFiles = @(
+    "modal_staging_manifest.csv",
+    "modal_cut_dry_run_plan.csv",
+    "modal_cut_manifest.csv",
+    "modal_cut_summary.json"
+)
+foreach ($file in $requiredModalManifestFiles) {
+    $path = Join-Path $modalManifestRoot $file
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        Fail "Missing ART21R2 modal manifest file: $path"
+    }
+    if ((Get-Item -LiteralPath $path).Length -le 0) {
+        Fail "ART21R2 modal manifest file is empty: $path"
+    }
+}
+
+$modalCutRows = @(Import-Csv -LiteralPath (Join-Path $modalManifestRoot "modal_cut_manifest.csv"))
+if ($modalCutRows.Count -ne 3) {
+    Fail "ART21R2 modal cut manifest must have exactly 3 rows: $($modalCutRows.Count)"
+}
+$requiredModalAssetIds = @(
+    "ui.art21r2.modal.inventory.frame",
+    "ui.art21r2.modal.ground_loot.frame",
+    "ui.art21r2.modal.result.frame"
+)
+foreach ($assetId in $requiredModalAssetIds) {
+    $row = $modalCutRows | Where-Object { $_.asset_id -eq $assetId }
+    if (-not $row) {
+        Fail "ART21R2 modal cut manifest missing asset id: $assetId"
+    }
+    if ($row.status -ne "runtime_written") {
+        Fail "ART21R2 modal cut manifest row is not runtime_written: $assetId"
+    }
+    if ($row.purple_like_after -ne "0") {
+        Fail "ART21R2 modal cut manifest row still has purple-like pixels: $assetId"
+    }
+    if ($row.cut_sha256 -ne "7CBB46D500EE5E620BD10152BC7F6FDA9D0199958C5A7666482035CFCD1F1104") {
+        Fail "ART21R2 modal cut manifest row has unexpected cut hash: $assetId"
+    }
+}
+
+$modalSummary = Get-Content -LiteralPath (Join-Path $modalManifestRoot "modal_cut_summary.json") -Raw
+if ($modalSummary -notmatch '"write_runtime": true' -or $modalSummary -notmatch '"purple_like_after": 0') {
+    Fail "ART21R2 modal cut summary must record runtime write and purple cleanup."
+}
+
+$inventoryPanelPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/inventory/inventory_panel.gd"
+$inventoryPanel = Get-Content -LiteralPath $inventoryPanelPath -Raw
+if ($inventoryPanel -notmatch 'texture_margin_left\s*=\s*38' -or $inventoryPanel -notmatch 'content_margin_left\s*=\s*30') {
+    Fail "InventoryPanel must use ART21R2 modal 9-slice margins."
+}
+$groundLootPanelPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/ground_loot/ground_loot_panel.gd"
+$groundLootPanel = Get-Content -LiteralPath $groundLootPanelPath -Raw
+if ($groundLootPanel -notmatch 'texture_margin_left\s*=\s*38' -or $groundLootPanel -notmatch 'content_margin_left\s*=\s*30') {
+    Fail "GroundLootPanel must use ART21R2 modal 9-slice margins."
+}
+$resultPanelPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/result/result_panel.gd"
+$resultPanel = Get-Content -LiteralPath $resultPanelPath -Raw
+if ($resultPanel -notmatch 'NinePatchRect' -or $resultPanel -notmatch 'patch_margin_left\s*=\s*38') {
+    Fail "ResultPanel must use a NinePatchRect ART21R2 modal frame."
+}
+if ($resultPanel -match 'backdrop\s*=\s*ColorRect\.new\(\)') {
+    Fail "ResultPanel must not recreate the legacy visible ColorRect backdrop."
+}
+if ($resultPanel -notmatch 'backdrop\.visible\s*=\s*false') {
+    Fail "ResultPanel must hide any legacy Backdrop ColorRect."
+}
+
+$slice6ModalReport = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_SLICE6_MODAL_FRAME_REPORT.md") -Raw
+$requiredSlice6ModalPatterns = @(
+    "Status",
+    "PARTIAL",
+    "modal_staging_manifest.csv",
+    "modal_cut_dry_run_plan.csv",
+    "purple/fringe count",
+    "godot_inventory_zujian3_modal_frame_pass28_smoke.png",
+    "godot_ground_loot_zujian3_modal_frame_pass28_smoke.png",
+    "godot_result_zujian3_modal_frame_pass28_smoke.png",
+    "Pause -> Exit current run"
+)
+foreach ($pattern in $requiredSlice6ModalPatterns) {
+    if ($slice6ModalReport -notmatch [regex]::Escape($pattern)) {
+        Fail "ART21R2 Slice 6 Modal Frame report missing required evidence: $pattern"
     }
 }
 

@@ -41,9 +41,12 @@ const ART21_COMPONENT_BY_VISUAL_KEY := {
 	&"map_overlay.marker.exit": &"ui.art21.map.marker.exit",
 	&"map_overlay.marker.mine": &"ui.art21.map.marker.mine",
 	&"map_overlay.marker.chest": &"ui.art21.map.marker.chest",
-	&"inventory.panel.frame": &"ui.art21.inventory.panel.frame",
-	&"ground_loot.panel.frame": &"ui.art21.ground_loot.panel.frame",
-	&"result.modal.frame": &"ui.art21.result.modal.frame",
+	&"inventory.panel.frame": &"ui.art21r2.modal.inventory.frame",
+	&"ground_loot.panel.frame": &"ui.art21r2.modal.ground_loot.frame",
+	&"result.modal.frame": &"ui.art21r2.modal.result.frame",
+	&"art21r2.modal.inventory.frame": &"ui.art21r2.modal.inventory.frame",
+	&"art21r2.modal.ground_loot.frame": &"ui.art21r2.modal.ground_loot.frame",
+	&"art21r2.modal.result.frame": &"ui.art21r2.modal.result.frame",
 }
 
 const SLOT_VISUAL_KEY := {
@@ -58,9 +61,9 @@ const SLOT_VISUAL_KEY := {
 	&"run_hud.left_info_rail": &"run.left_info_rail.frame",
 	&"run_hud.top_right_status_card": &"run.status_card.frame",
 	&"run_hud.bottom_overlay": &"run.bottom_overlay.frame",
-	&"inventory.inventory_panel_frame": &"inventory.panel.frame",
-	&"ground_loot.ground_loot_panel_frame": &"ground_loot.panel.frame",
-	&"result.result_modal_frame": &"result.modal.frame",
+	&"inventory.inventory_panel_frame": &"art21r2.modal.inventory.frame",
+	&"ground_loot.ground_loot_panel_frame": &"art21r2.modal.ground_loot.frame",
+	&"result.result_modal_frame": &"art21r2.modal.result.frame",
 }
 
 const PANEL_VISUAL_KEY_BY_ROLE := {

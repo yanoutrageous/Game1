@@ -109,3 +109,27 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
 - Result: `PARTIAL`. The map cells are no longer the small generated empty
   ART21 squares, but the modal frame and dense unknown-cell wall still fall below
   the UE-floor Map Overlay target.
+
+## Applied ART21R2 Modal Frame Pass
+
+- Source sheet: `D:\AGAME1\sources\draw\Zujian3.png`.
+- Source candidate:
+  `D:\AGAME1\sources\draw\10_working\candidates\Zujian3\Zujian3_candidate_001.png`.
+- Dedicated ART21R2 manifests:
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_staging_manifest.csv`,
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_cut_dry_run_plan.csv`,
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_cut_manifest.csv`, and
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_cut_summary.json`.
+- Runtime target: `Godot/GraytailGodot/assets/ui/art21r2/modal`.
+- Imported slots: `inventory_panel_frame`, `ground_loot_panel_frame`, and
+  `result_modal_frame`.
+- The first cleanup threshold left visible purple fringe in preview, so it was
+  not accepted. The final script rule reduced purple-like pixels from 3690 to 0
+  and then overwrote only the same-turn generated modal PNGs with `--force`.
+- Evidence screenshots:
+  `screenshots/slice6/godot_inventory_zujian3_modal_frame_pass28_smoke.png`,
+  `screenshots/slice6/godot_ground_loot_zujian3_modal_frame_pass28_smoke.png`,
+  and `screenshots/slice6/godot_result_zujian3_modal_frame_pass28_smoke.png`.
+- Result: `PARTIAL`. The modal frame material is now draw-sliced and
+  image-owned, but row buttons, result buttons, title treatment, and typography
+  remain below the UE/Base floor.

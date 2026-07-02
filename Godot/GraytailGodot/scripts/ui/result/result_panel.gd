@@ -12,7 +12,7 @@ signal return_main_requested
 signal return_deploy_requested
 
 var result_title_art: TextureRect
-var result_modal_art: TextureRect
+var result_modal_art: NinePatchRect
 
 
 func _ready() -> void:
@@ -51,25 +51,26 @@ func hide_result() -> void:
 
 func _ensure_backdrop() -> void:
 	var backdrop := get_node_or_null("Backdrop") as ColorRect
-	if backdrop == null:
-		backdrop = ColorRect.new()
-		backdrop.name = "Backdrop"
-		backdrop.color = PresentationTheme.panel_color()
-		backdrop.position = Vector2(-8, -8)
-		backdrop.size = Vector2(636, 456)
-		backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(backdrop)
-		move_child(backdrop, 0)
-	result_modal_art = get_node_or_null("ResultModalFrame") as TextureRect
+	if backdrop != null:
+		backdrop.color = Color(0, 0, 0, 0)
+		backdrop.visible = false
+	result_modal_art = get_node_or_null("ResultModalFrame") as NinePatchRect
 	if result_modal_art == null:
-		result_modal_art = TextureRect.new()
+		var legacy_modal := get_node_or_null("ResultModalFrame") as TextureRect
+		if legacy_modal != null:
+			legacy_modal.name = "ResultModalFrameLegacy"
+			legacy_modal.visible = false
+		result_modal_art = NinePatchRect.new()
 		result_modal_art.name = "ResultModalFrame"
 		result_modal_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		result_modal_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		result_modal_art.stretch_mode = TextureRect.STRETCH_SCALE
 		result_modal_art.modulate = Color(1.0, 1.0, 1.0, 0.96)
+		result_modal_art.patch_margin_left = 38
+		result_modal_art.patch_margin_top = 38
+		result_modal_art.patch_margin_right = 38
+		result_modal_art.patch_margin_bottom = 38
+		result_modal_art.draw_center = true
 		add_child(result_modal_art)
-		move_child(result_modal_art, 1)
+		move_child(result_modal_art, 0)
 	var modal_texture := Art21UIPlacementContractScript.texture_for_slot(&"result", &"result_modal_frame", &"ui.art19.panel.terminal_main")
 	if modal_texture != null:
 		result_modal_art.texture = modal_texture
@@ -133,6 +134,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		size = Vector2(620, 440)
 	var backdrop := get_node_or_null("Backdrop") as ColorRect
 	if backdrop != null:
+		backdrop.visible = false
+		backdrop.color = Color(0, 0, 0, 0)
 		backdrop.size = size + Vector2(16, 16)
 	if result_modal_art != null:
 		result_modal_art.position = Vector2.ZERO
