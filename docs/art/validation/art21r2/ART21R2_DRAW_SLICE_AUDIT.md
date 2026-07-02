@@ -133,3 +133,30 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
 - Result: `PARTIAL`. The modal frame material is now draw-sliced and
   image-owned, but row buttons, result buttons, title treatment, and typography
   remain below the UE/Base floor.
+
+## Applied ART21R2 Modal Control Pass
+
+- Source sheet: `D:\AGAME1\sources\draw\Zujian3.png`.
+- Source candidates:
+  `D:\AGAME1\sources\draw\10_working\candidates\Zujian3\Zujian3_candidate_005.png`
+  for normal rows/buttons and
+  `D:\AGAME1\sources\draw\10_working\candidates\Zujian3\Zujian3_candidate_008.png`
+  for danger buttons.
+- Dedicated ART21R2 manifests:
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_control_staging_manifest.csv`,
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_control_cut_dry_run_plan.csv`,
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_control_cut_manifest.csv`,
+  and
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_control_cut_summary.json`.
+- Runtime target: `Godot/GraytailGodot/assets/ui/art21r2/modal`.
+- Imported roles: modal item row normal, modal primary button, modal secondary
+  button, and modal danger button.
+- Candidate 005 cleanup: purple-like pixels 1297 -> 0. Candidate 008 cleanup:
+  purple-like pixels 1184 -> 0.
+- Evidence screenshots:
+  `screenshots/slice6/godot_inventory_zujian3_modal_controls_pass29_smoke.png`,
+  `screenshots/slice6/godot_ground_loot_zujian3_modal_controls_pass29_smoke.png`,
+  and `screenshots/slice6/godot_result_zujian3_modal_controls_pass30_smoke.png`.
+- Result: `PARTIAL`. The modal control boundaries are image-owned, but the
+  current live run does not prove non-empty inventory/ground-loot rows, and
+  result button contrast remains weak.

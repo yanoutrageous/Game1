@@ -92,17 +92,18 @@ func _ensure_actions() -> void:
 	var actions := HBoxContainer.new()
 	actions.name = "ResultActions"
 	actions.offset_left = 24.0
-	actions.offset_top = 408.0
+	actions.offset_top = 386.0
 	actions.offset_right = 600.0
-	actions.offset_bottom = 448.0
-	actions.add_theme_constant_override("separation", 10)
+	actions.offset_bottom = 430.0
+	actions.add_theme_constant_override("separation", 14)
 	add_child(actions)
 
 	var main_button := Button.new()
 	main_button.name = "ResultReturnMainButton"
 	main_button.text = "返回主界面"
 	main_button.tooltip_text = "关闭本次结算记录并返回主界面。"
-	main_button.custom_minimum_size = Vector2(150, 34)
+	main_button.custom_minimum_size = Vector2(170, 40)
+	_apply_art21r2_modal_button(main_button, &"art21r2.modal.button.secondary", &"secondary", 13)
 	main_button.pressed.connect(func() -> void: return_main_requested.emit())
 	actions.add_child(main_button)
 
@@ -110,7 +111,8 @@ func _ensure_actions() -> void:
 	deploy_button.name = "ResultReturnDeployButton"
 	deploy_button.text = "返回出发页"
 	deploy_button.tooltip_text = "关闭本次结算记录并返回出发页，准备下一次探索。"
-	deploy_button.custom_minimum_size = Vector2(150, 34)
+	deploy_button.custom_minimum_size = Vector2(170, 40)
+	_apply_art21r2_modal_button(deploy_button, &"art21r2.modal.button.primary", &"primary", 13)
 	deploy_button.pressed.connect(func() -> void: return_deploy_requested.emit())
 	actions.add_child(deploy_button)
 
@@ -145,9 +147,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		result_title_art.size = Vector2(250 if is_low else (300 if is_high else 270), 96)
 	var actions := get_node_or_null("ResultActions") as HBoxContainer
 	if actions != null:
-		actions.offset_top = size.y - 32.0
+		actions.offset_top = size.y - 54.0
 		actions.offset_right = size.x - 20.0
-		actions.offset_bottom = size.y + 8.0
+		actions.offset_bottom = size.y - 12.0
 
 
 func _apply_result_title_plate(state: StringName) -> void:
@@ -173,3 +175,15 @@ func _result_state_from_snapshot(snapshot: Dictionary) -> StringName:
 	if outcome == "Abandoned" or settlement_outcome == "abandon":
 		return &"abandon"
 	return &"extract_confirm"
+
+
+func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: StringName, font_size_value: int, padding: int = 8, texture_margin: int = 18) -> void:
+	Art10UISkinKitScript.apply_button(button, tone, font_size_value)
+	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.button.dark", padding, texture_margin)
+	if style == null:
+		return
+	button.add_theme_stylebox_override("normal", style)
+	button.add_theme_stylebox_override("hover", style.duplicate())
+	button.add_theme_stylebox_override("pressed", style.duplicate())
+	button.add_theme_stylebox_override("disabled", style.duplicate())
+	button.add_theme_stylebox_override("focus", Art10UISkinKitScript.transparent_style_box(padding))

@@ -47,6 +47,10 @@ const ART21_COMPONENT_BY_VISUAL_KEY := {
 	&"art21r2.modal.inventory.frame": &"ui.art21r2.modal.inventory.frame",
 	&"art21r2.modal.ground_loot.frame": &"ui.art21r2.modal.ground_loot.frame",
 	&"art21r2.modal.result.frame": &"ui.art21r2.modal.result.frame",
+	&"art21r2.modal.item_row.normal": &"ui.art21r2.modal.item_row.normal",
+	&"art21r2.modal.button.primary": &"ui.art21r2.modal.button.primary",
+	&"art21r2.modal.button.secondary": &"ui.art21r2.modal.button.secondary",
+	&"art21r2.modal.button.danger": &"ui.art21r2.modal.button.danger",
 }
 
 const SLOT_VISUAL_KEY := {
@@ -150,3 +154,21 @@ static func texture_for_slot(screen: StringName, slot: StringName, fallback_asse
 
 static func texture_for_visual_key(visual_key: StringName, fallback_asset_id: StringName = &"ui.art19.panel.terminal_main") -> Texture2D:
 	return Art09ManifestAssetMappingScript.resolve_texture(component_ref(visual_key, fallback_asset_id))
+
+
+static func style_box_for_visual_key(visual_key: StringName, fallback_asset_id: StringName = &"ui.art19.button.dark", padding: int = 8, texture_margin: int = 18) -> StyleBoxTexture:
+	var texture := texture_for_visual_key(visual_key, fallback_asset_id)
+	if texture == null:
+		return null
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = texture_margin
+	style.texture_margin_top = texture_margin
+	style.texture_margin_right = texture_margin
+	style.texture_margin_bottom = texture_margin
+	style.content_margin_left = padding
+	style.content_margin_top = padding
+	style.content_margin_right = padding
+	style.content_margin_bottom = padding
+	style.draw_center = true
+	return style

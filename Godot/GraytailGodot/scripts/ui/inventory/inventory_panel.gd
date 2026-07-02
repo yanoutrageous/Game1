@@ -52,7 +52,7 @@ func build() -> void:
 	close_button.name = "InventoryCloseButton"
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.text = "关闭"
-	Art10UISkinKitScript.apply_button(close_button, &"secondary", 13)
+	_apply_art21r2_modal_button(close_button, &"art21r2.modal.button.secondary", &"secondary", 13)
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	header.add_child(close_button)
 
@@ -213,7 +213,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
 	_apply_art09_item_icon(item_button, item)
-	Art10UISkinKitScript.apply_button(item_button, &"secondary", 13)
+	_apply_art21r2_modal_button(item_button, &"art21r2.modal.item_row.normal", &"secondary", 13, 10, 18)
 	item_button.pressed.connect(func() -> void:
 		tooltip_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.item_tooltip(item))
 		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
@@ -225,7 +225,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	drop_button.text = "丢弃"
 	drop_button.disabled = not can_drop
 	drop_button.tooltip_text = "丢弃到当前房间地面，稍后可从地面物品重新拾取。" if can_drop else "已装备物品暂不可从此面板丢弃。"
-	Art10UISkinKitScript.apply_button(drop_button, &"danger" if can_drop else &"secondary", 13)
+	_apply_art21r2_modal_button(drop_button, &"art21r2.modal.button.danger" if can_drop else &"art21r2.modal.button.secondary", &"danger" if can_drop else &"secondary", 13)
 	var instance_id: String = String(item.get("instance_id", ""))
 	var use_button := Button.new()
 	use_button.name = "InventoryUseButton"
@@ -234,7 +234,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	var can_use := can_drop and bool(item.get("can_consume", false))
 	use_button.disabled = not can_use
 	use_button.tooltip_text = "使用当前消耗品。" if can_use else "只有背包中的消耗品可使用。"
-	Art10UISkinKitScript.apply_button(use_button, &"primary" if can_use else &"secondary", 13)
+	_apply_art21r2_modal_button(use_button, &"art21r2.modal.button.primary" if can_use else &"art21r2.modal.button.secondary", &"primary" if can_use else &"secondary", 13)
 	use_button.pressed.connect(func() -> void: use_item_requested.emit(instance_id))
 	row.add_child(use_button)
 	drop_button.pressed.connect(func() -> void: drop_item_requested.emit(instance_id))
@@ -255,3 +255,15 @@ func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
 		return
 	button.icon = texture
 	Art10UISkinKitScript.controlled_button_icon(button, &"slot")
+
+
+func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: StringName, font_size_value: int, padding: int = 8, texture_margin: int = 18) -> void:
+	Art10UISkinKitScript.apply_button(button, tone, font_size_value)
+	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.button.dark", padding, texture_margin)
+	if style == null:
+		return
+	button.add_theme_stylebox_override("normal", style)
+	button.add_theme_stylebox_override("hover", style.duplicate())
+	button.add_theme_stylebox_override("pressed", style.duplicate())
+	button.add_theme_stylebox_override("disabled", style.duplicate())
+	button.add_theme_stylebox_override("focus", Art10UISkinKitScript.transparent_style_box(padding))

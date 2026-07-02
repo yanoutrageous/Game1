@@ -52,7 +52,7 @@ func build() -> void:
 	close_button.name = "GroundLootCloseButton"
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.text = "关闭"
-	Art10UISkinKitScript.apply_button(close_button, &"secondary", 13)
+	_apply_art21r2_modal_button(close_button, &"art21r2.modal.button.secondary", &"secondary", 13)
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	header.add_child(close_button)
 
@@ -197,7 +197,7 @@ func _add_item_row(item: Dictionary) -> void:
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
 	_apply_art09_item_icon(item_button, item)
-	Art10UISkinKitScript.apply_button(item_button, &"secondary", 13)
+	_apply_art21r2_modal_button(item_button, &"art21r2.modal.item_row.normal", &"secondary", 13, 10, 18)
 	item_button.pressed.connect(func() -> void:
 		tooltip_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.item_tooltip(item))
 		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
@@ -208,7 +208,7 @@ func _add_item_row(item: Dictionary) -> void:
 	pickup_button.focus_mode = Control.FOCUS_NONE
 	pickup_button.text = "拾取"
 	pickup_button.tooltip_text = "拾取到背包；容量不足时保留在地面。"
-	Art10UISkinKitScript.apply_button(pickup_button, &"primary", 13)
+	_apply_art21r2_modal_button(pickup_button, &"art21r2.modal.button.primary", &"primary", 13)
 	var instance_id: String = String(item.get("instance_id", ""))
 	pickup_button.pressed.connect(func() -> void: pickup_item_requested.emit(instance_id))
 	row.add_child(pickup_button)
@@ -217,7 +217,7 @@ func _add_item_row(item: Dictionary) -> void:
 	replace_button.focus_mode = Control.FOCUS_NONE
 	replace_button.text = "Replace"
 	replace_button.tooltip_text = "Drop the lowest-value backpack item that makes room, then pick up this floor item."
-	Art10UISkinKitScript.apply_button(replace_button, &"secondary", 13)
+	_apply_art21r2_modal_button(replace_button, &"art21r2.modal.button.secondary", &"secondary", 13)
 	replace_button.pressed.connect(func() -> void: replace_item_requested.emit(instance_id))
 	row.add_child(replace_button)
 
@@ -236,3 +236,15 @@ func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
 		return
 	button.icon = texture
 	Art10UISkinKitScript.controlled_button_icon(button, &"slot")
+
+
+func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: StringName, font_size_value: int, padding: int = 8, texture_margin: int = 18) -> void:
+	Art10UISkinKitScript.apply_button(button, tone, font_size_value)
+	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.button.dark", padding, texture_margin)
+	if style == null:
+		return
+	button.add_theme_stylebox_override("normal", style)
+	button.add_theme_stylebox_override("hover", style.duplicate())
+	button.add_theme_stylebox_override("pressed", style.duplicate())
+	button.add_theme_stylebox_override("disabled", style.duplicate())
+	button.add_theme_stylebox_override("focus", Art10UISkinKitScript.transparent_style_box(padding))
