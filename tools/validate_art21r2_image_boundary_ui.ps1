@@ -57,7 +57,8 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_minimap_public_grid_pass10_logic.png",
-    "screenshots/slice3/godot_run_hud_after_slice3_minimap_draw_overlay_pass14_logic.png"
+    "screenshots/slice3/godot_run_hud_after_slice3_minimap_draw_overlay_pass14_logic.png",
+    "screenshots/slice3/godot_run_hud_after_slice3_minimap_hud32_pass16_smoke.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -211,6 +212,7 @@ $requiredDrawAuditPatterns = @(
     "Existing Slice Process To Reuse",
     "tools/art20_cut_ui_assets.py",
     "magenta-background root sheets",
+    "minimap_hud_cut_manifest.csv",
     "map_overlay_event_marker_64",
     "candidate crop with purple remnants is not runtime-ready evidence"
 )
@@ -332,6 +334,9 @@ $requiredManifestIds = @(
     'ui.art21r2.run.left_info_rail.frame',
     'ui.art21r2.run.status_card.frame',
     'ui.art21r2.run.bottom_overlay.frame',
+    'ui.art21r2.minimap.hud.player',
+    'ui.art21r2.minimap.hud.explored',
+    'ui.art21r2.minimap.hud.scanned',
     'ui.art19.map64.player',
     'ui.art19.map64.explored',
     'ui.art19.map64.scanned'
@@ -339,6 +344,21 @@ $requiredManifestIds = @(
 foreach ($assetId in $requiredManifestIds) {
     if ($manifest -notmatch [regex]::Escape($assetId)) {
         Fail "asset_manifest.csv missing ART21R2 run HUD asset id: $assetId"
+    }
+}
+
+$requiredRuntimeAssets = @(
+    "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_player_32.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_explored_32.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/minimap/ui_art21r2_minimap_hud_scanned_32.png"
+)
+foreach ($assetPath in $requiredRuntimeAssets) {
+    $fullPath = Join-Path $root $assetPath
+    if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+        Fail "Missing ART21R2 runtime minimap HUD asset: $assetPath"
+    }
+    if ((Get-Item -LiteralPath $fullPath).Length -le 0) {
+        Fail "ART21R2 runtime minimap HUD asset is empty: $assetPath"
     }
 }
 
@@ -368,8 +388,8 @@ if ($miniMap -notmatch 'EXPAND_IGNORE_SIZE') {
 $requiredMiniMapPatterns = @(
     '_base_asset_id_for_marker',
     '_overlay_asset_id_for_marker',
-    'ui\.art19\.map64\.player',
-    'ui\.art19\.map64\.explored'
+    'ui\.art21r2\.minimap\.hud\.player',
+    'ui\.art21r2\.minimap\.hud\.explored'
 )
 foreach ($pattern in $requiredMiniMapPatterns) {
     if ($miniMap -notmatch $pattern) {

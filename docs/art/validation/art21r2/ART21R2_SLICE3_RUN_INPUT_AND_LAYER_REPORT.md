@@ -57,6 +57,10 @@ lock. It does not mark the overall ART21R2 visual goal complete.
     minimap replacement art. Event remains on the existing ART21 generated
     marker because ART20 left `map_overlay_event_marker_64` blocked pending
     source selection.
+  - Replaced the active HUD minimap explored/scanned/current/exit/mine/chest
+    refs with ART21R2 32px runtime imports copied from
+    `sources/draw/30_game_ready/icons/32` and recorded in the external
+    `ART-21R2/_manifest/minimap_hud_cut_manifest.csv`.
 - `ART21R2_DRAW_SLICE_AUDIT.md`
   - Records the draw-source purple-background scan and the ART19R1 / ART20
     slicing precedent that ART21R2 should reuse before any new art generation.
@@ -80,6 +84,7 @@ lock. It does not mark the overall ART21R2 visual goal complete.
 | Logic run HUD pass7 | `screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png` | Godot import now resolves the ART21R2 frame textures at runtime; the fallback green terminal edge is gone and key text is visible again. Still PARTIAL because minimap public-cell evidence and disabled key contrast remain below target. |
 | Logic run HUD pass10 | `screenshots/slice3/godot_run_hud_after_slice3_minimap_public_grid_pass10_logic.png` | Standard run start path renders a full 10x10 minimap with image tiles and a current-cell marker. Still PARTIAL because tile scale/contrast remains below final UE floor. |
 | Logic run HUD pass14 | `screenshots/slice3/godot_run_hud_after_slice3_minimap_draw_overlay_pass14_logic.png` | Standard run start path renders the full 10x10 public minimap and the current marker uses manifest-backed draw-derived ART19 map64 overlay assets. Still PARTIAL because minimap density/contrast and the bottom command strip remain below the UE floor. |
+| Logic run HUD pass16 smoke | `screenshots/slice3/godot_run_hud_after_slice3_minimap_hud32_pass16_smoke.png` | Restarted Godot after import and confirmed the current marker renders from ART21R2 32px draw-derived HUD minimap assets rather than text fallback. Still PARTIAL because this is 856x511 smoke evidence and the 10x10 minimap remains dense. |
 
 ## Current Verdict
 
@@ -104,18 +109,19 @@ PASS for this slice:
 - The pass14 Run HUD capture confirms that the current-cell overlay can use
   existing draw-derived runtime assets from the manifest without adding generated
   replacement minimap art or reading TruthMap.
+- The pass16 smoke capture confirms that the new ART21R2 32px HUD minimap
+  runtime assets load after Godot import and render in the live Run HUD instead
+  of falling back to text.
 
 PARTIAL for the larger ART21R2 target:
 
-- Run HUD still reads below the UE visual floor. The latest pass14 capture
-  (`screenshots/slice3/godot_run_hud_after_slice3_minimap_draw_overlay_pass14_logic.png`)
-  improves the current-cell marker by using draw-derived map64 overlay assets,
-  but minimap density/contrast and disabled key contrast still do not reach the
-  target.
-- MiniMap readability is still not complete. The pass14 capture proves the live
-  public grid path with manifest-backed draw-derived overlay assets, but the
-  small tile scale and state contrast still need a final HUD-size cut or polish
-  pass.
+- Run HUD still reads below the UE visual floor. The latest pass16 smoke capture
+  (`screenshots/slice3/godot_run_hud_after_slice3_minimap_hud32_pass16_smoke.png`)
+  confirms the 32px draw-derived player marker loads in runtime, but minimap
+  density/contrast and disabled key contrast still do not reach the target.
+- MiniMap readability is still not complete. The pass16 smoke capture proves the
+  live public grid path with 32px HUD imports, but the grid still needs layout,
+  contrast, or dedicated state-art polish before it can be considered UE-floor.
 - Bottom key text is less noisy and more legible, but still weak compared with
   the UE command strip target.
 - Inventory modal opens but overlaps the left HUD rail and still uses generated
@@ -133,6 +139,9 @@ PARTIAL for the larger ART21R2 target:
 - Godot import: required once for the new ART21R2 PNG files so `ContentDB` does
   not fall back to older terminal-frame assets; generated `.import` and `.godot`
   cache files remain uncommitted side effects.
+- Godot import: required again for the ART21R2 32px minimap runtime PNG files;
+  before import they fell back to text, after import pass16 shows the player
+  marker image in the live Run HUD.
 - Draw slice audit: `ART21R2_DRAW_SLICE_AUDIT.md` records that large
   purple-background draw sheets must be sliced/cleaned through the earlier
   ART19R1 / ART20 process before runtime use. No generated replacement minimap

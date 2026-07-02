@@ -76,3 +76,19 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
 - Do not treat ART20 blocked rows as imported assets. In particular,
   `map_overlay_cell_64_set` and `map_overlay_event_marker_64` still require a
   fresh source-selection/cutting path before they can be claimed complete.
+
+## Applied ART21R2 HUD Minimap Pass
+
+- Source set: `D:\AGAME1\sources\draw\30_game_ready\icons\32`.
+- External cut/import record:
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\minimap_hud_cut_manifest.csv`.
+- Runtime target: `Godot/GraytailGodot/assets/ui/art21r2/minimap`.
+- Imported states: `player`, `explored`, `scanned`, `mine`, `chest`, `exit`.
+- Unknown cells intentionally stay on the existing blank ART21 tile for the Run
+  HUD so the left rail does not regress into a dense question-mark wall.
+- Flag and event are not claimed as solved by this pass. Event remains a
+  source-selection issue from ART20 and must not be marked complete.
+- Evidence screenshot:
+  `screenshots/slice3/godot_run_hud_after_slice3_minimap_hud32_pass16_smoke.png`.
+- Result: `PARTIAL`. The imported 32px player marker is visible in the smoke
+  screenshot, but the 10x10 HUD minimap remains dense and below the UE floor.
