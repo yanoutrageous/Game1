@@ -66,6 +66,7 @@ lock. It does not mark the overall ART21R2 visual goal complete.
 | Logic map overlay pass4 | `screenshots/slice3/godot_map_overlay_guard_after_slice3_pass4_logic.png` | Map overlay still opens after the HUD frame changes; modal remains visually partial. |
 | Logic minimap fallback pass5 | `screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png` | Blank minimap state now shows an explicit no-public-map fallback; live tile readability remains unproven. |
 | Logic run HUD pass6 | `screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png` | ART21R2 run-specific frame assets are manifest-backed and visible; the old center floating encounter backplate is gone. Still PARTIAL because left edge color and bottom text contrast remain weak. |
+| Logic run HUD pass7 | `screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png` | Godot import now resolves the ART21R2 frame textures at runtime; the fallback green terminal edge is gone and key text is visible again. Still PARTIAL because minimap public-cell evidence and disabled key contrast remain below target. |
 
 ## Current Verdict
 
@@ -81,15 +82,17 @@ PASS for this slice:
   image-backed frames owning those boundaries.
 - The minimap rail no longer collapses to an unexplained blank when the view
   model has no public cells.
-- The pass6 Run HUD capture removes the extra floating encounter backplate while
-  keeping encounter buttons and callbacks routed through the existing code path.
+- The pass7 Run HUD capture confirms that the ART21R2 frame assets resolve at
+  runtime after import, removes the extra floating encounter backplate, and keeps
+  encounter buttons and callbacks routed through the existing code path.
 
 PARTIAL for the larger ART21R2 target:
 
-- Run HUD still reads below the UE visual floor. The latest pass6 capture
-  (`screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png`)
-  removes the center floating backplate and replaces the prior frame assets, but
-  the left rail edge color and bottom key text still do not reach the target.
+- Run HUD still reads below the UE visual floor. The latest pass7 capture
+  (`screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png`)
+  removes the fallback green terminal edge and restores key text over the image
+  strip, but minimap public-cell readability and disabled key contrast still do
+  not reach the target.
 - MiniMap readability is still not complete. The pass5 fallback prevents a blank
   rail, but it does not prove readable unknown/explored/scanned/player/exit
   tile states in a live map.
@@ -106,5 +109,8 @@ PARTIAL for the larger ART21R2 target:
 
 - Godot headless: exit code `0`; pre-existing resource-leak warnings still appear
   on exit.
+- Godot import: required once for the new ART21R2 PNG files so `ContentDB` does
+  not fall back to older terminal-frame assets; generated `.import` and `.godot`
+  cache files remain uncommitted side effects.
 - `tools/validate_art21r2_image_boundary_ui.ps1`: expected to remain
   `PASS_STRUCTURAL_OPEN`, not visual closeout.

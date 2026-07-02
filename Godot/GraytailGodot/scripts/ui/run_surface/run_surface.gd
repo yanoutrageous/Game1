@@ -109,7 +109,7 @@ func build() -> void:
 	left_backdrop = _add_panel("RunScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	left_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.72), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(left_backdrop, &"deep")
-	left_rail_art = _add_nine_patch_from_ref("Art21RunLeftInfoRail", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"left_info_rail", &"ui.art21.shared.panel.page_frame.normal"), 0.82, 14)
+	left_rail_art = _add_nine_patch_from_ref("Art21RunLeftInfoRail", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"left_info_rail", &"ui.art21.shared.panel.page_frame.normal"), 0.96, 14)
 	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"))
 	center_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"), 1))
 	room_background_layer = _add_texture_rect_from_ref("RunRoomBackgroundFill", _room_background_ref(&"Normal"), 1.0)
@@ -119,11 +119,11 @@ func build() -> void:
 	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
 	right_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.68), PresentationTheme.color_for_key(&"ui.warning"), 2))
 	Art10UISkinKitScript.apply_panel(right_backdrop, &"summary")
-	status_card_art = _add_nine_patch_from_ref("Art21RunStatusCard", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"top_right_status_card", &"ui.art19.panel.deploy_summary"), 0.82, 12)
+	status_card_art = _add_nine_patch_from_ref("Art21RunStatusCard", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"top_right_status_card", &"ui.art19.panel.deploy_summary"), 0.94, 12)
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.70), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(bottom_backdrop, &"summary")
-	bottom_overlay_art = _add_nine_patch_from_ref("Art21RunBottomOverlay", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.74, 12)
+	bottom_overlay_art = _add_nine_patch_from_ref("Art21RunBottomOverlay", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.96, 12)
 	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
 	resource_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.60), PresentationTheme.color_for_key(&"mini.chest"), 2))
 	Art10UISkinKitScript.apply_panel(resource_backdrop, &"card")
@@ -839,7 +839,7 @@ func _apply_art10_text_refresh() -> void:
 	for action_id in action_buttons.keys():
 		var action_button := action_buttons[action_id] as Button
 		action_button.custom_minimum_size = Vector2(86, 36)
-		Art10UISkinKitScript.apply_transparent_button(action_button, &"secondary", 13, &"key", 0)
+		_apply_action_button_style(action_button, &"secondary", not action_button.disabled)
 		_apply_key_prompt_icon(action_button, StringName(action_id))
 	for button in encounter_option_buttons:
 		Art10UISkinKitScript.apply_transparent_button(button, &"primary" if button != null and not button.disabled else &"secondary", 12, &"key", 0)
@@ -873,10 +873,12 @@ func _panel_style(color: Color, border_color: Color, border_width: int) -> Style
 
 
 func _apply_action_button_style(button: Button, tone: StringName, enabled: bool) -> void:
-	button.add_theme_color_override("font_color", PresentationTheme.text_color())
-	button.add_theme_color_override("font_disabled_color", PresentationTheme.color_for_key(&"ui.muted"))
-	button.modulate = Color(1, 1, 1, 1) if enabled else Color(0.74, 0.78, 0.76, 1)
 	Art10UISkinKitScript.apply_transparent_button(button, tone, 13, &"key", 0)
+	button.add_theme_color_override("font_color", Color(0.92, 0.86, 0.68, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.94, 0.70, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 0.82, 0.45, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.68, 0.64, 0.52, 0.96))
+	button.modulate = Color(1, 1, 1, 1) if enabled else Color(0.86, 0.86, 0.80, 1)
 
 
 func _tone_color(tone: StringName) -> Color:

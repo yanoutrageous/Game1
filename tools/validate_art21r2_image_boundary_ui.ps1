@@ -53,7 +53,8 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_inventory_q_guard_after_slice3_pass4_logic.png",
     "screenshots/slice3/godot_map_overlay_guard_after_slice3_pass4_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png",
-    "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png"
+    "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png",
+    "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
