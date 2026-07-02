@@ -111,6 +111,7 @@ func build() -> void:
 	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"))
 	center_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"), 1))
 	room_background_layer = _add_texture_rect_from_ref("RunRoomBackgroundFill", _room_background_ref(&"Normal"), 1.0)
+	room_background_layer.visible = false
 	encounter_backdrop = _add_panel("RunEncounterSlot", Color(0.018, 0.034, 0.038, 0.88), PresentationTheme.color_for_key(&"ui.warning"))
 	encounter_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.72), PresentationTheme.color_for_key(&"ui.accent"), 1))
 	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
@@ -139,6 +140,7 @@ func build() -> void:
 	player_sprite_layer = _add_texture_rect_from_ref("RunPlayerSprite", Art09ManifestAssetMappingScript.player_sprite_ref(&"idle"), 1.0)
 	if player_sprite_layer != null:
 		player_sprite_layer.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		player_sprite_layer.visible = false
 
 	scanner_title_label = _add_label("RunScannerTitle", "小地图", 18, PresentationTheme.color_for_key(&"ui.accent"))
 	scanner_summary_label = _add_label("RunScannerSummary", "", 13, PresentationTheme.text_color())
@@ -216,7 +218,8 @@ func apply_surface_model(model: Dictionary) -> void:
 	room_body_label.text = ""
 	objective_label.text = ""
 	objective_label.visible = false
-	_apply_texture_ref(room_background_layer, _room_background_ref(StringName(model.get("room_type", &"Normal"))), 1.0)
+	room_background_layer.visible = false
+	player_sprite_layer.visible = false
 	resource_label.text = _resource_copy(model)
 	var danger_key := StringName(model.get("danger_theme_key", &"ui.warning"))
 	right_title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(danger_key, PresentationTheme.color_for_key(&"ui.warning")))
@@ -303,8 +306,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(status_card_art, Rect2(right_left, margin, right_card_width, right_card_height))
-	_set_rect(center_backdrop, Rect2(gameplay_square_left, gameplay_square_top, gameplay_square_size, gameplay_square_size))
-	_set_rect(room_background_layer, Rect2(gameplay_square_left, gameplay_square_top, gameplay_square_size, gameplay_square_size))
+	_set_rect(center_backdrop, Rect2(0, 0, 0, 0))
+	_set_rect(room_background_layer, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_backdrop, Rect2(encounter_left, encounter_top, encounter_width, encounter_height))
 	_set_rect(bottom_backdrop, Rect2(bottom_key_left, bottom_key_top, bottom_key_width, bottom_key_height))
 	_set_rect(bottom_overlay_art, Rect2(bottom_key_left, bottom_key_top, bottom_key_width, bottom_key_height))
@@ -314,18 +317,18 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(threat_mask, Rect2(right_content_left, margin + 34.0, right_content_width, 42.0 if is_low else 50.0))
 	_set_rect(event_mask, Rect2(right_content_left, margin + (78.0 if is_low else 90.0), right_content_width, 24.0 if is_low else 30.0))
 	_set_rect(reward_mask, Rect2(0, 0, 0, 0))
-	_set_rect(player_sprite_layer, Rect2(gameplay_square_left + gameplay_square_size * 0.5 - 74.0, gameplay_square_top + gameplay_square_size * 0.44 - 108.0, 148.0, 216.0))
+	_set_rect(player_sprite_layer, Rect2(0, 0, 0, 0))
 	_set_rect(player_tag_mask, Rect2(0, 0, 0, 0))
 	_set_rect(room_hint_softener, Rect2(0, 0, 0, 0))
 	_set_rect(scanner_glow_layer, Rect2(0, 0, 0, 0))
-	_set_rect(room_glow_layer, Rect2(gameplay_square_left + 10.0, gameplay_square_top + 10.0, gameplay_square_size - 20.0, gameplay_square_size - 20.0))
+	_set_rect(room_glow_layer, Rect2(0, 0, 0, 0))
 	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 30.0, right_content_width, right_card_height - 44.0))
 	_set_rect(bottom_key_glow_layer, Rect2(bottom_key_left + 8.0, bottom_key_top + 8.0, bottom_key_width - 16.0, bottom_key_height - 16.0))
 	_set_rect(right_game_fill_layer, Rect2(0, 0, 0, 0))
-	center_backdrop.visible = true
-	room_background_layer.visible = true
-	player_sprite_layer.visible = true
-	room_glow_layer.visible = true
+	center_backdrop.visible = false
+	room_background_layer.visible = false
+	player_sprite_layer.visible = false
+	room_glow_layer.visible = false
 	room_text_mask.visible = false
 	room_hint_softener.visible = false
 	player_tag_mask.visible = false
@@ -368,9 +371,13 @@ func apply_layout_profile(profile: Dictionary) -> void:
 func show_command_feedback(result: Dictionary) -> void:
 	if command_feedback_label == null or result.is_empty():
 		return
+	var accepted := bool(result.get("accepted", result.get("ok", false)))
+	if accepted:
+		command_feedback_art.visible = false
+		command_feedback_label.visible = false
+		return
 	command_feedback_art.visible = true
 	command_feedback_label.visible = true
-	var accepted := bool(result.get("accepted", result.get("ok", false)))
 	var text := RunUIViewModel.command_result_text(result)
 	if text == "":
 		text = "操作完成。" if accepted else "操作受阻。"

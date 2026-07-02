@@ -128,6 +128,19 @@ if ($runSurface -match 'slot_ref\(&"run_hud",\s*&"gameplay_viewport_background"'
     Fail "run_surface.gd still binds room background to gameplay_viewport_background."
 }
 
+$runSurfaceGuards = @(
+    'center_backdrop\.visible\s*=\s*false',
+    'room_background_layer\.visible\s*=\s*false',
+    'player_sprite_layer\.visible\s*=\s*false',
+    'room_glow_layer\.visible\s*=\s*false'
+)
+
+foreach ($guard in $runSurfaceGuards) {
+    if ($runSurface -notmatch $guard) {
+        Fail "run_surface.gd is missing duplicate-world-layer guard: $guard"
+    }
+}
+
 $runtimeScripts = @(
     "Godot/GraytailGodot/scripts/ui",
     "Godot/GraytailGodot/scripts/presentation"

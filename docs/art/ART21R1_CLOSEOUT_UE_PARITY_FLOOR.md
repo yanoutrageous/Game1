@@ -11,7 +11,7 @@ PARTIAL: ue_parity_floor_partial / blockers_listed
 - UE reference was launched and captured for main menu, area select, difficulty select, run HUD, and map overlay.
 - Godot before screenshots were captured before code changes.
 - Godot after screenshots were captured for main menu, deploy prep, run HUD, map overlay, inventory, and result.
-- Run HUD now presents the real room/player world layer as primary evidence instead of relying on `gameplay_viewport_background`.
+- Run HUD now presents the real `RoomLayer/PlayerLayer` world layer as primary evidence instead of relying on `gameplay_viewport_background` or UI-drawn duplicate room/player layers.
 - Main menu preserves the original direct `出发探索 -> Deploy Prep` click flow and no longer uses the previous left-side line-frame overlays.
 - Map overlay is now a centered modal grid with stronger background separation.
 - Inventory and result modals are reachable in a live Godot run.
@@ -21,6 +21,7 @@ PARTIAL: ue_parity_floor_partial / blockers_listed
 
 - Main menu still uses ART terminal/button skins for the right action board; it is cleaner but not a full UE physical board reproduction.
 - UE-style area/difficulty selection was not implemented on the main menu by design; those choices belong in Deploy Prep.
+- Run HUD no longer duplicates room/player through RunSurface, but real player placement remains governed by RunScene gameplay/local-position behavior and should be separately tuned if the player appears in an unexpected room-local position.
 - Map overlay cells remain abstract squares and are still below UE tile/marker readability.
 - Deploy and Long-term remain mostly ART-21 contract-era pages and were not rebuilt to the UE/Base page-family target in this pass.
 - Inventory has a Q-labeled button, but `RunSceneInputRouter` does not currently route keyboard Q to inventory.

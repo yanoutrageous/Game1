@@ -15,7 +15,7 @@ art/art21r1-ue-parity-existing-assets
 | Area | Change |
 | --- | --- |
 | Main menu | Preserved the original `出发探索 -> Deploy Prep` click route, removed default tooltips, raised background visibility, removed left-side artificial line/mask overlays, and kept the right menu in a single board-like action deck. |
-| Run HUD | Restored room-specific runtime background selection in `run_surface.gd`; made the room/player layer primary; removed permanent top room text masks and right-side world fill; made command feedback state-triggered. |
+| Run HUD | Keeps real `RoomLayer/PlayerLayer` rendering authoritative; hides the former RunSurface UI room/player duplicate layers; removes permanent top room text masks and right-side world fill; suppresses large success feedback. |
 | Map overlay | Reworked `map_overlay_panel.gd` toward a centered modal grid with stronger dimming, square cells, and less table-like spacing. |
 | Evidence | Captured UE and Godot before/after screenshots under `docs/art/validation/art21r1/screenshots/`. |
 | Contract | Added `docs/art/validation/art21r1/ui_placement_contract_v2.csv` with screen/layer/slot/state/consumer/screenshot mapping. |
@@ -35,6 +35,7 @@ art/art21r1-ue-parity-existing-assets
 - This is not Base final visual completion.
 - This is not a full Deploy / Long-term page-family rebuild.
 - This does not add UE-style area/difficulty pages to the Godot main menu. Map, area, difficulty, and loadout choice remain Deploy Prep responsibilities.
+- This does not replace the real run world with a UI-drawn room/player layer; RunSurface duplicate world layers are explicitly hidden.
 - This does not prove UE inventory / loot / event parity because those UE states were not naturally triggered in the sampled run.
 - This does not prove Godot ground loot visual parity because ground loot was not naturally triggered in the sampled run.
 - The validator is structural evidence only; screenshot comparison remains the acceptance boundary.
