@@ -69,6 +69,30 @@ foreach ($screen in $expectedScreenCounts.Keys) {
     Assert-Condition ($actual -eq $expectedScreenCounts[$screen]) "Contract screen count mismatch for ${screen}: expected $($expectedScreenCounts[$screen]), got $actual."
 }
 
+$requiredScreenshots = @(
+    "art21_cu_main_menu.png",
+    "art21_cu_deploy_prep.png",
+    "art21_cu_long_term.png",
+    "art21_cu_run_hud.png",
+    "art21_cu_map_overlay.png",
+    "art21_cu_inventory.png",
+    "art21_cu_result.png",
+    "art21_cu_ground_loot_not_triggered.png"
+)
+
+$contractScreenshots = @()
+foreach ($row in $contractRows) {
+    Assert-Condition (-not [string]::IsNullOrWhiteSpace($row.validation_screenshot)) "Contract row lacks validation_screenshot: $($row.screen).$($row.slot)"
+    $contractScreenshots += @($row.validation_screenshot -split ";" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+}
+
+foreach ($screenshot in ($requiredScreenshots + $contractScreenshots | Select-Object -Unique)) {
+    $path = Join-Path $validationRoot $screenshot
+    Assert-Condition (Test-Path -LiteralPath $path -PathType Leaf) "Missing ART21 validation screenshot: $screenshot"
+    $file = Get-Item -LiteralPath $path
+    Assert-Condition ($file.Length -gt 0) "ART21 validation screenshot is empty: $screenshot"
+}
+
 $duplicateAssetIds = @($assetRows | Group-Object asset_id | Where-Object { $_.Name -and $_.Count -gt 1 })
 Assert-Condition ($duplicateAssetIds.Count -eq 0) ("Duplicate asset_id values found: " + (($duplicateAssetIds | Select-Object -ExpandProperty Name) -join ", "))
 
@@ -85,6 +109,7 @@ foreach ($row in $art21Rows) {
     $localPath = Join-Path $godotRoot $relative
     Assert-Condition (Test-Path -LiteralPath $localPath -PathType Leaf) "ART21 runtime file missing: $localPath"
     Assert-Condition ($row.source_status -eq "art21_generated_contract_component") "ART21 row has unexpected source_status: $($row.asset_id) -> $($row.source_status)"
+    Assert-Condition ($row.source_status -notmatch "reference_only") "ART21 runtime asset is marked reference_only: $($row.asset_id)"
 }
 
 $requiredBlockedVisualKeys = @(
