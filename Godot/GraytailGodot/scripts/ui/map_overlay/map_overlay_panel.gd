@@ -41,16 +41,17 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	offset_bottom = 0.0
 	var dimmer := get_node_or_null("Dimmer") as ColorRect
 	if dimmer != null:
-		dimmer.color = Color(0.0, 0.0, 0.0, 0.18)
+		dimmer.color = Color(0.0, 0.0, 0.0, 0.58)
 	var panel := get_node_or_null("Panel") as Control
 	if panel != null:
-		var panel_width: float = min(width * 0.972, 1840.0 if is_high else 1248.0)
-		var panel_height: float = min(height * 0.940, 1000.0 if is_high else 684.0)
-		panel_width = max(panel_width, 900.0 if not is_low else 780.0)
-		panel_height = max(panel_height, 560.0 if not is_low else 500.0)
-		var cell_width: float = floor((panel_width - 36.0) / 10.0)
-		var cell_height: float = floor((panel_height - 118.0) / 10.0)
-		marker_size = Vector2(maxf(44.0, cell_width), maxf(40.0, cell_height))
+		var panel_width: float = min(width * 0.74, 980.0 if is_high else 760.0)
+		var panel_height: float = min(height * 0.86, 820.0 if is_high else 620.0)
+		panel_width = max(panel_width, 620.0 if not is_low else 540.0)
+		panel_height = max(panel_height, 500.0 if not is_low else 440.0)
+		var cell_width: float = floor((panel_width - 84.0) / 10.0)
+		var cell_height: float = floor((panel_height - 140.0) / 10.0)
+		var cell_size: float = maxf(42.0, min(cell_width, cell_height))
+		marker_size = Vector2(cell_size, cell_size)
 		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		_set_rect(panel, Rect2((width - panel_width) * 0.5, (height - panel_height) * 0.5, panel_width, panel_height))
 		_apply_overlay_panel_style(panel)
@@ -115,10 +116,10 @@ func _rebuild_grid() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
-	grid.add_theme_constant_override("h_separation", 4)
-	grid.add_theme_constant_override("v_separation", 4)
-	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	grid.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 	for child in grid.get_children():
 		child.queue_free()
@@ -155,6 +156,8 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	var label_text := String(marker.get("label", "?"))
 	var button := Button.new()
 	button.custom_minimum_size = marker_size
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.focus_mode = Control.FOCUS_NONE
 	button.text = label_text
 	button.tooltip_text = ""
@@ -192,9 +195,9 @@ func _apply_overlay_panel_style(control: Control) -> void:
 
 func _apply_marker_button_style(button: Button, theme_key: StringName) -> void:
 	var border := PresentationTheme.color_for_key(theme_key)
-	button.add_theme_stylebox_override("normal", _marker_style(Color(0.020, 0.032, 0.036, 0.90), border, 1))
-	button.add_theme_stylebox_override("hover", _marker_style(Color(0.052, 0.074, 0.076, 0.96), border, 2))
-	button.add_theme_stylebox_override("pressed", _marker_style(Color(0.070, 0.092, 0.088, 1.0), PresentationTheme.color_for_key(&"ui.warning"), 2))
+	button.add_theme_stylebox_override("normal", _marker_style(Color(0.030, 0.035, 0.044, 0.98), border, 1))
+	button.add_theme_stylebox_override("hover", _marker_style(Color(0.064, 0.070, 0.086, 1.0), border, 2))
+	button.add_theme_stylebox_override("pressed", _marker_style(Color(0.082, 0.078, 0.054, 1.0), PresentationTheme.color_for_key(&"ui.warning"), 2))
 	button.add_theme_color_override("font_color", border)
 
 
