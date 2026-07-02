@@ -48,7 +48,10 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_long_term_after_slice3_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_logic.png",
     "screenshots/slice3/godot_inventory_q_after_slice3_logic.png",
-    "screenshots/slice3/godot_map_overlay_after_slice3_logic.png"
+    "screenshots/slice3/godot_map_overlay_after_slice3_logic.png",
+    "screenshots/slice3/godot_run_hud_after_slice3_image_boundary_pass4_logic.png",
+    "screenshots/slice3/godot_inventory_q_guard_after_slice3_pass4_logic.png",
+    "screenshots/slice3/godot_map_overlay_guard_after_slice3_pass4_logic.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -225,7 +228,11 @@ $runSurfaceGuards = @(
     'center_backdrop\.visible\s*=\s*false',
     'room_background_layer\.visible\s*=\s*false',
     'player_sprite_layer\.visible\s*=\s*false',
-    'room_glow_layer\.visible\s*=\s*false'
+    'room_glow_layer\.visible\s*=\s*false',
+    'left_backdrop\.visible\s*=\s*false',
+    'right_backdrop\.visible\s*=\s*false',
+    'bottom_backdrop\.visible\s*=\s*false',
+    'encounter_backdrop\.visible\s*=\s*false'
 )
 
 foreach ($guard in $runSurfaceGuards) {
@@ -268,6 +275,15 @@ foreach ($pattern in $requiredRunScenePatterns) {
 
 if ($runSurface -notmatch 'apply_transparent_button') {
     Fail "run_surface.gd should use transparent image-backed action hitboxes."
+}
+if ($runSurface -notmatch 'Art21RunLeftInfoRail') {
+    Fail "run_surface.gd should provide an image-backed left information rail."
+}
+if ($runSurface -notmatch '_add_nine_patch_from_ref') {
+    Fail "run_surface.gd should use image-backed NinePatch frames for HUD regions."
+}
+if ($runSurface -notmatch 'button\.icon\s*=\s*null') {
+    Fail "run_surface.gd should not restore noisy bottom action button icons in the R2 HUD pass."
 }
 if ($runSurface -notmatch 'encounter_backdrop\.visible\s*=\s*not\s+encounter_option_buttons\.is_empty\(\)') {
     Fail "run_surface.gd should hide encounter placeholder when no executable option exists."

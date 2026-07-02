@@ -54,8 +54,9 @@ var room_glow_layer: ColorRect
 var protocol_glow_layer: ColorRect
 var bottom_key_glow_layer: ColorRect
 var right_game_fill_layer: ColorRect
-var status_card_art: TextureRect
-var bottom_overlay_art: TextureRect
+var left_rail_art: NinePatchRect
+var status_card_art: NinePatchRect
+var bottom_overlay_art: NinePatchRect
 var player_sprite_layer: TextureRect
 var scanner_title_label: Label
 var scanner_summary_label: Label
@@ -108,6 +109,7 @@ func build() -> void:
 	left_backdrop = _add_panel("RunScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	left_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.72), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(left_backdrop, &"deep")
+	left_rail_art = _add_nine_patch_from_ref("Art21RunLeftInfoRail", Art21UIPlacementContractScript.panel_ref(&"page_frame"), 0.72, 14)
 	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"))
 	center_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"), 1))
 	room_background_layer = _add_texture_rect_from_ref("RunRoomBackgroundFill", _room_background_ref(&"Normal"), 1.0)
@@ -117,11 +119,11 @@ func build() -> void:
 	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
 	right_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.68), PresentationTheme.color_for_key(&"ui.warning"), 2))
 	Art10UISkinKitScript.apply_panel(right_backdrop, &"summary")
-	status_card_art = _add_texture_rect_from_ref("Art21RunStatusCard", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"top_right_status_card", &"ui.art19.panel.deploy_summary"), 0.82)
+	status_card_art = _add_nine_patch_from_ref("Art21RunStatusCard", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"top_right_status_card", &"ui.art19.panel.deploy_summary"), 0.82, 12)
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.70), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(bottom_backdrop, &"summary")
-	bottom_overlay_art = _add_texture_rect_from_ref("Art21RunBottomOverlay", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.74)
+	bottom_overlay_art = _add_nine_patch_from_ref("Art21RunBottomOverlay", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.74, 12)
 	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
 	resource_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.60), PresentationTheme.color_for_key(&"mini.chest"), 2))
 	Art10UISkinKitScript.apply_panel(resource_backdrop, &"card")
@@ -178,6 +180,7 @@ func build() -> void:
 	reward_label.visible = false
 	reward_mask.visible = false
 	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.94)
+	command_feedback_art.stretch_mode = TextureRect.STRETCH_SCALE
 	command_feedback_label = _add_label("RunCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
 	layout_label = _add_label("RunLayoutProfileStatus", "", 11, PresentationTheme.color_for_key(&"ui.muted"))
 	layout_label.visible = false
@@ -304,6 +307,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	encounter_top = clampf(gameplay_square_top + gameplay_square_size * 0.68, gameplay_square_top + 120.0, gameplay_square_top + gameplay_square_size - encounter_height - 24.0)
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
+	_set_rect(left_rail_art, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(status_card_art, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(center_backdrop, Rect2(0, 0, 0, 0))
@@ -325,6 +329,13 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 30.0, right_content_width, right_card_height - 44.0))
 	_set_rect(bottom_key_glow_layer, Rect2(bottom_key_left + 8.0, bottom_key_top + 8.0, bottom_key_width - 16.0, bottom_key_height - 16.0))
 	_set_rect(right_game_fill_layer, Rect2(0, 0, 0, 0))
+	left_backdrop.visible = false
+	left_rail_art.visible = true
+	right_backdrop.visible = false
+	status_card_art.visible = true
+	bottom_backdrop.visible = false
+	bottom_overlay_art.visible = true
+	encounter_backdrop.visible = false
 	center_backdrop.visible = false
 	room_background_layer.visible = false
 	player_sprite_layer.visible = false
@@ -353,7 +364,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(player_tag_label, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_title_label, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_body_label, Rect2(0, 0, 0, 0))
-	_set_rect(encounter_options_box, Rect2(encounter_left + 10.0, encounter_top + 8.0, encounter_width - 20.0, encounter_height - 16.0))
+	_set_rect(encounter_options_box, Rect2(bottom_info_left + bottom_info_width - encounter_width, bottom_info_top + 4.0, encounter_width, bottom_info_height - 8.0))
 	_set_rect(encounter_result_label, Rect2(0, 0, 0, 0))
 	_set_rect(resource_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 62.0, rail_content_width - 16.0, 26.0))
 
@@ -597,6 +608,20 @@ func _add_texture_rect_from_ref(node_name: String, asset_ref: Dictionary, alpha:
 	return texture_rect
 
 
+func _add_nine_patch_from_ref(node_name: String, asset_ref: Dictionary, alpha: float = 1.0, margin: int = 12) -> NinePatchRect:
+	var frame := NinePatchRect.new()
+	frame.name = node_name
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.modulate = Color(1.0, 1.0, 1.0, alpha)
+	frame.texture = Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	frame.set_patch_margin(SIDE_LEFT, margin)
+	frame.set_patch_margin(SIDE_TOP, margin)
+	frame.set_patch_margin(SIDE_RIGHT, margin)
+	frame.set_patch_margin(SIDE_BOTTOM, margin)
+	add_child(frame)
+	return frame
+
+
 func _apply_texture_ref(texture_rect: TextureRect, asset_ref: Dictionary, alpha: float = 1.0) -> void:
 	if texture_rect == null:
 		return
@@ -619,11 +644,11 @@ func _room_background_ref(room_type: StringName) -> Dictionary:
 func _add_action_button(action_id: StringName, label: String, callback: Callable) -> void:
 	var button := Art10UISkinKitScript.make_bottom_key_button(label, _key_label_for_action(action_id))
 	button.name = "RunAction_%s" % String(action_id)
-	button.custom_minimum_size = Vector2(112, 46)
+	button.custom_minimum_size = Vector2(86, 36)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.focus_mode = Control.FOCUS_NONE
 	button.pressed.connect(callback)
-	button.add_theme_font_size_override("font_size", 13)
+	button.add_theme_font_size_override("font_size", 12)
 	_apply_action_button_style(button, &"secondary", true)
 	_apply_key_prompt_icon(button, action_id)
 	action_bar.add_child(button)
@@ -633,25 +658,7 @@ func _add_action_button(action_id: StringName, label: String, callback: Callable
 func _apply_key_prompt_icon(button: Button, action_id: StringName) -> void:
 	if button == null:
 		return
-	var prompt_action := &"interact"
-	match action_id:
-		&"inventory", &"ground_loot":
-			prompt_action = &"quick"
-		&"map":
-			prompt_action = &"map"
-		&"combat":
-			prompt_action = &"inspect"
-		&"extract":
-			prompt_action = &"toggle"
-		&"pause":
-			prompt_action = &"cancel"
-		_:
-			prompt_action = &"interact"
-	var texture := Art09ManifestAssetMappingScript.resolve_texture(Art09ManifestAssetMappingScript.key_prompt_ref(prompt_action, true))
-	if texture == null:
-		return
-	button.icon = texture
-	Art10UISkinKitScript.controlled_button_icon(button, &"key")
+	button.icon = null
 
 
 func _add_slot(node_name: String) -> Control:
@@ -742,12 +749,12 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 		var title := String(option.get("title", String(option_id)))
 		button.name = "RunEncounterOption_%s" % String(option_id)
 		button.text = "%s%s" % [_compact_line(title, 9), "  确认" if requires_confirm else ""]
-		button.custom_minimum_size = Vector2(240, 32)
+		button.custom_minimum_size = Vector2(176, 28)
 		button.focus_mode = Control.FOCUS_NONE
 		button.disabled = disabled
 		button.tooltip_text = _encounter_option_tooltip(option)
 		button.add_theme_font_size_override("font_size", 12)
-		_apply_action_button_style(button, &"primary" if not disabled else &"secondary", not disabled)
+		Art10UISkinKitScript.apply_transparent_button(button, &"primary" if not disabled else &"secondary", 12, &"key", 0)
 		if not disabled:
 			var payload := _dict_variant(option.get("command_payload", {}))
 			button.pressed.connect(_on_encounter_option_pressed.bind(option_id, payload))
@@ -831,10 +838,11 @@ func _apply_art10_text_refresh() -> void:
 			left_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for action_id in action_buttons.keys():
 		var action_button := action_buttons[action_id] as Button
+		action_button.custom_minimum_size = Vector2(86, 36)
 		Art10UISkinKitScript.apply_transparent_button(action_button, &"secondary", 13, &"key", 0)
 		_apply_key_prompt_icon(action_button, StringName(action_id))
 	for button in encounter_option_buttons:
-		Art10UISkinKitScript.apply_button(button, &"primary" if button != null and not button.disabled else &"secondary", 12)
+		Art10UISkinKitScript.apply_transparent_button(button, &"primary" if button != null and not button.disabled else &"secondary", 12, &"key", 0)
 
 
 func _array_variant(raw: Variant) -> Array:
