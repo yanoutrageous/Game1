@@ -38,14 +38,20 @@ func build() -> void:
 	root.add_theme_constant_override("separation", 8)
 	add_child(root)
 
+	var header_panel := PanelContainer.new()
+	header_panel.name = "InventoryTitlePlate"
+	_apply_art21r2_modal_panel(header_panel, &"art21r2.modal.title_plate", 8, 34)
+	root.add_child(header_panel)
 	var header := HBoxContainer.new()
 	header.name = "InventoryPanelHeader"
-	root.add_child(header)
+	header.add_theme_constant_override("separation", 8)
+	header_panel.add_child(header)
 	title_label = Label.new()
 	title_label.name = "InventoryPanelTitle"
 	title_label.text = "回收背包"
 	title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 	title_label.add_theme_font_size_override("font_size", 20)
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	Art10UISkinKitScript.apply_label(title_label, 20, PresentationTheme.color_for_key(&"ui.accent"))
 	header.add_child(title_label)
 	var close_button := Button.new()
@@ -56,6 +62,10 @@ func build() -> void:
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	header.add_child(close_button)
 
+	var summary_panel := PanelContainer.new()
+	summary_panel.name = "InventorySummaryPanel"
+	_apply_art21r2_modal_panel(summary_panel, &"art21r2.modal.section.panel", 8, 32)
+	root.add_child(summary_panel)
 	summary_label = Label.new()
 	summary_label.name = "InventorySummary"
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
@@ -64,29 +74,41 @@ func build() -> void:
 	summary_label.custom_minimum_size = Vector2(0, 44)
 	summary_label.add_theme_font_size_override("font_size", 13)
 	summary_label.add_theme_constant_override("line_spacing", 2)
-	root.add_child(summary_label)
+	summary_panel.add_child(summary_label)
 
+	var item_list_panel := PanelContainer.new()
+	item_list_panel.name = "InventoryItemListPanel"
+	_apply_art21r2_modal_panel(item_list_panel, &"art21r2.modal.section.panel", 8, 32)
+	root.add_child(item_list_panel)
 	item_list = VBoxContainer.new()
 	item_list.name = "InventoryItemList"
-	item_list.custom_minimum_size = Vector2(500, 210)
-	root.add_child(item_list)
+	item_list.custom_minimum_size = Vector2(500, 170)
+	item_list_panel.add_child(item_list)
 
+	var tooltip_panel := PanelContainer.new()
+	tooltip_panel.name = "InventoryTooltipPanel"
+	_apply_art21r2_modal_panel(tooltip_panel, &"art21r2.modal.section.panel", 8, 32)
+	root.add_child(tooltip_panel)
 	tooltip_label = Label.new()
 	tooltip_label.name = "InventoryItemTooltip"
 	tooltip_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	tooltip_label.clip_text = true
 	tooltip_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tooltip_label.custom_minimum_size = Vector2(500, 120)
+	tooltip_label.custom_minimum_size = Vector2(500, 84)
 	tooltip_label.add_theme_font_size_override("font_size", 13)
 	tooltip_label.add_theme_constant_override("line_spacing", 2)
-	root.add_child(tooltip_label)
+	tooltip_panel.add_child(tooltip_label)
 
+	var result_panel := PanelContainer.new()
+	result_panel.name = "InventoryCommandResultPanel"
+	_apply_art21r2_modal_panel(result_panel, &"art21r2.modal.section.panel", 8, 32)
+	root.add_child(result_panel)
 	last_result_label = Label.new()
 	last_result_label.name = "InventoryCommandResult"
 	last_result_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	last_result_label.clip_text = true
 	last_result_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	root.add_child(last_result_label)
+	result_panel.add_child(last_result_label)
 
 
 func apply_snapshot(snapshot: Dictionary) -> void:
@@ -158,9 +180,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		offset_bottom = 650.0
 		item_button_minimum_size = Vector2(360, 30)
 		if item_list != null:
-			item_list.custom_minimum_size = Vector2(500, 190)
+			item_list.custom_minimum_size = Vector2(500, 150)
 		if tooltip_label != null:
-			tooltip_label.custom_minimum_size = Vector2(500, 104)
+			tooltip_label.custom_minimum_size = Vector2(500, 72)
 	elif is_high:
 		offset_left = 350.0
 		offset_top = 88.0
@@ -168,9 +190,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		offset_bottom = 636.0
 		item_button_minimum_size = Vector2(430, 34)
 		if item_list != null:
-			item_list.custom_minimum_size = Vector2(560, 236)
+			item_list.custom_minimum_size = Vector2(560, 196)
 		if tooltip_label != null:
-			tooltip_label.custom_minimum_size = Vector2(560, 138)
+			tooltip_label.custom_minimum_size = Vector2(560, 104)
 	else:
 		offset_left = 390.0
 		offset_top = 98.0
@@ -178,9 +200,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		offset_bottom = 610.0
 		item_button_minimum_size = Vector2(380, 30)
 		if item_list != null:
-			item_list.custom_minimum_size = Vector2(500, 210)
+			item_list.custom_minimum_size = Vector2(500, 170)
 		if tooltip_label != null:
-			tooltip_label.custom_minimum_size = Vector2(500, 120)
+			tooltip_label.custom_minimum_size = Vector2(500, 84)
 	_apply_art21_panel_frame()
 
 
@@ -255,6 +277,14 @@ func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
 		return
 	button.icon = texture
 	Art10UISkinKitScript.controlled_button_icon(button, &"slot")
+
+
+func _apply_art21r2_modal_panel(panel: PanelContainer, visual_key: StringName, padding: int = 8, texture_margin: int = 32) -> void:
+	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.panel.terminal_main", padding, texture_margin)
+	if style == null:
+		panel.add_theme_stylebox_override("panel", Art10UISkinKitScript.transparent_style_box(padding))
+		return
+	panel.add_theme_stylebox_override("panel", style)
 
 
 func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: StringName, font_size_value: int, padding: int = 8, texture_margin: int = 18) -> void:

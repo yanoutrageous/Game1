@@ -160,3 +160,30 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
 - Result: `PARTIAL`. The modal control boundaries are image-owned, but the
   current live run does not prove non-empty inventory/ground-loot rows, and
   result button contrast remains weak.
+
+## Applied ART21R2 Modal Section Pass
+
+- Source sheet: `D:\AGAME1\sources\draw\Zujian3.png`.
+- Source candidates:
+  `D:\AGAME1\sources\draw\10_working\candidates\Zujian3\Zujian3_candidate_012.png`
+  for title/action plates and
+  `D:\AGAME1\sources\draw\10_working\candidates\Zujian3\Zujian3_candidate_010.png`
+  for content section panels.
+- Dedicated ART21R2 manifests:
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_section_staging_manifest.csv`,
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_section_cut_dry_run_plan.csv`,
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_section_cut_manifest.csv`,
+  and
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\modal_section_cut_summary.json`.
+- Runtime target: `Godot/GraytailGodot/assets/ui/art21r2/modal`.
+- Imported roles: modal title plate, modal section panel, and modal action
+  strip.
+- Candidate 012 cleanup: purple-like pixels 1199 -> 0. Candidate 010 cleanup:
+  purple-like pixels 1534 -> 0.
+- Evidence screenshots:
+  `screenshots/slice6/godot_inventory_zujian3_modal_sections_pass31_smoke.png`,
+  `screenshots/slice6/godot_ground_loot_zujian3_modal_sections_pass31_smoke.png`,
+  and `screenshots/slice6/godot_result_zujian3_modal_sections_pass32_smoke.png`.
+- Result: `PARTIAL`. Section boundaries are now image-owned, and the Result
+  summary overflow found in pass31 was corrected in pass32, but title/action
+  composition and non-empty item-row evidence remain incomplete.

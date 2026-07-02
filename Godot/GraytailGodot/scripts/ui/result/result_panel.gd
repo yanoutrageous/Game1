@@ -13,6 +13,8 @@ signal return_deploy_requested
 
 var result_title_art: TextureRect
 var result_modal_art: NinePatchRect
+var result_summary_art: NinePatchRect
+var result_actions_art: NinePatchRect
 
 
 func _ready() -> void:
@@ -26,12 +28,16 @@ func set_result_summary(title: String, summary: String) -> void:
 
 	if title_node != null:
 		title_node.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
+		title_node.z_index = 4
 		title_node.text = title
 
 	if summary_node != null:
 		summary_node.add_theme_color_override("font_color", PresentationTheme.text_color())
 		summary_node.add_theme_font_size_override("font_size", 13)
 		summary_node.add_theme_constant_override("line_spacing", 2)
+		summary_node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		summary_node.clip_text = true
+		summary_node.z_index = 4
 		summary_node.text = summary
 
 
@@ -74,6 +80,8 @@ func _ensure_backdrop() -> void:
 	var modal_texture := Art21UIPlacementContractScript.texture_for_slot(&"result", &"result_modal_frame", &"ui.art19.panel.terminal_main")
 	if modal_texture != null:
 		result_modal_art.texture = modal_texture
+	result_summary_art = _ensure_modal_patch(&"ResultSummaryPanelArt", &"art21r2.modal.section.panel", 32, 0.96)
+	result_actions_art = _ensure_modal_patch(&"ResultActionStripArt", &"art21r2.modal.action_strip", 34, 0.96)
 	result_title_art = get_node_or_null("ResultTitlePlate") as TextureRect
 	if result_title_art == null:
 		result_title_art = TextureRect.new()
@@ -83,7 +91,13 @@ func _ensure_backdrop() -> void:
 		result_title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		result_title_art.modulate = Color(1.0, 1.0, 1.0, 0.94)
 		add_child(result_title_art)
-		move_child(result_title_art, 2)
+	result_title_art.z_index = 1
+	var title_node := get_node_or_null("ResultTitle") as Label
+	if title_node != null:
+		title_node.z_index = 4
+	var summary_node := get_node_or_null("ResultSummary") as Label
+	if summary_node != null:
+		summary_node.z_index = 4
 
 
 func _ensure_actions() -> void:
@@ -96,6 +110,7 @@ func _ensure_actions() -> void:
 	actions.offset_right = 600.0
 	actions.offset_bottom = 430.0
 	actions.add_theme_constant_override("separation", 14)
+	actions.z_index = 4
 	add_child(actions)
 
 	var main_button := Button.new()
@@ -143,19 +158,37 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		result_modal_art.position = Vector2.ZERO
 		result_modal_art.size = size
 	if result_title_art != null:
-		result_title_art.position = Vector2(18, 8)
-		result_title_art.size = Vector2(250 if is_low else (300 if is_high else 270), 96)
+		result_title_art.position = Vector2(24, 10)
+		result_title_art.size = Vector2(260 if is_low else (330 if is_high else 310), 76)
+	var title_node := get_node_or_null("ResultTitle") as Label
+	if title_node != null:
+		title_node.position = Vector2(58, 30)
+		title_node.size = Vector2(220 if is_low else (280 if is_high else 260), 30)
+	var summary_top := 108.0
+	var action_strip_top := size.y - 86.0
+	if result_summary_art != null:
+		result_summary_art.position = Vector2(28, summary_top)
+		result_summary_art.size = Vector2(size.x - 56.0, max(120.0, action_strip_top - summary_top - 12.0))
+	if summary_node != null:
+		summary_node.position = Vector2(48, summary_top + 18.0)
+		summary_node.size = Vector2(size.x - 96.0, max(88.0, action_strip_top - summary_top - 48.0))
+	if result_actions_art != null:
+		result_actions_art.position = Vector2(34, action_strip_top)
+		result_actions_art.size = Vector2(size.x - 68.0, 66)
 	var actions := get_node_or_null("ResultActions") as HBoxContainer
 	if actions != null:
-		actions.offset_top = size.y - 54.0
-		actions.offset_right = size.x - 20.0
-		actions.offset_bottom = size.y - 12.0
+		actions.offset_left = 58.0
+		actions.offset_top = size.y - 68.0
+		actions.offset_right = size.x - 58.0
+		actions.offset_bottom = size.y - 22.0
 
 
 func _apply_result_title_plate(state: StringName) -> void:
 	if result_title_art == null:
 		_ensure_backdrop()
-	var texture := Art09ManifestAssetMappingScript.resolve_texture(PresentationMappingScript.result_title_ref(state))
+	var texture := Art21UIPlacementContractScript.texture_for_visual_key(&"art21r2.modal.title_plate", &"ui.result.title.extraction_success")
+	if texture == null:
+		texture = Art09ManifestAssetMappingScript.resolve_texture(PresentationMappingScript.result_title_ref(state))
 	if texture != null and result_title_art != null:
 		result_title_art.texture = texture
 		result_title_art.visible = true
@@ -175,6 +208,24 @@ func _result_state_from_snapshot(snapshot: Dictionary) -> StringName:
 	if outcome == "Abandoned" or settlement_outcome == "abandon":
 		return &"abandon"
 	return &"extract_confirm"
+
+
+func _ensure_modal_patch(node_name: StringName, visual_key: StringName, margin: int, alpha: float) -> NinePatchRect:
+	var patch := get_node_or_null(String(node_name)) as NinePatchRect
+	if patch == null:
+		patch = NinePatchRect.new()
+		patch.name = String(node_name)
+		patch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		patch.patch_margin_left = margin
+		patch.patch_margin_top = margin
+		patch.patch_margin_right = margin
+		patch.patch_margin_bottom = margin
+		patch.draw_center = true
+		add_child(patch)
+	patch.texture = Art21UIPlacementContractScript.texture_for_visual_key(visual_key, &"ui.art19.panel.terminal_main")
+	patch.modulate = Color(1.0, 1.0, 1.0, alpha)
+	patch.z_index = 1
+	return patch
 
 
 func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: StringName, font_size_value: int, padding: int = 8, texture_margin: int = 18) -> void:
