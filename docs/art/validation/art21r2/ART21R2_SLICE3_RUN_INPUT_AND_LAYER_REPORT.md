@@ -49,6 +49,9 @@ lock. It does not mark the overall ART21R2 visual goal complete.
   - Added a no-public-map fallback for the case where a `MiniMapViewModel`
     exists but exposes no public cells, preventing a blank rail without reading
     TruthMap or changing map rules.
+  - Renders a full public-size minimap grid when width/height are available,
+    filling undisclosed cells with unknown image tiles and mapping public/current
+    markers to ART21 image assets without reading TruthMap.
 
 ## Evidence
 
@@ -67,6 +70,7 @@ lock. It does not mark the overall ART21R2 visual goal complete.
 | Logic minimap fallback pass5 | `screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png` | Blank minimap state now shows an explicit no-public-map fallback; live tile readability remains unproven. |
 | Logic run HUD pass6 | `screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png` | ART21R2 run-specific frame assets are manifest-backed and visible; the old center floating encounter backplate is gone. Still PARTIAL because left edge color and bottom text contrast remain weak. |
 | Logic run HUD pass7 | `screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png` | Godot import now resolves the ART21R2 frame textures at runtime; the fallback green terminal edge is gone and key text is visible again. Still PARTIAL because minimap public-cell evidence and disabled key contrast remain below target. |
+| Logic run HUD pass10 | `screenshots/slice3/godot_run_hud_after_slice3_minimap_public_grid_pass10_logic.png` | Standard run start path renders a full 10x10 minimap with image tiles and a current-cell marker. Still PARTIAL because tile scale/contrast remains below final UE floor. |
 
 ## Current Verdict
 
@@ -85,6 +89,9 @@ PASS for this slice:
 - The pass7 Run HUD capture confirms that the ART21R2 frame assets resolve at
   runtime after import, removes the extra floating encounter backplate, and keeps
   encounter buttons and callbacks routed through the existing code path.
+- The pass10 Run HUD capture uses the standard run start path and proves that
+  the left rail can render a public 10x10 minimap grid with current-cell marker
+  from `MiniMapViewModel`/`IntelMap` data rather than TruthMap.
 
 PARTIAL for the larger ART21R2 target:
 
@@ -93,10 +100,11 @@ PARTIAL for the larger ART21R2 target:
   removes the fallback green terminal edge and restores key text over the image
   strip, but minimap public-cell readability and disabled key contrast still do
   not reach the target.
-- MiniMap readability is still not complete. The pass5 fallback prevents a blank
-  rail, but it does not prove readable unknown/explored/scanned/player/exit
-  tile states in a live map.
-- Bottom key text is less noisy but still weak in contrast/readability.
+- MiniMap readability is still not complete. The pass10 capture proves the live
+  unknown/current public grid path, but the small tile scale and state contrast
+  still need a final polish pass.
+- Bottom key text is less noisy and more legible, but still weak compared with
+  the UE command strip target.
 - Inventory modal opens but overlaps the left HUD rail and still uses generated
   row/button treatment.
 - Deploy Prep and Long Term remain mostly baseline visual quality after this

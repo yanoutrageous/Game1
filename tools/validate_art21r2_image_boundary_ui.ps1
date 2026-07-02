@@ -54,7 +54,8 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_map_overlay_guard_after_slice3_pass4_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png",
-    "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png"
+    "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png",
+    "screenshots/slice3/godot_run_hud_after_slice3_minimap_public_grid_pass10_logic.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -333,8 +334,17 @@ $miniMap = Get-Content -LiteralPath $miniMapPath -Raw
 if ($miniMap -notmatch 'UNKNOWN_CELL_ASSET_ID') {
     Fail "minimap_panel.gd should provide an image-backed unknown-cell fallback."
 }
+if ($miniMap -notmatch 'PLAYER_MARKER_ASSET_ID') {
+    Fail "minimap_panel.gd should provide an image-backed current-cell marker."
+}
 if ($miniMap -notmatch 'view_model\.room_markers\.is_empty\(\)') {
     Fail "minimap_panel.gd should handle empty public marker sets explicitly."
+}
+if ($miniMap -notmatch '_public_marker_or_unknown') {
+    Fail "minimap_panel.gd should render a full public grid without reading TruthMap."
+}
+if ($miniMap -notmatch 'EXPAND_IGNORE_SIZE') {
+    Fail "minimap_panel.gd should scale map tile textures to minimap cells."
 }
 
 Write-Output "ART21R2_IMAGE_BOUNDARY_VALIDATION=PASS_STRUCTURAL_OPEN"

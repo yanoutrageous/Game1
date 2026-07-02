@@ -877,8 +877,10 @@ func _apply_action_button_style(button: Button, tone: StringName, enabled: bool)
 	button.add_theme_color_override("font_color", Color(0.92, 0.86, 0.68, 1.0))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.94, 0.70, 1.0))
 	button.add_theme_color_override("font_pressed_color", Color(1.0, 0.82, 0.45, 1.0))
-	button.add_theme_color_override("font_disabled_color", Color(0.68, 0.64, 0.52, 0.96))
-	button.modulate = Color(1, 1, 1, 1) if enabled else Color(0.86, 0.86, 0.80, 1)
+	button.add_theme_color_override("font_disabled_color", Color(1.0, 0.86, 0.50, 1.0))
+	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
+	button.add_theme_constant_override("outline_size", 2)
+	button.modulate = Color(1, 1, 1, 1)
 
 
 func _tone_color(tone: StringName) -> Color:

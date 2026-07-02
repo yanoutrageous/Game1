@@ -12,6 +12,14 @@ var marker_font_size: int = 13
 const LEGACY_MINIMAP_VALIDATION_MARKER := "MiniMap: icons fallback to text"
 const G10_MINIMAP_CLICK_VALIDATION_MARKER := "MiniMapPanel click opens MapOverlay"
 const UNKNOWN_CELL_ASSET_ID := &"ui.art21.map.cell.unknown"
+const EXPLORED_CELL_ASSET_ID := &"ui.art21.map.cell.explored"
+const SCANNED_CELL_ASSET_ID := &"ui.art21.map.cell.scanned"
+const FLAGGED_CELL_ASSET_ID := &"ui.art21.map.cell.flagged"
+const PLAYER_MARKER_ASSET_ID := &"ui.art21.map.marker.player"
+const EXIT_MARKER_ASSET_ID := &"ui.art21.map.marker.exit"
+const MINE_MARKER_ASSET_ID := &"ui.art21.map.marker.mine"
+const CHEST_MARKER_ASSET_ID := &"ui.art21.map.marker.chest"
+const EVENT_MARKER_ASSET_ID := &"ui.art21.map.marker.event"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
@@ -95,8 +103,16 @@ func _rebuild_grid() -> void:
 
 	_apply_marker_scale_for_view_model()
 	grid.columns = max(1, view_model.width)
-	for marker in view_model.room_markers:
-		_add_marker_node(grid, marker, marker_size)
+	if view_model.width > 0 and view_model.height > 0:
+		var markers_by_pos := _markers_by_position(view_model.room_markers)
+		for y in range(view_model.height):
+			for x in range(view_model.width):
+				var pos := Vector2i(x, y)
+				var marker := _public_marker_or_unknown(markers_by_pos, pos)
+				_add_marker_node(grid, marker, marker_size)
+	else:
+		for marker in view_model.room_markers:
+			_add_marker_node(grid, marker, marker_size)
 
 	if placeholder != null:
 		placeholder.visible = false
@@ -123,7 +139,7 @@ func _apply_marker_scale_for_view_model() -> void:
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) -> void:
-	var asset_id := StringName(marker.get("asset_id", &""))
+	var asset_id := _asset_id_for_marker(marker)
 	var asset_ref: Resource = null
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
 	if asset_id != &"":
@@ -133,7 +149,8 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		var icon := TextureRect.new()
 		icon.texture = asset_ref
 		icon.custom_minimum_size = size
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_SCALE
 		icon.mouse_filter = Control.MOUSE_FILTER_STOP
 		icon.tooltip_text = ""
 		icon.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
@@ -154,6 +171,57 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		label.tooltip_text = ""
 		label.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
 		grid.add_child(label)
+
+
+func _markers_by_position(markers: Array[Dictionary]) -> Dictionary:
+	var result: Dictionary = {}
+	for marker in markers:
+		var pos: Vector2i = marker.get("pos", Vector2i(-1, -1))
+		if pos.x < 0 or pos.y < 0:
+			continue
+		result[_pos_key(pos)] = marker.duplicate(true)
+	return result
+
+
+func _public_marker_or_unknown(markers_by_pos: Dictionary, pos: Vector2i) -> Dictionary:
+	var key := _pos_key(pos)
+	if markers_by_pos.has(key):
+		return (markers_by_pos[key] as Dictionary).duplicate(true)
+	return {
+		"pos": pos,
+		"label": "?",
+		"asset_id": UNKNOWN_CELL_ASSET_ID,
+		"theme_key": &"mini.normal",
+		"display_only": true,
+		"read_only": true,
+		"preview": true,
+	}
+
+
+func _asset_id_for_marker(marker: Dictionary) -> StringName:
+	if bool(marker.get("is_current", false)):
+		return PLAYER_MARKER_ASSET_ID
+	if bool(marker.get("flagged", false)):
+		return FLAGGED_CELL_ASSET_ID
+	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
+	var room_type := StringName(marker.get("room_type", &"Unknown"))
+	if room_type == &"Exit":
+		return EXIT_MARKER_ASSET_ID
+	if room_type == &"Mine":
+		return MINE_MARKER_ASSET_ID
+	if room_type == &"Chest":
+		return CHEST_MARKER_ASSET_ID
+	if room_type == &"Event":
+		return EVENT_MARKER_ASSET_ID
+	if bool(marker.get("scanned", false)) or known_state == &"scanned":
+		return SCANNED_CELL_ASSET_ID
+	if bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]:
+		return EXPLORED_CELL_ASSET_ID
+	return UNKNOWN_CELL_ASSET_ID
+
+
+func _pos_key(pos: Vector2i) -> String:
+	return "%d,%d" % [pos.x, pos.y]
 
 
 func _emit_open_map_from_mouse_event(event: InputEvent) -> void:
@@ -177,6 +245,8 @@ func _apply_child_layout() -> void:
 		grid.offset_top = 8.0
 		grid.offset_right = panel_size.x - 8.0
 		grid.offset_bottom = panel_size.y - 8.0
+		grid.add_theme_constant_override("h_separation", 2)
+		grid.add_theme_constant_override("v_separation", 2)
 	if placeholder != null:
 		placeholder.offset_left = 8.0
 		placeholder.offset_top = panel_size.y - 30.0
