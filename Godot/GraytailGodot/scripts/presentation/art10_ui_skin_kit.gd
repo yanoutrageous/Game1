@@ -6,6 +6,7 @@ class_name Art10UISkinKit
 
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
 const FONT_ASSET_ID := &"ui.font.fusion_pixel"
 const CANVAS_SIZE := Vector2(1280, 720)
@@ -154,6 +155,16 @@ static func pixel_font() -> Resource:
 
 static func art19_texture(role: StringName) -> Texture2D:
 	return Art09ManifestAssetMappingScript.resolve_texture(Art09ManifestAssetMappingScript.art19_skin_ref(role))
+
+
+static func art21_texture(role: StringName) -> Texture2D:
+	var asset_ref: Dictionary
+	match role:
+		&"button_confirm", &"button_primary", &"button_primary_hover", &"button_primary_pressed", &"button_primary_disabled", &"button_dark", &"button_secondary", &"button_selected_tab", &"tab_normal", &"tab_selected":
+			asset_ref = Art21UIPlacementContractScript.button_ref(role)
+		_:
+			asset_ref = Art21UIPlacementContractScript.panel_ref(role)
+	return Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
 
 
 static func font_size(token: StringName, fallback: int = 15) -> int:
@@ -816,7 +827,9 @@ static func button_style(tone: StringName = &"secondary", hover: bool = false, p
 
 
 static func _texture_style_box(role: StringName, padding: int, texture_margin: int) -> StyleBoxTexture:
-	var texture := art19_texture(role)
+	var texture := art21_texture(role)
+	if texture == null:
+		texture = art19_texture(role)
 	if texture == null:
 		return null
 	var style := StyleBoxTexture.new()

@@ -5,6 +5,7 @@ const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
 signal pickup_item_requested(instance_id: String)
 signal replace_item_requested(instance_id: String)
@@ -29,6 +30,7 @@ func build() -> void:
 	offset_top = 116.0
 	offset_right = 930.0
 	offset_bottom = 610.0
+	_apply_art21_panel_frame()
 	if get_child_count() > 0:
 		return
 	var root := VBoxContainer.new()
@@ -163,6 +165,26 @@ func apply_layout_profile(profile: Dictionary) -> void:
 			item_list.custom_minimum_size = Vector2(500, 210)
 		if tooltip_label != null:
 			tooltip_label.custom_minimum_size = Vector2(500, 120)
+	_apply_art21_panel_frame()
+
+
+func _apply_art21_panel_frame() -> void:
+	var texture := Art21UIPlacementContractScript.texture_for_slot(&"ground_loot", &"ground_loot_panel_frame", &"ui.art19.panel.terminal_main")
+	if texture == null:
+		Art10UISkinKitScript.apply_panel(self, &"modal")
+		return
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = 28
+	style.texture_margin_top = 28
+	style.texture_margin_right = 28
+	style.texture_margin_bottom = 28
+	style.content_margin_left = 18
+	style.content_margin_top = 18
+	style.content_margin_right = 18
+	style.content_margin_bottom = 18
+	style.draw_center = true
+	add_theme_stylebox_override("panel", style)
 
 
 func _add_item_row(item: Dictionary) -> void:

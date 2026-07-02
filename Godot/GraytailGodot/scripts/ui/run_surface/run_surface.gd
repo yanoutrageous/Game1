@@ -9,6 +9,7 @@ const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
 signal interact_requested
 signal inventory_requested
@@ -53,6 +54,8 @@ var room_glow_layer: ColorRect
 var protocol_glow_layer: ColorRect
 var bottom_key_glow_layer: ColorRect
 var right_game_fill_layer: ColorRect
+var status_card_art: TextureRect
+var bottom_overlay_art: TextureRect
 var player_sprite_layer: TextureRect
 var scanner_title_label: Label
 var scanner_summary_label: Label
@@ -113,9 +116,11 @@ func build() -> void:
 	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
 	right_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.68), PresentationTheme.color_for_key(&"ui.warning"), 2))
 	Art10UISkinKitScript.apply_panel(right_backdrop, &"summary")
+	status_card_art = _add_texture_rect_from_ref("Art21RunStatusCard", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"top_right_status_card", &"ui.art19.panel.deploy_summary"), 0.82)
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.70), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(bottom_backdrop, &"summary")
+	bottom_overlay_art = _add_texture_rect_from_ref("Art21RunBottomOverlay", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.74)
 	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
 	resource_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.60), PresentationTheme.color_for_key(&"mini.chest"), 2))
 	Art10UISkinKitScript.apply_panel(resource_backdrop, &"card")
@@ -170,7 +175,7 @@ func build() -> void:
 	reward_label = _add_label("RunRewardSummary", "奖励：等待记录。", 12, PresentationTheme.color_for_key(&"ui.muted"))
 	reward_label.visible = false
 	reward_mask.visible = false
-	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art09ManifestAssetMappingScript.art19_skin_ref(&"bar_summary"), 0.94)
+	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.94)
 	command_feedback_label = _add_label("RunCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
 	layout_label = _add_label("RunLayoutProfileStatus", "", 11, PresentationTheme.color_for_key(&"ui.muted"))
 	layout_label.visible = false
@@ -283,31 +288,45 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var encounter_height: float = 44.0 if is_low else 50.0
 	var encounter_left: float = clampf(gameplay_left + gameplay_width * 0.58, gameplay_left + margin, width - encounter_width - margin)
 	var encounter_top: float = clampf(height * 0.52 - encounter_height * 0.5, margin + 110.0, bottom_info_top - encounter_height - 12.0)
+	var gameplay_square_size: float = min(gameplay_width - margin * 2.0, height - margin * 2.0)
+	gameplay_square_size = max(320.0 if is_low else 420.0, gameplay_square_size)
+	var gameplay_square_left: float = gameplay_left + max(margin, (gameplay_width - gameplay_square_size) * 0.5)
+	if gameplay_square_left + gameplay_square_size > width - margin:
+		gameplay_square_left = max(gameplay_left + margin, width - margin - gameplay_square_size)
+	var gameplay_square_top: float = margin
+	var room_info_width: float = min(gameplay_square_size - 48.0, 420.0 if is_high else 340.0)
+	encounter_left = clampf(gameplay_square_left + gameplay_square_size * 0.58, gameplay_square_left + 20.0, gameplay_square_left + gameplay_square_size - encounter_width - 20.0)
+	encounter_top = clampf(gameplay_square_top + gameplay_square_size * 0.68, gameplay_square_top + 120.0, gameplay_square_top + gameplay_square_size - encounter_height - 24.0)
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(right_left, margin, right_card_width, right_card_height))
-	_set_rect(center_backdrop, Rect2(0, 0, 0, 0))
-	_set_rect(room_background_layer, Rect2(0, 0, 0, 0))
-	_set_rect(encounter_backdrop, Rect2(0, 0, 0, 0))
+	_set_rect(status_card_art, Rect2(right_left, margin, right_card_width, right_card_height))
+	_set_rect(center_backdrop, Rect2(gameplay_square_left, gameplay_square_top, gameplay_square_size, gameplay_square_size))
+	_set_rect(room_background_layer, Rect2(gameplay_square_left, gameplay_square_top, gameplay_square_size, gameplay_square_size))
+	_set_rect(encounter_backdrop, Rect2(encounter_left, encounter_top, encounter_width, encounter_height))
 	_set_rect(bottom_backdrop, Rect2(bottom_key_left, bottom_key_top, bottom_key_width, bottom_key_height))
+	_set_rect(bottom_overlay_art, Rect2(bottom_key_left, bottom_key_top, bottom_key_width, bottom_key_height))
 	_set_rect(resource_backdrop, Rect2(rail_content_left, scanner_stats_top, rail_content_width, 92.0 if is_low else 104.0))
 	_set_rect(scanner_text_mask, Rect2(rail_content_left, backpack_top, rail_content_width, 48.0))
-	_set_rect(room_text_mask, Rect2(0, 0, 0, 0))
+	_set_rect(room_text_mask, Rect2(gameplay_square_left + 24.0, gameplay_square_top + 22.0, room_info_width, 92.0))
 	_set_rect(threat_mask, Rect2(right_content_left, margin + 34.0, right_content_width, 42.0 if is_low else 50.0))
 	_set_rect(event_mask, Rect2(right_content_left, margin + (78.0 if is_low else 90.0), right_content_width, 24.0 if is_low else 30.0))
 	_set_rect(reward_mask, Rect2(0, 0, 0, 0))
-	_set_rect(player_sprite_layer, Rect2(0, 0, 0, 0))
-	_set_rect(player_tag_mask, Rect2(0, 0, 0, 0))
-	_set_rect(room_hint_softener, Rect2(0, 0, 0, 0))
+	_set_rect(player_sprite_layer, Rect2(gameplay_square_left + gameplay_square_size * 0.5 - 74.0, gameplay_square_top + gameplay_square_size * 0.44 - 108.0, 148.0, 216.0))
+	_set_rect(player_tag_mask, Rect2(gameplay_square_left + gameplay_square_size * 0.5 - 82.0, gameplay_square_top + gameplay_square_size - 76.0, 164.0, 30.0))
+	_set_rect(room_hint_softener, Rect2(gameplay_square_left + 18.0, gameplay_square_top + 18.0, room_info_width + 20.0, 108.0))
 	_set_rect(scanner_glow_layer, Rect2(0, 0, 0, 0))
-	_set_rect(room_glow_layer, Rect2(0, 0, 0, 0))
+	_set_rect(room_glow_layer, Rect2(gameplay_square_left + 10.0, gameplay_square_top + 10.0, gameplay_square_size - 20.0, gameplay_square_size - 20.0))
 	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 30.0, right_content_width, right_card_height - 44.0))
 	_set_rect(bottom_key_glow_layer, Rect2(bottom_key_left + 8.0, bottom_key_top + 8.0, bottom_key_width - 16.0, bottom_key_height - 16.0))
-	_set_rect(right_game_fill_layer, Rect2(0, 0, 0, 0))
-	center_backdrop.visible = false
-	room_background_layer.visible = false
-	player_sprite_layer.visible = false
-	room_glow_layer.visible = false
+	_set_rect(right_game_fill_layer, Rect2(gameplay_left, 0, gameplay_width, height))
+	center_backdrop.visible = true
+	room_background_layer.visible = true
+	player_sprite_layer.visible = true
+	room_glow_layer.visible = true
+	room_text_mask.visible = true
+	room_hint_softener.visible = true
+	right_game_fill_layer.visible = true
 
 	_set_rect(scanner_title_label, Rect2(rail_content_left, margin, rail_content_width, 28))
 	_set_rect(scanner_summary_label, Rect2(0, 0, 0, 0))
@@ -316,10 +335,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(scanner_legend_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 10.0, rail_content_width - 16.0, 48.0))
 	_set_rect(scanner_detail_label, Rect2(rail_content_left + 8.0, backpack_top + 10.0, rail_content_width - 16.0, 24.0))
 
-	_set_rect(room_title_label, Rect2(0, 0, 0, 0))
-	_set_rect(room_body_label, Rect2(0, 0, 0, 0))
-	_set_rect(objective_label, Rect2(0, 0, 0, 0))
-	_set_rect(player_tag_label, Rect2(0, 0, 0, 0))
+	_set_rect(room_title_label, Rect2(gameplay_square_left + 38.0, gameplay_square_top + 30.0, room_info_width - 28.0, 28.0))
+	_set_rect(room_body_label, Rect2(gameplay_square_left + 38.0, gameplay_square_top + 58.0, room_info_width - 28.0, 38.0))
+	_set_rect(objective_label, Rect2(gameplay_square_left + 38.0, gameplay_square_top + 94.0, room_info_width - 28.0, 24.0))
+	_set_rect(player_tag_label, Rect2(gameplay_square_left + gameplay_square_size * 0.5 - 70.0, gameplay_square_top + gameplay_square_size - 69.0, 140.0, 20.0))
 	_set_rect(encounter_title_label, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_body_label, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_options_box, Rect2(encounter_left + 10.0, encounter_top + 8.0, encounter_width - 20.0, encounter_height - 16.0))
@@ -354,7 +373,7 @@ func show_command_feedback(result: Dictionary) -> void:
 	var feedback_state := &"neutral"
 	if not accepted:
 		feedback_state = &"warning"
-	_apply_texture_ref(command_feedback_art, Art09ManifestAssetMappingScript.art19_skin_ref(&"bar_summary"), 0.82)
+	_apply_texture_ref(command_feedback_art, Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.82)
 	var pulse_state := &"ready"
 	if not accepted:
 		pulse_state = &"warning"
@@ -570,13 +589,7 @@ func _apply_texture_ref(texture_rect: TextureRect, asset_ref: Dictionary, alpha:
 
 
 func _room_background_ref(room_type: StringName) -> Dictionary:
-	var visual := PresentationMapping.room_visual_from_snapshot({"current_room": room_type})
-	return Art09ManifestAssetMappingScript.asset_ref(
-		StringName(visual.get("background_asset_id", &"room.background.normal")),
-		&"room.background.normal",
-		&"room_background",
-		room_type
-	)
+	return Art21UIPlacementContractScript.slot_ref(&"run_hud", &"gameplay_viewport_background", &"room.background.normal", &"room_background")
 
 
 func _add_action_button(action_id: StringName, label: String, callback: Callable) -> void:

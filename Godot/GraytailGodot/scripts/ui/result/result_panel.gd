@@ -5,12 +5,14 @@ const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const LEGACY_RESULT_VALIDATION_MARKERS := ["Outcome:", "Mode:", "Moves:", "Mine Hits:", "Monsters Defeated:", "Failure Pending Lost:", "Failure Salvaged Items:", "Carried Items:", "Carried Value:", "Safe Gold:", "Final HP:", "Final Pressure:", "Black Coin:", "Gold Coin:", "Warehouse Lite Items:", "Room Floor Lost:", "Settlement Log Entries:"]
 
 signal return_main_requested
 signal return_deploy_requested
 
 var result_title_art: TextureRect
+var result_modal_art: TextureRect
 
 
 func _ready() -> void:
@@ -58,6 +60,19 @@ func _ensure_backdrop() -> void:
 		backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(backdrop)
 		move_child(backdrop, 0)
+	result_modal_art = get_node_or_null("ResultModalFrame") as TextureRect
+	if result_modal_art == null:
+		result_modal_art = TextureRect.new()
+		result_modal_art.name = "ResultModalFrame"
+		result_modal_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		result_modal_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		result_modal_art.stretch_mode = TextureRect.STRETCH_SCALE
+		result_modal_art.modulate = Color(1.0, 1.0, 1.0, 0.96)
+		add_child(result_modal_art)
+		move_child(result_modal_art, 1)
+	var modal_texture := Art21UIPlacementContractScript.texture_for_slot(&"result", &"result_modal_frame", &"ui.art19.panel.terminal_main")
+	if modal_texture != null:
+		result_modal_art.texture = modal_texture
 	result_title_art = get_node_or_null("ResultTitlePlate") as TextureRect
 	if result_title_art == null:
 		result_title_art = TextureRect.new()
@@ -67,7 +82,7 @@ func _ensure_backdrop() -> void:
 		result_title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		result_title_art.modulate = Color(1.0, 1.0, 1.0, 0.94)
 		add_child(result_title_art)
-		move_child(result_title_art, 1)
+		move_child(result_title_art, 2)
 
 
 func _ensure_actions() -> void:
@@ -119,6 +134,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var backdrop := get_node_or_null("Backdrop") as ColorRect
 	if backdrop != null:
 		backdrop.size = size + Vector2(16, 16)
+	if result_modal_art != null:
+		result_modal_art.position = Vector2.ZERO
+		result_modal_art.size = size
 	if result_title_art != null:
 		result_title_art.position = Vector2(18, 8)
 		result_title_art.size = Vector2(250 if is_low else (300 if is_high else 270), 96)

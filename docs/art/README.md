@@ -10,6 +10,7 @@
 
 | Stage | 状态 | 主要文档 | 结论 |
 | --- | --- | --- | --- |
+| ART-21 | closed_with_residual_visual_risk | `docs/art/ART21_LUA_UE_EXECUTION_LOGIC_UI_PLACEMENT_REBUILD.md`; `docs/art/ART21_CLOSEOUT_UI_PLACEMENT_CONTRACT_REBUILD.md`; `docs/art/validation/art21/UI_PLACEMENT_CONTRACT.md` | UI Placement Contract established and mirrored in Godot runtime; core screens rebuilt against Lua / UE execution references. Ground loot live trigger remains NOT_TRIGGERED; final visual completion is not claimed. |
 | ART-20 | closed_with_visual_gap | `docs/art/ART20_DRAW_TO_RUNTIME_UI_COMPONENT_PIPELINE_EXECUTION.md`; `docs/art/ART20_CLOSEOUT_PIPELINE_PASS_VISUAL_INCOMPLETE.md` | Draw/source 到 Godot runtime 的切片、导入、manifest、visual_key、UI consumer 链路通过；核心 UI 目标视觉未完成，ART-21 必须补 `UI_ASSET_PLACEMENT_INDEX` 和核心界面视觉落地。 |
 
 ## 使用规则

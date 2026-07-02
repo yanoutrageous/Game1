@@ -6,6 +6,7 @@ const MainMenuModelScript := preload("res://scripts/ui/main_menu/main_menu_model
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
 signal navigation_intent_requested(intent: Dictionary)
 
@@ -165,7 +166,7 @@ func _build_top_entrance_panel() -> void:
 
 func _build_menu_panel() -> void:
 	_add_panel(self, "MainMenuEntryBoard", Rect2(732, 126, 486, 426), &"deep")
-	_add_texture_rect_from_ref(self, "MainMenuEntryBoardTexture", Rect2(738, 132, 474, 414), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_terminal"), 0.74)
+	_add_texture_rect_from_ref(self, "Art21MainMenuActionDeckTexture", Rect2(738, 132, 474, 414), Art21UIPlacementContractScript.slot_ref(&"main_menu", &"action_deck_frame", &"ui.art19.panel.terminal_main"), 0.82)
 	_add_color_rect(self, "MainMenuEntryBoardTopRail", Rect2(748, 142, 444, 4), Art10UISkinKitScript.color(&"gold"))
 	_add_color_rect(self, "MainMenuEntryBoardGlow", Rect2(760, 150, 430, 372), Color(0.94, 0.70, 0.28, 0.045))
 	var panel := VBoxContainer.new()
@@ -186,7 +187,7 @@ func _build_notice_panel() -> void:
 	notice_panel.add_theme_constant_override("separation", 4)
 	add_child(notice_panel)
 	_add_panel(self, "MainMenuNoticeFrame", Art10UISkinKitScript.rect(&"main_menu", "notice"), &"summary")
-	_add_texture_rect_from_ref(self, "Art19MainMenuNoticeTexture", Art10UISkinKitScript.rect(&"main_menu", "notice"), Art09ManifestAssetMappingScript.art19_skin_ref(&"bar_summary"), 0.82)
+	_add_texture_rect_from_ref(self, "Art21MainMenuNoticeTexture", Art10UISkinKitScript.rect(&"main_menu", "notice"), Art21UIPlacementContractScript.panel_ref(&"bar_summary"), 0.82)
 	move_child(notice_panel, get_child_count() - 1)
 	_add_section_label(notice_panel, "公告")
 	for notice in _array_from(current_model, "notices").slice(0, 1):
@@ -199,7 +200,7 @@ func _build_notice_panel() -> void:
 
 func _build_meta_summary_panel() -> void:
 	_add_panel(self, "MainMenuMetaFrame", Art10UISkinKitScript.rect(&"main_menu", "meta"), &"soft")
-	_add_texture_rect_from_ref(self, "Art19MainMenuMetaTexture", Art10UISkinKitScript.rect(&"main_menu", "meta"), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_summary"), 0.62)
+	_add_texture_rect_from_ref(self, "Art21MainMenuMetaTexture", Art10UISkinKitScript.rect(&"main_menu", "meta"), Art21UIPlacementContractScript.panel_ref(&"summary"), 0.62)
 	_add_label_token(self, "MainMenuMetaSummaryHeading", Rect2(384, 446, 220, 20), "行动记录", &"caption", &"muted")
 	meta_summary_label = _add_label_token(self, "MainMenuMetaSummary", Rect2(384, 468, 272, 28), "", &"caption", &"text")
 	_refresh_meta_summary()

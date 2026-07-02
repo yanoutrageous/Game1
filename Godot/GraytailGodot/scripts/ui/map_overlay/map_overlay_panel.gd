@@ -5,6 +5,7 @@ const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
 signal cell_action_requested(marker: Dictionary)
 
@@ -163,7 +164,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	button.add_theme_color_override("font_color", marker_color)
 	button.add_theme_font_size_override("font_size", maxi(12, int(min(marker_size.x, marker_size.y) * 0.52)))
 	_apply_marker_button_style(button, theme_key)
-	var texture := Art09ManifestAssetMappingScript.resolve_texture(Art09ManifestAssetMappingScript.art19_map64_ref(_art19_marker_state(marker)))
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(Art21UIPlacementContractScript.map_ref(_art21_marker_state(marker)))
 	if texture != null:
 		button.icon = texture
 		button.expand_icon = false
@@ -197,19 +198,24 @@ func _apply_marker_button_style(button: Button, theme_key: StringName) -> void:
 	button.add_theme_color_override("font_color", border)
 
 
-func _art19_marker_state(marker: Dictionary) -> StringName:
+func _art21_marker_state(marker: Dictionary) -> StringName:
 	var asset_id := String(marker.get("asset_id", "")).to_lower()
-	if asset_id.find("player") >= 0:
+	var room_type := String(marker.get("room_type", "")).to_lower()
+	if bool(marker.get("is_current", false)) or asset_id.find("player") >= 0:
 		return &"player"
-	if asset_id.find("mine") >= 0:
+	if bool(marker.get("flagged", false)) or asset_id.find("flag") >= 0:
+		return &"flagged"
+	if room_type == "event" or asset_id.find("event") >= 0:
+		return &"event"
+	if room_type == "mine" or room_type == "monster" or asset_id.find("mine") >= 0 or asset_id.find("monster") >= 0:
 		return &"mine"
-	if asset_id.find("chest") >= 0:
+	if room_type == "chest" or asset_id.find("chest") >= 0:
 		return &"chest"
-	if asset_id.find("exit") >= 0 or asset_id.find("extract") >= 0:
+	if room_type == "exit" or asset_id.find("exit") >= 0 or asset_id.find("extract") >= 0:
 		return &"exit"
 	if not bool(marker.get("revealed", true)) or String(marker.get("label", "")) == "?":
 		return &"unknown"
-	if int(marker.get("adjacent_mines", -1)) > 0:
+	if bool(marker.get("scanned", false)) or int(marker.get("adjacent_mines", -1)) > 0:
 		return &"scanned"
 	return &"explored"
 

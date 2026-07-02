@@ -7,6 +7,7 @@ const LongTermTabModelScript := preload("res://scripts/ui/long_term/long_term_ta
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
 signal navigation_intent_requested(intent: Dictionary)
 
@@ -111,9 +112,9 @@ func _build_static_layout() -> void:
 	_add_panel(self, "LongTermProfileColumn", Art10UISkinKitScript.rect(&"long_term", "profile_column"), &"deep")
 	_add_panel(self, "LongTermCardGridColumn", Art10UISkinKitScript.rect(&"long_term", "card_grid"), &"surface")
 	_add_panel(self, "LongTermDetailColumn", Art10UISkinKitScript.rect(&"long_term", "detail_column"), &"summary")
-	_add_texture_rect_from_ref(self, "Art19LongTermProfileTexture", Art10UISkinKitScript.rect(&"long_term", "profile_column"), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_terminal"), 0.56)
-	_add_texture_rect_from_ref(self, "Art19LongTermArchiveTexture", Art10UISkinKitScript.rect(&"long_term", "card_grid"), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_terminal"), 0.62)
-	_add_texture_rect_from_ref(self, "Art19LongTermDetailTexture", Art10UISkinKitScript.rect(&"long_term", "detail_column"), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_summary"), 0.68)
+	_add_texture_rect_from_ref(self, "Art21LongTermProfileTexture", Art10UISkinKitScript.rect(&"long_term", "profile_column"), Art21UIPlacementContractScript.slot_ref(&"long_term", &"left_profile_frame", &"ui.art19.panel.terminal_main"), 0.64)
+	_add_texture_rect_from_ref(self, "Art21LongTermCollectionTexture", Art10UISkinKitScript.rect(&"long_term", "card_grid"), Art21UIPlacementContractScript.slot_ref(&"long_term", &"collection_wall", &"ui.art19.panel.terminal_main"), 0.70)
+	_add_texture_rect_from_ref(self, "Art21LongTermDetailTexture", Art10UISkinKitScript.rect(&"long_term", "detail_column"), Art21UIPlacementContractScript.slot_ref(&"long_term", &"right_detail_panel", &"ui.art19.panel.deploy_summary"), 0.74)
 	_add_label_token(self, "LongTermTitle", Rect2(46, 34, 250, 48), "长期系统", &"page_title", &"accent")
 	_add_label_token(self, "LongTermSubtitle", Rect2(304, 36, 620, 32), "", &"body_small", &"muted")
 	_add_button(self, "LongTermBackButton", Rect2(1084, 36, 154, 38), "返回主菜单", Callable(self, "_request_back_to_main"))
