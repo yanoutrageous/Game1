@@ -109,7 +109,7 @@ func build() -> void:
 	left_backdrop = _add_panel("RunScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	left_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.72), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(left_backdrop, &"deep")
-	left_rail_art = _add_nine_patch_from_ref("Art21RunLeftInfoRail", Art21UIPlacementContractScript.panel_ref(&"page_frame"), 0.72, 14)
+	left_rail_art = _add_nine_patch_from_ref("Art21RunLeftInfoRail", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"left_info_rail", &"ui.art21.shared.panel.page_frame.normal"), 0.82, 14)
 	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"))
 	center_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"), 1))
 	room_background_layer = _add_texture_rect_from_ref("RunRoomBackgroundFill", _room_background_ref(&"Normal"), 1.0)
@@ -760,7 +760,7 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 			button.pressed.connect(_on_encounter_option_pressed.bind(option_id, payload))
 		encounter_options_box.add_child(button)
 		encounter_option_buttons.append(button)
-	encounter_backdrop.visible = not encounter_option_buttons.is_empty()
+	encounter_backdrop.visible = false
 	encounter_options_box.visible = not encounter_option_buttons.is_empty()
 	if encounter_option_buttons.is_empty():
 		return

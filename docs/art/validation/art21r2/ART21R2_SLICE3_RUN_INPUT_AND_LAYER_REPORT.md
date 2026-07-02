@@ -28,6 +28,8 @@ lock. It does not mark the overall ART21R2 visual goal complete.
     in-run layers.
   - Added image-backed `NinePatchRect` frames for the left information rail,
     top-right protocol card, and bottom action overlay.
+  - Replaced the earlier ART21/shared frame mappings for those HUD regions with
+    ART21R2 run-specific manifest assets.
   - Hid the visible `PanelContainer` backplates for the left rail, right status
     card, bottom action bar, and encounter prompt.
   - Changed bottom HUD action buttons to transparent hitboxes over the ART21
@@ -36,6 +38,8 @@ lock. It does not mark the overall ART21R2 visual goal complete.
     prompts on the image strip rather than a row of large framed buttons.
   - Moved encounter option hitboxes out of the room center and into the lower
     prompt area.
+  - Kept encounter option callbacks but suppresses the extra floating encounter
+    `PanelContainer` backplate in the run HUD.
   - Removed the no-action placeholder panel; the encounter/action prompt is now
     hidden when there is no executable option.
 - `map_overlay_panel.gd`
@@ -61,6 +65,7 @@ lock. It does not mark the overall ART21R2 visual goal complete.
 | Logic Q inventory pass4 | `screenshots/slice3/godot_inventory_q_guard_after_slice3_pass4_logic.png` | Inventory route guard still works; inventory modal remains visually partial and overlaps the left rail. |
 | Logic map overlay pass4 | `screenshots/slice3/godot_map_overlay_guard_after_slice3_pass4_logic.png` | Map overlay still opens after the HUD frame changes; modal remains visually partial. |
 | Logic minimap fallback pass5 | `screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png` | Blank minimap state now shows an explicit no-public-map fallback; live tile readability remains unproven. |
+| Logic run HUD pass6 | `screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png` | ART21R2 run-specific frame assets are manifest-backed and visible; the old center floating encounter backplate is gone. Still PARTIAL because left edge color and bottom text contrast remain weak. |
 
 ## Current Verdict
 
@@ -76,13 +81,15 @@ PASS for this slice:
   image-backed frames owning those boundaries.
 - The minimap rail no longer collapses to an unexplained blank when the view
   model has no public cells.
+- The pass6 Run HUD capture removes the extra floating encounter backplate while
+  keeping encounter buttons and callbacks routed through the existing code path.
 
 PARTIAL for the larger ART21R2 target:
 
-- Run HUD still reads below the UE visual floor. The latest pass4 capture
-  (`screenshots/slice3/godot_run_hud_after_slice3_image_boundary_pass4_logic.png`)
-  shows fewer code-owned backplates, but the rail/card/bar still read as green
-  terminal-frame art rather than the UE physical HUD floor.
+- Run HUD still reads below the UE visual floor. The latest pass6 capture
+  (`screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png`)
+  removes the center floating backplate and replaces the prior frame assets, but
+  the left rail edge color and bottom key text still do not reach the target.
 - MiniMap readability is still not complete. The pass5 fallback prevents a blank
   rail, but it does not prove readable unknown/explored/scanned/player/exit
   tile states in a live map.

@@ -52,7 +52,8 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_run_hud_after_slice3_image_boundary_pass4_logic.png",
     "screenshots/slice3/godot_inventory_q_guard_after_slice3_pass4_logic.png",
     "screenshots/slice3/godot_map_overlay_guard_after_slice3_pass4_logic.png",
-    "screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png"
+    "screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png",
+    "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -286,8 +287,38 @@ if ($runSurface -notmatch '_add_nine_patch_from_ref') {
 if ($runSurface -notmatch 'button\.icon\s*=\s*null') {
     Fail "run_surface.gd should not restore noisy bottom action button icons in the R2 HUD pass."
 }
-if ($runSurface -notmatch 'encounter_backdrop\.visible\s*=\s*not\s+encounter_option_buttons\.is_empty\(\)') {
-    Fail "run_surface.gd should hide encounter placeholder when no executable option exists."
+if ($runSurface -notmatch 'encounter_backdrop\.visible\s*=\s*false') {
+    Fail "run_surface.gd should not restore the extra floating encounter backplate."
+}
+if ($runSurface -notmatch 'slot_ref\(&"run_hud",\s*&"left_info_rail"') {
+    Fail "run_surface.gd should resolve the left information rail through the ART21R2 slot contract."
+}
+
+$placementPath = Join-Path $root "Godot/GraytailGodot/scripts/presentation/art21_ui_placement_contract.gd"
+$placement = Get-Content -LiteralPath $placementPath -Raw
+$requiredPlacementPatterns = @(
+    'ui\.art21r2\.run\.left_info_rail\.frame',
+    'ui\.art21r2\.run\.status_card\.frame',
+    'ui\.art21r2\.run\.bottom_overlay\.frame',
+    'run_hud\.left_info_rail'
+)
+foreach ($pattern in $requiredPlacementPatterns) {
+    if ($placement -notmatch $pattern) {
+        Fail "art21_ui_placement_contract.gd missing ART21R2 run HUD mapping: $pattern"
+    }
+}
+
+$manifestPath = Join-Path $root "Godot/GraytailGodot/data/assets/asset_manifest.csv"
+$manifest = Get-Content -LiteralPath $manifestPath -Raw
+$requiredManifestIds = @(
+    'ui.art21r2.run.left_info_rail.frame',
+    'ui.art21r2.run.status_card.frame',
+    'ui.art21r2.run.bottom_overlay.frame'
+)
+foreach ($assetId in $requiredManifestIds) {
+    if ($manifest -notmatch [regex]::Escape($assetId)) {
+        Fail "asset_manifest.csv missing ART21R2 run HUD asset id: $assetId"
+    }
 }
 
 $mapOverlayPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/map_overlay/map_overlay_panel.gd"
