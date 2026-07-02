@@ -14,6 +14,24 @@ docs/00_governance/DUPLICATE_DOC_LEDGER.md
 docs/00_governance/SOURCE_REGISTRY.md
 ```
 
+Stage process governance:
+
+```text
+docs/00_governance/DOC_GOV_003_STAGE_PROCESS_MINIMAL.md
+```
+
+Use this file when starting a new stage, auditing a stage plan, recovering from long context, or preparing high-risk execution gates. It is not part of the always-read entrypoint set for ordinary doc navigation.
+
+Recent ART closeout evidence:
+
+```text
+docs/art/ART20_DRAW_TO_RUNTIME_UI_COMPONENT_PIPELINE_EXECUTION.md
+docs/art/ART20_CLOSEOUT_PIPELINE_PASS_VISUAL_INCOMPLETE.md
+tools/validate_art20_ui_asset_pipeline.ps1
+```
+
+ART-20 is closed as a pipeline proof with visual gaps. It must not be read as final UI visual acceptance; ART-21 must add image placement indexing and target visual reconstruction.
+
 Current G40 validation / cleanup helper tools:
 
 ```text

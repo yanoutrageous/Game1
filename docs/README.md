@@ -55,6 +55,15 @@ docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md
 docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md
 ```
 
+Recent ART closeout evidence:
+
+```text
+docs/art/ART20_DRAW_TO_RUNTIME_UI_COMPONENT_PIPELINE_EXECUTION.md
+docs/art/ART20_CLOSEOUT_PIPELINE_PASS_VISUAL_INCOMPLETE.md
+```
+
+ART-20 is a pipeline proof closeout, not final UI visual acceptance.
+
 Directory responsibilities:
 
 | Directory | Responsibility |
@@ -79,3 +88,4 @@ Rules:
 - Register duplicate or legacy material before moving or deleting it.
 - Current entrypoints are preferred in Chinese when practical; historical English files are not forcibly translated.
 - New contract / validation / handoff documents should include at least a Chinese summary.
+- Stage planning / audit / execution / closeout process rules live in `docs/00_governance/DOC_GOV_003_STAGE_PROCESS_MINIMAL.md`.
