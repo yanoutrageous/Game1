@@ -41,6 +41,10 @@ lock. It does not mark the overall ART21R2 visual goal complete.
 - `map_overlay_panel.gd`
   - Removed generated Button `StyleBoxFlat` borders from map cells so the cell
     image assets own the visible boundary.
+- `minimap_panel.gd`
+  - Added a no-public-map fallback for the case where a `MiniMapViewModel`
+    exists but exposes no public cells, preventing a blank rail without reading
+    TruthMap or changing map rules.
 
 ## Evidence
 
@@ -56,6 +60,7 @@ lock. It does not mark the overall ART21R2 visual goal complete.
 | Logic run HUD pass4 | `screenshots/slice3/godot_run_hud_after_slice3_image_boundary_pass4_logic.png` | Generated PanelContainer backplates are hidden for left/right/bottom HUD regions; image NinePatch frames own the visible boundary. |
 | Logic Q inventory pass4 | `screenshots/slice3/godot_inventory_q_guard_after_slice3_pass4_logic.png` | Inventory route guard still works; inventory modal remains visually partial and overlaps the left rail. |
 | Logic map overlay pass4 | `screenshots/slice3/godot_map_overlay_guard_after_slice3_pass4_logic.png` | Map overlay still opens after the HUD frame changes; modal remains visually partial. |
+| Logic minimap fallback pass5 | `screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png` | Blank minimap state now shows an explicit no-public-map fallback; live tile readability remains unproven. |
 
 ## Current Verdict
 
@@ -69,6 +74,8 @@ PASS for this slice:
 - R1 duplicate fake room/player layer guards remain intact.
 - Left/right/bottom HUD code backplates are hidden in the active layout, with
   image-backed frames owning those boundaries.
+- The minimap rail no longer collapses to an unexplained blank when the view
+  model has no public cells.
 
 PARTIAL for the larger ART21R2 target:
 
@@ -76,8 +83,9 @@ PARTIAL for the larger ART21R2 target:
   (`screenshots/slice3/godot_run_hud_after_slice3_image_boundary_pass4_logic.png`)
   shows fewer code-owned backplates, but the rail/card/bar still read as green
   terminal-frame art rather than the UE physical HUD floor.
-- MiniMap readability is not proven by the pass4 capture; it needs a dedicated
-  visual pass rather than relying on the current rail screenshot.
+- MiniMap readability is still not complete. The pass5 fallback prevents a blank
+  rail, but it does not prove readable unknown/explored/scanned/player/exit
+  tile states in a live map.
 - Bottom key text is less noisy but still weak in contrast/readability.
 - Inventory modal opens but overlaps the left HUD rail and still uses generated
   row/button treatment.

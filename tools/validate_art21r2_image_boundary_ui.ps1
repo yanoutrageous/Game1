@@ -51,7 +51,8 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_map_overlay_after_slice3_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_image_boundary_pass4_logic.png",
     "screenshots/slice3/godot_inventory_q_guard_after_slice3_pass4_logic.png",
-    "screenshots/slice3/godot_map_overlay_guard_after_slice3_pass4_logic.png"
+    "screenshots/slice3/godot_map_overlay_guard_after_slice3_pass4_logic.png",
+    "screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -293,6 +294,15 @@ $mapOverlayPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/map_overlay/ma
 $mapOverlay = Get-Content -LiteralPath $mapOverlayPath -Raw
 if ($mapOverlay -notmatch 'transparent_style_box') {
     Fail "map_overlay_panel.gd should use transparent hitboxes for image-backed map cells."
+}
+
+$miniMapPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/minimap/minimap_panel.gd"
+$miniMap = Get-Content -LiteralPath $miniMapPath -Raw
+if ($miniMap -notmatch 'UNKNOWN_CELL_ASSET_ID') {
+    Fail "minimap_panel.gd should provide an image-backed unknown-cell fallback."
+}
+if ($miniMap -notmatch 'view_model\.room_markers\.is_empty\(\)') {
+    Fail "minimap_panel.gd should handle empty public marker sets explicitly."
 }
 
 Write-Output "ART21R2_IMAGE_BOUNDARY_VALIDATION=PASS_STRUCTURAL_OPEN"

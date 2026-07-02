@@ -11,6 +11,7 @@ var marker_size: Vector2 = Vector2(28, 28)
 var marker_font_size: int = 13
 const LEGACY_MINIMAP_VALIDATION_MARKER := "MiniMap: icons fallback to text"
 const G10_MINIMAP_CLICK_VALIDATION_MARKER := "MiniMapPanel click opens MapOverlay"
+const UNKNOWN_CELL_ASSET_ID := &"ui.art21.map.cell.unknown"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
@@ -66,6 +67,30 @@ func _rebuild_grid() -> void:
 			placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 			placeholder.add_theme_font_size_override("font_size", marker_font_size)
 			placeholder.text = "点击展开地图"
+		return
+
+	if view_model.room_markers.is_empty():
+		if view_model.width > 0 and view_model.height > 0:
+			_apply_marker_scale_for_view_model()
+			grid.columns = max(1, view_model.width)
+			for y in range(view_model.height):
+				for x in range(view_model.width):
+					_add_marker_node(grid, {
+						"pos": Vector2i(x, y),
+						"label": "?",
+						"asset_id": UNKNOWN_CELL_ASSET_ID,
+						"theme_key": &"mini.normal",
+						"display_only": true,
+						"read_only": true,
+					}, marker_size)
+			if placeholder != null:
+				placeholder.visible = false
+			return
+		if placeholder != null:
+			placeholder.visible = true
+			placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
+			placeholder.add_theme_font_size_override("font_size", marker_font_size)
+			placeholder.text = "地图未公开"
 		return
 
 	_apply_marker_scale_for_view_model()
