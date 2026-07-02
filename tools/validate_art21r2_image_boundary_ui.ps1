@@ -18,7 +18,8 @@ $requiredFiles = @(
     "docs/art/validation/art21r2/ART21R2_SLOT_GAP_MATRIX.csv",
     "docs/art/validation/art21r2/ui_placement_contract_v3.csv",
     "docs/art/validation/art21r2/ART21R2_SLICE2_MAIN_MENU_PHYSICAL_BOARD_REPORT.md",
-    "docs/art/validation/art21r2/ART21R2_SLICE3_RUN_INPUT_AND_LAYER_REPORT.md"
+    "docs/art/validation/art21r2/ART21R2_SLICE3_RUN_INPUT_AND_LAYER_REPORT.md",
+    "docs/art/validation/art21r2/ART21R2_DRAW_SLICE_AUDIT.md"
 )
 
 foreach ($file in $requiredFiles) {
@@ -55,7 +56,8 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_run_hud_after_slice3_minimap_fallback_pass5_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass6_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png",
-    "screenshots/slice3/godot_run_hud_after_slice3_minimap_public_grid_pass10_logic.png"
+    "screenshots/slice3/godot_run_hud_after_slice3_minimap_public_grid_pass10_logic.png",
+    "screenshots/slice3/godot_run_hud_after_slice3_minimap_draw_overlay_pass14_logic.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -204,6 +206,20 @@ if ($targetLock -notmatch "directly to Deploy Prep") {
     Fail "Target visual lock must preserve direct Start Exploration -> Deploy Prep routing."
 }
 
+$drawSliceAudit = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_DRAW_SLICE_AUDIT.md") -Raw
+$requiredDrawAuditPatterns = @(
+    "Existing Slice Process To Reuse",
+    "tools/art20_cut_ui_assets.py",
+    "magenta-background root sheets",
+    "map_overlay_event_marker_64",
+    "candidate crop with purple remnants is not runtime-ready evidence"
+)
+foreach ($pattern in $requiredDrawAuditPatterns) {
+    if ($drawSliceAudit -notmatch [regex]::Escape($pattern)) {
+        Fail "ART21R2 draw slice audit missing required process evidence: $pattern"
+    }
+}
+
 $mainMenuPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/main_menu/main_menu_shell.gd"
 $mainMenu = Get-Content -LiteralPath $mainMenuPath -Raw
 if ($mainMenu -match "area_select|difficulty_select") {
@@ -315,7 +331,10 @@ $manifest = Get-Content -LiteralPath $manifestPath -Raw
 $requiredManifestIds = @(
     'ui.art21r2.run.left_info_rail.frame',
     'ui.art21r2.run.status_card.frame',
-    'ui.art21r2.run.bottom_overlay.frame'
+    'ui.art21r2.run.bottom_overlay.frame',
+    'ui.art19.map64.player',
+    'ui.art19.map64.explored',
+    'ui.art19.map64.scanned'
 )
 foreach ($assetId in $requiredManifestIds) {
     if ($manifest -notmatch [regex]::Escape($assetId)) {
@@ -345,6 +364,17 @@ if ($miniMap -notmatch '_public_marker_or_unknown') {
 }
 if ($miniMap -notmatch 'EXPAND_IGNORE_SIZE') {
     Fail "minimap_panel.gd should scale map tile textures to minimap cells."
+}
+$requiredMiniMapPatterns = @(
+    '_base_asset_id_for_marker',
+    '_overlay_asset_id_for_marker',
+    'ui\.art19\.map64\.player',
+    'ui\.art19\.map64\.explored'
+)
+foreach ($pattern in $requiredMiniMapPatterns) {
+    if ($miniMap -notmatch $pattern) {
+        Fail "minimap_panel.gd missing draw-derived minimap overlay evidence: $pattern"
+    }
 }
 
 Write-Output "ART21R2_IMAGE_BOUNDARY_VALIDATION=PASS_STRUCTURAL_OPEN"

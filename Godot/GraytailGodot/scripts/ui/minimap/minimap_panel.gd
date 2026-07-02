@@ -12,13 +12,13 @@ var marker_font_size: int = 13
 const LEGACY_MINIMAP_VALIDATION_MARKER := "MiniMap: icons fallback to text"
 const G10_MINIMAP_CLICK_VALIDATION_MARKER := "MiniMapPanel click opens MapOverlay"
 const UNKNOWN_CELL_ASSET_ID := &"ui.art21.map.cell.unknown"
-const EXPLORED_CELL_ASSET_ID := &"ui.art21.map.cell.explored"
-const SCANNED_CELL_ASSET_ID := &"ui.art21.map.cell.scanned"
-const FLAGGED_CELL_ASSET_ID := &"ui.art21.map.cell.flagged"
-const PLAYER_MARKER_ASSET_ID := &"ui.art21.map.marker.player"
-const EXIT_MARKER_ASSET_ID := &"ui.art21.map.marker.exit"
-const MINE_MARKER_ASSET_ID := &"ui.art21.map.marker.mine"
-const CHEST_MARKER_ASSET_ID := &"ui.art21.map.marker.chest"
+const EXPLORED_CELL_ASSET_ID := &"ui.art19.map64.explored"
+const SCANNED_CELL_ASSET_ID := &"ui.art19.map64.scanned"
+const FLAGGED_CELL_ASSET_ID := &"icon.minimap.flag"
+const PLAYER_MARKER_ASSET_ID := &"ui.art19.map64.player"
+const EXIT_MARKER_ASSET_ID := &"ui.art19.map64.exit"
+const MINE_MARKER_ASSET_ID := &"ui.art19.map64.mine"
+const CHEST_MARKER_ASSET_ID := &"ui.art19.map64.chest"
 const EVENT_MARKER_ASSET_ID := &"ui.art21.map.marker.event"
 
 
@@ -139,22 +139,41 @@ func _apply_marker_scale_for_view_model() -> void:
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) -> void:
-	var asset_id := _asset_id_for_marker(marker)
+	var asset_id := _base_asset_id_for_marker(marker)
 	var asset_ref: Resource = null
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
 	if asset_id != &"":
 		asset_ref = ContentDB.get_asset_ref(asset_id)
 
 	if asset_ref is Texture2D:
-		var icon := TextureRect.new()
-		icon.texture = asset_ref
-		icon.custom_minimum_size = size
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_SCALE
-		icon.mouse_filter = Control.MOUSE_FILTER_STOP
-		icon.tooltip_text = ""
-		icon.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
-		grid.add_child(icon)
+		var cell := Control.new()
+		cell.custom_minimum_size = size
+		cell.mouse_filter = Control.MOUSE_FILTER_STOP
+		cell.tooltip_text = ""
+		cell.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
+		var base_icon := TextureRect.new()
+		base_icon.texture = asset_ref
+		base_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		base_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		base_icon.stretch_mode = TextureRect.STRETCH_SCALE
+		base_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cell.add_child(base_icon)
+		var overlay_id := _overlay_asset_id_for_marker(marker)
+		if overlay_id != &"":
+			var overlay_ref := ContentDB.get_asset_ref(overlay_id)
+			if overlay_ref is Texture2D:
+				var overlay_icon := TextureRect.new()
+				overlay_icon.texture = overlay_ref
+				overlay_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+				overlay_icon.offset_left = -4.0
+				overlay_icon.offset_top = -4.0
+				overlay_icon.offset_right = 4.0
+				overlay_icon.offset_bottom = 4.0
+				overlay_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				overlay_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				overlay_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				cell.add_child(overlay_icon)
+		grid.add_child(cell)
 	else:
 		var label := Label.new()
 		var label_text := String(marker.get("label", "?"))
@@ -198,12 +217,20 @@ func _public_marker_or_unknown(markers_by_pos: Dictionary, pos: Vector2i) -> Dic
 	}
 
 
-func _asset_id_for_marker(marker: Dictionary) -> StringName:
+func _base_asset_id_for_marker(marker: Dictionary) -> StringName:
+	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
+	if bool(marker.get("scanned", false)) or known_state == &"scanned":
+		return SCANNED_CELL_ASSET_ID
+	if bool(marker.get("is_current", false)) or bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]:
+		return EXPLORED_CELL_ASSET_ID
+	return UNKNOWN_CELL_ASSET_ID
+
+
+func _overlay_asset_id_for_marker(marker: Dictionary) -> StringName:
 	if bool(marker.get("is_current", false)):
 		return PLAYER_MARKER_ASSET_ID
 	if bool(marker.get("flagged", false)):
 		return FLAGGED_CELL_ASSET_ID
-	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
 	var room_type := StringName(marker.get("room_type", &"Unknown"))
 	if room_type == &"Exit":
 		return EXIT_MARKER_ASSET_ID
@@ -213,11 +240,7 @@ func _asset_id_for_marker(marker: Dictionary) -> StringName:
 		return CHEST_MARKER_ASSET_ID
 	if room_type == &"Event":
 		return EVENT_MARKER_ASSET_ID
-	if bool(marker.get("scanned", false)) or known_state == &"scanned":
-		return SCANNED_CELL_ASSET_ID
-	if bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]:
-		return EXPLORED_CELL_ASSET_ID
-	return UNKNOWN_CELL_ASSET_ID
+	return &""
 
 
 func _pos_key(pos: Vector2i) -> String:
