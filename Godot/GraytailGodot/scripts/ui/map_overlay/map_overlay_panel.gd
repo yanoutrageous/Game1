@@ -195,9 +195,10 @@ func _apply_overlay_panel_style(control: Control) -> void:
 
 func _apply_marker_button_style(button: Button, theme_key: StringName) -> void:
 	var border := PresentationTheme.color_for_key(theme_key)
-	button.add_theme_stylebox_override("normal", _marker_style(Color(0.030, 0.035, 0.044, 0.98), border, 1))
-	button.add_theme_stylebox_override("hover", _marker_style(Color(0.064, 0.070, 0.086, 1.0), border, 2))
-	button.add_theme_stylebox_override("pressed", _marker_style(Color(0.082, 0.078, 0.054, 1.0), PresentationTheme.color_for_key(&"ui.warning"), 2))
+	button.add_theme_stylebox_override("normal", Art10UISkinKitScript.transparent_style_box(0))
+	button.add_theme_stylebox_override("hover", Art10UISkinKitScript.transparent_style_box(0))
+	button.add_theme_stylebox_override("pressed", Art10UISkinKitScript.transparent_style_box(0))
+	button.add_theme_stylebox_override("disabled", Art10UISkinKitScript.transparent_style_box(0))
 	button.add_theme_color_override("font_color", border)
 
 

@@ -196,6 +196,15 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 		RunSceneInputRouterScript.ACTION_FLAG_CURRENT:
 			_dispatch_command(&"flag_current_cell")
 			return true
+		RunSceneInputRouterScript.ACTION_OPEN_INVENTORY:
+			_show_inventory_panel()
+			return true
+		RunSceneInputRouterScript.ACTION_OPEN_GROUND_LOOT:
+			_show_ground_loot_panel()
+			return true
+		RunSceneInputRouterScript.ACTION_REQUEST_EXTRACT:
+			_request_extract_from_ui()
+			return true
 		RunSceneInputRouterScript.ACTION_OPEN_MAP:
 			_open_map_from_ui(&"keyboard")
 			return true

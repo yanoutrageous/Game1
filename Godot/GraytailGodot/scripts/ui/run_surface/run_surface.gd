@@ -328,10 +328,16 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	center_backdrop.visible = false
 	room_background_layer.visible = false
 	player_sprite_layer.visible = false
+	resource_backdrop.visible = false
+	scanner_text_mask.visible = false
+	threat_mask.visible = false
+	event_mask.visible = false
 	room_glow_layer.visible = false
 	room_text_mask.visible = false
 	room_hint_softener.visible = false
 	player_tag_mask.visible = false
+	protocol_glow_layer.visible = false
+	bottom_key_glow_layer.visible = false
 	right_game_fill_layer.visible = false
 
 	_set_rect(scanner_title_label, Rect2(rail_content_left, margin, rail_content_width, 28))
@@ -747,7 +753,10 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 			button.pressed.connect(_on_encounter_option_pressed.bind(option_id, payload))
 		encounter_options_box.add_child(button)
 		encounter_option_buttons.append(button)
+	encounter_backdrop.visible = not encounter_option_buttons.is_empty()
+	encounter_options_box.visible = not encounter_option_buttons.is_empty()
 	if encounter_option_buttons.is_empty():
+		return
 		var placeholder := Label.new()
 		placeholder.name = "RunEncounterOptionPlaceholder"
 		placeholder.text = "暂无可执行行动。"
@@ -822,7 +831,7 @@ func _apply_art10_text_refresh() -> void:
 			left_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for action_id in action_buttons.keys():
 		var action_button := action_buttons[action_id] as Button
-		Art10UISkinKitScript.apply_button(action_button, &"secondary", 13, &"key")
+		Art10UISkinKitScript.apply_transparent_button(action_button, &"secondary", 13, &"key", 0)
 		_apply_key_prompt_icon(action_button, StringName(action_id))
 	for button in encounter_option_buttons:
 		Art10UISkinKitScript.apply_button(button, &"primary" if button != null and not button.disabled else &"secondary", 12)
@@ -856,15 +865,10 @@ func _panel_style(color: Color, border_color: Color, border_width: int) -> Style
 
 
 func _apply_action_button_style(button: Button, tone: StringName, enabled: bool) -> void:
-	var accent := _tone_color(tone)
 	button.add_theme_color_override("font_color", PresentationTheme.text_color())
 	button.add_theme_color_override("font_disabled_color", PresentationTheme.color_for_key(&"ui.muted"))
-	button.add_theme_stylebox_override("normal", _panel_style(Color(0.035, 0.06, 0.064, 0.92), accent, 1))
-	button.add_theme_stylebox_override("hover", _panel_style(Color(0.055, 0.09, 0.092, 0.98), accent, 1))
-	button.add_theme_stylebox_override("pressed", _panel_style(Color(0.02, 0.04, 0.045, 0.98), accent, 2))
-	button.add_theme_stylebox_override("disabled", _panel_style(Color(0.025, 0.032, 0.034, 0.72), PresentationTheme.color_for_key(&"ui.muted"), 1))
 	button.modulate = Color(1, 1, 1, 1) if enabled else Color(0.74, 0.78, 0.76, 1)
-	Art10UISkinKitScript.apply_button(button, tone, 13)
+	Art10UISkinKitScript.apply_transparent_button(button, tone, 13, &"key", 0)
 
 
 func _tone_color(tone: StringName) -> Color:

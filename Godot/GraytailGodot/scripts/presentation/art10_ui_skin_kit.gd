@@ -423,8 +423,22 @@ static func apply_button(button: Button, tone: StringName = &"secondary", font_s
 	button.modulate = Color(1, 1, 1, 1) if not button.disabled else Color(0.72, 0.76, 0.74, 1.0)
 
 
+static func apply_transparent_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button", padding: int = 2) -> void:
+	if button == null:
+		return
+	apply_button(button, tone, font_size_value, icon_token)
+	button.add_theme_stylebox_override("normal", transparent_style_box(padding))
+	button.add_theme_stylebox_override("hover", transparent_style_box(padding))
+	button.add_theme_stylebox_override("pressed", transparent_style_box(padding))
+	button.add_theme_stylebox_override("disabled", transparent_style_box(padding))
+
+
 static func apply_button_token(button: Button, tone: StringName, token: StringName, icon_token: StringName = &"button") -> void:
 	apply_button(button, tone, font_size(token), icon_token)
+
+
+static func apply_transparent_button_token(button: Button, tone: StringName, token: StringName, icon_token: StringName = &"button", padding: int = 2) -> void:
+	apply_transparent_button(button, tone, font_size(token), icon_token, padding)
 
 
 static func apply_panel(panel: PanelContainer, tone: StringName = &"surface") -> void:
@@ -824,6 +838,20 @@ static func button_style(tone: StringName = &"secondary", hover: bool = false, p
 	if textured != null:
 		return textured
 	return _style_box(bg, border, border_width, padding, 3)
+
+
+static func transparent_style_box(padding: int = 0) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0)
+	style.border_width_left = 0
+	style.border_width_top = 0
+	style.border_width_right = 0
+	style.border_width_bottom = 0
+	style.content_margin_left = padding
+	style.content_margin_top = padding
+	style.content_margin_right = padding
+	style.content_margin_bottom = padding
+	return style
 
 
 static func _texture_style_box(role: StringName, padding: int, texture_margin: int) -> StyleBoxTexture:

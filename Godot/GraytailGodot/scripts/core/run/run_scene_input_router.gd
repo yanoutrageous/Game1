@@ -7,6 +7,9 @@ const ACTION_INTERACT := &"interact"
 const ACTION_FIGHT := &"fight"
 const ACTION_FLAG_CURRENT := &"flag_current_cell"
 const ACTION_OPEN_MAP := &"open_map"
+const ACTION_OPEN_INVENTORY := &"open_inventory"
+const ACTION_OPEN_GROUND_LOOT := &"open_ground_loot"
+const ACTION_REQUEST_EXTRACT := &"request_extract"
 const ACTION_RESTART_RUN := &"restart_run"
 
 
@@ -31,6 +34,12 @@ static func run_action(event: InputEvent) -> StringName:
 		return ACTION_FIGHT
 	if event.is_action_pressed("flag_cell") or _event_matches_key(event, [KEY_F]):
 		return ACTION_FLAG_CURRENT
+	if event.is_action_pressed("open_inventory") or _event_matches_key(event, [KEY_Q]):
+		return ACTION_OPEN_INVENTORY
+	if event.is_action_pressed("open_ground_loot") or _event_matches_key(event, [KEY_G]):
+		return ACTION_OPEN_GROUND_LOOT
+	if event.is_action_pressed("request_extract") or _event_matches_key(event, [KEY_T]):
+		return ACTION_REQUEST_EXTRACT
 	if event.is_action_pressed("open_map") or _event_matches_key(event, [KEY_M, KEY_TAB]):
 		return ACTION_OPEN_MAP
 	if event.is_action_pressed("debug_restart_run"):
