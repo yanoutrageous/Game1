@@ -8,6 +8,7 @@ This index points to historical evidence. It does not rewrite historical validat
 
 | Stage | Status | Primary evidence | Boundary |
 | --- | --- | --- | --- |
+| ART-20 | closed_with_visual_gap | `docs/art/ART20_DRAW_TO_RUNTIME_UI_COMPONENT_PIPELINE_EXECUTION.md`; `docs/art/ART20_CLOSEOUT_PIPELINE_PASS_VISUAL_INCOMPLETE.md`; `docs/art/validation/art20/`; `tools/validate_art20_ui_asset_pipeline.ps1` | ART pipeline proof complete: staging, cutting, runtime import, manifest, visual_key and UI consumer smoke passed. Final UI visual target not achieved; ART-21 must add placement index and target visual reconstruction. |
 | M5 | closed / merged baseline before G40 | `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md`; `docs/handoff/HANDOFF_M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT.md` | Latest gameplay baseline before G40; no new G40 gameplay claim |
 | G39 | closed / route closure evidence | `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md`; `docs/handoff/HANDOFF_G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE.md` | Navigation boundary closure; no full settings/Profile UI |
 | M3H | closed / item loop hardening evidence | `docs/validation/M3H_ITEM_LOOP_HARDENING_VALIDATION.md`; `docs/handoff/HANDOFF_M3H_ITEM_LOOP_HARDENING.md` | Item loop hardening; no full warehouse/Rule Engine |

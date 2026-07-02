@@ -3,6 +3,8 @@ class_name MapOverlayPanel
 
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
+const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 signal cell_action_requested(marker: Dictionary)
 
@@ -38,7 +40,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	offset_bottom = 0.0
 	var dimmer := get_node_or_null("Dimmer") as ColorRect
 	if dimmer != null:
-		dimmer.color = Color(0.0, 0.0, 0.0, 0.28)
+		dimmer.color = Color(0.0, 0.0, 0.0, 0.18)
 	var panel := get_node_or_null("Panel") as Control
 	if panel != null:
 		var panel_width: float = min(width * 0.972, 1840.0 if is_high else 1248.0)
@@ -112,8 +114,8 @@ func _rebuild_grid() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
-	grid.add_theme_constant_override("h_separation", 2)
-	grid.add_theme_constant_override("v_separation", 2)
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 4)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
@@ -123,7 +125,7 @@ func _rebuild_grid() -> void:
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		title.add_theme_font_size_override("font_size", title_font_size)
-		title.text = "地图"
+		title.text = "区域地图"
 	if detail != null:
 		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
 		detail.add_theme_font_size_override("font_size", 11 if footer_font_size <= 12 else 12)
@@ -134,7 +136,7 @@ func _rebuild_grid() -> void:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		footer.add_theme_font_size_override("font_size", footer_font_size)
 		footer.add_theme_constant_override("line_spacing", 2)
-		footer.text = "Esc 关闭"
+		footer.text = "Esc 关闭 · 点击格子查看 / 标记"
 
 	if footer != null and selected_feedback_text != "":
 		footer.text += "\n" + selected_feedback_text
@@ -148,8 +150,6 @@ func _rebuild_grid() -> void:
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
-	var asset_id := StringName(marker.get("asset_id", &""))
-	var asset_ref := ContentDB.get_asset_ref(asset_id)
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
 	var label_text := String(marker.get("label", "?"))
 	var button := Button.new()
@@ -163,9 +163,12 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	button.add_theme_color_override("font_color", marker_color)
 	button.add_theme_font_size_override("font_size", maxi(12, int(min(marker_size.x, marker_size.y) * 0.52)))
 	_apply_marker_button_style(button, theme_key)
-	if asset_ref is Texture2D:
-		button.icon = asset_ref
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(Art09ManifestAssetMappingScript.art19_map64_ref(_art19_marker_state(marker)))
+	if texture != null:
+		button.icon = texture
 		button.expand_icon = false
+		button.add_theme_constant_override("icon_max_width", int(min(marker_size.x, marker_size.y) * 0.78))
+		button.text = "" if label_text != "P" else "P"
 	button.pressed.connect(func() -> void: _select_marker(marker))
 	grid.add_child(button)
 
@@ -183,29 +186,32 @@ func _apply_overlay_panel_style(control: Control) -> void:
 	if not (control is PanelContainer):
 		return
 	var panel := control as PanelContainer
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.006, 0.014, 0.016, 0.94)
-	style.border_color = PresentationTheme.color_for_key(&"ui.accent")
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.corner_radius_top_left = 3
-	style.corner_radius_top_right = 3
-	style.corner_radius_bottom_left = 3
-	style.corner_radius_bottom_right = 3
-	style.content_margin_left = 8
-	style.content_margin_top = 6
-	style.content_margin_right = 8
-	style.content_margin_bottom = 6
-	panel.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", Art10UISkinKitScript.panel_style(&"deep"))
 
 
 func _apply_marker_button_style(button: Button, theme_key: StringName) -> void:
 	var border := PresentationTheme.color_for_key(theme_key)
-	button.add_theme_stylebox_override("normal", _marker_style(Color(0.018, 0.026, 0.030, 0.92), border, 1))
-	button.add_theme_stylebox_override("hover", _marker_style(Color(0.038, 0.054, 0.060, 0.98), border, 1))
-	button.add_theme_stylebox_override("pressed", _marker_style(Color(0.010, 0.020, 0.024, 1.0), border, 2))
+	button.add_theme_stylebox_override("normal", _marker_style(Color(0.020, 0.032, 0.036, 0.90), border, 1))
+	button.add_theme_stylebox_override("hover", _marker_style(Color(0.052, 0.074, 0.076, 0.96), border, 2))
+	button.add_theme_stylebox_override("pressed", _marker_style(Color(0.070, 0.092, 0.088, 1.0), PresentationTheme.color_for_key(&"ui.warning"), 2))
+	button.add_theme_color_override("font_color", border)
+
+
+func _art19_marker_state(marker: Dictionary) -> StringName:
+	var asset_id := String(marker.get("asset_id", "")).to_lower()
+	if asset_id.find("player") >= 0:
+		return &"player"
+	if asset_id.find("mine") >= 0:
+		return &"mine"
+	if asset_id.find("chest") >= 0:
+		return &"chest"
+	if asset_id.find("exit") >= 0 or asset_id.find("extract") >= 0:
+		return &"exit"
+	if not bool(marker.get("revealed", true)) or String(marker.get("label", "")) == "?":
+		return &"unknown"
+	if int(marker.get("adjacent_mines", -1)) > 0:
+		return &"scanned"
+	return &"explored"
 
 
 func _marker_style(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
@@ -216,10 +222,14 @@ func _marker_style(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
 	style.border_width_top = border_width
 	style.border_width_right = border_width
 	style.border_width_bottom = border_width
-	style.corner_radius_top_left = 2
-	style.corner_radius_top_right = 2
-	style.corner_radius_bottom_left = 2
-	style.corner_radius_bottom_right = 2
+	style.corner_radius_top_left = 4
+	style.corner_radius_top_right = 4
+	style.corner_radius_bottom_left = 4
+	style.corner_radius_bottom_right = 4
+	style.content_margin_left = 4
+	style.content_margin_top = 4
+	style.content_margin_right = 4
+	style.content_margin_bottom = 4
 	return style
 
 

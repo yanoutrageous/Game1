@@ -1,0 +1,11 @@
+﻿group,value,count
+traceability,traceable,16
+hash_match,yes,16
+usage_decision,defer_or_reserved,1
+usage_decision,keep,10
+usage_decision,keep_with_followup,1
+usage_decision,keep_with_scope_limit,1
+usage_decision,replace_or_rename,1
+usage_decision,temporary_keep_replace_later,2
+wrong_usage_status,no_confirmed_wrong_usage,12
+wrong_usage_status,wrong_usage_risk,4

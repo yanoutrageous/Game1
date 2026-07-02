@@ -100,22 +100,22 @@ func _build_static_layout() -> void:
 	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.016, 0.030, 0.036, 1.0))
 	_add_texture_rect_from_ref(self, "LongTermRoomBackground", Rect2(0, 0, 1280, 720), Art09ManifestAssetMappingScript.asset_ref(&"room.background.normal", &"room.background.normal", &"room_background", &"archive"), 0.50)
 	_add_color_rect(self, "LongTermBackdropShade", Rect2(0, 0, 1280, 720), Color(0.0, 0.0, 0.0, 0.20))
-	_add_color_rect(self, "LongTermArchiveRoomGlow", Rect2(38, 112, 1202, 548), Color(0.13, 0.18, 0.20, 0.20))
-	_add_color_rect(self, "LongTermArchiveWall", Rect2(326, 130, 564, 514), Color(0.06, 0.09, 0.09, 0.28))
-	_add_color_rect(self, "LongTermProfileMask", Rect2(60, 170, 228, 450), Color(0.0, 0.0, 0.0, 0.20))
-	_add_color_rect(self, "LongTermDetailMask", Rect2(928, 142, 286, 476), Color(0.0, 0.0, 0.0, 0.26))
-	_add_color_rect(self, "LongTermShelfLineA", Rect2(342, 248, 526, 2), Color(0.94, 0.70, 0.28, 0.26))
-	_add_color_rect(self, "LongTermShelfLineB", Rect2(342, 386, 526, 2), Color(0.94, 0.70, 0.28, 0.18))
-	_add_color_rect(self, "LongTermShelfLineC", Rect2(342, 524, 526, 2), Color(0.94, 0.70, 0.28, 0.14))
-	_add_color_rect(self, "LongTermDetailLamp", Rect2(912, 106, 326, 4), Art10UISkinKitScript.color(&"gold"))
+	_add_color_rect(self, "LongTermArchiveRoomGlow", Rect2(32, 88, 1206, 596), Color(0.13, 0.18, 0.20, 0.16))
+	_add_color_rect(self, "LongTermArchiveWall", Rect2(340, 116, 590, 520), Color(0.06, 0.09, 0.09, 0.22))
+	_add_color_rect(self, "LongTermProfileMask", Rect2(60, 164, 228, 470), Color(0.0, 0.0, 0.0, 0.16))
+	_add_color_rect(self, "LongTermDetailMask", Rect2(952, 112, 286, 500), Color(0.0, 0.0, 0.0, 0.20))
+	_add_color_rect(self, "LongTermShelfLineA", Rect2(356, 254, 548, 2), Color(0.94, 0.70, 0.28, 0.24))
+	_add_color_rect(self, "LongTermShelfLineB", Rect2(356, 392, 548, 2), Color(0.94, 0.70, 0.28, 0.16))
+	_add_color_rect(self, "LongTermShelfLineC", Rect2(356, 530, 548, 2), Color(0.94, 0.70, 0.28, 0.12))
+	_add_color_rect(self, "LongTermDetailLamp", Rect2(952, 104, 286, 4), Art10UISkinKitScript.color(&"gold"))
 	_add_panel(self, "LongTermProfileColumn", Art10UISkinKitScript.rect(&"long_term", "profile_column"), &"deep")
 	_add_panel(self, "LongTermCardGridColumn", Art10UISkinKitScript.rect(&"long_term", "card_grid"), &"surface")
 	_add_panel(self, "LongTermDetailColumn", Art10UISkinKitScript.rect(&"long_term", "detail_column"), &"summary")
-	_add_texture_rect_from_ref(self, "Art15LongTermProfileTexture", Art10UISkinKitScript.rect(&"long_term", "profile_column"), Art09ManifestAssetMappingScript.panel_ref(&"terminal"), 0.16)
-	_add_texture_rect_from_ref(self, "Art15LongTermArchiveTexture", Art10UISkinKitScript.rect(&"long_term", "card_grid"), Art09ManifestAssetMappingScript.panel_ref(&"terminal"), 0.20)
-	_add_texture_rect_from_ref(self, "Art15LongTermDetailTexture", Art10UISkinKitScript.rect(&"long_term", "detail_column"), Art09ManifestAssetMappingScript.panel_ref(&"protocol"), 0.18)
-	_add_label_token(self, "LongTermTitle", Rect2(44, 32, 360, 48), "长期系统", &"page_title", &"accent")
-	_add_label_token(self, "LongTermSubtitle", Rect2(44, 80, 700, 28), "档案、图鉴、研究与收藏。", &"body_small", &"muted")
+	_add_texture_rect_from_ref(self, "Art19LongTermProfileTexture", Art10UISkinKitScript.rect(&"long_term", "profile_column"), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_terminal"), 0.56)
+	_add_texture_rect_from_ref(self, "Art19LongTermArchiveTexture", Art10UISkinKitScript.rect(&"long_term", "card_grid"), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_terminal"), 0.62)
+	_add_texture_rect_from_ref(self, "Art19LongTermDetailTexture", Art10UISkinKitScript.rect(&"long_term", "detail_column"), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_summary"), 0.68)
+	_add_label_token(self, "LongTermTitle", Rect2(46, 34, 250, 48), "长期系统", &"page_title", &"accent")
+	_add_label_token(self, "LongTermSubtitle", Rect2(304, 36, 620, 32), "", &"body_small", &"muted")
 	_add_button(self, "LongTermBackButton", Rect2(1084, 36, 154, 38), "返回主菜单", Callable(self, "_request_back_to_main"))
 	_add_button(self, "LongTermNavMainButton", Rect2(44, 84, 104, 34), "主菜单", Callable(self, "_request_back_to_main"))
 	_add_button(self, "LongTermNavDeployButton", Rect2(158, 84, 120, 34), "出发探索", Callable(self, "_request_deploy"))
@@ -128,51 +128,51 @@ func _build_static_layout() -> void:
 	_build_tab_buttons()
 
 	_add_label_token(self, "LongTermProfileHeading", Rect2(66, 154, 220, 24), "角色外观", &"tab", &"accent")
-	_add_color_rect(self, "LongTermAvatarGlow", Rect2(66, 184, 184, 246), Color(0.58, 0.93, 0.76, 0.08))
-	_add_color_rect(self, "LongTermAvatarSilhouette", Rect2(116, 228, 72, 150), Color(0.18, 0.27, 0.24, 0.84))
-	_add_texture_rect_from_ref(self, "LongTermPlayerSprite", Rect2(70, 196, 176, 206), Art09ManifestAssetMappingScript.player_sprite_ref(&"idle"), 1.0)
-	_add_color_rect(self, "LongTermAvatarBase", Rect2(92, 414, 138, 6), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
-	_add_button(self, "LongTermAppearanceButton", Rect2(74, 448, 176, 40), "设置外观", Callable(self, "_request_appearance_settings"))
-	_add_color_rect(self, "LongTermArchiveDivider", Rect2(66, 514, 214, 2), Art10UISkinKitScript.color(&"accent"))
-	overview_label = _add_label_token(self, "LongTermOverview", Rect2(66, 528, 214, 38), "", &"body_small", &"text")
-	child_preview_label = _add_label_token(self, "LongTermChildPreview", Rect2(66, 574, 214, 32), "", &"caption", &"text")
-	history_preview_label = _add_label_token(self, "LongTermHistoryPreview", Rect2(66, 614, 214, 26), "", &"caption", &"muted")
+	_add_color_rect(self, "LongTermAvatarGlow", Rect2(66, 184, 190, 272), Color(0.58, 0.93, 0.76, 0.08))
+	_add_color_rect(self, "LongTermAvatarSilhouette", Rect2(116, 232, 78, 168), Color(0.18, 0.27, 0.24, 0.70))
+	_add_texture_rect_from_ref(self, "LongTermPlayerSprite", Rect2(70, 202, 182, 210), Art09ManifestAssetMappingScript.player_sprite_ref(&"idle"), 1.0)
+	_add_color_rect(self, "LongTermAvatarBase", Rect2(92, 430, 146, 6), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
+	_add_button(self, "LongTermAppearanceButton", Art10UISkinKitScript.rect(&"long_term", "appearance_button"), "设置外观", Callable(self, "_request_appearance_settings"))
+	_add_color_rect(self, "LongTermArchiveDivider", Rect2(66, 526, 214, 2), Art10UISkinKitScript.color(&"accent"))
+	overview_label = _add_label_token(self, "LongTermOverview", Rect2(66, 540, 214, 38), "", &"body_small", &"text")
+	child_preview_label = _add_label_token(self, "LongTermChildPreview", Rect2(66, 584, 214, 32), "", &"caption", &"text")
+	history_preview_label = _add_label_token(self, "LongTermHistoryPreview", Rect2(66, 624, 214, 26), "", &"caption", &"muted")
 
-	_add_label_token(self, "LongTermGridHeading", Rect2(348, 126, 320, 28), "收藏与记录", &"tab", &"warning")
+	_add_label_token(self, "LongTermGridHeading", Rect2(356, 112, 320, 28), "收藏与记录", &"tab", &"warning")
 	card_grid_container = GridContainer.new()
 	card_grid_container.name = "LongTermCardGrid"
 	card_grid_container.columns = 3
 	card_grid_container.add_theme_constant_override("h_separation", 10)
 	card_grid_container.add_theme_constant_override("v_separation", 10)
-	_set_rect(card_grid_container, Rect2(348, 164, 516, 456))
+	_set_rect(card_grid_container, Rect2(356, 152, 548, 462))
 	add_child(card_grid_container)
-	next_stage_label = _add_label_token(self, "LongTermNextStage", Rect2(348, 626, 516, 20), "", &"caption", &"muted")
+	next_stage_label = _add_label_token(self, "LongTermNextStage", Rect2(356, 620, 548, 20), "", &"caption", &"muted")
 
-	_add_panel(self, "LongTermDetailStatusBlock", Rect2(936, 120, 258, 58), &"surface")
-	_add_panel(self, "LongTermDetailInfoBlock", Rect2(936, 186, 258, 74), &"deep")
-	_add_panel(self, "LongTermDetailUnlockBlock", Rect2(936, 268, 258, 58), &"warning")
-	_add_panel(self, "LongTermDetailLinkBlock", Rect2(936, 334, 258, 116), &"surface")
-	module_title_label = _add_label_token(self, "LongTermModuleTitle", Rect2(940, 84, 250, 30), "", &"section_title", &"warning")
-	module_state_label = _add_label_token(self, "LongTermModuleState", Rect2(950, 132, 230, 32), "", &"body_small", &"muted")
-	module_body_label = _add_label_token(self, "LongTermModuleBody", Rect2(950, 198, 230, 44), "", &"body_small", &"text")
-	module_reason_label = _add_label_token(self, "LongTermModuleReason", Rect2(950, 280, 230, 32), "", &"caption", &"warning")
-	snapshot_label = _add_label_token(self, "LongTermSnapshotPreview", Rect2(950, 350, 230, 42), "", &"caption", &"text")
-	interface_preview_label = _add_label_token(self, "LongTermInterfacePreview", Rect2(950, 404, 230, 28), "", &"caption", &"muted")
+	_add_panel(self, "LongTermDetailStatusBlock", Rect2(964, 130, 256, 58), &"surface")
+	_add_panel(self, "LongTermDetailInfoBlock", Rect2(964, 198, 256, 68), &"deep")
+	_add_panel(self, "LongTermDetailUnlockBlock", Rect2(964, 276, 256, 58), &"warning")
+	_add_panel(self, "LongTermDetailLinkBlock", Rect2(964, 344, 256, 118), &"surface")
+	module_title_label = _add_label_token(self, "LongTermModuleTitle", Rect2(970, 96, 238, 30), "", &"section_title", &"warning")
+	module_state_label = _add_label_token(self, "LongTermModuleState", Rect2(978, 142, 226, 32), "", &"body_small", &"muted")
+	module_body_label = _add_label_token(self, "LongTermModuleBody", Rect2(978, 210, 226, 42), "", &"body_small", &"text")
+	module_reason_label = _add_label_token(self, "LongTermModuleReason", Rect2(978, 288, 226, 32), "", &"caption", &"warning")
+	snapshot_label = _add_label_token(self, "LongTermSnapshotPreview", Rect2(978, 360, 226, 42), "", &"caption", &"text")
+	interface_preview_label = _add_label_token(self, "LongTermInterfacePreview", Rect2(978, 414, 226, 28), "", &"caption", &"muted")
 	_compact_detail_column()
 
 
 func _compact_detail_column() -> void:
 	var rects := {
-		"LongTermDetailStatusBlock": Rect2(936, 120, 258, 58),
-		"LongTermDetailInfoBlock": Rect2(936, 186, 258, 74),
-		"LongTermDetailUnlockBlock": Rect2(936, 268, 258, 58),
-		"LongTermDetailLinkBlock": Rect2(936, 334, 258, 116),
-		"LongTermModuleTitle": Rect2(940, 84, 250, 30),
-		"LongTermModuleState": Rect2(950, 132, 230, 32),
-		"LongTermModuleBody": Rect2(950, 198, 230, 44),
-		"LongTermModuleReason": Rect2(950, 280, 230, 32),
-		"LongTermSnapshotPreview": Rect2(950, 350, 230, 42),
-		"LongTermInterfacePreview": Rect2(950, 404, 230, 28),
+		"LongTermDetailStatusBlock": Rect2(964, 130, 256, 58),
+		"LongTermDetailInfoBlock": Rect2(964, 198, 256, 68),
+		"LongTermDetailUnlockBlock": Rect2(964, 276, 256, 58),
+		"LongTermDetailLinkBlock": Rect2(964, 344, 256, 118),
+		"LongTermModuleTitle": Rect2(970, 96, 238, 30),
+		"LongTermModuleState": Rect2(978, 142, 226, 32),
+		"LongTermModuleBody": Rect2(978, 210, 226, 42),
+		"LongTermModuleReason": Rect2(978, 288, 226, 32),
+		"LongTermSnapshotPreview": Rect2(978, 360, 226, 42),
+		"LongTermInterfacePreview": Rect2(978, 414, 226, 28),
 	}
 	for node_name in rects.keys():
 		var node := get_node_or_null(String(node_name)) as Control
@@ -184,7 +184,7 @@ func _build_tab_buttons() -> void:
 	tab_buttons.clear()
 	var tab_row := HBoxContainer.new()
 	tab_row.name = "LongTermTopTabRow"
-	_set_rect(tab_row, Rect2(326, 78, 564, 48))
+	_set_rect(tab_row, Art10UISkinKitScript.rect(&"long_term", "tab_row"))
 	tab_row.add_theme_constant_override("separation", 6)
 	add_child(tab_row)
 	var modules: Array = current_model.get("modules", [])
@@ -196,7 +196,7 @@ func _build_tab_buttons() -> void:
 		button.text = title
 		button.tooltip_text = String(module.get("reason", ""))
 		button.toggle_mode = true
-		button.custom_minimum_size = Vector2(86, 40)
+		button.custom_minimum_size = Vector2(76, 42)
 		button.pressed.connect(Callable(self, "_on_module_tab_pressed").bind(module_id))
 		Art10UISkinKitScript.apply_button_token(button, &"secondary", &"tab", &"tab")
 		tab_row.add_child(button)
@@ -263,9 +263,49 @@ func _refresh_from_model() -> void:
 	interface_preview_label.text = "奖励\n事件 / 图鉴 / 外观"
 	next_stage_label.text = ""
 	_refresh_card_grid(content_preview.get("cards", []) as Array)
+	_normalize_static_copy()
 	_apply_art10_text_refresh()
 	_refresh_tab_buttons()
 	_apply_layer_order()
+
+
+func _normalize_static_copy() -> void:
+	_set_label_text("LongTermProfileHeading", "角色外观")
+	_set_button_text("LongTermAppearanceButton", "设置外观")
+	_set_label_text("LongTermGridHeading", "收藏与记录")
+	if overview_label != null:
+		overview_label.text = "角色档案\n回收员 / 基地记录"
+	if child_preview_label != null:
+		var panel: Dictionary = current_model.get("placeholder_panel", {})
+		child_preview_label.text = "当前模块\n%s" % _shorten_copy(String(panel.get("title", "主线")), 12)
+	if history_preview_label != null:
+		history_preview_label.text = "战绩\n探索记录已归档"
+	if module_title_label != null:
+		module_title_label.text = "档案总览"
+	if module_state_label != null:
+		module_state_label.text = "等级  01\n主线  已登记"
+	if module_body_label != null:
+		module_body_label.text = "主线\n当前目标 / 关键节点"
+	if module_reason_label != null:
+		module_reason_label.text = "资历\n探索 / 回收 / 失败"
+	if snapshot_label != null:
+		snapshot_label.text = "资源\n金币 / 黑币 / 奖励"
+	if interface_preview_label != null:
+		interface_preview_label.text = "奖励\n事件 / 图鉴 / 外观"
+	if next_stage_label != null:
+		next_stage_label.text = ""
+
+
+func _set_label_text(node_name: String, text: String) -> void:
+	var node := get_node_or_null(node_name)
+	if node is Label:
+		(node as Label).text = text
+
+
+func _set_button_text(node_name: String, text: String) -> void:
+	var node := get_node_or_null(node_name)
+	if node is Button:
+		(node as Button).text = text
 
 
 func _refresh_card_grid(cards: Array) -> void:
@@ -294,26 +334,41 @@ func _refresh_card_grid(cards: Array) -> void:
 	for card: Dictionary in display_cards.slice(0, 9):
 		var button := Button.new()
 		button.name = "LongTermCard_%s" % str(card.get("id", index))
-		button.text = "%s  %s\n%s" % [
+		button.text = "%s\n%s\n%s" % [
 			_card_marker(index),
 			_shorten_copy(String(card.get("title", "")), 10),
 			_archive_card_state_label(StringName(card.get("state", "preview")), index),
 		]
 		button.tooltip_text = String(card.get("description", ""))
-		button.custom_minimum_size = Vector2(164, 122)
+		button.custom_minimum_size = Vector2(170, 132)
 		button.toggle_mode = true
 		button.button_pressed = index == 0
-		Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if index == 0 else &"normal"), &"caption", &"slot")
+		Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if index == 0 else &"normal"), &"body_small", &"slot")
 		card_grid_container.add_child(button)
 		index += 1
 
 
 func _archive_slot_title(index: int) -> String:
+	var clean_titles := ["主线", "图鉴", "研究", "资历", "收藏", "拍卖", "记录", "奖励", "外观"]
+	return clean_titles[index % clean_titles.size()]
 	var titles := ["主线", "图鉴", "研究", "资历", "收藏", "拍卖", "记录", "奖励", "外观"]
 	return titles[index % titles.size()]
 
 
 func _archive_card_state_label(state: StringName, index: int) -> String:
+	if index == 0:
+		return "当前档案"
+	match state:
+		&"locked":
+			return "待解锁"
+		&"new":
+			return "新记录"
+		&"reward":
+			return "奖励"
+		&"ready":
+			return "可领取"
+		_:
+			return "收藏墙"
 	if index == 0:
 		return "当前档案"
 	match state:

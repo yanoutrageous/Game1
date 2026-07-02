@@ -1,0 +1,17 @@
+{
+  "dry_run": true,
+  "generated_png_count": 0,
+  "staged_asset_count": 27,
+  "spec_p0_count": 27,
+  "import_plan_p0_count": 19,
+  "dry_run_plan_rows": 59,
+  "matched_rows": 54,
+  "blocked_rows": 5,
+  "governance_review_rows": 11,
+  "ready_crop_rows": 25,
+  "ready_9slice_rows": 18,
+  "distinct_staged_sources_in_plan": 27,
+  "unstaged_slice1_sources": [],
+  "plan_out": "D:\\AGAME1\\_repo_cache\\Game1_work\\docs\\art\\validation\\art20\\art20_slice2_cutting_dry_run_plan.csv",
+  "summary_out": "D:\\AGAME1\\_repo_cache\\Game1_work\\docs\\art\\validation\\art20\\art20_slice2_cutting_dry_run_summary.json"
+}

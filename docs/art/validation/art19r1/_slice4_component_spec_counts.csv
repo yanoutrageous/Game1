@@ -1,0 +1,13 @@
+﻿group,value,count
+page,deploy_prep,7
+page,ground_loot,1
+page,inventory,2
+page,long_term,5
+page,main_menu,4
+page,map_overlay,3
+page,result,1
+page,run_hud,6
+page,shared,8
+priority,P0,27
+priority,P1,9
+priority,P2,1

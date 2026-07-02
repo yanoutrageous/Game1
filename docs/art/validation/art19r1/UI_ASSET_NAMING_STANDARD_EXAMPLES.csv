@@ -1,0 +1,8 @@
+﻿"file_name","asset_id","visual_key","purpose"
+"ui_main_menu_button_primary_normal.png","ui.main_menu.button.primary.normal","main_menu.button.primary.normal","主菜单右侧主入口按钮 normal 状态"
+"ui_deploy_route_card_selected.png","ui.deploy.card.route.selected","deploy.route_card.selected","出发探索路线卡 selected 状态"
+"ui_longterm_collection_card_locked.png","ui.longterm.card.collection.locked","longterm.collection_card.locked","长期系统收藏卡 locked 状态"
+"ui_run_hud_status_card_pressure_warning.png","ui.run_hud.panel.status_card.pressure.warning","run_hud.status_card.pressure.warning","局内右上压力状态卡 warning 状态"
+"ui_map_overlay_cell_unknown_64.png","ui.map_overlay.cell.unknown.64","map_overlay.cell.unknown","MapOverlay 未知地图格 64px 图"
+"ui_shared_keycap_e_normal.png","ui.shared.keycap.e.normal","shared.keycap.e.normal","共享 E 键 keycap normal 状态"
+"ui_inventory_slot_item_selected.png","ui.inventory.slot.item.selected","inventory.slot.item.selected","背包物品槽 selected 状态"

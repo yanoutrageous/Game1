@@ -103,22 +103,26 @@ func build() -> void:
 	z_index = 180
 
 	left_backdrop = _add_panel("RunScannerRail", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
-	left_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.78), PresentationTheme.color_for_key(&"ui.accent"), 1))
+	left_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.72), PresentationTheme.color_for_key(&"ui.accent"), 2))
+	Art10UISkinKitScript.apply_panel(left_backdrop, &"deep")
 	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"))
 	center_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"), 1))
 	room_background_layer = _add_texture_rect_from_ref("RunRoomBackgroundFill", _room_background_ref(&"Normal"), 0.88)
 	encounter_backdrop = _add_panel("RunEncounterSlot", Color(0.018, 0.034, 0.038, 0.88), PresentationTheme.color_for_key(&"ui.warning"))
 	encounter_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.72), PresentationTheme.color_for_key(&"ui.accent"), 1))
 	right_backdrop = _add_panel("RunProtocolRail", Color(0.035, 0.04, 0.042, 0.90), PresentationTheme.color_for_key(&"ui.warning"))
-	right_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.72), PresentationTheme.color_for_key(&"ui.warning"), 1))
+	right_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.68), PresentationTheme.color_for_key(&"ui.warning"), 2))
+	Art10UISkinKitScript.apply_panel(right_backdrop, &"summary")
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
-	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.78), PresentationTheme.color_for_key(&"ui.accent"), 1))
+	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.70), PresentationTheme.color_for_key(&"ui.accent"), 2))
+	Art10UISkinKitScript.apply_panel(bottom_backdrop, &"summary")
 	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
-	resource_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.54), PresentationTheme.color_for_key(&"mini.chest"), 1))
-	scanner_text_mask = _add_panel("RunScannerTextMask", Color(0.012, 0.026, 0.030, 0.86), PresentationTheme.color_for_key(&"ui.accent"))
+	resource_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.60), PresentationTheme.color_for_key(&"mini.chest"), 2))
+	Art10UISkinKitScript.apply_panel(resource_backdrop, &"card")
+	scanner_text_mask = _add_panel("RunScannerTextMask", Color(0.012, 0.026, 0.030, 0.72), PresentationTheme.color_for_key(&"ui.accent"))
 	room_text_mask = _add_panel("RunRoomTextMask", Color(0.012, 0.026, 0.030, 0.82), PresentationTheme.color_for_key(&"mini.normal"))
-	threat_mask = _add_panel("RunThreatMask", Color(0.040, 0.046, 0.042, 0.92), PresentationTheme.color_for_key(&"ui.warning"))
-	event_mask = _add_panel("RunEventMask", Color(0.026, 0.042, 0.046, 0.90), PresentationTheme.color_for_key(&"ui.accent"))
+	threat_mask = _add_panel("RunThreatMask", Color(0.040, 0.046, 0.042, 0.74), PresentationTheme.color_for_key(&"ui.warning"))
+	event_mask = _add_panel("RunEventMask", Color(0.026, 0.042, 0.046, 0.68), PresentationTheme.color_for_key(&"ui.accent"))
 	reward_mask = _add_panel("RunRewardMask", Color(0.036, 0.052, 0.046, 0.90), PresentationTheme.color_for_key(&"mini.chest"))
 	player_tag_mask = _add_color_layer("RunPlayerTagMask", Color(0.004, 0.010, 0.012, 0.96))
 	room_hint_softener = _add_color_layer("RunRoomHintSoftener", Color(0.0, 0.0, 0.0, 0.34))
@@ -166,7 +170,7 @@ func build() -> void:
 	reward_label = _add_label("RunRewardSummary", "奖励：等待记录。", 12, PresentationTheme.color_for_key(&"ui.muted"))
 	reward_label.visible = false
 	reward_mask.visible = false
-	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art09ManifestAssetMappingScript.feedback_bar_ref(&"neutral"), 0.86)
+	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art09ManifestAssetMappingScript.art19_skin_ref(&"bar_summary"), 0.94)
 	command_feedback_label = _add_label("RunCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
 	layout_label = _add_label("RunLayoutProfileStatus", "", 11, PresentationTheme.color_for_key(&"ui.muted"))
 	layout_label.visible = false
@@ -350,7 +354,7 @@ func show_command_feedback(result: Dictionary) -> void:
 	var feedback_state := &"neutral"
 	if not accepted:
 		feedback_state = &"warning"
-	_apply_texture_ref(command_feedback_art, Art09ManifestAssetMappingScript.feedback_bar_ref(feedback_state), 0.58)
+	_apply_texture_ref(command_feedback_art, Art09ManifestAssetMappingScript.art19_skin_ref(&"bar_summary"), 0.82)
 	var pulse_state := &"ready"
 	if not accepted:
 		pulse_state = &"warning"

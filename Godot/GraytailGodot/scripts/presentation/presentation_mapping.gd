@@ -150,17 +150,7 @@ static func player_sprite_ref(state: StringName = &"idle") -> Dictionary:
 
 
 static func main_menu_entry_icon_ref(entry_id: StringName) -> Dictionary:
-	match entry_id:
-		&"deploy":
-			return Art09ManifestAssetMappingScript.deploy_icon_ref(&"compass")
-		&"long_term":
-			return Art09ManifestAssetMappingScript.deploy_icon_ref(&"backpack")
-		&"settings":
-			return Art09ManifestAssetMappingScript.deploy_icon_ref(&"armor")
-		&"exit_game":
-			return Art09ManifestAssetMappingScript.deploy_icon_ref(&"bandage")
-		_:
-			return Art09ManifestAssetMappingScript.deploy_icon_ref(&"compass")
+	return Art09ManifestAssetMappingScript.main_menu_entry_icon_ref(entry_id)
 
 
 static func deploy_prep_asset_refs() -> Dictionary:
@@ -197,6 +187,30 @@ static func panel_ref(role: StringName = &"terminal") -> Dictionary:
 
 static func key_prompt_ref(action_id: StringName, rendered: bool = false) -> Dictionary:
 	return Art09ManifestAssetMappingScript.key_prompt_ref(action_id, rendered)
+
+
+static func art19_skin_ref(role: StringName) -> Dictionary:
+	return Art09ManifestAssetMappingScript.art19_skin_ref(role)
+
+
+static func art19_map64_ref(state: StringName) -> Dictionary:
+	return Art09ManifestAssetMappingScript.art19_map64_ref(state)
+
+
+static func art20_component_ref(visual_key: StringName) -> Dictionary:
+	return Art09ManifestAssetMappingScript.art20_component_ref(visual_key)
+
+
+static func art20_keycap_ref(action_id: StringName) -> Dictionary:
+	return Art09ManifestAssetMappingScript.art20_keycap_ref(action_id)
+
+
+static func art20_main_menu_background_ref() -> Dictionary:
+	return Art09ManifestAssetMappingScript.art20_main_menu_background_ref()
+
+
+static func art20_deploy_icon_ref(kind: StringName) -> Dictionary:
+	return Art09ManifestAssetMappingScript.art20_deploy_icon_ref(kind)
 
 
 static func hint_for_snapshot(snapshot: Dictionary) -> String:

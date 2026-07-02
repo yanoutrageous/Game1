@@ -62,6 +62,7 @@ Recent historical/current evidence pointers:
 
 | Stage | Evidence | Boundary |
 | --- | --- | --- |
+| ART-20 | `docs/art/ART20_DRAW_TO_RUNTIME_UI_COMPONENT_PIPELINE_EXECUTION.md`; `docs/art/ART20_CLOSEOUT_PIPELINE_PASS_VISUAL_INCOMPLETE.md`; `tools/validate_art20_ui_asset_pipeline.ps1`; `docs/art/validation/art20/` | Pipeline proof only: source/staging/cut/runtime/manifest/visual_key/UI consumer chain passed. Final UI visual target not achieved; Computer Use screenshots are live smoke evidence, not release visual QA. |
 | G40 | `docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md` | Current cleanup validation is IN_PROGRESS / PASS_WITH_NOTES; branch commit/push complete at `ad883310232ca9756371fb68eb3d0176a56e809e`; `project.godot` restored in Slice 12; residual duplicate decisions and smoke remain pending later gates |
 | M5 | `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md` | Latest gameplay baseline before G40; no manual playtest PASS unless explicitly recorded |
 | G39 | `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md` | Navigation boundary closure; no full settings/Profile UI |

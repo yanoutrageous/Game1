@@ -114,35 +114,35 @@ func _build_backdrop() -> void:
 	var visuals := _dictionary_from(current_model.get("art09_visuals", {}))
 	_add_texture_rect_from_ref(self, "Art09MainMenuBackground", Rect2(0, 0, 1280, 720), _dictionary_from(visuals.get("background", {})), 0.64)
 	_add_color_rect(self, "MainMenuVignette", Rect2(0, 0, 1280, 720), Color(0.0, 0.0, 0.0, 0.24))
-	_add_color_rect(self, "BaseHallWarmBacklight", Rect2(58, 178, 666, 336), Color(0.42, 0.30, 0.13, 0.10))
-	_add_color_rect(self, "BaseHallDoorGlow", Rect2(86, 186, 176, 326), Color(0.54, 0.86, 0.68, 0.10))
-	_add_color_rect(self, "BaseHallEntryMask", Rect2(62, 158, 650, 368), Color(0.0, 0.0, 0.0, 0.28))
-	_add_color_rect(self, "BaseHallHeroMask", Rect2(78, 166, 254, 376), Color(0.02, 0.05, 0.05, 0.68))
-	_add_color_rect(self, "BaseHallDoorLeft", Rect2(76, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
-	_add_color_rect(self, "BaseHallDoorRight", Rect2(282, 188, 5, 302), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
-	_add_color_rect(self, "BaseHallForegroundRail", Rect2(56, 512, 642, 3), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
-	_add_color_rect(self, "BaseAtmosphereLayer", Rect2(70, 210, 640, 266), Color(0.10, 0.19, 0.17, 0.28))
-	_add_color_rect(self, "BaseFloorLine", Rect2(86, 486, 598, 4), PresentationTheme.color_for_key(&"ui.warning", Color(0.94, 0.7, 0.28, 1.0)))
+	_add_color_rect(self, "BaseHallWarmBacklight", Rect2(44, 176, 674, 348), Color(0.42, 0.30, 0.13, 0.08))
+	_add_color_rect(self, "BaseHallDoorGlow", Rect2(88, 198, 222, 292), Color(0.54, 0.86, 0.68, 0.10))
+	_add_color_rect(self, "BaseHallEntryMask", Rect2(44, 166, 676, 380), Color(0.0, 0.0, 0.0, 0.20))
+	_add_color_rect(self, "BaseHallHeroMask", Rect2(72, 206, 258, 304), Color(0.02, 0.05, 0.05, 0.46))
+	_add_color_rect(self, "BaseHallDoorLeft", Rect2(78, 210, 5, 276), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
+	_add_color_rect(self, "BaseHallDoorRight", Rect2(308, 210, 5, 276), Art10UISkinKitScript.color(&"gold", Color(0.94, 0.70, 0.28, 1.0)))
+	_add_color_rect(self, "BaseHallForegroundRail", Rect2(52, 520, 646, 3), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
+	_add_color_rect(self, "BaseAtmosphereLayer", Rect2(66, 224, 650, 238), Color(0.10, 0.19, 0.17, 0.22))
+	_add_color_rect(self, "BaseFloorLine", Rect2(86, 506, 598, 4), PresentationTheme.color_for_key(&"ui.warning", Color(0.94, 0.7, 0.28, 1.0)))
 	_add_label_token(self, "MainMenuTitle", Art10UISkinKitScript.rect(&"main_menu", "title"), String(current_model.get("title", "灰尾回收")), &"title", &"warning")
-	_add_label_token(self, "MainMenuSubtitle", Rect2(78, 126, 320, 30), "基地门厅", &"body", &"text")
+	_add_label_token(self, "MainMenuSubtitle", Rect2(78, 150, 320, 30), "基地门厅", &"body", &"text")
 
 
 func _build_role_panel() -> void:
 	_add_panel(self, "CharacterDisplayLayer", Art10UISkinKitScript.rect(&"main_menu", "role"), &"card")
-	_add_color_rect(self, "CharacterPodBacklight", Rect2(96, 188, 190, 318), Color(0.58, 0.93, 0.76, 0.10))
-	_add_color_rect(self, "CharacterCapeLayer", Rect2(112, 242, 160, 226), Color(0.10, 0.18, 0.16, 0.92))
-	_add_color_rect(self, "CharacterSilhouette", Rect2(132, 210, 122, 258), Color(0.20, 0.31, 0.27, 0.94))
-	_add_color_rect(self, "CharacterHead", Rect2(146, 184, 92, 82), Color(0.23, 0.34, 0.30, 0.94))
-	_add_texture_rect_from_ref(self, "MainMenuPlayerSprite", Rect2(110, 236, 150, 168), Art09ManifestAssetMappingScript.player_sprite_ref(&"idle"), 1.0)
-	_add_color_rect(self, "CharacterTool", Rect2(248, 250, 10, 210), Art10UISkinKitScript.color(&"gold"))
-	_add_color_rect(self, "CharacterEquipmentLine", Rect2(104, 462, 188, 3), Art10UISkinKitScript.color(&"accent"))
-	_add_label_token(self, "CharacterDisplayLabel", Rect2(110, 474, 184, 28), "探索员整备", &"tab", &"text")
+	_add_color_rect(self, "CharacterPodBacklight", Rect2(94, 214, 206, 272), Color(0.58, 0.93, 0.76, 0.10))
+	_add_color_rect(self, "CharacterCapeLayer", Rect2(118, 262, 160, 194), Color(0.10, 0.18, 0.16, 0.82))
+	_add_color_rect(self, "CharacterSilhouette", Rect2(142, 226, 112, 226), Color(0.20, 0.31, 0.27, 0.86))
+	_add_color_rect(self, "CharacterHead", Rect2(152, 204, 90, 74), Color(0.23, 0.34, 0.30, 0.88))
+	_add_texture_rect_from_ref(self, "MainMenuPlayerSprite", Rect2(116, 244, 154, 172), Art09ManifestAssetMappingScript.player_sprite_ref(&"idle"), 1.0)
+	_add_color_rect(self, "CharacterTool", Rect2(270, 256, 10, 204), Art10UISkinKitScript.color(&"gold"))
+	_add_color_rect(self, "CharacterEquipmentLine", Rect2(100, 486, 204, 3), Art10UISkinKitScript.color(&"accent"))
+	_add_label_token(self, "CharacterDisplayLabel", Rect2(108, 494, 198, 28), "探索员整备", &"tab", &"text")
 
 
 func _build_top_entrance_panel() -> void:
 	var top_panel := HBoxContainer.new()
 	top_panel.name = "MainMenuTopEntrancePanel"
-	_set_rect(top_panel, Rect2(770, 36, 428, 42))
+	_set_rect(top_panel, Art10UISkinKitScript.rect(&"main_menu", "top_shortcuts"))
 	top_panel.add_theme_constant_override("separation", 8)
 	add_child(top_panel)
 	var shortcut_index := 1
@@ -164,9 +164,13 @@ func _build_top_entrance_panel() -> void:
 
 
 func _build_menu_panel() -> void:
+	_add_panel(self, "MainMenuEntryBoard", Rect2(732, 126, 486, 426), &"deep")
+	_add_texture_rect_from_ref(self, "MainMenuEntryBoardTexture", Rect2(738, 132, 474, 414), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_terminal"), 0.74)
+	_add_color_rect(self, "MainMenuEntryBoardTopRail", Rect2(748, 142, 444, 4), Art10UISkinKitScript.color(&"gold"))
+	_add_color_rect(self, "MainMenuEntryBoardGlow", Rect2(760, 150, 430, 372), Color(0.94, 0.70, 0.28, 0.045))
 	var panel := VBoxContainer.new()
 	panel.name = "MainMenuFixedEntries"
-	_set_rect(panel, Rect2(770, 122, 428, 378))
+	_set_rect(panel, Art10UISkinKitScript.rect(&"main_menu", "entry_stack"))
 	panel.add_theme_constant_override("separation", 14)
 	add_child(panel)
 	for raw_entry in _array_from(current_model, "entries"):
@@ -178,11 +182,11 @@ func _build_menu_panel() -> void:
 func _build_notice_panel() -> void:
 	var notice_panel := VBoxContainer.new()
 	notice_panel.name = "MainMenuNoticePanel"
-	_set_rect(notice_panel, Rect2(90, 550, 530, 46))
+	_set_rect(notice_panel, Rect2(80, 556, 528, 42))
 	notice_panel.add_theme_constant_override("separation", 4)
 	add_child(notice_panel)
 	_add_panel(self, "MainMenuNoticeFrame", Art10UISkinKitScript.rect(&"main_menu", "notice"), &"summary")
-	_add_texture_rect_from_ref(self, "Art15MainMenuNoticeTexture", Art10UISkinKitScript.rect(&"main_menu", "notice"), Art09ManifestAssetMappingScript.feedback_panel_ref(&"event"), 0.24)
+	_add_texture_rect_from_ref(self, "Art19MainMenuNoticeTexture", Art10UISkinKitScript.rect(&"main_menu", "notice"), Art09ManifestAssetMappingScript.art19_skin_ref(&"bar_summary"), 0.82)
 	move_child(notice_panel, get_child_count() - 1)
 	_add_section_label(notice_panel, "公告")
 	for notice in _array_from(current_model, "notices").slice(0, 1):
@@ -194,10 +198,10 @@ func _build_notice_panel() -> void:
 
 
 func _build_meta_summary_panel() -> void:
-	_add_panel(self, "MainMenuMetaFrame", Rect2(354, 414, 320, 82), &"soft")
-	_add_texture_rect_from_ref(self, "Art15MainMenuMetaTexture", Rect2(354, 414, 320, 82), Art09ManifestAssetMappingScript.panel_ref(&"terminal"), 0.18)
-	_add_label_token(self, "MainMenuMetaSummaryHeading", Rect2(372, 430, 220, 22), "行动记录", &"caption", &"muted")
-	meta_summary_label = _add_label_token(self, "MainMenuMetaSummary", Rect2(372, 454, 282, 36), "", &"caption", &"text")
+	_add_panel(self, "MainMenuMetaFrame", Art10UISkinKitScript.rect(&"main_menu", "meta"), &"soft")
+	_add_texture_rect_from_ref(self, "Art19MainMenuMetaTexture", Art10UISkinKitScript.rect(&"main_menu", "meta"), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_summary"), 0.62)
+	_add_label_token(self, "MainMenuMetaSummaryHeading", Rect2(384, 446, 220, 20), "行动记录", &"caption", &"muted")
+	meta_summary_label = _add_label_token(self, "MainMenuMetaSummary", Rect2(384, 468, 272, 28), "", &"caption", &"text")
 	_refresh_meta_summary()
 
 
@@ -239,9 +243,11 @@ func _add_entry_button(parent: Control, entry: Dictionary, large: bool = false, 
 	button.tooltip_text = _entry_tooltip(entry)
 	button.text = Art10UISkinKitScript.sanitize_player_copy(button.text)
 	button.tooltip_text = Art10UISkinKitScript.sanitize_player_copy(button.tooltip_text)
-	button.custom_minimum_size = _layout_size(Vector2(410, 78) if large else Vector2(104, 36))
+	button.custom_minimum_size = _layout_size(Vector2(410, 84) if large else Vector2(104, 36))
 	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})), &"large_nav" if large else &"key")
-	Art10UISkinKitScript.apply_button_token(button, &"primary" if large or bool(entry.get("primary", false)) else &"secondary", &"main_button" if large else &"key_prompt", &"large_nav" if large else &"key")
+	var entry_id := StringName(entry.get("id", &""))
+	var tone := &"gold" if large and entry_id == &"deploy" else (&"primary" if large or bool(entry.get("primary", false)) else &"secondary")
+	Art10UISkinKitScript.apply_button_token(button, tone, &"main_button" if large else &"key_prompt", &"large_nav" if large else &"key")
 	button.pressed.connect(func() -> void: _emit_entry(entry))
 	parent.add_child(button)
 	return button

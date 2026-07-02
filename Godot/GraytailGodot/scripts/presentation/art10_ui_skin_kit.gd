@@ -5,6 +5,7 @@ class_name Art10UISkinKit
 # player-visible copy cleanup, and Base confirmed draft layout metrics.
 
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
+const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 
 const FONT_ASSET_ID := &"ui.font.fusion_pixel"
 const CANVAS_SIZE := Vector2(1280, 720)
@@ -65,10 +66,10 @@ const COLORS := {
 	&"text": Color(0.89, 0.94, 0.88, 1.0),
 	&"muted": Color(0.56, 0.67, 0.62, 1.0),
 	&"caption": Color(0.68, 0.76, 0.70, 1.0),
-	&"panel": Color(0.020, 0.041, 0.046, 0.34),
-	&"panel_deep": Color(0.010, 0.022, 0.028, 0.40),
-	&"panel_soft": Color(0.050, 0.078, 0.074, 0.22),
-	&"slot": Color(0.038, 0.064, 0.064, 0.34),
+	&"panel": Color(0.020, 0.041, 0.046, 0.48),
+	&"panel_deep": Color(0.010, 0.022, 0.028, 0.58),
+	&"panel_soft": Color(0.050, 0.078, 0.074, 0.32),
+	&"slot": Color(0.038, 0.064, 0.064, 0.58),
 	&"gold": Color(0.94, 0.70, 0.28, 1.0),
 	&"gold_dark": Color(0.28, 0.18, 0.06, 0.96),
 	&"accent": Color(0.58, 0.93, 0.76, 1.0),
@@ -104,33 +105,43 @@ const MOTION_FALLBACKS := {
 }
 
 const MAIN_MENU_RECTS := {
-	"title": Rect2(72, 48, 620, 78),
-	"role": Rect2(82, 178, 238, 352),
-	"entry_stack": Rect2(760, 122, 438, 372),
-	"notice": Rect2(76, 532, 584, 84),
-	"bottom_key_bar": Rect2(72, 638, 344, 50),
+	"title": Rect2(64, 58, 420, 116),
+	"role": Rect2(64, 200, 280, 320),
+	"top_shortcuts": Rect2(760, 62, 430, 44),
+	"entry_stack": Rect2(760, 148, 430, 390),
+	"notice": Rect2(64, 540, 560, 74),
+	"meta": Rect2(366, 436, 310, 68),
+	"bottom_key_bar": Rect2(64, 642, 380, 58),
 }
 
 const DEPLOY_RECTS := {
-	"left_column": Rect2(42, 120, 272, 538),
-	"center_column": Rect2(326, 112, 598, 548),
-	"summary_column": Rect2(946, 96, 292, 562),
-	"tab_row": Rect2(350, 78, 548, 48),
-	"bottom_key_bar": Rect2(350, 642, 548, 48),
+	"left_column": Rect2(32, 88, 280, 596),
+	"mode_switch_buttons": Rect2(32, 28, 280, 42),
+	"center_column": Rect2(340, 160, 590, 380),
+	"center_detail": Rect2(340, 554, 590, 88),
+	"summary_column": Rect2(952, 88, 286, 396),
+	"action_cluster": Rect2(952, 506, 286, 160),
+	"tab_row": Rect2(398, 34, 470, 58),
+	"filter_row": Rect2(372, 104, 526, 44),
+	"bottom_key_bar": Rect2(340, 642, 590, 48),
 }
 
 const LONG_TERM_RECTS := {
-	"profile_column": Rect2(44, 120, 260, 538),
-	"card_grid": Rect2(326, 112, 564, 548),
-	"detail_column": Rect2(912, 96, 326, 562),
-	"tab_row": Rect2(326, 78, 564, 48),
+	"profile_column": Rect2(32, 88, 280, 596),
+	"mode_switch_buttons": Rect2(32, 28, 280, 42),
+	"card_grid": Rect2(340, 116, 590, 520),
+	"detail_column": Rect2(952, 88, 286, 548),
+	"tab_row": Rect2(398, 34, 470, 58),
+	"appearance_button": Rect2(86, 596, 170, 46),
 }
 
 const RUN_RECTS := {
-	"left_scanner": Rect2(0, 0, 384, 720),
-	"right_status": Rect2(1038, 14, 226, 106),
-	"center_room": Rect2(391, 14, 875, 534),
-	"bottom_key_bar": Rect2(391, 648, 875, 58),
+	"left_info_rail": Rect2(0, 0, 292, 720),
+	"gameplay_viewport": Rect2(292, 0, 988, 720),
+	"right_status": Rect2(1054, 24, 202, 108),
+	"bottom_info": Rect2(412, 590, 620, 44),
+	"bottom_key_bar": Rect2(320, 656, 928, 64),
+	"map_overlay": Rect2(0, 0, 1280, 720),
 }
 
 
@@ -139,6 +150,10 @@ static func pixel_font() -> Resource:
 	if resource is Font:
 		return resource
 	return null
+
+
+static func art19_texture(role: StringName) -> Texture2D:
+	return Art09ManifestAssetMappingScript.resolve_texture(Art09ManifestAssetMappingScript.art19_skin_ref(role))
 
 
 static func font_size(token: StringName, fallback: int = 15) -> int:
@@ -637,118 +652,207 @@ static func play_panel_open(control: Control) -> void:
 	tween.tween_property(control, "modulate:a", 1.0, motion_duration(0.12))
 
 
-static func panel_style(tone: StringName = &"surface") -> StyleBoxFlat:
+static func panel_style(tone: StringName = &"surface") -> StyleBox:
 	var bg := color(&"panel")
 	var border := color(&"accent")
 	var border_width := 1
 	var padding := 10
+	var texture_role := &"panel_terminal"
 	match tone:
 		&"deep":
 			bg = color(&"panel_deep")
 			border = color(&"muted")
+			border_width = 2
 			padding = 12
+			texture_role = &"panel_terminal"
 		&"summary":
-			bg = Color(0.044, 0.058, 0.058, 0.30)
+			bg = Color(0.044, 0.058, 0.058, 0.58)
 			border = color(&"warning")
+			border_width = 2
 			padding = 12
+			texture_role = &"panel_summary"
 		&"notice":
-			bg = Color(0.052, 0.061, 0.048, 0.28)
+			bg = Color(0.052, 0.061, 0.048, 0.54)
 			border = color(&"gold")
-			padding = 10
-		&"card":
-			bg = Color(0.030, 0.052, 0.056, 0.28)
-			border = Color(0.24, 0.36, 0.34, 1.0)
-			padding = 10
-		&"selected":
-			bg = Color(0.050, 0.078, 0.066, 0.50)
-			border = color(&"accent")
 			border_width = 2
 			padding = 10
+			texture_role = &"panel_summary"
+		&"card":
+			bg = Color(0.030, 0.052, 0.056, 0.56)
+			border = Color(0.24, 0.36, 0.34, 1.0)
+			border_width = 2
+			padding = 12
+			texture_role = &"panel_deploy_main"
+		&"selected":
+			bg = Color(0.050, 0.078, 0.066, 0.70)
+			border = color(&"accent")
+			border_width = 3
+			padding = 12
+			texture_role = &"panel_highlight"
 		&"slot":
 			bg = color(&"slot")
 			border = Color(0.30, 0.46, 0.42, 1.0)
+			border_width = 2
 			padding = 6
+			texture_role = &"button_dark"
 		&"gold":
 			bg = color(&"gold_dark")
 			border = color(&"gold")
-			border_width = 2
+			border_width = 3
 			padding = 12
+			texture_role = &"button_confirm"
 		&"reward":
-			bg = Color(0.20, 0.13, 0.04, 0.44)
+			bg = Color(0.20, 0.13, 0.04, 0.68)
 			border = color(&"gold")
 			border_width = 2
+			texture_role = &"button_confirm"
 		&"ready":
-			bg = Color(0.044, 0.078, 0.052, 0.44)
+			bg = Color(0.044, 0.078, 0.052, 0.66)
 			border = color(&"accent")
 			border_width = 2
+			texture_role = &"button_selected_tab"
 		&"new":
-			bg = Color(0.050, 0.066, 0.088, 0.44)
+			bg = Color(0.050, 0.066, 0.088, 0.66)
 			border = Color(0.55, 0.78, 0.96, 1.0)
+			texture_role = &"button_selected_tab"
 		&"locked":
-			bg = Color(0.020, 0.026, 0.028, 0.36)
+			bg = Color(0.020, 0.026, 0.028, 0.52)
 			border = color(&"disabled")
+			texture_role = &"button_dark"
 		&"warning":
-			bg = Color(0.068, 0.050, 0.026, 0.44)
+			bg = Color(0.068, 0.050, 0.026, 0.68)
 			border = color(&"warning")
+			border_width = 2
+			texture_role = &"panel_summary"
 		&"danger":
-			bg = Color(0.060, 0.032, 0.032, 0.44)
+			bg = Color(0.060, 0.032, 0.032, 0.68)
 			border = color(&"danger")
+			border_width = 2
+			texture_role = &"button_dark"
 		&"soft":
 			bg = color(&"panel_soft")
 			border = color(&"muted")
+			padding = 8
+			texture_role = &"panel_summary"
 		_:
 			bg = color(&"panel")
 			border = color(&"accent")
+	var textured := _texture_style_box(texture_role, padding, _texture_margin_for(texture_role))
+	if textured != null:
+		return textured
 	return _style_box(bg, border, border_width, padding, 3)
 
 
-static func button_style(tone: StringName = &"secondary", hover: bool = false, pressed: bool = false) -> StyleBoxFlat:
+static func button_style(tone: StringName = &"secondary", hover: bool = false, pressed: bool = false) -> StyleBox:
 	var bg := Color(0.032, 0.056, 0.060, 0.95)
 	var border := color(&"muted")
 	var border_width := 1
 	var padding := 8
+	var texture_role := &"button_dark"
 	match tone:
 		&"primary":
-			bg = Color(0.044, 0.075, 0.070, 0.97)
-			border = color(&"accent")
-		&"selected":
-			bg = Color(0.052, 0.084, 0.070, 0.98)
+			bg = Color(0.052, 0.082, 0.074, 0.99)
 			border = color(&"accent")
 			border_width = 2
+			padding = 12
+			texture_role = &"button_selected_tab"
+		&"selected":
+			bg = Color(0.066, 0.100, 0.082, 1.0)
+			border = color(&"accent")
+			border_width = 3
+			padding = 12
+			texture_role = &"button_selected_tab"
 		&"gold":
 			bg = color(&"gold_dark")
 			border = color(&"gold")
-			border_width = 2
+			border_width = 3
 			padding = 12
+			texture_role = &"button_confirm"
 		&"reward":
 			bg = Color(0.20, 0.13, 0.04, 0.96)
 			border = color(&"gold")
-			border_width = 2
+			border_width = 3
+			padding = 10
+			texture_role = &"button_confirm"
 		&"ready":
 			bg = Color(0.045, 0.080, 0.052, 0.96)
 			border = color(&"accent")
 			border_width = 2
+			padding = 10
+			texture_role = &"button_selected_tab"
 		&"new":
 			bg = Color(0.050, 0.066, 0.088, 0.96)
 			border = Color(0.55, 0.78, 0.96, 1.0)
+			border_width = 2
+			texture_role = &"button_selected_tab"
 		&"locked":
 			bg = Color(0.020, 0.028, 0.030, 0.72)
 			border = color(&"disabled")
+			texture_role = &"button_dark"
 		&"warning":
 			border = color(&"warning")
+			border_width = 2
+			texture_role = &"button_dark"
 		&"danger":
 			border = color(&"danger")
+			border_width = 2
+			texture_role = &"button_dark"
 		&"disabled":
 			bg = Color(0.020, 0.028, 0.030, 0.70)
 			border = color(&"disabled")
+			texture_role = &"button_dark"
 		_:
 			border = color(&"muted")
 	if hover:
-		bg = bg.lightened(0.08)
+		bg = bg.lightened(0.10)
+		border_width = max(border_width, 2)
 	if pressed:
 		bg = bg.darkened(0.12)
 		border_width = max(border_width, 2)
+	var textured := _texture_style_box(texture_role, padding, _texture_margin_for(texture_role))
+	if textured != null:
+		return textured
 	return _style_box(bg, border, border_width, padding, 3)
+
+
+static func _texture_style_box(role: StringName, padding: int, texture_margin: int) -> StyleBoxTexture:
+	var texture := art19_texture(role)
+	if texture == null:
+		return null
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = texture_margin
+	style.texture_margin_top = texture_margin
+	style.texture_margin_right = texture_margin
+	style.texture_margin_bottom = texture_margin
+	style.content_margin_left = padding
+	style.content_margin_top = padding
+	style.content_margin_right = padding
+	style.content_margin_bottom = padding
+	style.draw_center = true
+	return style
+
+
+static func _texture_margin_for(role: StringName) -> int:
+	match role:
+		&"panel_terminal":
+			return 32
+		&"panel_deploy_main":
+			return 28
+		&"panel_summary":
+			return 16
+		&"panel_highlight":
+			return 16
+		&"button_confirm":
+			return 20
+		&"button_selected_tab":
+			return 14
+		&"button_dark":
+			return 28
+		&"bar_summary":
+			return 18
+		_:
+			return 12
 
 
 static func _style_box(bg: Color, border: Color, border_width: int, padding: int, radius: int) -> StyleBoxFlat:
