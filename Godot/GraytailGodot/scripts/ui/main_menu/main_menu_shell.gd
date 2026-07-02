@@ -150,6 +150,8 @@ func _build_top_entrance_panel() -> void:
 
 
 func _build_menu_panel() -> void:
+	_build_physical_menu_panel()
+	return
 	_add_panel(self, "MainMenuEntryBoard", Rect2(732, 126, 486, 426), &"deep")
 	_add_texture_rect_from_ref(self, "Art21MainMenuActionDeckTexture", Rect2(738, 132, 474, 414), Art21UIPlacementContractScript.slot_ref(&"main_menu", &"action_deck_frame", &"ui.art19.panel.terminal_main"), 0.82)
 	_add_color_rect(self, "MainMenuEntryBoardTopRail", Rect2(748, 142, 444, 4), Art10UISkinKitScript.color(&"gold"))
@@ -240,6 +242,52 @@ func _add_entry_button(parent: Control, entry: Dictionary, large: bool = false, 
 	button.pressed.connect(func() -> void: _emit_entry(entry))
 	parent.add_child(button)
 	return button
+
+
+func _build_physical_menu_panel() -> void:
+	_add_label_token(self, "MainMenuBoardHeader", Rect2(934, 108, 274, 34), "GRAYTAIL", &"hud", &"warning")
+	_add_label_token(self, "MainMenuBoardSubHeader", Rect2(934, 140, 274, 24), "GRAYTAIL CO.", &"caption", &"text")
+	var entry_index := 0
+	for raw_entry in _array_from(current_model, "entries"):
+		if raw_entry is Dictionary:
+			var entry: Dictionary = (raw_entry as Dictionary).duplicate(true)
+			_add_physical_entry_button(self, entry, _main_menu_entry_rect(entry_index))
+			entry_index += 1
+
+
+func _add_physical_entry_button(parent: Control, entry: Dictionary, rect: Rect2) -> Button:
+	var raw_label := String(entry.get("label", "Entry"))
+	var button := Art10UISkinKitScript.make_large_nav_button(raw_label, _entry_subtitle(entry), &"primary")
+	button.name = "MainMenuPhysicalEntry_%s" % String(entry.get("id", &"entry"))
+	button.tooltip_text = ""
+	button.text = Art10UISkinKitScript.sanitize_player_copy(button.text)
+	button.custom_minimum_size = _layout_size(rect.size)
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})), &"large_nav")
+	var entry_id := StringName(entry.get("id", &""))
+	var tone := &"gold" if entry_id == &"deploy" else &"secondary"
+	Art10UISkinKitScript.apply_transparent_button_token(button, tone, &"main_button", &"large_nav", 0)
+	button.add_theme_color_override("font_color", Color(0.92, 0.82, 0.62, 1.0) if entry_id == &"deploy" else Color(0.86, 0.78, 0.64, 1.0))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.88, 0.50, 1.0))
+	button.add_theme_color_override("font_pressed_color", Color(0.95, 0.68, 0.28, 1.0))
+	button.pressed.connect(func() -> void: _emit_entry(entry))
+	parent.add_child(button)
+	_set_rect(button, rect)
+	return button
+
+
+func _main_menu_entry_rect(index: int) -> Rect2:
+	var rects := [
+		Rect2(932, 218, 290, 74),
+		Rect2(936, 328, 288, 72),
+		Rect2(942, 434, 282, 72),
+		Rect2(948, 540, 272, 70),
+	]
+	if index >= 0 and index < rects.size():
+		return rects[index]
+	return Rect2(948, 540 + float(index - 3) * 74.0, 272, 70)
 
 
 func _entry_subtitle(entry: Dictionary) -> String:

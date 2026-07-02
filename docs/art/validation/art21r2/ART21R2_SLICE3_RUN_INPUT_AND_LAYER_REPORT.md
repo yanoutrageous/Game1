@@ -59,14 +59,18 @@ PASS for this slice:
 
 PARTIAL for the larger ART21R2 target:
 
-- Run HUD still reads below the UE visual floor.
+- Run HUD still reads below the UE visual floor. A later Slice 2 route/board
+  capture (`screenshots/slice2/godot_run_hud_extra_layers_blocker_slice2_logic.png`)
+  preserves this as an explicit blocker: the left rail, right protocol/status
+  card, and bottom hotkey overlay are still visible old/code-owned boundaries.
 - Bottom key text is less noisy but still weak in contrast/readability.
 - Inventory modal opens but overlaps the left HUD rail and still uses generated
   row/button treatment.
 - Deploy Prep and Long Term remain mostly baseline visual quality after this
   slice.
-- Main menu still uses a flat terminal action deck rather than the UE physical
-  board/plank target.
+- Main menu active path is superseded by Slice 2's physical plank-board pass,
+  but that pass is still PARTIAL because text/icon fit and title integration
+  remain unfinished.
 
 ## Validation
 

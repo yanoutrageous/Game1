@@ -17,6 +17,7 @@ $requiredFiles = @(
     "docs/art/validation/art21r2/ART21R2_TARGET_VISUAL_LOCK.md",
     "docs/art/validation/art21r2/ART21R2_SLOT_GAP_MATRIX.csv",
     "docs/art/validation/art21r2/ui_placement_contract_v3.csv",
+    "docs/art/validation/art21r2/ART21R2_SLICE2_MAIN_MENU_PHYSICAL_BOARD_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE3_RUN_INPUT_AND_LAYER_REPORT.md"
 )
 
@@ -38,6 +39,9 @@ $requiredScreenshots = @(
     "screenshots/baseline/ue_main_menu_reference.png",
     "screenshots/baseline/ue_run_hud_reference.png",
     "screenshots/baseline/ue_map_overlay_reference.png",
+    "screenshots/slice2/godot_main_menu_after_slice2_logic.png",
+    "screenshots/slice2/godot_deploy_prep_from_main_click_slice2_logic.png",
+    "screenshots/slice2/godot_run_hud_extra_layers_blocker_slice2_logic.png",
     "screenshots/slice3/godot_deploy_prep_after_slice3.png",
     "screenshots/slice3/godot_main_menu_after_slice3_logic.png",
     "screenshots/slice3/godot_deploy_prep_after_slice3_logic.png",
@@ -197,6 +201,18 @@ $mainMenuPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/main_menu/main_m
 $mainMenu = Get-Content -LiteralPath $mainMenuPath -Raw
 if ($mainMenu -match "area_select|difficulty_select") {
     Fail "main_menu_shell.gd contains an unexpected area/difficulty selection route."
+}
+if ($mainMenu -notmatch '_build_physical_menu_panel\(\)\s*\r?\n\s*return') {
+    Fail "main_menu_shell.gd active menu path must use the physical board before the legacy terminal deck."
+}
+if ($mainMenu -notmatch 'MainMenuPhysicalEntry_%s') {
+    Fail "main_menu_shell.gd must name physical menu entries for route/screenshot evidence."
+}
+if ($mainMenu -notmatch 'apply_transparent_button_token') {
+    Fail "main_menu_shell.gd should use transparent hitboxes on the physical board."
+}
+if ($mainMenu -notmatch 'button\.pressed\.connect\(func\(\) -> void: _emit_entry\(entry\)\)') {
+    Fail "main_menu_shell.gd must preserve entry pressed -> _emit_entry route logic."
 }
 
 $runSurfacePath = Join-Path $root "Godot/GraytailGodot/scripts/ui/run_surface/run_surface.gd"
