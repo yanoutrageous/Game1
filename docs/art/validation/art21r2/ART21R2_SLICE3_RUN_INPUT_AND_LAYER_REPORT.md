@@ -85,6 +85,10 @@ lock. It does not mark the overall ART21R2 visual goal complete.
 | Logic run HUD pass10 | `screenshots/slice3/godot_run_hud_after_slice3_minimap_public_grid_pass10_logic.png` | Standard run start path renders a full 10x10 minimap with image tiles and a current-cell marker. Still PARTIAL because tile scale/contrast remains below final UE floor. |
 | Logic run HUD pass14 | `screenshots/slice3/godot_run_hud_after_slice3_minimap_draw_overlay_pass14_logic.png` | Standard run start path renders the full 10x10 public minimap and the current marker uses manifest-backed draw-derived ART19 map64 overlay assets. Still PARTIAL because minimap density/contrast and the bottom command strip remain below the UE floor. |
 | Logic run HUD pass16 smoke | `screenshots/slice3/godot_run_hud_after_slice3_minimap_hud32_pass16_smoke.png` | Restarted Godot after import and confirmed the current marker renders from ART21R2 32px draw-derived HUD minimap assets rather than text fallback. Still PARTIAL because this is 856x511 smoke evidence and the 10x10 minimap remains dense. |
+| Direct Deploy pass26 smoke | `screenshots/slice3/godot_after_start_explore_direct_deploy_prep_pass26_q_input_check.png` | Main menu `Start Exploration` still routes directly to Deploy Prep; no extra area/map/difficulty screen was inserted. |
+| Run HUD before Q pass26 smoke | `screenshots/slice3/godot_run_hud_before_q_inventory_pass26_smoke.png` | Standard Deploy Prep -> Start Exploration path enters the live Run HUD before keyboard input validation. |
+| Q inventory pass26 smoke | `screenshots/slice3/godot_run_hud_q_inventory_open_pass26_smoke.png` | Pressing `Q` in the live Run HUD opens Inventory. Input route PASS; Inventory modal remains visually partial/terminal-like. |
+| M map pass26 smoke | `screenshots/slice3/godot_run_hud_m_map_open_pass26_smoke.png` | Pressing `M` after closing Inventory opens Map Overlay. Input route PASS; Map modal/cells remain visually partial and below the UE floor. |
 
 ## Current Verdict
 
@@ -112,6 +116,9 @@ PASS for this slice:
 - The pass16 smoke capture confirms that the new ART21R2 32px HUD minimap
   runtime assets load after Godot import and render in the live Run HUD instead
   of falling back to text.
+- The pass26 smoke captures confirm the current keyboard routes: `Q` opens
+  Inventory and `M` opens Map Overlay from the live Run HUD without changing the
+  main menu -> Deploy Prep flow.
 
 PARTIAL for the larger ART21R2 target:
 
@@ -126,6 +133,10 @@ PARTIAL for the larger ART21R2 target:
   the UE command strip target.
 - Inventory modal opens but overlaps the left HUD rail and still uses generated
   row/button treatment.
+- The pass26 `Q` capture proves the input route works, but the Inventory modal
+  still reads like a terminal panel and is not a visual pass.
+- The pass26 `M` capture proves the map input route works, but the Map Overlay
+  still reads as a generated modal/button grid rather than UE-floor map art.
 - Deploy Prep and Long Term remain mostly baseline visual quality after this
   slice.
 - Main menu active path is superseded by Slice 2's physical plank-board pass,
@@ -142,6 +153,8 @@ PARTIAL for the larger ART21R2 target:
 - Godot import: required again for the ART21R2 32px minimap runtime PNG files;
   before import they fell back to text, after import pass16 shows the player
   marker image in the live Run HUD.
+- Computer Use pass26 smoke: 856x511 evidence only. It validates Q/M input
+  routing and direct Deploy Prep flow, not final 1280/1600/1920 visual QA.
 - Draw slice audit: `ART21R2_DRAW_SLICE_AUDIT.md` records that large
   purple-background draw sheets must be sliced/cleaned through the earlier
   ART19R1 / ART20 process before runtime use. No generated replacement minimap

@@ -58,7 +58,11 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_run_hud_after_slice3_art21r2_asset_pass7_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_minimap_public_grid_pass10_logic.png",
     "screenshots/slice3/godot_run_hud_after_slice3_minimap_draw_overlay_pass14_logic.png",
-    "screenshots/slice3/godot_run_hud_after_slice3_minimap_hud32_pass16_smoke.png"
+    "screenshots/slice3/godot_run_hud_after_slice3_minimap_hud32_pass16_smoke.png",
+    "screenshots/slice3/godot_after_start_explore_direct_deploy_prep_pass26_q_input_check.png",
+    "screenshots/slice3/godot_run_hud_before_q_inventory_pass26_smoke.png",
+    "screenshots/slice3/godot_run_hud_q_inventory_open_pass26_smoke.png",
+    "screenshots/slice3/godot_run_hud_m_map_open_pass26_smoke.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
