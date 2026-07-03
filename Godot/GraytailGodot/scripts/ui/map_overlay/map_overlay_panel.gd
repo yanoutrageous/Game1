@@ -170,9 +170,12 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	_apply_marker_button_style(button, theme_key)
 	var texture := Art09ManifestAssetMappingScript.resolve_texture(_map_overlay_asset_ref_for_marker(marker))
 	if texture != null:
+		var art21r2_marker := _art21_marker_state(marker) in [&"flagged", &"event"]
 		button.icon = texture
-		button.expand_icon = false
-		button.add_theme_constant_override("icon_max_width", int(min(marker_size.x, marker_size.y) * 0.78))
+		button.expand_icon = art21r2_marker
+		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+		button.add_theme_constant_override("icon_max_width", int(min(marker_size.x, marker_size.y) * (0.92 if art21r2_marker else 0.78)))
 		button.text = "" if label_text != "P" else "P"
 	button.pressed.connect(func() -> void: _select_marker(marker))
 	grid.add_child(button)

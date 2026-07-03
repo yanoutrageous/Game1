@@ -68,6 +68,7 @@ static func build_from_run_map_snapshot(snapshot: Dictionary) -> MiniMapViewMode
 			"room_type": cell.get("room_type", &"Unknown"),
 			"known_state": cell.get("known_state", &"unknown"),
 			"visibility": cell.get("visibility", &"unknown"),
+			"flagged": bool(cell.get("flagged", false)),
 			"return_eligibility": cell.get("return_eligibility", {}),
 			"display_only": true,
 			"read_only": true,

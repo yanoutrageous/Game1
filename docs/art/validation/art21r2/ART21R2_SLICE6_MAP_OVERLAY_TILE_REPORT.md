@@ -11,6 +11,8 @@ Map Overlay or ART21R2 complete.
 - Do not add a new map/difficulty screen to the main menu flow.
 - Reuse existing draw-derived runtime assets before generating or cutting new
   art.
+- Use the selected draw game-ready outputs before touching the purple root
+  sheet directly.
 - Improve large Map Overlay cell readability without changing TruthMap or run
   rules.
 
@@ -23,12 +25,48 @@ Map Overlay or ART21R2 complete.
     `Art09ManifestAssetMapping.art19_map64_ref()`.
   - Uses the existing draw-derived ART19 64px runtime assets for `unknown`,
     `explored`, `scanned`, `player`, `exit`, `mine`, and `chest`.
-  - Leaves `flagged` and `event` on the existing ART21 map assets because the
-    ART20 `map_overlay_event_marker_64` source remained blocked and no approved
-    ART19 64px event/flag replacement exists in the current manifest.
+  - Routes `flagged` and `event` through ART21R2 draw-cleaned marker visual
+    keys from the Zujian2 lineage without changing `_select_marker()` or
+    `cell_action_requested`.
+  - Scales and centers only the high-resolution ART21R2 event/flag marker icons
+    inside the existing map-cell buttons so the new cuts are visible instead of
+    being clipped by the legacy icon slot.
+  - Preserves `flagged` in `MiniMapViewModel.build_from_run_map_snapshot()` so
+    existing flag state and map-cell click behavior can render through the
+    ART21R2 flag visual key.
   - Pass36 keeps the same `M` route and cell click behavior, but changes the
     centered `Panel` frame to the already cut ART21R2 Zujian3 modal frame via
     `Art21UIPlacementContract.style_box_for_visual_key()`.
+
+## Source And Cutting Path
+
+- Root source sheet: `D:\AGAME1\sources\draw\Zujian2.png`.
+- Runtime candidates:
+  `D:\AGAME1\sources\draw\30_game_ready\map_icon\map_icon_event.png` and
+  `D:\AGAME1\sources\draw\30_game_ready\map_icon\map_icon_marker_flag.png`.
+- The purple root sheet was not imported directly.
+- Script: `tools/art21r2_cut_map_overlay_marker_assets.py`.
+- Staging manifest:
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\map_overlay_marker_staging_manifest.csv`.
+- Dry-run plan:
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\map_overlay_marker_cut_dry_run_plan.csv`.
+- Cut manifest:
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\map_overlay_marker_cut_manifest.csv`.
+- Cut summary:
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\map_overlay_marker_cut_summary.json`.
+
+The event marker was cleaned from 89 purple-like pixels to 0. The flag marker
+was cleaned from 90 purple-like pixels to 0.
+
+## Reproduction Route
+
+- Start Godot with debug tools and `--art21r2-seed-map-markers`.
+- Click the existing main-menu `Start Exploration` entry directly into Deploy
+  Prep, then start the run.
+- Press the existing `M` Map Overlay route. The smoke seed reveals the current
+  run map, pins one debug-only Event cell, and toggles one flag only for
+  deterministic screenshot evidence; it does not add a new main-menu
+  map/difficulty step and does not replace the normal cell click callback.
 
 ## Evidence
 
@@ -37,6 +75,7 @@ Map Overlay or ART21R2 complete.
 | Map Overlay open pass27 smoke | `screenshots/slice6/godot_map_overlay_art19_map64_pass27_smoke.png` | `M` opens Map Overlay and cells render with draw-derived 64px stone/question tiles instead of the previous empty generated squares. |
 | Map Overlay selected pass27 smoke | `screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png` | Clicking a map cell still updates detail/selection feedback; interaction path is preserved. |
 | Map Overlay Zujian3 panel frame pass36 smoke | `screenshots/slice6/godot_map_overlay_zujian3_panel_frame_pass36_smoke.png` | The centered map panel now uses the ART21R2 Zujian3 modal frame while preserving the existing `M` open path. |
+| Map Overlay event/flag marker pass38 smoke | `screenshots/slice6/godot_map_overlay_art21r2_event_flag_pass38_smoke.png` | Event and flagged states resolve ART21R2 draw-cleaned markers while preserving the existing `M` open path and cell click behavior. |
 
 ## Verdict
 
@@ -44,6 +83,8 @@ PASS for this detail:
 
 - Large Map Overlay cell visuals now use existing draw-derived runtime assets
   for most states.
+- Event and flagged states now use ART21R2 draw-cleaned markers from selected
+  Zujian2 game-ready outputs.
 - The large centered panel frame now uses an existing draw-sliced ART21R2 modal
   frame instead of the previous generated terminal panel look.
 - Existing `M` input and cell click handling remain intact.
@@ -54,6 +95,6 @@ PARTIAL for the larger ART21R2 target:
 - Unknown cells are now readable but visually dense as a 10x10 question-mark
   wall.
 - Footer/title hierarchy still reads as UI placeholder text, not final map art.
-- `flagged` and `event` remain on non-final ART21 assets and are not claimed as
-  solved.
+- Event/flag marker source is resolved for this pass, but selected-state
+  hierarchy still needs a dedicated art pass.
 - This is 856x511 smoke evidence, not final high-resolution QA.

@@ -74,8 +74,9 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
 - If a slot still needs new art, first cut or clean the purple-background draw
   source into a transparent runtime candidate, then update manifest and evidence.
 - Do not treat ART20 blocked rows as imported assets. In particular,
-  `map_overlay_cell_64_set` and `map_overlay_event_marker_64` still require a
-  fresh source-selection/cutting path before they can be claimed complete.
+  `map_overlay_cell_64_set` and `map_overlay_event_marker_64` do not count as
+  solved by ART20. Pass38 establishes a fresh R2 source-selection/cutting path
+  for event/flag markers only; it does not close the full Map Overlay target.
 
 ## Applied ART21R2 HUD Minimap Pass
 
@@ -86,8 +87,8 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
 - Imported states: `player`, `explored`, `scanned`, `mine`, `chest`, `exit`.
 - Unknown cells intentionally stay on the existing blank ART21 tile for the Run
   HUD so the left rail does not regress into a dense question-mark wall.
-- Flag and event are not claimed as solved by this pass. Event remains a
-  source-selection issue from ART20 and must not be marked complete.
+- Flag and event are not claimed as solved by the HUD minimap pass. They are
+  addressed separately by the Map Overlay pass38 source-selection/cutting path.
 - Evidence screenshot:
   `screenshots/slice3/godot_run_hud_after_slice3_minimap_hud32_pass16_smoke.png`.
 - Result: `PARTIAL`. The imported 32px player marker is visible in the smoke
@@ -100,9 +101,9 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
 - Runtime target: `Godot/GraytailGodot/assets/ui/art19/map64`.
 - Applied states: `unknown`, `explored`, `scanned`, `player`, `exit`, `mine`,
   and `chest`.
-- `flagged` and `event` stay on the existing ART21 map assets because ART20
-  left `map_overlay_event_marker_64` blocked and there is no approved ART19 64px
-  event/flag runtime asset in the current manifest.
+- Pass38 adds ART21R2 draw-cleaned `event` and `flagged` marker assets from
+  selected Zujian2 lineage game-ready outputs; the purple root sheet is not
+  imported directly.
 - Evidence screenshots:
   `screenshots/slice6/godot_map_overlay_art19_map64_pass27_smoke.png` and
   `screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png`.
@@ -110,6 +111,14 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
   `screenshots/slice6/godot_map_overlay_zujian3_panel_frame_pass36_smoke.png`
   proves the centered Map Overlay panel now uses the existing ART21R2 Zujian3
   modal frame via `style_box_for_visual_key`.
+- Pass38 marker follow-up:
+  `screenshots/slice6/godot_map_overlay_art21r2_event_flag_pass38_smoke.png`
+  proves event/flag marker textures resolve while the existing `M` route and
+  cell click behavior remain intact.
+- Pass38 is reproduced with the debug-only `--art21r2-seed-map-markers` flag so
+  the screenshot can contain both marker states. The flag pins one Event cell
+  and one flagged cell only for smoke evidence, without changing normal menu,
+  route, or cell click logic.
 - Result: `PARTIAL`. The map cells are no longer the small generated empty
   ART21 squares, and the modal frame is no longer the previous terminal panel
   look, but the dense unknown-cell wall and title/footer hierarchy still fall

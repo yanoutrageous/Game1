@@ -42,6 +42,7 @@ const SCREEN_RUN := &"run"
 
 const LEGACY_GRAYBOX_VALIDATION_MARKERS := ["Start Tutorial 5x5", "Start Standard 10x10", "Controls: W/A/S/D or arrows move"]
 const ART21R2_MODAL_ITEM_SMOKE_FLAG := "--art21r2-seed-modal-items"
+const ART21R2_MAP_MARKER_SMOKE_FLAG := "--art21r2-seed-map-markers"
 const G9_UI_NODE_VALIDATION_MARKERS := [
 	"MainMenuPanel",
 	"ModeEntryPanel",
@@ -1525,6 +1526,7 @@ func _start_standard_from_ui() -> void:
 	if player_controller != null:
 		player_controller.reset_local_position()
 	_seed_art21r2_modal_smoke_items_if_requested(result)
+	_seed_art21r2_map_marker_smoke_if_requested(result)
 	_show_run_screen()
 
 
@@ -1537,6 +1539,7 @@ func _start_run_from_route(intent: Dictionary) -> void:
 		player_controller.reset_local_position()
 	if bool(command_result.get("ok", false)):
 		_seed_art21r2_modal_smoke_items_if_requested(command_result)
+		_seed_art21r2_map_marker_smoke_if_requested(command_result)
 	if bool(route_result.get("run_screen_requested", false)):
 		_show_run_screen()
 
@@ -1552,6 +1555,39 @@ func _seed_art21r2_modal_smoke_items_if_requested(start_result: Dictionary = {})
 		return
 	command_bus.dispatch(&"debug_spawn_test_item_floor", {"source": "debug", "art21r2_smoke": true})
 	command_bus.dispatch(&"debug_spawn_test_item_backpack", {"source": "debug", "art21r2_smoke": true})
+
+
+func _seed_art21r2_map_marker_smoke_if_requested(start_result: Dictionary = {}) -> void:
+	if not bool(start_result.get("ok", false)):
+		return
+	if not DebugGateScript.is_debug_tools_enabled():
+		return
+	if not _has_cmdline_flag(ART21R2_MAP_MARKER_SMOKE_FLAG):
+		return
+	if command_bus == null or run_context == null or not bool(run_context.get_status_snapshot().get("run_active", false)):
+		return
+	var current_pos := run_context.get_current_pos()
+	var event_pos := Vector2i(mini(2, maxi(0, run_context.width - 1)), 0)
+	if event_pos == current_pos:
+		event_pos = Vector2i(mini(2, maxi(0, run_context.width - 1)), mini(1, maxi(0, run_context.height - 1)))
+	if event_pos == current_pos:
+		event_pos = Vector2i(0, mini(2, maxi(0, run_context.height - 1)))
+	if run_context.truth_map != null and run_context.is_inside(event_pos) and event_pos != current_pos:
+		run_context.truth_map.set_room_type(event_pos, &"Event")
+	command_bus.dispatch(&"debug_reveal_full_map", {"source": "debug", "art21r2_map_marker_smoke": true})
+	var flag_pos := Vector2i(mini(4, maxi(0, run_context.width - 1)), mini(4, maxi(0, run_context.height - 1)))
+	if flag_pos == current_pos or flag_pos == event_pos:
+		flag_pos = Vector2i(mini(3, maxi(0, run_context.width - 1)), mini(4, maxi(0, run_context.height - 1)))
+	if flag_pos == current_pos or flag_pos == event_pos:
+		flag_pos = Vector2i(mini(4, maxi(0, run_context.width - 1)), mini(3, maxi(0, run_context.height - 1)))
+	if (
+		run_context.intel_map != null
+		and run_context.is_inside(flag_pos)
+		and flag_pos != current_pos
+		and flag_pos != event_pos
+		and not run_context.intel_map.is_flagged(flag_pos)
+	):
+		run_context.intel_map.toggle_flag(flag_pos)
 
 
 func _has_cmdline_flag(flag: String) -> bool:

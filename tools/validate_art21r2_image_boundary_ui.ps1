@@ -74,6 +74,7 @@ $requiredScreenshots = @(
     "screenshots/slice6/godot_map_overlay_art19_map64_pass27_smoke.png",
     "screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png",
     "screenshots/slice6/godot_map_overlay_zujian3_panel_frame_pass36_smoke.png",
+    "screenshots/slice6/godot_map_overlay_art21r2_event_flag_pass38_smoke.png",
     "screenshots/slice6/godot_inventory_zujian3_modal_frame_pass28_smoke.png",
     "screenshots/slice6/godot_ground_loot_zujian3_modal_frame_pass28_smoke.png",
     "screenshots/slice6/godot_result_zujian3_modal_frame_pass28_smoke.png",
@@ -211,6 +212,7 @@ $requiredSlots = @(
     "map_overlay.map_cell_unknown",
     "map_overlay.map_cell_explored",
     "map_overlay.map_marker_event",
+    "map_overlay.map_marker_flag",
     "inventory.inventory_panel_frame",
     "ground_loot.ground_loot_panel_frame",
     "result.result_modal_frame",
@@ -315,8 +317,8 @@ $requiredSourceSlots = @(
     @("run_hud", "scanner_minimap", "art21r2_formal_draw_cut_ready", "needs_new_cut"),
     @("map_overlay", "modal_dimmer", "code_scrim_exception", "runtime_text_ok"),
     @("map_overlay", "map_panel", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
-    @("map_overlay", "map_marker_event", "art21_generated_transition", "needs_new_cut"),
-    @("map_overlay", "map_marker_flag_candidate", "art21_generated_transition", "needs_new_cut"),
+    @("map_overlay", "map_marker_event", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
+    @("map_overlay", "map_marker_flag_candidate", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
     @("inventory", "inventory_panel_frame", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
     @("ground_loot", "ground_loot_panel_frame", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
     @("result", "result_modal_frame", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
@@ -562,6 +564,12 @@ $requiredRunSceneSmokePatterns = @(
     'ART21R2_MODAL_ITEM_SMOKE_FLAG',
     '--art21r2-seed-modal-items',
     '_seed_art21r2_modal_smoke_items_if_requested',
+    'ART21R2_MAP_MARKER_SMOKE_FLAG',
+    '--art21r2-seed-map-markers',
+    '_seed_art21r2_map_marker_smoke_if_requested',
+    'set_room_type\(event_pos, &"Event"\)',
+    'is_flagged\(flag_pos\)',
+    'intel_map\.toggle_flag\(flag_pos\)',
     'debug_spawn_test_item_floor',
     'debug_spawn_test_item_backpack',
     'OS\.get_cmdline_user_args'
@@ -610,6 +618,8 @@ $requiredPlacementPatterns = @(
     'art21r2\.modal\.button\.primary',
     'art21r2\.modal\.button\.secondary',
     'art21r2\.modal\.button\.danger',
+    'art21r2\.map_overlay\.marker\.event',
+    'art21r2\.map_overlay\.marker\.flag',
     'style_box_for_visual_key',
     'run_hud\.left_info_rail'
 )
@@ -644,7 +654,9 @@ $requiredManifestIds = @(
     'ui.art19.map64.scanned',
     'ui.art19.map64.mine',
     'ui.art19.map64.chest',
-    'ui.art19.map64.exit'
+    'ui.art19.map64.exit',
+    'ui.art21r2.map_overlay.marker.event',
+    'ui.art21r2.map_overlay.marker.flag'
 )
 foreach ($assetId in $requiredManifestIds) {
     if ($manifest -notmatch [regex]::Escape($assetId)) {
@@ -672,7 +684,9 @@ $requiredRuntimeAssets = @(
     "Godot/GraytailGodot/assets/ui/art19/map64/scanned_cell_64.png",
     "Godot/GraytailGodot/assets/ui/art19/map64/mine_icon_64.png",
     "Godot/GraytailGodot/assets/ui/art19/map64/chest_icon_64.png",
-    "Godot/GraytailGodot/assets/ui/art19/map64/exit_icon_64.png"
+    "Godot/GraytailGodot/assets/ui/art19/map64/exit_icon_64.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/map_overlay/ui_art21r2_map_overlay_marker_event.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/map_overlay/ui_art21r2_map_overlay_marker_flag.png"
 )
 foreach ($assetPath in $requiredRuntimeAssets) {
     $fullPath = Join-Path $root $assetPath
@@ -719,6 +733,46 @@ foreach ($file in $requiredModalManifestFiles) {
     if ((Get-Item -LiteralPath $path).Length -le 0) {
         Fail "ART21R2 modal manifest file is empty: $path"
     }
+}
+
+$requiredMapOverlayMarkerManifestFiles = @(
+    "map_overlay_marker_staging_manifest.csv",
+    "map_overlay_marker_cut_dry_run_plan.csv",
+    "map_overlay_marker_cut_manifest.csv",
+    "map_overlay_marker_cut_summary.json"
+)
+foreach ($file in $requiredMapOverlayMarkerManifestFiles) {
+    $path = Join-Path $modalManifestRoot $file
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        Fail "Missing ART21R2 map overlay marker manifest file: $path"
+    }
+    if ((Get-Item -LiteralPath $path).Length -le 0) {
+        Fail "ART21R2 map overlay marker manifest file is empty: $path"
+    }
+}
+$mapOverlayMarkerRows = @(Import-Csv -LiteralPath (Join-Path $modalManifestRoot "map_overlay_marker_cut_manifest.csv"))
+if ($mapOverlayMarkerRows.Count -ne 2) {
+    Fail "ART21R2 map overlay marker cut manifest must have exactly 2 rows: $($mapOverlayMarkerRows.Count)"
+}
+$requiredMapOverlayMarkerAssetIds = @(
+    "ui.art21r2.map_overlay.marker.event",
+    "ui.art21r2.map_overlay.marker.flag"
+)
+foreach ($assetId in $requiredMapOverlayMarkerAssetIds) {
+    $row = $mapOverlayMarkerRows | Where-Object { $_.asset_id -eq $assetId }
+    if (-not $row) {
+        Fail "ART21R2 map overlay marker cut manifest missing asset id: $assetId"
+    }
+    if ($row.status -ne "runtime_written") {
+        Fail "ART21R2 map overlay marker cut manifest row is not runtime_written: $assetId"
+    }
+    if ($row.purple_like_after -ne "0") {
+        Fail "ART21R2 map overlay marker cut manifest row still has purple-like pixels: $assetId"
+    }
+}
+$mapOverlayMarkerSummary = Get-Content -LiteralPath (Join-Path $modalManifestRoot "map_overlay_marker_cut_summary.json") -Raw
+if ($mapOverlayMarkerSummary -notmatch '"source_status": "root sheet has purple background and is not imported directly"' -or $mapOverlayMarkerSummary -notmatch '"purple_like_after": 0') {
+    Fail "ART21R2 map overlay marker summary must record purple source boundary and cleanup."
 }
 
 $modalCutRows = @(Import-Csv -LiteralPath (Join-Path $modalManifestRoot "modal_cut_manifest.csv"))
@@ -1032,6 +1086,17 @@ if ($mapOverlay -notmatch 'art19_map64_ref') {
 if ($mapOverlay -notmatch 'ART21R2_MAP_PANEL_FRAME_VISUAL_KEY' -or $mapOverlay -notmatch 'style_box_for_visual_key') {
     Fail "map_overlay_panel.gd should use an ART21R2 image-backed modal frame for the centered map panel."
 }
+if (
+    $mapOverlay -notmatch 'var art21r2_marker := _art21_marker_state\(marker\) in \[&"flagged", &"event"\]' -or
+    $mapOverlay -notmatch 'button\.expand_icon\s*=\s*art21r2_marker'
+) {
+    Fail "map_overlay_panel.gd should scale the high-resolution ART21R2 event/flag marker cuts inside existing map buttons."
+}
+$miniMapViewModelPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/minimap/minimap_view_model.gd"
+$miniMapViewModel = Get-Content -LiteralPath $miniMapViewModelPath -Raw
+if ($miniMapViewModel -notmatch '"flagged": bool\(cell\.get\("flagged", false\)\)') {
+    Fail "minimap_view_model.gd should preserve flagged state from run_map_snapshot for Map Overlay marker rendering."
+}
 
 $slice6MapOverlayReport = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_SLICE6_MAP_OVERLAY_TILE_REPORT.md") -Raw
 $requiredSlice6MapOverlayPatterns = @(
@@ -1040,8 +1105,12 @@ $requiredSlice6MapOverlayPatterns = @(
     "godot_map_overlay_art19_map64_pass27_smoke.png",
     "godot_map_overlay_art19_map64_selected_pass27_smoke.png",
     "godot_map_overlay_zujian3_panel_frame_pass36_smoke.png",
+    "godot_map_overlay_art21r2_event_flag_pass38_smoke.png",
     "Zujian3 modal frame",
-    "No generated replacement art was introduced"
+    "map_overlay_marker_cut_manifest.csv",
+    "--art21r2-seed-map-markers",
+    "purple root sheet was not imported directly",
+    "Event and flagged states now use ART21R2 draw-cleaned markers"
 )
 foreach ($pattern in $requiredSlice6MapOverlayPatterns) {
     if ($slice6MapOverlayReport -notmatch [regex]::Escape($pattern)) {

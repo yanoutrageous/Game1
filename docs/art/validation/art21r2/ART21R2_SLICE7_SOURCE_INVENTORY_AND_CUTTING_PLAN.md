@@ -122,7 +122,9 @@ The following are still transition layers:
 - ART20 keycaps and deploy icons.
 - ART20/main menu background lineage where used as the current runtime scene
   background.
-- ART21 generated deploy, long-term, map event/flag/shared frame assets.
+- ART21 generated deploy, long-term, and shared frame assets. Map event/flag
+  markers have an ART21R2 draw-cleaned pass but the overall map overlay remains
+  partial.
 
 These are useful for continuity but should not be described as final R2 image
 boundary wins.
@@ -174,6 +176,8 @@ Decision:
 - Clean all purple background before runtime import.
 - Do not claim ART20 blocked `map_overlay_event_marker_64` solved without a
   fresh source-selection and cut/import record.
+- Slice 6 pass38 records that fresh cut/import record for event and flag
+  marker textures only; it does not close the map overlay visual target.
 
 ### `Zujian1.png`
 
@@ -212,8 +216,7 @@ Decision:
    rows and a Result screenshot proving no missing or duplicate title text.
 3. Address the highest-risk temporary slots:
    `main_menu/title`,
-   `map_overlay/map_marker_event`,
-   `map_overlay/map_marker_flag_candidate`,
+   map overlay title/footer/selected-state hierarchy,
    Run HUD rail/minimap/status/bottom,
    Deploy Prep page-family frames, and
    Long Term page-family frames.
