@@ -67,6 +67,15 @@ was cleaned from 90 purple-like pixels to 0.
   run map, pins one debug-only Event cell, and toggles one flag only for
   deterministic screenshot evidence; it does not add a new main-menu
   map/difficulty step and does not replace the normal cell click callback.
+- For the sparse evidence, start Godot with debug tools and
+  `--art21r2-seed-map-sparse-markers`, then use the same existing main-menu
+  entry, Deploy Prep confirm button, and `M` Map Overlay route. The sparse state
+  does not call full-map reveal; it only prepares a few explored/scanned cells,
+  one Event cell, and one flagged cell for deterministic visual evidence.
+  Audit marker: sparse state does not call full-map reveal.
+- Pass40 clicks the visible flagged cell in the Map Overlay and captures the
+  same panel after the flag disappears, proving the existing map-cell click
+  route still toggles flag state instead of only relying on seed output.
 
 ## Evidence
 
@@ -76,6 +85,8 @@ was cleaned from 90 purple-like pixels to 0.
 | Map Overlay selected pass27 smoke | `screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png` | Clicking a map cell still updates detail/selection feedback; interaction path is preserved. |
 | Map Overlay Zujian3 panel frame pass36 smoke | `screenshots/slice6/godot_map_overlay_zujian3_panel_frame_pass36_smoke.png` | The centered map panel now uses the ART21R2 Zujian3 modal frame while preserving the existing `M` open path. |
 | Map Overlay event/flag marker pass38 smoke | `screenshots/slice6/godot_map_overlay_art21r2_event_flag_pass38_smoke.png` | Event and flagged states resolve ART21R2 draw-cleaned markers while preserving the existing `M` open path and cell click behavior. |
+| Map Overlay sparse event/flag pass39 smoke | `screenshots/slice6/godot_map_overlay_art21r2_sparse_event_flag_pass39_smoke.png` | Existing `M` route opens a sparse state with only a few explored/scanned cells plus one Event and one Flag marker; this is not full-map reveal evidence. |
+| Map Overlay sparse flag click pass40 smoke | `screenshots/slice6/godot_map_overlay_art21r2_sparse_flag_click_pass40_smoke.png` | Clicking the flagged map cell through the existing button route removes the Flag marker while preserving the Event marker and the centered panel. |
 
 ## Verdict
 
@@ -92,8 +103,10 @@ PASS for this detail:
 
 PARTIAL for the larger ART21R2 target:
 
-- Unknown cells are now readable but visually dense as a 10x10 question-mark
-  wall.
+- Pass39 is more readable than the full reveal pass, but it is still
+  deterministic smoke evidence, not natural long-run exploration proof.
+- Unknown cells are now readable but the full reveal pass still shows a dense
+  10x10 question-mark wall.
 - Footer/title hierarchy still reads as UI placeholder text, not final map art.
 - Event/flag marker source is resolved for this pass, but selected-state
   hierarchy still needs a dedicated art pass.

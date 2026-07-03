@@ -43,6 +43,7 @@ const SCREEN_RUN := &"run"
 const LEGACY_GRAYBOX_VALIDATION_MARKERS := ["Start Tutorial 5x5", "Start Standard 10x10", "Controls: W/A/S/D or arrows move"]
 const ART21R2_MODAL_ITEM_SMOKE_FLAG := "--art21r2-seed-modal-items"
 const ART21R2_MAP_MARKER_SMOKE_FLAG := "--art21r2-seed-map-markers"
+const ART21R2_MAP_SPARSE_MARKER_SMOKE_FLAG := "--art21r2-seed-map-sparse-markers"
 const G9_UI_NODE_VALIDATION_MARKERS := [
 	"MainMenuPanel",
 	"ModeEntryPanel",
@@ -1527,6 +1528,7 @@ func _start_standard_from_ui() -> void:
 		player_controller.reset_local_position()
 	_seed_art21r2_modal_smoke_items_if_requested(result)
 	_seed_art21r2_map_marker_smoke_if_requested(result)
+	_seed_art21r2_map_sparse_marker_smoke_if_requested(result)
 	_show_run_screen()
 
 
@@ -1540,6 +1542,7 @@ func _start_run_from_route(intent: Dictionary) -> void:
 	if bool(command_result.get("ok", false)):
 		_seed_art21r2_modal_smoke_items_if_requested(command_result)
 		_seed_art21r2_map_marker_smoke_if_requested(command_result)
+		_seed_art21r2_map_sparse_marker_smoke_if_requested(command_result)
 	if bool(route_result.get("run_screen_requested", false)):
 		_show_run_screen()
 
@@ -1588,6 +1591,44 @@ func _seed_art21r2_map_marker_smoke_if_requested(start_result: Dictionary = {}) 
 		and not run_context.intel_map.is_flagged(flag_pos)
 	):
 		run_context.intel_map.toggle_flag(flag_pos)
+
+
+func _seed_art21r2_map_sparse_marker_smoke_if_requested(start_result: Dictionary = {}) -> void:
+	if not bool(start_result.get("ok", false)):
+		return
+	if not DebugGateScript.is_debug_tools_enabled():
+		return
+	if not _has_cmdline_flag(ART21R2_MAP_SPARSE_MARKER_SMOKE_FLAG):
+		return
+	if run_context == null or run_context.intel_map == null or run_context.truth_map == null or not bool(run_context.get_status_snapshot().get("run_active", false)):
+		return
+	var current_pos := run_context.get_current_pos()
+	var event_pos := _art21r2_map_smoke_pos(2, 1)
+	var flag_pos := _art21r2_map_smoke_pos(4, 4)
+	var reveal_positions := [
+		current_pos,
+		_art21r2_map_smoke_pos(1, 0),
+		_art21r2_map_smoke_pos(1, 1),
+		_art21r2_map_smoke_pos(2, 0),
+		event_pos,
+	]
+	for pos: Vector2i in reveal_positions:
+		if run_context.is_inside(pos):
+			run_context.intel_map.reveal_cell(pos, run_context.truth_map)
+	if run_context.is_inside(event_pos) and event_pos != current_pos:
+		run_context.truth_map.set_room_type(event_pos, &"Event")
+		run_context.intel_map.reveal_cell(event_pos, run_context.truth_map)
+	for scan_pos: Vector2i in [_art21r2_map_smoke_pos(3, 1), _art21r2_map_smoke_pos(3, 2), _art21r2_map_smoke_pos(4, 2)]:
+		if run_context.is_inside(scan_pos) and scan_pos != event_pos and scan_pos != flag_pos:
+			run_context.intel_map.scan_cell(scan_pos, run_context.truth_map, &"limited", 0.70)
+	if run_context.is_inside(flag_pos) and flag_pos != current_pos and flag_pos != event_pos and not run_context.intel_map.is_flagged(flag_pos):
+		run_context.intel_map.toggle_flag(flag_pos)
+
+
+func _art21r2_map_smoke_pos(x: int, y: int) -> Vector2i:
+	if run_context == null:
+		return Vector2i.ZERO
+	return Vector2i(clampi(x, 0, maxi(0, run_context.width - 1)), clampi(y, 0, maxi(0, run_context.height - 1)))
 
 
 func _has_cmdline_flag(flag: String) -> bool:

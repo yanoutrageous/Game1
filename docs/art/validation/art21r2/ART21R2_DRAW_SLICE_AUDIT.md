@@ -119,6 +119,17 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
   the screenshot can contain both marker states. The flag pins one Event cell
   and one flagged cell only for smoke evidence, without changing normal menu,
   route, or cell click logic.
+- Pass39 sparse follow-up:
+  `screenshots/slice6/godot_map_overlay_art21r2_sparse_event_flag_pass39_smoke.png`
+  uses `--art21r2-seed-map-sparse-markers`, the existing main-menu direct
+  Deploy Prep flow, and the existing `M` route. It prepares only a few
+  explored/scanned cells plus one Event and one Flag, and does not call
+  full-map reveal.
+- Pass40 click follow-up:
+  `screenshots/slice6/godot_map_overlay_art21r2_sparse_flag_click_pass40_smoke.png`
+  is captured after clicking the visible flagged cell in Map Overlay; the Flag
+  marker disappears while the Event marker remains, so this pass covers the
+  existing map-cell click route more directly than pass38.
 - Result: `PARTIAL`. The map cells are no longer the small generated empty
   ART21 squares, and the modal frame is no longer the previous terminal panel
   look, but the dense unknown-cell wall and title/footer hierarchy still fall

@@ -224,10 +224,10 @@ func _art21_marker_state(marker: Dictionary) -> StringName:
 		return &"chest"
 	if room_type == "exit" or asset_id.find("exit") >= 0 or asset_id.find("extract") >= 0:
 		return &"exit"
-	if not bool(marker.get("revealed", true)) or String(marker.get("label", "")) == "?":
-		return &"unknown"
 	if bool(marker.get("scanned", false)) or int(marker.get("adjacent_mines", -1)) > 0:
 		return &"scanned"
+	if not bool(marker.get("revealed", true)) or String(marker.get("label", "")) == "?":
+		return &"unknown"
 	return &"explored"
 
 

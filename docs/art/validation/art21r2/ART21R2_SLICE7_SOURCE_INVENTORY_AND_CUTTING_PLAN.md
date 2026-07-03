@@ -177,7 +177,9 @@ Decision:
 - Do not claim ART20 blocked `map_overlay_event_marker_64` solved without a
   fresh source-selection and cut/import record.
 - Slice 6 pass38 records that fresh cut/import record for event and flag
-  marker textures only; it does not close the map overlay visual target.
+  marker textures only. Pass39 adds sparse non-full-reveal evidence, and pass40
+  adds click-to-unflag evidence; none of these close the map overlay visual
+  target.
 
 ### `Zujian1.png`
 
