@@ -25,7 +25,9 @@ $requiredFiles = @(
     "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_SECTION_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_MAIN_GAME_CENTER_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE6_DEPLOY_LONGTERM_ART19_SURFACE_REPORT.md",
-    "docs/art/validation/art21r2/ART21R2_DRAW_SLICE_AUDIT.md"
+    "docs/art/validation/art21r2/ART21R2_DRAW_SLICE_AUDIT.md",
+    "docs/art/validation/art21r2/ART21R2_SOURCE_SLOT_CUTTING_MATRIX.csv",
+    "docs/art/validation/art21r2/ART21R2_SLICE7_SOURCE_INVENTORY_AND_CUTTING_PLAN.md"
 )
 
 foreach ($file in $requiredFiles) {
@@ -229,6 +231,149 @@ if ($gaps.Count -lt 16) {
 }
 if (-not ($gaps | Where-Object { $_.status -eq "baseline_fail" })) {
     Fail "Gap matrix must preserve baseline_fail rows; ART21R2 is not visually complete at baseline."
+}
+
+$sourceMatrixPath = Join-Path $validationRoot "ART21R2_SOURCE_SLOT_CUTTING_MATRIX.csv"
+$sourceMatrix = @(Import-Csv -LiteralPath $sourceMatrixPath)
+if ($sourceMatrix.Count -lt 30) {
+    Fail "ART21R2 source slot cutting matrix has too few rows: $($sourceMatrix.Count)"
+}
+
+$requiredSourceMatrixColumns = @(
+    "screen",
+    "slot",
+    "current_asset_id",
+    "current_visual_key",
+    "current_runtime_asset",
+    "current_source_class",
+    "source_root",
+    "source_candidate",
+    "cut_manifest",
+    "cut_status",
+    "replacement_need",
+    "target_reference",
+    "current_gap",
+    "next_action",
+    "validation_screenshot"
+)
+$actualSourceMatrixColumns = @($sourceMatrix[0].PSObject.Properties.Name)
+foreach ($column in $requiredSourceMatrixColumns) {
+    if ($actualSourceMatrixColumns -notcontains $column) {
+        Fail "Missing ART21R2 source matrix column: $column"
+    }
+}
+
+$allowedSourceClasses = @(
+    "art21r2_formal_draw_cut_ready",
+    "art21r2_generated_transition",
+    "art19_draw_borrowed",
+    "art20_transition",
+    "art21_generated_transition",
+    "art15_result_title_borrowed",
+    "none_runtime_text",
+    "code_scrim_exception"
+)
+$allowedReplacementNeeds = @(
+    "keep_for_r2",
+    "replace_from_existing_game_ready",
+    "needs_new_cut",
+    "needs_source_selection",
+    "blocked",
+    "runtime_text_ok"
+)
+
+foreach ($row in $sourceMatrix) {
+    if ([string]::IsNullOrWhiteSpace($row.screen) -or [string]::IsNullOrWhiteSpace($row.slot)) {
+        Fail "Source matrix row has empty screen or slot."
+    }
+    foreach ($sourceClass in $row.current_source_class.Split(";")) {
+        if ($allowedSourceClasses -notcontains $sourceClass) {
+            Fail "Invalid current_source_class '$sourceClass' for $($row.screen).$($row.slot)"
+        }
+    }
+    if ($allowedReplacementNeeds -notcontains $row.replacement_need) {
+        Fail "Invalid replacement_need '$($row.replacement_need)' for $($row.screen).$($row.slot)"
+    }
+    if ([string]::IsNullOrWhiteSpace($row.current_gap) -or [string]::IsNullOrWhiteSpace($row.next_action)) {
+        Fail "Source matrix row missing current_gap or next_action: $($row.screen).$($row.slot)"
+    }
+    if ($row.validation_screenshot) {
+        $shot = Join-Path $validationRoot $row.validation_screenshot
+        if (-not (Test-Path -LiteralPath $shot -PathType Leaf)) {
+            Fail "Source matrix references missing screenshot: $($row.validation_screenshot)"
+        }
+    }
+}
+
+$requiredSourceSlots = @(
+    @("main_menu", "title", "none_runtime_text", "needs_source_selection"),
+    @("deploy_prep", "left_character_frame", "art21_generated_transition", "needs_new_cut"),
+    @("long_term", "collection_wall", "art21_generated_transition", "needs_source_selection"),
+    @("run_hud", "left_info_rail", "art21r2_generated_transition", "needs_source_selection"),
+    @("run_hud", "scanner_minimap", "art21r2_formal_draw_cut_ready", "needs_new_cut"),
+    @("map_overlay", "modal_dimmer", "code_scrim_exception", "runtime_text_ok"),
+    @("map_overlay", "map_panel", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
+    @("map_overlay", "map_marker_event", "art21_generated_transition", "needs_new_cut"),
+    @("map_overlay", "map_marker_flag_candidate", "art21_generated_transition", "needs_new_cut"),
+    @("inventory", "inventory_panel_frame", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
+    @("ground_loot", "ground_loot_panel_frame", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
+    @("result", "result_modal_frame", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
+    @("result", "result_state_title_candidate", "art15_result_title_borrowed", "keep_for_r2")
+)
+
+foreach ($required in $requiredSourceSlots) {
+    $screen = $required[0]
+    $slot = $required[1]
+    $sourceClass = $required[2]
+    $replacementNeed = $required[3]
+    $row = $sourceMatrix | Where-Object { $_.screen -eq $screen -and $_.slot -eq $slot }
+    if (-not $row) {
+        Fail "Source matrix missing required slot: $screen.$slot"
+    }
+    if ($row.current_source_class -notmatch [regex]::Escape($sourceClass)) {
+        Fail "Source matrix slot $screen.$slot missing source class: $sourceClass"
+    }
+    if ($row.replacement_need -ne $replacementNeed) {
+        Fail "Source matrix slot $screen.$slot expected replacement_need $replacementNeed but got $($row.replacement_need)"
+    }
+}
+
+$sourceMatrixRequiredCandidates = @(
+    "D:\AGAME1\sources\draw\5.png",
+    "D:\AGAME1\sources\draw\Zujian2.png",
+    "D:\AGAME1\sources\draw\Zujian3.png",
+    "D:\AGAME1\sources\draw\Main.png",
+    "D:\AGAME1\sources\draw\Next.png",
+    "D:\AGAME1\sources\art\ART-21R2\_manifest\modal_cut_manifest.csv",
+    "D:\AGAME1\sources\art\ART-21R2\_manifest\modal_control_cut_manifest.csv",
+    "D:\AGAME1\sources\art\ART-21R2\_manifest\modal_section_cut_manifest.csv",
+    "D:\AGAME1\sources\art\ART-21R2\_manifest\minimap_hud_cut_manifest.csv"
+)
+$sourceMatrixRaw = Get-Content -LiteralPath $sourceMatrixPath -Raw
+foreach ($pattern in $sourceMatrixRequiredCandidates) {
+    if ($sourceMatrixRaw -notmatch [regex]::Escape($pattern)) {
+        Fail "Source matrix missing required source or manifest reference: $pattern"
+    }
+}
+
+$slice7Report = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_SLICE7_SOURCE_INVENTORY_AND_CUTTING_PLAN.md") -Raw
+$requiredSlice7Patterns = @(
+    "NOT_COMPLETE_R2_PARTIAL",
+    "ART21R2_SOURCE_SLOT_CUTTING_MATRIX.csv",
+    "5.png",
+    "Zujian2.png",
+    "Zujian3.png",
+    "Main.png",
+    "Next.png",
+    "Do not import the root sheet directly",
+    "Do not import purple-background candidates directly",
+    "Result title-plate candidate",
+    "does not prove visual completion"
+)
+foreach ($pattern in $requiredSlice7Patterns) {
+    if ($slice7Report -notmatch [regex]::Escape($pattern)) {
+        Fail "ART21R2 Slice 7 source inventory report missing required evidence: $pattern"
+    }
 }
 
 $targetLock = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_TARGET_VISUAL_LOCK.md") -Raw
@@ -926,3 +1071,4 @@ Write-Output "ART21R2_IMAGE_BOUNDARY_VALIDATION=PASS_STRUCTURAL_OPEN"
 Write-Output "visual_closeout=NOT_COMPLETE_R2_PARTIAL"
 Write-Output "contract_rows=$($contract.Count)"
 Write-Output "gap_rows=$($gaps.Count)"
+Write-Output "source_matrix_rows=$($sourceMatrix.Count)"
