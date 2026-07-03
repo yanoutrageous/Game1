@@ -30,6 +30,7 @@ func set_result_summary(title: String, summary: String) -> void:
 	if title_node != null:
 		title_node.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		title_node.z_index = 4
+		title_node.visible = true
 		title_node.text = title
 
 	if summary_node != null:
@@ -153,12 +154,12 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		result_modal_art.size = size
 	if result_title_art != null:
 		result_title_art.position = Vector2(24, 10)
-		result_title_art.size = Vector2(260 if is_low else (330 if is_high else 310), 76)
+		result_title_art.size = Vector2(250 if is_low else (340 if is_high else 300), 104 if is_low else 112)
 	var title_node := get_node_or_null("ResultTitle") as Label
 	if title_node != null:
 		title_node.position = Vector2(58, 30)
 		title_node.size = Vector2(220 if is_low else (280 if is_high else 260), 30)
-	var summary_top := 108.0
+	var summary_top := 126.0 if not is_low else 116.0
 	var action_strip_top := size.y - 86.0
 	if result_summary_art != null:
 		result_summary_art.position = Vector2(28, summary_top)
@@ -201,12 +202,16 @@ func _main_game_modal_rect(profile: Dictionary) -> Rect2:
 func _apply_result_title_plate(state: StringName) -> void:
 	if result_title_art == null:
 		_ensure_backdrop()
-	var texture := Art21UIPlacementContractScript.texture_for_visual_key(&"art21r2.modal.title_plate", &"ui.result.title.extraction_success")
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(PresentationMappingScript.result_title_ref(state))
+	var uses_state_title := texture != null
 	if texture == null:
-		texture = Art09ManifestAssetMappingScript.resolve_texture(PresentationMappingScript.result_title_ref(state))
+		texture = Art21UIPlacementContractScript.texture_for_visual_key(&"art21r2.modal.title_plate", &"ui.result.title.extraction_success")
 	if texture != null and result_title_art != null:
 		result_title_art.texture = texture
 		result_title_art.visible = true
+	var title_node := get_node_or_null("ResultTitle") as Label
+	if title_node != null:
+		title_node.visible = not uses_state_title
 
 
 func _result_state_from_snapshot(snapshot: Dictionary) -> StringName:

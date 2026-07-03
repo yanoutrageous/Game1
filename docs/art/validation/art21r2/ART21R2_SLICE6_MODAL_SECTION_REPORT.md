@@ -60,6 +60,11 @@ runtime title and section PNGs.
   `screenshots/slice6/godot_inventory_nonempty_main_game_center_pass34_smoke.png`,
   `screenshots/slice6/godot_ground_loot_nonempty_main_game_center_pass34_smoke.png`,
   and `screenshots/slice6/godot_result_main_game_center_pass34_smoke.png`.
+- Pass37 Result title follow-up uses the existing Result route and captures the
+  ART15 draw-derived state title plates through `PresentationMapping.result_title_ref`.
+  Runtime title text is hidden only when the borrowed title texture resolves, so
+  fallback text remains available if the asset lookup fails:
+  `screenshots/slice6/godot_result_draw_title_plate_pass37_smoke.png`.
 
 `godot_result_zujian3_modal_sections_pass31_smoke.png` exposed summary text
 overflow and is not acceptance evidence; pass31 was corrected in pass32.
@@ -72,5 +77,8 @@ overflow and is not acceptance evidence; pass31 was corrected in pass32.
 - Title/close-button composition is image-backed but still cramped at 856x511.
 - Result is no longer overflowing, but the title treatment, reward/item
   hierarchy, and action button contrast remain below the UE floor.
+- Result state title plates are ART15 draw-derived borrowed assets. They improve
+  the duplicate text/image title problem for R2 partial evidence, but they are
+  not ART21R2 formal source ownership or visual closeout.
 - This pass remains smoke evidence only; it does not claim high-resolution UI QA
   or ART21R2 visual closeout.

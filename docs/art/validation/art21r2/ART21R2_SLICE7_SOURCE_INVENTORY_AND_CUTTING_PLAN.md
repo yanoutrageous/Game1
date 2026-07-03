@@ -207,9 +207,9 @@ Decision:
 ## Priority After Slice 7
 
 1. Do not close out ART21R2.
-2. Decide whether the current uncommitted Result title-plate candidate should
-   enter R2. If yes, first update contract/gap/report evidence and capture a
-   Result screenshot proving no missing or duplicate title text.
+2. If the Result title-plate candidate enters R2, keep it classified as
+   ART15 borrowed partial evidence. It must stay linked to contract/gap/report
+   rows and a Result screenshot proving no missing or duplicate title text.
 3. Address the highest-risk temporary slots:
    `main_menu/title`,
    `map_overlay/map_marker_event`,

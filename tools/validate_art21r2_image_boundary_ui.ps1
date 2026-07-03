@@ -88,6 +88,7 @@ $requiredScreenshots = @(
     "screenshots/slice6/godot_inventory_nonempty_main_game_center_pass34_smoke.png",
     "screenshots/slice6/godot_ground_loot_nonempty_main_game_center_pass34_smoke.png",
     "screenshots/slice6/godot_result_main_game_center_pass34_smoke.png",
+    "screenshots/slice6/godot_result_draw_title_plate_pass37_smoke.png",
     "screenshots/slice6/godot_main_menu_art19_inner_surfaces_pass35_smoke.png",
     "screenshots/slice6/godot_deploy_prep_art19_inner_surfaces_pass35_smoke.png",
     "screenshots/slice6/godot_long_term_art19_inner_surfaces_pass35_smoke.png",
@@ -212,7 +213,8 @@ $requiredSlots = @(
     "map_overlay.map_marker_event",
     "inventory.inventory_panel_frame",
     "ground_loot.ground_loot_panel_frame",
-    "result.result_modal_frame"
+    "result.result_modal_frame",
+    "result.result_state_title_plate"
 )
 
 foreach ($slotKey in $requiredSlots) {
@@ -779,6 +781,12 @@ if ($resultPanel -match 'backdrop\s*=\s*ColorRect\.new\(\)') {
 if ($resultPanel -notmatch 'backdrop\.visible\s*=\s*false') {
     Fail "ResultPanel must hide any legacy Backdrop ColorRect."
 }
+if ($resultPanel -notmatch 'PresentationMappingScript\.result_title_ref\(state\)') {
+    Fail "ResultPanel must route state title plates through PresentationMapping.result_title_ref."
+}
+if ($resultPanel -notmatch 'title_node\.visible\s*=\s*not uses_state_title') {
+    Fail "ResultPanel must hide runtime title text only when a state title texture resolves."
+}
 
 $slice6ModalReport = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_SLICE6_MODAL_FRAME_REPORT.md") -Raw
 $requiredSlice6ModalPatterns = @(
@@ -977,6 +985,9 @@ $requiredSlice6ModalSectionPatterns = @(
     "godot_inventory_zujian3_modal_sections_pass31_smoke.png",
     "godot_ground_loot_zujian3_modal_sections_pass31_smoke.png",
     "godot_result_zujian3_modal_sections_pass32_smoke.png",
+    "godot_result_draw_title_plate_pass37_smoke.png",
+    "ART15 draw-derived state title plates",
+    "Runtime title text is hidden only when the borrowed title texture resolves",
     "pass31 was corrected in pass32",
     "non-empty item-row live evidence"
 )
