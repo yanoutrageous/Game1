@@ -205,3 +205,31 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
   placement through explicit debug-smoke seed evidence, but it does not prove
   natural deterministic GroundLoot progression or ART21R2 visual closeout.
 - Validator phrase: non-empty modal rows and left-rail-safe placement.
+
+## Applied ART21R2 Deploy LongTerm ART19 Surface Pass
+
+- No new generated art was introduced.
+- No new draw slicing was required for this pass because existing draw-derived
+  ART19 runtime assets were already registered in `asset_manifest.csv`.
+- Runtime source: `Art09ManifestAssetMappingScript.art19_skin_ref`.
+- Shared surface helper: `Art10UISkinKitScript.apply_image_button_ref` and
+  `Art10UISkinKitScript.make_image_frame_panel`.
+- Deploy Prep changes:
+  - top tabs, filter chips, route cards, summary blocks, equipment slots, and
+    action buttons now use manifest-backed image StyleBoxTexture surfaces.
+  - Start Exploration direct Deploy Prep route remained unchanged, and
+    `DeployStartButton` still enters Run through the existing pressed signal.
+- Long Term changes:
+  - tabs, collection cards, right detail blocks, and navigation/action buttons
+    now use manifest-backed image StyleBoxTexture surfaces.
+- Evidence screenshots:
+  `screenshots/slice6/godot_main_menu_art19_inner_surfaces_pass35_smoke.png`,
+  `screenshots/slice6/godot_deploy_prep_art19_inner_surfaces_pass35_smoke.png`,
+  `screenshots/slice6/godot_long_term_art19_inner_surfaces_pass35_smoke.png`,
+  and
+  `screenshots/slice6/godot_run_hud_from_deploy_art19_inner_surfaces_pass35_smoke.png`.
+- Result: `PARTIAL`. Deploy Prep and Long Term no longer rely on generated-style
+  inner Button/Panel boundaries for the covered controls, but page title art,
+  route/map density, profile/archive copy, and bottom detail slots remain below
+  the target product floor.
+- Validator phrase: deploy and long-term inner surfaces use ART19 draw-derived image style boxes.

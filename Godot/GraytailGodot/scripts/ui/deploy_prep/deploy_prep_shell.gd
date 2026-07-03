@@ -197,7 +197,7 @@ func _build_tab_panel() -> void:
 			_apply_art09_button_icon(button, _dictionary_from(tab.get("art09_asset_ref", {})), &"tab")
 			var captured_tab := tab_id
 			button.pressed.connect(func() -> void: show_tab(captured_tab))
-			Art10UISkinKitScript.apply_button_token(button, &"secondary", &"tab", &"tab")
+			_apply_art19_button_surface(button, &"button_dark", &"secondary", &"tab", &"tab", 7, 14)
 			tab_row.add_child(button)
 			tab_buttons[tab_id] = button
 
@@ -269,8 +269,7 @@ func _build_summary_panel() -> void:
 
 func _build_action_panel() -> void:
 	_add_color_rect(self, "DeployStartButtonGlow", Rect2(948, 584, 298, 104), Color(0.94, 0.70, 0.28, 0.14))
-	var art09_refs := _art09_asset_refs()
-	_add_texture_rect_from_ref(self, "Art21DeployStartButtonTexture", Rect2(958, 602, 278, 76), Art21UIPlacementContractScript.button_ref(&"button_primary"), 0.88)
+	_add_texture_rect_from_ref(self, "Art21DeployStartButtonTexture", Rect2(958, 602, 278, 76), Art09ManifestAssetMappingScript.art19_skin_ref(&"button_confirm"), 0.88)
 	start_button = _add_button(self, "DeployStartButton", Rect2(958, 610, 278, 72), "开始探索", _on_start_preview_pressed)
 	continue_button = _add_button(self, "DeployContinueButton", Rect2(966, 548, 126, 42), "继续", _on_continue_preview_pressed)
 	abandon_button = _add_button(self, "DeployAbandonButton", Rect2(1102, 548, 126, 42), "终止", _on_abandon_preview_pressed)
@@ -320,7 +319,7 @@ func _refresh_view() -> void:
 		if button != null:
 			var selected := StringName(tab_id) == active_tab
 			button.button_pressed = selected
-			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if selected else &"normal"), &"tab", &"tab")
+			_apply_art19_button_surface(button, &"button_selected_tab" if selected else &"button_dark", Art10UISkinKitScript.visual_state_tone(&"selected" if selected else &"normal"), &"tab", &"tab", 7, 14)
 	tab_title_label.text = String(tab.get("label", active_tab))
 	tab_body_label.text = _lines_text(_array_from(tab, "lines"), 1, 12)
 	_refresh_filter_buttons(tab)
@@ -420,7 +419,7 @@ func _refresh_filter_buttons(tab: Dictionary) -> void:
 			var button := _add_button(self, "DeployFilter_%s" % String(filter_id), Rect2(x, y, 68, 30), String(filter.get("label", filter_id)), func() -> void: _on_filter_pressed(captured_filter))
 			button.toggle_mode = true
 			button.button_pressed = filter_id == selected_filter
-			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if button.button_pressed else &"normal"), &"caption", &"tab")
+			_apply_art19_button_surface(button, &"button_selected_tab" if button.button_pressed else &"button_dark", Art10UISkinKitScript.visual_state_tone(&"selected" if button.button_pressed else &"normal"), &"caption", &"tab", 5, 12)
 			filter_buttons.append(button)
 			x += 72.0
 
@@ -457,7 +456,7 @@ func _refresh_card_buttons() -> void:
 			button.toggle_mode = true
 			button.button_pressed = selected
 			_apply_art09_button_icon(button, _dictionary_from(card.get("art09_asset_ref", {})), &"slot")
-			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(state, button.button_pressed), &"body", &"slot")
+			_apply_art19_button_surface(button, &"panel_highlight" if selected else &"panel_deploy_main", Art10UISkinKitScript.visual_state_tone(state, button.button_pressed), &"body", &"slot", 12, 18)
 			button.pressed.connect(func() -> void: _on_card_pressed(captured_card))
 			card_list_container.add_child(button)
 			card_buttons.append(button)
@@ -495,9 +494,9 @@ func _refresh_actions() -> void:
 	_apply_art09_button_icon(start_button, _asset_ref_from(art09_refs, "buttons", "confirm"), &"large_nav")
 	_apply_art09_button_icon(continue_button, _asset_ref_from(art09_refs, "buttons", "loadout"), &"button")
 	_apply_art09_button_icon(abandon_button, _asset_ref_from(art09_refs, "buttons", "back_main"), &"button")
-	Art10UISkinKitScript.apply_button_token(start_button, &"gold", &"main_button", &"large_nav")
-	Art10UISkinKitScript.apply_button_token(continue_button, &"primary" if not continue_button.disabled else &"secondary", &"caption", &"button")
-	Art10UISkinKitScript.apply_button_token(abandon_button, &"warning" if not abandon_button.disabled else &"danger", &"caption", &"button")
+	_apply_art19_button_surface(start_button, &"button_confirm", &"gold", &"main_button", &"large_nav", 12, 20)
+	_apply_art19_button_surface(continue_button, &"button_selected_tab" if not continue_button.disabled else &"button_dark", &"primary" if not continue_button.disabled else &"secondary", &"caption", &"button", 7, 14)
+	_apply_art19_button_surface(abandon_button, &"button_dark", &"warning" if not abandon_button.disabled else &"danger", &"caption", &"button", 7, 14)
 	continue_button.modulate = Color(1.0, 1.0, 1.0, 0.96)
 	abandon_button.modulate = Color(1.0, 0.94, 0.84, 0.96)
 	var message := String(current_model.get("action_message", ""))
@@ -646,9 +645,11 @@ func _apply_art10_text_refresh() -> void:
 	Art10UISkinKitScript.apply_label_token(action_message_label, &"caption", &"muted")
 	for button_id in tab_buttons.keys():
 		var tab_button := tab_buttons[button_id] as Button
-		Art10UISkinKitScript.apply_button_token(tab_button, Art10UISkinKitScript.visual_state_tone(&"selected" if tab_button != null and tab_button.button_pressed else &"normal"), &"tab", &"tab")
+		var tab_selected := tab_button != null and tab_button.button_pressed
+		_apply_art19_button_surface(tab_button, &"button_selected_tab" if tab_selected else &"button_dark", Art10UISkinKitScript.visual_state_tone(&"selected" if tab_selected else &"normal"), &"tab", &"tab", 7, 14)
 	for button in filter_buttons:
-		Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if button != null and button.button_pressed else &"normal"), &"caption", &"tab")
+		var filter_selected := button != null and button.button_pressed
+		_apply_art19_button_surface(button, &"button_selected_tab" if filter_selected else &"button_dark", Art10UISkinKitScript.visual_state_tone(&"selected" if filter_selected else &"normal"), &"caption", &"tab", 5, 12)
 
 
 func _apply_art09_button_icon(button: Button, asset_ref: Dictionary, icon_token: StringName = &"button") -> void:
@@ -659,6 +660,56 @@ func _apply_art09_button_icon(button: Button, asset_ref: Dictionary, icon_token:
 		return
 	button.icon = texture
 	Art10UISkinKitScript.controlled_button_icon(button, icon_token)
+
+
+func _apply_art19_button_surface(button: Button, skin_role: StringName, tone: StringName, token: StringName, icon_token: StringName = &"button", padding: int = 8, texture_margin: int = 16) -> void:
+	Art10UISkinKitScript.apply_image_button_ref(
+		button,
+		Art09ManifestAssetMappingScript.art19_skin_ref(skin_role),
+		tone,
+		token,
+		icon_token,
+		padding,
+		texture_margin
+	)
+
+
+func _art19_panel_ref_for_tone(tone: StringName) -> Dictionary:
+	return Art09ManifestAssetMappingScript.art19_skin_ref(_art19_panel_role_for_tone(tone))
+
+
+func _art19_panel_role_for_tone(tone: StringName) -> StringName:
+	match tone:
+		&"deep":
+			return &"panel_terminal"
+		&"summary", &"warning", &"notice":
+			return &"panel_summary"
+		&"selected", &"slot":
+			return &"panel_highlight"
+		_:
+			return &"panel_deploy_main"
+
+
+func _panel_padding_for_tone(tone: StringName) -> int:
+	match tone:
+		&"slot":
+			return 6
+		&"deep", &"summary", &"warning":
+			return 12
+		_:
+			return 10
+
+
+func _panel_texture_margin_for_tone(tone: StringName) -> int:
+	match tone:
+		&"deep":
+			return 32
+		&"summary", &"warning", &"notice":
+			return 16
+		&"selected", &"slot":
+			return 14
+		_:
+			return 24
 
 
 func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2, asset_ref: Dictionary, alpha: float = 1.0) -> TextureRect:
@@ -682,7 +733,7 @@ func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, 
 	button.name = node_name
 	button.text = text
 	_set_rect(button, rect)
-	Art10UISkinKitScript.apply_button_token(button, &"secondary", &"caption", &"button")
+	_apply_art19_button_surface(button, &"button_dark", &"secondary", &"caption", &"button", 6, 12)
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -701,7 +752,7 @@ func _add_label_token(parent: Control, node_name: String, rect: Rect2, text: Str
 
 
 func _add_icon_slot(parent: Control, node_name: String, rect: Rect2, label_text: String) -> PanelContainer:
-	var panel := Art10UISkinKitScript.make_icon_slot(node_name, rect.size, &"slot")
+	var panel := Art10UISkinKitScript.make_image_frame_panel(node_name, Rect2(Vector2.ZERO, rect.size), Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_highlight"), 6, 14)
 	_set_rect(panel, rect)
 	parent.add_child(panel)
 	var label := _add_label_token(parent, "%sLabel" % node_name, Rect2(rect.position.x, rect.position.y + rect.size.y + 3.0, rect.size.x, 16.0), label_text, &"key_prompt", &"muted")
@@ -710,7 +761,7 @@ func _add_icon_slot(parent: Control, node_name: String, rect: Rect2, label_text:
 
 
 func _add_panel(parent: Control, node_name: String, rect: Rect2, tone: StringName) -> PanelContainer:
-	var panel := Art10UISkinKitScript.make_frame_panel(node_name, rect, tone)
+	var panel := Art10UISkinKitScript.make_image_frame_panel(node_name, rect, _art19_panel_ref_for_tone(tone), _panel_padding_for_tone(tone), _panel_texture_margin_for_tone(tone))
 	parent.add_child(panel)
 	return panel
 

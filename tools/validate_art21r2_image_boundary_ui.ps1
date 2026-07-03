@@ -24,6 +24,7 @@ $requiredFiles = @(
     "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_CONTROL_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_SECTION_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_MAIN_GAME_CENTER_REPORT.md",
+    "docs/art/validation/art21r2/ART21R2_SLICE6_DEPLOY_LONGTERM_ART19_SURFACE_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_DRAW_SLICE_AUDIT.md"
 )
 
@@ -83,7 +84,11 @@ $requiredScreenshots = @(
     "screenshots/slice6/godot_run_hud_modal_seed_pass34_smoke.png",
     "screenshots/slice6/godot_inventory_nonempty_main_game_center_pass34_smoke.png",
     "screenshots/slice6/godot_ground_loot_nonempty_main_game_center_pass34_smoke.png",
-    "screenshots/slice6/godot_result_main_game_center_pass34_smoke.png"
+    "screenshots/slice6/godot_result_main_game_center_pass34_smoke.png",
+    "screenshots/slice6/godot_main_menu_art19_inner_surfaces_pass35_smoke.png",
+    "screenshots/slice6/godot_deploy_prep_art19_inner_surfaces_pass35_smoke.png",
+    "screenshots/slice6/godot_long_term_art19_inner_surfaces_pass35_smoke.png",
+    "screenshots/slice6/godot_run_hud_from_deploy_art19_inner_surfaces_pass35_smoke.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -256,7 +261,12 @@ $requiredDrawAuditPatterns = @(
     "purple-like pixels 1534 -> 0",
     "Applied ART21R2 Modal Main-Game-Center Pass",
     "No new generated art was introduced",
-    "non-empty modal rows and left-rail-safe placement"
+    "non-empty modal rows and left-rail-safe placement",
+    "Applied ART21R2 Deploy LongTerm ART19 Surface Pass",
+    "Start Exploration direct Deploy Prep route remained unchanged",
+    "godot_deploy_prep_art19_inner_surfaces_pass35_smoke.png",
+    "godot_long_term_art19_inner_surfaces_pass35_smoke.png",
+    "deploy and long-term inner surfaces use ART19 draw-derived image style boxes"
 )
 foreach ($pattern in $requiredDrawAuditPatterns) {
     if ($drawSliceAudit -notmatch [regex]::Escape($pattern)) {
@@ -280,6 +290,68 @@ if ($mainMenu -notmatch 'apply_transparent_button_token') {
 }
 if ($mainMenu -notmatch 'button\.pressed\.connect\(func\(\) -> void: _emit_entry\(entry\)\)') {
     Fail "main_menu_shell.gd must preserve entry pressed -> _emit_entry route logic."
+}
+
+$deployPrepPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_shell.gd"
+$deployPrep = Get-Content -LiteralPath $deployPrepPath -Raw
+$requiredDeployPrepSurfacePatterns = @(
+    'apply_image_button_ref',
+    'make_image_frame_panel',
+    'art19_skin_ref',
+    'button_confirm',
+    '_on_start_preview_pressed'
+)
+foreach ($pattern in $requiredDeployPrepSurfacePatterns) {
+    if ($deployPrep -notmatch $pattern) {
+        Fail "deploy_prep_shell.gd missing ART19 image surface pattern: $pattern"
+    }
+}
+
+$longTermPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/long_term/long_term_shell.gd"
+$longTerm = Get-Content -LiteralPath $longTermPath -Raw
+$requiredLongTermSurfacePatterns = @(
+    'apply_image_button_ref',
+    'make_image_frame_panel',
+    'art19_skin_ref',
+    'panel_deploy_main',
+    'panel_highlight'
+)
+foreach ($pattern in $requiredLongTermSurfacePatterns) {
+    if ($longTerm -notmatch $pattern) {
+        Fail "long_term_shell.gd missing ART19 image surface pattern: $pattern"
+    }
+}
+
+$skinKitPath = Join-Path $root "Godot/GraytailGodot/scripts/presentation/art10_ui_skin_kit.gd"
+$skinKit = Get-Content -LiteralPath $skinKitPath -Raw
+$requiredSkinKitSurfacePatterns = @(
+    'style_box_from_asset_ref',
+    'apply_image_button_ref',
+    'make_image_frame_panel'
+)
+foreach ($pattern in $requiredSkinKitSurfacePatterns) {
+    if ($skinKit -notmatch $pattern) {
+        Fail "art10_ui_skin_kit.gd missing shared image surface helper: $pattern"
+    }
+}
+
+$slice6DeployLongTermReport = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_SLICE6_DEPLOY_LONGTERM_ART19_SURFACE_REPORT.md") -Raw
+$requiredSlice6DeployLongTermPatterns = @(
+    "PARTIAL",
+    "No new generated art was introduced",
+    "No new draw slicing was required",
+    "ART19 assets",
+    "DeployStartButton",
+    "directly to Deploy Prep",
+    "godot_deploy_prep_art19_inner_surfaces_pass35_smoke.png",
+    "godot_long_term_art19_inner_surfaces_pass35_smoke.png",
+    "godot_run_hud_from_deploy_art19_inner_surfaces_pass35_smoke.png",
+    "not visually complete"
+)
+foreach ($pattern in $requiredSlice6DeployLongTermPatterns) {
+    if ($slice6DeployLongTermReport -notmatch [regex]::Escape($pattern)) {
+        Fail "ART21R2 Slice 6 Deploy/LongTerm report missing required evidence: $pattern"
+    }
 }
 
 $runSurfacePath = Join-Path $root "Godot/GraytailGodot/scripts/ui/run_surface/run_surface.gd"

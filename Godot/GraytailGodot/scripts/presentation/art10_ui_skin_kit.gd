@@ -441,6 +441,55 @@ static func apply_transparent_button_token(button: Button, tone: StringName, tok
 	apply_transparent_button(button, tone, font_size(token), icon_token, padding)
 
 
+static func style_box_from_asset_ref(asset_ref: Dictionary, padding: int = 8, texture_margin: int = 16) -> StyleBoxTexture:
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	if texture == null:
+		return null
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = texture_margin
+	style.texture_margin_top = texture_margin
+	style.texture_margin_right = texture_margin
+	style.texture_margin_bottom = texture_margin
+	style.content_margin_left = padding
+	style.content_margin_top = padding
+	style.content_margin_right = padding
+	style.content_margin_bottom = padding
+	style.draw_center = true
+	return style
+
+
+static func apply_image_button_ref(button: Button, asset_ref: Dictionary, tone: StringName, token: StringName, icon_token: StringName = &"button", padding: int = 8, texture_margin: int = 16) -> void:
+	if button == null:
+		return
+	apply_button_token(button, tone, token, icon_token)
+	var normal := style_box_from_asset_ref(asset_ref, padding, texture_margin)
+	if normal == null:
+		return
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", style_box_from_asset_ref(asset_ref, padding, texture_margin))
+	button.add_theme_stylebox_override("pressed", style_box_from_asset_ref(asset_ref, padding, texture_margin))
+	button.add_theme_stylebox_override("disabled", style_box_from_asset_ref(asset_ref, padding, texture_margin))
+
+
+static func apply_image_panel_ref(panel: PanelContainer, asset_ref: Dictionary, padding: int = 10, texture_margin: int = 18) -> void:
+	if panel == null:
+		return
+	var style := style_box_from_asset_ref(asset_ref, padding, texture_margin)
+	if style == null:
+		return
+	panel.add_theme_stylebox_override("panel", style)
+
+
+static func make_image_frame_panel(node_name: String, rect: Rect2, asset_ref: Dictionary, padding: int = 10, texture_margin: int = 18) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.name = node_name
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	set_rect(panel, rect)
+	apply_image_panel_ref(panel, asset_ref, padding, texture_margin)
+	return panel
+
+
 static func apply_panel(panel: PanelContainer, tone: StringName = &"surface") -> void:
 	if panel == null:
 		return

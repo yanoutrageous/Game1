@@ -199,7 +199,7 @@ func _build_tab_buttons() -> void:
 		button.toggle_mode = true
 		button.custom_minimum_size = Vector2(76, 42)
 		button.pressed.connect(Callable(self, "_on_module_tab_pressed").bind(module_id))
-		Art10UISkinKitScript.apply_button_token(button, &"secondary", &"tab", &"tab")
+		_apply_art19_button_surface(button, &"button_dark", &"secondary", &"tab", &"tab", 7, 14)
 		tab_row.add_child(button)
 		tab_buttons[module_id] = button
 
@@ -344,7 +344,7 @@ func _refresh_card_grid(cards: Array) -> void:
 		button.custom_minimum_size = Vector2(170, 132)
 		button.toggle_mode = true
 		button.button_pressed = index == 0
-		Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if index == 0 else &"normal"), &"body_small", &"slot")
+		_apply_art19_button_surface(button, &"panel_highlight" if index == 0 else &"panel_deploy_main", Art10UISkinKitScript.visual_state_tone(&"selected" if index == 0 else &"normal"), &"body_small", &"slot", 10, 18)
 		card_grid_container.add_child(button)
 		index += 1
 
@@ -390,7 +390,7 @@ func _refresh_tab_buttons() -> void:
 		var button := tab_buttons[module_id] as Button
 		if button != null:
 			button.button_pressed = StringName(module_id) == selected_module_id
-			Art10UISkinKitScript.apply_button_token(button, Art10UISkinKitScript.visual_state_tone(&"selected" if button.button_pressed else &"normal"), &"tab", &"tab")
+			_apply_art19_button_surface(button, &"button_selected_tab" if button.button_pressed else &"button_dark", Art10UISkinKitScript.visual_state_tone(&"selected" if button.button_pressed else &"normal"), &"tab", &"tab", 7, 14)
 
 
 func _format_child_groups(groups: Array) -> String:
@@ -526,7 +526,7 @@ func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, 
 	button.name = node_name
 	button.text = text
 	_set_rect(button, rect)
-	Art10UISkinKitScript.apply_button_token(button, &"secondary", &"caption", &"button")
+	_apply_art19_button_surface(button, &"button_dark", &"secondary", &"caption", &"button", 6, 12)
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -545,9 +545,59 @@ func _add_label_token(parent: Control, node_name: String, rect: Rect2, text: Str
 
 
 func _add_panel(parent: Control, node_name: String, rect: Rect2, tone: StringName) -> PanelContainer:
-	var panel := Art10UISkinKitScript.make_frame_panel(node_name, rect, tone)
+	var panel := Art10UISkinKitScript.make_image_frame_panel(node_name, rect, _art19_panel_ref_for_tone(tone), _panel_padding_for_tone(tone), _panel_texture_margin_for_tone(tone))
 	parent.add_child(panel)
 	return panel
+
+
+func _apply_art19_button_surface(button: Button, skin_role: StringName, tone: StringName, token: StringName, icon_token: StringName = &"button", padding: int = 8, texture_margin: int = 16) -> void:
+	Art10UISkinKitScript.apply_image_button_ref(
+		button,
+		Art09ManifestAssetMappingScript.art19_skin_ref(skin_role),
+		tone,
+		token,
+		icon_token,
+		padding,
+		texture_margin
+	)
+
+
+func _art19_panel_ref_for_tone(tone: StringName) -> Dictionary:
+	return Art09ManifestAssetMappingScript.art19_skin_ref(_art19_panel_role_for_tone(tone))
+
+
+func _art19_panel_role_for_tone(tone: StringName) -> StringName:
+	match tone:
+		&"deep":
+			return &"panel_terminal"
+		&"summary", &"warning", &"notice":
+			return &"panel_summary"
+		&"selected", &"slot":
+			return &"panel_highlight"
+		_:
+			return &"panel_deploy_main"
+
+
+func _panel_padding_for_tone(tone: StringName) -> int:
+	match tone:
+		&"slot":
+			return 6
+		&"deep", &"summary", &"warning":
+			return 12
+		_:
+			return 10
+
+
+func _panel_texture_margin_for_tone(tone: StringName) -> int:
+	match tone:
+		&"deep":
+			return 32
+		&"summary", &"warning", &"notice":
+			return 16
+		&"selected", &"slot":
+			return 14
+		_:
+			return 24
 
 
 func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2, asset_ref: Dictionary, alpha: float = 1.0) -> TextureRect:
