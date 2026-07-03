@@ -41,6 +41,7 @@ const SCREEN_SETTINGS := &"settings_shell"
 const SCREEN_RUN := &"run"
 
 const LEGACY_GRAYBOX_VALIDATION_MARKERS := ["Start Tutorial 5x5", "Start Standard 10x10", "Controls: W/A/S/D or arrows move"]
+const ART21R2_MODAL_ITEM_SMOKE_FLAG := "--art21r2-seed-modal-items"
 const G9_UI_NODE_VALIDATION_MARKERS := [
 	"MainMenuPanel",
 	"ModeEntryPanel",
@@ -1523,6 +1524,7 @@ func _start_standard_from_ui() -> void:
 	_show_command_feedback(result)
 	if player_controller != null:
 		player_controller.reset_local_position()
+	_seed_art21r2_modal_smoke_items_if_requested(result)
 	_show_run_screen()
 
 
@@ -1533,8 +1535,33 @@ func _start_run_from_route(intent: Dictionary) -> void:
 	_show_command_feedback(command_result)
 	if bool(route_result.get("player_reset_requested", false)) and player_controller != null:
 		player_controller.reset_local_position()
+	if bool(command_result.get("ok", false)):
+		_seed_art21r2_modal_smoke_items_if_requested(command_result)
 	if bool(route_result.get("run_screen_requested", false)):
 		_show_run_screen()
+
+
+func _seed_art21r2_modal_smoke_items_if_requested(start_result: Dictionary = {}) -> void:
+	if not bool(start_result.get("ok", false)):
+		return
+	if not DebugGateScript.is_debug_tools_enabled():
+		return
+	if not _has_cmdline_flag(ART21R2_MODAL_ITEM_SMOKE_FLAG):
+		return
+	if command_bus == null or run_context == null or not bool(run_context.get_status_snapshot().get("run_active", false)):
+		return
+	command_bus.dispatch(&"debug_spawn_test_item_floor", {"source": "debug", "art21r2_smoke": true})
+	command_bus.dispatch(&"debug_spawn_test_item_backpack", {"source": "debug", "art21r2_smoke": true})
+
+
+func _has_cmdline_flag(flag: String) -> bool:
+	for arg in OS.get_cmdline_args():
+		if String(arg) == flag or String(arg).begins_with("%s=" % flag):
+			return true
+	for arg in OS.get_cmdline_user_args():
+		if String(arg) == flag or String(arg).begins_with("%s=" % flag):
+			return true
+	return false
 
 
 func _attempt_room_transition(direction: Vector2i) -> void:

@@ -6,6 +6,7 @@ const PresentationMappingScript := preload("res://scripts/presentation/presentat
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
+const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const LEGACY_RESULT_VALIDATION_MARKERS := ["Outcome:", "Mode:", "Moves:", "Mine Hits:", "Monsters Defeated:", "Failure Pending Lost:", "Failure Salvaged Items:", "Carried Items:", "Carried Value:", "Safe Gold:", "Final HP:", "Final Pressure:", "Black Coin:", "Gold Coin:", "Warehouse Lite Items:", "Room Floor Lost:", "Settlement Log Entries:"]
 
 signal return_main_requested
@@ -133,22 +134,15 @@ func _ensure_actions() -> void:
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
-	var profile_id: StringName = StringName(profile.get("profile_id", &"desktop"))
 	var is_low := bool(profile.get("is_low_resolution", false))
 	var is_high := bool(profile.get("is_high_resolution", false))
 	var summary_node := get_node_or_null("ResultSummary") as Label
 	if summary_node != null:
 		summary_node.add_theme_font_size_override("font_size", 12 if is_low else (15 if is_high else 13))
 		summary_node.add_theme_constant_override("line_spacing", 1 if is_low else (3 if is_high else 2))
-	if profile_id == &"narrow" or is_low:
-		position = Vector2(18, 70)
-		size = Vector2(560, 520)
-	elif is_high:
-		position = Vector2(300, 82)
-		size = Vector2(680, 480)
-	else:
-		position = Vector2(330, 96)
-		size = Vector2(620, 440)
+	var rect := _main_game_modal_rect(profile)
+	position = rect.position
+	size = rect.size
 	var backdrop := get_node_or_null("Backdrop") as ColorRect
 	if backdrop != null:
 		backdrop.visible = false
@@ -181,6 +175,27 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		actions.offset_top = size.y - 68.0
 		actions.offset_right = size.x - 58.0
 		actions.offset_bottom = size.y - 22.0
+
+
+func _main_game_modal_rect(profile: Dictionary) -> Rect2:
+	var viewport_size := UILayerContractScript.viewport_size_from_profile(profile)
+	var width: float = maxf(1.0, viewport_size.x)
+	var height: float = maxf(1.0, viewport_size.y)
+	var is_low := bool(profile.get("is_low_resolution", false))
+	var margin: float = 18.0 if is_low else 24.0
+	var left_width: float = min(UILayerContractScript.run_left_width(profile), width * 0.42)
+	var gameplay_left: float = left_width + margin
+	var gameplay_width: float = maxf(260.0, width - gameplay_left - margin)
+	var modal_width: float = clampf(gameplay_width * 0.82, 430.0, 660.0)
+	if modal_width > gameplay_width:
+		modal_width = maxf(260.0, gameplay_width)
+	var bottom_reserve: float = 72.0 if is_low else 92.0
+	var modal_height: float = clampf(height * 0.68, 360.0, 500.0)
+	modal_height = min(modal_height, maxf(300.0, height - margin * 2.0 - bottom_reserve))
+	var x: float = gameplay_left + maxf(0.0, (gameplay_width - modal_width) * 0.5)
+	var y: float = margin + maxf(0.0, (height - bottom_reserve - modal_height) * 0.45)
+	y = clampf(y, margin + 46.0, maxf(margin + 46.0, height - bottom_reserve - modal_height))
+	return Rect2(x, y, modal_width, modal_height)
 
 
 func _apply_result_title_plate(state: StringName) -> void:

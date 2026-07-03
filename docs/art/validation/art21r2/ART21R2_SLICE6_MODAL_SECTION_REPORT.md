@@ -55,13 +55,20 @@ runtime title and section PNGs.
   `screenshots/slice6/godot_ground_loot_zujian3_modal_sections_pass31_smoke.png`.
 - Result via existing Pause -> Exit current run double-confirm abandon route:
   `screenshots/slice6/godot_result_zujian3_modal_sections_pass32_smoke.png`.
+- Pass34 follow-up moved the modal family into the main gameplay region and
+  captured non-empty item-row live evidence through an explicit debug-smoke seed:
+  `screenshots/slice6/godot_inventory_nonempty_main_game_center_pass34_smoke.png`,
+  `screenshots/slice6/godot_ground_loot_nonempty_main_game_center_pass34_smoke.png`,
+  and `screenshots/slice6/godot_result_main_game_center_pass34_smoke.png`.
 
 `godot_result_zujian3_modal_sections_pass31_smoke.png` exposed summary text
 overflow and is not acceptance evidence; pass31 was corrected in pass32.
 
 ## Remaining Gaps
 
-- Inventory and GroundLoot still lack non-empty item-row live evidence.
+- Inventory and GroundLoot now have non-empty debug-smoke item-row evidence, but
+  natural deterministic loot progression is still not the evidence path for this
+  pass.
 - Title/close-button composition is image-backed but still cramped at 856x511.
 - Result is no longer overflowing, but the title treatment, reward/item
   hierarchy, and action button contrast remain below the UE floor.

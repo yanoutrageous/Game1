@@ -187,3 +187,21 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
 - Result: `PARTIAL`. Section boundaries are now image-owned, and the Result
   summary overflow found in pass31 was corrected in pass32, but title/action
   composition and non-empty item-row evidence remain incomplete.
+
+## Applied ART21R2 Modal Main-Game-Center Pass
+
+- No new generated art was introduced.
+- Runtime modal placement now reuses the previously cut Zujian3 modal frame,
+  row, button, title, section, and action-strip assets.
+- Inventory, GroundLoot, and Result are centered inside the main gameplay region
+  instead of covering the left information rail.
+- Evidence screenshots:
+  `screenshots/slice6/godot_deploy_prep_direct_from_main_pass34_smoke.png`,
+  `screenshots/slice6/godot_run_hud_modal_seed_pass34_smoke.png`,
+  `screenshots/slice6/godot_inventory_nonempty_main_game_center_pass34_smoke.png`,
+  `screenshots/slice6/godot_ground_loot_nonempty_main_game_center_pass34_smoke.png`,
+  and `screenshots/slice6/godot_result_main_game_center_pass34_smoke.png`.
+- Result: `PARTIAL`. Pass34 proves non-empty modal rows and left-rail-safe
+  placement through explicit debug-smoke seed evidence, but it does not prove
+  natural deterministic GroundLoot progression or ART21R2 visual closeout.
+- Validator phrase: non-empty modal rows and left-rail-safe placement.

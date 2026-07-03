@@ -23,6 +23,7 @@ $requiredFiles = @(
     "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_FRAME_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_CONTROL_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_SECTION_REPORT.md",
+    "docs/art/validation/art21r2/ART21R2_SLICE6_MODAL_MAIN_GAME_CENTER_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_DRAW_SLICE_AUDIT.md"
 )
 
@@ -77,7 +78,12 @@ $requiredScreenshots = @(
     "screenshots/slice6/godot_result_zujian3_modal_controls_pass30_smoke.png",
     "screenshots/slice6/godot_inventory_zujian3_modal_sections_pass31_smoke.png",
     "screenshots/slice6/godot_ground_loot_zujian3_modal_sections_pass31_smoke.png",
-    "screenshots/slice6/godot_result_zujian3_modal_sections_pass32_smoke.png"
+    "screenshots/slice6/godot_result_zujian3_modal_sections_pass32_smoke.png",
+    "screenshots/slice6/godot_deploy_prep_direct_from_main_pass34_smoke.png",
+    "screenshots/slice6/godot_run_hud_modal_seed_pass34_smoke.png",
+    "screenshots/slice6/godot_inventory_nonempty_main_game_center_pass34_smoke.png",
+    "screenshots/slice6/godot_ground_loot_nonempty_main_game_center_pass34_smoke.png",
+    "screenshots/slice6/godot_result_main_game_center_pass34_smoke.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -247,7 +253,10 @@ $requiredDrawAuditPatterns = @(
     "Applied ART21R2 Modal Section Pass",
     "modal_section_cut_dry_run_plan.csv",
     "purple-like pixels 1199 -> 0",
-    "purple-like pixels 1534 -> 0"
+    "purple-like pixels 1534 -> 0",
+    "Applied ART21R2 Modal Main-Game-Center Pass",
+    "No new generated art was introduced",
+    "non-empty modal rows and left-rail-safe placement"
 )
 foreach ($pattern in $requiredDrawAuditPatterns) {
     if ($drawSliceAudit -notmatch [regex]::Escape($pattern)) {
@@ -325,6 +334,20 @@ $requiredRunScenePatterns = @(
 foreach ($pattern in $requiredRunScenePatterns) {
     if ($runScene -notmatch $pattern) {
         Fail "run_scene.gd missing run action handler: $pattern"
+    }
+}
+
+$requiredRunSceneSmokePatterns = @(
+    'ART21R2_MODAL_ITEM_SMOKE_FLAG',
+    '--art21r2-seed-modal-items',
+    '_seed_art21r2_modal_smoke_items_if_requested',
+    'debug_spawn_test_item_floor',
+    'debug_spawn_test_item_backpack',
+    'OS\.get_cmdline_user_args'
+)
+foreach ($pattern in $requiredRunSceneSmokePatterns) {
+    if ($runScene -notmatch $pattern) {
+        Fail "run_scene.gd missing ART21R2 debug-smoke seed guard: $pattern"
     }
 }
 
@@ -512,15 +535,24 @@ $inventoryPanel = Get-Content -LiteralPath $inventoryPanelPath -Raw
 if ($inventoryPanel -notmatch 'texture_margin_left\s*=\s*38' -or $inventoryPanel -notmatch 'content_margin_left\s*=\s*30') {
     Fail "InventoryPanel must use ART21R2 modal 9-slice margins."
 }
+if ($inventoryPanel -notmatch '_main_game_modal_rect' -or $inventoryPanel -notmatch 'UILayerContractScript\.run_left_width') {
+    Fail "InventoryPanel must center runtime modals in the main gameplay region."
+}
 $groundLootPanelPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/ground_loot/ground_loot_panel.gd"
 $groundLootPanel = Get-Content -LiteralPath $groundLootPanelPath -Raw
 if ($groundLootPanel -notmatch 'texture_margin_left\s*=\s*38' -or $groundLootPanel -notmatch 'content_margin_left\s*=\s*30') {
     Fail "GroundLootPanel must use ART21R2 modal 9-slice margins."
 }
+if ($groundLootPanel -notmatch '_main_game_modal_rect' -or $groundLootPanel -notmatch 'UILayerContractScript\.run_left_width') {
+    Fail "GroundLootPanel must center runtime modals in the main gameplay region."
+}
 $resultPanelPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/result/result_panel.gd"
 $resultPanel = Get-Content -LiteralPath $resultPanelPath -Raw
 if ($resultPanel -notmatch 'NinePatchRect' -or $resultPanel -notmatch 'patch_margin_left\s*=\s*38') {
     Fail "ResultPanel must use a NinePatchRect ART21R2 modal frame."
+}
+if ($resultPanel -notmatch '_main_game_modal_rect' -or $resultPanel -notmatch 'UILayerContractScript\.run_left_width') {
+    Fail "ResultPanel must center runtime modals in the main gameplay region."
 }
 if ($resultPanel -match 'backdrop\s*=\s*ColorRect\.new\(\)') {
     Fail "ResultPanel must not recreate the legacy visible ColorRect backdrop."
@@ -732,6 +764,27 @@ $requiredSlice6ModalSectionPatterns = @(
 foreach ($pattern in $requiredSlice6ModalSectionPatterns) {
     if ($slice6ModalSectionReport -notmatch [regex]::Escape($pattern)) {
         Fail "ART21R2 Slice 6 Modal Section report missing required evidence: $pattern"
+    }
+}
+
+$slice6ModalCenterReport = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_SLICE6_MODAL_MAIN_GAME_CENTER_REPORT.md") -Raw
+$requiredSlice6ModalCenterPatterns = @(
+    "PARTIAL",
+    "--art21r2-seed-modal-items",
+    "debug-smoke seed",
+    "main gameplay region",
+    "without covering the left information rail",
+    "godot_deploy_prep_direct_from_main_pass34_smoke.png",
+    "godot_run_hud_modal_seed_pass34_smoke.png",
+    "godot_inventory_nonempty_main_game_center_pass34_smoke.png",
+    "godot_ground_loot_nonempty_main_game_center_pass34_smoke.png",
+    "godot_result_main_game_center_pass34_smoke.png",
+    "not natural loot progression completion",
+    "NOT_COMPLETE_R2_PARTIAL"
+)
+foreach ($pattern in $requiredSlice6ModalCenterPatterns) {
+    if ($slice6ModalCenterReport -notmatch [regex]::Escape($pattern)) {
+        Fail "ART21R2 Slice 6 Modal Main-Game-Center report missing required evidence: $pattern"
     }
 }
 

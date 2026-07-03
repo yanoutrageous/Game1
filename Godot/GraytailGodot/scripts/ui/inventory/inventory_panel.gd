@@ -6,6 +6,7 @@ const PresentationMappingScript := preload("res://scripts/presentation/presentat
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
+const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 
 signal drop_item_requested(instance_id: String)
 signal use_item_requested(instance_id: String)
@@ -172,38 +173,41 @@ func hide_panel() -> void:
 func apply_layout_profile(profile: Dictionary) -> void:
 	var is_low := bool(profile.get("is_low_resolution", false))
 	var is_high := bool(profile.get("is_high_resolution", false))
-	var profile_id: StringName = StringName(profile.get("profile_id", &"desktop"))
-	if profile_id == &"narrow" or is_low:
-		offset_left = 20.0
-		offset_top = 88.0
-		offset_right = 600.0
-		offset_bottom = 650.0
-		item_button_minimum_size = Vector2(360, 30)
-		if item_list != null:
-			item_list.custom_minimum_size = Vector2(500, 150)
-		if tooltip_label != null:
-			tooltip_label.custom_minimum_size = Vector2(500, 72)
-	elif is_high:
-		offset_left = 350.0
-		offset_top = 88.0
-		offset_right = 970.0
-		offset_bottom = 636.0
-		item_button_minimum_size = Vector2(430, 34)
-		if item_list != null:
-			item_list.custom_minimum_size = Vector2(560, 196)
-		if tooltip_label != null:
-			tooltip_label.custom_minimum_size = Vector2(560, 104)
-	else:
-		offset_left = 390.0
-		offset_top = 98.0
-		offset_right = 930.0
-		offset_bottom = 610.0
-		item_button_minimum_size = Vector2(380, 30)
-		if item_list != null:
-			item_list.custom_minimum_size = Vector2(500, 170)
-		if tooltip_label != null:
-			tooltip_label.custom_minimum_size = Vector2(500, 84)
+	var rect := _main_game_modal_rect(profile, 0.0)
+	offset_left = rect.position.x
+	offset_top = rect.position.y
+	offset_right = rect.position.x + rect.size.x
+	offset_bottom = rect.position.y + rect.size.y
+	var content_width: float = max(280.0, rect.size.x - 92.0)
+	item_button_minimum_size = Vector2(
+		max(220.0, content_width - (150.0 if is_low else 178.0)),
+		30.0 if is_low else (34.0 if is_high else 30.0)
+	)
+	if item_list != null:
+		item_list.custom_minimum_size = Vector2(content_width, 148.0 if is_low else (196.0 if is_high else 170.0))
+	if tooltip_label != null:
+		tooltip_label.custom_minimum_size = Vector2(content_width, 72.0 if is_low else (104.0 if is_high else 84.0))
 	_apply_art21_panel_frame()
+
+
+func _main_game_modal_rect(profile: Dictionary, y_shift: float = 0.0) -> Rect2:
+	var viewport_size := UILayerContractScript.viewport_size_from_profile(profile)
+	var width: float = maxf(1.0, viewport_size.x)
+	var height: float = maxf(1.0, viewport_size.y)
+	var margin: float = 18.0 if bool(profile.get("is_low_resolution", false)) else 24.0
+	var left_width: float = min(UILayerContractScript.run_left_width(profile), width * 0.42)
+	var gameplay_left: float = left_width + margin
+	var gameplay_width: float = maxf(260.0, width - gameplay_left - margin)
+	var modal_width: float = clampf(gameplay_width * 0.78, 430.0, 620.0)
+	if modal_width > gameplay_width:
+		modal_width = maxf(260.0, gameplay_width)
+	var modal_height: float = clampf(height * 0.76, 360.0, 548.0)
+	var bottom_reserve: float = 72.0 if bool(profile.get("is_low_resolution", false)) else 92.0
+	modal_height = min(modal_height, maxf(300.0, height - margin * 2.0 - bottom_reserve))
+	var x: float = gameplay_left + maxf(0.0, (gameplay_width - modal_width) * 0.5)
+	var y: float = margin + maxf(0.0, (height - bottom_reserve - modal_height) * 0.45) + y_shift
+	y = clampf(y, margin + 36.0, maxf(margin + 36.0, height - bottom_reserve - modal_height))
+	return Rect2(x, y, modal_width, modal_height)
 
 
 func _apply_art21_panel_frame() -> void:
