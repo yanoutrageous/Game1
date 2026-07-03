@@ -106,9 +106,14 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
 - Evidence screenshots:
   `screenshots/slice6/godot_map_overlay_art19_map64_pass27_smoke.png` and
   `screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png`.
+- Pass36 frame follow-up:
+  `screenshots/slice6/godot_map_overlay_zujian3_panel_frame_pass36_smoke.png`
+  proves the centered Map Overlay panel now uses the existing ART21R2 Zujian3
+  modal frame via `style_box_for_visual_key`.
 - Result: `PARTIAL`. The map cells are no longer the small generated empty
-  ART21 squares, but the modal frame and dense unknown-cell wall still fall below
-  the UE-floor Map Overlay target.
+  ART21 squares, and the modal frame is no longer the previous terminal panel
+  look, but the dense unknown-cell wall and title/footer hierarchy still fall
+  below the UE-floor Map Overlay target.
 
 ## Applied ART21R2 Modal Frame Pass
 

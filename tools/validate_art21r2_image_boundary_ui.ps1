@@ -71,6 +71,7 @@ $requiredScreenshots = @(
     "screenshots/slice3/godot_run_hud_m_map_open_pass26_smoke.png",
     "screenshots/slice6/godot_map_overlay_art19_map64_pass27_smoke.png",
     "screenshots/slice6/godot_map_overlay_art19_map64_selected_pass27_smoke.png",
+    "screenshots/slice6/godot_map_overlay_zujian3_panel_frame_pass36_smoke.png",
     "screenshots/slice6/godot_inventory_zujian3_modal_frame_pass28_smoke.png",
     "screenshots/slice6/godot_ground_loot_zujian3_modal_frame_pass28_smoke.png",
     "screenshots/slice6/godot_result_zujian3_modal_frame_pass28_smoke.png",
@@ -248,6 +249,7 @@ $requiredDrawAuditPatterns = @(
     "candidate crop with purple remnants is not runtime-ready evidence",
     "Applied ART21R2 Map Overlay Tile Pass",
     "ui.art19.map64.*",
+    "godot_map_overlay_zujian3_panel_frame_pass36_smoke.png",
     "Applied ART21R2 Modal Frame Pass",
     "modal_cut_dry_run_plan.csv",
     "purple-like pixels from 3690 to 0",
@@ -871,6 +873,9 @@ if ($mapOverlay -notmatch '_map_overlay_asset_ref_for_marker') {
 if ($mapOverlay -notmatch 'art19_map64_ref') {
     Fail "map_overlay_panel.gd should use draw-derived ART19 64px assets for large map overlay cells."
 }
+if ($mapOverlay -notmatch 'ART21R2_MAP_PANEL_FRAME_VISUAL_KEY' -or $mapOverlay -notmatch 'style_box_for_visual_key') {
+    Fail "map_overlay_panel.gd should use an ART21R2 image-backed modal frame for the centered map panel."
+}
 
 $slice6MapOverlayReport = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_SLICE6_MAP_OVERLAY_TILE_REPORT.md") -Raw
 $requiredSlice6MapOverlayPatterns = @(
@@ -878,6 +883,8 @@ $requiredSlice6MapOverlayPatterns = @(
     "art19_map64_ref",
     "godot_map_overlay_art19_map64_pass27_smoke.png",
     "godot_map_overlay_art19_map64_selected_pass27_smoke.png",
+    "godot_map_overlay_zujian3_panel_frame_pass36_smoke.png",
+    "Zujian3 modal frame",
     "No generated replacement art was introduced"
 )
 foreach ($pattern in $requiredSlice6MapOverlayPatterns) {

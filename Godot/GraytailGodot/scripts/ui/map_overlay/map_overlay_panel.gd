@@ -17,6 +17,7 @@ var marker_size: Vector2 = Vector2(42, 42)
 var title_font_size: int = 20
 var footer_font_size: int = 13
 const LEGACY_MAP_OVERLAY_VALIDATION_MARKER := "Click hidden cells to flag"
+const ART21R2_MAP_PANEL_FRAME_VISUAL_KEY := &"art21r2.modal.inventory.frame"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
@@ -190,7 +191,10 @@ func _apply_overlay_panel_style(control: Control) -> void:
 	if not (control is PanelContainer):
 		return
 	var panel := control as PanelContainer
-	panel.add_theme_stylebox_override("panel", Art10UISkinKitScript.panel_style(&"deep"))
+	var style := Art21UIPlacementContractScript.style_box_for_visual_key(ART21R2_MAP_PANEL_FRAME_VISUAL_KEY, &"ui.art19.panel.terminal_main", 30, 38)
+	if style == null:
+		style = Art10UISkinKitScript.panel_style(&"deep")
+	panel.add_theme_stylebox_override("panel", style)
 
 
 func _apply_marker_button_style(button: Button, theme_key: StringName) -> void:
