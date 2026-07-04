@@ -14,6 +14,8 @@ var current_model: Dictionary = {}
 var current_snapshot: Dictionary = {}
 var meta_summary_label: Label
 var layout_profile: Dictionary = {}
+var main_menu_entry_buttons: Array[Button] = []
+var selected_main_menu_entry_id: StringName = &"deploy"
 
 
 func build(model: Dictionary = {}) -> void:
@@ -29,6 +31,7 @@ func build(model: Dictionary = {}) -> void:
 	_build_meta_summary_panel()
 	_build_shortcut_panel()
 	_apply_layer_order()
+	call_deferred("_grab_main_menu_initial_focus")
 
 
 func _clear_children() -> void:
@@ -36,6 +39,8 @@ func _clear_children() -> void:
 		remove_child(child)
 		child.queue_free()
 	meta_summary_label = null
+	main_menu_entry_buttons.clear()
+	selected_main_menu_entry_id = &"deploy"
 
 
 func _apply_layer_order() -> void:
@@ -116,6 +121,7 @@ func _build_backdrop() -> void:
 	_add_texture_rect_from_ref(self, "Art09MainMenuBackground", Rect2(0, 0, 1280, 720), _dictionary_from(visuals.get("background", {})), 0.94)
 	_add_color_rect(self, "MainMenuVignette", Rect2(0, 0, 1280, 720), Color(0.0, 0.0, 0.0, 0.08))
 	_add_color_rect(self, "BaseHallWarmBacklight", Rect2(44, 176, 674, 348), Color(0.42, 0.30, 0.13, 0.035))
+	_add_image_panel_from_ref(self, "MainMenuTitlePlate", Rect2(52, 52, 440, 112), Art21UIPlacementContractScript.component_ref(&"art21r2.modal.title_plate", &"ui.art19.panel.terminal_main", &"main_menu_title_plate"), 16, 18, 0.86)
 	_add_label_token(self, "MainMenuTitle", Art10UISkinKitScript.rect(&"main_menu", "title"), String(current_model.get("title", "灰尾回收")), &"title", &"warning")
 	_add_label_token(self, "MainMenuSubtitle", Rect2(78, 150, 360, 30), "基地门厅", &"body", &"text")
 
@@ -235,6 +241,7 @@ func _add_entry_button(parent: Control, entry: Dictionary, large: bool = false, 
 	button.tooltip_text = ""
 	button.text = Art10UISkinKitScript.sanitize_player_copy(button.text)
 	button.custom_minimum_size = _layout_size(Vector2(410, 76) if large else Vector2(104, 36))
+	button.focus_mode = Control.FOCUS_ALL
 	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})), &"large_nav" if large else &"key")
 	var entry_id := StringName(entry.get("id", &""))
 	var tone := &"gold" if large and entry_id == &"deploy" else (&"primary" if large or bool(entry.get("primary", false)) else &"secondary")
@@ -245,14 +252,19 @@ func _add_entry_button(parent: Control, entry: Dictionary, large: bool = false, 
 
 
 func _build_physical_menu_panel() -> void:
+	_add_image_panel_from_ref(self, "MainMenuBoardHeaderPlate", Rect2(912, 96, 316, 72), Art21UIPlacementContractScript.component_ref(&"art21r2.modal.section.panel", &"ui.art19.panel.deploy_summary", &"main_menu_board_header"), 10, 18, 0.78)
 	_add_label_token(self, "MainMenuBoardHeader", Rect2(934, 108, 274, 34), "GRAYTAIL", &"hud", &"warning")
 	_add_label_token(self, "MainMenuBoardSubHeader", Rect2(934, 140, 274, 24), "GRAYTAIL CO.", &"caption", &"text")
 	var entry_index := 0
 	for raw_entry in _array_from(current_model, "entries"):
 		if raw_entry is Dictionary:
 			var entry: Dictionary = (raw_entry as Dictionary).duplicate(true)
-			_add_physical_entry_button(self, entry, _main_menu_entry_rect(entry_index))
+			var rect := _main_menu_entry_rect(entry_index)
+			_add_main_menu_entry_plate(self, entry, rect)
+			_add_physical_entry_button(self, entry, rect)
 			entry_index += 1
+	_wire_main_menu_entry_focus()
+	_set_main_menu_entry_selected(selected_main_menu_entry_id)
 
 
 func _add_physical_entry_button(parent: Control, entry: Dictionary, rect: Rect2) -> Button:
@@ -262,20 +274,79 @@ func _add_physical_entry_button(parent: Control, entry: Dictionary, rect: Rect2)
 	button.tooltip_text = ""
 	button.text = Art10UISkinKitScript.sanitize_player_copy(button.text)
 	button.custom_minimum_size = _layout_size(rect.size)
+	button.focus_mode = Control.FOCUS_ALL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_apply_art09_button_icon(button, _dictionary_from(entry.get("art09_asset_ref", {})), &"large_nav")
 	var entry_id := StringName(entry.get("id", &""))
+	button.set_meta("entry_id", entry_id)
 	var tone := &"gold" if entry_id == &"deploy" else &"secondary"
 	Art10UISkinKitScript.apply_transparent_button_token(button, tone, &"main_button", &"large_nav", 0)
 	button.add_theme_color_override("font_color", Color(0.92, 0.82, 0.62, 1.0) if entry_id == &"deploy" else Color(0.86, 0.78, 0.64, 1.0))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.88, 0.50, 1.0))
 	button.add_theme_color_override("font_pressed_color", Color(0.95, 0.68, 0.28, 1.0))
+	button.focus_entered.connect(func() -> void: _set_main_menu_entry_selected(entry_id))
+	button.mouse_entered.connect(func() -> void: _set_main_menu_entry_selected(entry_id))
 	button.pressed.connect(func() -> void: _emit_entry(entry))
 	parent.add_child(button)
 	_set_rect(button, rect)
+	main_menu_entry_buttons.append(button)
 	return button
+
+
+func _add_main_menu_entry_plate(parent: Control, entry: Dictionary, rect: Rect2) -> void:
+	var entry_id := StringName(entry.get("id", &"entry"))
+	var visual_key := &"art21r2.modal.button.primary" if entry_id == &"deploy" else &"art21r2.modal.button.secondary"
+	var plate_name := "MainMenuPhysicalEntryPlate_%s" % String(entry_id)
+	var plate_rect := rect.grow_individual(10.0, 8.0, 10.0, 8.0)
+	_add_image_panel_from_ref(parent, plate_name, plate_rect, Art21UIPlacementContractScript.component_ref(visual_key, &"ui.art19.button.dark", &"main_menu_entry_plate"), 10, 18, 0.58)
+	var arrow := _add_label_token(parent, "MainMenuPhysicalEntryArrow_%s" % String(entry_id), Rect2(rect.position.x + rect.size.x - 32.0, rect.position.y + 18.0, 26.0, 34.0), "▶", &"section_title", &"warning")
+	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
+
+func _wire_main_menu_entry_focus() -> void:
+	var count := main_menu_entry_buttons.size()
+	if count <= 0:
+		return
+	for index in range(count):
+		var button := main_menu_entry_buttons[index]
+		var previous := main_menu_entry_buttons[(index - 1 + count) % count]
+		var next := main_menu_entry_buttons[(index + 1) % count]
+		button.focus_neighbor_top = button.get_path_to(previous)
+		button.focus_neighbor_bottom = button.get_path_to(next)
+		button.focus_neighbor_left = button.get_path_to(previous)
+		button.focus_neighbor_right = button.get_path_to(next)
+
+
+func _set_main_menu_entry_selected(entry_id: StringName) -> void:
+	selected_main_menu_entry_id = entry_id
+	for button in main_menu_entry_buttons:
+		if button == null:
+			continue
+		var raw_id: Variant = button.get_meta("entry_id", &"")
+		var button_entry_id := StringName(raw_id)
+		var selected := button_entry_id == entry_id
+		var plate := get_node_or_null("MainMenuPhysicalEntryPlate_%s" % String(button_entry_id)) as CanvasItem
+		if plate != null:
+			plate.modulate = Color(1.18, 1.06, 0.74, 0.90) if selected else Color(0.86, 0.88, 0.78, 0.54)
+		var arrow := get_node_or_null("MainMenuPhysicalEntryArrow_%s" % String(button_entry_id)) as Label
+		if arrow != null:
+			arrow.add_theme_color_override("font_color", Color(1.0, 0.78, 0.30, 1.0) if selected else Color(0.58, 0.50, 0.38, 0.78))
+		button.add_theme_color_override("font_color", Color(1.0, 0.90, 0.58, 1.0) if selected else Color(0.86, 0.78, 0.64, 1.0))
+
+
+func _grab_main_menu_initial_focus() -> void:
+	for button in main_menu_entry_buttons:
+		if button == null:
+			continue
+		if StringName(button.get_meta("entry_id", &"")) == &"deploy":
+			button.grab_focus()
+			_set_main_menu_entry_selected(&"deploy")
+			return
+	if not main_menu_entry_buttons.is_empty() and main_menu_entry_buttons[0] != null:
+		main_menu_entry_buttons[0].grab_focus()
 
 
 func _main_menu_entry_rect(index: int) -> Rect2:
@@ -367,6 +438,20 @@ func _add_label_token(parent: Control, node_name: String, rect: Rect2, text: Str
 
 func _add_panel(parent: Control, node_name: String, rect: Rect2, tone: StringName) -> PanelContainer:
 	var panel := Art10UISkinKitScript.make_frame_panel(node_name, rect, tone)
+	parent.add_child(panel)
+	_set_rect(panel, rect)
+	return panel
+
+
+func _add_image_panel_from_ref(parent: Control, node_name: String, rect: Rect2, asset_ref: Dictionary, padding: int = 8, texture_margin: int = 18, alpha: float = 1.0) -> PanelContainer:
+	var style := Art10UISkinKitScript.style_box_from_asset_ref(asset_ref, padding, texture_margin)
+	if style == null:
+		return null
+	var panel := PanelContainer.new()
+	panel.name = node_name
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", style)
+	panel.modulate = Color(1.0, 1.0, 1.0, alpha)
 	parent.add_child(panel)
 	_set_rect(panel, rect)
 	return panel

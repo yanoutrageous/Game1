@@ -26,6 +26,11 @@ var interface_preview_label: Label
 var history_preview_label: Label
 var next_stage_label: Label
 var card_grid_container: GridContainer
+var content_detail_title_label: Label
+var content_detail_body_label: Label
+var content_detail_meta_label: Label
+var tab_button_order: Array[Button] = []
+var long_term_card_buttons: Array[Button] = []
 
 
 func build(model: Dictionary = {}) -> void:
@@ -36,6 +41,7 @@ func build(model: Dictionary = {}) -> void:
 	_build_static_layout()
 	_apply_layer_order()
 	_refresh_from_model()
+	call_deferred("_grab_long_term_initial_focus")
 
 
 func apply_snapshot(snapshot: Dictionary) -> void:
@@ -145,9 +151,13 @@ func _build_static_layout() -> void:
 	card_grid_container.columns = 3
 	card_grid_container.add_theme_constant_override("h_separation", 10)
 	card_grid_container.add_theme_constant_override("v_separation", 10)
-	_set_rect(card_grid_container, Rect2(356, 152, 548, 462))
+	_set_rect(card_grid_container, Rect2(356, 152, 548, 292))
 	add_child(card_grid_container)
-	next_stage_label = _add_label_token(self, "LongTermNextStage", Rect2(356, 620, 548, 20), "", &"caption", &"muted")
+	_add_panel(self, "LongTermContentDetailBlock", Rect2(356, 464, 548, 138), &"summary")
+	content_detail_title_label = _add_label_token(self, "LongTermContentDetailTitle", Rect2(372, 476, 516, 28), "", &"tab", &"warning")
+	content_detail_body_label = _add_label_token(self, "LongTermContentDetailBody", Rect2(372, 508, 516, 44), "", &"caption", &"text")
+	content_detail_meta_label = _add_label_token(self, "LongTermContentDetailMeta", Rect2(372, 556, 516, 30), "", &"caption", &"muted")
+	next_stage_label = _add_label_token(self, "LongTermNextStage", Rect2(356, 610, 548, 22), "", &"caption", &"muted")
 
 	_add_panel(self, "LongTermDetailStatusBlock", Rect2(964, 130, 256, 58), &"surface")
 	_add_panel(self, "LongTermDetailInfoBlock", Rect2(964, 198, 256, 68), &"deep")
@@ -183,6 +193,7 @@ func _compact_detail_column() -> void:
 
 func _build_tab_buttons() -> void:
 	tab_buttons.clear()
+	tab_button_order.clear()
 	var tab_row := HBoxContainer.new()
 	tab_row.name = "LongTermTopTabRow"
 	_set_rect(tab_row, Art10UISkinKitScript.rect(&"long_term", "tab_row"))
@@ -198,10 +209,14 @@ func _build_tab_buttons() -> void:
 		button.tooltip_text = String(module.get("reason", ""))
 		button.toggle_mode = true
 		button.custom_minimum_size = Vector2(76, 42)
+		button.focus_mode = Control.FOCUS_ALL
 		button.pressed.connect(Callable(self, "_on_module_tab_pressed").bind(module_id))
+		button.focus_entered.connect(Callable(self, "_preview_long_term_tab_focus").bind(module_id))
 		_apply_art19_button_surface(button, &"button_dark", &"secondary", &"tab", &"tab", 7, 14)
 		tab_row.add_child(button)
 		tab_buttons[module_id] = button
+		tab_button_order.append(button)
+	_wire_long_term_tab_focus()
 
 
 func _on_module_tab_pressed(module_id: StringName) -> void:
@@ -262,8 +277,18 @@ func _refresh_from_model() -> void:
 	module_reason_label.text = "资历\n探索 / 回收 / 失败"
 	snapshot_label.text = "资源\n金币 / 黑币 / 奖励"
 	interface_preview_label.text = "奖励\n事件 / 图鉴 / 外观"
+	if content_detail_title_label != null:
+		content_detail_title_label.text = "%s  /  %s" % [
+			_shorten_copy(String(panel.get("title", "长期内容")), 12),
+			Art10UISkinKitScript.status_label(panel.get("state", "preview")),
+		]
+	if content_detail_body_label != null:
+		content_detail_body_label.text = _detail_module_copy(String(panel.get("description", "")), content_preview.get("detail_preview", {}))
+	if content_detail_meta_label != null:
+		content_detail_meta_label.text = "解锁条件  %s  ·  预览内容不会写入玩法收益" % _shorten_copy(String(panel.get("reason", "尚未开放")), 18)
 	next_stage_label.text = ""
 	_refresh_card_grid(content_preview.get("cards", []) as Array)
+	_wire_long_term_tab_focus()
 	_normalize_static_copy()
 	_apply_art10_text_refresh()
 	_refresh_tab_buttons()
@@ -312,10 +337,11 @@ func _set_button_text(node_name: String, text: String) -> void:
 func _refresh_card_grid(cards: Array) -> void:
 	if card_grid_container == null:
 		return
+	long_term_card_buttons.clear()
 	for child in card_grid_container.get_children():
 		card_grid_container.remove_child(child)
 		child.queue_free()
-	var visible_cards := cards.slice(0, 9)
+	var visible_cards := cards.slice(0, 6)
 	if visible_cards.is_empty():
 		var placeholder := Label.new()
 		placeholder.text = "当前模块尚无可展示卡片。"
@@ -324,7 +350,7 @@ func _refresh_card_grid(cards: Array) -> void:
 		card_grid_container.add_child(placeholder)
 		return
 	var display_cards := visible_cards.duplicate(true)
-	while display_cards.size() < 9:
+	while display_cards.size() < 6:
 		display_cards.append({
 			"id": "archive_slot_%d" % display_cards.size(),
 			"title": _archive_slot_title(display_cards.size()),
@@ -332,7 +358,7 @@ func _refresh_card_grid(cards: Array) -> void:
 			"description": "档案位待解锁。",
 		})
 	var index := 0
-	for card: Dictionary in display_cards.slice(0, 9):
+	for card: Dictionary in display_cards.slice(0, 6):
 		var button := Button.new()
 		button.name = "LongTermCard_%s" % str(card.get("id", index))
 		button.text = "%s\n%s\n%s" % [
@@ -341,12 +367,18 @@ func _refresh_card_grid(cards: Array) -> void:
 			_archive_card_state_label(StringName(card.get("state", "preview")), index),
 		]
 		button.tooltip_text = String(card.get("description", ""))
-		button.custom_minimum_size = Vector2(170, 132)
+		button.custom_minimum_size = Vector2(170, 118)
 		button.toggle_mode = true
 		button.button_pressed = index == 0
+		button.focus_mode = Control.FOCUS_ALL
+		button.set_meta("card_index", index)
+		button.focus_entered.connect(Callable(self, "_set_long_term_card_selected").bind(index))
+		button.mouse_entered.connect(Callable(self, "_set_long_term_card_selected").bind(index))
 		_apply_art19_button_surface(button, &"panel_highlight" if index == 0 else &"panel_deploy_main", Art10UISkinKitScript.visual_state_tone(&"selected" if index == 0 else &"normal"), &"body_small", &"slot", 10, 18)
 		card_grid_container.add_child(button)
+		long_term_card_buttons.append(button)
 		index += 1
+	_wire_long_term_card_focus()
 
 
 func _archive_slot_title(index: int) -> String:
@@ -391,6 +423,73 @@ func _refresh_tab_buttons() -> void:
 		if button != null:
 			button.button_pressed = StringName(module_id) == selected_module_id
 			_apply_art19_button_surface(button, &"button_selected_tab" if button.button_pressed else &"button_dark", Art10UISkinKitScript.visual_state_tone(&"selected" if button.button_pressed else &"normal"), &"tab", &"tab", 7, 14)
+
+
+func _preview_long_term_tab_focus(module_id: StringName) -> void:
+	selected_module_id = module_id
+	_refresh_tab_buttons()
+
+
+func _wire_long_term_tab_focus() -> void:
+	var count := tab_button_order.size()
+	if count <= 0:
+		return
+	for index in range(count):
+		var button := tab_button_order[index]
+		if button == null:
+			continue
+		var previous := tab_button_order[(index - 1 + count) % count]
+		var next := tab_button_order[(index + 1) % count]
+		button.focus_neighbor_left = button.get_path_to(previous)
+		button.focus_neighbor_right = button.get_path_to(next)
+		if not long_term_card_buttons.is_empty():
+			button.focus_neighbor_bottom = button.get_path_to(long_term_card_buttons[index % long_term_card_buttons.size()])
+
+
+func _wire_long_term_card_focus() -> void:
+	var count := long_term_card_buttons.size()
+	if count <= 0:
+		return
+	var columns := 3
+	for index in range(count):
+		var button := long_term_card_buttons[index]
+		if button == null:
+			continue
+		var row_start := int(index / columns) * columns
+		var row_end := mini(row_start + columns - 1, count - 1)
+		var left_index := row_end if index == row_start else index - 1
+		var right_index := row_start if index == row_end else index + 1
+		var up_index := index - columns
+		var down_index := index + columns
+		button.focus_neighbor_left = button.get_path_to(long_term_card_buttons[left_index])
+		button.focus_neighbor_right = button.get_path_to(long_term_card_buttons[right_index])
+		if up_index >= 0:
+			button.focus_neighbor_top = button.get_path_to(long_term_card_buttons[up_index])
+		elif not tab_button_order.is_empty():
+			button.focus_neighbor_top = button.get_path_to(tab_button_order[index % tab_button_order.size()])
+		if down_index < count:
+			button.focus_neighbor_bottom = button.get_path_to(long_term_card_buttons[down_index])
+		else:
+			button.focus_neighbor_bottom = button.get_path_to(long_term_card_buttons[index % columns])
+
+
+func _set_long_term_card_selected(card_index: int) -> void:
+	for button in long_term_card_buttons:
+		if button == null:
+			continue
+		var raw_index: Variant = button.get_meta("card_index", -1)
+		var selected := int(raw_index) == card_index
+		button.button_pressed = selected
+		_apply_art19_button_surface(button, &"panel_highlight" if selected else &"panel_deploy_main", Art10UISkinKitScript.visual_state_tone(&"selected" if selected else &"normal"), &"body_small", &"slot", 10, 18)
+
+
+func _grab_long_term_initial_focus() -> void:
+	var selected_tab := tab_buttons.get(selected_module_id, null) as Button
+	if selected_tab != null:
+		selected_tab.grab_focus()
+		return
+	if not tab_button_order.is_empty() and tab_button_order[0] != null:
+		tab_button_order[0].grab_focus()
 
 
 func _format_child_groups(groups: Array) -> String:
@@ -497,10 +596,14 @@ func _apply_art10_text_refresh() -> void:
 		child_preview_label,
 		history_preview_label,
 		next_stage_label,
+		content_detail_body_label,
+		content_detail_meta_label,
 	]:
 		if label is Label:
 			Art10UISkinKitScript.apply_label_token(label, &"caption", &"text")
 			label.clip_text = false
+	if content_detail_title_label is Label:
+		Art10UISkinKitScript.apply_label_token(content_detail_title_label, &"tab", &"warning")
 	if module_title_label is Label:
 		Art10UISkinKitScript.apply_label_token(module_title_label, &"section_title", &"warning")
 	if module_state_label is Label:
@@ -519,6 +622,23 @@ func _clear_children() -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
+	tab_buttons.clear()
+	tab_button_order.clear()
+	long_term_card_buttons.clear()
+	overview_label = null
+	module_title_label = null
+	module_state_label = null
+	module_body_label = null
+	module_reason_label = null
+	child_preview_label = null
+	snapshot_label = null
+	interface_preview_label = null
+	history_preview_label = null
+	next_stage_label = null
+	content_detail_title_label = null
+	content_detail_body_label = null
+	content_detail_meta_label = null
+	card_grid_container = null
 
 
 func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, callback: Callable) -> Button:
@@ -526,6 +646,7 @@ func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, 
 	button.name = node_name
 	button.text = text
 	_set_rect(button, rect)
+	button.focus_mode = Control.FOCUS_ALL
 	_apply_art19_button_surface(button, &"button_dark", &"secondary", &"caption", &"button", 6, 12)
 	button.pressed.connect(callback)
 	parent.add_child(button)

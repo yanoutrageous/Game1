@@ -27,7 +27,8 @@ $requiredFiles = @(
     "docs/art/validation/art21r2/ART21R2_SLICE6_DEPLOY_LONGTERM_ART19_SURFACE_REPORT.md",
     "docs/art/validation/art21r2/ART21R2_DRAW_SLICE_AUDIT.md",
     "docs/art/validation/art21r2/ART21R2_SOURCE_SLOT_CUTTING_MATRIX.csv",
-    "docs/art/validation/art21r2/ART21R2_SLICE7_SOURCE_INVENTORY_AND_CUTTING_PLAN.md"
+    "docs/art/validation/art21r2/ART21R2_SLICE7_SOURCE_INVENTORY_AND_CUTTING_PLAN.md",
+    "docs/art/validation/art21r2/ART21R2_SLICE8_CORE_SCREEN_PRODUCT_HIERARCHY_REPORT.md"
 )
 
 foreach ($file in $requiredFiles) {
@@ -96,7 +97,12 @@ $requiredScreenshots = @(
     "screenshots/slice6/godot_main_menu_art19_inner_surfaces_pass35_smoke.png",
     "screenshots/slice6/godot_deploy_prep_art19_inner_surfaces_pass35_smoke.png",
     "screenshots/slice6/godot_long_term_art19_inner_surfaces_pass35_smoke.png",
-    "screenshots/slice6/godot_run_hud_from_deploy_art19_inner_surfaces_pass35_smoke.png"
+    "screenshots/slice6/godot_run_hud_from_deploy_art19_inner_surfaces_pass35_smoke.png",
+    "screenshots/slice8/godot_main_menu_product_hierarchy_pass43_smoke.png",
+    "screenshots/slice8/godot_deploy_prep_route_guard_pass44_smoke.png",
+    "screenshots/slice8/godot_long_term_product_hierarchy_pass45_smoke.png",
+    "screenshots/slice8/godot_run_hud_route_guard_pass46_smoke.png",
+    "screenshots/slice8/godot_map_overlay_route_guard_pass47_smoke.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -205,6 +211,7 @@ $requiredSlots = @(
     "deploy_prep.right_summary_panel",
     "long_term.left_profile_frame",
     "long_term.collection_wall",
+    "long_term.center_content_detail",
     "long_term.right_detail_panel",
     "run_hud.room_world",
     "run_hud.left_info_rail",
@@ -314,9 +321,10 @@ foreach ($row in $sourceMatrix) {
 }
 
 $requiredSourceSlots = @(
-    @("main_menu", "title", "none_runtime_text", "needs_source_selection"),
+    @("main_menu", "title", "art21r2_formal_draw_cut_ready", "needs_source_selection"),
     @("deploy_prep", "left_character_frame", "art21_generated_transition", "needs_new_cut"),
     @("long_term", "collection_wall", "art21_generated_transition", "needs_source_selection"),
+    @("long_term", "center_content_detail", "art19_draw_borrowed", "needs_source_selection"),
     @("run_hud", "left_info_rail", "art21r2_generated_transition", "needs_source_selection"),
     @("run_hud", "scanner_minimap", "art21r2_formal_draw_cut_ready", "needs_new_cut"),
     @("map_overlay", "modal_dimmer", "code_scrim_exception", "runtime_text_ok"),
@@ -447,6 +455,21 @@ if ($mainMenu -notmatch 'apply_transparent_button_token') {
 if ($mainMenu -notmatch 'button\.pressed\.connect\(func\(\) -> void: _emit_entry\(entry\)\)') {
     Fail "main_menu_shell.gd must preserve entry pressed -> _emit_entry route logic."
 }
+$requiredMainMenuSlice8Patterns = @(
+    'MainMenuTitlePlate',
+    'MainMenuBoardHeaderPlate',
+    'MainMenuPhysicalEntryPlate_%s',
+    'main_menu_entry_buttons',
+    '_wire_main_menu_entry_focus',
+    '_grab_main_menu_initial_focus',
+    'art21r2\.modal\.button\.primary',
+    'art21r2\.modal\.button\.secondary'
+)
+foreach ($pattern in $requiredMainMenuSlice8Patterns) {
+    if ($mainMenu -notmatch $pattern) {
+        Fail "main_menu_shell.gd missing Slice 8 product hierarchy pattern: $pattern"
+    }
+}
 
 $deployPrepPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_shell.gd"
 $deployPrep = Get-Content -LiteralPath $deployPrepPath -Raw
@@ -475,6 +498,20 @@ $requiredLongTermSurfacePatterns = @(
 foreach ($pattern in $requiredLongTermSurfacePatterns) {
     if ($longTerm -notmatch $pattern) {
         Fail "long_term_shell.gd missing ART19 image surface pattern: $pattern"
+    }
+}
+$requiredLongTermSlice8Patterns = @(
+    'LongTermContentDetailBlock',
+    'content_detail_title_label',
+    'tab_button_order',
+    'long_term_card_buttons',
+    '_wire_long_term_tab_focus',
+    '_wire_long_term_card_focus',
+    '_grab_long_term_initial_focus'
+)
+foreach ($pattern in $requiredLongTermSlice8Patterns) {
+    if ($longTerm -notmatch $pattern) {
+        Fail "long_term_shell.gd missing Slice 8 hierarchy/focus pattern: $pattern"
     }
 }
 
