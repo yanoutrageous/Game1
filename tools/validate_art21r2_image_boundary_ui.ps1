@@ -28,7 +28,8 @@ $requiredFiles = @(
     "docs/art/validation/art21r2/ART21R2_DRAW_SLICE_AUDIT.md",
     "docs/art/validation/art21r2/ART21R2_SOURCE_SLOT_CUTTING_MATRIX.csv",
     "docs/art/validation/art21r2/ART21R2_SLICE7_SOURCE_INVENTORY_AND_CUTTING_PLAN.md",
-    "docs/art/validation/art21r2/ART21R2_SLICE8_CORE_SCREEN_PRODUCT_HIERARCHY_REPORT.md"
+    "docs/art/validation/art21r2/ART21R2_SLICE8_CORE_SCREEN_PRODUCT_HIERARCHY_REPORT.md",
+    "docs/art/validation/art21r2/ART21R2_SLICE9_MAIN_MENU_SOURCE_CUT_REPORT.md"
 )
 
 foreach ($file in $requiredFiles) {
@@ -102,7 +103,9 @@ $requiredScreenshots = @(
     "screenshots/slice8/godot_deploy_prep_route_guard_pass44_smoke.png",
     "screenshots/slice8/godot_long_term_product_hierarchy_pass45_smoke.png",
     "screenshots/slice8/godot_run_hud_route_guard_pass46_smoke.png",
-    "screenshots/slice8/godot_map_overlay_route_guard_pass47_smoke.png"
+    "screenshots/slice8/godot_map_overlay_route_guard_pass47_smoke.png",
+    "screenshots/slice9/godot_main_menu_main_png_planks_pass48_smoke.png",
+    "screenshots/slice9/godot_deploy_prep_direct_from_main_pass49_smoke.png"
 )
 
 foreach ($screenshot in $requiredScreenshots) {
@@ -322,6 +325,8 @@ foreach ($row in $sourceMatrix) {
 
 $requiredSourceSlots = @(
     @("main_menu", "title", "art21r2_formal_draw_cut_ready", "needs_source_selection"),
+    @("main_menu", "action_deck_frame", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
+    @("main_menu", "deploy_entry", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
     @("deploy_prep", "left_character_frame", "art21_generated_transition", "needs_new_cut"),
     @("long_term", "collection_wall", "art21_generated_transition", "needs_source_selection"),
     @("long_term", "center_content_detail", "art19_draw_borrowed", "needs_source_selection"),
@@ -364,7 +369,8 @@ $sourceMatrixRequiredCandidates = @(
     "D:\AGAME1\sources\art\ART-21R2\_manifest\modal_cut_manifest.csv",
     "D:\AGAME1\sources\art\ART-21R2\_manifest\modal_control_cut_manifest.csv",
     "D:\AGAME1\sources\art\ART-21R2\_manifest\modal_section_cut_manifest.csv",
-    "D:\AGAME1\sources\art\ART-21R2\_manifest\minimap_hud_cut_manifest.csv"
+    "D:\AGAME1\sources\art\ART-21R2\_manifest\minimap_hud_cut_manifest.csv",
+    "D:\AGAME1\sources\art\ART-21R2\_manifest\main_menu_cut_manifest.csv"
 )
 $sourceMatrixRaw = Get-Content -LiteralPath $sourceMatrixPath -Raw
 foreach ($pattern in $sourceMatrixRequiredCandidates) {
@@ -390,6 +396,29 @@ $requiredSlice7Patterns = @(
 foreach ($pattern in $requiredSlice7Patterns) {
     if ($slice7Report -notmatch [regex]::Escape($pattern)) {
         Fail "ART21R2 Slice 7 source inventory report missing required evidence: $pattern"
+    }
+}
+
+$slice9Report = Get-Content -LiteralPath (Join-Path $validationRoot "ART21R2_SLICE9_MAIN_MENU_SOURCE_CUT_REPORT.md") -Raw
+$requiredSlice9Patterns = @(
+    "NOT_COMPLETE_R2_PARTIAL",
+    "tools/art21r2_cut_main_menu_assets.py",
+    "Main.png",
+    "5.png",
+    "Zujian3.png",
+    "main_menu_cut_manifest.csv",
+    "ui.art21r2.main_menu.title_board",
+    "ui.art21r2.main_menu.entry_plank.deploy",
+    "source-silhouette alpha mask",
+    "godot_main_menu_main_png_planks_pass48_smoke.png",
+    "godot_deploy_prep_direct_from_main_pass49_smoke.png",
+    "Start Exploration -> Deploy Prep",
+    "No area, map, or difficulty selection screen was added",
+    "title text remains runtime text"
+)
+foreach ($pattern in $requiredSlice9Patterns) {
+    if ($slice9Report -notmatch [regex]::Escape($pattern)) {
+        Fail "ART21R2 Slice 9 Main Menu source cut report missing required evidence: $pattern"
     }
 }
 
@@ -430,7 +459,13 @@ $requiredDrawAuditPatterns = @(
     "Start Exploration direct Deploy Prep route remained unchanged",
     "godot_deploy_prep_art19_inner_surfaces_pass35_smoke.png",
     "godot_long_term_art19_inner_surfaces_pass35_smoke.png",
-    "deploy and long-term inner surfaces use ART19 draw-derived image style boxes"
+    "deploy and long-term inner surfaces use ART19 draw-derived image style boxes",
+    "Applied ART21R2 Main Menu Source Cut Pass",
+    "main_menu_cut_manifest.csv",
+    "source-silhouette alpha mask",
+    "godot_main_menu_main_png_planks_pass48_smoke.png",
+    "godot_deploy_prep_direct_from_main_pass49_smoke.png",
+    "Main Menu title lettering remains runtime text"
 )
 foreach ($pattern in $requiredDrawAuditPatterns) {
     if ($drawSliceAudit -notmatch [regex]::Escape($pattern)) {
@@ -456,18 +491,24 @@ if ($mainMenu -notmatch 'button\.pressed\.connect\(func\(\) -> void: _emit_entry
     Fail "main_menu_shell.gd must preserve entry pressed -> _emit_entry route logic."
 }
 $requiredMainMenuSlice8Patterns = @(
-    'MainMenuTitlePlate',
+    'MainMenuTitleBoard',
     'MainMenuBoardHeaderPlate',
     'MainMenuPhysicalEntryPlate_%s',
     'main_menu_entry_buttons',
     '_wire_main_menu_entry_focus',
     '_grab_main_menu_initial_focus',
-    'art21r2\.modal\.button\.primary',
-    'art21r2\.modal\.button\.secondary'
+    '_main_menu_entry_visual_key',
+    '_main_menu_entry_plate_rect',
+    'art21r2\.main_menu\.title_board',
+    'art21r2\.main_menu\.board_header',
+    'art21r2\.main_menu\.entry_plank\.deploy',
+    'art21r2\.main_menu\.entry_plank\.long_term',
+    'art21r2\.main_menu\.entry_plank\.settings',
+    'art21r2\.main_menu\.entry_plank\.exit'
 )
 foreach ($pattern in $requiredMainMenuSlice8Patterns) {
     if ($mainMenu -notmatch $pattern) {
-        Fail "main_menu_shell.gd missing Slice 8 product hierarchy pattern: $pattern"
+        Fail "main_menu_shell.gd missing Slice 9 product hierarchy pattern: $pattern"
     }
 }
 
@@ -666,6 +707,12 @@ $requiredPlacementPatterns = @(
     'art21r2\.modal\.button\.danger',
     'art21r2\.map_overlay\.marker\.event',
     'art21r2\.map_overlay\.marker\.flag',
+    'art21r2\.main_menu\.title_board',
+    'art21r2\.main_menu\.board_header',
+    'art21r2\.main_menu\.entry_plank\.deploy',
+    'art21r2\.main_menu\.entry_plank\.long_term',
+    'art21r2\.main_menu\.entry_plank\.settings',
+    'art21r2\.main_menu\.entry_plank\.exit',
     'style_box_for_visual_key',
     'run_hud\.left_info_rail'
 )
@@ -702,7 +749,13 @@ $requiredManifestIds = @(
     'ui.art19.map64.chest',
     'ui.art19.map64.exit',
     'ui.art21r2.map_overlay.marker.event',
-    'ui.art21r2.map_overlay.marker.flag'
+    'ui.art21r2.map_overlay.marker.flag',
+    'ui.art21r2.main_menu.title_board',
+    'ui.art21r2.main_menu.board_header',
+    'ui.art21r2.main_menu.entry_plank.deploy',
+    'ui.art21r2.main_menu.entry_plank.long_term',
+    'ui.art21r2.main_menu.entry_plank.settings',
+    'ui.art21r2.main_menu.entry_plank.exit'
 )
 foreach ($assetId in $requiredManifestIds) {
     if ($manifest -notmatch [regex]::Escape($assetId)) {
@@ -732,7 +785,13 @@ $requiredRuntimeAssets = @(
     "Godot/GraytailGodot/assets/ui/art19/map64/chest_icon_64.png",
     "Godot/GraytailGodot/assets/ui/art19/map64/exit_icon_64.png",
     "Godot/GraytailGodot/assets/ui/art21r2/map_overlay/ui_art21r2_map_overlay_marker_event.png",
-    "Godot/GraytailGodot/assets/ui/art21r2/map_overlay/ui_art21r2_map_overlay_marker_flag.png"
+    "Godot/GraytailGodot/assets/ui/art21r2/map_overlay/ui_art21r2_map_overlay_marker_flag.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/main_menu/ui_art21r2_main_menu_title_board.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/main_menu/ui_art21r2_main_menu_board_header.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/main_menu/ui_art21r2_main_menu_entry_plank_deploy.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/main_menu/ui_art21r2_main_menu_entry_plank_long_term.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/main_menu/ui_art21r2_main_menu_entry_plank_settings.png",
+    "Godot/GraytailGodot/assets/ui/art21r2/main_menu/ui_art21r2_main_menu_entry_plank_exit.png"
 )
 foreach ($assetPath in $requiredRuntimeAssets) {
     $fullPath = Join-Path $root $assetPath
@@ -742,6 +801,75 @@ foreach ($assetPath in $requiredRuntimeAssets) {
     if ((Get-Item -LiteralPath $fullPath).Length -le 0) {
         Fail "ART21R2 runtime minimap HUD asset is empty: $assetPath"
     }
+}
+
+$mainMenuCutToolPath = Join-Path $root "tools/art21r2_cut_main_menu_assets.py"
+if (-not (Test-Path -LiteralPath $mainMenuCutToolPath -PathType Leaf)) {
+    Fail "Missing ART21R2 main menu cut tool: tools/art21r2_cut_main_menu_assets.py"
+}
+$mainMenuCutTool = Get-Content -LiteralPath $mainMenuCutToolPath -Raw
+$requiredMainMenuToolPatterns = @(
+    'Main.png',
+    'main_menu_cut_dry_run_plan.csv',
+    '--write-runtime',
+    '--force',
+    'source-silhouette alpha mask',
+    'ui.art21r2.main_menu.title_board',
+    'ui.art21r2.main_menu.board_header',
+    'ui.art21r2.main_menu.entry_plank.deploy',
+    'ui.art21r2.main_menu.entry_plank.long_term',
+    'ui.art21r2.main_menu.entry_plank.settings',
+    'ui.art21r2.main_menu.entry_plank.exit'
+)
+foreach ($pattern in $requiredMainMenuToolPatterns) {
+    if ($mainMenuCutTool -notmatch [regex]::Escape($pattern)) {
+        Fail "ART21R2 main menu cut tool missing required pattern: $pattern"
+    }
+}
+
+$modalManifestRoot = "D:\AGAME1\sources\art\ART-21R2\_manifest"
+$requiredMainMenuManifestFiles = @(
+    "main_menu_staging_manifest.csv",
+    "main_menu_cut_dry_run_plan.csv",
+    "main_menu_cut_manifest.csv",
+    "main_menu_cut_summary.json"
+)
+foreach ($file in $requiredMainMenuManifestFiles) {
+    $path = Join-Path $modalManifestRoot $file
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        Fail "Missing ART21R2 main menu manifest file: $path"
+    }
+    if ((Get-Item -LiteralPath $path).Length -le 0) {
+        Fail "ART21R2 main menu manifest file is empty: $path"
+    }
+}
+$mainMenuCutRows = @(Import-Csv -LiteralPath (Join-Path $modalManifestRoot "main_menu_cut_manifest.csv"))
+if ($mainMenuCutRows.Count -ne 6) {
+    Fail "ART21R2 main menu cut manifest must have exactly 6 rows: $($mainMenuCutRows.Count)"
+}
+$requiredMainMenuAssetIds = @(
+    "ui.art21r2.main_menu.title_board",
+    "ui.art21r2.main_menu.board_header",
+    "ui.art21r2.main_menu.entry_plank.deploy",
+    "ui.art21r2.main_menu.entry_plank.long_term",
+    "ui.art21r2.main_menu.entry_plank.settings",
+    "ui.art21r2.main_menu.entry_plank.exit"
+)
+foreach ($assetId in $requiredMainMenuAssetIds) {
+    $row = $mainMenuCutRows | Where-Object { $_.asset_id -eq $assetId }
+    if (-not $row) {
+        Fail "ART21R2 main menu cut manifest missing asset id: $assetId"
+    }
+    if ($row.status -ne "runtime_written") {
+        Fail "ART21R2 main menu cut manifest row is not runtime_written: $assetId"
+    }
+    if ($row.purple_like_after -ne "0") {
+        Fail "ART21R2 main menu cut manifest row still has purple-like pixels: $assetId"
+    }
+}
+$mainMenuCutSummary = Get-Content -LiteralPath (Join-Path $modalManifestRoot "main_menu_cut_summary.json") -Raw
+if ($mainMenuCutSummary -notmatch '"source_status": "Main.png no-text background; direct crop source, not generated"' -or $mainMenuCutSummary -notmatch '"write_runtime": true') {
+    Fail "ART21R2 main menu cut summary must record Main.png source status and runtime write."
 }
 
 $modalCutToolPath = Join-Path $root "tools/art21r2_cut_modal_assets.py"
@@ -764,7 +892,6 @@ foreach ($pattern in $requiredModalToolPatterns) {
     }
 }
 
-$modalManifestRoot = "D:\AGAME1\sources\art\ART-21R2\_manifest"
 $requiredModalManifestFiles = @(
     "modal_staging_manifest.csv",
     "modal_cut_dry_run_plan.csv",

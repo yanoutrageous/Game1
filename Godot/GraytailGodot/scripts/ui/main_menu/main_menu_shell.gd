@@ -121,7 +121,7 @@ func _build_backdrop() -> void:
 	_add_texture_rect_from_ref(self, "Art09MainMenuBackground", Rect2(0, 0, 1280, 720), _dictionary_from(visuals.get("background", {})), 0.94)
 	_add_color_rect(self, "MainMenuVignette", Rect2(0, 0, 1280, 720), Color(0.0, 0.0, 0.0, 0.08))
 	_add_color_rect(self, "BaseHallWarmBacklight", Rect2(44, 176, 674, 348), Color(0.42, 0.30, 0.13, 0.035))
-	_add_image_panel_from_ref(self, "MainMenuTitlePlate", Rect2(52, 52, 440, 112), Art21UIPlacementContractScript.component_ref(&"art21r2.modal.title_plate", &"ui.art19.panel.terminal_main", &"main_menu_title_plate"), 16, 18, 0.86)
+	_add_texture_rect_from_ref(self, "MainMenuTitleBoard", Rect2(44, 67, 528, 145), Art21UIPlacementContractScript.component_ref(&"art21r2.main_menu.title_board", &"ui.main_menu.background.no_text", &"main_menu_title_board"), 0.94)
 	_add_label_token(self, "MainMenuTitle", Art10UISkinKitScript.rect(&"main_menu", "title"), String(current_model.get("title", "灰尾回收")), &"title", &"warning")
 	_add_label_token(self, "MainMenuSubtitle", Rect2(78, 150, 360, 30), "基地门厅", &"body", &"text")
 
@@ -252,7 +252,7 @@ func _add_entry_button(parent: Control, entry: Dictionary, large: bool = false, 
 
 
 func _build_physical_menu_panel() -> void:
-	_add_image_panel_from_ref(self, "MainMenuBoardHeaderPlate", Rect2(912, 96, 316, 72), Art21UIPlacementContractScript.component_ref(&"art21r2.modal.section.panel", &"ui.art19.panel.deploy_summary", &"main_menu_board_header"), 10, 18, 0.78)
+	_add_texture_rect_from_ref(self, "MainMenuBoardHeaderPlate", Rect2(896, 60, 298, 142), Art21UIPlacementContractScript.component_ref(&"art21r2.main_menu.board_header", &"ui.main_menu.background.no_text", &"main_menu_board_header"), 0.98)
 	_add_label_token(self, "MainMenuBoardHeader", Rect2(934, 108, 274, 34), "GRAYTAIL", &"hud", &"warning")
 	_add_label_token(self, "MainMenuBoardSubHeader", Rect2(934, 140, 274, 24), "GRAYTAIL CO.", &"caption", &"text")
 	var entry_index := 0
@@ -297,10 +297,8 @@ func _add_physical_entry_button(parent: Control, entry: Dictionary, rect: Rect2)
 
 func _add_main_menu_entry_plate(parent: Control, entry: Dictionary, rect: Rect2) -> void:
 	var entry_id := StringName(entry.get("id", &"entry"))
-	var visual_key := &"art21r2.modal.button.primary" if entry_id == &"deploy" else &"art21r2.modal.button.secondary"
 	var plate_name := "MainMenuPhysicalEntryPlate_%s" % String(entry_id)
-	var plate_rect := rect.grow_individual(10.0, 8.0, 10.0, 8.0)
-	_add_image_panel_from_ref(parent, plate_name, plate_rect, Art21UIPlacementContractScript.component_ref(visual_key, &"ui.art19.button.dark", &"main_menu_entry_plate"), 10, 18, 0.58)
+	_add_texture_rect_from_ref(parent, plate_name, _main_menu_entry_plate_rect(entry_id), Art21UIPlacementContractScript.component_ref(_main_menu_entry_visual_key(entry_id), &"ui.main_menu.background.no_text", &"main_menu_entry_plank"), 0.94)
 	var arrow := _add_label_token(parent, "MainMenuPhysicalEntryArrow_%s" % String(entry_id), Rect2(rect.position.x + rect.size.x - 32.0, rect.position.y + 18.0, 26.0, 34.0), "▶", &"section_title", &"warning")
 	arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -359,6 +357,34 @@ func _main_menu_entry_rect(index: int) -> Rect2:
 	if index >= 0 and index < rects.size():
 		return rects[index]
 	return Rect2(948, 540 + float(index - 3) * 74.0, 272, 70)
+
+
+func _main_menu_entry_plate_rect(entry_id: StringName) -> Rect2:
+	match entry_id:
+		&"deploy":
+			return Rect2(902, 216, 293, 106)
+		&"long_term":
+			return Rect2(911, 324, 282, 101)
+		&"settings":
+			return Rect2(925, 430, 266, 101)
+		&"exit_game":
+			return Rect2(939, 539, 251, 98)
+		_:
+			return Rect2(911, 324, 282, 101)
+
+
+func _main_menu_entry_visual_key(entry_id: StringName) -> StringName:
+	match entry_id:
+		&"deploy":
+			return &"art21r2.main_menu.entry_plank.deploy"
+		&"long_term":
+			return &"art21r2.main_menu.entry_plank.long_term"
+		&"settings":
+			return &"art21r2.main_menu.entry_plank.settings"
+		&"exit_game":
+			return &"art21r2.main_menu.entry_plank.exit"
+		_:
+			return &"art21r2.main_menu.entry_plank.long_term"
 
 
 func _entry_subtitle(entry: Dictionary) -> String:

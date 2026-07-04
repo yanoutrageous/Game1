@@ -265,3 +265,27 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
   route/map density, profile/archive copy, and bottom detail slots remain below
   the target product floor.
 - Validator phrase: deploy and long-term inner surfaces use ART19 draw-derived image style boxes.
+
+## Applied ART21R2 Main Menu Source Cut Pass
+
+- Source sheet: `D:\AGAME1\sources\draw\Main.png`.
+- No generated art was introduced.
+- Dedicated ART21R2 manifests:
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\main_menu_staging_manifest.csv`,
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\main_menu_cut_dry_run_plan.csv`,
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\main_menu_cut_manifest.csv`,
+  and
+  `D:\AGAME1\sources\art\ART-21R2\_manifest\main_menu_cut_summary.json`.
+- Runtime target: `Godot/GraytailGodot/assets/ui/art21r2/main_menu`.
+- Imported roles: Main Menu title board, company board header, and four entry
+  planks.
+- The title-board cut uses a source-silhouette alpha mask to remove non-board
+  sky from the Main.png crop.
+- All six cut rows record `purple_like_after=0`.
+- Evidence screenshots:
+  `screenshots/slice9/godot_main_menu_main_png_planks_pass48_smoke.png` and
+  `screenshots/slice9/godot_deploy_prep_direct_from_main_pass49_smoke.png`.
+- Result: `PARTIAL`. The right-side Main Menu planks no longer borrow ART21R2
+  modal button material, and Start Exploration still routes directly to Deploy
+  Prep. Main Menu title lettering remains runtime text, and no visual closeout
+  is claimed.

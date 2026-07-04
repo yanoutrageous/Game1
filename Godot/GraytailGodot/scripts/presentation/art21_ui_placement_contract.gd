@@ -56,6 +56,12 @@ const ART21_COMPONENT_BY_VISUAL_KEY := {
 	&"art21r2.modal.button.primary": &"ui.art21r2.modal.button.primary",
 	&"art21r2.modal.button.secondary": &"ui.art21r2.modal.button.secondary",
 	&"art21r2.modal.button.danger": &"ui.art21r2.modal.button.danger",
+	&"art21r2.main_menu.title_board": &"ui.art21r2.main_menu.title_board",
+	&"art21r2.main_menu.board_header": &"ui.art21r2.main_menu.board_header",
+	&"art21r2.main_menu.entry_plank.deploy": &"ui.art21r2.main_menu.entry_plank.deploy",
+	&"art21r2.main_menu.entry_plank.long_term": &"ui.art21r2.main_menu.entry_plank.long_term",
+	&"art21r2.main_menu.entry_plank.settings": &"ui.art21r2.main_menu.entry_plank.settings",
+	&"art21r2.main_menu.entry_plank.exit": &"ui.art21r2.main_menu.entry_plank.exit",
 }
 
 const SLOT_VISUAL_KEY := {
