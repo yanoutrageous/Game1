@@ -218,7 +218,8 @@ Decision:
    rows and a Result screenshot proving no missing or duplicate title text.
 3. Address the highest-risk temporary slots:
    `main_menu/title`,
-   map overlay title/footer/selected-state hierarchy,
+   map overlay title/footer/selected-state hierarchy after the pass41 partial
+   plate reuse,
    Run HUD rail/minimap/status/bottom,
    Deploy Prep page-family frames, and
    Long Term page-family frames.

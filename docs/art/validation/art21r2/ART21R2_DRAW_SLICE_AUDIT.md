@@ -130,10 +130,17 @@ sequence. A candidate crop with purple remnants is not runtime-ready evidence.
   is captured after clicking the visible flagged cell in Map Overlay; the Flag
   marker disappears while the Event marker remains, so this pass covers the
   existing map-cell click route more directly than pass38.
+- Pass41 hierarchy follow-up:
+  `screenshots/slice6/godot_map_overlay_hierarchy_pass41_smoke.png`
+  reuses the already cut ART21R2 Zujian3 modal title plate, section panel, and
+  action strip for the Map Overlay title/detail/footer labels, and dims
+  unknown cells without changing the existing main-menu direct Deploy Prep
+  route or `M` Map Overlay route.
 - Result: `PARTIAL`. The map cells are no longer the small generated empty
   ART21 squares, and the modal frame is no longer the previous terminal panel
-  look, but the dense unknown-cell wall and title/footer hierarchy still fall
-  below the UE-floor Map Overlay target.
+  look. Pass41 lowers unknown-cell dominance and improves title/footer
+  surfaces, but the 856x511 smoke hierarchy still falls below the UE-floor Map
+  Overlay target.
 
 ## Applied ART21R2 Modal Frame Pass
 

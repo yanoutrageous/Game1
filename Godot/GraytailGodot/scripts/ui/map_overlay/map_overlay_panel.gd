@@ -18,6 +18,9 @@ var title_font_size: int = 20
 var footer_font_size: int = 13
 const LEGACY_MAP_OVERLAY_VALIDATION_MARKER := "Click hidden cells to flag"
 const ART21R2_MAP_PANEL_FRAME_VISUAL_KEY := &"art21r2.modal.inventory.frame"
+const ART21R2_MAP_TITLE_PLATE_VISUAL_KEY := &"art21r2.modal.title_plate"
+const ART21R2_MAP_DETAIL_PANEL_VISUAL_KEY := &"art21r2.modal.section.panel"
+const ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY := &"art21r2.modal.action_strip"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
@@ -117,28 +120,36 @@ func _rebuild_grid() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
+	var grid_gap := 5 if marker_size.x <= 44.0 else 8
+	grid.add_theme_constant_override("h_separation", grid_gap)
+	grid.add_theme_constant_override("v_separation", grid_gap)
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	grid.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 	for child in grid.get_children():
 		child.queue_free()
 
+	_apply_overlay_text_hierarchy(title, detail, footer)
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		title.add_theme_font_size_override("font_size", title_font_size)
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title.text = "区域地图"
 	if detail != null:
 		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
 		detail.add_theme_font_size_override("font_size", 11 if footer_font_size <= 12 else 12)
 		detail.add_theme_constant_override("line_spacing", 2)
+		detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		detail.text = _selected_detail_text()
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		footer.add_theme_font_size_override("font_size", footer_font_size)
 		footer.add_theme_constant_override("line_spacing", 2)
+		footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		footer.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		footer.text = "Esc 关闭 · 点击格子查看 / 标记"
 
 	if footer != null and selected_feedback_text != "":
@@ -167,7 +178,9 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 		marker_color = Color(0.58, 0.72, 0.68, 0.74)
 	button.add_theme_color_override("font_color", marker_color)
 	button.add_theme_font_size_override("font_size", maxi(12, int(min(marker_size.x, marker_size.y) * 0.52)))
-	_apply_marker_button_style(button, theme_key)
+	var state := _art21_marker_state(marker)
+	var selected := _is_selected_marker(marker)
+	_apply_marker_button_style(button, theme_key, state, selected)
 	var texture := Art09ManifestAssetMappingScript.resolve_texture(_map_overlay_asset_ref_for_marker(marker))
 	if texture != null:
 		var art21r2_marker := _art21_marker_state(marker) in [&"flagged", &"event"]
@@ -175,8 +188,9 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 		button.expand_icon = art21r2_marker
 		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-		button.add_theme_constant_override("icon_max_width", int(min(marker_size.x, marker_size.y) * (0.92 if art21r2_marker else 0.78)))
+		button.add_theme_constant_override("icon_max_width", _icon_width_for_marker_state(state, marker_size))
 		button.text = "" if label_text != "P" else "P"
+	button.modulate = _modulate_for_marker_state(state, selected)
 	button.pressed.connect(func() -> void: _select_marker(marker))
 	grid.add_child(button)
 
@@ -200,13 +214,69 @@ func _apply_overlay_panel_style(control: Control) -> void:
 	panel.add_theme_stylebox_override("panel", style)
 
 
-func _apply_marker_button_style(button: Button, theme_key: StringName) -> void:
+func _apply_overlay_text_hierarchy(title: Label, detail: Label, footer: Label) -> void:
+	if title != null:
+		title.custom_minimum_size = Vector2(0, 30)
+		title.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_TITLE_PLATE_VISUAL_KEY, 8, 18))
+	if detail != null:
+		detail.custom_minimum_size = Vector2(0, 32)
+		detail.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_DETAIL_PANEL_VISUAL_KEY, 8, 18))
+	if footer != null:
+		footer.custom_minimum_size = Vector2(0, 38)
+		footer.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY, 8, 18))
+
+
+func _style_box_for_visual_key(visual_key: StringName, padding: int = 8, texture_margin: int = 18) -> StyleBox:
+	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.panel.terminal_main", padding, texture_margin)
+	if style != null:
+		return style
+	return Art10UISkinKitScript.panel_style(&"deep")
+
+
+func _apply_marker_button_style(button: Button, theme_key: StringName, state: StringName, selected: bool) -> void:
 	var border := PresentationTheme.color_for_key(theme_key)
 	button.add_theme_stylebox_override("normal", Art10UISkinKitScript.transparent_style_box(0))
 	button.add_theme_stylebox_override("hover", Art10UISkinKitScript.transparent_style_box(0))
 	button.add_theme_stylebox_override("pressed", Art10UISkinKitScript.transparent_style_box(0))
 	button.add_theme_stylebox_override("disabled", Art10UISkinKitScript.transparent_style_box(0))
+	if selected:
+		var selected_style := Art10UISkinKitScript.style_box_from_asset_ref(Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_highlight"), 2, 14)
+		if selected_style != null:
+			button.add_theme_stylebox_override("normal", selected_style)
+			button.add_theme_stylebox_override("hover", selected_style)
+			button.add_theme_stylebox_override("pressed", selected_style)
 	button.add_theme_color_override("font_color", border)
+
+
+func _icon_width_for_marker_state(state: StringName, size: Vector2) -> int:
+	var base: float = minf(size.x, size.y)
+	match state:
+		&"flagged", &"event":
+			return int(base * 0.92)
+		&"player", &"exit", &"mine", &"chest":
+			return int(base * 0.82)
+		&"scanned":
+			return int(base * 0.72)
+		&"unknown":
+			return int(base * 0.58)
+		_:
+			return int(base * 0.70)
+
+
+func _modulate_for_marker_state(state: StringName, selected: bool) -> Color:
+	if selected:
+		return Color(1.14, 1.14, 1.06, 1.0)
+	match state:
+		&"unknown":
+			return Color(0.72, 0.78, 0.74, 0.58)
+		&"explored":
+			return Color(0.88, 0.96, 0.91, 0.82)
+		&"scanned":
+			return Color(0.94, 1.0, 0.96, 0.96)
+		&"flagged", &"event", &"player":
+			return Color(1.0, 1.0, 1.0, 1.0)
+		_:
+			return Color(0.96, 1.0, 0.96, 0.92)
 
 
 func _art21_marker_state(marker: Dictionary) -> StringName:
@@ -238,6 +308,14 @@ func _map_overlay_asset_ref_for_marker(marker: Dictionary) -> Dictionary:
 			return Art21UIPlacementContractScript.map_ref(state)
 		_:
 			return Art09ManifestAssetMappingScript.art19_map64_ref(state)
+
+
+func _is_selected_marker(marker: Dictionary) -> bool:
+	if selected_marker.is_empty():
+		return false
+	var marker_pos: Vector2i = marker.get("pos", Vector2i(-9999, -9999))
+	var selected_pos: Vector2i = selected_marker.get("pos", Vector2i(-8888, -8888))
+	return marker_pos == selected_pos
 
 
 func _marker_style(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:

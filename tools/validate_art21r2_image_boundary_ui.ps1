@@ -77,6 +77,7 @@ $requiredScreenshots = @(
     "screenshots/slice6/godot_map_overlay_art21r2_event_flag_pass38_smoke.png",
     "screenshots/slice6/godot_map_overlay_art21r2_sparse_event_flag_pass39_smoke.png",
     "screenshots/slice6/godot_map_overlay_art21r2_sparse_flag_click_pass40_smoke.png",
+    "screenshots/slice6/godot_map_overlay_hierarchy_pass41_smoke.png",
     "screenshots/slice6/godot_inventory_zujian3_modal_frame_pass28_smoke.png",
     "screenshots/slice6/godot_ground_loot_zujian3_modal_frame_pass28_smoke.png",
     "screenshots/slice6/godot_result_zujian3_modal_frame_pass28_smoke.png",
@@ -211,6 +212,7 @@ $requiredSlots = @(
     "run_hud.bottom_overlay",
     "run_hud.keyboard_q_inventory",
     "map_overlay.map_panel",
+    "map_overlay.title_detail_footer",
     "map_overlay.map_cell_unknown",
     "map_overlay.map_cell_explored",
     "map_overlay.map_marker_event",
@@ -319,6 +321,7 @@ $requiredSourceSlots = @(
     @("run_hud", "scanner_minimap", "art21r2_formal_draw_cut_ready", "needs_new_cut"),
     @("map_overlay", "modal_dimmer", "code_scrim_exception", "runtime_text_ok"),
     @("map_overlay", "map_panel", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
+    @("map_overlay", "title_detail_footer", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
     @("map_overlay", "map_marker_event", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
     @("map_overlay", "map_marker_flag", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
     @("inventory", "inventory_panel_frame", "art21r2_formal_draw_cut_ready", "keep_for_r2"),
@@ -1098,6 +1101,20 @@ if (
 ) {
     Fail "map_overlay_panel.gd should scale the high-resolution ART21R2 event/flag marker cuts inside existing map buttons."
 }
+if (
+    $mapOverlay -notmatch '_apply_overlay_text_hierarchy' -or
+    $mapOverlay -notmatch 'ART21R2_MAP_TITLE_PLATE_VISUAL_KEY' -or
+    $mapOverlay -notmatch 'ART21R2_MAP_DETAIL_PANEL_VISUAL_KEY' -or
+    $mapOverlay -notmatch 'ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY'
+) {
+    Fail "map_overlay_panel.gd should use ART21R2 modal-family image plates for the Map Overlay title/detail/footer hierarchy."
+}
+if (
+    $mapOverlay -notmatch '_modulate_for_marker_state' -or
+    $mapOverlay -notmatch '_is_selected_marker'
+) {
+    Fail "map_overlay_panel.gd should explicitly reduce unknown-cell dominance and preserve selected-cell hierarchy hooks."
+}
 $miniMapViewModelPath = Join-Path $root "Godot/GraytailGodot/scripts/ui/minimap/minimap_view_model.gd"
 $miniMapViewModel = Get-Content -LiteralPath $miniMapViewModelPath -Raw
 if ($miniMapViewModel -notmatch '"flagged": bool\(cell\.get\("flagged", false\)\)') {
@@ -1114,13 +1131,16 @@ $requiredSlice6MapOverlayPatterns = @(
     "godot_map_overlay_art21r2_event_flag_pass38_smoke.png",
     "godot_map_overlay_art21r2_sparse_event_flag_pass39_smoke.png",
     "godot_map_overlay_art21r2_sparse_flag_click_pass40_smoke.png",
+    "godot_map_overlay_hierarchy_pass41_smoke.png",
     "Zujian3 modal frame",
+    "title/detail/footer",
     "map_overlay_marker_cut_manifest.csv",
     "--art21r2-seed-map-markers",
     "--art21r2-seed-map-sparse-markers",
     "sparse state does not call full-map reveal",
     "purple root sheet was not imported directly",
-    "Event and flagged states now use ART21R2 draw-cleaned markers"
+    "Event and flagged states now use ART21R2 draw-cleaned markers",
+    "unknown cells are visually de-emphasized"
 )
 foreach ($pattern in $requiredSlice6MapOverlayPatterns) {
     if ($slice6MapOverlayReport -notmatch [regex]::Escape($pattern)) {
