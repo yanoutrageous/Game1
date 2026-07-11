@@ -1,3 +1,12 @@
+# I0 Open Decisions Update
+
+- `OD-I0-001`: 原始 12 项 dirty 的最终归属仍需用户单独决定；I0 只保护，不清理、丢弃或自动提交。
+- `OD-I0-002`: I0.7 可见 / 人工验收尚未完成；在完成前不得关闭 I0。
+- `OD-I0-003`: 两份历史 UTF-8 损坏正文按精确路径和哈希保留；是否人工重建阅读副本需要独立授权。
+- `OD-I0-004`: I0 后尚无自动获批的后续线路；任何新阶段需单独授权并继承 I0 基线。
+- `OD-I0-005`: 24 条 ObjectDB / resource 退出清理提示属于已登记技术债，后续是否设为零诊断门待决定。
+- 更早的 open decision 只在对应历史阶段或被明确重新打开时生效。
+
 # M3 Open Decisions Update
 
 M3 minimum item pack / drop loop open decisions:

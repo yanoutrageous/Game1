@@ -8,6 +8,8 @@ DOC-GOV-001 不删除历史文档。若后续需要移动旧文档，应先建�
 
 当前治理通过索引、来源注册表和重复台账降低入口复杂度，不批量迁移历史 handoff、validation、stage summaries、audits 或 branch change records。
 
+生成报告当前归档边界见 `docs/90_archive/generated_reports/I0_INDEX.md`；同目录旧 `README.md` 的字节损坏已登记且不作猜测性覆盖。
+
 ## 当前规则
 
 ```text

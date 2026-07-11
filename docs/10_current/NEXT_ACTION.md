@@ -1,39 +1,27 @@
 # Next Action
 
-文档状态：当前下一步建议
-适用范围：DOC-GOV-002 完成后的审计复查、Git gate 和下一策划主题准备
-最后更新：2026/06/27
+文档状态：当前下一步
+最后更新：2026-07-11（I0.6）
 
-## 1. 推荐下一步
+## 已授权的下一步
 
-```text
-1. 完成 DOC-GOV-002 执行框自检。
-2. 由审计框复查 README、INDEX、current、validation index、stage index、重复台账和新增目录 README。
-3. 审计确认后，再决定是否进入 DOC-GOV-002 docs-only Git gate。
-4. G38 / G37S / G37 后续 release / merge gate 必须另开工程 gate，不由 DOC-GOV-002 自动执行。
-5. 下一策划主题准备时，先读取 docs/README.md、docs/INDEX.md 和 docs/00_governance/DOC_PLACEMENT_STANDARD.md。
-```
+完成 I0.6 后进入 I0.7，并按以下顺序关闭独立基准阶段：
 
-## 2. 本阶段不得自动推进
+1. 对文档路径、严格 UTF-8、Git 状态、冻结证据和安全边界做最终静态审计。
+2. 从新活动路径再次运行完整 remediated I0 套件。
+3. 使用项目本地 Godot 做可见启动与关键 UI 路由烟测，记录实际可见结果。
+4. 按最小人工检查表验证启动、出发、局内、地图、背包 / 地面拾取、撤离 / 结算和返回路由。
+5. 如实区分自动化 PASS、可见 PASS、人工 PASS 与未覆盖项。
+6. 定稿 I0 validation / handoff，更新 active / closed stage index，并提交本地关闭记录。
 
-```text
-1. 不 commit。
-2. 不 push。
-3. 不 stage。
-4. 不运行 Godot。
-5. 不执行 manual playtest。
-6. 不修改 Base Docs、Base Docs_Governance、Connection、Base Art。
-7. 不修改 Godot scripts/scenes/data/project.godot/.uid/.translation/import metadata。
-8. 不把 G38 / G37S / G37 / G36 验证摘要写成 gameplay runtime PASS 或 manual playtest PASS。
-```
+## 当前停止条件
 
-## 3. 审计框复查重点
+- 出现未知 Git / 业务文件污染。
+- 原始 12 项脏状态、stash、refs 或冻结证据发生不可解释变化。
+- Godot 执行源不是 `D:\AGAME1\tools\runtimes\godot\4.6.3`。
+- 可见结果与自动化结论冲突。
+- 需要修改或删除 `D:\AGAME1` 外文件。
 
-```text
-1. DOC-GOV-001 是否已经降级为 completed / historical。
-2. DOC-GOV-002 是否是当前文档治理阶段。
-3. G38 / G37S / G37 是否只按现有文档证据索引，未扩大为 main 已完成。
-4. validation index 是否只说明验证范围，没有扩大验证结论。
-5. 根目录旧文件是否只登记状态，没有移动、删除或批量改写。
-6. 新增目录 README 是否只说明职责和边界。
-```
+## I0 后
+
+I0 不自动启动后续线路。下一阶段应由用户单独授权，并引用 `I0_BASELINE_ASSESSMENT.md` 中的优先级：先 release / CI 基础与 persistence 可靠性，再继续可证明的 `RunScene` 拆分和 MVP 内容闭环。

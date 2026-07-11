@@ -1,21 +1,34 @@
 # Game1 Docs
 
-This directory is the current documentation entrypoint for the active Game1 repo.
+本目录是活动仓库的当前文档入口。I0 以前的阶段文档继续作为历史证据，但不再控制当前路径、阶段或验证声明。
 
-Read first:
+第一读取顺序严格保持为五项：
 
-```text
-docs/README.md
-docs/INDEX.md
-docs/10_current/CURRENT_STATE.md
-docs/10_current/CAPABILITY_MATRIX.yaml
-docs/10_current/AUDIT_SCOPE.md
-docs/00_governance/DOC_PLACEMENT_STANDARD.md
-docs/00_governance/DUPLICATE_DOC_LEDGER.md
-docs/00_governance/SOURCE_REGISTRY.md
-```
+1. `docs/README.md`
+2. `docs/INDEX.md`
+3. `docs/10_current/CURRENT_STATE.md`
+4. `docs/10_current/CAPABILITY_MATRIX.yaml`
+5. `docs/10_current/NEXT_ACTION.md`
 
-Current external source roots after G40 Slice 3:
+当前详细评估：`docs/10_current/I0_BASELINE_ASSESSMENT.md`。
+
+## 目录职责
+
+| 目录 | 职责 |
+| --- | --- |
+| `00_governance/` | 当前治理、来源、生命周期、编码和重复台账 |
+| `10_current/` | 当前事实、评估、能力、下一步和未完成系统 |
+| `20_product/` | 产品与阶段契约 |
+| `30_engineering/` | 工程索引、架构和 Godot 文档登记 |
+| `40_validation/` | 当前验证索引 |
+| `50_stages/` | active / closed 阶段索引 |
+| `60_interfaces/` | 外部协作接口登记 |
+| `70_sources/` | 外部来源登记 |
+| `90_archive/` | 历史、旧入口与生成报告说明 |
+| `validation/` | 阶段验证原文 |
+| `handoff/` | 阶段交接原文 |
+
+## 当前外部来源根
 
 ```text
 D:\AGAME1\sources\docs
@@ -25,67 +38,10 @@ D:\AGAME1\sources\draw
 D:\AGAME1\handoff\connection
 ```
 
-Legacy path before G40: `D:\AGAME1\Base Docs`
-Moved to: `D:\AGAME1\sources\docs`
-Do not use as current canonical path: `D:\AGAME1\Base Docs`
+## 规则
 
-Legacy path before G40: `D:\AGAME1\Connection`
-Moved to: `D:\AGAME1\handoff\connection`
-Do not use as current canonical path: `D:\AGAME1\Connection`
-
-## Current Validation
-
-Run the current G40 validation entrypoint from the repository root:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File tools/validate_current_project.ps1
-```
-
-Current expected marker during G40 cleanup:
-
-```text
-G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
-```
-
-Current G40 stage documentation:
-
-```text
-docs/20_product/G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION_CONTRACT.md
-docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md
-docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md
-```
-
-Recent ART closeout evidence:
-
-```text
-docs/art/ART20_DRAW_TO_RUNTIME_UI_COMPONENT_PIPELINE_EXECUTION.md
-docs/art/ART20_CLOSEOUT_PIPELINE_PASS_VISUAL_INCOMPLETE.md
-```
-
-ART-20 is a pipeline proof closeout, not final UI visual acceptance.
-
-Directory responsibilities:
-
-| Directory | Responsibility |
-| --- | --- |
-| `00_governance/` | document governance, source registry, duplicate ledgers, lifecycle rules |
-| `10_current/` | current state, next action, capability matrix, audit scope |
-| `20_product/` | product contracts and system boundary contracts |
-| `30_engineering/` | engineering notes, ADRs, Godot docs registration |
-| `40_validation/` | validation index |
-| `50_stages/active/` | active stage index |
-| `50_stages/closed/` | closed stage index |
-| `60_interfaces/connection/` | Connection source registration |
-| `70_sources/` | Base Docs / art / UI reference source registration |
-| `90_archive/` | historical, legacy, generated-report explanations |
-| `validation/` | stage validation originals |
-| `handoff/` | stage handoff originals |
-
-Rules:
-
-- Do not place new long-lived documents in the docs root.
-- Do not copy external source bodies into repo docs.
-- Register duplicate or legacy material before moving or deleting it.
-- Current entrypoints are preferred in Chinese when practical; historical English files are not forcibly translated.
-- New contract / validation / handoff documents should include at least a Chinese summary.
-- Stage planning / audit / execution / closeout process rules live in `docs/00_governance/DOC_GOV_003_STAGE_PROCESS_MINIMAL.md`.
+- 新增长期文档按 `docs/00_governance/DOC_PLACEMENT_STANDARD.md` 落位。
+- 不复制外部来源正文来替代登记与引用。
+- 历史 validation / handoff / report 不做全局路径替换。
+- 当前入口优先中文；历史英文文档不强制翻译。
+- 任何完成声明必须匹配实际执行的自动化、可见、人工或发布证据。

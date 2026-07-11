@@ -1,39 +1,34 @@
 # Audit Entrypoint
 
-Use this file to start a read-only audit of the active repo after G40 Slice 4.
+文档状态：I0 当前只读审计入口
+最后更新：2026-07-11
 
-Read first:
+第一读取顺序：
 
 ```text
-README.md
-AGENTS.md
 docs/README.md
 docs/INDEX.md
 docs/10_current/CURRENT_STATE.md
 docs/10_current/CAPABILITY_MATRIX.yaml
-docs/10_current/AUDIT_SCOPE.md
-docs/00_governance/DOC_PLACEMENT_STANDARD.md
-docs/00_governance/SOURCE_REGISTRY.md
-docs/00_governance/DUPLICATE_DOC_LEDGER.md
+docs/10_current/NEXT_ACTION.md
 ```
 
-Current external sources:
+详细项目审计、进度和健康度见 `docs/10_current/I0_BASELINE_ASSESSMENT.md`。执行边界见 `docs/00_governance/EXECUTION_ENVIRONMENT.md`。
+
+## 审计起点
 
 ```text
-D:\AGAME1\sources\docs
-D:\AGAME1\sources\docs_governance
-D:\AGAME1\sources\art
-D:\AGAME1\sources\draw
-D:\AGAME1\handoff\connection
+active_repo: D:\AGAME1\active\Game1_work
+godot_project: D:\AGAME1\active\Game1_work\Godot\GraytailGodot
+branch: i0/project-baseline-refactor
+stage: I0; I0.7 pending
 ```
 
-Legacy path before G40: `D:\AGAME1\Base Docs`
-Moved to: `D:\AGAME1\sources\docs`
-Do not use as current canonical path: `D:\AGAME1\Base Docs`
+## 审计边界
 
-Audit boundary:
-
-- Check Git state before trusting working tree content.
-- Separate pre-existing `project.godot` dirty from G40 documentation/tool changes.
-- Do not claim gameplay runtime PASS or manual playtest PASS from docs-only validation.
-- Do not use stale worktrees under `_repo_cache` as current facts unless explicitly requested.
+- 先核对 branch、HEAD、index、refs、stash、worktree 和完整 status，再解释工作树。
+- 将原始 12 项用户 dirty 与 I0 变更分开；不得清理、丢弃或混合暂存。
+- 当前 Godot 只允许通过 `tools/i0/invoke_i0_tests.ps1` 使用项目本地固定工具链。
+- 不把 docs、静态、headless、runner、可见 smoke 或人工检查互相扩大为更强的 PASS。
+- `D:\AGAME1\_repo_cache\Game1_work` 是已迁出的旧活动路径；历史文件中的该路径只作时间点证据。
+- 不修改或删除 `D:\AGAME1` 外文件。

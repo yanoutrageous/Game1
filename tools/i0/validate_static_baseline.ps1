@@ -194,6 +194,7 @@ $requiredRelativePaths = @(
     [string]$manifest.static_contract.asset_manifest_relative_path,
     [string]$manifest.static_contract.project_settings_relative_path,
     [string]$manifest.static_contract.run_scene_relative_path,
+    [string]$manifest.static_contract.document_encoding_validator_relative_path,
     [string]$manifest.godot.environment_probe_relative_path
 ) + @($manifest.runners | ForEach-Object { [string]$_.relative_path })
 $missingPaths = @($requiredRelativePaths | Where-Object { -not (Test-Path -LiteralPath (Join-Path $repo ($_.Replace('/', '\'))) -PathType Leaf) })

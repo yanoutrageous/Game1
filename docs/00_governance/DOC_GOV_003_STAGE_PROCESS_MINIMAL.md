@@ -25,6 +25,8 @@ A formal stage must represent a meaningful state change for one line:
 
 Single-point repairs are slices by default, not stages. A narrow task can become stage-worthy only when it closes a blocker, repairs a release gate, or produces reusable validation / pipeline / contract capability.
 
+I0 is a one-time, user-approved independent baseline stage. It does not create a reusable new stage line; later G / ART / M / P stages inherit the I0 repository, toolchain, validation and claim baseline.
+
 Stricter stage-specific rules win. If a Stage Card, audit verdict, or user instruction requires stronger validation, narrower paths, or per-slice audit, follow the stricter rule.
 
 ## 2. Scope Check

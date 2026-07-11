@@ -1,5 +1,7 @@
 ﻿# Claim Ledger
 
+文档状态补充：下表是 P2 时间点声明台账；当前声明权威已由 I0 的 `CURRENT_STATE.md`、`CAPABILITY_MATRIX.yaml`、assessment 和 validation 链取代。旧 hash 不回写。
+
 文档状态：声明台账
 适用范围：P2 后当前声明、来源、哈希与确认状态
 最后更新：2026/06/23

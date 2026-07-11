@@ -1,81 +1,49 @@
 # Game1 Docs Index
 
-Current docs entrypoints:
+文档状态：当前导航索引
+最后更新：2026-07-11（I0.6）
 
-```text
-docs/README.md
-docs/10_current/CURRENT_STATE.md
-docs/10_current/CAPABILITY_MATRIX.yaml
-docs/10_current/AUDIT_SCOPE.md
-docs/10_current/KNOWN_UNFINISHED_SYSTEMS.md
-docs/10_current/G40_HEALTH_ISSUE_CLOSURE_MATRIX.md
-docs/00_governance/DOC_PLACEMENT_STANDARD.md
-docs/00_governance/DUPLICATE_DOC_LEDGER.md
-docs/00_governance/SOURCE_REGISTRY.md
-```
+## 第一入口
 
-Stage process governance:
+1. `docs/README.md`
+2. `docs/INDEX.md`
+3. `docs/10_current/CURRENT_STATE.md`
+4. `docs/10_current/CAPABILITY_MATRIX.yaml`
+5. `docs/10_current/NEXT_ACTION.md`
 
-```text
-docs/00_governance/DOC_GOV_003_STAGE_PROCESS_MINIMAL.md
-```
+## I0 当前证据
 
-Use this file when starting a new stage, auditing a stage plan, recovering from long context, or preparing high-risk execution gates. It is not part of the always-read entrypoint set for ordinary doc navigation.
+| 类型 | 文档 |
+| --- | --- |
+| 详细审计 | `docs/10_current/I0_BASELINE_ASSESSMENT.md` |
+| 阶段契约 | `docs/20_product/I0_PROJECT_BASELINE_REFACTOR_CONTRACT.md` |
+| 审计范围 | `docs/10_current/AUDIT_SCOPE.md` |
+| 未完成系统 | `docs/10_current/KNOWN_UNFINISHED_SYSTEMS.md` |
+| 验证索引 | `docs/40_validation/VALIDATION_INDEX.md` |
+| active stage | `docs/50_stages/active/STAGE_INDEX.md` |
+| 当前执行环境 | `docs/00_governance/EXECUTION_ENVIRONMENT.md` |
+| 文本编码台账 | `docs/00_governance/TEXT_ENCODING_LEDGER.md` |
 
-Recent ART closeout evidence:
+I0 validation 已建立为中间记录，validation 与 handoff 将在 I0.7 关闭时定稿。未经记录的人工游玩、最终视觉、CI 或发布 PASS 不得推断。
 
-```text
-docs/art/ART20_DRAW_TO_RUNTIME_UI_COMPONENT_PIPELINE_EXECUTION.md
-docs/art/ART20_CLOSEOUT_PIPELINE_PASS_VISUAL_INCOMPLETE.md
-tools/validate_art20_ui_asset_pipeline.ps1
-```
+## 治理入口
 
-ART-20 is closed as a pipeline proof with visual gaps. It must not be read as final UI visual acceptance; ART-21 must add image placement indexing and target visual reconstruction.
+- `docs/00_governance/DOC_GOV_003_STAGE_PROCESS_MINIMAL.md`
+- `docs/00_governance/DOC_PLACEMENT_STANDARD.md`
+- `docs/00_governance/DOCUMENT_LIFECYCLE.md`
+- `docs/00_governance/SOURCE_REGISTRY.md`
+- `docs/00_governance/EXTERNAL_SOURCE_BOUNDARY.md`
+- `docs/00_governance/DUPLICATE_DOC_LEDGER.md`
 
-Current G40 validation / cleanup helper tools:
+## 历史证据边界
 
-```text
-tools/validate_current_project.ps1
-tools/inspect_dirty_state.ps1
-tools/scan_g40_path_references.ps1
-tools/validate_g40_cleanup_topology.ps1
-tools/clean_generated_dirty_state.ps1
-tools/prepare_validation_clean_state.ps1
-```
+- G40 及更早阶段原文保留在 `docs/validation/`、`docs/handoff/`、`docs/art/`、`docs/audits/`、`docs/stage_summaries/` 等原位置。
+- `docs/PROJECT_BASELINE.md`、`docs/ENGINEERING_STATUS.md`、`docs/NEXT_HANDOFF.md` 和 `docs/project_governance/` 是 expanded / historical evidence，不是当前事实入口。
+- 历史文件中的 `D:\AGAME1\_repo_cache\Game1_work` 可以是当时的真实路径；不得批量替换。
+- G40 健康矩阵已降为历史阶段矩阵，不在当前第一入口中。
 
-Current validation entrypoint:
+## 当前验证命令
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/validate_current_project.ps1
-```
-
-Current stage:
-
-```text
-G40 = Full Project Cleanup, Repository Remediation & Validation Stabilization
-branch = godot/g40-full-project-cleanup-validation-stabilization
-```
-
-G40 current facts:
-
-- `D:\AGAME1` topology is being rebuilt into active / sources / handoff / archive / reports / workflow / tools / external.
-- Active repo remains physically at `D:\AGAME1\_repo_cache\Game1_work`.
-- External source paths moved by G40 are registered in `docs/00_governance/SOURCE_REGISTRY.md`.
-- Duplicate decisions are tracked outside the repo during G40 in `D:\AGAME1\reports\g40\duplicate_resolution_plan.csv` and `D:\AGAME1\reports\g40\cleanup_decisions.md`.
-- `project.godot` dirty is pre-existing and not part of Slice 4 docs changes.
-
-Recent engineering evidence remains in product/validation/handoff files. This index does not upgrade historical validation into gameplay runtime PASS or manual playtest PASS.
-
-Important non-goals are listed in:
-
-```text
-docs/10_current/KNOWN_UNFINISHED_SYSTEMS.md
-```
-
-Current G40 stage docs:
-
-```text
-docs/20_product/G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION_CONTRACT.md
-docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md
-docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md
+powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tools/i0/invoke_i0_tests.ps1 -Profile remediated
 ```

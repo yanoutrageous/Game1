@@ -240,6 +240,7 @@ foreach ($writePath in @($staticReportPath, $logsRoot, $reportPath)) {
 [void](New-Item -ItemType Directory -Path $logsRoot -Force)
 
 $startedUtc = [DateTime]::UtcNow
+$windowsPowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 $fatalError = $null
 $beforeGit = $null
 $afterGit = $null
@@ -252,6 +253,7 @@ $mirrorFidelity = $null
 $mirrorCopy = $null
 $runtimeLinks = $null
 $toolchainVerification = $null
+$documentEncodingCase = $null
 $engineVersionCase = $null
 $staticCase = $null
 $staticData = $null
@@ -265,6 +267,46 @@ try {
     $beforeGit = Get-I0GitSnapshot -RepoRoot $repo -TimeoutSeconds $gitTimeout
     $beforeBusiness = Get-I0BusinessHashSnapshot -RepoRoot $repo -BusinessRoots @($manifest.business_roots) -ExcludedDirectoryNames @($manifest.mirror.excluded_directory_names)
     $toolchainVerification = Get-I0VerifiedToolchainLock -RepoRoot $repo -ValidationManifest $manifest
+
+    $documentEncodingScript = Join-Path $repo (([string]$manifest.static_contract.document_encoding_validator_relative_path).Replace('/', '\'))
+    Assert-I0PathWithin -Path $documentEncodingScript -Root $repo -Label 'document encoding validator'
+    Assert-I0NoReparseExistingAncestor -Path $documentEncodingScript -Root $workspaceRoot -Label 'document encoding validator'
+    $documentEncodingRaw = Invoke-I0Process `
+        -FilePath $windowsPowerShell `
+        -Arguments @(
+            '-NoProfile',
+            '-NonInteractive',
+            '-ExecutionPolicy', 'Bypass',
+            '-File', $documentEncodingScript,
+            '-RepoRoot', $repo
+        ) `
+        -WorkingDirectory $repo `
+        -TimeoutSeconds ([int]$manifest.timeouts_seconds.document_encoding)
+    $documentEncodingData = $null
+    $documentEncodingParseError = $null
+    try {
+        $documentEncodingData = Get-I0MarkedJson -Text $documentEncodingRaw.stdout -Marker 'I0_DOCUMENT_ENCODING_JSON='
+    }
+    catch {
+        $documentEncodingParseError = $_.Exception.Message
+    }
+    $documentEncodingPass = (
+        -not $documentEncodingRaw.timed_out -and
+        $documentEncodingRaw.exit_code -eq 0 -and
+        $null -ne $documentEncodingData -and
+        [string]$documentEncodingData.status -eq 'PASS_WITH_RECORDED_LIMITATION' -and
+        [int]$documentEncodingData.error_count -eq 0 -and
+        [bool]$documentEncodingData.git_status_unchanged
+    )
+    $documentEncodingCase = [pscustomobject][ordered]@{
+        status = if ($documentEncodingPass) { 'PASS_WITH_RECORDED_LIMITATION' } else { 'FAIL' }
+        parse_error = $documentEncodingParseError
+        process = ConvertTo-I0ProcessReport -ProcessResult $documentEncodingRaw
+        result = $documentEncodingData
+    }
+    if (-not $documentEncodingPass) {
+        throw 'Document encoding gate failed'
+    }
 
     $mirrorCopyRaw = Copy-I0WorktreeMirror `
         -SourceRepo $repo `
@@ -305,7 +347,6 @@ try {
         throw "Godot version preflight failed: $versionText"
     }
 
-    $windowsPowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
     $mirrorStaticScript = Join-Path $mirrorRoot 'tools\i0\validate_static_baseline.ps1'
     $mirrorManifest = Join-Path $mirrorRoot 'tools\i0\validation_manifest.json'
     $staticRaw = Invoke-I0Process `
@@ -487,6 +528,7 @@ $allCasesPass = (
     $null -eq $fatalError -and
     $null -ne $mirrorFidelity -and $mirrorFidelity.unchanged -and
     $null -ne $toolchainVerification -and $toolchainVerification.status -eq 'PASS' -and
+    $null -ne $documentEncodingCase -and $documentEncodingCase.status -eq 'PASS_WITH_RECORDED_LIMITATION' -and
     $null -ne $engineVersionCase -and $engineVersionCase.status -eq 'PASS' -and
     $null -ne $staticCase -and $staticCase.status -eq 'PASS' -and
     $null -ne $editorBootstrapCase -and $editorBootstrapCase.status -like 'PASS*' -and
@@ -498,16 +540,17 @@ $cleanupDiagnosticCount = 0
 if ($null -ne $editorBootstrapCase) { $cleanupDiagnosticCount += @($editorBootstrapCase.cleanup_diagnostics).Count }
 if ($null -ne $environmentCase) { $cleanupDiagnosticCount += @($environmentCase.cleanup_diagnostics).Count }
 foreach ($runnerResult in $runnerResults) { $cleanupDiagnosticCount += @($runnerResult.cleanup_diagnostics).Count }
+$recordedLimitationCount = if ($null -ne $documentEncodingCase -and $documentEncodingCase.status -eq 'PASS_WITH_RECORDED_LIMITATION') { 1 } else { 0 }
 $overallLabel = if (-not $allCasesPass) {
     'FAIL'
 }
-elseif ($Profile -eq 'baseline' -and $cleanupDiagnosticCount -gt 0) {
+elseif ($Profile -eq 'baseline' -and ($cleanupDiagnosticCount -gt 0 -or $recordedLimitationCount -gt 0)) {
     'PASS_WITH_EXPECTED_REDS_AND_NOTES'
 }
 elseif ($Profile -eq 'baseline') {
     'PASS_WITH_EXPECTED_REDS'
 }
-elseif ($cleanupDiagnosticCount -gt 0) {
+elseif ($cleanupDiagnosticCount -gt 0 -or $recordedLimitationCount -gt 0) {
     'PASS_WITH_NOTES'
 }
 else {
@@ -516,13 +559,13 @@ else {
 $characterizationLabel = if (-not $allCasesPass) {
     'FAIL'
 }
-elseif ($Profile -eq 'baseline' -and $cleanupDiagnosticCount -gt 0) {
+elseif ($Profile -eq 'baseline' -and ($cleanupDiagnosticCount -gt 0 -or $recordedLimitationCount -gt 0)) {
     'PASS_WITH_EXPECTED_REDS_AND_NOTES'
 }
 elseif ($Profile -eq 'baseline') {
     'PASS_WITH_EXPECTED_REDS'
 }
-elseif ($cleanupDiagnosticCount -gt 0) {
+elseif ($cleanupDiagnosticCount -gt 0 -or $recordedLimitationCount -gt 0) {
     'PASS_REMEDIATED_WITH_NOTES'
 }
 else {
@@ -537,6 +580,7 @@ $report = [pscustomobject][ordered]@{
     overall_status = $overallLabel
     characterization_status = $characterizationLabel
     cleanup_diagnostic_count = $cleanupDiagnosticCount
+    recorded_limitation_count = $recordedLimitationCount
     started_utc = $startedUtc.ToString('o')
     completed_utc = $completedUtc.ToString('o')
     duration_ms = [int64]($completedUtc - $startedUtc).TotalMilliseconds
@@ -558,6 +602,7 @@ $report = [pscustomobject][ordered]@{
     }
     runtime_links = $runtimeLinks
     toolchain_verification = $toolchainVerification
+    document_encoding = $documentEncodingCase
     engine_version = $engineVersionCase
     static_characterization = $staticCase
     editor_bootstrap = $editorBootstrapCase

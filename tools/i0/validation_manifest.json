@@ -49,6 +49,7 @@
     "asset_manifest_relative_path": "Godot/GraytailGodot/data/assets/asset_manifest.csv",
     "project_settings_relative_path": "Godot/GraytailGodot/project.godot",
     "run_scene_relative_path": "Godot/GraytailGodot/scripts/core/run/run_scene.gd",
+    "document_encoding_validator_relative_path": "tools/i0/validate_document_encoding.ps1",
     "required_input_actions": [
       "open_inventory",
       "open_ground_loot",
@@ -182,6 +183,7 @@
   ],
   "timeouts_seconds": {
     "mirror_copy": 600,
+    "document_encoding": 60,
     "static_validation": 120,
     "editor_bootstrap": 180,
     "environment_probe": 120,

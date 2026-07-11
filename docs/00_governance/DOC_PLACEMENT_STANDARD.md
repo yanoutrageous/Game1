@@ -1,11 +1,11 @@
 # Document Placement Standard
 
-Status: current governance rule after G40 Slice 4.
+Status: current governance rule after I0.6.
 
 Current repository docs entrypoint:
 
 ```text
-D:\AGAME1\_repo_cache\Game1_work\docs
+D:\AGAME1\active\Game1_work\docs
 ```
 
 Current external source roots:
@@ -31,6 +31,7 @@ Do not use as current canonical path: `D:\AGAME1\Connection`
 | Document type | Location |
 | --- | --- |
 | Current state / next step / capability matrix | `docs/10_current/` |
+| Current baseline assessment | `docs/10_current/` |
 | Governance / source / lifecycle / duplicate ledgers | `docs/00_governance/` |
 | Product contracts / planning rules / system boundaries | `docs/20_product/` |
 | Engineering notes / ADR / Godot docs registry | `docs/30_engineering/` |
@@ -72,3 +73,4 @@ README.md
 5. Current entrypoints prefer Chinese summaries where practical; historical English files are not forcibly translated.
 6. New contract / validation / handoff documents should include at least a Chinese summary.
 7. Do not rewrite old validation / handoff into current facts; downgrade or label through indexes.
+8. A completed baseline assessment is frozen as stage evidence; future changes belong in `CURRENT_STATE.md` or a new approved assessment.

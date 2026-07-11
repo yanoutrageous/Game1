@@ -1,54 +1,39 @@
 # Game1 Active Repository
 
-This repository is the current active Game1 / GraytailGodot engineering repo.
-
-Current repo path:
+这是 Game1 / GraytailGodot 当前活动工程。
 
 ```text
-D:\AGAME1\active\Game1_work
+repository: D:\AGAME1\active\Game1_work
+godot_project: D:\AGAME1\active\Game1_work\Godot\GraytailGodot
+current_stage: I0 Project Baseline Refactor
+branch: i0/project-baseline-refactor
 ```
 
-Current Godot project path:
+## 当前入口
 
-```text
-D:\AGAME1\active\Game1_work\Godot\GraytailGodot
+1. `docs/README.md`
+2. `docs/INDEX.md`
+3. `docs/10_current/CURRENT_STATE.md`
+4. `docs/10_current/CAPABILITY_MATRIX.yaml`
+5. `docs/10_current/NEXT_ACTION.md`
+
+详细审计与进度判断：`docs/10_current/I0_BASELINE_ASSESSMENT.md`。
+
+## 当前验证
+
+从仓库根执行项目本地、隔离的 I0 套件：
+
+```powershell
+powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tools/i0/invoke_i0_tests.ps1 -Profile remediated
 ```
 
-G40 topology note:
+Godot 运行只允许使用 `D:\AGAME1\tools\runtimes\godot\4.6.3` 中被锁定的二进制。历史工具、系统 PATH 或 `D:\Godot` 不得作为当前执行源。
 
-- Legacy path before G40: `D:\AGAME1\Base Docs`
-  Moved to: `D:\AGAME1\sources\docs`
-  Do not use as current canonical path: `D:\AGAME1\Base Docs`
-- Legacy path before G40: `D:\AGAME1\Base Docs_Governance`
-  Moved to: `D:\AGAME1\sources\docs_governance`
-  Do not use as current canonical path: `D:\AGAME1\Base Docs_Governance`
-- Legacy path before G40: `D:\AGAME1\Base Art`
-  Moved to: `D:\AGAME1\sources\art`
-  Do not use as current canonical path: `D:\AGAME1\Base Art`
-- Legacy path before G40: `D:\AGAME1\Draw`
-  Moved to: `D:\AGAME1\sources\draw`
-  Do not use as current canonical path: `D:\AGAME1\Draw`
-- Legacy path before G40: `D:\AGAME1\Connection`
-  Moved to: `D:\AGAME1\handoff\connection`
-  Do not use as current canonical path: `D:\AGAME1\Connection`
+## 边界
 
-Use the repository `docs` tree as the active documentation entrypoint:
-
-```text
-docs/README.md
-docs/INDEX.md
-docs/10_current/CURRENT_STATE.md
-docs/10_current/CAPABILITY_MATRIX.yaml
-docs/10_current/AUDIT_SCOPE.md
-docs/00_governance/DOC_PLACEMENT_STANDARD.md
-docs/00_governance/DUPLICATE_DOC_LEDGER.md
-docs/00_governance/SOURCE_REGISTRY.md
-```
-
-Boundary:
-
-- External source material is registered, not copied into repo docs.
-- Legacy root paths are moved/superseded mappings, not current canonical source paths.
-- Do not treat preview/display-only/schema foundations as completed gameplay systems.
-- Do not claim gameplay runtime PASS or manual playtest PASS unless that exact validation was run.
-- `Godot/GraytailGodot/project.godot` dirty in G40 is pre-existing metadata/config dirty and must not be staged as docs cleanup.
+- 只操作 `D:\AGAME1` 内的文件。
+- 不把历史 validation / handoff / ART 报告改写成当前事实。
+- 不把 preview、display-only 或 schema foundation 声称为完整玩法。
+- 不把 headless / runner PASS 声称为未执行的人工游玩、最终视觉或发布 PASS。
+- 不清理、丢弃或自动提交原有 12 项脏状态和保护性 stash。
+- 外部来源位于 `D:\AGAME1\sources`、`D:\AGAME1\handoff` 和 `D:\AGAME1\external`；默认只登记，不复制正文。

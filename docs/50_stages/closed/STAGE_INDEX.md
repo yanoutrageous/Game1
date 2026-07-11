@@ -1,6 +1,6 @@
 # Closed Stage Index
 
-Status: readable closed-stage summary after G40 Slice 7.
+Status: current closed-stage index during I0.6. I0 remains active and is not yet listed as closed.
 
 This index points to historical evidence. It does not rewrite historical validation or handoff originals.
 
@@ -8,6 +8,7 @@ This index points to historical evidence. It does not rewrite historical validat
 
 | Stage | Status | Primary evidence | Boundary |
 | --- | --- | --- | --- |
+| G40 | historical / superseded by I0 current baseline | `docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md`; `docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md`; `D:\AGAME1\reports\g40` | Cleanup accounting and topology evidence retained with notes; current path, toolchain, health and validation authority moved to I0. |
 | ART-21R2 | closed_partial / image-boundary source-contract pass | `docs/art/ART21R2_CLOSEOUT_IMAGE_BOUNDARY_SOURCE_CONTRACT_PASS_VISUAL_PARTIAL.md`; `docs/art/validation/art21r2/`; `tools/validate_art21r2_image_boundary_ui.ps1` | PARTIAL: Main Menu `Main.png` source planks, Map Overlay event/flag, modal family, Long Term structure, and route guards are proven. Final UI visual completion and high-resolution QA are not claimed. |
 | ART-21R1 | closed_partial / ue parity floor repair | `docs/art/ART21R1_UE_PARITY_FLOOR_EXISTING_ASSETS.md`; `docs/art/ART21R1_CLOSEOUT_UE_PARITY_FLOOR.md`; `docs/art/validation/art21r1/`; `tools/validate_art21r1_ue_parity.ps1` | PARTIAL: Run HUD real room/player layer and main-menu direct Deploy Prep route are repaired. UE/Base visual parity is not fully reached; Deploy / Long-term, map tile readability, inventory keyboard route, and ground-loot evidence remain blockers. |
 | ART-21 | closed_with_residual_visual_risk | `docs/art/ART21_LUA_UE_EXECUTION_LOGIC_UI_PLACEMENT_REBUILD.md`; `docs/art/ART21_CLOSEOUT_UI_PLACEMENT_CONTRACT_REBUILD.md`; `docs/art/validation/art21/`; `tools/validate_art21_ui_placement_contract.ps1` | UI Placement Contract, runtime asset mapping, and core-screen rebuild are in place. Live screenshots cover main menu, deploy prep, long-term, run HUD, map overlay, inventory, and result. Ground loot modal remains NOT_TRIGGERED in live validation; final visual target is not claimed. |

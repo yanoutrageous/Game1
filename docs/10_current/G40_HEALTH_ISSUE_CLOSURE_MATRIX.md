@@ -1,5 +1,7 @@
 # G40 Health Issue Closure Matrix
 
+文档状态：G40 历史阶段矩阵；已由 I0 当前事实链取代，不属于当前第一入口。
+
 Source: project health review and G40 cleanup evidence.
 
 | Issue | Category | G40 action | Status | Evidence |

@@ -1,74 +1,50 @@
 # Validation Index
 
-Status: current validation index after G40 Slice 11.
+文档状态：当前验证索引
+最后更新：2026-07-11（I0.6）
 
-## Current Validation Entrypoint
-
-Run from the active repository:
+## 当前入口
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/validate_current_project.ps1
+powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tools/i0/invoke_i0_tests.ps1 -Profile remediated
 ```
 
-Expected current result during G40:
+当前 Godot 工具链必须来自 `D:\AGAME1\tools\runtimes\godot\4.6.3`。套件在 `D:\AGAME1\tools\runtimes\.tmp\i0` 建立隔离镜像和用户目录，并比较执行前后 Git 与业务文件指纹。
 
-```text
-G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
+文档编码门独立执行：
+
+```powershell
+powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File tools/i0/validate_document_encoding.ps1
 ```
 
-`PASS_WITH_NOTES` is intentional while G40 is still in progress. It means the current state is explainable, not fully clean.
+## I0 当前结果
 
-Known PASS_WITH_NOTES reasons:
-
-```text
-g40_cleanup_in_progress=true
-duplicate_execution_partial=true
-duplicate_remaining_manual_and_reference_review=true
-project_godot_restored_to_head=true
-manual_playtest_claimed=false
-gameplay_runtime_pass_claimed=false
-```
-
-## G40 Helper Tools
-
-| Tool | Role | Mutation policy |
+| 验证 | 当前结果 | 边界 |
 | --- | --- | --- |
-| `tools/inspect_dirty_state.ps1` | Classifies dirty/staged/untracked state. | Read-only |
-| `tools/scan_g40_path_references.ps1` | Classifies legacy path references. | Read-only |
-| `tools/validate_g40_cleanup_topology.ps1` | Validates G40 topology in in-progress mode. | Read-only |
-| `tools/clean_generated_dirty_state.ps1` | Lists generated dirty candidates. | Dry-run by default; no `-Apply` in Slice 7 |
-| `tools/prepare_validation_clean_state.ps1` | Reports validation blockers and suggested future actions. | Dry-run only in Slice 7 |
+| 工具链 | PASS_WITH_RECORDED_LIMITATION | 版本 / 哈希通过；本机证书链 untrusted root 已记录 |
+| 文档编码与清单 | PASS_WITH_RECORDED_LIMITATION | 已接入主套件；376 文本、428 图片 magic、5 个精确历史例外、0 新异常 |
+| 静态契约 | PASS | 四个基线缺陷与 runner inventory 均通过 |
+| Godot runners | 12/12 PASS_WITH_CLEANUP_DIAGNOSTIC | 0 blocking；24 个退出清理提示 |
+| RunScene 快照 | 5/5 identical | I0.4 前后及两次迁移后逐字一致 |
+| 污染守卫 | PASS | Git、stash、refs、index 和业务指纹未改变 |
+| I0.5 原子迁移 | PASS_WITH_FOLLOWUPS | 同卷原子移动；followups 在 I0.6 收口 |
+| ART-13 | PASS_WITH_28_WARNINGS | warning 包含原始 dirty 与词语复核项 |
+| ART-14 | EXPECTED_FAIL_ON_PROTECTED_DIRTY_STATE | 5 error 均由原始 dirty 精确解释，非回归 |
+| 可见 Godot 烟测 | pending | I0.7 |
+| 人工游玩检查 | pending | I0.7 |
+| 发布 / CI | not_run | 不得声称 PASS |
 
-## Validation Claim Boundary
+迁移后重复报告：
 
-- Godot headless project-load/parser smoke PASS is not gameplay runtime PASS.
-- Gameplay runtime PASS must cite an actual runtime validation run.
-- Manual playtest PASS must cite an actual manual playtest record.
-- G40 does not claim new gameplay capability.
-- G40 Slice 12 restored `project.godot` to HEAD after an explicit metadata/config decision gate. The prior patch remains in `D:\AGAME1\reports\g40\project_godot_dirty.patch`.
+- `D:\AGAME1\reports\i0\I0.2_20260711T044908553Z_9d24aba9.json`
+- `D:\AGAME1\reports\i0\I0.2_20260711T045314232Z_7792d2cf.json`
 
-## Historical Validation Originals
+最终原文：`docs/validation/I0_PROJECT_BASELINE_REFACTOR_VALIDATION.md`（I0.7 定稿）。
 
-Historical validation originals remain in:
+## 声明边界
 
-```text
-docs/validation/
-docs/handoff/
-```
-
-This index does not rewrite historical validation or handoff originals into current facts.
-
-Recent historical/current evidence pointers:
-
-| Stage | Evidence | Boundary |
-| --- | --- | --- |
-| ART-21R2 | `docs/art/ART21R2_CLOSEOUT_IMAGE_BOUNDARY_SOURCE_CONTRACT_PASS_VISUAL_PARTIAL.md`; `docs/art/validation/art21r2/`; `tools/validate_art21r2_image_boundary_ui.ps1` | Image-boundary/source-contract pass with visual partial. Main Menu source planks, Map Overlay event/flag, modal family, Long Term structure, and route guards passed smoke; final visual completion and high-resolution QA are not claimed. |
-| ART-21R1 | `docs/art/ART21R1_UE_PARITY_FLOOR_EXISTING_ASSETS.md`; `docs/art/ART21R1_CLOSEOUT_UE_PARITY_FLOOR.md`; `docs/art/validation/art21r1/`; `tools/validate_art21r1_ue_parity.ps1` | PARTIAL UE parity floor repair using existing assets. Run HUD world layer is restored as primary, main-menu `出发探索` keeps the direct Deploy Prep route, and map/inventory/result evidence is captured. Visual closeout remains partial: Deploy / Long-term, map tile readability, inventory keyboard route, and ground-loot trigger are not complete. |
-| ART-21 | `docs/art/ART21_LUA_UE_EXECUTION_LOGIC_UI_PLACEMENT_REBUILD.md`; `docs/art/ART21_CLOSEOUT_UI_PLACEMENT_CONTRACT_REBUILD.md`; `docs/art/validation/art21/`; `tools/validate_art21_ui_placement_contract.ps1` | UI Placement Contract and Godot runtime mirror passed structural validation. Computer Use screenshots cover main menu, deploy prep, long-term, run HUD, map overlay, inventory, and result. Ground loot modal was not naturally triggered in the sampled runtime path, so ground-loot visual acceptance remains residual risk. Final UI visual completion is not claimed. |
-| ART-20 | `docs/art/ART20_DRAW_TO_RUNTIME_UI_COMPONENT_PIPELINE_EXECUTION.md`; `docs/art/ART20_CLOSEOUT_PIPELINE_PASS_VISUAL_INCOMPLETE.md`; `tools/validate_art20_ui_asset_pipeline.ps1`; `docs/art/validation/art20/` | Pipeline proof only: source/staging/cut/runtime/manifest/visual_key/UI consumer chain passed. Final UI visual target not achieved; Computer Use screenshots are live smoke evidence, not release visual QA. |
-| G40 | `docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md` | Current cleanup validation is IN_PROGRESS / PASS_WITH_NOTES; branch commit/push complete at `ad883310232ca9756371fb68eb3d0176a56e809e`; `project.godot` restored in Slice 12; residual duplicate decisions and smoke remain pending later gates |
-| M5 | `docs/validation/M5_MINIMUM_ITEM_PACK_DROP_LOOP_FULL_CONTENT_VALIDATION.md` | Latest gameplay baseline before G40; no manual playtest PASS unless explicitly recorded |
-| G39 | `docs/validation/G39_NAVIGATION_BOUNDARY_ROUTE_CLOSURE_VALIDATION.md` | Navigation boundary closure; no full settings/Profile UI |
-| G38 | `docs/validation/G38_RUNTIME_ARCHITECTURE_FINALIZATION_VALIDATION.md` | Runtime architecture finalization evidence |
-| G37 | `docs/validation/G37_RUNTIME_AUTHORITY_RUNFLOW_EXECUTION_VALIDATION.md` | Runtime authority / RunFlow execution evidence |
-| G36 and earlier | `docs/validation/` and `docs/handoff/` | Historical evidence, not current acceptance by this index |
+- `PASS_WITH_NOTES` 不是纯 PASS。
+- headless / runner PASS 只证明其测试契约，不等于完整 gameplay runtime PASS。
+- 可见 smoke 不等于完整人工 playtest。
+- 人工 playtest 不自动等于最终视觉、性能、发布或 CI PASS。
+- 历史 validation / handoff 原文继续保留在原目录，不因当前索引而扩大结论。

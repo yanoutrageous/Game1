@@ -12,6 +12,7 @@
 | --- | --- | --- |
 | `current_entry` | 当前必读入口 | 保持短、可审计，不超过 5 个第一入口 |
 | `current_state` | 当前事实摘要 | 只汇总已验证事实和明确边界 |
+| `baseline_assessment` | 获批准阶段形成的详细基线评估 | 阶段关闭后冻结；未来变化通过新的当前摘要或新评估表达 |
 | `draft_contract` | 产品契约草案 | 必须标注草案 / 待确认 |
 | `external_live_reference` | 外部当前只读来源 | 每次按当前外部目录只读定位；仓库只登记路径和观测信息 |
 | `historical_authorized_snapshot` | 此前获授权的冻结历史快照 | 不自动同步；不替代当前外部原件；无新授权不得刷新 |

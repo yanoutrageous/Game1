@@ -1,5 +1,7 @@
 # M4 Repository Sync Metadata Policy
 
+文档状态补充：本文件是 M4 / M4S 时间点策略证据。正文中的旧 Godot 路径和命令不得作为当前执行指令；当前以 `docs/00_governance/EXECUTION_ENVIRONMENT.md` 为准。
+
 文档状态：M4 / M4S metadata 策略裁决
 适用范围：Godot generated metadata、ART15/17 准入、clean checkout 验证流程
 最后更新：2026/06/30

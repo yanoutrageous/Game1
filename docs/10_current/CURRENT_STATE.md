@@ -1,262 +1,124 @@
 # Current State
 
-Document status: current summary after G40 Slice 21 active-repo duplicate retained classification.
+文档状态：当前权威事实摘要
+最后更新：2026-07-11（I0.6）
 
-## Repository
-
-```text
-active_repo: D:\AGAME1\_repo_cache\Game1_work
-godot_project: D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot
-branch: godot/g40-full-project-cleanup-validation-stabilization
-slice_13_validation_base_head: 7a8ed12108a857264aeec4ed3b06f126dc9df7d5
-origin_branch_head_at_slice_13_validation: 7a8ed12108a857264aeec4ed3b06f126dc9df7d5
-base_head_at_g40_start: aa57a4270e047ef83020c333b30af225aa1a5ffb
-main_origin_main: aa57a4270e047ef83020c333b30af225aa1a5ffb
-```
-
-Pre-existing dirty state at G40 start:
+## 1. 活动基线
 
 ```text
-Godot/GraytailGodot/project.godot
+workspace_root: D:\AGAME1
+active_repo: D:\AGAME1\active\Game1_work
+godot_project: D:\AGAME1\active\Game1_work\Godot\GraytailGodot
+branch: i0/project-baseline-refactor
+i0_code_and_path_baseline_head: ba467dd2afdfd517ce798b9d674742891face4b7
+i0_source_head: d4168a6111cfd30be28880301ded52be2d32f462
+upstream: none
 ```
 
-Slice 12 audit chose to restore this file to HEAD instead of committing Godot editor/config changes. The prior patch remains preserved at `D:\AGAME1\reports\g40\project_godot_dirty.patch`.
+旧活动路径 `D:\AGAME1\_repo_cache\Game1_work` 已在 I0.5 通过同卷原子目录移动迁出，当前应不存在。历史报告中的旧路径是时间点证据，不应批量替换。
 
-## Root topology after G40 Slice 3
+## 2. 当前阶段
+
+I0 是独立项目基准阶段，不属于 G / ART / M / P 线路。后续线路均应使用 I0 固定的活动路径、Godot 工具链、测试隔离、污染守卫和声明边界。
+
+| 阶段 | 状态 |
+| --- | --- |
+| I0.0 原始状态冻结 | complete |
+| I0.1 项目本地工具链 | complete_with_recorded_chain_limitation |
+| I0.2 隔离特征测试 | complete |
+| I0.3 四项基线缺陷修复 | complete |
+| I0.4 RunScene 最小职责提取 | complete |
+| I0.5 原子迁移与双次复验 | complete_with_followups_closed_in_I0.6 |
+| I0.6 文档与流程治理 | complete_with_recorded_limitations |
+| I0.7 最终自动化 / 可见 / 人工验收 | pending |
+
+I0 契约：`docs/20_product/I0_PROJECT_BASELINE_REFACTOR_CONTRACT.md`。
+
+## 3. 产品与进度
+
+当前项目是《灰尾回收 / 五四三二一》的 Godot 4 单人撤离式 roguelite 纵向切片，以扫雷式信息推理驱动房间探索、风险与撤离决策。
 
 ```text
-D:\AGAME1\active
-D:\AGAME1\sources
-D:\AGAME1\handoff
-D:\AGAME1\archive
-D:\AGAME1\reports
-D:\AGAME1\workflow
-D:\AGAME1\tools
-D:\AGAME1\external
+engineering_vertical_slice: 65%-75%
+public_mvp: 40%-50%
+full_product_vision: 25%-35%
+release_readiness: 20%-30%
+current_engineering_health: about 6/10, yellow
 ```
 
-Moved legacy source/handoff roots:
+完整依据、置信度和未来路线见 `docs/10_current/I0_BASELINE_ASSESSMENT.md`。
 
-- Legacy path before G40: `D:\AGAME1\Base Docs`
-  Moved to: `D:\AGAME1\sources\docs`
-  Do not use as current canonical path: `D:\AGAME1\Base Docs`
-- Legacy path before G40: `D:\AGAME1\Base Docs_Governance`
-  Moved to: `D:\AGAME1\sources\docs_governance`
-  Do not use as current canonical path: `D:\AGAME1\Base Docs_Governance`
-- Legacy path before G40: `D:\AGAME1\Base Art`
-  Moved to: `D:\AGAME1\sources\art`
-  Do not use as current canonical path: `D:\AGAME1\Base Art`
-- Legacy path before G40: `D:\AGAME1\Draw`
-  Moved to: `D:\AGAME1\sources\draw`
-  Do not use as current canonical path: `D:\AGAME1\Draw`
-- Legacy path before G40: `D:\AGAME1\Connection`
-  Moved to: `D:\AGAME1\handoff\connection`
-  Do not use as current canonical path: `D:\AGAME1\Connection`
+## 4. I0 已改变的事实
 
-## Current G40 status
+- 保存默认值和规范化不再丢失 `abandon_count`。
+- 资产 CSV 使用 RFC4180 解析，六行含逗号字段已正确引用，179 行身份与顺序未改变。
+- `open_inventory`、`open_ground_loot`、`request_extract` 已有 InputMap 定义。
+- 调试面板 toggle / open 恢复受 `DebugGate` 控制的显示能力。
+- ART21R2 调试播种由 `art21r2_run_smoke_seeder.gd` 持有；`RunScene` 从 1,768 行降至 1,668 行。
+- Godot 4.6.3 固定在 `D:\AGAME1\tools\runtimes\godot\4.6.3`。
+- 活动仓库已原子迁移到 `D:\AGAME1\active\Game1_work`。
 
-- Slice 0 current state freeze: complete.
-- Slice 1 full inventory: complete.
-- Slice 2 duplicate decision register: complete.
-- Slice 3 top-level topology rebuild: complete.
-- Slice 4 active repo entrypoint rebuild: complete.
-- Slice 5 path reference migration: complete.
-- Slice 6 dirty-state tools and validation helper dry-runs: complete.
-- Slice 7 unified validation entrypoint and stage indexes: complete.
-- Slice 8 G40 contract / validation / handoff scaffold: complete.
-- Slice 9A G40 working report consolidation: complete.
-- Slice 9B duplicate / stale worktree / historical report cleanup: complete with notes.
-- Slice 10 G40 docs/tools commit and branch push: complete.
-- Slice 11 post-push status synchronization: complete with notes.
-- Slice 12 `project.godot` metadata/config decision: restored to HEAD; active repo dirty count returned to 0.
-- Slice 13 final non-Godot validation boundary: complete with notes.
-- Slice 14 root residual topology cleanup: moved the empty legacy `D:\AGAME1\Godot` shell to `D:\AGAME1\external\godot_reference\Godot` and moved the root 20260622 audit report pair to `D:\AGAME1\reports\code_audit_20260622`.
-- Slice 15 registered worktree cleanup: removed five clean non-active registered worktrees with `git worktree remove` without `--force`; the dirty generated-metadata worktree retained at that point was resolved in Slice 16.
-- Slice 16 dirty generated-metadata worktree cleanup: restored tracked generated `.translation` files by exact path, removed exact untracked generated `.translation` and verified `.gd.uid` files, then removed the clean registered worktree with `git worktree remove` without `--force`.
-- Slice 17 duplicate evidence refresh: regenerated current duplicate-state evidence after Slice 15/16 topology and worktree cleanup; no delete, move, archive, cache cleanup, protected-source cleanup, or active-repo duplicate cleanup was performed.
-- Slice 18 generated-cache duplicate policy closure: classified 10002 existing workflow Edge CDP generated-cache duplicate rows as `generated-ignore / processed_by_policy_no_delete`; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete.
-- Slice 19 residual duplicate final-disposition classification: classified 3003 existing canonical/protected-source residual rows as final non-destructive dispositions; no file was deleted, moved, archived, copied, or marked safe to delete. It left 109 tracked active-repo duplicate-review rows and 94 historical/reference/workflow-state rows as explicit later gate inputs.
-- Slice 20 workflow duplicate blocker classification: classified the 94 workflow historical/reference/workflow-state rows as final non-destructive workflow-retained dispositions; no file was deleted, moved, archived, copied, cleaned, or marked safe to delete. At that point it left only the 109 tracked active-repo duplicate-review rows as the duplicate gate input before Slice 21.
-- Slice 21 active-repo duplicate retained classification: classified the remaining 109 tracked active-repo duplicate-review rows as retained final dispositions for G40 accounting; no file was deleted, moved, archived, copied, restored, imported, cleaned, or marked safe to delete. Future physical consolidation requires a separate asset-reference migration / art asset dedupe gate.
+## 5. 自动化验证事实
 
-Slice 9B archived two approved non-registered stale checkouts:
+迁移后两次独立全套运行均得到：
 
 ```text
-D:\AGAME1\archive\stale_checkouts\Game_git_compare
-D:\AGAME1\archive\stale_checkouts\Game_feature_editor_playable_prototype
+overall: PASS_WITH_NOTES
+characterization: PASS_REMEDIATED_WITH_NOTES
+runners: 12/12
+blocking_diagnostics: 0
+cleanup_diagnostics: 24
+pollution_guard: PASS
+RunScene canonical snapshots: 5/5 identical between runs
+business_fingerprint: 9175B56EE97ABBD503ACB3631A35EBF947926B65B498D10C254C064636C6108D
 ```
 
-Generated cache/profile duplicate rows are policy-closed only where Slice 18 explicitly records `generated-ignore / processed_by_policy_no_delete`. Slice 19 classifies only already-final canonical/protected-source rows as final non-destructive dispositions. Slice 20 classifies workflow blockers as retained workflow/generated evidence. Slice 21 classifies the remaining active-repo duplicate-review rows as retained final dispositions, not as physical dedupe. Registered worktree cleanup is resolved; the only registered worktree is the active repo.
+报告：
 
-Slice 17 refreshed the stale duplicate evidence because earlier reports still contained paths removed by later topology/worktree cleanup. Current evidence files:
+- `D:\AGAME1\reports\i0\I0.2_20260711T044908553Z_9d24aba9.json`
+- `D:\AGAME1\reports\i0\I0.2_20260711T045314232Z_7792d2cf.json`
+
+24 条提示来自 ObjectDB / resource 退出清理，当前不阻断行为结论，但仍是健康债务。
+
+I0.6 已把严格文档编码门接入同一主套件：376 个文本、428 个图片 magic 验证、5 个精确历史异常、0 个新增异常；340 张历史截图为 `.png` 扩展名 / JPEG 编码不一致并已计数。未知类型 canary 会在 Godot runner 前 fail closed。
+
+## 6. 受保护的原始工作树状态
+
+I0 开始前的 12 项 status 被精确保留，且无 staged 文件：
 
 ```text
-D:\AGAME1\reports\g40\duplicate_resolution_plan_current_paths_after_slice16.csv
-D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice16.md
-D:\AGAME1\reports\g40\remaining_manual_decisions_after_slice16.md
-D:\AGAME1\reports\g40\remaining_reference_blockers_after_slice16.md
+7 tracked *.translation modifications
+1 tracked project.godot modification
+1 tracked scripts/ui/run_surface/run_surface.gd modification (EOL-only)
+2 untracked ART21R2 smoke screenshots
+1 untracked tools/__pycache__/ directory
 ```
 
-Slice 17 current duplicate-state counts:
+保护性 stash 保持：
 
 ```text
-previous_manifest_total_rows=23306
-currently_existing_rows=13208
-missing_after_topology_worktree_cleanup=10098
-unclassified_missing_path_column_rows=0
-remaining_needs_manual_decision=109
-remaining_blocked_by_reference=155
-protected_source_rows_still_present=670
-active_repo_rows_still_present=1394
-workflow_cache_report_rows_still_present=11136
+a608462968d7913a5bf63c376c186fe1df89d2db
+On main: pre-sync generated dirty before aligning to G15 encounter branch on computer two
 ```
 
-Missing rows are evidence-labelled `no_longer_present_after_topology_worktree_cleanup`; Slice 17 does not claim they were deleted by Slice 17.
+这些内容属于用户原有状态。I0 不清理、不丢弃、不自动提交。
 
-Slice 18 classified the audited workflow/browser generated-cache subset without deleting or moving any file. Current Slice 18 evidence files:
+## 7. 已知限制与安全记录
 
-```text
-D:\AGAME1\reports\g40\generated_cache_duplicate_policy_closure_after_slice17.csv
-D:\AGAME1\reports\g40\generated_cache_duplicate_policy_closure_after_slice17.md
-D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice18.md
-```
+- 工具链签名者和时间戳可读取；本机证书链返回 untrusted root，因此记录为限制，不声称完整链验证 PASS。
+- 历史 G37 验证器曾意外选择 `D:\Godot` 下的 Godot，并在 `D:\AGAME1` 外产生两个 Godot AppData 日志文件。相关进程已终止；外部文件未清理，后续 Godot 调用全部改走 I0 隔离工具链。I0 最终结论必须标为带记录安全偏差 / 限制，而非无条件全绿。
+- ART-13 在原始脏状态下 exit 0 并报告 28 个 warning；ART-14 的 5 个 error 均可由原始 `run_surface.gd`、两张截图和 `tools/__pycache__` 解释，不是迁移回归。
+- 五个历史 / 导航文档存在 I0 前即有的 UTF-8 字节损坏；I0 保留精确 preimage，并为三个导航职责建立有效 `I0_INDEX.md`，不猜测恢复历史正文。处理见编码台账。
+- 最终可见与人工游玩验收尚未完成，不能声称发布或完整视觉 PASS。
 
-Slice 18 generated-cache policy closure counts:
+## 8. 当前读取顺序
 
-```text
-generated_cache_policy_closed_rows=10002
-generated_cache_policy_decision=generated-ignore
-generated_cache_policy_action=processed_by_policy_no_delete
-generated_cache_deleted=false
-generated_cache_archived=false
-generated_cache_moved=false
-existing_rows_not_policy_closed_by_slice18=3206
-remaining_needs_manual_decision=109
-remaining_blocked_by_reference=155
-protected_source_rows_still_present=670
-active_repo_rows_still_present=1394
-```
+1. `docs/10_current/CURRENT_STATE.md`
+2. `docs/10_current/I0_BASELINE_ASSESSMENT.md`
+3. `docs/10_current/CAPABILITY_MATRIX.yaml`
+4. `docs/20_product/I0_PROJECT_BASELINE_REFACTOR_CONTRACT.md`
+5. `docs/40_validation/VALIDATION_INDEX.md`
+6. `docs/10_current/KNOWN_UNFINISHED_SYSTEMS.md`
+7. `docs/10_current/NEXT_ACTION.md`
 
-Slice 18 does not imply that active repo duplicates, protected source duplicates, reference-blocked rows, workflow `not_actionable_in_9b`, or workflow state/receipt manual-decision rows are resolved.
-
-Slice 19 classified the audited canonical/protected-source residual subset without deleting or moving any file. Current Slice 19 evidence files:
-
-```text
-D:\AGAME1\reports\g40\residual_duplicate_final_disposition_after_slice19.csv
-D:\AGAME1\reports\g40\residual_duplicate_final_disposition_after_slice19.md
-D:\AGAME1\reports\g40\active_repo_duplicate_review_remaining_after_slice19.csv
-D:\AGAME1\reports\g40\reference_or_workflow_state_blockers_remaining_after_slice19.csv
-D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice19.md
-```
-
-Slice 19 residual duplicate classification counts:
-
-```text
-residual_final_non_destructive_disposition_rows=3003
-residual_final_physical_action=none
-active_repo_duplicate_review_remaining=109
-historical_reference_workflow_state_blockers_remaining=94
-true_unresolved_rows_after_slice19=203
-```
-
-Slice 19 does not physically remediate active repo duplicate assets, historical report archive candidates, reference-blocked rows, workflow state rows, or workflow receipt rows.
-
-Slice 20 classified the workflow duplicate blocker subset without deleting or moving any file. Current Slice 20 evidence files:
-
-```text
-D:\AGAME1\reports\g40\workflow_blocker_final_disposition_after_slice20.csv
-D:\AGAME1\reports\g40\workflow_blocker_final_disposition_after_slice20.md
-D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice20.md
-```
-
-Slice 20 workflow blocker classification counts:
-
-```text
-workflow_blocker_final_disposition_rows=94
-workflow_transport_generated_reference_retained_rows=81
-workflow_record_retained_rows=13
-workflow_blocker_physical_action=none
-active_repo_duplicate_review_remaining=109
-```
-
-Slice 20 does not physically remediate active repo duplicate assets. Those 109 tracked active-repo rows remained the duplicate-review gate input until Slice 21 retained classification.
-
-Slice 21 classified the active-repo duplicate-review subset without deleting or moving any file. Current Slice 21 evidence files:
-
-```text
-D:\AGAME1\reports\g40\active_repo_duplicate_final_disposition_after_slice21.csv
-D:\AGAME1\reports\g40\active_repo_duplicate_final_disposition_after_slice21.md
-D:\AGAME1\reports\g40\duplicate_current_state_summary_after_slice21.md
-```
-
-Slice 21 active-repo duplicate retained classification counts:
-
-```text
-active_repo_duplicate_final_disposition_rows=109
-active_runtime_asset_retained_rows=75
-external_reference_future_asset_migration_rows=14
-validation_evidence_retained_rows=9
-protected_source_placeholder_retained_rows=10
-runtime_font_retained_rows=1
-active_repo_duplicate_physical_action=none
-delete_move_archive_copy_approvals=0
-duplicate_review_unresolved_for_g40_accounting=0
-future_asset_reference_migration_required=true
-```
-
-Slice 21 does not physically remediate active repo duplicate assets. It closes G40 duplicate accounting by retained disposition only. Physical asset consolidation remains a future non-G40 asset-reference migration / art asset dedupe decision.
-
-G40 branch commit/push evidence:
-
-```text
-slice_10_commit: ad883310232ca9756371fb68eb3d0176a56e809e
-slice_11_commit: fac8310c970260c333cb3b716d43b3024e161a75
-slice_12_commit: 7a8ed12108a857264aeec4ed3b06f126dc9df7d5
-branch: origin/godot/g40-full-project-cleanup-validation-stabilization
-main_status: not merged / not pushed by G40
-```
-
-## Current G40 tools
-
-```text
-tools/inspect_dirty_state.ps1
-tools/validate_current_project.ps1
-tools/scan_g40_path_references.ps1
-tools/validate_g40_cleanup_topology.ps1
-tools/clean_generated_dirty_state.ps1
-tools/prepare_validation_clean_state.ps1
-```
-
-Slice 6 tools are read-only or dry-run in this slice. No `-Apply` mode was used, and no generated metadata or `project.godot` cleanup was performed.
-
-Current validation entrypoint:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File tools/validate_current_project.ps1
-```
-
-Expected current marker:
-
-```text
-G40_UNIFIED_VALIDATION=PASS_WITH_NOTES
-```
-
-Slice 13 validated the active repo with only in-boundary, non-Godot commands. The validation set included G40 dirty-state/topology/reference checks plus static M3/M3R/M3H/M4S/M5/G36/G37/G38/G39 validators. Godot project-load/parser smoke and Godot-backed runtime runners were not run because no `D:\AGAME1`-local Godot executable was available and the G40 boundary forbids `D:\Godot`.
-
-Slice 14 removed the remaining root `D:\AGAME1\Godot` ambiguity by moving its empty directory shell into `D:\AGAME1\external\godot_reference\Godot`. The moved folder is not the active Godot project and is not a runtime executable source. Historical `AGAME1_code_audit_delivery_report_20260622.*` files now live under `D:\AGAME1\reports\code_audit_20260622`.
-
-Slice 15 reduced registered worktree ambiguity. It left one dirty generated-metadata worktree for a separate audited gate; Slice 16 subsequently resolved and removed that worktree.
-
-Slice 16 resolved the remaining registered dirty generated-metadata worktree. The exact cleanup and removal evidence is recorded at `D:\AGAME1\reports\g40\worktree_dirty_metadata_resolution_log.md`. Current `git worktree list --porcelain` shows only the active repo `D:\AGAME1\_repo_cache\Game1_work`.
-
-Slice 17 refreshed duplicate evidence only. Slice 18 policy-closed only the audited workflow Edge CDP generated-cache subset as `generated-ignore / processed_by_policy_no_delete`. Slice 19 classified already-final canonical/protected-source rows as final non-destructive dispositions. Slice 20 classified workflow blocker rows as retained workflow/generated evidence. Slice 21 classified the 109 tracked active-repo rows as retained final dispositions for G40 accounting. Future physical asset consolidation requires a separate asset-reference migration / art asset dedupe gate.
-
-G40 is a cleanup and validation stabilization stage. Latest gameplay baseline before G40 is M5 at `aa57a4270e047ef83020c333b30af225aa1a5ffb`; G40 does not claim new gameplay content.
-
-## Current boundaries
-
-- No gameplay runtime PASS is claimed by G40.
-- No manual playtest PASS is claimed by G40.
-- `Godot/GraytailGodot/project.godot` was restored to HEAD in Slice 12; G40 keeps the captured patch as evidence and does not accept the 4.6 editor rewrite in this branch.
-- G40 is cleanup / governance / validation-stabilization work, not a gameplay feature implementation stage.
-- Complete LongTerm, Objective / Reward / Pool, full Rule Engine, full Warehouse, full art productization, and CI remain outside G40 unless a later gate says otherwise.
+G40 及更早阶段文件继续作为历史证据，不再控制当前路径、当前阶段或当前验证声明。

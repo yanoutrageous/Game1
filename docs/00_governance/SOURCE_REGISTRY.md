@@ -1,6 +1,6 @@
 # Source Registry
 
-Status: current source registry after G40 Slice 4.
+Status: current source registry after I0.6.
 
 ## Current External Source Roots
 
@@ -41,7 +41,7 @@ Status: current source registry after G40 Slice 4.
 ## Active Repo
 
 ```text
-D:\AGAME1\_repo_cache\Game1_work
+D:\AGAME1\active\Game1_work
 ```
 
 ## Source Use Rules

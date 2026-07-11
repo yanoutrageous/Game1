@@ -1,154 +1,120 @@
 document_status: current_capability_matrix
-updated_by: G40 Slice 21
+updated: "2026-07-11"
+updated_by: "I0.6"
 
 repository:
-  active_repo_path: "D:\\AGAME1\\_repo_cache\\Game1_work"
-  godot_project_path: "D:\\AGAME1\\_repo_cache\\Game1_work\\Godot\\GraytailGodot"
-  current_branch: "godot/g40-full-project-cleanup-validation-stabilization"
-  slice_13_validation_base_head: "7a8ed12108a857264aeec4ed3b06f126dc9df7d5"
-  origin_branch_head_at_slice_13_validation: "7a8ed12108a857264aeec4ed3b06f126dc9df7d5"
-  g40_base_head: "aa57a4270e047ef83020c333b30af225aa1a5ffb"
-  main_origin_main: "aa57a4270e047ef83020c333b30af225aa1a5ffb"
-
-g40_cleanup:
-  current_state_freeze: complete
-  full_inventory: complete
-  duplicate_decision_register: complete
-  top_level_topology_rebuild: complete
-  active_repo_entrypoints: complete
-  path_reference_migration: complete
-  dirty_state_tools: complete
-  unified_validation_entrypoint: complete
-  documentation_closeout_scaffold: complete
-  report_consolidation_9a: complete
-  duplicate_stale_cleanup_9b: complete_with_notes
-  stale_checkout_archived_count_9b: 2
-  duplicate_state_refresh_17: complete_with_notes
-  duplicate_manifest_after_slice16_total_rows: 23306
-  duplicate_manifest_after_slice16_existing_rows: 13208
-  duplicate_manifest_after_slice16_missing_rows: 10098
-  duplicate_manifest_after_slice16_unclassified_rows: 0
-  duplicate_remaining_needs_manual_decision_after_slice16: 109
-  duplicate_remaining_blocked_by_reference_after_slice16: 155
-  duplicate_protected_source_rows_still_present_after_slice16: 670
-  duplicate_active_repo_rows_still_present_after_slice16: 1394
-  duplicate_workflow_cache_report_rows_still_present_after_slice16: 11136
-  generated_cache_duplicate_policy_closure_18: complete_with_notes
-  generated_cache_policy_closed_rows_18: 10002
-  generated_cache_policy_decision_18: generated-ignore
-  generated_cache_policy_action_18: processed_by_policy_no_delete
-  generated_cache_deleted_18: false
-  generated_cache_archived_18: false
-  generated_cache_moved_18: false
-  duplicate_existing_rows_not_policy_closed_after_slice18: 3206
-  duplicate_remaining_needs_manual_decision_after_slice18: 109
-  duplicate_remaining_blocked_by_reference_after_slice18: 155
-  duplicate_protected_source_rows_still_present_after_slice18: 670
-  duplicate_active_repo_rows_still_present_after_slice18: 1394
-  residual_duplicate_final_disposition_19: complete_with_notes
-  residual_duplicate_final_disposition_rows_19: 3003
-  residual_duplicate_final_disposition_physical_action_19: none
-  active_repo_duplicate_review_remaining_19: 109
-  historical_reference_workflow_state_blockers_remaining_19: 94
-  true_unresolved_duplicate_rows_after_slice19: 203
-  workflow_blocker_final_disposition_20: complete_with_notes
-  workflow_blocker_final_disposition_rows_20: 94
-  workflow_transport_generated_reference_retained_rows_20: 81
-  workflow_record_retained_rows_20: 13
-  workflow_blocker_physical_action_20: none
-  active_repo_duplicate_review_remaining_20: 109
-  active_repo_duplicate_final_disposition_21: complete_with_notes
-  active_repo_duplicate_final_disposition_rows_21: 109
-  active_runtime_asset_retained_rows_21: 75
-  external_reference_future_asset_migration_rows_21: 14
-  validation_evidence_retained_rows_21: 9
-  protected_source_placeholder_retained_rows_21: 10
-  runtime_font_retained_rows_21: 1
-  active_repo_duplicate_physical_action_21: none
-  active_repo_duplicate_delete_move_archive_copy_approvals_21: 0
-  duplicate_review_unresolved_for_g40_accounting_after_slice21: 0
-  future_asset_reference_migration_required_after_slice21: true
-  branch_commit_push: complete
-  slice_10_commit_hash: "ad883310232ca9756371fb68eb3d0176a56e809e"
-  slice_11_commit_hash: "fac8310c970260c333cb3b716d43b3024e161a75"
-  slice_12_commit_hash: "7a8ed12108a857264aeec4ed3b06f126dc9df7d5"
-  main_merge_push: not_performed
-  project_godot_restore_12: complete
-  final_non_godot_validation_13: complete_with_notes
-  root_residual_topology_cleanup_14: complete
-  legacy_godot_root_status: relocated_to_external_godot_reference
-  code_audit_20260622_status: relocated_to_reports_code_audit_20260622
-  registered_clean_worktree_cleanup_15: complete_with_notes
-  registered_clean_worktrees_removed_15: 5
-  dirty_generated_metadata_worktree_cleanup_16: complete
-  remaining_registered_dirty_worktree: null
-  registered_worktree_topology: active_only
-  final_cleanup_execution: pass_with_notes
-  final_validation: pass_with_notes
-
-topology:
-  active_repo_physically_moved: false
-  active_repo_pointer: "D:\\AGAME1\\active\\Game1_work.pointer.md"
-  source_roots_moved: true
-  source_roots:
-    docs: "D:\\AGAME1\\sources\\docs"
-    docs_governance: "D:\\AGAME1\\sources\\docs_governance"
-    art: "D:\\AGAME1\\sources\\art"
-    draw: "D:\\AGAME1\\sources\\draw"
-    connection: "D:\\AGAME1\\handoff\\connection"
-    legacy_godot_reference: "D:\\AGAME1\\external\\godot_reference\\Godot"
-    code_audit_20260622: "D:\\AGAME1\\reports\\code_audit_20260622"
-  legacy_paths_are_canonical: false
-  non_active_registered_worktrees_remaining: []
-
-validation_claims:
-  gameplay_runtime_pass_claimed_by_g40: false
-  manual_playtest_pass_claimed_by_g40: false
-  godot_smoke_required_later: true
-  godot_smoke_slice_13: not_run_no_in_boundary_godot_executable
-  m5_static_validator_slice_13: pass
-  g39_static_validator_slice_13: pass
-  m5_runtime_runner_slice_13: not_run_no_in_boundary_godot_executable
-  g39_runtime_runner_slice_13: not_run_no_in_boundary_godot_executable
-  unified_validation_entrypoint_pending: false
-  unified_current_project_entrypoint: pass_with_notes
-
-known_unfinished_systems:
-  complete_long_term: not_in_scope_for_g40
-  objective_reward_pool: not_in_scope_for_g40
-  complete_rule_engine: not_in_scope_for_g40
-  complete_warehouse_economy: not_in_scope_for_g40
-  full_art_productization: not_in_scope_for_g40
-  ci_pipeline: not_in_scope_unless_later_gate
-
-dirty_state:
-  pre_existing_project_godot_dirty: false
-  project_godot_dirty_status: restored_to_head_by_g40_slice_12
-  project_godot_decision_gate: completed_restore_to_head
-  project_godot_patch: "D:\\AGAME1\\reports\\g40\\project_godot_dirty.patch"
-  staged_files_expected_now: false
+  workspace_root: "D:\\AGAME1"
+  active_repo_path: "D:\\AGAME1\\active\\Game1_work"
+  godot_project_path: "D:\\AGAME1\\active\\Game1_work\\Godot\\GraytailGodot"
+  current_branch: "i0/project-baseline-refactor"
+  code_and_path_baseline_head: "ba467dd2afdfd517ce798b9d674742891face4b7"
+  source_head: "d4168a6111cfd30be28880301ded52be2d32f462"
+  upstream: null
+  old_active_repo_path_exists: false
+  registered_worktree_count: 1
   protective_stash_touched: false
 
-g40_tools:
-  inspect_dirty_state: "tools/inspect_dirty_state.ps1"
-  validate_current_project: "tools/validate_current_project.ps1"
-  scan_g40_path_references: "tools/scan_g40_path_references.ps1"
-  validate_g40_cleanup_topology: "tools/validate_g40_cleanup_topology.ps1"
-  clean_generated_dirty_state: "tools/clean_generated_dirty_state.ps1"
-  prepare_validation_clean_state: "tools/prepare_validation_clean_state.ps1"
-  slice_6_apply_modes_used: false
-  mutation_performed_by_tools: false
+i0:
+  line: independent_baseline
+  status: in_progress
+  freeze: complete
+  local_toolchain: complete_with_recorded_chain_limitation
+  isolated_characterization: complete
+  confirmed_defect_repairs: complete
+  run_scene_minimal_extraction: complete
+  atomic_relocation: complete
+  documentation_governance: complete_with_recorded_limitations
+  final_acceptance: pending
+
+progress_estimate:
+  confidence: medium
+  engineering_vertical_slice_percent: "65-75"
+  public_mvp_percent: "40-50"
+  full_product_vision_percent: "25-35"
+  release_readiness_percent: "20-30"
+  note: "I0 improves evidence and engineering health; it does not add product content."
+
+health:
+  audit_start_score_out_of_10: 4.5
+  current_score_out_of_10: 6.0
+  current_band: yellow
+  confidence: medium
+  dimensions:
+    product_direction: 7
+    runtime_vertical_slice: 6
+    architecture: 5
+    automated_validation: 7
+    documentation_governance: 6
+    release_readiness: 3
+  remaining_reasons:
+    - final_visible_and_manual_acceptance_pending
+    - run_scene_still_1668_lines
+    - objectdb_and_resource_cleanup_diagnostics_24
+    - original_dirty_state_protected_not_resolved
+    - historical_screenshot_extension_magic_mismatch_340
+    - ci_and_release_gate_absent
+    - visual_productization_partial
+
+toolchain:
+  engine: Godot
+  version: "4.6.3.stable.official.7d41c59c4"
+  install_root: "D:\\AGAME1\\tools\\runtimes\\godot\\4.6.3"
+  archive_sha256: "e39986a178d585ce7ac198fb8de6ea436366dc0cc00e594810c2e3e104c04b90"
+  binary_hashes_verified: true
+  authenticode_signer_and_timestamp_present: true
+  certificate_chain_status: chain_untrusted_recorded
+
+runtime_capabilities:
+  app_shell_and_navigation: implemented_foundation
+  deploy_prep: implemented_foundation
+  run_exploration: playable_vertical_slice
+  minesweeper_information_loop: playable_vertical_slice
+  encounters_and_basic_combat: implemented_foundation
+  items_ground_loot_inventory: playable_vertical_slice
+  extraction_and_result: playable_vertical_slice
+  save_profile: partial_foundation
+  long_term_systems: display_only_or_partial
+  warehouse_economy: partial_or_display_only
+  objective_reward_pool: incomplete
+  full_rule_content: incomplete
+  final_art_productization: incomplete
+  release_pipeline: incomplete
+
+i0_repairs:
+  save_abandon_count: pass
+  asset_manifest_rfc4180_and_width: pass
+  required_input_actions: pass
+  debug_surface_toggle_and_open: pass
+  run_scene_art21r2_seeder_extraction: behavior_snapshot_equivalent
 
 validation:
-  unified_current_project_entrypoint: "tools/validate_current_project.ps1"
-  current_expected_marker: "G40_UNIFIED_VALIDATION=PASS_WITH_NOTES"
-  g40_validation_doc: "docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md"
-  g40_handoff_doc: "docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md"
-  pass_with_notes_reasons:
-    - g40_cleanup_in_progress
-    - generated_cache_duplicates_policy_closed_after_slice18_without_delete
-    - residual_canonical_and_protected_duplicates_classified_after_slice19_without_delete
-    - workflow_duplicate_blockers_classified_after_slice20_without_delete
-    - active_repo_duplicates_closed_by_retained_disposition_after_slice21
-    - future_asset_reference_migration_required_outside_g40
-    - godot_project_load_parser_smoke_not_run_due_boundary
+  suite_entrypoint: "tools/i0/invoke_i0_tests.ps1"
+  profile: remediated
+  post_move_repeat_count: 2
+  expected_runner_count: 12
+  passing_runner_count: 12
+  blocking_diagnostic_count: 0
+  cleanup_diagnostic_count: 24
+  pollution_guard: pass
+  canonical_run_scene_snapshot_count: 5
+  canonical_run_scene_snapshot_difference_count: 0
+  manual_playtest: pending_i0_7
+  final_visual_acceptance: pending_i0_7
+
+protected_dirty_state:
+  status_entry_count: 12
+  staged_entry_count: 0
+  translation_modifications: 7
+  project_godot_modifications: 1
+  run_surface_eol_only_modifications: 1
+  untracked_screenshots: 2
+  untracked_pycache_directories: 1
+  policy: preserve_until_separately_authorized
+
+claim_boundaries:
+  gameplay_runtime_pass: only_for_the_12_recorded_isolated_runners
+  manual_playtest_pass: false
+  final_visual_pass: false
+  release_pass: false
+  i0_final_pass: false
+  historical_stage_documents_are_current_authority: false

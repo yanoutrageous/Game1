@@ -1,34 +1,25 @@
 # Audit Scope
 
-Current audit scope after G40 Slice 4.
+文档状态：I0 当前审计范围
+最后更新：2026-07-11
 
-## In Scope
+## 已纳入
 
-- Active repo documentation entrypoints.
-- G40 topology and source-root mapping.
-- Duplicate decision registers and cleanup evidence.
-- Dirty-state policy and validation entrypoint preparation.
-- Verification that repo docs do not present legacy paths as current canonical source paths.
+- `D:\AGAME1` 全目录、活动仓库、Godot 工程、当前文档、来源登记和历史报告。
+- Git branch / HEAD / index / refs / stash / worktree / dirty state。
+- 所有可定位的 AGAME1 相关 Codex 根对话与子代理 rollout。
+- 项目本地 Godot 4.6.3 的来源、版本、哈希、签名限制、编辑器导入与 12 个隔离运行器。
+- 四个已确认缺陷、`RunScene` 的最小职责提取、仓库原子迁移和路径重绑定。
+- 当前事实、阶段、验证、安全和编码治理。
 
-## Out of Scope
+## 明确未声称完成
 
-- Full gameplay runtime validation unless explicitly run.
-- Manual playtest validation unless explicitly run.
-- Complete LongTerm implementation.
-- Objective / Reward / Pool implementation.
-- Complete Rule Engine.
-- Complete Warehouse economy.
-- Full art productization.
-- Physical relocation of Git worktrees.
+- 完整产品内容、长期系统、仓库经济、目标 / 奖励 / Pool 和完整规则引擎。
+- 最终美术产品化、全分辨率视觉 QA、性能基线、发布导出或 CI。
+- 尚未执行的 I0.7 人工游玩与最终可见验收。
+- 用户原始 12 项脏状态的归属或清理决定。
+- 远端 push、main merge、历史重写或分支删除。
 
-## Current source roots
+## 证据等级
 
-```text
-D:\AGAME1\sources\docs
-D:\AGAME1\sources\docs_governance
-D:\AGAME1\sources\art
-D:\AGAME1\sources\draw
-D:\AGAME1\handoff\connection
-```
-
-Legacy root paths are only moved/superseded mapping evidence.
+实现、可运行测试和可见结果优先于对话自述；当前入口优先于历史导航；历史文档只证明其明确记录的时间点和范围。

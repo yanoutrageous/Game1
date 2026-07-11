@@ -1,32 +1,19 @@
 # Active Stage Index
 
-Status: current active stage index after G40 Slice 11.
+文档状态：当前 active stage 索引
+最后更新：2026-07-11（I0.6）
 
-## Active Stage
-
-| Stage | Lane | Status | Evidence | Boundary |
+| Stage | Line | Status | Evidence | Boundary |
 | --- | --- | --- | --- | --- |
-| G40 | program / cleanup | active, in progress | `docs/20_product/G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION_CONTRACT.md`; `docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md`; `docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md`; `tools/validate_current_project.ps1` | Full project cleanup, repository remediation, validation stabilization. No gameplay runtime PASS or manual playtest PASS claimed. |
+| I0 | independent baseline | active / I0.0–I0.6 complete; I0.7 pending | `docs/20_product/I0_PROJECT_BASELINE_REFACTOR_CONTRACT.md`; `docs/10_current/I0_BASELINE_ASSESSMENT.md`; `docs/40_validation/VALIDATION_INDEX.md` | 项目冻结、工具链、缺陷修复、最小结构修正、迁移、治理和最终验收；不增加玩法内容，不声明发布完成。 |
 
-## Current Baselines
+## 当前基线
 
-| Item | Current fact |
-| --- | --- |
-| Active repo | `D:\AGAME1\_repo_cache\Game1_work` |
-| Current G40 branch | `godot/g40-full-project-cleanup-validation-stabilization` |
-| Current G40 branch head | `ad883310232ca9756371fb68eb3d0176a56e809e` |
-| Origin G40 branch head | `ad883310232ca9756371fb68eb3d0176a56e809e` |
-| Base HEAD / main / origin/main at G40 start | `aa57a4270e047ef83020c333b30af225aa1a5ffb` |
-| Latest gameplay baseline before G40 | M5 item pack / drop loop full content baseline |
-| Pre-existing project config dirty | Restored to HEAD in G40 Slice 12; patch retained at `D:\AGAME1\reports\g40\project_godot_dirty.patch` |
+```text
+active_repo: D:\AGAME1\active\Game1_work
+branch: i0/project-baseline-refactor
+code_and_path_baseline_head: ba467dd2afdfd517ce798b9d674742891face4b7
+toolchain: Godot 4.6.3.stable.official.7d41c59c4
+```
 
-## Not Active
-
-| Stage | Status |
-| --- | --- |
-| M5 | closed / merged baseline before G40 |
-| M6 | not started |
-| Objective / Reward / Pool expansion | not a G40 task |
-| Complete LongTerm / Warehouse / Rule Engine | not a G40 task |
-
-G40 does not add gameplay content. It stabilizes cleanup, documentation entrypoints, topology, and validation gates.
+G40 已是历史 cleanup / governance 阶段，不再是 active stage。I0.7 关闭后，本索引应显示“无已授权后续阶段”，并将 I0 登记到 closed index。

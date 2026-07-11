@@ -1,6 +1,6 @@
 # Duplicate Document Ledger
 
-Status: current duplicate documentation ledger after G40 Slice 4.
+Status: current duplicate documentation ledger after I0.6.
 
 This ledger records document/source duplication decisions. It does not authorize deletion by itself.
 
@@ -12,7 +12,8 @@ This ledger records document/source duplication decisions. It does not authorize
 | `docs/INDEX.md` | current docs index |
 | `docs/10_current/CURRENT_STATE.md` | current state summary |
 | `docs/10_current/CAPABILITY_MATRIX.yaml` | current capability matrix |
-| `docs/10_current/AUDIT_SCOPE.md` | current audit scope |
+| `docs/10_current/NEXT_ACTION.md` | current next action |
+| `docs/10_current/I0_BASELINE_ASSESSMENT.md` | I0 baseline assessment; freeze after closeout |
 | `docs/00_governance/DOC_PLACEMENT_STANDARD.md` | current placement rules |
 | `docs/00_governance/SOURCE_REGISTRY.md` | current source registry |
 | `docs/00_governance/DUPLICATE_DOC_LEDGER.md` | current duplicate ledger |
@@ -49,3 +50,13 @@ This ledger records document/source duplication decisions. It does not authorize
 | Protected source duplicates | keep; optional review only |
 | Generated/cache duplicates | ignore or clean only under metadata policy |
 | Active repo duplicate assets/docs | manual decision before action |
+
+## I0 Supersession And Encoding Decisions
+
+| Document group | Current handling |
+| --- | --- |
+| `docs/PROJECT_BASELINE.md`, `docs/ENGINEERING_STATUS.md`, `docs/NEXT_HANDOFF.md`, `docs/project_governance/` | retain as expanded / historical evidence; current authority is the I0 current chain |
+| `docs/10_current/G40_HEALTH_ISSUE_CLOSURE_MATRIX.md` | retain as G40 historical stage matrix; removed from current first-entry set |
+| `docs/00_governance/P2_EXECUTION_REPORT.md` | retain byte-damaged historical evidence with exact encoding-ledger hash |
+| `docs/20_product/PRODUCT_CONTRACT.md` | retain byte-damaged P2 draft; it is not the approved I0 contract |
+| three byte-damaged README indexes | preserve exact preimage; current navigation is carried by valid `I0_INDEX.md` companions registered in `TEXT_ENCODING_LEDGER.md` |

@@ -1,6 +1,6 @@
 # External Planning And Handoff Source Boundary
 
-Status: current governance rule after G40 Slice 5.
+Status: current governance rule after I0.6.
 
 This document defines how the repository cites external planning, art, and handoff material after the G40 topology rebuild. It does not copy source bodies into Git and does not authorize runtime asset import.
 
@@ -38,7 +38,7 @@ D:\AGAME1\handoff\connection
 2. Governance snapshots under `D:\AGAME1\sources\docs_governance` are external snapshots. They are not the current repository fact source.
 3. Art sources under `D:\AGAME1\sources\art` and `D:\AGAME1\sources\draw` are not runtime assets unless an approved art import gate imports them.
 4. Handoff material under `D:\AGAME1\handoff\connection` is an external collaboration area. Register paths and hashes when needed; do not import content into Git by default.
-5. Repository facts live under `D:\AGAME1\_repo_cache\Game1_work\docs`, implementation evidence, and committed code.
+5. Repository facts live under `D:\AGAME1\active\Game1_work\docs`, implementation evidence, and committed code.
 
 ## Current Read Order
 
