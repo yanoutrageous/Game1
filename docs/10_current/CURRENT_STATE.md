@@ -1,7 +1,7 @@
 # Current State
 
 文档状态：当前权威事实摘要
-最后更新：2026-07-11（I0.6）
+最后更新：2026-07-11（I0.7 closeout）
 
 ## 1. 活动基线
 
@@ -11,6 +11,7 @@ active_repo: D:\AGAME1\active\Game1_work
 godot_project: D:\AGAME1\active\Game1_work\Godot\GraytailGodot
 branch: i0/project-baseline-refactor
 i0_code_and_path_baseline_head: ba467dd2afdfd517ce798b9d674742891face4b7
+i0_validated_implementation_head: d34f869e85993704ca4091b26f9e40a39795c860
 i0_source_head: d4168a6111cfd30be28880301ded52be2d32f462
 upstream: none
 ```
@@ -19,7 +20,7 @@ upstream: none
 
 ## 2. 当前阶段
 
-I0 是独立项目基准阶段，不属于 G / ART / M / P 线路。后续线路均应使用 I0 固定的活动路径、Godot 工具链、测试隔离、污染守卫和声明边界。
+I0 是已关闭的独立项目基准阶段，不属于 G / ART / M / P 线路。当前没有已授权 active stage。后续线路均应使用 I0 固定的活动路径、Godot 工具链、测试隔离、污染守卫和声明边界，并新增“可见启动先证明游戏日志隔离”的安全门。
 
 | 阶段 | 状态 |
 | --- | --- |
@@ -30,7 +31,7 @@ I0 是独立项目基准阶段，不属于 G / ART / M / P 线路。后续线路
 | I0.4 RunScene 最小职责提取 | complete |
 | I0.5 原子迁移与双次复验 | complete_with_followups_closed_in_I0.6 |
 | I0.6 文档与流程治理 | complete_with_recorded_limitations |
-| I0.7 最终自动化 / 可见 / 人工验收 | pending |
+| I0.7 最终自动化 / 可见 / 人工观察 | closed_with_recorded_safety_nonconformance_and_limitations |
 
 I0 契约：`docs/20_product/I0_PROJECT_BASELINE_REFACTOR_CONTRACT.md`。
 
@@ -60,7 +61,7 @@ current_engineering_health: about 6/10, yellow
 
 ## 5. 自动化验证事实
 
-迁移后两次独立全套运行均得到：
+恢复后的 I0.7 最终隔离运行得到：
 
 ```text
 overall: PASS_WITH_NOTES
@@ -70,17 +71,19 @@ blocking_diagnostics: 0
 cleanup_diagnostics: 24
 pollution_guard: PASS
 RunScene canonical snapshots: 5/5 identical between runs
-business_fingerprint: 9175B56EE97ABBD503ACB3631A35EBF947926B65B498D10C254C064636C6108D
+business_file_count: 656
+business_fingerprint: A344034211ACD8299E1FE3F1CDED47A80D58815B4D77D9E6B312A4A0569D0928
 ```
 
-报告：
-
-- `D:\AGAME1\reports\i0\I0.2_20260711T044908553Z_9d24aba9.json`
-- `D:\AGAME1\reports\i0\I0.2_20260711T045314232Z_7792d2cf.json`
+报告：`D:\AGAME1\reports\i0\I0.2_20260711T064535471Z_5b55f8c8.json`；SHA256 `6868337E7E51DB03BA083725914165D6D7456F017252823C866939CF4B98782F`。
 
 24 条提示来自 ObjectDB / resource 退出清理，当前不阻断行为结论，但仍是健康债务。
 
-I0.6 已把严格文档编码门接入同一主套件：376 个文本、428 个图片 magic 验证、5 个精确历史异常、0 个新增异常；340 张历史截图为 `.png` 扩展名 / JPEG 编码不一致并已计数。未知类型 canary 会在 Godot runner 前 fail closed。
+I0.6 已把严格文档编码门接入同一主套件：376 个文本、428 个图片 magic 验证、5 个精确历史异常、0 个新增异常；340 张历史截图为 `.png` 扩展名 / JPEG magic 不一致并已计数。未知类型 canary 会在 Godot runner 前 fail closed。
+
+I0.7 closeout 文档落位后的独立编码门为 805 inventory、377 个文本、428 个图片 magic、5 个精确历史异常、0 error；该门用于验证 closeout 文档树，不冒充在 closeout 文档提交 HEAD 上重新运行了 12 个 Godot runners。
+
+可见有限烟测观察到主菜单 → 出发整备 → 局内 HUD，以及 M 地图、Q 背包、G 地面回收和 T 任务提示响应。移动、撤离完成、结算和返回未观察；不声明完整人工游玩或最终视觉 PASS。
 
 ## 6. 受保护的原始工作树状态
 
@@ -106,10 +109,11 @@ On main: pre-sync generated dirty before aligning to G15 encounter branch on com
 ## 7. 已知限制与安全记录
 
 - 工具链签名者和时间戳可读取；本机证书链返回 untrusted root，因此记录为限制，不声称完整链验证 PASS。
-- 历史 G37 验证器曾意外选择 `D:\Godot` 下的 Godot，并在 `D:\AGAME1` 外产生两个 Godot AppData 日志文件。相关进程已终止；外部文件未清理，后续 Godot 调用全部改走 I0 隔离工具链。I0 最终结论必须标为带记录安全偏差 / 限制，而非无条件全绿。
+- 历史 G37 验证器曾意外选择 `D:\Godot` 下的 Godot，并在 `D:\AGAME1` 外产生 Godot AppData 日志写入。
+- I0.7 的项目内固定 Godot 可见启动再次在同一 AppData logs 目录新增 / 改写两个日志，构成明确 `SAFETY_NONCONFORMANCE`。活动工程内被改变的 8 个业务路径已从可信 preimage 恢复；12 个原始 status 路径成员全部保留，11 / 12 与 I0.0 raw 字节相同，`project.godot` 恢复到含 I0.3 合法修复的 post-I0 preimage `CD7C9662...E3D46`。恢复 / 后续处置没有删除或再次修改这些范围外日志。直接可见 Godot 在证明日志隔离前不再授权。
 - ART-13 在原始脏状态下 exit 0 并报告 28 个 warning；ART-14 的 5 个 error 均可由原始 `run_surface.gd`、两张截图和 `tools/__pycache__` 解释，不是迁移回归。
 - 五个历史 / 导航文档存在 I0 前即有的 UTF-8 字节损坏；I0 保留精确 preimage，并为三个导航职责建立有效 `I0_INDEX.md`，不猜测恢复历史正文。处理见编码台账。
-- 最终可见与人工游玩验收尚未完成，不能声称发布或完整视觉 PASS。
+- 可见验收为有限覆盖；完整人工游玩、发布和完整视觉 PASS 均未声明。
 
 ## 8. 当前读取顺序
 

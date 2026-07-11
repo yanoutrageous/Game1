@@ -1,6 +1,6 @@
 document_status: current_capability_matrix
 updated: "2026-07-11"
-updated_by: "I0.6"
+updated_by: "I0.7_closeout"
 
 repository:
   workspace_root: "D:\\AGAME1"
@@ -8,6 +8,7 @@ repository:
   godot_project_path: "D:\\AGAME1\\active\\Game1_work\\Godot\\GraytailGodot"
   current_branch: "i0/project-baseline-refactor"
   code_and_path_baseline_head: "ba467dd2afdfd517ce798b9d674742891face4b7"
+  validated_implementation_head: "d34f869e85993704ca4091b26f9e40a39795c860"
   source_head: "d4168a6111cfd30be28880301ded52be2d32f462"
   upstream: null
   old_active_repo_path_exists: false
@@ -16,7 +17,7 @@ repository:
 
 i0:
   line: independent_baseline
-  status: in_progress
+  status: closed_with_recorded_safety_nonconformance_and_limitations
   freeze: complete
   local_toolchain: complete_with_recorded_chain_limitation
   isolated_characterization: complete
@@ -24,7 +25,7 @@ i0:
   run_scene_minimal_extraction: complete
   atomic_relocation: complete
   documentation_governance: complete_with_recorded_limitations
-  final_acceptance: pending
+  final_acceptance: complete_with_recorded_safety_nonconformance_and_limited_visible_coverage
 
 progress_estimate:
   confidence: medium
@@ -47,7 +48,8 @@ health:
     documentation_governance: 6
     release_readiness: 3
   remaining_reasons:
-    - final_visible_and_manual_acceptance_pending
+    - visible_smoke_limited_and_full_manual_playtest_not_claimed
+    - visible_godot_external_appdata_log_nonconformance_recorded
     - run_scene_still_1668_lines
     - objectdb_and_resource_cleanup_diagnostics_24
     - original_dirty_state_protected_not_resolved
@@ -90,6 +92,8 @@ i0_repairs:
 validation:
   suite_entrypoint: "tools/i0/invoke_i0_tests.ps1"
   profile: remediated
+  final_report: "D:\\AGAME1\\reports\\i0\\I0.2_20260711T064535471Z_5b55f8c8.json"
+  final_report_sha256: "6868337E7E51DB03BA083725914165D6D7456F017252823C866939CF4B98782F"
   post_move_repeat_count: 2
   expected_runner_count: 12
   passing_runner_count: 12
@@ -98,8 +102,24 @@ validation:
   pollution_guard: pass
   canonical_run_scene_snapshot_count: 5
   canonical_run_scene_snapshot_difference_count: 0
-  manual_playtest: pending_i0_7
-  final_visual_acceptance: pending_i0_7
+  business_file_count: 656
+  business_fingerprint: "A344034211ACD8299E1FE3F1CDED47A80D58815B4D77D9E6B312A4A0569D0928"
+  protected_status_membership: "12/12"
+  frozen_dirty_raw_byte_identical: "11/12"
+  project_godot_post_i0_preimage_sha256: "CD7C9662E78D0B2EBBB660CD238E1C8E47E9D11D50020F98A811CDD186DE3D46"
+  visible_key_route_smoke: pass_with_notes
+  human_observed_smoke: pass_with_limited_coverage
+  observed_routes:
+    - main_menu_to_deploy_prep_to_run_hud
+    - map_m
+    - inventory_q
+    - ground_loot_g
+    - task_hint_t
+  movement: not_observed
+  extraction_settlement_return: not_run
+  full_manual_playtest: not_claimed
+  final_visual_acceptance: not_claimed
+  safety_boundary: nonconforming_recorded
 
 protected_dirty_state:
   status_entry_count: 12
@@ -117,4 +137,6 @@ claim_boundaries:
   final_visual_pass: false
   release_pass: false
   i0_final_pass: false
+  i0_stage_closed: true
+  i0_overall_closeout: closed_with_recorded_safety_nonconformance_and_limitations
   historical_stage_documents_are_current_authority: false

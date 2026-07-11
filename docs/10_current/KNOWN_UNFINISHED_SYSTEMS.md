@@ -7,7 +7,8 @@
 
 | 系统 | 当前事实 | 建议后续门 |
 | --- | --- | --- |
-| I0 最终可见 / 人工验收 | I0.7 pending | I0.7 closeout |
+| 可见启动安全隔离 | I0 已关闭，但可见 Godot 曾写入范围外 AppData logs | 在任何新可见运行前建立并验证日志隔离门 |
+| 完整人工游玩 | I0.7 仅观察 main menu → deploy prep → run HUD 与 M / Q / G / T；移动、撤离、结算、返回未覆盖 | 安全启动门之后的独立 manual regression stage |
 | `RunScene` 职责 | I0.4 后仍有 1,668 行 | 每次只迁移一个有特征测试的职责 |
 | active-run persistence | save/profile 边界存在，完整往返、恢复和迁移不足 | persistence stage |
 | Complete LongTerm | shell / preview / partial foundation | long-term product stage |

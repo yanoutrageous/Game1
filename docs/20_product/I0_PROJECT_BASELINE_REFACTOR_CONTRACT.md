@@ -1,8 +1,9 @@
 # I0 Project Baseline Refactor Contract
 
-文档状态：已批准、执行中；I0.0–I0.6 完成，I0.7 待验收
+文档状态：已批准、执行完成；I0.0–I0.7 已关闭
 阶段：I0（独立基准阶段，不归入 G / ART / M / P 线路）
 批准时间：2026-07-11
+关闭时间：2026-07-11
 
 ## 1. 阶段目的
 
@@ -32,7 +33,7 @@ I0 同时改变了冻结恢复能力、工具链、自动化验证、运行时�
 | I0.4 | 对 `RunScene` 做最小、有行为快照保护的职责提取 | ART21R2 smoke seeder 与五组快照 |
 | I0.5 | 同卷原子迁移活动仓库并重绑定路径 | I0.5 MOVE 报告与双次迁移后测试 |
 | I0.6 | 修正当前文档、分支、路径、安全与交接治理 | 当前入口、验证记录、编码审计 |
-| I0.7 | 执行自动化、可见和人工验收，关闭 I0 | 最终验证与 handoff |
+| I0.7 | 执行自动化、有限可见 / 人工观察与安全审计，关闭 I0 | `docs/validation/I0_PROJECT_BASELINE_REFACTOR_VALIDATION.md`；`docs/handoff/HANDOFF_I0_PROJECT_BASELINE_REFACTOR.md` |
 
 ## 4. 允许与禁止
 
@@ -77,3 +78,23 @@ I0 同时改变了冻结恢复能力、工具链、自动化验证、运行时�
 - 最终美术产品化、全分辨率视觉 QA 或发布打包。
 - 大规模重写 `RunScene`、更换引擎或重建全部架构。
 - 远端分支整理、main 合并、发布或 CI 平台接入。
+
+## 8. 关闭记录
+
+```text
+stage_status: CLOSED
+overall_closeout: CLOSED_WITH_RECORDED_SAFETY_NONCONFORMANCE_AND_LIMITATIONS
+implementation_validation: PASS_WITH_NOTES
+visible_key_route_smoke: PASS_WITH_NOTES
+human_observed_smoke: PASS_WITH_LIMITED_COVERAGE
+full_manual_playtest_pass: false
+final_visual_pass: false
+release_ci_pass: false
+authorized_next_stage: none
+```
+
+恢复后的最终隔离报告为 `D:\AGAME1\reports\i0\I0.2_20260711T064535471Z_5b55f8c8.json`，SHA256 为 `6868337E7E51DB03BA083725914165D6D7456F017252823C866939CF4B98782F`，验证 implementation head `d34f869e85993704ca4091b26f9e40a39795c860`。
+
+可见观察只证明主菜单 → 出发整备 → 局内 HUD 以及 M / Q / G / T 的 UI 响应；移动、撤离完成、结算和返回路线没有观察。可见启动还在 `D:\AGAME1` 外新增 / 改写 Godot AppData 日志，构成明确安全不符合项。项目内被改写的 8 个业务指纹路径已经从可信 preimage 恢复；12 个原始 status 路径成员全部保留，11 / 12 与 I0.0 raw 字节相同，`project.godot` 恢复到含 I0.3 合法修复的 post-I0 preimage `CD7C9662...E3D46`。恢复 / 后续处置没有删除或再次修改这些外部日志。
+
+关闭 I0 不等于发布完成，也不自动授权下一阶段。任何后续线路必须单独批准，并继承本契约固定的活动路径、工具链、隔离套件、污染守卫、声明边界和新增的“可见启动先证明日志隔离”安全门。

@@ -29,8 +29,10 @@ i0_freeze: D:\AGAME1\_i0_freeze
 
 - 当前唯一获准执行源是工具链锁确认的项目本地 Godot 4.6.3。
 - Godot 必须通过 I0 harness 使用隔离 APPDATA、LOCALAPPDATA、TEMP 和 `user://`。
+- I0.7 证明仅使用项目内二进制 / self-contained editor data 仍不足以隔离游戏日志；直接可见启动曾写入范围外 AppData logs，属于记录的安全不符合项。
+- 在独立启动门实证编辑器与游戏日志均留在 `D:\AGAME1` 前，只授权 I0 headless harness，不授权新的直接可见 Godot 启动。
 - 系统 PATH、历史工具或 `D:\Godot` 不得作为当前执行源。
-- 历史 G37 验证器误选范围外 Godot 的事件记录在 I0 validation；不得用删除外部日志来掩盖事件。
+- 历史 G37 与 I0.7 可见启动事件均记录在 I0 validation；不得用删除外部日志来掩盖事件。
 
 ## Git 边界
 

@@ -1,14 +1,15 @@
 # I0 Project Baseline Refactor Validation
 
-文档状态：I0.6 中间验证记录；I0.7 后定稿
-当前结论：`IN_PROGRESS / PASS_WITH_RECORDED_SAFETY_DEVIATION_AND_LIMITATIONS`
+文档状态：I0.7 最终验证记录
+阶段状态：`CLOSED`
+总体收口：`CLOSED_WITH_RECORDED_SAFETY_NONCONFORMANCE_AND_LIMITATIONS`
 最后更新：2026-07-11
 
 ## 1. 中文摘要
 
-I0.0–I0.6 的已执行范围目前没有阻断回归：四个确认缺陷已修复，`RunScene` 的最小职责提取保持五组快照逐字一致，活动仓库已原子迁移，两次迁移后全套验证均为 12/12 且污染守卫通过。
+I0.0–I0.7 的批准范围已经执行并收口：四个确认缺陷已修复，`RunScene` 的最小职责提取保持五组快照逐字一致，活动仓库已原子迁移，恢复后的最终隔离套件为 12/12，Git 与业务污染守卫通过。
 
-I0 尚不能关闭：I0.7 的最终可见与人工验收仍待执行；24 条 Godot 退出清理提示、证书链限制、五个历史编码损坏文件和一次范围外 Godot 执行偏差必须继续保留在最终结论中。
+I0 不能写成无条件 PASS。可见验收只覆盖主菜单、出发整备、局内 HUD 与 M / Q / G / T 关键 UI 响应；移动、撤离完成、结算和返回路线未观察。更重要的是，可见 Godot 启动在 `D:\AGAME1` 外新增 / 改写了两个 AppData 日志，并在工作区内改写了受保护业务文件。业务文件已从可信 preimage 精确恢复并复验，但已经发生的范围外写入不能撤销或改写，因此安全边界结论为 `NONCONFORMING_RECORDED`。
 
 ## 2. 阶段证据
 
@@ -22,7 +23,7 @@ I0 尚不能关闭：I0.7 的最终可见与人工验收仍待执行；24 条 Go
 | I0.4 extraction | PASS_WITH_NOTES | `de8c66f`; pre/post snapshots identical |
 | I0.5 atomic relocation | PASS_WITH_FOLLOWUPS | `ba467dd`; move report and two repeat runs |
 | I0.6 governance | PASS_WITH_RECORDED_LIMITATIONS | current docs, integrated encoding gate, external pointers |
-| I0.7 final acceptance | PENDING | visible / manual / final suite not yet closed |
+| I0.7 final acceptance | CLOSED_WITH_RECORDED_SAFETY_NONCONFORMANCE_AND_LIMITATIONS | restored final suite, limited visible smoke, byte-level dirty recovery, handoff |
 
 ## 3. I0.0 冻结
 
@@ -96,7 +97,7 @@ ART-13 exit 0、28 warning。ART-14 exit 1、5 error，其中 `run_surface.gd` �
 
 ## 8. 原始脏状态保护
 
-staged count 始终为 0，stash 始终为 `a608462968d7913a5bf63c376c186fe1df89d2db`。原始 12 项：
+所有记录的高风险门前后、测试报告取样点与阶段收口点 staged count 均为 0；本地提交使用过精确暂存，但原始 12 项从未被混合暂存。stash 始终为 `a608462968d7913a5bf63c376c186fe1df89d2db`。原始 12 项：
 
 ```text
 Godot/GraytailGodot/data/assets/asset_manifest.category.translation
@@ -127,13 +128,43 @@ I0 变更必须与上述用户状态分开暂存和提交。
 - 编码门已接入 `invoke_i0_tests.ps1` 的 `allCasesPass` 和 JSON 总报告。集成正向报告为 12/12、0 blocking、24 cleanup、encoding limitation 1、pollution PASS。
 - 集成负向 canary 使用临时未知 `.bin` 文档，主套件在任何 mirror / Godot runner 前以 `Document encoding gate failed` 退出；0 runner，污染守卫仍 PASS。canary 随后由创建者删除，未留在工作树。
 
-## 10. 安全偏差记录
+## 10. 安全偏差与不符合记录
+
+### 10.1 I0.4 历史偏差
 
 I0.4 的一次 clean-clone 历史 G37 验证中，旧验证器绕过 I0 工具链选择了 `D:\Godot\Tools\...` 的 Godot，并挂起。相关命令行指向 I0 clean clone 的进程全部终止，复核剩余数为 0。
 
-只读审计在事件窗口确认 `C:\Users\33682\AppData\Roaming\Godot\app_userdata\GraytailGodot\logs` 下两个日志文件发生写入（`godot.log` 和一个 rotated log）；未发现 save 或其他外部写入。I0 遵守边界，没有删除或修改这两个范围外文件，也没有修改 `D:\Godot` 内文件。
+只读审计在已检查的 `C:\Users\33682\AppData\Roaming\Godot\app_userdata\GraytailGodot` 范围内确认 logs 写入，未见该事件窗口的 save / profile 变化；这不能推出整个外部文件系统没有其他写入。后续处置没有删除或修改已发现的范围外日志，也没有修改 `D:\Godot` 内文件。
 
-纠正措施：之后所有 Godot 执行只允许通过 I0 harness、项目本地固定二进制和 `D:\AGAME1` 内隔离 APPDATA / `user://`。因此最终安全结论必须保留 `RECORDED_SAFETY_DEVIATION`，不能写成“全程无范围外副作用”。
+纠正措施：之后的 headless 自动化只允许通过 I0 harness、项目本地固定二进制和 `D:\AGAME1` 内隔离 APPDATA / `user://`。
+
+### 10.2 I0.7 可见启动不符合项
+
+I0.7 使用 `D:\AGAME1\tools\runtimes\godot\4.6.3` 的固定二进制做可见编辑器 / 游戏烟测。虽然编辑器数据写入了工作区内的 self-contained 目录，游戏日志仍写入：
+
+```text
+C:\Users\33682\AppData\Roaming\Godot\app_userdata\GraytailGodot\logs\godot2026-07-11T14.24.49.log
+created / written UTC: 2026-07-11 06:24:49
+bytes: 12,238
+sha256: 73C4D9BC9E5DC1B32F63D30703192AA5D7313B5C03166DD3FE445B20806DD7A2
+
+C:\Users\33682\AppData\Roaming\Godot\app_userdata\GraytailGodot\logs\godot.log
+last written UTC: 2026-07-11 06:24:50
+bytes: 262
+sha256 after run: 4B4304849DA42A212A647937193A2005EEF936EF25EBBAC9FD8BAD582C86713F
+```
+
+这些文件没有被删除、恢复或再次修改。同期未发现 save / profile 写入。该事件违反“不得修改 `D:\AGAME1` 外文件”的执行边界，所以本验证不能使用 `PASS_WITH_RECORDED_DEVIATION` 弱化为一般提示；必须保留 `SAFETY_NONCONFORMANCE`。
+
+可见启动还在项目内触及 Godot 生成物，并改变 8 个业务指纹路径：2 个受保护 tracked 文件、5 个 ignored translation 和 1 个新增 ignored UID。恢复动作仅发生在 `D:\AGAME1` 内：
+
+- `project.godot` 恢复到启动前 post-I0 preimage：7,535 bytes / `CD7C9662E78D0B2EBBB660CD238E1C8E47E9D11D50020F98A811CDD186DE3D46`。
+- `asset_manifest.note.translation` 从 I0.0 dirty raw 恢复：25,897 bytes / `1C23005E798EA61F0768616218E0CDFD617B3A81CAD3B5DC2215969EE76B3A40`。
+- `presentation`、`source`、`state`、`theme`、`variant` 五个 ignored translation 从五组独立早期镜像一致的 preimage 恢复。
+- 可见启动新增的 `scripts/core/run/art21r2_run_smoke_seeder.gd.uid` 已删除，恢复其启动前“不存在”状态。
+- 原始 12 个 status 路径成员全部保留；其中 11 / 12 与 I0.0 dirty raw 字节相同。`project.godot` 因 I0.3 合法加入 Q / G / T InputMap，不能与 I0.0 raw 相同；它已恢复到可见启动前的 post-I0 preimage `CD7C9662E78D0B2EBBB660CD238E1C8E47E9D11D50020F98A811CDD186DE3D46`。5 个 ignored translation 也匹配 I0.5 prehash。
+
+七个 `.godot` editor / import cache 内容变化与若干相同内容的 mtime 变化没有伪装成业务不变；它们是被主套件明确排除的本地生成缓存。`D:\AGAME1\tools\runtimes\godot\4.6.3\editor_data` 新增 769 个文件、33 个目录、4,990,377 bytes，全部位于允许的工作区内并保留。以后在当前安全约束下，不再授权直接可见启动，除非先有能实证隔离游戏日志的启动门。
 
 ## 11. 当前报告哈希
 
@@ -147,11 +178,57 @@ I0.4 的一次 clean-clone 历史 G37 验证中，旧验证器绕过 I0 工具�
 | `I0.6_CURRENT_POINTERS.json` | `3FC62C3B06DF5B437B771E9D3AC6062496CF4F20339A31F40A677CC2797721F9` |
 | `I0.2_20260711T060154836Z_3f271a48.json` | `4FE5B1AA0F0F4FB793EC7E751F7550365281A860155290A5C1E4D7BDF4BFFF54` |
 | `I0.2_20260711T060307627Z_2827a9c2.json` | `9EEE3B857A0DBBEA961DA35BDA1F29B66BF48BB18FB3F84135DEE0BD79F2E111` |
+| `I0.2_20260711T064535471Z_5b55f8c8.json` | `6868337E7E51DB03BA083725914165D6D7456F017252823C866939CF4B98782F` |
 
-## 12. I0.7 待定稿项
+## 12. I0.7 恢复后自动化验收
 
-- 最终静态 / encoding / path / Git / freeze audit。
-- 最终 remediated 全套报告。
-- 可见启动与关键 UI 路由烟测。
-- 最小人工检查表和未覆盖项。
-- 最终 HEAD、validation 状态、closed index 与 handoff。
+```text
+report: D:\AGAME1\reports\i0\I0.2_20260711T064535471Z_5b55f8c8.json
+report_sha256: 6868337E7E51DB03BA083725914165D6D7456F017252823C866939CF4B98782F
+validated_implementation_head: d34f869e85993704ca4091b26f9e40a39795c860
+overall: PASS_WITH_NOTES
+characterization: PASS_REMEDIATED_WITH_NOTES
+runners: 12/12
+blocking_diagnostics: 0
+cleanup_diagnostics: 24
+document_encoding: PASS_WITH_RECORDED_LIMITATION
+pollution_guard: PASS
+git_before_after_unchanged: true
+business_before_after_unchanged: true
+business_file_count: 656
+business_fingerprint: A344034211ACD8299E1FE3F1CDED47A80D58815B4D77D9E6B312A4A0569D0928
+protected_status_membership: 12/12
+frozen_dirty_raw_byte_identical: 11/12
+project_godot_post_i0_preimage_sha256: CD7C9662E78D0B2EBBB660CD238E1C8E47E9D11D50020F98A811CDD186DE3D46
+staged_count: 0
+stash: a608462968d7913a5bf63c376c186fe1df89d2db
+```
+
+closeout 文档落位后另行运行严格编码门：805 inventory、377 文本、428 图片 magic、5 个精确历史例外、0 error、Git 状态不变。该门验证最终文档树；上方 12-runner 报告明确验证 `d34f869...` implementation head，不声称运行于尚未产生的 closeout 文档提交。
+
+06:30 报告（business fingerprint `BEAE62B8...`）和 06:40 报告（business fingerprint `58A09982...`）是发现污染与分层恢复过程的中间证据，不作为最终 implementation acceptance。06:45 报告从完整 A+B 恢复后的状态开始，并证明该状态在隔离套件内保持稳定。
+
+## 13. 可见 / 人工观察矩阵
+
+| 项目 | 结果 | 证据边界 |
+| --- | --- | --- |
+| 项目内 Godot 4.6.3 导入 `main.tscn` | OBSERVED | 真实可见编辑器窗口；无持久化截图 |
+| 主菜单 | OBSERVED | 菜单与“出发探索 / 整备出发”入口可见 |
+| 出发整备 | OBSERVED | 地图 / 目标与确认开始探索界面可见 |
+| 局内 HUD | OBSERVED | 小地图、角色、底部操作栏与状态框可见 |
+| M 地图 | OBSERVED | 区域地图覆盖层打开 |
+| Q 背包 | OBSERVED | 回收背包面板打开 |
+| G 地面回收 | OBSERVED | 地面回收物面板打开 |
+| T 任务提示 | OBSERVED_WITH_NOTES | 底部任务提示发生可见响应 |
+| 基础移动 | NOT_OBSERVED | 单次 W / Up 未观察到位移；不声明失败或通过 |
+| 撤离完成 / 结算 / 返回 | NOT_RUN | 安全不符合项确认后停止继续可见运行 |
+| 完整人工游玩 | NOT_CLAIMED | 本轮只是有限可见烟测 |
+| 最终视觉 / 性能 / 发布 / CI | NOT_RUN | 非 I0 验收范围 |
+
+## 14. 最终声明
+
+- I0 阶段按批准范围关闭；不存在已授权的后续 active stage。
+- 实现与隔离自动化结论为 `PASS_WITH_NOTES`，不是纯 PASS。
+- 可见关键路由为 `PASS_WITH_NOTES / LIMITED_COVERAGE`，不是完整 manual playtest PASS。
+- 安全边界为 `NONCONFORMING_RECORDED`；业务恢复不抹除范围外日志写入事实。
+- 因此 I0 总体只能记为 `CLOSED_WITH_RECORDED_SAFETY_NONCONFORMANCE_AND_LIMITATIONS`。

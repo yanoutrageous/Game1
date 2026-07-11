@@ -1,7 +1,7 @@
 # Game1 Docs Index
 
 文档状态：当前导航索引
-最后更新：2026-07-11（I0.6）
+最后更新：2026-07-11（I0.7 closeout）
 
 ## 第一入口
 
@@ -20,11 +20,14 @@
 | 审计范围 | `docs/10_current/AUDIT_SCOPE.md` |
 | 未完成系统 | `docs/10_current/KNOWN_UNFINISHED_SYSTEMS.md` |
 | 验证索引 | `docs/40_validation/VALIDATION_INDEX.md` |
-| active stage | `docs/50_stages/active/STAGE_INDEX.md` |
+| 最终 I0 validation | `docs/validation/I0_PROJECT_BASELINE_REFACTOR_VALIDATION.md` |
+| 最终 I0 handoff | `docs/handoff/HANDOFF_I0_PROJECT_BASELINE_REFACTOR.md` |
+| active stage（当前无授权阶段） | `docs/50_stages/active/STAGE_INDEX.md` |
+| closed stage | `docs/50_stages/closed/STAGE_INDEX.md` |
 | 当前执行环境 | `docs/00_governance/EXECUTION_ENVIRONMENT.md` |
 | 文本编码台账 | `docs/00_governance/TEXT_ENCODING_LEDGER.md` |
 
-I0 validation 已建立为中间记录，validation 与 handoff 将在 I0.7 关闭时定稿。未经记录的人工游玩、最终视觉、CI 或发布 PASS 不得推断。
+I0 已关闭为 `CLOSED_WITH_RECORDED_SAFETY_NONCONFORMANCE_AND_LIMITATIONS`。实现自动化为 PASS_WITH_NOTES，可见烟测为有限覆盖；完整人工游玩、最终视觉、CI 或发布 PASS 不得推断。当前没有已授权后续阶段。
 
 ## 治理入口
 
