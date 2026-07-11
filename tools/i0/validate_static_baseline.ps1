@@ -206,7 +206,7 @@ $missingProjectMarkers = @($manifest.static_contract.required_project_markers | 
 
 $runnerDirectory = Join-Path $repo 'tools'
 $actualRunnerPaths = @(Get-ChildItem -LiteralPath $runnerDirectory -File -Filter 'godot_*_runner.gd' | ForEach-Object { Get-I0RelativePath -Path $_.FullName -Root $repo } | Sort-Object)
-$manifestRunnerPaths = @($manifest.runners | ForEach-Object { [string]$_.relative_path } | Sort-Object)
+$manifestRunnerPaths = @($manifest.runners | ForEach-Object { [string]$_.relative_path } | Sort-Object -Unique)
 $runnerPathDifference = @(Compare-Object -ReferenceObject $manifestRunnerPaths -DifferenceObject $actualRunnerPaths)
 $runnerMarkerFailures = New-Object System.Collections.Generic.List[string]
 foreach ($runner in $manifest.runners) {
@@ -224,9 +224,10 @@ foreach ($runner in $manifest.runners) {
 }
 $runnerIds = @($manifest.runners | ForEach-Object { [string]$_.id })
 $runnerIdsUnique = @($runnerIds | Sort-Object -Unique)
-$runnerInventoryOk = ($manifest.runners.Count -eq 7 -and $runnerIds.Count -eq $runnerIdsUnique.Count -and $runnerPathDifference.Count -eq 0 -and $runnerMarkerFailures.Count -eq 0)
+$expectedRunnerCaseCount = [int]$manifest.static_contract.expected_runner_case_count
+$runnerInventoryOk = ($expectedRunnerCaseCount -gt 0 -and $manifest.runners.Count -eq $expectedRunnerCaseCount -and $runnerIds.Count -eq $runnerIdsUnique.Count -and $runnerPathDifference.Count -eq 0 -and $runnerMarkerFailures.Count -eq 0)
 [void]$checks.Add((New-I0StaticCheck -Code "STATIC_RUNNER_INVENTORY" -Condition $runnerInventoryOk -ExpectedRedCodes $expectedRedCodes -Details ([pscustomobject]@{
-    expected_count = 7
+    expected_count = $expectedRunnerCaseCount
     manifest_count = $manifest.runners.Count
     path_difference = $runnerPathDifference
     marker_failures = $runnerMarkerFailures.ToArray()

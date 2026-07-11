@@ -411,11 +411,26 @@ try {
         if (-not (Test-Path -LiteralPath $runnerPath -PathType Leaf)) {
             throw "Godot runner missing from mirror: $runnerPath"
         }
+        $runnerUserArgs = @()
+        if ($null -ne $runner.PSObject.Properties['user_args']) {
+            foreach ($rawUserArg in @($runner.user_args)) {
+                $userArg = [string]$rawUserArg
+                if ($userArg.Length -lt 3 -or $userArg.Length -gt 128 -or $userArg -notmatch '^--[a-z0-9][a-z0-9._-]*(=[a-z0-9][a-z0-9._-]*)?$') {
+                    throw "Unsafe Godot user argument for ${runnerId}: $userArg"
+                }
+                $runnerUserArgs += $userArg
+            }
+        }
         $runnerLog = Join-Path $logsRoot ($runnerId + '.log')
         $runnerEnvironment = New-I0ProcessEnvironment -RunRoot $runRoot -CaseId $runnerId
+        $runnerArguments = @('--headless', '--path', $projectRoot, '--log-file', $runnerLog, '--script', $runnerPath)
+        if ($runnerUserArgs.Count -gt 0) {
+            $runnerArguments += '--'
+            $runnerArguments += $runnerUserArgs
+        }
         $runnerRaw = Invoke-I0Process `
             -FilePath $godotConsole `
-            -Arguments @('--headless', '--path', $projectRoot, '--log-file', $runnerLog, '--script', $runnerPath) `
+            -Arguments $runnerArguments `
             -WorkingDirectory $projectRoot `
             -Environment $runnerEnvironment `
             -TimeoutSeconds ([int]$manifest.timeouts_seconds.runner)
@@ -427,6 +442,7 @@ try {
         [void]$runnerCases.Add([pscustomobject][ordered]@{
             id = $runnerId
             relative_path = [string]$runner.relative_path
+            user_args = $runnerUserArgs
             coverage = @($runner.coverage)
             status = if ($runnerPass -and $engineDiagnostics.cleanup_diagnostics.Count -gt 0) { 'PASS_WITH_CLEANUP_DIAGNOSTIC' } elseif ($runnerPass) { 'PASS' } else { 'FAIL' }
             pass_marker_line_count = $passMarkerLineCount

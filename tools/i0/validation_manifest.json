@@ -43,6 +43,7 @@
     }
   },
   "static_contract": {
+    "expected_runner_case_count": 12,
     "save_adapter_relative_path": "Godot/GraytailGodot/scripts/core/save/save_adapter.gd",
     "asset_catalog_relative_path": "Godot/GraytailGodot/scripts/core/content/asset_catalog.gd",
     "asset_manifest_relative_path": "Godot/GraytailGodot/data/assets/asset_manifest.csv",
@@ -103,6 +104,45 @@
       "pass_marker": "G39_NAVIGATION_BOUNDARY=PASS",
       "fail_marker": "G39_NAVIGATION_BOUNDARY=FAIL",
       "coverage": ["ui", "navigation", "abandon"]
+    },
+    {
+      "id": "I04_RUN_SCENE_CONTRACT",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_RUN_SCENE_CONTRACT=PASS",
+      "fail_marker": "I04_RUN_SCENE_CONTRACT=FAIL",
+      "coverage": ["scene", "signals", "input", "modal", "persistence_boundary"]
+    },
+    {
+      "id": "I04_ART21R2_NO_FLAGS",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_ART21R2_NO_FLAGS=PASS",
+      "fail_marker": "I04_ART21R2_NO_FLAGS=FAIL",
+      "user_args": ["--i04-case=no_flags"],
+      "coverage": ["scene", "debug_gate", "art21r2_smoke_negative"]
+    },
+    {
+      "id": "I04_ART21R2_MODAL",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_ART21R2_MODAL=PASS",
+      "fail_marker": "I04_ART21R2_MODAL=FAIL",
+      "user_args": ["--i04-case=modal", "--art21r2-seed-modal-items"],
+      "coverage": ["scene", "debug_gate", "art21r2_modal_seed"]
+    },
+    {
+      "id": "I04_ART21R2_FULL_MAP",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_ART21R2_FULL_MAP=PASS",
+      "fail_marker": "I04_ART21R2_FULL_MAP=FAIL",
+      "user_args": ["--i04-case=full_map", "--art21r2-seed-map-markers"],
+      "coverage": ["scene", "debug_gate", "art21r2_full_map_seed"]
+    },
+    {
+      "id": "I04_ART21R2_SPARSE_MAP",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_ART21R2_SPARSE_MAP=PASS",
+      "fail_marker": "I04_ART21R2_SPARSE_MAP=FAIL",
+      "user_args": ["--i04-case=sparse_map", "--art21r2-seed-map-sparse-markers"],
+      "coverage": ["scene", "debug_gate", "art21r2_sparse_map_seed"]
     },
     {
       "id": "M2_LUA_UE_EFFECT_FIRST_LOOP",
