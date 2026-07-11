@@ -205,6 +205,21 @@ function Invoke-DownloadNoCache {
     }
 }
 
+function Write-Utf8CreateNew {
+    param([string]$Path, [string]$Content, [string]$Label)
+    $full = Assert-NoReparseExisting $Path $Label
+    $bytes = $Utf8NoBom.GetBytes($Content)
+    $stream = $null
+    try {
+        $stream = [IO.File]::Open($full, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Flush()
+    }
+    finally {
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
+}
+
 function Assert-Archive {
     param([string]$Path, [object]$Spec)
     $full = Assert-NoReparseExisting $Path 'Godot archive'
@@ -422,6 +437,7 @@ $OriginalProcessEnvironment = @{}
 foreach ($name in @('TEMP', 'TMP', 'APPDATA', 'LOCALAPPDATA')) {
     $OriginalProcessEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
+$OriginalSecurityProtocol = [Net.ServicePointManager]::SecurityProtocol
 
 $Verified = $null
 $ExecutionMode = $null
@@ -501,7 +517,7 @@ try {
             installed_utc = [DateTime]::UtcNow.ToString('o')
         }
         $ManifestPath = Get-DirectChildPath $ExtractRoot 'install-manifest.json' 'Godot install manifest'
-        [IO.File]::WriteAllText($ManifestPath, ($InstallManifest | ConvertTo-Json -Depth 6), $Utf8NoBom)
+        Write-Utf8CreateNew $ManifestPath ($InstallManifest | ConvertTo-Json -Depth 6) 'Godot install manifest'
 
         if (Test-Path -LiteralPath $FinalRoot) {
             Stop-I0 "Final Godot directory appeared concurrently: $FinalRoot"
@@ -575,10 +591,11 @@ try {
     }
     else {
         $null = New-SafeDirectory $ReportRoot 'I0 report root'
-        [IO.File]::WriteAllText($ReportPath, ($Report | ConvertTo-Json -Depth 6), $Utf8NoBom)
+        Write-Utf8CreateNew $ReportPath ($Report | ConvertTo-Json -Depth 6) 'I0.1 toolchain report'
     }
 }
 finally {
+    [Net.ServicePointManager]::SecurityProtocol = $OriginalSecurityProtocol
     Restore-ProcessEnvironment $OriginalProcessEnvironment
 }
 
