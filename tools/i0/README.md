@@ -39,3 +39,44 @@ godot_signature_chain_trusted=false
 这表示官方发布 API digest、本地 ZIP 和可执行文件字节均一致，且 PE 中存在固定的签名/时间戳证书元数据；不表示本机 Authenticode 信任链为 `Valid`。
 
 `optional_python` 目前只记录候选版本与哈希，不是核心门禁，也不会由该脚本安装。
+
+## I0.2 隔离特征化测试
+
+修复前基线：
+
+```powershell
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+  -File tools\i0\invoke_i0_tests.ps1 `
+  -Profile baseline
+```
+
+修复后验收：
+
+```powershell
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+  -File tools\i0\invoke_i0_tests.ps1 `
+  -Profile remediated
+```
+
+测试不会在活动 Godot 项目上运行。每次执行会在 `D:\AGAME1\tools\runtimes\.tmp\i0\<run-id>` 创建独立镜像、引擎硬链接、进程环境、日志和导入缓存，并把正式报告写到 `D:\AGAME1\reports\i0`。
+
+基线必须恰好出现以下四个 `EXPECTED_RED`：
+
+```text
+SAVE_ABANDON_COUNT
+CSV_ASSET_MANIFEST_WIDTH
+INPUT_REQUIRED_ACTIONS
+DEBUG_SURFACE_TOGGLES
+```
+
+验证范围包括：
+
+- 工具链 lock、EXE 大小/SHA-256 和精确 Godot 版本；
+- 当前工作树到沙箱镜像的业务文件哈希一致性；
+- 严格 UTF-8、RFC 4180 CSV、17 列/179 行资产清单契约；
+- 新镜像内 editor import 与全局类缓存；
+- 实测 `res://`、`user://`、日志及写探针全部位于 run root；
+- 7 个现有 headless runner 的退出码、唯一 PASS 行、零 FAIL 行；
+- 活动仓库的 HEAD、branch、status、stash、Git index、refs 和完整业务文件哈希集合前后不变。
+
+当前 7 个 runner 均通过业务断言，但每个在 Godot 退出时报告相同的 ObjectDB/资源清理诊断。它们只按精确白名单降级为 `PASS_WITH_CLEANUP_DIAGNOSTIC`；其他 `WARNING`、`ERROR`、`SCRIPT ERROR`、`FATAL` 或 `CRASH` 仍会阻塞。基线总结果因此为 `PASS_WITH_EXPECTED_REDS_AND_NOTES`，不能表述成无注记 PASS。

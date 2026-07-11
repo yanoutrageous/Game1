@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "suite_id": "I0.2_characterization_baseline",
+  "powershell": {
+    "edition": "Desktop",
+    "major": 5,
+    "minimum_version": "5.1"
+  },
+  "workspace_root": "D:\\AGAME1",
+  "active_repo": "D:\\AGAME1\\_repo_cache\\Game1_work",
+  "runtime_temp_root": "D:\\AGAME1\\tools\\runtimes\\.tmp\\i0",
+  "report_root": "D:\\AGAME1\\reports\\i0",
+  "godot": {
+    "version_prefix": "4.6.3.stable",
+    "install_root": "D:\\AGAME1\\tools\\runtimes\\godot\\4.6.3",
+    "main_executable": "Godot_v4.6.3-stable_win64.exe",
+    "console_executable": "Godot_v4.6.3-stable_win64_console.exe",
+    "project_relative_path": "Godot/GraytailGodot",
+    "environment_probe_relative_path": "tools/i0/godot_i0_environment_probe.gd"
+  },
+  "mirror": {
+    "worktree_directory": "worktree",
+    "excluded_directory_names": [
+      ".git",
+      ".godot",
+      "__pycache__"
+    ]
+  },
+  "business_roots": [
+    "Godot/GraytailGodot"
+  ],
+  "profiles": {
+    "baseline": {
+      "expected_red_codes": [
+        "SAVE_ABANDON_COUNT",
+        "CSV_ASSET_MANIFEST_WIDTH",
+        "INPUT_REQUIRED_ACTIONS",
+        "DEBUG_SURFACE_TOGGLES"
+      ]
+    },
+    "remediated": {
+      "expected_red_codes": []
+    }
+  },
+  "static_contract": {
+    "save_adapter_relative_path": "Godot/GraytailGodot/scripts/core/save/save_adapter.gd",
+    "asset_catalog_relative_path": "Godot/GraytailGodot/scripts/core/content/asset_catalog.gd",
+    "asset_manifest_relative_path": "Godot/GraytailGodot/data/assets/asset_manifest.csv",
+    "project_settings_relative_path": "Godot/GraytailGodot/project.godot",
+    "run_scene_relative_path": "Godot/GraytailGodot/scripts/core/run/run_scene.gd",
+    "required_input_actions": [
+      "open_inventory",
+      "open_ground_loot",
+      "request_extract"
+    ],
+    "required_project_markers": [
+      "config_version=5",
+      "config/features=PackedStringArray(\"4.6\")",
+      "run/main_scene=\"res://scenes/main/main.tscn\""
+    ],
+    "asset_manifest_expected_headers": [
+      "asset_id",
+      "source_repo_path",
+      "godot_path",
+      "type",
+      "category",
+      "usage",
+      "import_preset",
+      "license_status",
+      "replacement_needed",
+      "linked_scene",
+      "linked_data",
+      "note",
+      "theme_key",
+      "presentation_role",
+      "state",
+      "variant",
+      "source_status"
+    ],
+    "asset_manifest_expected_data_row_count": 179,
+    "asset_manifest_required_headers": [
+      "asset_id",
+      "godot_path",
+      "replacement_needed",
+      "theme_key",
+      "presentation_role",
+      "state",
+      "variant",
+      "source_status"
+    ]
+  },
+  "runners": [
+    {
+      "id": "G37_COMMAND_SEQUENCE",
+      "relative_path": "tools/godot_g37_command_sequence_runner.gd",
+      "pass_marker": "G37_COMMAND_SEQUENCE_REGRESSION=PASS",
+      "fail_marker": "G37_COMMAND_SEQUENCE_REGRESSION=FAIL",
+      "coverage": ["command", "runtime", "extraction"]
+    },
+    {
+      "id": "G39_NAVIGATION_BOUNDARY",
+      "relative_path": "tools/godot_g39_navigation_boundary_runner.gd",
+      "pass_marker": "G39_NAVIGATION_BOUNDARY=PASS",
+      "fail_marker": "G39_NAVIGATION_BOUNDARY=FAIL",
+      "coverage": ["ui", "navigation", "abandon"]
+    },
+    {
+      "id": "M2_LUA_UE_EFFECT_FIRST_LOOP",
+      "relative_path": "tools/godot_m2_lua_ue_effect_first_runner.gd",
+      "pass_marker": "M2_LUA_UE_EFFECT_FIRST_LOOP=PASS",
+      "fail_marker": "M2_LUA_UE_EFFECT_FIRST_LOOP=FAIL",
+      "coverage": ["rules", "effects", "parity"]
+    },
+    {
+      "id": "M3_MINIMUM_ITEM_DROP_LOOP",
+      "relative_path": "tools/godot_m3_minimum_item_drop_loop_runner.gd",
+      "pass_marker": "M3_MINIMUM_ITEM_DROP_LOOP=PASS",
+      "fail_marker": "M3_MINIMUM_ITEM_DROP_LOOP=FAIL",
+      "coverage": ["items", "drop_loop", "settlement"]
+    },
+    {
+      "id": "M3H_ITEM_LOOP_HARDENING",
+      "relative_path": "tools/godot_m3h_item_loop_hardening_runner.gd",
+      "pass_marker": "M3H_ITEM_LOOP_HARDENING=PASS",
+      "fail_marker": "M3H_ITEM_LOOP_HARDENING=FAIL",
+      "coverage": ["items", "hardening", "abandon"]
+    },
+    {
+      "id": "M3R_ITEM_USABILITY_COMPLETION",
+      "relative_path": "tools/godot_m3r_item_usability_completion_runner.gd",
+      "pass_marker": "M3R_ITEM_USABILITY_COMPLETION=PASS",
+      "fail_marker": "M3R_ITEM_USABILITY_COMPLETION=FAIL",
+      "coverage": ["items", "warehouse", "loadout"]
+    },
+    {
+      "id": "M5_ITEM_DROP_LOOP_FULL_CONTENT",
+      "relative_path": "tools/godot_m5_item_drop_loop_full_content_runner.gd",
+      "pass_marker": "M5_ITEM_DROP_LOOP_FULL_CONTENT=PASS",
+      "fail_marker": "M5_ITEM_DROP_LOOP_FULL_CONTENT=FAIL",
+      "coverage": ["items", "content", "ground_loot"]
+    }
+  ],
+  "timeouts_seconds": {
+    "mirror_copy": 600,
+    "static_validation": 120,
+    "editor_bootstrap": 180,
+    "environment_probe": 120,
+    "runner": 180,
+    "git_probe": 30
+  }
+}
