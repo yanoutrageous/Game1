@@ -643,27 +643,101 @@ foreach ($pattern in $requiredRunScenePatterns) {
     }
 }
 
-$requiredRunSceneSmokePatterns = @(
-    'ART21R2_MODAL_ITEM_SMOKE_FLAG',
-    '--art21r2-seed-modal-items',
-    '_seed_art21r2_modal_smoke_items_if_requested',
-    'ART21R2_MAP_MARKER_SMOKE_FLAG',
-    '--art21r2-seed-map-markers',
-    '_seed_art21r2_map_marker_smoke_if_requested',
-    'ART21R2_MAP_SPARSE_MARKER_SMOKE_FLAG',
-    '--art21r2-seed-map-sparse-markers',
-    '_seed_art21r2_map_sparse_marker_smoke_if_requested',
-    'scan_cell\(scan_pos, run_context\.truth_map',
-    'set_room_type\(event_pos, &"Event"\)',
-    'is_flagged\(flag_pos\)',
-    'intel_map\.toggle_flag\(flag_pos\)',
+$smokeSeederPath = Join-Path $root "Godot/GraytailGodot/scripts/core/run/art21r2_run_smoke_seeder.gd"
+if (-not (Test-Path -LiteralPath $smokeSeederPath -PathType Leaf)) {
+    Fail "Missing ART21R2 run smoke seeder: Godot/GraytailGodot/scripts/core/run/art21r2_run_smoke_seeder.gd"
+}
+$smokeSeeder = Get-Content -LiteralPath $smokeSeederPath -Raw
+$requiredSmokeSeederPatterns = @(
+    '^extends\s+RefCounted',
+    'class_name\s+Art21R2RunSmokeSeeder',
+    'DebugGateScript\s*:=\s*preload\("res://scripts/core/debug/debug_gate\.gd"\)',
+    'static func seed_if_requested\(start_result: Dictionary, command_bus, run_context\) -> void:',
+    'ART21R2_MODAL_ITEM_SMOKE_FLAG\s*:=\s*"--art21r2-seed-modal-items"',
+    'ART21R2_MAP_MARKER_SMOKE_FLAG\s*:=\s*"--art21r2-seed-map-markers"',
+    'ART21R2_MAP_SPARSE_MARKER_SMOKE_FLAG\s*:=\s*"--art21r2-seed-map-sparse-markers"',
     'debug_spawn_test_item_floor',
     'debug_spawn_test_item_backpack',
-    'OS\.get_cmdline_user_args'
+    'debug_reveal_full_map',
+    'set_room_type\(event_pos, &"Event"\)',
+    'scan_cell\(scan_pos, run_context\.truth_map, &"limited", 0\.70\)',
+    'is_flagged\(flag_pos\)',
+    'intel_map\.toggle_flag\(flag_pos\)',
+    'OS\.get_cmdline_args\(\)',
+    'OS\.get_cmdline_user_args\(\)',
+    'begins_with\("%s=" % flag\)'
 )
-foreach ($pattern in $requiredRunSceneSmokePatterns) {
-    if ($runScene -notmatch $pattern) {
-        Fail "run_scene.gd missing ART21R2 debug-smoke seed guard: $pattern"
+foreach ($pattern in $requiredSmokeSeederPatterns) {
+    if ($smokeSeeder -notmatch $pattern) {
+        Fail "art21r2_run_smoke_seeder.gd missing required ownership contract: $pattern"
+    }
+}
+
+$seedOrderPattern = '(?s)static func seed_if_requested\(.*?_seed_art21r2_modal_smoke_items_if_requested\(start_result, command_bus, run_context\)\s*_seed_art21r2_map_marker_smoke_if_requested\(start_result, command_bus, run_context\)\s*_seed_art21r2_map_sparse_marker_smoke_if_requested\(start_result, run_context\)'
+if ($smokeSeeder -notmatch $seedOrderPattern) {
+    Fail "ART21R2 smoke seeder must delegate in modal -> full-map -> sparse-map order without a shared gate."
+}
+if ([regex]::Matches($smokeSeeder, 'DebugGateScript\.is_debug_tools_enabled\(\)').Count -ne 3) {
+    Fail "ART21R2 smoke seeder must keep one DebugGate check inside each private seed path."
+}
+$modalOrderPattern = '(?s)static func _seed_art21r2_modal_smoke_items_if_requested\(.*?debug_spawn_test_item_floor.*?debug_spawn_test_item_backpack.*?static func _seed_art21r2_map_marker_smoke_if_requested\('
+if ($smokeSeeder -notmatch $modalOrderPattern) {
+    Fail "ART21R2 modal smoke seed must dispatch floor before backpack."
+}
+$fullMapOrderPattern = '(?s)static func _seed_art21r2_map_marker_smoke_if_requested\(.*?set_room_type\(event_pos, &"Event"\).*?debug_reveal_full_map.*?intel_map\.toggle_flag\(flag_pos\).*?static func _seed_art21r2_map_sparse_marker_smoke_if_requested\('
+if ($smokeSeeder -notmatch $fullMapOrderPattern) {
+    Fail "ART21R2 full-map smoke seed must set Event, reveal, then flag."
+}
+$sparseOrderPattern = '(?s)static func _seed_art21r2_map_sparse_marker_smoke_if_requested\(.*?intel_map\.reveal_cell\(pos, run_context\.truth_map\).*?set_room_type\(event_pos, &"Event"\).*?intel_map\.reveal_cell\(event_pos, run_context\.truth_map\).*?intel_map\.scan_cell\(scan_pos, run_context\.truth_map, &"limited", 0\.70\).*?intel_map\.toggle_flag\(flag_pos\).*?static func _art21r2_map_smoke_pos\('
+if ($smokeSeeder -notmatch $sparseOrderPattern) {
+    Fail "ART21R2 sparse-map smoke seed must preserve reveal, Event refresh, scan, then flag order."
+}
+$sparseFunction = [regex]::Match($smokeSeeder, '(?s)static func _seed_art21r2_map_sparse_marker_smoke_if_requested\(.*?(?=\r?\nstatic func _art21r2_map_smoke_pos\()').Value
+if ([string]::IsNullOrWhiteSpace($sparseFunction) -or $sparseFunction -match 'command_bus') {
+    Fail "ART21R2 sparse-map seed must remain independent of command_bus."
+}
+$cmdlineOrderPattern = '(?s)static func _has_cmdline_flag\(.*?OS\.get_cmdline_args\(\).*?begins_with\("%s=" % flag\).*?OS\.get_cmdline_user_args\(\).*?begins_with\("%s=" % flag\)'
+if ($smokeSeeder -notmatch $cmdlineOrderPattern) {
+    Fail "ART21R2 smoke flag parsing must preserve ordinary/user argument order and exact-or-prefix matching."
+}
+
+$smokePreloadPattern = 'const Art21R2RunSmokeSeederScript\s*:=\s*preload\("res://scripts/core/run/art21r2_run_smoke_seeder\.gd"\)'
+if ([regex]::Matches($runScene, $smokePreloadPattern).Count -ne 1) {
+    Fail "run_scene.gd must preload the ART21R2 smoke seeder exactly once."
+}
+$smokeDelegatePattern = 'Art21R2RunSmokeSeederScript\.seed_if_requested\('
+if ([regex]::Matches($runScene, $smokeDelegatePattern).Count -ne 2) {
+    Fail "run_scene.gd must contain exactly two ART21R2 smoke delegates."
+}
+if ([regex]::Matches($runScene, 'Art21R2RunSmokeSeederScript\.seed_if_requested\(result, command_bus, run_context\)').Count -ne 1) {
+    Fail "run_scene.gd standard start must delegate ART21R2 smoke seeding exactly once."
+}
+if ([regex]::Matches($runScene, 'Art21R2RunSmokeSeederScript\.seed_if_requested\(command_result, command_bus, run_context\)').Count -ne 1) {
+    Fail "run_scene.gd route start must delegate ART21R2 smoke seeding exactly once."
+}
+$standardDelegateOrder = '(?s)func _start_standard_from_ui\(\).*?player_controller\.reset_local_position\(\).*?Art21R2RunSmokeSeederScript\.seed_if_requested\(result, command_bus, run_context\).*?_show_run_screen\(\).*?func _start_run_from_route\('
+if ($runScene -notmatch $standardDelegateOrder) {
+    Fail "run_scene.gd standard smoke delegate must remain after player reset and before showing the run screen."
+}
+$routeDelegateGate = '(?s)func _start_run_from_route\(.*?if bool\(command_result\.get\("ok", false\)\):\s*Art21R2RunSmokeSeederScript\.seed_if_requested\(command_result, command_bus, run_context\)'
+if ($runScene -notmatch $routeDelegateGate) {
+    Fail "run_scene.gd route smoke delegate must remain under the command_result ok gate."
+}
+$forbiddenRunSceneSmokePatterns = @(
+    'ART21R2_(?:MODAL_ITEM|MAP_MARKER|MAP_SPARSE_MARKER)_SMOKE_FLAG',
+    '--art21r2-seed-(?:modal-items|map-markers|map-sparse-markers)',
+    '_seed_art21r2_',
+    '_art21r2_map_smoke_pos',
+    '_has_cmdline_flag',
+    'OS\.get_cmdline_(?:user_)?args',
+    '"art21r2_smoke"\s*:\s*true',
+    '"art21r2_map_marker_smoke"\s*:\s*true',
+    'run_context\.truth_map\.set_room_type',
+    'run_context\.intel_map\.(?:reveal_cell|scan_cell|toggle_flag)'
+)
+foreach ($pattern in $forbiddenRunSceneSmokePatterns) {
+    if ($runScene -match $pattern) {
+        Fail "run_scene.gd still owns ART21R2 smoke implementation detail: $pattern"
     }
 }
 
