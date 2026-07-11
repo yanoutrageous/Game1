@@ -7,12 +7,14 @@ class_name AssetCatalog
 var asset_records: Dictionary = {}
 var duplicate_asset_ids: Array[StringName] = []
 var missing_asset_paths: Array[StringName] = []
+var manifest_parse_errors: Array[String] = []
 
 
 func load_from_manifest(manifest_path: String) -> void:
 	asset_records.clear()
 	duplicate_asset_ids.clear()
 	missing_asset_paths.clear()
+	manifest_parse_errors.clear()
 
 	if not FileAccess.file_exists(manifest_path):
 		return
@@ -22,13 +24,19 @@ func load_from_manifest(manifest_path: String) -> void:
 		return
 
 	var header: PackedStringArray = []
+	var row_number := 0
 	while not manifest_file.eof_reached():
-		var line := manifest_file.get_line().strip_edges()
-		if line.is_empty():
+		var columns := manifest_file.get_csv_line()
+		row_number += 1
+		if columns.size() == 1 and String(columns[0]).strip_edges().is_empty():
 			continue
-		var columns := line.split(",", false)
 		if header.is_empty():
 			header = columns
+			continue
+		if columns.size() != header.size():
+			manifest_parse_errors.append(
+				"row %d: expected %d columns, got %d" % [row_number, header.size(), columns.size()]
+			)
 			continue
 
 		var record := _record_from_columns(header, columns)
@@ -86,6 +94,8 @@ func get_records_for_role(role: StringName) -> Array[Dictionary]:
 
 func validate_manifest_contract() -> Array[String]:
 	var failures: Array[String] = []
+	if manifest_parse_errors.size() > 0:
+		failures.append("manifest parse errors: %s" % manifest_parse_errors)
 	if duplicate_asset_ids.size() > 0:
 		failures.append("duplicate asset ids: %s" % duplicate_asset_ids)
 	if missing_asset_paths.size() > 0:

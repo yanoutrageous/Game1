@@ -1293,8 +1293,14 @@ func _open_map_from_ui(source: StringName = &"button") -> void:
 
 
 func _toggle_debug_panel() -> void:
-	if debug_panel != null:
+	if debug_panel == null:
+		return
+	if not _can_use_debug_tools():
 		debug_panel.visible = false
+		_show_debug_disabled_feedback()
+		get_viewport().gui_release_focus()
+		return
+	debug_panel.visible = not debug_panel.visible
 	get_viewport().gui_release_focus()
 
 
@@ -1307,7 +1313,12 @@ func _open_debug_panel_from_pause() -> void:
 func _open_debug_panel() -> void:
 	if debug_panel == null:
 		return
-	debug_panel.visible = false
+	if not _can_use_debug_tools():
+		debug_panel.visible = false
+		_show_debug_disabled_feedback()
+		get_viewport().gui_release_focus()
+		return
+	debug_panel.visible = true
 	get_viewport().gui_release_focus()
 
 

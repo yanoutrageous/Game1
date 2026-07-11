@@ -57,6 +57,7 @@ func default_meta_progress() -> Dictionary:
 		"run_count": 0,
 		"extract_count": 0,
 		"fail_count": 0,
+		"abandon_count": 0,
 		"debug_used": false,
 		"debug_commands": [],
 		"committed_result_ids": [],
@@ -131,6 +132,7 @@ func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Diction
 	result["run_count"] = maxi(0, int(data.get("run_count", result.get("run_count", 0))))
 	result["extract_count"] = maxi(0, int(data.get("extract_count", result.get("extract_count", 0))))
 	result["fail_count"] = maxi(0, int(data.get("fail_count", result.get("fail_count", 0))))
+	result["abandon_count"] = maxi(0, int(data.get("abandon_count", result.get("abandon_count", 0))))
 	result["debug_used"] = bool(data.get("debug_used", result.get("debug_used", false)))
 	result["debug_commands"] = _array_from(data.get("debug_commands", result.get("debug_commands", [])))
 	result["committed_result_ids"] = _array_from(data.get("committed_result_ids", result.get("committed_result_ids", [])))
