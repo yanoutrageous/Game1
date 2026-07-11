@@ -5,9 +5,9 @@ Objective rule: evaluate facts as objectively and completely as possible; do not
 Current authority:
 
 ```text
-active_repo = D:\AGAME1\_repo_cache\Game1_work
-godot_project = D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot
-docs_entry = D:\AGAME1\_repo_cache\Game1_work\docs
+active_repo = D:\AGAME1\active\Game1_work
+godot_project = D:\AGAME1\active\Game1_work\Godot\GraytailGodot
+docs_entry = D:\AGAME1\active\Game1_work\docs
 ```
 
 G40 source roots:

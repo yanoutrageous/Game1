@@ -14,13 +14,13 @@ $targets = @(
     "reports/g40/cleanup_decisions.md",
     "reports/g40/repo_worktree_inventory.md",
     "reports/g40/path_reference_migration_log.md",
-    "_repo_cache/Game1_work/README.md",
-    "_repo_cache/Game1_work/AGENTS.md",
-    "_repo_cache/Game1_work/AUDIT_ENTRYPOINT.md",
-    "_repo_cache/Game1_work/docs/README.md",
-    "_repo_cache/Game1_work/docs/INDEX.md",
-    "_repo_cache/Game1_work/docs/10_current",
-    "_repo_cache/Game1_work/docs/00_governance"
+    "active/Game1_work/README.md",
+    "active/Game1_work/AGENTS.md",
+    "active/Game1_work/AUDIT_ENTRYPOINT.md",
+    "active/Game1_work/docs/README.md",
+    "active/Game1_work/docs/INDEX.md",
+    "active/Game1_work/docs/10_current",
+    "active/Game1_work/docs/00_governance"
 )
 
 Push-Location $AgameRoot

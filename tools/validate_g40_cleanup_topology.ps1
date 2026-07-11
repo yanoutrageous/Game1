@@ -39,8 +39,8 @@ foreach ($path in @("Base Docs","Base Docs_Governance","Base Art","Draw","Connec
 }
 
 Check-Exists (Join-Path $AgameRoot "README_CURRENT_ENTRYPOINTS.md") "root_entrypoint"
-Check-Exists (Join-Path $AgameRoot "_repo_cache\Game1_work\docs\README.md") "repo_docs_entrypoint"
-Check-Exists (Join-Path $AgameRoot "_repo_cache\Game1_work\docs\00_governance\DOC_PLACEMENT_STANDARD.md") "doc_placement_standard"
+Check-Exists (Join-Path $AgameRoot "active\Game1_work\docs\README.md") "repo_docs_entrypoint"
+Check-Exists (Join-Path $AgameRoot "active\Game1_work\docs\00_governance\DOC_PLACEMENT_STANDARD.md") "doc_placement_standard"
 
 Write-Output "repo_cache_still_present=allowed_in_progress"
 Write-Output "D_AGAME1_Godot=relocated_to_external_godot_reference"
@@ -65,7 +65,7 @@ if (Test-Path -LiteralPath $pendingDirtyWorktree) {
     Write-Output "dirty_generated_metadata_worktree=resolved_absent $pendingDirtyWorktree"
 }
 
-$activeRepo = Join-Path $AgameRoot "_repo_cache\Game1_work"
+$activeRepo = Join-Path $AgameRoot "active\Game1_work"
 if (Test-Path -LiteralPath (Join-Path $activeRepo ".git")) {
     $worktreeLines = git -C $activeRepo worktree list --porcelain
     $worktreePaths = @($worktreeLines | Where-Object { $_ -like "worktree *" } | ForEach-Object { $_.Substring(9) })

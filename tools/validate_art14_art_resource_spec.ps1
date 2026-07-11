@@ -16,7 +16,7 @@ function Add-Result {
 }
 
 $results = New-Object System.Collections.Generic.List[object]
-$expectedRoot = "D:\AGAME1\_repo_cache\Game1_work"
+$expectedRoot = "D:\AGAME1\active\Game1_work"
 $resolvedRoot = (Resolve-Path $RepoRoot).Path
 
 if ($resolvedRoot -ne $expectedRoot) {

@@ -5,13 +5,13 @@ This repository is the current active Game1 / GraytailGodot engineering repo.
 Current repo path:
 
 ```text
-D:\AGAME1\_repo_cache\Game1_work
+D:\AGAME1\active\Game1_work
 ```
 
 Current Godot project path:
 
 ```text
-D:\AGAME1\_repo_cache\Game1_work\Godot\GraytailGodot
+D:\AGAME1\active\Game1_work\Godot\GraytailGodot
 ```
 
 G40 topology note:

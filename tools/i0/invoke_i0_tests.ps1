@@ -2,7 +2,7 @@ param(
     [ValidateSet("baseline", "remediated")]
     [string]$Profile = "baseline",
 
-    [string]$RepoRoot = "D:\AGAME1\_repo_cache\Game1_work",
+    [string]$RepoRoot = "D:\AGAME1\active\Game1_work",
 
     [string]$ManifestPath = (Join-Path $PSScriptRoot "validation_manifest.json")
 )
@@ -177,7 +177,7 @@ if ($PSVersionTable.PSEdition -cne 'Desktop' -or $PSVersionTable.PSVersion.Major
 }
 
 $approvedWorkspaceRoot = Get-I0CanonicalPath -Path 'D:\AGAME1'
-$approvedRepoRoot = Get-I0CanonicalPath -Path 'D:\AGAME1\_repo_cache\Game1_work'
+$approvedRepoRoot = Get-I0CanonicalPath -Path 'D:\AGAME1\active\Game1_work'
 $approvedRuntimeTempRoot = Get-I0CanonicalPath -Path 'D:\AGAME1\tools\runtimes\.tmp\i0'
 $approvedReportRoot = Get-I0CanonicalPath -Path 'D:\AGAME1\reports\i0'
 $approvedManifestPath = Get-I0CanonicalPath -Path (Join-Path $PSScriptRoot 'validation_manifest.json')

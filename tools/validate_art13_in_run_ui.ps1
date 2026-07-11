@@ -23,7 +23,7 @@ function Test-PathLike([string]$Path, [string[]]$Prefixes) {
 }
 
 $repoRoot = (git rev-parse --show-toplevel).Trim()
-$expectedRoot = "D:/AGAME1/_repo_cache/Game1_work"
+$expectedRoot = "D:/AGAME1/active/Game1_work"
 if ($repoRoot -ne $expectedRoot) {
     Add-ErrorMessage "unexpected git root: $repoRoot"
 }

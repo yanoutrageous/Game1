@@ -22,7 +22,7 @@ from typing import Iterable
 from PIL import Image
 
 
-DEFAULT_REPO = Path(r"D:\AGAME1\_repo_cache\Game1_work")
+DEFAULT_REPO = Path(r"D:\AGAME1\active\Game1_work")
 DEFAULT_STAGING_MANIFEST = Path(r"D:\AGAME1\sources\art\ART-20\_manifest\staging_manifest.csv")
 DEFAULT_CUTTING_SPEC = DEFAULT_REPO / "docs/art/validation/art19r1/UI_COMPONENT_CUTTING_SPEC.csv"
 DEFAULT_IMPORT_PLAN = DEFAULT_REPO / "docs/art/validation/art19r1/NEXT_RUNTIME_IMPORT_BATCH_PLAN.csv"
