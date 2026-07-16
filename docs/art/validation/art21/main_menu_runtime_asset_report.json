@@ -1,0 +1,93 @@
+{
+  "schema_version": 3,
+  "canvas": [
+    1280,
+    720
+  ],
+  "asset_count": 152,
+  "file_bytes": 13663099,
+  "decoded_bytes_all": 73795384,
+  "decoded_bytes_default_load": 10906816,
+  "decoded_mib_default_load": 10.4,
+  "budget_mib": 128,
+  "target_mib": 96,
+  "budget_pass": true,
+  "default_load_policy": "asset_level_live_and_interaction_reachable_worst_case",
+  "default_load_asset_count": 66,
+  "groups": {
+    "main_menu_evidence": {
+      "asset_count": 1,
+      "decoded_bytes": 3686400,
+      "file_bytes": 2121276
+    },
+    "main_menu_master": {
+      "asset_count": 1,
+      "decoded_bytes": 3686400,
+      "file_bytes": 2118315
+    },
+    "main_menu_default": {
+      "asset_count": 44,
+      "decoded_bytes": 26664088,
+      "file_bytes": 5133272
+    },
+    "main_menu_character_idle": {
+      "asset_count": 8,
+      "decoded_bytes": 1313280,
+      "file_bytes": 525293
+    },
+    "main_menu_character_focus": {
+      "asset_count": 4,
+      "decoded_bytes": 656640,
+      "file_bytes": 254802
+    },
+    "main_menu_character_walk_dungeon": {
+      "asset_count": 4,
+      "decoded_bytes": 656640,
+      "file_bytes": 153654
+    },
+    "main_menu_character_walk_company": {
+      "asset_count": 4,
+      "decoded_bytes": 656640,
+      "file_bytes": 229708
+    },
+    "main_menu_modal": {
+      "asset_count": 2,
+      "decoded_bytes": 1467184,
+      "file_bytes": 372204
+    },
+    "main_menu_settings": {
+      "asset_count": 16,
+      "decoded_bytes": 491328,
+      "file_bytes": 161834
+    },
+    "main_menu_focus": {
+      "asset_count": 8,
+      "decoded_bytes": 732016,
+      "file_bytes": 193571
+    },
+    "main_menu_environment": {
+      "asset_count": 36,
+      "decoded_bytes": 3481024,
+      "file_bytes": 919045
+    },
+    "main_menu_ambient_active": {
+      "asset_count": 16,
+      "decoded_bytes": 812544,
+      "file_bytes": 131408
+    },
+    "main_menu_transition_cave": {
+      "asset_count": 4,
+      "decoded_bytes": 14745600,
+      "file_bytes": 746450
+    },
+    "main_menu_transition_company": {
+      "asset_count": 4,
+      "decoded_bytes": 14745600,
+      "file_bytes": 602267
+    }
+  },
+  "render_strategy": "master_matched_clean_plate_plus_interactive_overlays",
+  "source_pack_id": "main_menu_asset_pack/ready_to_migrate",
+  "source_scope": "external_explicit_input_not_runtime_authority",
+  "runtime_root": "res://assets/ui/art21/main_menu/scene"
+}

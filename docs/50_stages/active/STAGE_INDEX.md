@@ -1,32 +1,45 @@
 # Active Stage Index
 
-Status: current active stage index after G40 Slice 11.
+Status: no active art stage assigned after ART21 closeout.
 
 ## Active Stage
 
 | Stage | Lane | Status | Evidence | Boundary |
 | --- | --- | --- | --- | --- |
-| G40 | program / cleanup | active, in progress | `docs/20_product/G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION_CONTRACT.md`; `docs/validation/G40_FULL_PROJECT_CLEANUP_VALIDATION.md`; `docs/handoff/HANDOFF_G40_FULL_PROJECT_CLEANUP_REPOSITORY_REMEDIATION_VALIDATION_STABILIZATION.md`; `tools/validate_current_project.ps1` | Full project cleanup, repository remediation, validation stabilization. No gameplay runtime PASS or manual playtest PASS claimed. |
+| None | art / UI runtime | ART21 closed; successor not yet named | `docs/art/ART21_CLOSEOUT_MAIN_MENU_SCENE_RECONSTRUCTION.md`; `docs/art/validation/art21/` | Do not infer or start ART22 without an explicit new requirement. |
 
 ## Current Baselines
 
 | Item | Current fact |
 | --- | --- |
-| Active repo | `D:\AGAME1\_repo_cache\Game1_work` |
-| Current G40 branch | `godot/g40-full-project-cleanup-validation-stabilization` |
-| Current G40 branch head | `ad883310232ca9756371fb68eb3d0176a56e809e` |
-| Origin G40 branch head | `ad883310232ca9756371fb68eb3d0176a56e809e` |
-| Base HEAD / main / origin/main at G40 start | `aa57a4270e047ef83020c333b30af225aa1a5ffb` |
-| Latest gameplay baseline before G40 | M5 item pack / drop loop full content baseline |
-| Pre-existing project config dirty | Restored to HEAD in G40 Slice 12; patch retained at `D:\AGAME1\reports\g40\project_godot_dirty.patch` |
+| Active repo | Resolve with `git rev-parse --show-toplevel`; no drive-letter authority |
+| Active implementation branch | `art/art21-main-menu-scene-reconstruction` |
+| Upstream implementation base | `origin/art/art21r1-ue-parity-existing-assets` |
+| Base head at continuation start | `3dbb843e34f16a9a10b7122a0e094c457a7057c6` |
+| Main baseline at continuation start | `ecc628d15838288aae17f250ac0298fc79cb15c7` |
+| Godot project | `<git-worktree-root>/Godot/GraytailGodot` |
+| Main-menu design canvas | 1280×720 |
+| Latest closed art stage | ART21 main-menu scene reconstruction |
+| Latest closed non-art stage | I0; project-stage authority confirmed by the user, while I0 evidence artifacts are not present on this ART21 branch |
 
-## Not Active
+## Stage Interpretation
 
-| Stage | Status |
-| --- | --- |
-| M5 | closed / merged baseline before G40 |
-| M6 | not started |
-| Objective / Reward / Pool expansion | not a G40 task |
-| Complete LongTerm / Warehouse / Rule Engine | not a G40 task |
+- ART21 placement-contract work and ART21R1 UE-parity repair are preliminary
+  slices retained as evidence.
+- The full main-menu scene reconstruction, including the preliminary slices,
+  closed as ART21 after live assembly, motion, multi-resolution evidence and
+  validation passed.
+- G40 is a historical repository-cleanup stage and is not the active execution
+  stage on this branch.
+- I0 is the latest project progress outside the art lane. This branch records
+  that stage authority without fabricating I0 implementation or validation
+  evidence that has not yet been synchronized here.
+- Gameplay content expansion, economy changes, save-model changes, and new
+  area/difficulty routing screens are outside ART21.
 
-G40 does not add gameplay content. It stabilizes cleanup, documentation entrypoints, topology, and validation gates.
+## Path Authority
+
+`D:\AGAME1` references in historical reports describe another machine. Current
+scripts and active documents must resolve repository paths relative to the active
+worktree and must accept external source roots as explicit parameters when they
+are genuinely needed.

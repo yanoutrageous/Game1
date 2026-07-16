@@ -1,14 +1,18 @@
 # Document Placement Standard
 
-Status: current governance rule after G40 Slice 4.
+Status: current repository-relative governance rule after ART21 closeout.
 
 Current repository docs entrypoint:
 
 ```text
-D:\AGAME1\_repo_cache\Game1_work\docs
+<git-worktree-root>\docs
 ```
 
-Current external source roots:
+Repository paths in current documents and validators must be resolved from the
+Git worktree root. Absolute paths from historical reports remain historical
+evidence and must not be used to select the active repository.
+
+Historical external source roots recorded during G40:
 
 ```text
 D:\AGAME1\sources\docs
@@ -20,11 +24,11 @@ D:\AGAME1\handoff\connection
 
 Legacy path before G40: `D:\AGAME1\Base Docs`
 Moved to: `D:\AGAME1\sources\docs`
-Do not use as current canonical path: `D:\AGAME1\Base Docs`
+Do not use either path as current-machine repository authority.
 
 Legacy path before G40: `D:\AGAME1\Connection`
 Moved to: `D:\AGAME1\handoff\connection`
-Do not use as current canonical path: `D:\AGAME1\Connection`
+Do not use either path as current-machine repository authority.
 
 ## Placement Rules
 
