@@ -212,7 +212,7 @@ if ($null -eq $featurePolicyProperty) {
     throw "Project feature marker policy is missing for source mode: $SourceMode"
 }
 $allowedProjectFeatureMarkers = @($featurePolicyProperty.Value | ForEach-Object { [string]$_ })
-$observedProjectFeatureLines = @([regex]::Matches($projectText, '(?m)^config/features=.*$') | ForEach-Object { $_.Value })
+$observedProjectFeatureLines = @([regex]::Matches($projectText, '(?m)^config/features=[^\r\n]*') | ForEach-Object { $_.Value })
 $matchedProjectFeatureMarkers = @($allowedProjectFeatureMarkers | Where-Object { $observedProjectFeatureLines -ccontains $_ })
 $projectFeatureDeclarationOk = (
     $allowedProjectFeatureMarkers.Count -gt 0 -and
