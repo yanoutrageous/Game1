@@ -7,6 +7,9 @@ const MainMenuShellScript := preload("res://scripts/ui/main_menu/main_menu_shell
 const DeployPrepShellScript := preload("res://scripts/ui/deploy_prep/deploy_prep_shell.gd")
 const LongTermShellScript := preload("res://scripts/ui/long_term/long_term_shell.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
+const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
 signal host_route_requested(intent: Dictionary)
 
@@ -14,22 +17,19 @@ var main_menu_shell: Control
 var deploy_page: Control
 var long_term_page: Control
 var settings_page: Control
-var exit_confirm_panel: PanelContainer
+var settings_close_button: Button
+var exit_confirm_panel: Control
 var exit_confirm_body: Label
 var current_snapshot: Dictionary = {}
 
 
 func build() -> void:
 	_clear_children()
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_main_menu()
 	_build_deploy_prep()
 	_build_long_term()
-	settings_page = _build_placeholder_page(
-		"SettingsPlaceholderPage",
-		"设置",
-		"当前仅为设置入口占位，完整设置系统未实现。\n\n本页不读取配置、不写入偏好、不改变分辨率。"
-	)
+	_build_settings_overlay()
 	_build_exit_confirm_layer()
 	show_main()
 
@@ -47,6 +47,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 
 func show_main() -> void:
 	_set_page_visible(main_menu_shell)
+	_hide_settings()
 	_hide_exit_confirm()
 
 
@@ -54,6 +55,7 @@ func show_deploy(_tab_id: StringName = &"overview") -> void:
 	_set_page_visible(deploy_page)
 	if deploy_page != null and deploy_page.has_method("show_tab"):
 		deploy_page.call("show_tab", _tab_id)
+	_hide_settings()
 	_hide_exit_confirm()
 
 
@@ -61,12 +63,17 @@ func show_long_term(_entry_id: StringName = &"overview") -> void:
 	_set_page_visible(long_term_page)
 	if long_term_page != null and long_term_page.has_method("show_module"):
 		long_term_page.call("show_module", _entry_id)
+	_hide_settings()
 	_hide_exit_confirm()
 
 
 func show_settings() -> void:
-	_set_page_visible(settings_page)
+	_set_page_visible(main_menu_shell)
 	_hide_exit_confirm()
+	if settings_page != null:
+		settings_page.visible = true
+		if settings_close_button != null:
+			settings_close_button.grab_focus()
 
 
 func get_main_page() -> Control:
@@ -128,37 +135,45 @@ func _build_placeholder_page(page_name: String, title: String, body: String) -> 
 	return page
 
 
+func _build_settings_overlay() -> void:
+	settings_page = Control.new()
+	settings_page.name = "SettingsOverlay"
+	settings_page.set_anchors_preset(Control.PRESET_FULL_RECT)
+	UILayerContractScript.apply_layer(settings_page, &"overlay")
+	settings_page.visible = false
+	add_child(settings_page)
+	var dim := _add_color_rect(settings_page, "SettingsOverlayDim", Rect2(0, 0, 1280, 720), Color(0.015, 0.025, 0.03, 0.72))
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_add_art21_texture(settings_page, "SettingsModalPanel", Rect2(232, 142, 816, 436), &"main_menu.scene.menu.modal.panel")
+	_add_overlay_label(settings_page, "SettingsModalTitle", Rect2(350, 180, 580, 52), "设置", 34, Color(0.97, 0.78, 0.39))
+	_add_overlay_label(settings_page, "SettingsVisualLabel", Rect2(354, 252, 190, 42), "画面模式", 21, Color(0.96, 0.90, 0.76))
+	_add_overlay_label(settings_page, "SettingsVisualValue", Rect2(560, 252, 250, 42), "16:9 自适应", 18, Color(0.75, 0.92, 0.86))
+	_add_art21_texture(settings_page, "SettingsVisualToggle", Rect2(830, 250, 104, 46), &"main_menu.scene.menu.settings_control.1.1")
+	_add_overlay_label(settings_page, "SettingsMusicLabel", Rect2(354, 326, 190, 42), "音乐音量", 21, Color(0.96, 0.90, 0.76))
+	_add_art21_texture(settings_page, "SettingsMusicSlider", Rect2(580, 326, 300, 42), &"main_menu.scene.menu.settings_control.2.2")
+	_add_overlay_label(settings_page, "SettingsEffectsLabel", Rect2(354, 390, 190, 42), "音效音量", 21, Color(0.96, 0.90, 0.76))
+	_add_art21_texture(settings_page, "SettingsEffectsSlider", Rect2(580, 390, 300, 42), &"main_menu.scene.menu.settings_control.2.1")
+	_add_overlay_label(settings_page, "SettingsBoundaryCopy", Rect2(350, 450, 420, 44), "当前设置为视觉预览，不写入持久化偏好。", 15, Color(0.66, 0.72, 0.70))
+	settings_close_button = _add_art21_modal_button(settings_page, "SettingsCloseButton", Rect2(796, 476, 190, 58), "关闭", func() -> void: _hide_settings())
+
+
 func _build_exit_confirm_layer() -> void:
-	exit_confirm_panel = PanelContainer.new()
+	exit_confirm_panel = Control.new()
 	exit_confirm_panel.name = "ExitConfirmDialog"
-	exit_confirm_panel.offset_left = 390.0
-	exit_confirm_panel.offset_top = 210.0
-	exit_confirm_panel.offset_right = 890.0
-	exit_confirm_panel.offset_bottom = 470.0
+	exit_confirm_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	UILayerContractScript.apply_layer(exit_confirm_panel, &"modal")
 	exit_confirm_panel.visible = false
 	add_child(exit_confirm_panel)
-	var content := VBoxContainer.new()
-	content.name = "ExitConfirmContent"
-	content.add_theme_constant_override("separation", 12)
-	exit_confirm_panel.add_child(content)
-	var title := Label.new()
-	title.name = "ExitConfirmTitle"
-	title.text = "退出游戏"
-	title.add_theme_font_size_override("font_size", 24)
-	title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.warning"))
-	content.add_child(title)
-	exit_confirm_body = Label.new()
-	exit_confirm_body.name = "ExitConfirmBody"
+	var dim := _add_color_rect(exit_confirm_panel, "ExitConfirmDim", Rect2(0, 0, 1280, 720), Color(0.015, 0.02, 0.025, 0.76))
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_add_art21_texture(exit_confirm_panel, "ExitConfirmModalPanel", Rect2(232, 142, 816, 436), &"main_menu.scene.menu.modal.panel")
+	_add_overlay_label(exit_confirm_panel, "ExitConfirmTitle", Rect2(350, 190, 580, 50), "退出游戏", 32, Color(0.97, 0.70, 0.35))
+	exit_confirm_body = _add_overlay_label(exit_confirm_panel, "ExitConfirmBody", Rect2(350, 266, 580, 126), "", 17, Color(0.94, 0.90, 0.80))
 	exit_confirm_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	exit_confirm_body.add_theme_font_size_override("font_size", 16)
-	exit_confirm_body.add_theme_color_override("font_color", PresentationTheme.text_color())
-	content.add_child(exit_confirm_body)
-	var actions := HBoxContainer.new()
-	actions.name = "ExitConfirmActions"
-	actions.add_theme_constant_override("separation", 10)
-	content.add_child(actions)
-	_add_menu_button(actions, "确认退出", func() -> void: get_tree().quit())
-	_add_menu_button(actions, "取消", func() -> void: _hide_exit_confirm())
+	exit_confirm_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	exit_confirm_body.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	_add_art21_modal_button(exit_confirm_panel, "ExitConfirmAccept", Rect2(392, 444, 190, 58), "确认退出", func() -> void: get_tree().quit())
+	_add_art21_modal_button(exit_confirm_panel, "ExitConfirmCancel", Rect2(698, 444, 190, 58), "取消", func() -> void: _hide_exit_confirm())
 	_refresh_exit_confirm_text()
 
 
@@ -193,20 +208,37 @@ func _on_deploy_start_intent_requested(intent: Dictionary) -> void:
 
 
 func _set_page_visible(active_page: Control) -> void:
-	for page: Control in [main_menu_shell, deploy_page, long_term_page, settings_page]:
+	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
 		if page != null:
 			page.visible = page == active_page
+	_hide_settings()
 
 
 func _show_exit_confirm() -> void:
 	_refresh_exit_confirm_text()
+	_hide_settings()
 	if exit_confirm_panel != null:
 		exit_confirm_panel.visible = true
+		var cancel_button := exit_confirm_panel.get_node_or_null("ExitConfirmCancel") as Button
+		if cancel_button != null:
+			cancel_button.grab_focus()
 
 
 func _hide_exit_confirm() -> void:
 	if exit_confirm_panel != null:
 		exit_confirm_panel.visible = false
+	_restore_main_menu_focus()
+
+
+func _hide_settings() -> void:
+	if settings_page != null:
+		settings_page.visible = false
+	_restore_main_menu_focus()
+
+
+func _restore_main_menu_focus() -> void:
+	if main_menu_shell != null and main_menu_shell.visible and main_menu_shell.has_method("_grab_default_focus"):
+		main_menu_shell.call_deferred("_grab_default_focus")
 
 
 func _refresh_exit_confirm_text() -> void:
@@ -236,6 +268,64 @@ func _add_menu_button(parent: Control, text: String, callback: Callable) -> Butt
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(150, 40)
+	button.pressed.connect(callback)
+	parent.add_child(button)
+	return button
+
+
+func _add_art21_texture(parent: Control, node_name: String, rect: Rect2, visual_key: StringName) -> TextureRect:
+	var texture := Art21UIPlacementContractScript.main_menu_scene_texture(visual_key)
+	if texture == null:
+		return null
+	var texture_rect := TextureRect.new()
+	texture_rect.name = node_name
+	texture_rect.texture = texture
+	texture_rect.position = rect.position.round()
+	texture_rect.size = rect.size.round()
+	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(texture_rect)
+	return texture_rect
+
+
+func _add_overlay_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.name = node_name
+	label.text = text
+	label.position = rect.position.round()
+	label.size = rect.size.round()
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_color_override("font_shadow_color", Color(0.05, 0.03, 0.02, 0.82))
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
+	Art10UISkinKitScript.apply_label(label, font_size, color)
+	parent.add_child(label)
+	return label
+
+
+func _add_art21_modal_button(parent: Control, node_name: String, rect: Rect2, text: String, callback: Callable) -> Button:
+	_add_art21_texture(parent, "%sTexture" % node_name, rect, &"main_menu.scene.menu.modal.button")
+	var button := Button.new()
+	button.name = node_name
+	button.text = text
+	button.position = rect.position.round()
+	button.size = rect.size.round()
+	button.focus_mode = Control.FOCUS_ALL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var empty := StyleBoxEmpty.new()
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(state, empty)
+	var font := Art10UISkinKitScript.pixel_font()
+	if font is Font:
+		button.add_theme_font_override("font", font as Font)
+	button.add_theme_font_size_override("font_size", 21)
+	button.add_theme_color_override("font_color", Color(0.96, 0.81, 0.48))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.68))
+	button.add_theme_color_override("font_pressed_color", Color(0.82, 0.64, 0.35))
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button

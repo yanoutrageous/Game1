@@ -5,6 +5,7 @@ class_name Art21UIPlacementContract
 # This keeps ART-21 UI consumption slot-driven and manifest-backed.
 
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const Art21MainMenuAssetContractScript := preload("res://scripts/presentation/art21_main_menu_asset_contract.gd")
 
 const ART21_COMPONENT_BY_VISUAL_KEY := {
 	&"shared.panel.page_frame.normal": &"ui.art21.shared.panel.page_frame.normal",
@@ -183,3 +184,15 @@ static func style_box_for_visual_key(visual_key: StringName, fallback_asset_id: 
 	style.content_margin_bottom = padding
 	style.draw_center = true
 	return style
+
+
+static func main_menu_scene_ref(visual_key: StringName, role: StringName = &"main_menu_scene") -> Dictionary:
+	return Art21MainMenuAssetContractScript.component_ref(visual_key, role)
+
+
+static func main_menu_scene_texture(visual_key: StringName) -> Texture2D:
+	return Art21MainMenuAssetContractScript.texture(visual_key)
+
+
+static func main_menu_scene_load_group(visual_key: StringName) -> StringName:
+	return Art21MainMenuAssetContractScript.load_group(visual_key)

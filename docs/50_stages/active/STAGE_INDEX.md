@@ -1,22 +1,35 @@
 # Active Stage Index
 
-文档状态：当前 active stage 索引
-最后更新：2026-07-11（I0.7 closeout）
+文档状态：I0 与 ART21 基线整合后的当前索引
 
-当前没有已授权的 active stage。
+当前没有已授权的后续 active stage。
 
 | Stage | Line | Status | Evidence | Boundary |
 | --- | --- | --- | --- | --- |
-| none | none | no_authorized_active_stage | `docs/10_current/NEXT_ACTION.md` | 后续工作必须由用户单独批准。 |
+| none | none | no_authorized_active_stage | `docs/10_current/NEXT_ACTION.md` | I0 与 ART21 的整合不自动授权 ART22、工程重构、内容扩展或发布阶段。 |
 
-## 当前基线
+## 当前整合基线
 
-```text
-active_repo: D:\AGAME1\active\Game1_work
-branch: i0/project-baseline-refactor
-validated_implementation_head: d34f869e85993704ca4091b26f9e40a39795c860
-toolchain: Godot 4.6.3.stable.official.7d41c59c4
-i0_status: CLOSED_WITH_RECORDED_SAFETY_NONCONFORMANCE_AND_LIMITATIONS
-```
+| Item | Current fact |
+| --- | --- |
+| Active repo | Resolve with `git rev-parse --show-toplevel`; no drive-letter authority |
+| Integration branch | `integration/i0-art21-baseline` |
+| I0 source | `origin/i0/project-baseline-refactor` at `77569579a6c66d9f4350f0ba419906a7814dd502` |
+| ART21 source | `origin/art/art21-main-menu-scene-reconstruction` at `93420a8f3799c540ac8a2b46d3c264d5f3ee10f1` |
+| Godot project | `<git-worktree-root>/Godot/GraytailGodot` |
+| Toolchain contract | Godot 4.6.3 from I0; current-machine path must be explicitly configured or resolved by the I0 bootstrap |
+| Latest closed non-art stage | I0, with its recorded safety nonconformance and limitations |
+| Latest closed art stage | ART21 main-menu scene reconstruction |
+| Main-menu design canvas | 1280×720 |
 
-I0 已登记到 closed index。关闭记录不授权自动启动后续线路，也不扩大为完整人工游玩、最终视觉或发布 PASS。
+## Interpretation
+
+- I0 remains the common repository, toolchain, test and governance baseline.
+- ART21 supplies the final scene-based main-menu implementation and evidence.
+- ART21R2, ART21R1 and the earlier ART21 placement work remain preliminary
+  historical slices; they do not supersede the final ART21 main-menu closeout.
+- Historical `D:\AGAME1` paths remain valid inside I0 handoff and validation
+  evidence, but current scripts and current documents must resolve the active
+  repository relative to the current Git worktree.
+- No full manual playtest, release, CI, performance or post-ART21 visual stage is
+  implied by this baseline integration.
