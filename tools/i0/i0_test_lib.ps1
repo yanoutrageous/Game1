@@ -523,6 +523,81 @@ function Copy-I0WorktreeMirror {
 }
 
 
+function Copy-I0HeadMirror {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceRepo,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Destination,
+
+        [Parameter(Mandatory = $true)]
+        [string]$RuntimeTempRoot,
+
+        [int]$TimeoutSeconds = 600
+    )
+
+    $source = Get-I0CanonicalPath -Path $SourceRepo
+    $destinationPath = Get-I0CanonicalPath -Path $Destination
+    $tempRoot = Get-I0CanonicalPath -Path $RuntimeTempRoot
+    Assert-I0PathWithin -Path $source -Root $script:I0WorkspaceRoot -Label "HEAD mirror source"
+    Assert-I0NoReparseExistingAncestor -Path $source -Root $script:I0WorkspaceRoot -Label "HEAD mirror source"
+    Assert-I0PathWithin -Path $destinationPath -Root $tempRoot -Label "HEAD mirror destination"
+    Assert-I0NoReparseExistingAncestor -Path $destinationPath -Root $script:I0WorkspaceRoot -Label "HEAD mirror destination"
+    if (Test-Path -LiteralPath $destinationPath) {
+        throw "Refusing to export HEAD into an existing mirror destination: $destinationPath"
+    }
+
+    $runRoot = Get-I0CanonicalPath -Path (Split-Path -Parent $destinationPath)
+    Assert-I0PathWithin -Path $runRoot -Root $tempRoot -Label "HEAD mirror run root"
+    $headIndexPath = Get-I0CanonicalPath -Path (Join-Path $runRoot 'head-export.index')
+    Assert-I0PathWithin -Path $headIndexPath -Root $runRoot -Label "HEAD export index"
+    Assert-I0NoReparseExistingAncestor -Path $headIndexPath -Root $script:I0WorkspaceRoot -Label "HEAD export index"
+    if (Test-Path -LiteralPath $headIndexPath) {
+        throw "Refusing to overwrite an existing HEAD export index: $headIndexPath"
+    }
+
+    [void](New-Item -ItemType Directory -Path $destinationPath)
+    $environment = @{
+        GIT_INDEX_FILE = $headIndexPath
+        GIT_OPTIONAL_LOCKS = '0'
+        GIT_TERMINAL_PROMPT = '0'
+    }
+    $git = Get-I0GitExecutable
+    $readTree = Invoke-I0Process `
+        -FilePath $git `
+        -Arguments @('-C', $source, 'read-tree', 'HEAD') `
+        -WorkingDirectory $source `
+        -Environment $environment `
+        -TimeoutSeconds $TimeoutSeconds
+    if ($readTree.timed_out -or $readTree.exit_code -ne 0) {
+        throw "Unable to create isolated HEAD index: $($readTree.stderr) $($readTree.stdout)"
+    }
+
+    $prefix = $destinationPath.TrimEnd('\') + '\'
+    $checkoutIndex = Invoke-I0Process `
+        -FilePath $git `
+        -Arguments @('-C', $source, 'checkout-index', '--all', "--prefix=$prefix") `
+        -WorkingDirectory $source `
+        -Environment $environment `
+        -TimeoutSeconds $TimeoutSeconds
+    if ($checkoutIndex.timed_out -or $checkoutIndex.exit_code -ne 0) {
+        throw "Unable to export isolated HEAD mirror: $($checkoutIndex.stderr) $($checkoutIndex.stdout)"
+    }
+    Assert-I0TreeHasNoReparseEntries -Root $destinationPath -Label "HEAD mirror"
+
+    $head = Invoke-I0Git -RepoRoot $source -Arguments @('rev-parse', '--verify', 'HEAD') -TimeoutSeconds $TimeoutSeconds
+    $tree = Invoke-I0Git -RepoRoot $source -Arguments @('rev-parse', '--verify', 'HEAD^{tree}') -TimeoutSeconds $TimeoutSeconds
+    return [pscustomobject][ordered]@{
+        read_tree_process = $readTree
+        checkout_process = $checkoutIndex
+        head = Normalize-I0ProcessText -Text $head.stdout
+        tree = Normalize-I0ProcessText -Text $tree.stdout
+        isolated_index_path = $headIndexPath
+    }
+}
+
+
 function New-I0GodotRuntimeLinks {
     param(
         [Parameter(Mandatory = $true)]

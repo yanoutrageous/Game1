@@ -3,6 +3,9 @@ param(
 
     [string]$ManifestPath = (Join-Path $PSScriptRoot "validation_manifest.json"),
 
+    [ValidateSet("worktree", "head")]
+    [string]$SourceMode = "worktree",
+
     [ValidateSet("baseline", "remediated")]
     [string]$Profile = "baseline",
 
@@ -204,6 +207,23 @@ $projectPath = Join-Path $repo (([string]$manifest.static_contract.project_setti
 $projectText = Read-I0Utf8Text -Path $projectPath
 $missingProjectMarkers = @($manifest.static_contract.required_project_markers | Where-Object { $projectText.IndexOf([string]$_, [System.StringComparison]::Ordinal) -lt 0 })
 [void]$checks.Add((New-I0StaticCheck -Code "STATIC_PROJECT_DECLARATION" -Condition ($missingProjectMarkers.Count -eq 0) -ExpectedRedCodes $expectedRedCodes -Details ([pscustomobject]@{ missing_markers = $missingProjectMarkers })))
+$featurePolicyProperty = $manifest.static_contract.allowed_project_feature_markers.PSObject.Properties[$SourceMode]
+if ($null -eq $featurePolicyProperty) {
+    throw "Project feature marker policy is missing for source mode: $SourceMode"
+}
+$allowedProjectFeatureMarkers = @($featurePolicyProperty.Value | ForEach-Object { [string]$_ })
+$observedProjectFeatureLines = @([regex]::Matches($projectText, '(?m)^config/features=.*$') | ForEach-Object { $_.Value })
+$matchedProjectFeatureMarkers = @($allowedProjectFeatureMarkers | Where-Object { $observedProjectFeatureLines -ccontains $_ })
+$projectFeatureDeclarationOk = (
+    $allowedProjectFeatureMarkers.Count -gt 0 -and
+    $observedProjectFeatureLines.Count -eq 1 -and
+    $matchedProjectFeatureMarkers.Count -eq 1
+)
+[void]$checks.Add((New-I0StaticCheck -Code "STATIC_PROJECT_FEATURE_DECLARATION" -Condition $projectFeatureDeclarationOk -ExpectedRedCodes $expectedRedCodes -Details ([pscustomobject]@{
+    source_mode = $SourceMode
+    allowed_markers = $allowedProjectFeatureMarkers
+    observed_lines = $observedProjectFeatureLines
+})))
 
 $runnerDirectory = Join-Path $repo 'tools'
 $actualRunnerPaths = @(Get-ChildItem -LiteralPath $runnerDirectory -File -Filter 'godot_*_runner.gd' | ForEach-Object { Get-I0RelativePath -Path $_.FullName -Root $repo } | Sort-Object)

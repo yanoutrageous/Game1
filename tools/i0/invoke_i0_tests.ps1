@@ -2,6 +2,9 @@ param(
     [ValidateSet("baseline", "remediated")]
     [string]$Profile = "baseline",
 
+    [ValidateSet("worktree", "head")]
+    [string]$SourceMode = "worktree",
+
     [string]$RepoRoot = "D:\AGAME1\active\Game1_work",
 
     [string]$ManifestPath = (Join-Path $PSScriptRoot "validation_manifest.json")
@@ -251,6 +254,7 @@ $businessPollution = $null
 $pollutionGuardError = $null
 $mirrorFidelity = $null
 $mirrorCopy = $null
+$mirrorSource = $null
 $runtimeLinks = $null
 $toolchainVerification = $null
 $documentEncodingCase = $null
@@ -268,8 +272,54 @@ try {
     $beforeBusiness = Get-I0BusinessHashSnapshot -RepoRoot $repo -BusinessRoots @($manifest.business_roots) -ExcludedDirectoryNames @($manifest.mirror.excluded_directory_names)
     $toolchainVerification = Get-I0VerifiedToolchainLock -RepoRoot $repo -ValidationManifest $manifest
 
-    $documentEncodingScript = Join-Path $repo (([string]$manifest.static_contract.document_encoding_validator_relative_path).Replace('/', '\'))
-    Assert-I0PathWithin -Path $documentEncodingScript -Root $repo -Label 'document encoding validator'
+    if ($SourceMode -eq 'worktree') {
+        $mirrorCopyRaw = Copy-I0WorktreeMirror `
+            -SourceRepo $repo `
+            -Destination $mirrorRoot `
+            -RuntimeTempRoot $runtimeTempRoot `
+            -ExcludedDirectoryNames @($manifest.mirror.excluded_directory_names) `
+            -TimeoutSeconds ([int]$manifest.timeouts_seconds.mirror_copy)
+        $mirrorCopy = ConvertTo-I0ProcessReport -ProcessResult $mirrorCopyRaw
+        $mirrorBusiness = Get-I0BusinessHashSnapshot -RepoRoot $mirrorRoot -BusinessRoots @($manifest.business_roots) -ExcludedDirectoryNames @($manifest.mirror.excluded_directory_names)
+        $mirrorFidelity = Compare-I0BusinessHashSnapshot -Before $beforeBusiness -After $mirrorBusiness
+        $mirrorSource = [pscustomobject][ordered]@{
+            mode = 'worktree'
+            head = $beforeGit.head
+            tree = '(worktree mirror)'
+            protected_dirty_state_included = $true
+        }
+        if (-not $mirrorFidelity.unchanged) {
+            throw "Isolated worktree mirror business hash does not match the active repo"
+        }
+    }
+    else {
+        $headMirror = Copy-I0HeadMirror `
+            -SourceRepo $repo `
+            -Destination $mirrorRoot `
+            -RuntimeTempRoot $runtimeTempRoot `
+            -TimeoutSeconds ([int]$manifest.timeouts_seconds.mirror_copy)
+        $mirrorCopy = ConvertTo-I0ProcessReport -ProcessResult $headMirror.checkout_process
+        $mirrorBusiness = Get-I0BusinessHashSnapshot -RepoRoot $mirrorRoot -BusinessRoots @($manifest.business_roots) -ExcludedDirectoryNames @($manifest.mirror.excluded_directory_names)
+        $mirrorFidelity = [pscustomobject][ordered]@{
+            unchanged = $true
+            method = 'isolated_git_index_checkout'
+            source_head = $headMirror.head
+            source_tree = $headMirror.tree
+            exported_business_file_count = $mirrorBusiness.file_count
+            exported_business_fingerprint_sha256 = $mirrorBusiness.fingerprint_sha256
+        }
+        $mirrorSource = [pscustomobject][ordered]@{
+            mode = 'head'
+            head = $headMirror.head
+            tree = $headMirror.tree
+            protected_dirty_state_included = $false
+            isolated_index_path = $headMirror.isolated_index_path
+            read_tree_process = ConvertTo-I0ProcessReport -ProcessResult $headMirror.read_tree_process
+        }
+    }
+
+    $documentEncodingScript = Join-Path $mirrorRoot (([string]$manifest.static_contract.document_encoding_validator_relative_path).Replace('/', '\'))
+    Assert-I0PathWithin -Path $documentEncodingScript -Root $mirrorRoot -Label 'document encoding validator'
     Assert-I0NoReparseExistingAncestor -Path $documentEncodingScript -Root $workspaceRoot -Label 'document encoding validator'
     $documentEncodingRaw = Invoke-I0Process `
         -FilePath $windowsPowerShell `
@@ -278,9 +328,9 @@ try {
             '-NonInteractive',
             '-ExecutionPolicy', 'Bypass',
             '-File', $documentEncodingScript,
-            '-RepoRoot', $repo
+            '-RepoRoot', $mirrorRoot
         ) `
-        -WorkingDirectory $repo `
+        -WorkingDirectory $mirrorRoot `
         -TimeoutSeconds ([int]$manifest.timeouts_seconds.document_encoding)
     $documentEncodingData = $null
     $documentEncodingParseError = $null
@@ -306,19 +356,6 @@ try {
     }
     if (-not $documentEncodingPass) {
         throw 'Document encoding gate failed'
-    }
-
-    $mirrorCopyRaw = Copy-I0WorktreeMirror `
-        -SourceRepo $repo `
-        -Destination $mirrorRoot `
-        -RuntimeTempRoot $runtimeTempRoot `
-        -ExcludedDirectoryNames @($manifest.mirror.excluded_directory_names) `
-        -TimeoutSeconds ([int]$manifest.timeouts_seconds.mirror_copy)
-    $mirrorCopy = ConvertTo-I0ProcessReport -ProcessResult $mirrorCopyRaw
-    $mirrorBusiness = Get-I0BusinessHashSnapshot -RepoRoot $mirrorRoot -BusinessRoots @($manifest.business_roots) -ExcludedDirectoryNames @($manifest.mirror.excluded_directory_names)
-    $mirrorFidelity = Compare-I0BusinessHashSnapshot -Before $beforeBusiness -After $mirrorBusiness
-    if (-not $mirrorFidelity.unchanged) {
-        throw "Isolated worktree mirror business hash does not match the active repo"
     }
 
     $runtimeLinks = New-I0GodotRuntimeLinks `
@@ -358,6 +395,7 @@ try {
             '-File', $mirrorStaticScript,
             '-RepoRoot', $mirrorRoot,
             '-ManifestPath', $mirrorManifest,
+            '-SourceMode', $SourceMode,
             '-Profile', $Profile,
             '-ReportPath', $staticReportPath
         ) `
@@ -573,10 +611,11 @@ else {
 }
 $completedUtc = [DateTime]::UtcNow
 $report = [pscustomobject][ordered]@{
-    schema_version = 1
+    schema_version = 2
     suite_id = [string]$manifest.suite_id
     run_id = $runId
     profile = $Profile
+    source_mode = $SourceMode
     overall_status = $overallLabel
     characterization_status = $characterizationLabel
     cleanup_diagnostic_count = $cleanupDiagnosticCount
@@ -597,6 +636,7 @@ $report = [pscustomobject][ordered]@{
     }
     fatal_error = $fatalError
     mirror = [pscustomobject][ordered]@{
+        source = $mirrorSource
         copy_process = $mirrorCopy
         fidelity = $mirrorFidelity
     }
