@@ -1,6 +1,12 @@
 Set-StrictMode -Version 2.0
 
-$script:I0WorkspaceRoot = "D:\AGAME1"
+$defaultI0WorkspaceRoot = if (-not [string]::IsNullOrWhiteSpace($env:I0_WORKSPACE_ROOT)) {
+    $env:I0_WORKSPACE_ROOT
+}
+else {
+    Join-Path $PSScriptRoot "..\.."
+}
+$script:I0WorkspaceRoot = [System.IO.Path]::GetFullPath($defaultI0WorkspaceRoot).TrimEnd('\')
 
 
 function Get-I0CanonicalPath {
@@ -10,6 +16,21 @@ function Get-I0CanonicalPath {
     )
 
     return [System.IO.Path]::GetFullPath($Path).TrimEnd('\')
+}
+
+
+function Set-I0WorkspaceRoot {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    $fullPath = Get-I0CanonicalPath -Path $Path
+    if (-not (Test-Path -LiteralPath $fullPath -PathType Container)) {
+        throw "I0 workspace root does not exist: $fullPath"
+    }
+    $script:I0WorkspaceRoot = $fullPath
+    return $script:I0WorkspaceRoot
 }
 
 

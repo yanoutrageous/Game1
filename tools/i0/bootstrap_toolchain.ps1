@@ -1,13 +1,14 @@
 [CmdletBinding()]
 param(
-    [string]$WorkspaceRoot = 'D:\AGAME1'
+    [string]$WorkspaceRoot = ''
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-$ApprovedWorkspaceRoot = [IO.Path]::GetFullPath('D:\AGAME1').TrimEnd('\')
+[Console]::OutputEncoding = $Utf8NoBom
+$OutputEncoding = $Utf8NoBom
 
 function Stop-I0 {
     param([string]$Message)
@@ -185,7 +186,7 @@ function Invoke-DownloadNoCache {
     }
     $request = [Net.HttpWebRequest]::Create($Uri)
     $request.Method = 'GET'
-    $request.UserAgent = 'AGAME1-I0-Toolchain'
+    $request.UserAgent = 'Game1-I0-Toolchain'
     $request.AllowAutoRedirect = $true
     $request.CachePolicy = New-Object System.Net.Cache.RequestCachePolicy ([System.Net.Cache.RequestCacheLevel]::BypassCache)
     $response = $null
@@ -380,20 +381,46 @@ function Test-GodotInstall {
     }
 }
 
+$RepoRoot = Get-FullPath (Join-Path $PSScriptRoot '..\..')
+if ([string]::IsNullOrWhiteSpace($WorkspaceRoot)) {
+    $gitCommonOutput = @(& git -C $RepoRoot rev-parse --path-format=absolute --git-common-dir 2>&1)
+    if ($LASTEXITCODE -ne 0) {
+        Stop-I0 "Unable to derive workspace from Git common directory: $($gitCommonOutput -join [Environment]::NewLine)"
+    }
+    $gitCommon = Get-FullPath (($gitCommonOutput -join [Environment]::NewLine).Trim())
+    $candidate = $RepoRoot
+    while ($true) {
+        if (
+            $gitCommon -eq $candidate -or
+            $gitCommon.StartsWith($candidate + '\', [StringComparison]::OrdinalIgnoreCase)
+        ) {
+            $WorkspaceRoot = $candidate
+            break
+        }
+        $parent = Split-Path -Parent $candidate
+        if ([string]::IsNullOrWhiteSpace($parent) -or $parent -eq $candidate) {
+            Stop-I0 "Unable to derive a common workspace for repo=$RepoRoot git_common=$gitCommon"
+        }
+        $candidate = Get-FullPath $parent
+    }
+}
 $WorkspaceFull = Get-FullPath $WorkspaceRoot
-if ($WorkspaceFull -ne $ApprovedWorkspaceRoot) {
-    Stop-I0 "Workspace root is outside the immutable I0 authorization boundary: $WorkspaceFull"
+if (-not (Test-Path -LiteralPath $WorkspaceFull -PathType Container)) {
+    Stop-I0 "Workspace root does not exist: $WorkspaceFull"
 }
 $ScriptFull = (Resolve-Path -LiteralPath $PSCommandPath).ProviderPath
-if (-not $ScriptFull.StartsWith($ApprovedWorkspaceRoot + '\', [StringComparison]::OrdinalIgnoreCase)) {
-    Stop-I0 "Bootstrap script is outside the immutable I0 authorization boundary: $ScriptFull"
+if (
+    $ScriptFull -ne $WorkspaceFull -and
+    -not $ScriptFull.StartsWith($WorkspaceFull + '\', [StringComparison]::OrdinalIgnoreCase)
+) {
+    Stop-I0 "Bootstrap script is outside the selected workspace: $ScriptFull"
 }
 $LockPath = Join-Path $PSScriptRoot 'toolchain.lock.json'
 if (-not (Test-Path -LiteralPath $LockPath -PathType Leaf)) {
     Stop-I0 "Toolchain lock missing: $LockPath"
 }
 $Lock = Get-Content -Raw -Encoding UTF8 -LiteralPath $LockPath | ConvertFrom-Json
-if ([int]$Lock.schema_version -ne 2 -or [string]$Lock.stage -ne 'I0.1') {
+if ([int]$Lock.schema_version -ne 3 -or [string]$Lock.stage -ne 'I0.1' -or [string]$Lock.path_policy -ne 'runtime_parameter') {
     Stop-I0 'Toolchain lock schema or stage is unsupported'
 }
 if ([string]$Lock.runtime_root -ne 'tools\runtimes') {
@@ -408,19 +435,11 @@ if ([string]$Lock.godot.executable -eq [string]$Lock.godot.console_executable) {
     Stop-I0 'Godot executable filenames must be distinct'
 }
 
-$ExpectedWorkspace = Get-FullPath ([string]$Lock.workspace_root)
-if ($ExpectedWorkspace -ne $ApprovedWorkspaceRoot -or $WorkspaceFull -ne $ExpectedWorkspace) {
-    Stop-I0 "Lock and requested workspace must both resolve exactly to $ApprovedWorkspaceRoot"
-}
 $WorkspaceFull = (Resolve-Path -LiteralPath $WorkspaceFull).ProviderPath.TrimEnd('\')
-if ($WorkspaceFull -ne $ExpectedWorkspace) {
-    Stop-I0 'Workspace root resolution changed'
-}
 if (((Get-Item -LiteralPath $WorkspaceFull -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
     Stop-I0 'Workspace root is a reparse point'
 }
 
-$RepoRoot = Get-FullPath (Join-Path $PSScriptRoot '..\..')
 $null = Assert-UnderWorkspace $RepoRoot 'Repo root'
 $RuntimeRoot = Get-FullPath (Join-Path $WorkspaceFull ([string]$Lock.runtime_root))
 $StagingRoot = Get-FullPath (Join-Path $RuntimeRoot '.staging')
@@ -575,9 +594,9 @@ try {
             Stop-I0 "Existing I0.1 report field set differs from the current verifier: $ReportPath"
         }
         foreach ($name in $ExpectedNames) {
-            if ($name -eq 'completed_utc') {
+            if ($name -in @('completed_utc', 'repo_root')) {
                 $parsedUtc = [DateTime]::MinValue
-                if (-not [DateTime]::TryParse([string]$ExistingReport.completed_utc, [ref]$parsedUtc)) {
+                if ($name -eq 'completed_utc' -and -not [DateTime]::TryParse([string]$ExistingReport.completed_utc, [ref]$parsedUtc)) {
                     Stop-I0 "Existing I0.1 report has an invalid completion timestamp: $ReportPath"
                 }
                 continue

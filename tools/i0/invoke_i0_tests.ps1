@@ -5,7 +5,15 @@ param(
     [ValidateSet("worktree", "head")]
     [string]$SourceMode = "worktree",
 
-    [string]$RepoRoot = "D:\AGAME1\active\Game1_work",
+    [string]$RepoRoot = ([System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))),
+
+    [string]$WorkspaceRoot = "",
+
+    [string]$RuntimeTempRoot = "",
+
+    [string]$ReportRoot = "",
+
+    [string]$GodotInstallRoot = "",
 
     [string]$ManifestPath = (Join-Path $PSScriptRoot "validation_manifest.json")
 )
@@ -14,6 +22,30 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
 
 . (Join-Path $PSScriptRoot "i0_test_lib.ps1")
+
+
+function Get-I0DefaultWorkspaceRoot {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $repo = Get-I0CanonicalPath -Path $RepoRoot
+    $commonResult = Invoke-I0Git -RepoRoot $repo -Arguments @('rev-parse', '--path-format=absolute', '--git-common-dir')
+    $gitCommon = Get-I0CanonicalPath -Path (Normalize-I0ProcessText -Text $commonResult.stdout)
+    $candidate = $repo
+    while (-not [string]::IsNullOrWhiteSpace($candidate)) {
+        if (Test-I0PathWithin -Path $gitCommon -Root $candidate -AllowRoot) {
+            return $candidate
+        }
+        $parent = Split-Path -Parent $candidate
+        if ([string]::IsNullOrWhiteSpace($parent) -or [string]::Equals($parent, $candidate, [System.StringComparison]::OrdinalIgnoreCase)) {
+            break
+        }
+        $candidate = Get-I0CanonicalPath -Path $parent
+    }
+    throw "Unable to derive a common I0 workspace root for repo=$repo git_common=$gitCommon"
+}
 
 
 function ConvertTo-I0ProcessReport {
@@ -91,17 +123,18 @@ function Get-I0FailMarkerLineCount {
 function Get-I0VerifiedToolchainLock {
     param(
         [Parameter(Mandatory = $true)][string]$RepoRoot,
+        [Parameter(Mandatory = $true)][string]$WorkspaceRoot,
+        [Parameter(Mandatory = $true)][string]$InstallRoot,
         [Parameter(Mandatory = $true)]$ValidationManifest
     )
 
     $lockPath = Get-I0CanonicalPath -Path (Join-Path $RepoRoot 'tools\i0\toolchain.lock.json')
-    Assert-I0NoReparseExistingAncestor -Path $lockPath -Root 'D:\AGAME1' -Label 'I0.1 toolchain lock'
+    Assert-I0NoReparseExistingAncestor -Path $lockPath -Root $WorkspaceRoot -Label 'I0.1 toolchain lock'
     if (-not (Test-Path -LiteralPath $lockPath -PathType Leaf)) {
         throw "I0.1 toolchain lock is missing: $lockPath"
     }
     $lock = Get-Content -LiteralPath $lockPath -Raw | ConvertFrom-Json
     $approved = [ordered]@{
-        workspace_root = 'D:\AGAME1'
         version = '4.6.3'
         archive_sha256 = 'e39986a178d585ce7ac198fb8de6ea436366dc0cc00e594810c2e3e104c04b90'
         main_sha256 = 'ef90e929ba1a6a4322860285d97f40f4aa349c90329a91b0e8b55b8df0f4cb00'
@@ -109,11 +142,8 @@ function Get-I0VerifiedToolchainLock {
         main_size = [int64]172409864
         console_size = [int64]198152
     }
-    if ([int]$lock.schema_version -ne 2 -or [string]$lock.stage -cne 'I0.1') {
+    if ([int]$lock.schema_version -ne 3 -or [string]$lock.stage -cne 'I0.1' -or [string]$lock.path_policy -cne 'runtime_parameter') {
         throw 'I0.1 toolchain lock schema or stage is unsupported'
-    }
-    if ((Get-I0CanonicalPath -Path ([string]$lock.workspace_root)) -cne $approved.workspace_root) {
-        throw 'I0.1 toolchain lock workspace root differs from the immutable boundary'
     }
     if ([string]$lock.godot.version -cne $approved.version -or [string]$lock.godot.archive_sha256 -cne $approved.archive_sha256) {
         throw 'I0.1 Godot version or official archive SHA-256 differs from the approved lock identity'
@@ -128,17 +158,17 @@ function Get-I0VerifiedToolchainLock {
         throw 'I0.1 executable sizes differ from the approved byte identities'
     }
 
-    $installRoot = Get-I0CanonicalPath -Path ([string]$ValidationManifest.godot.install_root)
-    $expectedInstallRoot = Get-I0CanonicalPath -Path (Join-Path 'D:\AGAME1\tools\runtimes\godot' $approved.version)
+    $installRoot = Get-I0CanonicalPath -Path $InstallRoot
+    $expectedInstallRoot = Get-I0CanonicalPath -Path (Join-Path $WorkspaceRoot ("tools\runtimes\godot\" + $approved.version))
     if (-not [string]::Equals($installRoot, $expectedInstallRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "I0.2 Godot install root is not the approved version directory: $installRoot"
     }
-    Assert-I0NoReparseExistingAncestor -Path $installRoot -Root 'D:\AGAME1' -Label 'Godot install root'
+    Assert-I0NoReparseExistingAncestor -Path $installRoot -Root $WorkspaceRoot -Label 'Godot install root'
     $mainPath = Join-Path $installRoot ([string]$lock.godot.executable)
     $consolePath = Join-Path $installRoot ([string]$lock.godot.console_executable)
     $installManifestPath = Join-Path $installRoot 'install-manifest.json'
     foreach ($path in @($mainPath, $consolePath, $installManifestPath)) {
-        Assert-I0NoReparseExistingAncestor -Path $path -Root 'D:\AGAME1' -Label 'Godot installed file'
+        Assert-I0NoReparseExistingAncestor -Path $path -Root $WorkspaceRoot -Label 'Godot installed file'
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
             throw "Godot installed file is missing: $path"
         }
@@ -179,41 +209,51 @@ if ($PSVersionTable.PSEdition -cne 'Desktop' -or $PSVersionTable.PSVersion.Major
     throw "I0.2 requires Windows PowerShell 5.1 Desktop; current=$($PSVersionTable.PSEdition) $($PSVersionTable.PSVersion)"
 }
 
-$approvedWorkspaceRoot = Get-I0CanonicalPath -Path 'D:\AGAME1'
-$approvedRepoRoot = Get-I0CanonicalPath -Path 'D:\AGAME1\active\Game1_work'
-$approvedRuntimeTempRoot = Get-I0CanonicalPath -Path 'D:\AGAME1\tools\runtimes\.tmp\i0'
-$approvedReportRoot = Get-I0CanonicalPath -Path 'D:\AGAME1\reports\i0'
+$repo = Get-I0CanonicalPath -Path $RepoRoot
+$workspaceRoot = if ([string]::IsNullOrWhiteSpace($WorkspaceRoot)) {
+    Get-I0DefaultWorkspaceRoot -RepoRoot $repo
+}
+else {
+    Get-I0CanonicalPath -Path $WorkspaceRoot
+}
+[void](Set-I0WorkspaceRoot -Path $workspaceRoot)
 $approvedManifestPath = Get-I0CanonicalPath -Path (Join-Path $PSScriptRoot 'validation_manifest.json')
 $requestedManifestPath = Get-I0CanonicalPath -Path $ManifestPath
 if (-not [string]::Equals($requestedManifestPath, $approvedManifestPath, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "I0.2 only accepts its colocated validation manifest: $approvedManifestPath"
 }
-Assert-I0NoReparseExistingAncestor -Path $requestedManifestPath -Root $approvedWorkspaceRoot -Label 'I0.2 validation manifest'
+Assert-I0NoReparseExistingAncestor -Path $requestedManifestPath -Root $workspaceRoot -Label 'I0.2 validation manifest'
 $manifest = Get-Content -LiteralPath $requestedManifestPath -Raw | ConvertFrom-Json
-$workspaceRoot = Get-I0CanonicalPath -Path ([string]$manifest.workspace_root)
-$repo = Get-I0CanonicalPath -Path $RepoRoot
-$expectedRepo = Get-I0CanonicalPath -Path ([string]$manifest.active_repo)
-if (-not [string]::Equals($workspaceRoot, $approvedWorkspaceRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "I0.2 manifest workspace root differs from the immutable authorization boundary: $workspaceRoot"
-}
-if (-not [string]::Equals($repo, $approvedRepoRoot, [System.StringComparison]::OrdinalIgnoreCase) -or -not [string]::Equals($expectedRepo, $approvedRepoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "I0.2 requested and manifest repos must both equal the approved active repo: $approvedRepoRoot"
+if ([int]$manifest.schema_version -ne 2 -or [string]$manifest.path_policy -cne 'runtime_parameters') {
+    throw 'I0.2 validation manifest schema or path policy is unsupported'
 }
 Assert-I0PathWithin -Path $repo -Root $workspaceRoot -Label "active repo"
 Assert-I0NoReparseExistingAncestor -Path $repo -Root $workspaceRoot -Label "active repo"
 
-$runtimeTempRoot = Get-I0CanonicalPath -Path ([string]$manifest.runtime_temp_root)
-$reportRoot = Get-I0CanonicalPath -Path ([string]$manifest.report_root)
-if (-not [string]::Equals($runtimeTempRoot, $approvedRuntimeTempRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "I0.2 runtime temp root differs from the approved path: $runtimeTempRoot"
+$runtimeTempRoot = if ([string]::IsNullOrWhiteSpace($RuntimeTempRoot)) {
+    Get-I0CanonicalPath -Path (Join-Path $workspaceRoot 'tools\runtimes\.tmp\i0')
 }
-if (-not [string]::Equals($reportRoot, $approvedReportRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "I0.2 report root differs from the approved path: $reportRoot"
+else {
+    Get-I0CanonicalPath -Path $RuntimeTempRoot
+}
+$reportRoot = if ([string]::IsNullOrWhiteSpace($ReportRoot)) {
+    Get-I0CanonicalPath -Path (Join-Path $workspaceRoot 'reports\i0')
+}
+else {
+    Get-I0CanonicalPath -Path $ReportRoot
+}
+$godotInstallRoot = if ([string]::IsNullOrWhiteSpace($GodotInstallRoot)) {
+    Get-I0CanonicalPath -Path (Join-Path $workspaceRoot 'tools\runtimes\godot\4.6.3')
+}
+else {
+    Get-I0CanonicalPath -Path $GodotInstallRoot
 }
 Assert-I0PathWithin -Path $runtimeTempRoot -Root $workspaceRoot -Label "I0 runtime temp root"
 Assert-I0PathWithin -Path $reportRoot -Root $workspaceRoot -Label "I0 report root"
+Assert-I0PathWithin -Path $godotInstallRoot -Root $workspaceRoot -Label "I0 Godot install root"
 Assert-I0NoReparseExistingAncestor -Path $runtimeTempRoot -Root $workspaceRoot -Label "I0 runtime temp root"
 Assert-I0NoReparseExistingAncestor -Path $reportRoot -Root $workspaceRoot -Label "I0 report root"
+[void](Assert-I0NoReparseExistingAncestor -Path $godotInstallRoot -Root $workspaceRoot -Label "I0 Godot install root")
 [void](New-Item -ItemType Directory -Path $runtimeTempRoot -Force)
 [void](New-Item -ItemType Directory -Path $reportRoot -Force)
 
@@ -270,7 +310,7 @@ try {
     $gitTimeout = [int]$manifest.timeouts_seconds.git_probe
     $beforeGit = Get-I0GitSnapshot -RepoRoot $repo -TimeoutSeconds $gitTimeout
     $beforeBusiness = Get-I0BusinessHashSnapshot -RepoRoot $repo -BusinessRoots @($manifest.business_roots) -ExcludedDirectoryNames @($manifest.mirror.excluded_directory_names)
-    $toolchainVerification = Get-I0VerifiedToolchainLock -RepoRoot $repo -ValidationManifest $manifest
+    $toolchainVerification = Get-I0VerifiedToolchainLock -RepoRoot $repo -WorkspaceRoot $workspaceRoot -InstallRoot $godotInstallRoot -ValidationManifest $manifest
 
     if ($SourceMode -eq 'worktree') {
         $mirrorCopyRaw = Copy-I0WorktreeMirror `
@@ -327,6 +367,8 @@ try {
             '-ExecutionPolicy', 'Bypass',
             '-File', $documentEncodingScript,
             '-RepoRoot', $repo,
+            '-WorkspaceRoot', $workspaceRoot,
+            '-RuntimeTempRoot', $runtimeTempRoot,
             '-SourceMode', 'worktree',
             '-GitRepoRoot', $repo
         )
@@ -340,6 +382,8 @@ try {
             '-ExecutionPolicy', 'Bypass',
             '-File', $documentEncodingScript,
             '-RepoRoot', $mirrorRoot,
+            '-WorkspaceRoot', $workspaceRoot,
+            '-RuntimeTempRoot', $runtimeTempRoot,
             '-SourceMode', 'head',
             '-GitRepoRoot', $repo,
             '-ExpectedHead', $headMirror.head
@@ -382,7 +426,7 @@ try {
     }
 
     $runtimeLinks = New-I0GodotRuntimeLinks `
-        -InstallRoot ([string]$manifest.godot.install_root) `
+        -InstallRoot $godotInstallRoot `
         -MainExecutableName ([string]$manifest.godot.main_executable) `
         -ConsoleExecutableName ([string]$manifest.godot.console_executable) `
         -RunRoot $runRoot
@@ -417,6 +461,7 @@ try {
             '-ExecutionPolicy', 'Bypass',
             '-File', $mirrorStaticScript,
             '-RepoRoot', $mirrorRoot,
+            '-WorkspaceRoot', $workspaceRoot,
             '-ManifestPath', $mirrorManifest,
             '-SourceMode', $SourceMode,
             '-Profile', $Profile,

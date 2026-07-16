@@ -1,18 +1,14 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "suite_id": "I0.2_characterization_baseline",
+  "path_policy": "runtime_parameters",
   "powershell": {
     "edition": "Desktop",
     "major": 5,
     "minimum_version": "5.1"
   },
-  "workspace_root": "D:\\AGAME1",
-  "active_repo": "D:\\AGAME1\\active\\Game1_work",
-  "runtime_temp_root": "D:\\AGAME1\\tools\\runtimes\\.tmp\\i0",
-  "report_root": "D:\\AGAME1\\reports\\i0",
   "godot": {
     "version_prefix": "4.6.3.stable",
-    "install_root": "D:\\AGAME1\\tools\\runtimes\\godot\\4.6.3",
     "main_executable": "Godot_v4.6.3-stable_win64.exe",
     "console_executable": "Godot_v4.6.3-stable_win64_console.exe",
     "project_relative_path": "Godot/GraytailGodot",
@@ -87,7 +83,7 @@
       "variant",
       "source_status"
     ],
-    "asset_manifest_expected_data_row_count": 179,
+    "asset_manifest_expected_data_row_count": 331,
     "asset_manifest_required_headers": [
       "asset_id",
       "godot_path",

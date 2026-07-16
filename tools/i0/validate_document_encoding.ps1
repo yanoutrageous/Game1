@@ -1,20 +1,24 @@
 param(
-    [string]$RepoRoot = "D:\AGAME1\active\Game1_work",
+    [string]$RepoRoot = ([System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))),
 
     [ValidateSet("worktree", "head")]
     [string]$SourceMode = "worktree",
 
     [string]$GitRepoRoot = "",
 
-    [string]$ExpectedHead = ""
+    [string]$ExpectedHead = "",
+
+    [string]$WorkspaceRoot = "",
+
+    [string]$RuntimeTempRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version 2.0
+$nativeUtf8 = New-Object System.Text.UTF8Encoding($false)
+[Console]::OutputEncoding = $nativeUtf8
+$OutputEncoding = $nativeUtf8
 
-$approvedRepo = [System.IO.Path]::GetFullPath('D:\AGAME1\active\Game1_work').TrimEnd('\')
-$approvedWorkspace = [System.IO.Path]::GetFullPath('D:\AGAME1').TrimEnd('\')
-$approvedRuntimeTempRoot = [System.IO.Path]::GetFullPath('D:\AGAME1\tools\runtimes\.tmp\i0').TrimEnd('\')
 $repo = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\')
 $gitRepo = if ([string]::IsNullOrWhiteSpace($GitRepoRoot)) {
     $repo
@@ -22,20 +26,52 @@ $gitRepo = if ([string]::IsNullOrWhiteSpace($GitRepoRoot)) {
 else {
     [System.IO.Path]::GetFullPath($GitRepoRoot).TrimEnd('\')
 }
-if ($SourceMode -eq 'worktree') {
-    if (-not [string]::Equals($repo, $approvedRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Worktree document encoding root differs from the approved active repo: $repo"
+
+$workspace = if (-not [string]::IsNullOrWhiteSpace($WorkspaceRoot)) {
+    [System.IO.Path]::GetFullPath($WorkspaceRoot).TrimEnd('\')
+}
+else {
+    $gitCommonProbe = @(& git.exe -C $gitRepo rev-parse --path-format=absolute --git-common-dir 2>$null)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Unable to resolve Git common directory for document encoding gate: $($gitCommonProbe -join "`n")"
     }
-    if (-not [string]::Equals($gitRepo, $approvedRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Worktree document encoding Git root differs from the approved active repo: $gitRepo"
+    $gitCommonProbeText = [string]($gitCommonProbe | Select-Object -Last 1)
+    if ([string]::IsNullOrWhiteSpace($gitCommonProbeText)) {
+        throw "Git common directory probe returned no path"
+    }
+    $gitCommonProbePath = [System.IO.Path]::GetFullPath($gitCommonProbeText.Trim()).TrimEnd('\')
+    $candidate = $repo
+    while (-not [string]::IsNullOrWhiteSpace($candidate)) {
+        $candidatePrefix = $candidate.TrimEnd('\') + '\'
+        if (
+            [string]::Equals($gitCommonProbePath, $candidate, [System.StringComparison]::OrdinalIgnoreCase) -or
+            $gitCommonProbePath.StartsWith($candidatePrefix, [System.StringComparison]::OrdinalIgnoreCase)
+        ) {
+            break
+        }
+        $parent = Split-Path -Parent $candidate
+        if ([string]::IsNullOrWhiteSpace($parent) -or [string]::Equals($parent, $candidate, [System.StringComparison]::OrdinalIgnoreCase)) {
+            throw "Unable to derive a common workspace for document encoding gate: repo=$repo git_common=$gitCommonProbePath"
+        }
+        $candidate = [System.IO.Path]::GetFullPath($parent).TrimEnd('\')
+    }
+    $candidate
+}
+$runtimeTemp = if (-not [string]::IsNullOrWhiteSpace($RuntimeTempRoot)) {
+    [System.IO.Path]::GetFullPath($RuntimeTempRoot).TrimEnd('\')
+}
+else {
+    [System.IO.Path]::GetFullPath((Join-Path $workspace 'tools\runtimes\.tmp\i0')).TrimEnd('\')
+}
+
+if ($SourceMode -eq 'worktree') {
+    if (-not [string]::Equals($repo, $gitRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Worktree document encoding root and Git root differ: repo=$repo git_repo=$gitRepo"
     }
 }
 else {
-    if (-not $repo.StartsWith($approvedRuntimeTempRoot + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "HEAD document encoding root escaped the approved I0 runtime root: $repo"
-    }
-    if (-not [string]::Equals($gitRepo, $approvedRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "HEAD document encoding Git root differs from the approved active repo: $gitRepo"
+    if (-not $repo.StartsWith($runtimeTemp + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "HEAD document encoding root escaped the I0 runtime root: $repo"
     }
     if ($ExpectedHead -notmatch '\A[0-9a-fA-F]{40}\z') {
         throw "HEAD document encoding requires an exact 40-character commit id: $ExpectedHead"
@@ -104,37 +140,51 @@ function Get-GitText {
     return ($output -join "`n")
 }
 
-if (-not $repo.StartsWith($approvedWorkspace + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "Document encoding root escaped the approved workspace: $repo"
+if (
+    -not [string]::Equals($repo, $workspace, [System.StringComparison]::OrdinalIgnoreCase) -and
+    -not $repo.StartsWith($workspace + '\', [System.StringComparison]::OrdinalIgnoreCase)
+) {
+    throw "Document encoding root escaped the workspace: $repo"
 }
-Assert-NoReparsePath -Path $repo -StopRoot $approvedWorkspace
-if (-not $gitRepo.StartsWith($approvedWorkspace + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "Document encoding Git root escaped the approved workspace: $gitRepo"
+Assert-NoReparsePath -Path $repo -StopRoot $workspace
+if (
+    -not [string]::Equals($gitRepo, $workspace, [System.StringComparison]::OrdinalIgnoreCase) -and
+    -not $gitRepo.StartsWith($workspace + '\', [System.StringComparison]::OrdinalIgnoreCase)
+) {
+    throw "Document encoding Git root escaped the workspace: $gitRepo"
 }
-Assert-NoReparsePath -Path $gitRepo -StopRoot $approvedWorkspace
+Assert-NoReparsePath -Path $gitRepo -StopRoot $workspace
 $docsRoot = Join-Path $repo 'docs'
-Assert-NoReparsePath -Path $docsRoot -StopRoot $approvedWorkspace
+Assert-NoReparsePath -Path $docsRoot -StopRoot $workspace
 
-$gitAdmin = Join-Path $gitRepo '.git'
-if (-not (Test-Path -LiteralPath $gitAdmin -PathType Container)) {
-    throw "Document encoding gate requires a self-contained .git directory: $gitAdmin"
+$gitAdminEntry = Join-Path $gitRepo '.git'
+if (-not (Test-Path -LiteralPath $gitAdminEntry)) {
+    throw "Document encoding gate requires a Git admin entry: $gitAdminEntry"
 }
-Assert-NoReparsePath -Path $gitAdmin -StopRoot $approvedWorkspace
+Assert-NoReparsePath -Path $gitAdminEntry -StopRoot $workspace
 $gitTopLevel = [System.IO.Path]::GetFullPath((Get-GitText -Arguments @('rev-parse', '--show-toplevel')).Trim()).TrimEnd('\')
 if (-not [string]::Equals($gitTopLevel, $gitRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Git top-level differs from the approved Git root: $gitTopLevel"
 }
-$gitDirectoryRaw = (Get-GitText -Arguments @('rev-parse', '--git-dir')).Trim()
+$gitDirectoryRaw = (Get-GitText -Arguments @('rev-parse', '--path-format=absolute', '--git-dir')).Trim()
 $gitDirectory = if ([System.IO.Path]::IsPathRooted($gitDirectoryRaw)) { [System.IO.Path]::GetFullPath($gitDirectoryRaw) } else { [System.IO.Path]::GetFullPath((Join-Path $gitRepo $gitDirectoryRaw)) }
-if (-not [string]::Equals($gitDirectory.TrimEnd('\'), $gitAdmin.TrimEnd('\'), [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "Git admin directory is not self-contained at the approved path: $gitDirectory"
+if (
+    -not [string]::Equals($gitDirectory.TrimEnd('\'), $workspace, [System.StringComparison]::OrdinalIgnoreCase) -and
+    -not $gitDirectory.StartsWith($workspace + '\', [System.StringComparison]::OrdinalIgnoreCase)
+) {
+    throw "Git admin directory escaped the workspace: $gitDirectory"
 }
-$gitCommonRaw = (Get-GitText -Arguments @('rev-parse', '--git-common-dir')).Trim()
+Assert-NoReparsePath -Path $gitDirectory -StopRoot $workspace
+$gitCommonRaw = (Get-GitText -Arguments @('rev-parse', '--path-format=absolute', '--git-common-dir')).Trim()
 $gitCommon = if ([System.IO.Path]::IsPathRooted($gitCommonRaw)) { [System.IO.Path]::GetFullPath($gitCommonRaw) } else { [System.IO.Path]::GetFullPath((Join-Path $gitRepo $gitCommonRaw)) }
-if (-not [string]::Equals($gitCommon.TrimEnd('\'), $gitAdmin.TrimEnd('\'), [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "Git common directory differs from the self-contained admin directory: $gitCommon"
+if (
+    -not [string]::Equals($gitCommon.TrimEnd('\'), $workspace, [System.StringComparison]::OrdinalIgnoreCase) -and
+    -not $gitCommon.StartsWith($workspace + '\', [System.StringComparison]::OrdinalIgnoreCase)
+) {
+    throw "Git common directory escaped the workspace: $gitCommon"
 }
-$alternatesPath = Join-Path $gitAdmin 'objects\info\alternates'
+Assert-NoReparsePath -Path $gitCommon -StopRoot $workspace
+$alternatesPath = Join-Path $gitCommon 'objects\info\alternates'
 if (Test-Path -LiteralPath $alternatesPath) {
     throw "Git object alternates are forbidden for the document encoding gate: $alternatesPath"
 }
@@ -170,7 +220,7 @@ $allowedInvalid = [ordered]@{
 }
 
 $ledgerPath = Join-Path $repo 'docs\00_governance\TEXT_ENCODING_LEDGER.md'
-Assert-NoReparsePath -Path $ledgerPath -StopRoot $approvedWorkspace
+Assert-NoReparsePath -Path $ledgerPath -StopRoot $workspace
 $ledgerEncoding = New-Object System.Text.UTF8Encoding($false, $true)
 $ledgerText = [System.IO.File]::ReadAllText($ledgerPath, $ledgerEncoding)
 foreach ($allowedPath in $allowedInvalid.Keys) {
@@ -206,7 +256,7 @@ foreach ($relativeRaw in $inventory) {
         continue
     }
     try {
-        Assert-NoReparsePath -Path $absolute -StopRoot $approvedWorkspace
+        Assert-NoReparsePath -Path $absolute -StopRoot $workspace
     }
     catch {
         [void]$errors.Add($_.Exception.Message)

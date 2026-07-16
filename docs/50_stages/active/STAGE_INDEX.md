@@ -6,7 +6,7 @@
 
 | Stage | Line | Status | Evidence | Boundary |
 | --- | --- | --- | --- | --- |
-| none | none | no_authorized_active_stage | `docs/10_current/NEXT_ACTION.md` | I0 与 ART21 的整合不自动授权 ART22、工程重构、内容扩展或发布阶段。 |
+| none | none | ART21 closed; successor not yet named / no_authorized_active_stage | `docs/10_current/NEXT_ACTION.md` | I0 与 ART21 的整合不自动授权 ART22、工程重构、内容扩展或发布阶段。 |
 
 ## 当前整合基线
 

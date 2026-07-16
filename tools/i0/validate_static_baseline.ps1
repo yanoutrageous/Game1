@@ -1,6 +1,8 @@
 param(
     [string]$RepoRoot = ([System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))),
 
+    [string]$WorkspaceRoot = ([System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))),
+
     [string]$ManifestPath = (Join-Path $PSScriptRoot "validation_manifest.json"),
 
     [ValidateSet("worktree", "head")]
@@ -188,7 +190,10 @@ if ($null -eq $profileProperty) {
 }
 $expectedRedCodes = @($profileProperty.Value.expected_red_codes | ForEach-Object { [string]$_ })
 $repo = Get-I0CanonicalPath -Path $RepoRoot
-Assert-I0PathWithin -Path $repo -Root ([string]$manifest.workspace_root) -Label "static validation repo"
+$workspace = Get-I0CanonicalPath -Path $WorkspaceRoot
+[void](Set-I0WorkspaceRoot -Path $workspace)
+Assert-I0PathWithin -Path $repo -Root $workspace -Label "static validation repo"
+Assert-I0NoReparseExistingAncestor -Path $repo -Root $workspace -Label "static validation repo"
 
 $checks = New-Object System.Collections.Generic.List[object]
 $requiredRelativePaths = @(
@@ -299,7 +304,7 @@ if ($header.Count -gt 0) {
 $assetCatalogPath = Join-Path $repo (([string]$manifest.static_contract.asset_catalog_relative_path).Replace('/', '\'))
 $assetCatalogText = Read-I0Utf8Text -Path $assetCatalogPath
 $catalogUsesCsvParser = ($assetCatalogText -match '\.get_csv_line\s*\(') -and ($assetCatalogText -notmatch '\.split\s*\(\s*["''],["'']')
-$csvWidthOk = ($headerExactMatch -and $expectedWidth -eq 17 -and $expectedDataRowCount -eq 179 -and $actualDataRowCount -eq $expectedDataRowCount -and $widthViolations.Count -eq 0 -and $catalogUsesCsvParser)
+$csvWidthOk = ($headerExactMatch -and $expectedWidth -eq 17 -and $expectedDataRowCount -gt 0 -and $actualDataRowCount -eq $expectedDataRowCount -and $widthViolations.Count -eq 0 -and $catalogUsesCsvParser)
 [void]$checks.Add((New-I0StaticCheck -Code "CSV_ASSET_MANIFEST_WIDTH" -Condition $csvWidthOk -ExpectedRedCodes $expectedRedCodes -Details ([pscustomobject]@{
     header_width = $header.Count
     expected_width = $expectedWidth
@@ -309,7 +314,7 @@ $csvWidthOk = ($headerExactMatch -and $expectedWidth -eq 17 -and $expectedDataRo
     actual_headers = $header
     data_row_count = $actualDataRowCount
     expected_data_row_count = $expectedDataRowCount
-    data_row_count_valid = ($expectedDataRowCount -eq 179 -and $actualDataRowCount -eq $expectedDataRowCount)
+    data_row_count_valid = ($expectedDataRowCount -gt 0 -and $actualDataRowCount -eq $expectedDataRowCount)
     data_width_valid = ($expectedWidth -eq 17 -and $widthViolations.Count -eq 0)
     parser_is_csv_aware = $catalogUsesCsvParser
     width_violations = $widthViolations.ToArray()
@@ -336,7 +341,7 @@ if ($assetIdIndex -ge 0) {
         }
     }
 }
-$assetIdentityOk = ($assetIdIndex -ge 0 -and $expectedDataRowCount -eq 179 -and $actualDataRowCount -eq $expectedDataRowCount -and $emptyAssetIdLines.Count -eq 0 -and $duplicateAssetIds.Count -eq 0)
+$assetIdentityOk = ($assetIdIndex -ge 0 -and $expectedDataRowCount -gt 0 -and $actualDataRowCount -eq $expectedDataRowCount -and $emptyAssetIdLines.Count -eq 0 -and $duplicateAssetIds.Count -eq 0)
 [void]$checks.Add((New-I0StaticCheck -Code "STATIC_ASSET_MANIFEST_IDENTITIES" -Condition $assetIdentityOk -ExpectedRedCodes $expectedRedCodes -Details ([pscustomobject]@{
     empty_asset_id_lines = $emptyAssetIdLines.ToArray()
     duplicate_asset_ids = @($duplicateAssetIds | Sort-Object -Unique)

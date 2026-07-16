@@ -1,34 +1,38 @@
 # Audit Entrypoint
 
-文档状态：I0 当前只读审计入口
-最后更新：2026-07-11
+文档状态：I0 + ART21 整合基线审计入口
+最后更新：2026-07-16
 
-第一读取顺序：
+## 读取顺序
+
+1. `docs/README.md`
+2. `docs/INDEX.md`
+3. `docs/10_current/CURRENT_STATE.md`
+4. `docs/10_current/CAPABILITY_MATRIX.yaml`
+5. `docs/10_current/NEXT_ACTION.md`
+
+详细证据：
+
+- I0 历史评估：`docs/10_current/I0_BASELINE_ASSESSMENT.md`
+- I0 最终验证：`docs/validation/I0_PROJECT_BASELINE_REFACTOR_VALIDATION.md`
+- ART21 最终关闭：`docs/art/ART21_CLOSEOUT_MAIN_MENU_SCENE_RECONSTRUCTION.md`
+- 本次整合验证：`docs/validation/I0_ART21_BASELINE_INTEGRATION_VALIDATION.md`
+
+## 当前审计起点
 
 ```text
-docs/README.md
-docs/INDEX.md
-docs/10_current/CURRENT_STATE.md
-docs/10_current/CAPABILITY_MATRIX.yaml
-docs/10_current/NEXT_ACTION.md
-```
-
-详细项目审计、进度和健康度见 `docs/10_current/I0_BASELINE_ASSESSMENT.md`。执行边界见 `docs/00_governance/EXECUTION_ENVIRONMENT.md`。
-
-## 审计起点
-
-```text
-active_repo: D:\AGAME1\active\Game1_work
-godot_project: D:\AGAME1\active\Game1_work\Godot\GraytailGodot
-branch: i0/project-baseline-refactor
-stage: no authorized active stage; I0 closed with recorded safety nonconformance and limitations
+active_repo: git rev-parse --show-toplevel
+branch: integration/i0-art21-baseline
+I0_source: 77569579a6c66d9f4350f0ba419906a7814dd502
+ART21_source: 93420a8f3799c540ac8a2b46d3c264d5f3ee10f1
+stage: no authorized successor stage
 ```
 
 ## 审计边界
 
-- 先核对 branch、HEAD、index、refs、stash、worktree 和完整 status，再解释工作树。
-- 将原始 12 项用户 dirty 与 I0 变更分开；不得清理、丢弃或混合暂存。
-- 当前 Godot 自动化只允许通过 `tools/i0/invoke_i0_tests.ps1` 使用项目本地固定工具链；直接可见启动在日志隔离门通过前不授权。
-- 不把 docs、静态、headless、runner、可见 smoke 或人工检查互相扩大为更强的 PASS。
-- `D:\AGAME1\_repo_cache\Game1_work` 是已迁出的旧活动路径；历史文件中的该路径只作时间点证据。
-- 不修改或删除 `D:\AGAME1` 外文件。
+- 先核对远端哈希、HEAD、branch、status、index、refs、stash 与 worktree，再解释差异。
+- 不清理、覆盖或提交其他 worktree 的已有 dirty 状态。
+- 当前脚本必须从 Git worktree 和显式工作区参数解析路径。
+- 旧机器路径只可作为历史证据，不能选择当前仓库或工具链。
+- Godot 自动化只通过 I0 隔离 headless harness；不授权直接可见启动。
+- 不把静态、runner、截图或有限人工观察扩张为完整发布结论。
