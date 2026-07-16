@@ -1,5 +1,12 @@
 param(
-    [string]$RepoRoot = "D:\AGAME1\active\Game1_work"
+    [string]$RepoRoot = "D:\AGAME1\active\Game1_work",
+
+    [ValidateSet("worktree", "head")]
+    [string]$SourceMode = "worktree",
+
+    [string]$GitRepoRoot = "",
+
+    [string]$ExpectedHead = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -7,9 +14,32 @@ Set-StrictMode -Version 2.0
 
 $approvedRepo = [System.IO.Path]::GetFullPath('D:\AGAME1\active\Game1_work').TrimEnd('\')
 $approvedWorkspace = [System.IO.Path]::GetFullPath('D:\AGAME1').TrimEnd('\')
+$approvedRuntimeTempRoot = [System.IO.Path]::GetFullPath('D:\AGAME1\tools\runtimes\.tmp\i0').TrimEnd('\')
 $repo = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd('\')
-if (-not [string]::Equals($repo, $approvedRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "Document encoding root differs from the approved active repo: $repo"
+$gitRepo = if ([string]::IsNullOrWhiteSpace($GitRepoRoot)) {
+    $repo
+}
+else {
+    [System.IO.Path]::GetFullPath($GitRepoRoot).TrimEnd('\')
+}
+if ($SourceMode -eq 'worktree') {
+    if (-not [string]::Equals($repo, $approvedRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Worktree document encoding root differs from the approved active repo: $repo"
+    }
+    if (-not [string]::Equals($gitRepo, $approvedRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Worktree document encoding Git root differs from the approved active repo: $gitRepo"
+    }
+}
+else {
+    if (-not $repo.StartsWith($approvedRuntimeTempRoot + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "HEAD document encoding root escaped the approved I0 runtime root: $repo"
+    }
+    if (-not [string]::Equals($gitRepo, $approvedRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "HEAD document encoding Git root differs from the approved active repo: $gitRepo"
+    }
+    if ($ExpectedHead -notmatch '\A[0-9a-fA-F]{40}\z') {
+        throw "HEAD document encoding requires an exact 40-character commit id: $ExpectedHead"
+    }
 }
 if (-not (Test-Path -LiteralPath $repo -PathType Container)) {
     throw "Document encoding root does not exist: $repo"
@@ -67,7 +97,7 @@ function Get-NormalizedLfSha256 {
 function Get-GitText {
     param([Parameter(Mandatory = $true)][string[]]$Arguments)
 
-    $output = & git -C $repo @Arguments 2>&1
+    $output = & git -C $gitRepo @Arguments 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Git command failed for document encoding gate: git $($Arguments -join ' ')`n$($output -join "`n")"
     }
@@ -78,25 +108,29 @@ if (-not $repo.StartsWith($approvedWorkspace + '\', [System.StringComparison]::O
     throw "Document encoding root escaped the approved workspace: $repo"
 }
 Assert-NoReparsePath -Path $repo -StopRoot $approvedWorkspace
+if (-not $gitRepo.StartsWith($approvedWorkspace + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Document encoding Git root escaped the approved workspace: $gitRepo"
+}
+Assert-NoReparsePath -Path $gitRepo -StopRoot $approvedWorkspace
 $docsRoot = Join-Path $repo 'docs'
 Assert-NoReparsePath -Path $docsRoot -StopRoot $approvedWorkspace
 
-$gitAdmin = Join-Path $repo '.git'
+$gitAdmin = Join-Path $gitRepo '.git'
 if (-not (Test-Path -LiteralPath $gitAdmin -PathType Container)) {
     throw "Document encoding gate requires a self-contained .git directory: $gitAdmin"
 }
 Assert-NoReparsePath -Path $gitAdmin -StopRoot $approvedWorkspace
 $gitTopLevel = [System.IO.Path]::GetFullPath((Get-GitText -Arguments @('rev-parse', '--show-toplevel')).Trim()).TrimEnd('\')
-if (-not [string]::Equals($gitTopLevel, $repo, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "Git top-level differs from the approved active repo: $gitTopLevel"
+if (-not [string]::Equals($gitTopLevel, $gitRepo, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Git top-level differs from the approved Git root: $gitTopLevel"
 }
 $gitDirectoryRaw = (Get-GitText -Arguments @('rev-parse', '--git-dir')).Trim()
-$gitDirectory = if ([System.IO.Path]::IsPathRooted($gitDirectoryRaw)) { [System.IO.Path]::GetFullPath($gitDirectoryRaw) } else { [System.IO.Path]::GetFullPath((Join-Path $repo $gitDirectoryRaw)) }
+$gitDirectory = if ([System.IO.Path]::IsPathRooted($gitDirectoryRaw)) { [System.IO.Path]::GetFullPath($gitDirectoryRaw) } else { [System.IO.Path]::GetFullPath((Join-Path $gitRepo $gitDirectoryRaw)) }
 if (-not [string]::Equals($gitDirectory.TrimEnd('\'), $gitAdmin.TrimEnd('\'), [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Git admin directory is not self-contained at the approved path: $gitDirectory"
 }
 $gitCommonRaw = (Get-GitText -Arguments @('rev-parse', '--git-common-dir')).Trim()
-$gitCommon = if ([System.IO.Path]::IsPathRooted($gitCommonRaw)) { [System.IO.Path]::GetFullPath($gitCommonRaw) } else { [System.IO.Path]::GetFullPath((Join-Path $repo $gitCommonRaw)) }
+$gitCommon = if ([System.IO.Path]::IsPathRooted($gitCommonRaw)) { [System.IO.Path]::GetFullPath($gitCommonRaw) } else { [System.IO.Path]::GetFullPath((Join-Path $gitRepo $gitCommonRaw)) }
 if (-not [string]::Equals($gitCommon.TrimEnd('\'), $gitAdmin.TrimEnd('\'), [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Git common directory differs from the self-contained admin directory: $gitCommon"
 }
@@ -106,7 +140,16 @@ if (Test-Path -LiteralPath $alternatesPath) {
 }
 
 $gitStatusBefore = Get-GitText -Arguments @('status', '--porcelain=v2', '--branch', '--untracked-files=all')
-$rawInventory = & git -C $repo -c core.quotepath=false ls-files --cached --others --exclude-standard -z -- docs 2>&1
+$headBefore = (Get-GitText -Arguments @('rev-parse', '--verify', 'HEAD')).Trim()
+if ($SourceMode -eq 'head' -and -not [string]::Equals($headBefore, $ExpectedHead, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Active Git HEAD differs from the requested document encoding commit: expected=$ExpectedHead actual=$headBefore"
+}
+if ($SourceMode -eq 'worktree') {
+    $rawInventory = & git -C $gitRepo -c core.quotepath=false ls-files --cached --others --exclude-standard -z -- docs 2>&1
+}
+else {
+    $rawInventory = & git -C $gitRepo -c core.quotepath=false ls-tree -r -z --name-only $ExpectedHead -- docs 2>&1
+}
 if ($LASTEXITCODE -ne 0) {
     throw "Git document inventory failed: $rawInventory"
 }
@@ -238,6 +281,21 @@ if ($inventory.Count -ne ($textCount + $binaryCount)) {
     [void]$errors.Add("inventory accounting mismatch: total=$($inventory.Count), text=$textCount, binary=$binaryCount")
 }
 
+$headAfter = (Get-GitText -Arguments @('rev-parse', '--verify', 'HEAD')).Trim()
+$headUnchanged = [string]::Equals($headBefore, $headAfter, [System.StringComparison]::OrdinalIgnoreCase)
+if (-not $headUnchanged) {
+    [void]$errors.Add("Git HEAD changed while running the read-only document encoding gate: before=$headBefore after=$headAfter")
+}
+$expectedHeadVerified = (
+    $SourceMode -eq 'worktree' -or
+    (
+        [string]::Equals($headBefore, $ExpectedHead, [System.StringComparison]::OrdinalIgnoreCase) -and
+        [string]::Equals($headAfter, $ExpectedHead, [System.StringComparison]::OrdinalIgnoreCase)
+    )
+)
+if (-not $expectedHeadVerified) {
+    [void]$errors.Add("Requested HEAD was not stable throughout the document encoding gate: expected=$ExpectedHead before=$headBefore after=$headAfter")
+}
 $gitStatusAfter = Get-GitText -Arguments @('status', '--porcelain=v2', '--branch', '--untracked-files=all')
 if ($gitStatusBefore -cne $gitStatusAfter) {
     [void]$errors.Add('Git status changed while running the read-only document encoding gate.')
@@ -245,10 +303,17 @@ if ($gitStatusBefore -cne $gitStatusAfter) {
 
 $status = if ($errors.Count -eq 0) { 'PASS_WITH_RECORDED_LIMITATION' } else { 'FAIL' }
 $result = [pscustomobject][ordered]@{
-    schema_version = 1
+    schema_version = 2
     gate = 'I0_DOCUMENT_ENCODING'
     status = $status
+    source_mode = $SourceMode
     repo_root = $repo
+    git_repo_root = $gitRepo
+    expected_head = $ExpectedHead
+    head_before = $headBefore
+    head_after = $headAfter
+    head_unchanged = $headUnchanged
+    expected_head_verified = $expectedHeadVerified
     inventory_total = $inventory.Count
     text_scanned = $textCount
     known_binary_skipped = $binaryCount

@@ -318,19 +318,39 @@ try {
         }
     }
 
-    $documentEncodingScript = Join-Path $mirrorRoot (([string]$manifest.static_contract.document_encoding_validator_relative_path).Replace('/', '\'))
-    Assert-I0PathWithin -Path $documentEncodingScript -Root $mirrorRoot -Label 'document encoding validator'
-    Assert-I0NoReparseExistingAncestor -Path $documentEncodingScript -Root $workspaceRoot -Label 'document encoding validator'
-    $documentEncodingRaw = Invoke-I0Process `
-        -FilePath $windowsPowerShell `
-        -Arguments @(
+    if ($SourceMode -eq 'worktree') {
+        $documentEncodingRoot = $repo
+        $documentEncodingScript = Join-Path $repo (([string]$manifest.static_contract.document_encoding_validator_relative_path).Replace('/', '\'))
+        $documentEncodingArguments = @(
             '-NoProfile',
             '-NonInteractive',
             '-ExecutionPolicy', 'Bypass',
             '-File', $documentEncodingScript,
-            '-RepoRoot', $mirrorRoot
-        ) `
-        -WorkingDirectory $mirrorRoot `
+            '-RepoRoot', $repo,
+            '-SourceMode', 'worktree',
+            '-GitRepoRoot', $repo
+        )
+    }
+    else {
+        $documentEncodingRoot = $mirrorRoot
+        $documentEncodingScript = Join-Path $mirrorRoot (([string]$manifest.static_contract.document_encoding_validator_relative_path).Replace('/', '\'))
+        $documentEncodingArguments = @(
+            '-NoProfile',
+            '-NonInteractive',
+            '-ExecutionPolicy', 'Bypass',
+            '-File', $documentEncodingScript,
+            '-RepoRoot', $mirrorRoot,
+            '-SourceMode', 'head',
+            '-GitRepoRoot', $repo,
+            '-ExpectedHead', $headMirror.head
+        )
+    }
+    Assert-I0PathWithin -Path $documentEncodingScript -Root $documentEncodingRoot -Label 'document encoding validator'
+    Assert-I0NoReparseExistingAncestor -Path $documentEncodingScript -Root $workspaceRoot -Label 'document encoding validator'
+    $documentEncodingRaw = Invoke-I0Process `
+        -FilePath $windowsPowerShell `
+        -Arguments $documentEncodingArguments `
+        -WorkingDirectory $documentEncodingRoot `
         -TimeoutSeconds ([int]$manifest.timeouts_seconds.document_encoding)
     $documentEncodingData = $null
     $documentEncodingParseError = $null
@@ -345,7 +365,10 @@ try {
         $documentEncodingRaw.exit_code -eq 0 -and
         $null -ne $documentEncodingData -and
         [string]$documentEncodingData.status -eq 'PASS_WITH_RECORDED_LIMITATION' -and
+        [string]$documentEncodingData.source_mode -eq $SourceMode -and
         [int]$documentEncodingData.error_count -eq 0 -and
+        [bool]$documentEncodingData.head_unchanged -and
+        [bool]$documentEncodingData.expected_head_verified -and
         [bool]$documentEncodingData.git_status_unchanged
     )
     $documentEncodingCase = [pscustomobject][ordered]@{

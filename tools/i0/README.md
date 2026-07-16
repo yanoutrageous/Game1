@@ -69,7 +69,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
 
 测试不会在活动 Godot 项目上运行。每次执行会在 `D:\AGAME1\tools\runtimes\.tmp\i0\<run-id>` 创建独立镜像、引擎硬链接、进程环境、日志和导入缓存，并把正式报告写到 `D:\AGAME1\reports\i0`。
 
-`SourceMode=worktree` 保留原行为，用于验证当前受保护工作树；`SourceMode=head` 通过 run root 内的隔离 Git index 导出 `HEAD`，不修改活动 index、不注册额外 worktree，也不把原有 12 项 dirty 状态带入镜像。I0 push / PR 声明必须使用 `head` 报告。项目提交树保留 `config/features=PackedStringArray("4.0")`；受保护工作树中的 Godot 4.6 编辑器改写仍作为未裁决 metadata 保留，因此两种 source mode 使用不同的 feature declaration 白名单。
+`SourceMode=worktree` 保留原行为，用于验证当前受保护工作树；`SourceMode=head` 通过 run root 内的隔离 Git index 导出 `HEAD`，不修改活动 index、不注册额外 worktree，也不把原有 12 项 dirty 状态带入镜像。HEAD 文档编码门禁从活动 Git 仅读取指定提交的 `docs` 清单、从隔离镜像读取内容，并锁定提交号和 Git 状态。I0 push / PR 声明必须使用 `head` 报告。项目提交树保留 `config/features=PackedStringArray("4.0")`；受保护工作树中的 Godot 4.6 编辑器改写仍作为未裁决 metadata 保留，因此两种 source mode 使用不同的 feature declaration 白名单。
 
 基线必须恰好出现以下四个 `EXPECTED_RED`：
 
