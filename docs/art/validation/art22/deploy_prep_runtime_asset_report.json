@@ -1,0 +1,25 @@
+{
+  "stage": "ART22",
+  "screen": "deploy_prep",
+  "runtime_assets": 57,
+  "default_assets": 36,
+  "total_decoded_bytes": 9818656,
+  "total_decoded_mib": 9.36,
+  "default_decoded_bytes": 8578208,
+  "default_decoded_mib": 8.18,
+  "load_groups": [
+    "deploy_active_run",
+    "deploy_claim",
+    "deploy_default",
+    "deploy_map",
+    "deploy_modal",
+    "deploy_objective"
+  ],
+  "source_files": [
+    "docs/art/validation/art22/sources/art22_deploy_background_clean_source.png",
+    "docs/art/validation/art22/sources/art22_parchment_alpha_source.png",
+    "docs/art/validation/art22/sources/art22_route_thumbnail_atlas_source.png",
+    "docs/art/validation/art22/sources/art22_semantic_icon_atlas_alpha_source.png",
+    "docs/art/validation/art22/sources/art22_ui_component_atlas_alpha_source.png"
+  ]
+}

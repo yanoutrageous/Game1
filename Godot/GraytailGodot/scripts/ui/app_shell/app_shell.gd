@@ -12,6 +12,7 @@ const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
 signal host_route_requested(intent: Dictionary)
+signal page_changed(page_id: StringName, payload: Dictionary)
 
 var main_menu_shell: Control
 var deploy_page: Control
@@ -180,14 +181,15 @@ func _build_exit_confirm_layer() -> void:
 func _on_navigation_intent_requested(intent: Dictionary) -> void:
 	var route := PageRouterScript.route_for_intent(intent)
 	var page_id := StringName(route.get("page", PageRouterScript.PAGE_MAIN_MENU))
+	var page_payload := NavigationIntentScript.payload(intent)
 	match page_id:
 		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER:
-			var deploy_payload := NavigationIntentScript.payload(intent)
+			var deploy_payload := page_payload
 			show_deploy(StringName(deploy_payload.get("tab", &"overview")))
 			if deploy_page != null and deploy_page.has_method("apply_route_payload"):
 				deploy_page.call("apply_route_payload", deploy_payload)
 		PageRouterScript.PAGE_LONG_TERM:
-			var long_term_payload := NavigationIntentScript.payload(intent)
+			var long_term_payload := page_payload
 			show_long_term(StringName(long_term_payload.get("module_id", long_term_payload.get("entry_id", &"goals"))))
 		PageRouterScript.PAGE_SETTINGS_PLACEHOLDER:
 			show_settings()
@@ -197,6 +199,7 @@ func _on_navigation_intent_requested(intent: Dictionary) -> void:
 			host_route_requested.emit(intent)
 		_:
 			show_main()
+	page_changed.emit(page_id, page_payload)
 
 
 func _on_deploy_start_intent_requested(intent: Dictionary) -> void:

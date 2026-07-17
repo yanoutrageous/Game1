@@ -8,6 +8,7 @@ var asset_records: Dictionary = {}
 var duplicate_asset_ids: Array[StringName] = []
 var missing_asset_paths: Array[StringName] = []
 var manifest_parse_errors: Array[String] = []
+var raw_texture_cache: Dictionary = {}
 
 
 func load_from_manifest(manifest_path: String) -> void:
@@ -15,6 +16,7 @@ func load_from_manifest(manifest_path: String) -> void:
 	duplicate_asset_ids.clear()
 	missing_asset_paths.clear()
 	manifest_parse_errors.clear()
+	raw_texture_cache.clear()
 
 	if not FileAccess.file_exists(manifest_path):
 		return
@@ -49,13 +51,13 @@ func load_from_manifest(manifest_path: String) -> void:
 
 		var godot_path := String(record.get("godot_path", ""))
 		var replacement_needed := String(record.get("replacement_needed", "false")).to_lower() == "true"
-		if not godot_path.is_empty() and not ResourceLoader.exists(godot_path) and not replacement_needed:
+		if not godot_path.is_empty() and not _asset_path_exists(godot_path) and not replacement_needed:
 			missing_asset_paths.append(asset_id)
 
 
 func has_asset(asset_id: StringName) -> bool:
 	var godot_path := get_godot_path(asset_id)
-	return not godot_path.is_empty() and ResourceLoader.exists(godot_path)
+	return not godot_path.is_empty() and _asset_path_exists(godot_path)
 
 
 func get_asset(asset_id: StringName) -> Dictionary:
@@ -69,9 +71,30 @@ func get_godot_path(asset_id: StringName) -> String:
 
 func get_asset_ref(asset_id: StringName) -> Resource:
 	var godot_path := get_godot_path(asset_id)
-	if godot_path.is_empty() or not ResourceLoader.exists(godot_path):
+	if godot_path.is_empty():
 		return null
-	return load(godot_path)
+	if ResourceLoader.exists(godot_path):
+		return load(godot_path)
+	return _load_raw_texture(godot_path)
+
+
+func _asset_path_exists(godot_path: String) -> bool:
+	return ResourceLoader.exists(godot_path) or FileAccess.file_exists(godot_path)
+
+
+func _load_raw_texture(godot_path: String) -> Texture2D:
+	if raw_texture_cache.has(godot_path):
+		return raw_texture_cache[godot_path] as Texture2D
+	var extension := godot_path.get_extension().to_lower()
+	if extension not in ["png", "jpg", "jpeg", "webp"] or not FileAccess.file_exists(godot_path):
+		return null
+	var image := Image.load_from_file(godot_path)
+	if image == null or image.is_empty():
+		return null
+	var texture := ImageTexture.create_from_image(image)
+	texture.resource_name = godot_path
+	raw_texture_cache[godot_path] = texture
+	return texture
 
 
 func get_usage(asset_id: StringName) -> String:

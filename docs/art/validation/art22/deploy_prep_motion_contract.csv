@@ -1,0 +1,18 @@
+motion_id,kind,source,region,timing_or_amplitude,reduce_motion_behavior,acceptance
+character_idle,frame_sequence,ART21 character idle 00-05,left character,"0.34s; 0,0,1,1,2,1,0,0,3,3,0,4,5,4,0,0",freeze_frame_00,no rapid pose popping
+character_look,event_sequence,ART21 character idle 06-07,left character,"first 5s; interval 10s; 0.42s",disabled,occasional side look returns to base pose
+left_lantern,frame_loop,ART21 lantern flame,left hanging lantern,0.22s alpha_0.36,freeze_first,attached to lamp core
+left_table_flame,frame_loop,ART21 lantern flame,left table lantern,0.24s alpha_0.30,freeze_first,attached to lamp core
+right_lantern,frame_loop,ART21 lantern flame,right wall lantern,0.20s alpha_0.32,freeze_first,attached to lamp core
+far_lantern,frame_loop,ART21 lantern flame,far-right lantern,0.26s alpha_0.26,freeze_first,attached to lamp core
+blue_wisp_near,frame_loop,ART21 lantern flame tinted blue,near hanging blue lamp,0.28s alpha_0.22,freeze_first,attached to blue light
+blue_wisp_far,frame_loop,ART21 lantern flame tinted blue,far hanging blue lamp,0.31s alpha_0.20,freeze_first,attached to blue light
+blue_ground_flame,frame_loop,ART21 lantern flame tinted blue,central ground blue flame,0.25s alpha_0.24,freeze_first,attached to ground flame
+workshop_smoke,frame_loop,ART21 smoke,left workshop,0.64s alpha_0.08,freeze_first,low contrast and source-attached
+blue_dust,particle_field,procedural 2px particle,central dungeon,18 particles lifetime_5.4s,stop,no text interference
+warm_embers,particle_field,procedural 2px particle,left workshop,10 particles lifetime_3.6s,stop,no text interference
+summary_sway,procedural_transform,right summary group,"x<=1.2px y<=0.7px",reset_zero,board and text move together
+parchment_slide,tween,central parchment,0.28s quad_out,instant,exact expanded and collapsed endpoints
+content_switch,fade,card scroll,0.12s,instant,no layout movement or text float
+summary_feedback,color_pulse,selected summary tab,0.24s total,instant,no size change
+card_feedback,color_pulse,selected card,0.24s total,instant,no size change

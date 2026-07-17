@@ -62,7 +62,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
 当前整合基线验证：
 
 - 12 个 runner。
-- 17 列、331 行资产 manifest。
+- 17 列、388 行资产 manifest（ART22 新增 57 个受审计的出发探索运行时资产）。
 - 文档严格 UTF-8 门与 5 个精确历史例外。
 - 保存、InputMap、DebugGate、RunScene / ART21R2 smoke 契约。
 - Git、index、refs、stash 和业务文件污染守卫。

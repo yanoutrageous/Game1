@@ -245,6 +245,7 @@ func _build_shell_pages() -> void:
 	ui_root.add_child(ui_shell)
 	ui_shell.call("build")
 	ui_shell.connect("host_route_requested", _on_app_shell_host_route_requested)
+	ui_shell.connect("page_changed", _on_app_shell_page_changed)
 	main_menu_panel = ui_shell.call("get_main_page") as Control
 	deploy_shell_panel = ui_shell.call("get_deploy_page") as Control
 	long_term_shell_panel = ui_shell.call("get_long_term_page") as Control
@@ -727,6 +728,24 @@ func _on_app_shell_host_route_requested(intent: Dictionary) -> void:
 			_start_run_from_route(intent)
 		_:
 			_show_main_menu()
+
+
+func _on_app_shell_page_changed(page_id: StringName, _payload: Dictionary) -> void:
+	match page_id:
+		&"deploy_prep":
+			screen_state = SCREEN_DEPLOY
+		&"long_term":
+			screen_state = SCREEN_LONG_TERM
+		&"settings_placeholder":
+			screen_state = SCREEN_SETTINGS
+		&"main_menu":
+			screen_state = SCREEN_MAIN_MENU
+		_:
+			return
+	_set_gameplay_visible(false)
+	if run_overlay_root != null:
+		run_overlay_root.visible = false
+	_hide_runtime_popups()
 
 
 func _on_main_entry_requested(entry_id: StringName) -> void:

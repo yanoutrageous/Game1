@@ -2,11 +2,11 @@
 
 文档状态：阶段验证原文入口
 适用范围：`docs/validation` 下阶段验证记录
-最后更新：2026-07-16
+最后更新：2026-07-18
 
 本目录保存阶段验证原文。验证记录只证明其明确验证范围，不扩大为玩法通过或手测通过。
 
-当前整合验证：`I0_ART21_BASELINE_INTEGRATION_VALIDATION.md`。
+当前美术阶段验证：`ART22_DEPLOY_PREP_FINAL_UI_VALIDATION.md`。I0 + ART21 整合验证继续作为工程基线记录。
 
 ## 使用规则
 

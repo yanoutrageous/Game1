@@ -83,7 +83,7 @@
       "variant",
       "source_status"
     ],
-    "asset_manifest_expected_data_row_count": 331,
+    "asset_manifest_expected_data_row_count": 388,
     "asset_manifest_required_headers": [
       "asset_id",
       "godot_path",
