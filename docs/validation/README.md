@@ -6,7 +6,7 @@
 
 本目录保存阶段验证原文。验证记录只证明其明确验证范围，不扩大为玩法通过或手测通过。
 
-当前美术阶段验证：`ART22_DEPLOY_PREP_FINAL_UI_VALIDATION.md`。I0 + ART21 整合验证继续作为工程基线记录。
+当前美术阶段验证：`ART23_LONG_TERM_FINAL_UI_VALIDATION.md`。I0 + ART21 整合验证继续作为工程基线记录。
 
 ## 使用规则
 

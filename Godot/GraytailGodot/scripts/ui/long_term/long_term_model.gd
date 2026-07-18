@@ -84,13 +84,13 @@ static func _overview_summary(modules: Array) -> Dictionary:
 		"title": "长期系统档案",
 		"state": "foundation",
 		"module_count": modules.size(),
-		"message": "当前展示档案、图鉴、研究、资历、拍卖和收藏入口。",
+		"message": "当前展示目标、图鉴、研究、角色、抽奖和收藏外观入口。",
 		"modules": [
 			"目标",
 			"图鉴",
 			"研究",
 			"个人资历",
-			"拍卖",
+			"抽奖",
 			"收藏 / 外观",
 		],
 	}
@@ -129,7 +129,7 @@ static func _history_preview_panel(snapshot: Dictionary) -> Dictionary:
 	var records: Array = timeline.get("records", [])
 	var first_record: Dictionary = records[0] if not records.is_empty() and records[0] is Dictionary else {}
 	return {
-		"title": "涓汉璧勫巻 / 鍘嗗彶鎴樼哗 preview",
+		"title": "个人资历 / 历史战绩",
 		"state": "display_only",
 		"summary": str(first_record.get("summary_line", "HistoryRecordSnapshot preview")),
 		"result_type": first_record.get("result_type", &"success"),
@@ -146,7 +146,10 @@ static func _history_preview_panel(snapshot: Dictionary) -> Dictionary:
 static func _profile_runtime_panel(meta_summary: Dictionary = {}, latest_result: Dictionary = {}) -> Dictionary:
 	return {
 		"title": "M2 MetaProgress / History consumer",
+		"profile_level": maxi(1, int(meta_summary.get("profile_level", 1))),
+		"profile_exp": maxi(0, int(meta_summary.get("profile_exp", 0))),
 		"gold": int(meta_summary.get("gold", 0)),
+		"long_term_gold": int(meta_summary.get("long_term_gold", meta_summary.get("gold", 0))),
 		"run_count": int(meta_summary.get("run_count", 0)),
 		"extract_count": int(meta_summary.get("extract_count", 0)),
 		"fail_count": int(meta_summary.get("fail_count", 0)),
@@ -177,7 +180,7 @@ static func _latest_run_result_summary(latest_result: Dictionary = {}) -> Dictio
 static func _codex_cards(codex_lite_model: Dictionary) -> Array[Dictionary]:
 	var cards: Array[Dictionary] = []
 	var discovered: Array = codex_lite_model.get("discovered_entries", [])
-	for entry in discovered.slice(0, 6):
+	for entry in discovered.slice(0, 12):
 		if entry is Dictionary:
 			var item: Dictionary = entry
 			cards.append({
@@ -185,10 +188,11 @@ static func _codex_cards(codex_lite_model: Dictionary) -> Array[Dictionary]:
 				"title": str(item.get("display_name", "Codex Entry")),
 				"description": str(item.get("summary", "")),
 				"state": "discovered",
+				"codex_kind": _codex_kind(item),
 				"group": "Codex Lite",
 			})
 	var undiscovered: Array = codex_lite_model.get("undiscovered_entries", [])
-	for entry in undiscovered.slice(0, maxi(0, 6 - cards.size())):
+	for entry in undiscovered.slice(0, 12):
 		if entry is Dictionary:
 			var item: Dictionary = entry
 			cards.append({
@@ -196,6 +200,7 @@ static func _codex_cards(codex_lite_model: Dictionary) -> Array[Dictionary]:
 				"title": str(item.get("display_name", "Unknown Entry")),
 				"description": str(item.get("summary", "")),
 				"state": "undiscovered",
+				"codex_kind": _codex_kind(item),
 				"group": "Codex Lite",
 			})
 	if cards.is_empty():
@@ -207,6 +212,14 @@ static func _codex_cards(codex_lite_model: Dictionary) -> Array[Dictionary]:
 			"group": "Codex Lite",
 		})
 	return cards
+
+
+static func _codex_kind(item: Dictionary) -> StringName:
+	var tags: Array = item.get("tags", [])
+	var source := StringName(item.get("source", &""))
+	if source == &"monster" or tags.has("monster") or tags.has("sample") or tags.has("trophy"):
+		return &"monster"
+	return &"collectible"
 
 
 static func _next_stage_notes(modules: Array) -> Array:

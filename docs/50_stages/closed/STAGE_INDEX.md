@@ -1,6 +1,6 @@
 # Closed Stage Index
 
-Status: current closed-stage summary after ART22 deploy-prep final UI.
+Status: current closed-stage summary after ART23 long-term final UI.
 
 This index points to evidence without rewriting historical validation or
 handoff originals.
@@ -9,6 +9,7 @@ handoff originals.
 
 | Stage | Status | Primary evidence | Boundary |
 | --- | --- | --- | --- |
+| ART23 | closed / long-term final art UI | `docs/art/ART23_CLOSEOUT_LONG_TERM_FINAL_UI.md`; `docs/validation/ART23_LONG_TERM_FINAL_UI_VALIDATION.md`; `docs/art/validation/art23/`; `tools/validate_art23_long_term_final_ui.ps1` | Real main-route integration, 58 textures plus readable CJK font, 6 × 27 pages, collapse/restore, fixed profile, 8 character frames, ambient motion and frozen Computer Use acceptance passed. Does not close the full MVP or long-term gameplay logic. |
 | ART22 | closed / deploy-prep final art UI | `docs/art/ART22_CLOSEOUT_DEPLOY_PREP_FINAL_UI.md`; `docs/validation/ART22_DEPLOY_PREP_FINAL_UI_VALIDATION.md`; `docs/art/validation/art22/`; `tools/validate_art22_deploy_prep_final_ui.ps1` | Real main-route integration, 57 assets, 5 × 34 states, four summary pages, collapse, active-run boundary, 8 character frames, 10 ambient tracks and frozen Computer Use acceptance passed. Does not close the full MVP or long-term system. |
 | I0 + ART21 baseline integration | integrated baseline / PASS_WITH_NOTES | `docs/validation/I0_ART21_BASELINE_INTEGRATION_VALIDATION.md`; `docs/handoff/HANDOFF_I0_ART21_BASELINE_INTEGRATION.md`; I0 and ART21 originals listed below | Combines I0 engineering authority with the final ART21 scene-based main menu. It does not authorize a successor stage or claim full manual, release, CI or performance validation. |
 | ART21 | closed / main-menu scene reconstruction | `docs/art/ART21_CLOSEOUT_MAIN_MENU_SCENE_RECONSTRUCTION.md`; `docs/art/ART21_MAIN_MENU_SCENE_RECONSTRUCTION.md`; `docs/art/validation/art21/`; `tools/validate_art21_main_menu_scene.ps1` | Clean plate, four entries, engine-rendered Chinese copy, character/environment motion, overlays, navigation regression, 10.40 MiB conservative texture budget and three-resolution evidence passed. Computer Use was excluded by user direction. |

@@ -4,223 +4,650 @@ class_name LongTermShell
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const LongTermModelScript := preload("res://scripts/ui/long_term/long_term_model.gd")
 const LongTermTabModelScript := preload("res://scripts/ui/long_term/long_term_tab_model.gd")
-const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
-const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const LongTermContentFrameworkScript := preload("res://scripts/ui/long_term/long_term_content_framework.gd")
+const LongTermLayoutContractScript := preload("res://scripts/ui/long_term/long_term_layout_contract.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
-const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
+const Art21MainMenuAssetContractScript := preload("res://scripts/presentation/art21_main_menu_asset_contract.gd")
+const Art23LongTermAssetContractScript := preload("res://scripts/presentation/art23_long_term_asset_contract.gd")
+const LongTermReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 
 signal navigation_intent_requested(intent: Dictionary)
+
+const STATE_CLOSED := &"CLOSED"
+const STATE_OPENING := &"OPENING"
+const STATE_OPEN := &"OPEN"
+const STATE_CLOSING := &"CLOSING"
+const STATE_SWITCHING := &"SWITCHING"
+
+const MODULE_IDS: Array[StringName] = [
+	&"goals", &"codex", &"research", &"profile", &"gacha", &"collection_appearance",
+]
+const MODULE_LABELS := {
+	&"goals": "目标",
+	&"codex": "图鉴",
+	&"research": "研究",
+	&"profile": "角色",
+	&"gacha": "抽奖",
+	&"collection_appearance": "收藏外观",
+}
+const LOCKED_MODULES := {&"research": true, &"gacha": true}
+const CHARACTER_IDLE_SEQUENCE := [0, 0, 1, 1, 2, 1, 0, 0, 3, 3, 0, 4, 5, 4, 0, 0]
+const CHARACTER_LOOK_SEQUENCE := [0, 6, 6, 7, 7, 6, 0]
+const CHARACTER_IDLE_FRAME_SECONDS := 0.34
+const CHARACTER_LOOK_FRAME_SECONDS := 0.42
+const CHARACTER_FIRST_LOOK_SECONDS := 5.0
+const CHARACTER_LOOK_INTERVAL_SECONDS := 10.0
+const CANCEL_DEBOUNCE_MSEC := 600
+
+const PAGE_COPY := {
+	"goals/task": "整理可见的长期任务与阶段目标。当前只读，不在这里计算或写入任务进度。",
+	"goals/achievement": "按类别陈列成就条件与奖励预览。达成判断和奖励领取仍由后续系统负责。",
+	"goals/commission_record": "回看委托来源、状态与历史记录；本页不接取当前探索委托。",
+	"codex/map": "归档已经接触的地图与区域线索；未知区域保持遮蔽。",
+	"codex/monster": "整理怪物样本、遭遇来源和发现状态；仓库样本是当前真实发现依据。",
+	"codex/collectible": "陈列已回收藏品和唯一物件引用，不改变仓库所有权。",
+	"codex/equipment": "记录装备类型、来源与发现状态，不在图鉴中装备或强化。",
+	"codex/consumable": "记录消耗品条目与使用提示，不在图鉴中消耗物品。",
+	"codex/event": "归档已经登记的事件入口和来源线索，不主动触发事件。",
+	"codex/rule": "集中展示已公开的规则说明与系统提示，不改变运行规则。",
+	"codex/lore": "保存世界背景与文本线索；未知条目维持未发现状态。",
+	"research/unlock_interface": "研究节点和条件接口预览。研究系统未接入，不扣除资源也不解锁功能。",
+	"research/research_entry": "预留研究入口、资源需求和未来数据表位置，当前保持封存。",
+	"profile/qualification_level": "展示真实资历等级与绝对经验值；没有阈值时不伪造百分比。",
+	"profile/history": "读取最近结算与历史快照，不写入或重算历史记录。",
+	"profile/statistics": "汇总探索、撤离、失败和长期金币等已存在统计。",
+	"profile/milestone": "陈列阶段性里程碑与后续条件，当前不自动发放奖励。",
+	"profile/title": "展示称号位置、来源与锁定状态，不在这里修改称号。",
+	"profile/badge": "整理徽章墙与徽章状态，不生成或授予新徽章。",
+	"gacha/pool": "奖池主题仅作界面预留；概率、保底和真实奖池尚未接入。",
+	"gacha/cost": "消耗字段仅作预览，不读取可支付状态，也不会扣除货币。",
+	"gacha/result_entry": "结果入口保持封存，不生成、保存或发放任何抽奖结果。",
+	"collection_appearance/unique_display": "展示唯一藏品的陈列位置，不改变仓库与收藏所有权。",
+	"collection_appearance/appearance_config": "外观配置入口已落位；真实换装保存未接入时保持只读。",
+	"collection_appearance/display_content": "规划展示墙内容与排序，不写入收藏配置。",
+	"collection_appearance/badge_title": "组合预览徽章与称号展示，不改变个人资历。",
+	"collection_appearance/settlement_display": "预览结算卡面和历史引用，不修改结算快照。",
+}
 
 var current_model: Dictionary = {}
 var current_app_snapshot: Dictionary = {}
 var selected_module_id: StringName = &"goals"
+var displayed_module_id: StringName = &"goals"
+var selected_secondary_by_module: Dictionary = {}
+var texture_cache: Dictionary = {}
+
 var tab_buttons: Dictionary = {}
-var overview_label: Label
+var tab_button_order: Array[Button] = []
+var secondary_buttons: Dictionary = {}
+var secondary_button_order: Array[Button] = []
+var long_term_card_buttons: Array[Button] = []
+
+var module_group: Control
+var furniture_texture: TextureRect
+var secondary_scroll: ScrollContainer
+var secondary_row: HBoxContainer
+var content_panel_texture: TextureRect
+var content_detail_title_label: Label
+var content_detail_body_label: Label
+var content_detail_meta_label: Label
 var module_title_label: Label
 var module_state_label: Label
 var module_body_label: Label
 var module_reason_label: Label
+var overview_label: Label
 var child_preview_label: Label
 var snapshot_label: Label
 var interface_preview_label: Label
 var history_preview_label: Label
 var next_stage_label: Label
-var card_grid_container: GridContainer
-var content_detail_title_label: Label
-var content_detail_body_label: Label
-var content_detail_meta_label: Label
-var tab_button_order: Array[Button] = []
-var long_term_card_buttons: Array[Button] = []
+var card_grid_container: HBoxContainer
+
+var profile_level_label: Label
+var profile_exp_value_label: Label
+var profile_stat_labels: Array[Label] = []
+var character_texture: TextureRect
+var character_frames: Array[Texture2D] = []
+var lever_texture: TextureRect
+var lever_button: Button
+var lever_label: Label
+
+var transition_state: StringName = STATE_OPEN
+var requested_module_id: StringName = &"goals"
+var switch_running := false
+var archive_collapsed := false
+var archive_context_module_id: StringName = &"goals"
+var archive_context_secondary_id: StringName = &"task"
+var reduced_motion := false
+var module_tween: Tween
+var collapse_tween: Tween
+var character_elapsed := 0.0
+var character_frame_index := 0
+var character_look_index := -1
+var next_character_look := CHARACTER_FIRST_LOOK_SECONDS
+var ambient_elapsed := 0.0
+var last_cancel_press_msec := -CANCEL_DEBOUNCE_MSEC
+var warm_glow: ColorRect
+var blue_glow: ColorRect
 
 
 func build(model: Dictionary = {}) -> void:
 	_clear_children()
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	current_model = model.duplicate(true) if not model.is_empty() else LongTermModelScript.build(selected_module_id)
-	selected_module_id = StringName(current_model.get("selected_module_id", selected_module_id))
-	_build_static_layout()
-	_apply_layer_order()
-	_refresh_from_model()
+	selected_module_id = _normalize_module_id(StringName(current_model.get("selected_module_id", selected_module_id)))
+	displayed_module_id = selected_module_id
+	requested_module_id = selected_module_id
+	reduced_motion = Art10UISkinKitScript.reduce_motion_enabled()
+	_seed_secondary_selection()
+	_build_background()
+	_build_ambient_motion()
+	_build_navigation()
+	_build_module_rail()
+	_build_module_group()
+	_build_profile_column()
+	_build_archive_lever()
+	_apply_module_immediately(displayed_module_id)
+	_refresh_profile()
+	set_process(not reduced_motion)
+	set_process_input(true)
 	call_deferred("_grab_long_term_initial_focus")
 
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	current_app_snapshot = snapshot.duplicate(true)
 	current_model = LongTermModelScript.build_from_snapshot(selected_module_id, current_app_snapshot, &"app_shell_snapshot_preview")
-	_refresh_from_model()
+	_refresh_profile()
+	_refresh_content()
 
 
 func show_module(module_id: StringName = &"goals") -> void:
-	selected_module_id = module_id
-	if selected_module_id == &"":
-		selected_module_id = LongTermTabModelScript.default_module_id()
-	current_model = LongTermModelScript.build_from_snapshot(selected_module_id, current_app_snapshot, &"app_shell_snapshot_preview")
-	_refresh_from_model()
+	var normalized := _normalize_module_id(module_id)
+	selected_module_id = normalized
+	requested_module_id = normalized
+	_refresh_module_buttons()
+	if not is_inside_tree() or reduced_motion:
+		_apply_module_immediately(normalized)
+		return
+	if normalized == displayed_module_id and transition_state == STATE_OPEN:
+		_refresh_content()
+		return
+	if not switch_running:
+		_run_switch_sequence()
+
+
+func show_secondary(group_id: StringName) -> void:
+	var normalized := _normalize_secondary_id(displayed_module_id, group_id)
+	selected_secondary_by_module[displayed_module_id] = normalized
+	_refresh_secondary_buttons()
+	_refresh_content()
+	if not reduced_motion and content_panel_texture != null:
+		var tween := create_tween()
+		tween.set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		for node in _content_transition_nodes():
+			node.modulate.a = 0.72
+			tween.tween_property(node, "modulate:a", 1.0, 0.16)
 
 
 func get_selected_module_id() -> StringName:
 	return selected_module_id
 
 
-func _apply_layer_order() -> void:
-	_establish_page_layer_roots()
-	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
-		var root_name := StringName(root_name_variant)
-		var root := get_node_or_null(String(root_name)) as Control
-		if root == null:
-			continue
-		UILayerContractScript.configure_root(root, UILayerContractScript.page_root_role(root_name))
-		for child in root.get_children():
-			UILayerContractScript.apply_local_layer(child, _local_layer_for_node(child, root_name))
+func get_selected_secondary_id() -> StringName:
+	return StringName(selected_secondary_by_module.get(displayed_module_id, &""))
 
 
-func _layer_for_node(node: Node) -> int:
-	return UILayerContractScript.layer_for_page_node(node)
+func get_secondary_ids(module_id: StringName = &"") -> Array[StringName]:
+	var target := displayed_module_id if module_id == &"" else _normalize_module_id(module_id)
+	var result: Array[StringName] = []
+	for group: Dictionary in _secondary_groups(target):
+		result.append(StringName(group.get("group_id", group.get("id", &""))))
+	return result
 
 
-func _establish_page_layer_roots() -> void:
-	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
-		var root_name := StringName(root_name_variant)
-		UILayerContractScript.ensure_root(self, root_name, UILayerContractScript.page_root_role(root_name))
-	for child in get_children().duplicate():
-		if UILayerContractScript.is_page_root_name(StringName(child.name)):
-			continue
-		var target_root_name := UILayerContractScript.page_root_for_node(child)
-		var target_root := get_node_or_null(String(target_root_name)) as Control
-		if target_root == null:
-			continue
-		remove_child(child)
-		target_root.add_child(child)
-	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
-		var root_name := StringName(root_name_variant)
-		var root := get_node_or_null(String(root_name)) as Control
-		if root != null and root.get_parent() == self:
-			move_child(root, get_child_count() - 1)
+func set_archive_collapsed(value: bool, animate: bool = true) -> void:
+	var was_collapsed := archive_collapsed
+	if value and not was_collapsed:
+		# Preserve the latest requested visual context, not merely the module that
+		# happened to be on screen at an intermediate animation frame.
+		archive_context_module_id = requested_module_id if switch_running else displayed_module_id
+		archive_context_secondary_id = StringName(selected_secondary_by_module.get(
+			archive_context_module_id,
+			_normalize_secondary_id(archive_context_module_id, &"")
+		))
+	archive_collapsed = value
+	if collapse_tween != null and collapse_tween.is_valid():
+		collapse_tween.kill()
+	var target := LongTermLayoutContractScript.COLLAPSED_OFFSET if value else Vector2.ZERO
+	var duration := 0.0 if reduced_motion or not animate else 0.30
+	if duration <= 0.0:
+		module_group.position = target
+	else:
+		collapse_tween = create_tween()
+		collapse_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		collapse_tween.tween_property(module_group, "position", target, duration)
+	_update_lever()
+	if not value and was_collapsed:
+		# Expanding must restore the exact module/page that was collapsed.  This
+		# also reconciles routes initiated from the fixed profile column.
+		selected_secondary_by_module[archive_context_module_id] = archive_context_secondary_id
+		show_module(archive_context_module_id)
+	if value and _focus_is_inside(module_group) and lever_button != null:
+		lever_button.grab_focus()
 
 
-func _local_layer_for_node(node: Node, root_name: StringName) -> int:
-	var root_layer := UILayerContractScript.layer(UILayerContractScript.page_root_role(root_name))
-	return maxi(0, _layer_for_node(node) - root_layer)
+func _process(delta: float) -> void:
+	ambient_elapsed += delta
+	_update_character(delta)
+	if warm_glow != null:
+		warm_glow.modulate.a = 0.52 + sin(ambient_elapsed * 2.1) * 0.10
+	if blue_glow != null:
+		blue_glow.modulate.a = 0.42 + sin(ambient_elapsed * 1.35 + 1.7) * 0.08
 
 
-func _build_static_layout() -> void:
-	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.016, 0.030, 0.036, 1.0))
-	_add_texture_rect_from_ref(self, "LongTermRoomBackground", Rect2(0, 0, 1280, 720), Art09ManifestAssetMappingScript.asset_ref(&"room.background.normal", &"room.background.normal", &"room_background", &"archive"), 0.50)
-	_add_color_rect(self, "LongTermBackdropShade", Rect2(0, 0, 1280, 720), Color(0.0, 0.0, 0.0, 0.20))
-	_add_color_rect(self, "LongTermArchiveRoomGlow", Rect2(32, 88, 1206, 596), Color(0.13, 0.18, 0.20, 0.16))
-	_add_color_rect(self, "LongTermArchiveWall", Rect2(340, 116, 590, 520), Color(0.06, 0.09, 0.09, 0.22))
-	_add_color_rect(self, "LongTermProfileMask", Rect2(60, 164, 228, 470), Color(0.0, 0.0, 0.0, 0.16))
-	_add_color_rect(self, "LongTermDetailMask", Rect2(952, 112, 286, 500), Color(0.0, 0.0, 0.0, 0.20))
-	_add_color_rect(self, "LongTermShelfLineA", Rect2(356, 254, 548, 2), Color(0.94, 0.70, 0.28, 0.24))
-	_add_color_rect(self, "LongTermShelfLineB", Rect2(356, 392, 548, 2), Color(0.94, 0.70, 0.28, 0.16))
-	_add_color_rect(self, "LongTermShelfLineC", Rect2(356, 530, 548, 2), Color(0.94, 0.70, 0.28, 0.12))
-	_add_color_rect(self, "LongTermDetailLamp", Rect2(952, 104, 286, 4), Art10UISkinKitScript.color(&"gold"))
-	_add_panel(self, "LongTermProfileColumn", Art10UISkinKitScript.rect(&"long_term", "profile_column"), &"deep")
-	_add_panel(self, "LongTermCardGridColumn", Art10UISkinKitScript.rect(&"long_term", "card_grid"), &"surface")
-	_add_panel(self, "LongTermDetailColumn", Art10UISkinKitScript.rect(&"long_term", "detail_column"), &"summary")
-	_add_texture_rect_from_ref(self, "Art21LongTermProfileTexture", Art10UISkinKitScript.rect(&"long_term", "profile_column"), Art21UIPlacementContractScript.slot_ref(&"long_term", &"left_profile_frame", &"ui.art19.panel.terminal_main"), 0.64)
-	_add_texture_rect_from_ref(self, "Art21LongTermCollectionTexture", Art10UISkinKitScript.rect(&"long_term", "card_grid"), Art21UIPlacementContractScript.slot_ref(&"long_term", &"collection_wall", &"ui.art19.panel.terminal_main"), 0.70)
-	_add_texture_rect_from_ref(self, "Art21LongTermDetailTexture", Art10UISkinKitScript.rect(&"long_term", "detail_column"), Art21UIPlacementContractScript.slot_ref(&"long_term", &"right_detail_panel", &"ui.art19.panel.deploy_summary"), 0.74)
-	_add_label_token(self, "LongTermTitle", Rect2(46, 34, 250, 48), "长期系统", &"page_title", &"accent")
-	_add_label_token(self, "LongTermSubtitle", Rect2(304, 36, 620, 32), "", &"body_small", &"muted")
-	_add_button(self, "LongTermBackButton", Rect2(1084, 36, 154, 38), "返回主菜单", Callable(self, "_request_back_to_main"))
-	_add_button(self, "LongTermNavMainButton", Rect2(44, 84, 104, 34), "主菜单", Callable(self, "_request_back_to_main"))
-	_add_button(self, "LongTermNavDeployButton", Rect2(158, 84, 120, 34), "出发探索", Callable(self, "_request_deploy"))
-	var subtitle := get_node_or_null("LongTermSubtitle") as Label
-	if subtitle != null:
-		subtitle.text = ""
-	var legacy_back := get_node_or_null("LongTermBackButton") as Button
-	if legacy_back != null:
-		legacy_back.visible = false
-	_build_tab_buttons()
-
-	_add_label_token(self, "LongTermProfileHeading", Rect2(66, 154, 220, 24), "角色外观", &"tab", &"accent")
-	_add_color_rect(self, "LongTermAvatarGlow", Rect2(66, 184, 190, 272), Color(0.58, 0.93, 0.76, 0.08))
-	_add_color_rect(self, "LongTermAvatarSilhouette", Rect2(116, 232, 78, 168), Color(0.18, 0.27, 0.24, 0.70))
-	_add_texture_rect_from_ref(self, "LongTermPlayerSprite", Rect2(70, 202, 182, 210), Art09ManifestAssetMappingScript.player_sprite_ref(&"idle"), 1.0)
-	_add_color_rect(self, "LongTermAvatarBase", Rect2(92, 430, 146, 6), Art10UISkinKitScript.color(&"accent", Color(0.58, 0.93, 0.76, 1.0)))
-	_add_button(self, "LongTermAppearanceButton", Art10UISkinKitScript.rect(&"long_term", "appearance_button"), "设置外观", Callable(self, "_request_appearance_settings"))
-	_add_color_rect(self, "LongTermArchiveDivider", Rect2(66, 526, 214, 2), Art10UISkinKitScript.color(&"accent"))
-	overview_label = _add_label_token(self, "LongTermOverview", Rect2(66, 540, 214, 38), "", &"body_small", &"text")
-	child_preview_label = _add_label_token(self, "LongTermChildPreview", Rect2(66, 584, 214, 32), "", &"caption", &"text")
-	history_preview_label = _add_label_token(self, "LongTermHistoryPreview", Rect2(66, 624, 214, 26), "", &"caption", &"muted")
-
-	_add_label_token(self, "LongTermGridHeading", Rect2(356, 112, 320, 28), "收藏与记录", &"tab", &"warning")
-	card_grid_container = GridContainer.new()
-	card_grid_container.name = "LongTermCardGrid"
-	card_grid_container.columns = 3
-	card_grid_container.add_theme_constant_override("h_separation", 10)
-	card_grid_container.add_theme_constant_override("v_separation", 10)
-	_set_rect(card_grid_container, Rect2(356, 152, 548, 292))
-	add_child(card_grid_container)
-	_add_panel(self, "LongTermContentDetailBlock", Rect2(356, 464, 548, 138), &"summary")
-	content_detail_title_label = _add_label_token(self, "LongTermContentDetailTitle", Rect2(372, 476, 516, 28), "", &"tab", &"warning")
-	content_detail_body_label = _add_label_token(self, "LongTermContentDetailBody", Rect2(372, 508, 516, 44), "", &"caption", &"text")
-	content_detail_meta_label = _add_label_token(self, "LongTermContentDetailMeta", Rect2(372, 556, 516, 30), "", &"caption", &"muted")
-	next_stage_label = _add_label_token(self, "LongTermNextStage", Rect2(356, 610, 548, 22), "", &"caption", &"muted")
-
-	_add_panel(self, "LongTermDetailStatusBlock", Rect2(964, 130, 256, 58), &"surface")
-	_add_panel(self, "LongTermDetailInfoBlock", Rect2(964, 198, 256, 68), &"deep")
-	_add_panel(self, "LongTermDetailUnlockBlock", Rect2(964, 276, 256, 58), &"warning")
-	_add_panel(self, "LongTermDetailLinkBlock", Rect2(964, 344, 256, 118), &"surface")
-	module_title_label = _add_label_token(self, "LongTermModuleTitle", Rect2(970, 96, 238, 30), "", &"section_title", &"warning")
-	module_state_label = _add_label_token(self, "LongTermModuleState", Rect2(978, 142, 226, 32), "", &"body_small", &"muted")
-	module_body_label = _add_label_token(self, "LongTermModuleBody", Rect2(978, 210, 226, 42), "", &"body_small", &"text")
-	module_reason_label = _add_label_token(self, "LongTermModuleReason", Rect2(978, 288, 226, 32), "", &"caption", &"warning")
-	snapshot_label = _add_label_token(self, "LongTermSnapshotPreview", Rect2(978, 360, 226, 42), "", &"caption", &"text")
-	interface_preview_label = _add_label_token(self, "LongTermInterfacePreview", Rect2(978, 414, 226, 28), "", &"caption", &"muted")
-	_compact_detail_column()
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree() or not event.is_action_pressed("ui_cancel"):
+		return
+	# A single Windows Escape gesture can surface as multiple pressed events.
+	# Keep it to one staged navigation step: expand -> secondary -> primary -> main.
+	if _cancel_press_is_debounced(Time.get_ticks_msec()):
+		get_viewport().set_input_as_handled()
+		return
+	_handle_cancel_focus_step()
+	get_viewport().set_input_as_handled()
 
 
-func _compact_detail_column() -> void:
-	var rects := {
-		"LongTermDetailStatusBlock": Rect2(964, 130, 256, 58),
-		"LongTermDetailInfoBlock": Rect2(964, 198, 256, 68),
-		"LongTermDetailUnlockBlock": Rect2(964, 276, 256, 58),
-		"LongTermDetailLinkBlock": Rect2(964, 344, 256, 118),
-		"LongTermModuleTitle": Rect2(970, 96, 238, 30),
-		"LongTermModuleState": Rect2(978, 142, 226, 32),
-		"LongTermModuleBody": Rect2(978, 210, 226, 42),
-		"LongTermModuleReason": Rect2(978, 288, 226, 32),
-		"LongTermSnapshotPreview": Rect2(978, 360, 226, 42),
-		"LongTermInterfacePreview": Rect2(978, 414, 226, 28),
-	}
-	for node_name in rects.keys():
-		var node := get_node_or_null(String(node_name)) as Control
-		if node != null:
-			_set_rect(node, rects[node_name])
+func _cancel_press_is_debounced(now_msec: int) -> bool:
+	if now_msec - last_cancel_press_msec < CANCEL_DEBOUNCE_MSEC:
+		return true
+	last_cancel_press_msec = now_msec
+	return false
 
 
-func _build_tab_buttons() -> void:
+func _handle_cancel_focus_step() -> StringName:
+	var focus := get_viewport().gui_get_focus_owner()
+	if archive_collapsed:
+		set_archive_collapsed(false)
+		return &"expanded"
+	if focus in long_term_card_buttons and not secondary_button_order.is_empty():
+		var selected_secondary := get_selected_secondary_id()
+		var secondary_button := secondary_buttons.get(selected_secondary, secondary_button_order[0]) as Button
+		if secondary_button != null:
+			secondary_button.grab_focus()
+		return &"secondary"
+	if focus in secondary_button_order:
+		var module_button := tab_buttons.get(selected_module_id, null) as Button
+		if module_button != null:
+			module_button.grab_focus()
+		return &"primary"
+	_request_back_to_main()
+	return &"main_menu"
+
+
+func _build_background() -> void:
+	_add_color_rect(self, "LongTermBackdrop", Rect2(0, 0, 1280, 720), Color(0.01, 0.01, 0.01, 1.0))
+	_add_texture(self, "LongTermSceneCleanPlate", Rect2(0, 0, 1280, 720), _texture(&"long_term.scene.background.clean_plate"), false)
+
+
+func _build_ambient_motion() -> void:
+	warm_glow = _add_color_rect(self, "LongTermWarmLanternGlow", Rect2(1106, 137, 38, 70), Color(1.0, 0.50, 0.16, 0.09))
+	blue_glow = _add_color_rect(self, "LongTermBlueResearchGlow", Rect2(506, 226, 34, 48), Color(0.14, 0.82, 0.94, 0.10))
+	_add_particles("LongTermArchiveDust", Vector2(670, 414), Vector2(640, 330), 18, Color(0.86, 0.72, 0.47, 0.28), Vector2(2, -6), 7.0)
+	_add_particles("LongTermBlueMotes", Vector2(520, 278), Vector2(90, 70), 8, Color(0.22, 0.84, 1.0, 0.34), Vector2(0, -9), 4.8)
+
+
+func _build_navigation() -> void:
+	_add_texture(self, "LongTermNavChain", LongTermLayoutContractScript.NAV_CHAIN, _texture(&"long_term.decoration.chain"), false)
+	_add_image_button(self, "LongTermNavMainButton", LongTermLayoutContractScript.NAV_MAIN, "主菜单", &"nav", _request_back_to_main, 17)
+	_add_image_button(self, "LongTermNavDeployButton", LongTermLayoutContractScript.NAV_DEPLOY, "出发探索", &"nav", _request_deploy, 17)
+
+
+func _build_module_rail() -> void:
+	_add_texture(self, "LongTermModuleRail", LongTermLayoutContractScript.MODULE_RAIL, _texture(&"long_term.decoration.rail"), false)
 	tab_buttons.clear()
 	tab_button_order.clear()
-	var tab_row := HBoxContainer.new()
-	tab_row.name = "LongTermTopTabRow"
-	_set_rect(tab_row, Art10UISkinKitScript.rect(&"long_term", "tab_row"))
-	tab_row.add_theme_constant_override("separation", 6)
-	add_child(tab_row)
-	var modules: Array = current_model.get("modules", [])
-	for module: Dictionary in modules:
-		var module_id := StringName(module.get("id", &""))
-		var title := String(module.get("title", ""))
+	for index in range(MODULE_IDS.size()):
+		var module_id := MODULE_IDS[index]
 		var button := Button.new()
 		button.name = "LongTermTab_%s" % String(module_id)
-		button.text = title
-		button.tooltip_text = String(module.get("reason", ""))
+		button.text = String(MODULE_LABELS.get(module_id, module_id))
+		button.position = LongTermLayoutContractScript.module_button_rect(index).position
+		button.size = LongTermLayoutContractScript.MODULE_BUTTON_SIZE
 		button.toggle_mode = true
-		button.custom_minimum_size = Vector2(76, 42)
 		button.focus_mode = Control.FOCUS_ALL
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		button.pressed.connect(Callable(self, "_on_module_tab_pressed").bind(module_id))
-		button.focus_entered.connect(Callable(self, "_preview_long_term_tab_focus").bind(module_id))
-		_apply_art19_button_surface(button, &"button_dark", &"secondary", &"tab", &"tab", 7, 14)
-		tab_row.add_child(button)
+		_apply_module_button_surface(button, module_id, false)
+		add_child(button)
 		tab_buttons[module_id] = button
 		tab_button_order.append(button)
 	_wire_long_term_tab_focus()
 
 
+func _build_module_group() -> void:
+	module_group = Control.new()
+	module_group.name = "LongTermModuleGroup"
+	module_group.position = Vector2.ZERO
+	module_group.size = Vector2(1000, 720)
+	module_group.pivot_offset = Vector2(500, 360)
+	# This transparent root is created after the top module rail. Ignore hits on
+	# the root itself so it cannot cover the six primary buttons; interactive
+	# descendants retain their own mouse filters.
+	module_group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(module_group)
+
+	furniture_texture = _add_texture(module_group, "LongTermModuleFurniture", LongTermLayoutContractScript.furniture_rect(displayed_module_id), null, true)
+	secondary_scroll = ScrollContainer.new()
+	secondary_scroll.name = "LongTermSecondaryScroll"
+	secondary_scroll.position = LongTermLayoutContractScript.SECONDARY_SCROLL.position
+	secondary_scroll.size = LongTermLayoutContractScript.SECONDARY_SCROLL.size
+	secondary_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	secondary_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	secondary_scroll.follow_focus = true
+	module_group.add_child(secondary_scroll)
+	secondary_row = HBoxContainer.new()
+	secondary_row.name = "LongTermSecondaryRow"
+	secondary_row.add_theme_constant_override("separation", 6)
+	secondary_scroll.add_child(secondary_row)
+
+	content_panel_texture = _add_texture(module_group, "LongTermContentDetailBlock", LongTermLayoutContractScript.CONTENT_PANEL, _texture(&"long_term.panel.content"), false)
+	content_detail_title_label = _add_label(module_group, "LongTermContentDetailTitle", LongTermLayoutContractScript.CONTENT_TITLE, "", 21, Color(0.26, 0.12, 0.05), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
+	content_detail_body_label = _add_label(module_group, "LongTermContentDetailBody", LongTermLayoutContractScript.CONTENT_SUMMARY, "", 16, Color(0.23, 0.14, 0.08), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
+	content_detail_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content_detail_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	content_detail_meta_label = _add_label(module_group, "LongTermContentDetailMeta", LongTermLayoutContractScript.CONTENT_META, "", 12, Color(0.35, 0.22, 0.12), HORIZONTAL_ALIGNMENT_RIGHT, &"readable")
+	_clear_label_shadow(content_detail_title_label)
+	_clear_label_shadow(content_detail_body_label)
+	_clear_label_shadow(content_detail_meta_label)
+	module_title_label = content_detail_title_label
+	module_body_label = content_detail_body_label
+	module_state_label = content_detail_meta_label
+	module_reason_label = content_detail_meta_label
+	overview_label = content_detail_title_label
+	child_preview_label = content_detail_body_label
+	snapshot_label = content_detail_meta_label
+	interface_preview_label = content_detail_meta_label
+	history_preview_label = content_detail_meta_label
+	next_stage_label = content_detail_meta_label
+
+	card_grid_container = HBoxContainer.new()
+	card_grid_container.name = "LongTermCardGrid"
+	card_grid_container.position = LongTermLayoutContractScript.CONTENT_CARDS.position
+	card_grid_container.size = LongTermLayoutContractScript.CONTENT_CARDS.size
+	card_grid_container.add_theme_constant_override("separation", 8)
+	module_group.add_child(card_grid_container)
+
+
+func _build_profile_column() -> void:
+	_add_texture(self, "LongTermProfileFrame", LongTermLayoutContractScript.PROFILE_FRAME, _texture(&"long_term.panel.profile"), false)
+	_add_label(self, "LongTermProfileHeading", LongTermLayoutContractScript.PROFILE_HEADER, "角色档案", 23, Color(0.96, 0.75, 0.34), HORIZONTAL_ALIGNMENT_CENTER)
+	character_frames.clear()
+	for index in range(8):
+		var frame := Art21MainMenuAssetContractScript.texture(StringName("main_menu.scene.character.idle.%02d" % index))
+		if frame != null:
+			character_frames.append(frame)
+	var initial: Texture2D = character_frames[0] if not character_frames.is_empty() else null
+	character_texture = _add_texture(self, "LongTermPlayerSprite", LongTermLayoutContractScript.PROFILE_CHARACTER, initial, true)
+	_add_label(self, "LongTermProfileRole", LongTermLayoutContractScript.PROFILE_ROLE, "回收员", 18, Color(0.95, 0.83, 0.57), HORIZONTAL_ALIGNMENT_CENTER)
+	profile_level_label = _add_label(self, "LongTermProfileLevel", LongTermLayoutContractScript.PROFILE_LEVEL, "等级 --", 23, Color(0.97, 0.74, 0.30), HORIZONTAL_ALIGNMENT_CENTER, &"readable")
+	_add_label(self, "LongTermProfileExpLabel", LongTermLayoutContractScript.PROFILE_EXP_LABEL, "经验", 14, Color(0.78, 0.68, 0.51), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
+	profile_exp_value_label = _add_label(self, "LongTermProfileExpValue", LongTermLayoutContractScript.PROFILE_EXP_VALUE, "0", 14, Color(0.88, 0.81, 0.66), HORIZONTAL_ALIGNMENT_RIGHT, &"readable")
+	profile_stat_labels.clear()
+	var stat_names := ["探索", "撤离", "失败", "长期金币"]
+	for index in range(stat_names.size()):
+		var rect := Rect2(
+			LongTermLayoutContractScript.PROFILE_STAT_ORIGIN + Vector2(0, index * (LongTermLayoutContractScript.PROFILE_STAT_SIZE.y + LongTermLayoutContractScript.PROFILE_STAT_GAP)),
+			LongTermLayoutContractScript.PROFILE_STAT_SIZE
+		)
+		profile_stat_labels.append(_add_label(self, "LongTermProfileStat_%d" % index, rect, "%s  0" % stat_names[index], 15, Color(0.91, 0.80, 0.58), HORIZONTAL_ALIGNMENT_LEFT, &"readable"))
+	_add_image_button(self, "LongTermAppearanceButton", LongTermLayoutContractScript.PROFILE_APPEARANCE, "设置外观", &"nav", _request_appearance_settings, 17)
+
+
+func _build_archive_lever() -> void:
+	lever_texture = _add_texture(self, "LongTermArchiveLeverTexture", LongTermLayoutContractScript.LEVER, null, false)
+	lever_button = Button.new()
+	lever_button.name = "LongTermArchiveLever"
+	lever_button.text = ""
+	lever_button.position = LongTermLayoutContractScript.LEVER.position
+	lever_button.size = LongTermLayoutContractScript.LEVER.size
+	lever_button.focus_mode = Control.FOCUS_ALL
+	lever_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_apply_transparent_button(lever_button, 13)
+	lever_button.pressed.connect(func() -> void: set_archive_collapsed(not archive_collapsed))
+	lever_button.focus_entered.connect(func() -> void: _set_lever_highlight(true))
+	lever_button.focus_exited.connect(func() -> void: _set_lever_highlight(lever_button.is_hovered()))
+	lever_button.mouse_entered.connect(func() -> void: _set_lever_highlight(true))
+	lever_button.mouse_exited.connect(func() -> void: _set_lever_highlight(lever_button.has_focus()))
+	add_child(lever_button)
+	lever_label = _add_label(self, "LongTermArchiveLeverLabel", LongTermLayoutContractScript.LEVER_LABEL, "收起档案", 12, Color(0.97, 0.78, 0.38), HORIZONTAL_ALIGNMENT_CENTER)
+	_clear_label_shadow(lever_label)
+	_update_lever()
+
+
+func _run_switch_sequence() -> void:
+	switch_running = true
+	while requested_module_id != displayed_module_id:
+		transition_state = STATE_CLOSING
+		if module_tween != null and module_tween.is_valid():
+			module_tween.kill()
+		module_tween = create_tween()
+		module_tween.set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		module_tween.tween_property(module_group, "modulate:a", 0.0, 0.24)
+		module_tween.tween_property(module_group, "scale", Vector2(0.96, 0.96), 0.24)
+		await module_tween.finished
+		transition_state = STATE_CLOSED
+		await get_tree().create_timer(0.10).timeout
+		transition_state = STATE_SWITCHING
+		_apply_module_content(requested_module_id)
+		module_group.modulate.a = 0.0
+		module_group.scale = Vector2(0.96, 0.96)
+		transition_state = STATE_OPENING
+		module_tween = create_tween()
+		module_tween.set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		module_tween.tween_property(module_group, "modulate:a", 1.0, 0.34)
+		module_tween.tween_property(module_group, "scale", Vector2.ONE, 0.34)
+		await module_tween.finished
+		transition_state = STATE_OPEN
+	switch_running = false
+
+
+func _apply_module_immediately(module_id: StringName) -> void:
+	if module_tween != null and module_tween.is_valid():
+		module_tween.kill()
+	_apply_module_content(module_id)
+	module_group.modulate = Color.WHITE
+	module_group.scale = Vector2.ONE
+	transition_state = STATE_OPEN
+	switch_running = false
+
+
+func _apply_module_content(module_id: StringName) -> void:
+	displayed_module_id = _normalize_module_id(module_id)
+	selected_module_id = displayed_module_id
+	current_model = LongTermModelScript.build_from_snapshot(displayed_module_id, current_app_snapshot, &"app_shell_snapshot_preview")
+	furniture_texture.position = LongTermLayoutContractScript.furniture_rect(displayed_module_id).position
+	furniture_texture.size = LongTermLayoutContractScript.furniture_rect(displayed_module_id).size
+	furniture_texture.texture = Art23LongTermAssetContractScript.texture(StringName("long_term.furniture.%s" % String(displayed_module_id)))
+	_rebuild_secondary_buttons()
+	_refresh_content()
+	_refresh_module_buttons()
+
+
+func _rebuild_secondary_buttons() -> void:
+	secondary_buttons.clear()
+	secondary_button_order.clear()
+	for child in secondary_row.get_children():
+		secondary_row.remove_child(child)
+		child.queue_free()
+	for group: Dictionary in _secondary_groups(displayed_module_id):
+		var group_id := StringName(group.get("group_id", group.get("id", &"")))
+		var button := Button.new()
+		button.name = "LongTermSecondary_%s_%s" % [String(displayed_module_id), String(group_id)]
+		button.text = String(group.get("title", group_id))
+		button.custom_minimum_size = LongTermLayoutContractScript.SECONDARY_ROW_MIN
+		button.toggle_mode = true
+		button.focus_mode = Control.FOCUS_ALL
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		button.pressed.connect(Callable(self, "_on_secondary_pressed").bind(group_id))
+		secondary_row.add_child(button)
+		secondary_buttons[group_id] = button
+		secondary_button_order.append(button)
+	_refresh_secondary_buttons()
+	_wire_long_term_secondary_focus()
+
+
+func _refresh_content() -> void:
+	if content_detail_title_label == null:
+		return
+	var group := _selected_group()
+	var group_id := StringName(group.get("group_id", group.get("id", &"")))
+	var module_label := String(MODULE_LABELS.get(displayed_module_id, displayed_module_id))
+	content_detail_title_label.text = "%s · %s" % [module_label, String(group.get("title", "档案"))]
+	content_detail_body_label.text = String(PAGE_COPY.get("%s/%s" % [String(displayed_module_id), String(group_id)], "当前档案只读展示。"))
+	content_detail_meta_label.text = "只读档案" if not LOCKED_MODULES.has(displayed_module_id) else "系统封存 · 仅展示接口预览"
+	_rebuild_content_cards(group)
+	_refresh_secondary_buttons()
+
+
+func _rebuild_content_cards(group: Dictionary) -> void:
+	long_term_card_buttons.clear()
+	for child in card_grid_container.get_children():
+		card_grid_container.remove_child(child)
+		child.queue_free()
+	var cards := _cards_for_group(group)
+	for index in range(mini(3, cards.size())):
+		var card: Dictionary = cards[index]
+		var button := Button.new()
+		button.name = "LongTermCard_%s_%d" % [String(get_selected_secondary_id()), index]
+		button.text = "%s\n%s" % [String(card.get("title", "档案条目")), String(card.get("state", "已登记"))]
+		button.custom_minimum_size = Vector2(164, 86)
+		button.toggle_mode = true
+		button.button_pressed = index == 0
+		button.focus_mode = Control.FOCUS_ALL
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		button.set_meta("card_index", index)
+		button.pressed.connect(Callable(self, "_set_long_term_card_selected").bind(index))
+		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if index == 0 else &"normal"))
+		card_grid_container.add_child(button)
+		long_term_card_buttons.append(button)
+	_wire_long_term_card_focus()
+
+
+func _cards_for_group(group: Dictionary) -> Array[Dictionary]:
+	var cards: Array[Dictionary] = []
+	var group_id := StringName(group.get("group_id", group.get("id", &"")))
+	if displayed_module_id == &"codex" and group_id in [&"monster", &"collectible"]:
+		var expected_kind := group_id
+		var matching_cards: Array = (current_model.get("content_cards", []) as Array).filter(
+			func(entry: Variant) -> bool:
+				return entry is Dictionary and StringName((entry as Dictionary).get("codex_kind", &"collectible")) == expected_kind
+		)
+		for card_index in range(mini(3, matching_cards.size())):
+			var card_variant: Variant = matching_cards[card_index]
+			if card_variant is Dictionary:
+				var card: Dictionary = card_variant
+				var state_name := StringName(card.get("state", &"undiscovered"))
+				var card_title := String(card.get("title", "未知条目"))
+				if state_name != &"discovered":
+					card_title = "%s %02d" % ["未发现怪物样本" if group_id == &"monster" else "未发现藏品", card_index + 1]
+				cards.append({
+					"title": card_title,
+					"state": _state_label(state_name),
+				})
+		while cards.size() < 3:
+			cards.append({
+				"title": "%s %02d" % ["未发现怪物样本" if group_id == &"monster" else "未发现藏品", cards.size() + 1],
+				"state": "未发现",
+			})
+	if displayed_module_id == &"profile":
+		cards = _profile_cards(group_id)
+	if cards.is_empty():
+		for item_variant in (group.get("items", []) as Array).slice(0, 3):
+			var item: Dictionary = item_variant if item_variant is Dictionary else {}
+			cards.append({
+				"title": String(item.get("title", "档案条目")),
+				"state": "封存" if LOCKED_MODULES.has(displayed_module_id) else "已登记",
+			})
+	while cards.size() < 3:
+		cards.append({"title": "预留档案位", "state": "封存" if LOCKED_MODULES.has(displayed_module_id) else "未发现"})
+	return cards
+
+
+func _profile_cards(group_id: StringName) -> Array[Dictionary]:
+	var runtime: Dictionary = current_model.get("profile_runtime_panel", {})
+	match group_id:
+		&"qualification_level":
+			return [
+				{"title": "资历等级", "state": "Lv.%02d" % int(runtime.get("profile_level", 1))},
+				{"title": "累计经验", "state": str(int(runtime.get("profile_exp", 0)))},
+			]
+		&"history":
+			var latest: Dictionary = current_model.get("latest_run_result_summary", {})
+			return [
+				{"title": "最近记录", "state": String(latest.get("outcome", "暂无"))},
+				{"title": "记录编号", "state": String(latest.get("result_id", "未登记"))},
+			]
+		&"statistics":
+			return [
+				{"title": "探索", "state": str(int(runtime.get("run_count", 0)))},
+				{"title": "撤离", "state": str(int(runtime.get("extract_count", 0)))},
+				{"title": "失败", "state": str(int(runtime.get("fail_count", 0)))},
+			]
+		_:
+			return []
+
+
+func _refresh_profile() -> void:
+	if profile_level_label == null:
+		return
+	var runtime: Dictionary = current_model.get("profile_runtime_panel", {})
+	profile_level_label.text = "等级 %02d" % maxi(1, int(runtime.get("profile_level", 1)))
+	profile_exp_value_label.text = str(maxi(0, int(runtime.get("profile_exp", 0))))
+	var values := [
+		int(runtime.get("run_count", 0)),
+		int(runtime.get("extract_count", 0)),
+		int(runtime.get("fail_count", 0)),
+		int(runtime.get("long_term_gold", runtime.get("gold", 0))),
+	]
+	var names := ["探索", "撤离", "失败", "长期金币"]
+	for index in range(mini(profile_stat_labels.size(), values.size())):
+		profile_stat_labels[index].text = "%s  %s" % [names[index], _format_number(values[index])]
+
+
+func _refresh_module_buttons() -> void:
+	for module_id_variant in tab_buttons.keys():
+		var module_id := StringName(module_id_variant)
+		var button := tab_buttons[module_id] as Button
+		if button == null:
+			continue
+		button.button_pressed = module_id == selected_module_id
+		_apply_module_button_surface(button, module_id, button.button_pressed)
+
+
+func _refresh_secondary_buttons() -> void:
+	var selected := get_selected_secondary_id()
+	for group_id_variant in secondary_buttons.keys():
+		var group_id := StringName(group_id_variant)
+		var button := secondary_buttons[group_id] as Button
+		if button == null:
+			continue
+		button.button_pressed = group_id == selected
+		_apply_generic_button_surface(button, &"secondary", &"selected" if button.button_pressed else &"normal", 14)
+	if secondary_buttons.has(selected):
+		secondary_scroll.ensure_control_visible(secondary_buttons[selected] as Control)
+
+
 func _on_module_tab_pressed(module_id: StringName) -> void:
 	show_module(module_id)
+	var button := tab_buttons.get(module_id, null) as Button
+	if button != null:
+		button.grab_focus()
+
+
+func _on_secondary_pressed(group_id: StringName) -> void:
+	show_secondary(group_id)
+	var button := secondary_buttons.get(group_id, null) as Button
+	if button != null:
+		button.grab_focus()
 
 
 func _request_back_to_main() -> void:
@@ -239,532 +666,360 @@ func _request_deploy() -> void:
 
 
 func _request_appearance_settings() -> void:
-	if overview_label != null:
-		overview_label.text = "外观设置\n后续开放"
+	selected_secondary_by_module[&"collection_appearance"] = &"appearance_config"
+	show_module(&"collection_appearance")
 
 
-func _refresh_from_model() -> void:
-	if overview_label == null:
+func _update_lever() -> void:
+	if lever_texture == null or lever_button == null:
 		return
-	selected_module_id = StringName(current_model.get("selected_module_id", selected_module_id))
-	var overview: Dictionary = current_model.get("overview_summary", {})
-	overview_label.text = "%s\n%s" % [
-		_shorten_copy(String(overview.get("title", "长期系统")), 12),
-		"档案 / 图鉴 / 研究 / 收藏",
-	]
-	var panel: Dictionary = current_model.get("placeholder_panel", {})
-	var content_preview: Dictionary = current_model.get("current_content_preview", panel.get("content_preview", {}))
-	module_title_label.text = _shorten_copy(String(panel.get("title", "")), 12)
-	module_state_label.text = "状态  %s" % Art10UISkinKitScript.status_label(panel.get("state", "preview"))
-	module_body_label.text = _detail_module_copy(String(panel.get("description", "")), content_preview.get("detail_preview", {}))
-	module_reason_label.text = "解锁  %s" % _shorten_copy(String(panel.get("reason", "")), 14)
-	child_preview_label.text = "记录\n%s" % _format_child_groups(panel.get("child_preview_groups", []) as Array)
-	var snapshot: Dictionary = current_model.get("snapshot_preview", {})
-	snapshot_label.text = "档案  %s" % _format_snapshot_section(snapshot.get("profile_snapshot", {}))
-	interface_preview_label.text = "联动  奖励 / 事件 / 跳转"
-	var history_preview: Dictionary = current_model.get("history_preview_panel", {})
-	var runtime_panel: Dictionary = current_model.get("profile_runtime_panel", {})
-	history_preview_label.text = _format_history_preview(history_preview)
-	if not runtime_panel.is_empty():
-		history_preview_label.text += "\n%s" % _format_profile_runtime(runtime_panel)
-	next_stage_label.text = "后续内容已收起到详情。"
-	overview_label.text = "角色档案\n回收员 / 基地记录"
-	child_preview_label.text = "当前模块\n%s" % _shorten_copy(String(panel.get("title", "")), 12)
-	history_preview_label.text = "战绩\n探索记录已归档"
-	module_title_label.text = "档案总览"
-	module_state_label.text = "等级  01\n主线  已登记"
-	module_body_label.text = "主线\n当前目标 / 关键节点"
-	module_reason_label.text = "资历\n探索 / 回收 / 失败"
-	snapshot_label.text = "资源\n金币 / 黑币 / 奖励"
-	interface_preview_label.text = "奖励\n事件 / 图鉴 / 外观"
-	if content_detail_title_label != null:
-		content_detail_title_label.text = "%s  /  %s" % [
-			_shorten_copy(String(panel.get("title", "长期内容")), 12),
-			Art10UISkinKitScript.status_label(panel.get("state", "preview")),
-		]
-	if content_detail_body_label != null:
-		content_detail_body_label.text = _detail_module_copy(String(panel.get("description", "")), content_preview.get("detail_preview", {}))
-	if content_detail_meta_label != null:
-		content_detail_meta_label.text = "解锁条件  %s  ·  预览内容不会写入玩法收益" % _shorten_copy(String(panel.get("reason", "尚未开放")), 18)
-	next_stage_label.text = ""
-	_refresh_card_grid(content_preview.get("cards", []) as Array)
-	_wire_long_term_tab_focus()
-	_normalize_static_copy()
-	_apply_art10_text_refresh()
-	_refresh_tab_buttons()
-	_apply_layer_order()
+	lever_texture.texture = _texture(&"long_term.control.lever.collapsed" if archive_collapsed else &"long_term.control.lever.expanded")
+	lever_label.text = "展开档案" if archive_collapsed else "收起档案"
 
 
-func _normalize_static_copy() -> void:
-	_set_label_text("LongTermProfileHeading", "角色外观")
-	_set_button_text("LongTermAppearanceButton", "设置外观")
-	_set_label_text("LongTermGridHeading", "收藏与记录")
-	if overview_label != null:
-		overview_label.text = "角色档案\n回收员 / 基地记录"
-	if child_preview_label != null:
-		var panel: Dictionary = current_model.get("placeholder_panel", {})
-		child_preview_label.text = "当前模块\n%s" % _shorten_copy(String(panel.get("title", "主线")), 12)
-	if history_preview_label != null:
-		history_preview_label.text = "战绩\n探索记录已归档"
-	if module_title_label != null:
-		module_title_label.text = "档案总览"
-	if module_state_label != null:
-		module_state_label.text = "等级  01\n主线  已登记"
-	if module_body_label != null:
-		module_body_label.text = "主线\n当前目标 / 关键节点"
-	if module_reason_label != null:
-		module_reason_label.text = "资历\n探索 / 回收 / 失败"
-	if snapshot_label != null:
-		snapshot_label.text = "资源\n金币 / 黑币 / 奖励"
-	if interface_preview_label != null:
-		interface_preview_label.text = "奖励\n事件 / 图鉴 / 外观"
-	if next_stage_label != null:
-		next_stage_label.text = ""
+func _set_lever_highlight(active: bool) -> void:
+	if lever_texture != null:
+		lever_texture.modulate = Color(1.12, 1.05, 0.78, 1.0) if active else Color.WHITE
+	if lever_label != null:
+		lever_label.modulate = Color(0.48, 1.0, 0.96, 1.0) if active else Color.WHITE
 
 
-func _set_label_text(node_name: String, text: String) -> void:
-	var node := get_node_or_null(node_name)
-	if node is Label:
-		(node as Label).text = text
+func _content_transition_nodes() -> Array[CanvasItem]:
+	var nodes: Array[CanvasItem] = []
+	for node: CanvasItem in [
+		content_panel_texture,
+		content_detail_title_label,
+		content_detail_body_label,
+		content_detail_meta_label,
+		card_grid_container,
+	]:
+		if node != null:
+			nodes.append(node)
+	return nodes
 
 
-func _set_button_text(node_name: String, text: String) -> void:
-	var node := get_node_or_null(node_name)
-	if node is Button:
-		(node as Button).text = text
-
-
-func _refresh_card_grid(cards: Array) -> void:
-	if card_grid_container == null:
+func _update_character(delta: float) -> void:
+	if character_texture == null or character_frames.size() < 8:
 		return
-	long_term_card_buttons.clear()
-	for child in card_grid_container.get_children():
-		card_grid_container.remove_child(child)
-		child.queue_free()
-	var visible_cards := cards.slice(0, 6)
-	if visible_cards.is_empty():
-		var placeholder := Label.new()
-		placeholder.text = "当前模块尚无可展示卡片。"
-		placeholder.custom_minimum_size = Vector2(500, 60)
-		Art10UISkinKitScript.apply_label_token(placeholder, &"body", &"muted")
-		card_grid_container.add_child(placeholder)
+	character_elapsed += delta
+	if character_look_index >= 0:
+		if character_elapsed < CHARACTER_LOOK_FRAME_SECONDS:
+			return
+		character_elapsed = 0.0
+		character_look_index += 1
+		if character_look_index >= CHARACTER_LOOK_SEQUENCE.size():
+			character_look_index = -1
+			next_character_look = ambient_elapsed + CHARACTER_LOOK_INTERVAL_SECONDS
+			character_texture.texture = character_frames[0]
+			return
+		character_texture.texture = character_frames[int(CHARACTER_LOOK_SEQUENCE[character_look_index])]
 		return
-	var display_cards := visible_cards.duplicate(true)
-	while display_cards.size() < 6:
-		display_cards.append({
-			"id": "archive_slot_%d" % display_cards.size(),
-			"title": _archive_slot_title(display_cards.size()),
-			"state": "locked",
-			"description": "档案位待解锁。",
-		})
-	var index := 0
-	for card: Dictionary in display_cards.slice(0, 6):
-		var button := Button.new()
-		button.name = "LongTermCard_%s" % str(card.get("id", index))
-		button.text = "%s\n%s\n%s" % [
-			_card_marker(index),
-			_shorten_copy(String(card.get("title", "")), 10),
-			_archive_card_state_label(StringName(card.get("state", "preview")), index),
-		]
-		button.tooltip_text = String(card.get("description", ""))
-		button.custom_minimum_size = Vector2(170, 118)
-		button.toggle_mode = true
-		button.button_pressed = index == 0
-		button.focus_mode = Control.FOCUS_ALL
-		button.set_meta("card_index", index)
-		button.focus_entered.connect(Callable(self, "_set_long_term_card_selected").bind(index))
-		button.mouse_entered.connect(Callable(self, "_set_long_term_card_selected").bind(index))
-		_apply_art19_button_surface(button, &"panel_highlight" if index == 0 else &"panel_deploy_main", Art10UISkinKitScript.visual_state_tone(&"selected" if index == 0 else &"normal"), &"body_small", &"slot", 10, 18)
-		card_grid_container.add_child(button)
-		long_term_card_buttons.append(button)
-		index += 1
-	_wire_long_term_card_focus()
+	if ambient_elapsed >= next_character_look:
+		character_look_index = 0
+		character_elapsed = 0.0
+		character_texture.texture = character_frames[int(CHARACTER_LOOK_SEQUENCE[0])]
+		return
+	if character_elapsed < CHARACTER_IDLE_FRAME_SECONDS:
+		return
+	character_elapsed = 0.0
+	character_frame_index = (character_frame_index + 1) % CHARACTER_IDLE_SEQUENCE.size()
+	character_texture.texture = character_frames[int(CHARACTER_IDLE_SEQUENCE[character_frame_index])]
 
 
-func _archive_slot_title(index: int) -> String:
-	var clean_titles := ["主线", "图鉴", "研究", "资历", "收藏", "拍卖", "记录", "奖励", "外观"]
-	return clean_titles[index % clean_titles.size()]
-	var titles := ["主线", "图鉴", "研究", "资历", "收藏", "拍卖", "记录", "奖励", "外观"]
-	return titles[index % titles.size()]
+func _seed_secondary_selection() -> void:
+	for module_id in MODULE_IDS:
+		var groups := _secondary_groups(module_id)
+		if not groups.is_empty():
+			selected_secondary_by_module[module_id] = StringName((groups[0] as Dictionary).get("group_id", &""))
 
 
-func _archive_card_state_label(state: StringName, index: int) -> String:
-	if index == 0:
-		return "当前档案"
-	match state:
-		&"locked":
-			return "待解锁"
-		&"new":
-			return "新记录"
-		&"reward":
-			return "奖励"
-		&"ready":
-			return "可领取"
-		_:
-			return "收藏墙"
-	if index == 0:
-		return "当前档案"
-	match state:
-		&"locked":
-			return "待解锁"
-		&"new":
-			return "新记录"
-		&"reward":
-			return "奖励"
-		&"ready":
-			return "可领取"
-		_:
-			return "收藏墙"
+func _secondary_groups(module_id: StringName) -> Array:
+	var module := LongTermContentFrameworkScript.find_module(module_id)
+	return (module.get("secondary_groups", []) as Array).duplicate(true)
 
 
-func _refresh_tab_buttons() -> void:
-	for module_id in tab_buttons.keys():
-		var button := tab_buttons[module_id] as Button
-		if button != null:
-			button.button_pressed = StringName(module_id) == selected_module_id
-			_apply_art19_button_surface(button, &"button_selected_tab" if button.button_pressed else &"button_dark", Art10UISkinKitScript.visual_state_tone(&"selected" if button.button_pressed else &"normal"), &"tab", &"tab", 7, 14)
+func _selected_group() -> Dictionary:
+	var selected := _normalize_secondary_id(displayed_module_id, get_selected_secondary_id())
+	selected_secondary_by_module[displayed_module_id] = selected
+	for group: Dictionary in _secondary_groups(displayed_module_id):
+		if StringName(group.get("group_id", group.get("id", &""))) == selected:
+			return group
+	return {}
 
 
-func _preview_long_term_tab_focus(module_id: StringName) -> void:
-	selected_module_id = module_id
-	_refresh_tab_buttons()
+func _normalize_module_id(module_id: StringName) -> StringName:
+	return module_id if module_id in MODULE_IDS else LongTermTabModelScript.default_module_id()
+
+
+func _normalize_secondary_id(module_id: StringName, group_id: StringName) -> StringName:
+	var groups := _secondary_groups(module_id)
+	for group: Dictionary in groups:
+		var candidate := StringName(group.get("group_id", group.get("id", &"")))
+		if candidate == group_id:
+			return candidate
+	return StringName((groups[0] as Dictionary).get("group_id", &"")) if not groups.is_empty() else &""
 
 
 func _wire_long_term_tab_focus() -> void:
 	var count := tab_button_order.size()
-	if count <= 0:
-		return
 	for index in range(count):
 		var button := tab_button_order[index]
-		if button == null:
-			continue
-		var previous := tab_button_order[(index - 1 + count) % count]
-		var next := tab_button_order[(index + 1) % count]
-		button.focus_neighbor_left = button.get_path_to(previous)
-		button.focus_neighbor_right = button.get_path_to(next)
+		button.focus_neighbor_left = button.get_path_to(tab_button_order[(index - 1 + count) % count])
+		button.focus_neighbor_right = button.get_path_to(tab_button_order[(index + 1) % count])
+
+
+func _wire_long_term_secondary_focus() -> void:
+	var count := secondary_button_order.size()
+	if count <= 0:
+		return
+	var module_button := tab_buttons.get(displayed_module_id, null) as Button
+	for index in range(count):
+		var button := secondary_button_order[index]
+		button.focus_neighbor_left = button.get_path_to(secondary_button_order[(index - 1 + count) % count])
+		button.focus_neighbor_right = button.get_path_to(secondary_button_order[(index + 1) % count])
+		if module_button != null:
+			button.focus_neighbor_top = button.get_path_to(module_button)
 		if not long_term_card_buttons.is_empty():
 			button.focus_neighbor_bottom = button.get_path_to(long_term_card_buttons[index % long_term_card_buttons.size()])
+	if module_button != null:
+		module_button.focus_neighbor_bottom = module_button.get_path_to(secondary_button_order[0])
 
 
 func _wire_long_term_card_focus() -> void:
 	var count := long_term_card_buttons.size()
 	if count <= 0:
 		return
-	var columns := 3
 	for index in range(count):
 		var button := long_term_card_buttons[index]
-		if button == null:
-			continue
-		var row_start := int(index / columns) * columns
-		var row_end := mini(row_start + columns - 1, count - 1)
-		var left_index := row_end if index == row_start else index - 1
-		var right_index := row_start if index == row_end else index + 1
-		var up_index := index - columns
-		var down_index := index + columns
-		button.focus_neighbor_left = button.get_path_to(long_term_card_buttons[left_index])
-		button.focus_neighbor_right = button.get_path_to(long_term_card_buttons[right_index])
-		if up_index >= 0:
-			button.focus_neighbor_top = button.get_path_to(long_term_card_buttons[up_index])
-		elif not tab_button_order.is_empty():
-			button.focus_neighbor_top = button.get_path_to(tab_button_order[index % tab_button_order.size()])
-		if down_index < count:
-			button.focus_neighbor_bottom = button.get_path_to(long_term_card_buttons[down_index])
-		else:
-			button.focus_neighbor_bottom = button.get_path_to(long_term_card_buttons[index % columns])
+		button.focus_neighbor_left = button.get_path_to(long_term_card_buttons[(index - 1 + count) % count])
+		button.focus_neighbor_right = button.get_path_to(long_term_card_buttons[(index + 1) % count])
+		if not secondary_button_order.is_empty():
+			button.focus_neighbor_top = button.get_path_to(secondary_button_order[index % secondary_button_order.size()])
+	_wire_long_term_secondary_focus()
 
 
 func _set_long_term_card_selected(card_index: int) -> void:
 	for button in long_term_card_buttons:
-		if button == null:
-			continue
-		var raw_index: Variant = button.get_meta("card_index", -1)
-		var selected := int(raw_index) == card_index
+		var selected := int(button.get_meta("card_index", -1)) == card_index
 		button.button_pressed = selected
-		_apply_art19_button_surface(button, &"panel_highlight" if selected else &"panel_deploy_main", Art10UISkinKitScript.visual_state_tone(&"selected" if selected else &"normal"), &"body_small", &"slot", 10, 18)
+		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if selected else &"normal"))
+		if selected:
+			button.grab_focus()
 
 
 func _grab_long_term_initial_focus() -> void:
-	var selected_tab := tab_buttons.get(selected_module_id, null) as Button
-	if selected_tab != null:
-		selected_tab.grab_focus()
-		return
-	if not tab_button_order.is_empty() and tab_button_order[0] != null:
+	var selected := tab_buttons.get(selected_module_id, null) as Button
+	if selected != null:
+		selected.grab_focus()
+	elif not tab_button_order.is_empty():
 		tab_button_order[0].grab_focus()
 
 
-func _format_child_groups(groups: Array) -> String:
-	var lines := []
-	var visible_groups := groups.slice(0, 2)
-	for group: Dictionary in visible_groups:
-		lines.append(String(group.get("title", "")))
-	if groups.size() > visible_groups.size():
-		lines.append("%d 项已收起" % (groups.size() - visible_groups.size()))
-	return Art10UISkinKitScript.budgeted_lines_text(lines, 3, 12, true)
+func _apply_module_button_surface(button: Button, module_id: StringName, selected: bool) -> void:
+	var base_state := &"selected" if selected else (&"locked" if LOCKED_MODULES.has(module_id) else &"normal")
+	var focus_state := &"selected" if selected else &"focused"
+	_apply_texture_style(button, Art23LongTermAssetContractScript.texture(StringName("long_term.control.module.%s.%s" % [String(module_id), String(base_state)])), "normal")
+	_apply_texture_style(button, Art23LongTermAssetContractScript.texture(StringName("long_term.control.module.%s.%s" % [String(module_id), String(focus_state)])), "hover")
+	_apply_texture_style(button, Art23LongTermAssetContractScript.texture(StringName("long_term.control.module.%s.%s" % [String(module_id), String(focus_state)])), "focus")
+	var pressed_state := &"selected" if selected else &"pressed"
+	_apply_texture_style(button, Art23LongTermAssetContractScript.texture(StringName("long_term.control.module.%s.%s" % [String(module_id), String(pressed_state)])), "pressed")
+	var text_color := Color(0.44, 1.0, 0.96) if selected else Color(0.98, 0.80, 0.39)
+	_apply_button_text(button, 16, text_color)
+	if selected:
+		_apply_selected_text_colors(button, text_color)
 
 
-func _format_detail_preview(detail: Variant) -> String:
-	var preview: Dictionary = detail if detail is Dictionary else {}
-	return Art10UISkinKitScript.sanitize_player_copy("%s\n%s" % [
-		_shorten_copy(String(preview.get("title", "详情")), 12),
-		_shorten_copy(String(preview.get("message", "展示信息")), 14),
-	])
+func _apply_generic_button_surface(button: Button, control_id: StringName, state: StringName, font_size: int) -> void:
+	var focus_state := &"selected" if state == &"selected" else &"focused"
+	_apply_texture_style(button, _texture(StringName("long_term.control.%s.%s" % [String(control_id), String(state)])), "normal")
+	_apply_texture_style(button, _texture(StringName("long_term.control.%s.%s" % [String(control_id), String(focus_state)])), "hover")
+	_apply_texture_style(button, _texture(StringName("long_term.control.%s.%s" % [String(control_id), String(focus_state)])), "focus")
+	var pressed_state := &"selected" if state == &"selected" else &"pressed"
+	_apply_texture_style(button, _texture(StringName("long_term.control.%s.%s" % [String(control_id), String(pressed_state)])), "pressed")
+	_apply_texture_style(button, _texture(StringName("long_term.control.%s.locked" % String(control_id))), "disabled")
+	var text_color := Color(0.42, 1.0, 0.96) if state == &"selected" else Color(0.96, 0.80, 0.48)
+	_apply_button_text(button, font_size, text_color)
+	if state == &"selected":
+		_apply_selected_text_colors(button, text_color)
 
 
-func _format_slots(slots: Array) -> String:
-	var lines := []
-	for slot: Dictionary in slots.slice(0, 2):
-		lines.append("- %s" % _shorten_copy(String(slot.get("display_name", "")), 14))
-	return Art10UISkinKitScript.sanitize_player_copy("\n".join(lines)) if not lines.is_empty() else "事件位：待开放"
+func _apply_card_surface(button: Button, state: StringName) -> void:
+	_apply_generic_button_surface(button, &"card", state, 13)
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
-func _format_art_slots(slots: Array) -> String:
-	var labels := []
-	for slot: Dictionary in slots:
-		labels.append(String(slot.get("art_key", "")))
-	return "美术位：模块图标 / 横幅"
-
-
-func _format_cross_links(links: Array) -> String:
-	var labels := []
-	for link: Dictionary in links:
-		labels.append(String(link.get("target", "")))
-	return ", ".join(labels) if not labels.is_empty() else "待接入"
-
-
-func _format_g30_interface_preview(model: Dictionary, content_preview: Dictionary) -> String:
-	return Art10UISkinKitScript.sanitize_player_copy("奖励与事件：待开放")
-
-
-func _format_jump_targets(targets: Array) -> String:
-	var labels := []
-	for target: Dictionary in targets.slice(0, 4):
-		labels.append("%s" % _safe_display_text(target.get("target_id", "")))
-	return ", ".join(labels) if not labels.is_empty() else "跳转待接入"
-
-
-func _format_snapshot_section(raw_section: Variant) -> String:
-	var section: Dictionary = raw_section if raw_section is Dictionary else {}
-	var lines: Array = section.get("lines", [])
-	return Art10UISkinKitScript.sanitize_player_copy("%s / %s" % [_shorten_copy(String(section.get("title", "")), 8), _shorten_copy(" / ".join(lines.slice(0, 1)), 14)])
-
-
-func _format_preview_line(snapshot: Dictionary, key: String) -> String:
-	var section: Dictionary = snapshot.get(key, {})
-	return Art10UISkinKitScript.sanitize_player_copy("%s：%s" % [_shorten_copy(String(section.get("title", key)), 14), _shorten_copy(String(section.get("message", "")), 22)])
-
-
-func _format_history_preview(history_preview: Dictionary) -> String:
-	if history_preview.is_empty():
-		return "历史战绩：待接入"
-	return Art10UISkinKitScript.sanitize_player_copy("战绩\n%s" % [
-		_shorten_copy(String(history_preview.get("summary", "")), 16),
-	])
-
-
-func _format_profile_runtime(runtime_panel: Dictionary) -> String:
-	return Art10UISkinKitScript.sanitize_player_copy("Meta %dG / runs %d / ex %d / fail %d" % [
-		int(runtime_panel.get("gold", 0)),
-		int(runtime_panel.get("run_count", 0)),
-		int(runtime_panel.get("extract_count", 0)),
-		int(runtime_panel.get("fail_count", 0)),
-	])
-
-
-func _format_summary_dictionary(value: Variant) -> String:
-	if value is Dictionary:
-		var summary: Dictionary = value
-		var lines := []
-		for key in summary.keys().slice(0, 3):
-			lines.append("- %s: %s" % [_shorten_copy(_safe_display_text(key), 14), _shorten_copy(_safe_display_text(summary.get(key, "")), 18)])
-		return Art10UISkinKitScript.sanitize_player_copy("\n".join(lines))
-	return _safe_display_text(value)
-
-
-func _safe_display_text(value: Variant) -> String:
-	if value == null:
-		return "-"
-	if value is Dictionary:
-		return "多项内容"
-	if value is Array:
-		return "列表内容"
-	return Art10UISkinKitScript.sanitize_player_copy(str(value))
-
-
-func _apply_art10_text_refresh() -> void:
-	for label in [
-		overview_label,
-		child_preview_label,
-		history_preview_label,
-		next_stage_label,
-		content_detail_body_label,
-		content_detail_meta_label,
-	]:
-		if label is Label:
-			Art10UISkinKitScript.apply_label_token(label, &"caption", &"text")
-			label.clip_text = false
-	if content_detail_title_label is Label:
-		Art10UISkinKitScript.apply_label_token(content_detail_title_label, &"tab", &"warning")
-	if module_title_label is Label:
-		Art10UISkinKitScript.apply_label_token(module_title_label, &"section_title", &"warning")
-	if module_state_label is Label:
-		Art10UISkinKitScript.apply_label_token(module_state_label, &"body_small", &"muted")
-	if module_body_label is Label:
-		Art10UISkinKitScript.apply_label_token(module_body_label, &"caption", &"text")
-	if module_reason_label is Label:
-		Art10UISkinKitScript.apply_label_token(module_reason_label, &"caption", &"warning")
-	if snapshot_label is Label:
-		Art10UISkinKitScript.apply_label_token(snapshot_label, &"caption", &"text")
-	if interface_preview_label is Label:
-		Art10UISkinKitScript.apply_label_token(interface_preview_label, &"caption", &"muted")
-
-
-func _clear_children() -> void:
-	for child in get_children():
-		remove_child(child)
-		child.queue_free()
-	tab_buttons.clear()
-	tab_button_order.clear()
-	long_term_card_buttons.clear()
-	overview_label = null
-	module_title_label = null
-	module_state_label = null
-	module_body_label = null
-	module_reason_label = null
-	child_preview_label = null
-	snapshot_label = null
-	interface_preview_label = null
-	history_preview_label = null
-	next_stage_label = null
-	content_detail_title_label = null
-	content_detail_body_label = null
-	content_detail_meta_label = null
-	card_grid_container = null
-
-
-func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, callback: Callable) -> Button:
+func _add_image_button(parent: Control, node_name: String, rect: Rect2, text: String, control_id: StringName, callback: Callable, font_size: int) -> Button:
 	var button := Button.new()
 	button.name = node_name
 	button.text = text
-	_set_rect(button, rect)
+	button.position = rect.position
+	button.size = rect.size
 	button.focus_mode = Control.FOCUS_ALL
-	_apply_art19_button_surface(button, &"button_dark", &"secondary", &"caption", &"button", 6, 12)
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.pressed.connect(callback)
+	_apply_generic_button_surface(button, control_id, &"normal", font_size)
 	parent.add_child(button)
 	return button
 
 
-func _add_label_token(parent: Control, node_name: String, rect: Rect2, text: String, token: StringName, color_token: StringName) -> Label:
-	var label := Label.new()
-	label.name = node_name
-	label.text = text
-	_set_rect(label, rect)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	Art10UISkinKitScript.apply_label_token(label, token, color_token)
-	label.clip_text = true
-	parent.add_child(label)
-	return label
-
-
-func _add_panel(parent: Control, node_name: String, rect: Rect2, tone: StringName) -> PanelContainer:
-	var panel := Art10UISkinKitScript.make_image_frame_panel(node_name, rect, _art19_panel_ref_for_tone(tone), _panel_padding_for_tone(tone), _panel_texture_margin_for_tone(tone))
-	parent.add_child(panel)
-	return panel
-
-
-func _apply_art19_button_surface(button: Button, skin_role: StringName, tone: StringName, token: StringName, icon_token: StringName = &"button", padding: int = 8, texture_margin: int = 16) -> void:
-	Art10UISkinKitScript.apply_image_button_ref(
-		button,
-		Art09ManifestAssetMappingScript.art19_skin_ref(skin_role),
-		tone,
-		token,
-		icon_token,
-		padding,
-		texture_margin
-	)
-
-
-func _art19_panel_ref_for_tone(tone: StringName) -> Dictionary:
-	return Art09ManifestAssetMappingScript.art19_skin_ref(_art19_panel_role_for_tone(tone))
-
-
-func _art19_panel_role_for_tone(tone: StringName) -> StringName:
-	match tone:
-		&"deep":
-			return &"panel_terminal"
-		&"summary", &"warning", &"notice":
-			return &"panel_summary"
-		&"selected", &"slot":
-			return &"panel_highlight"
-		_:
-			return &"panel_deploy_main"
-
-
-func _panel_padding_for_tone(tone: StringName) -> int:
-	match tone:
-		&"slot":
-			return 6
-		&"deep", &"summary", &"warning":
-			return 12
-		_:
-			return 10
-
-
-func _panel_texture_margin_for_tone(tone: StringName) -> int:
-	match tone:
-		&"deep":
-			return 32
-		&"summary", &"warning", &"notice":
-			return 16
-		&"selected", &"slot":
-			return 14
-		_:
-			return 24
-
-
-func _add_texture_rect_from_ref(parent: Control, node_name: String, rect: Rect2, asset_ref: Dictionary, alpha: float = 1.0) -> TextureRect:
-	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+func _apply_texture_style(button: Button, texture: Texture2D, state: String) -> void:
 	if texture == null:
-		return null
+		return
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	button.add_theme_stylebox_override(state, style)
+
+
+func _apply_button_text(button: Button, font_size: int, color: Color) -> void:
+	var font := _pixel_font_safe()
+	if font is Font:
+		button.add_theme_font_override("font", font as Font)
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", color)
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.68))
+	button.add_theme_color_override("font_focus_color", Color(0.46, 1.0, 0.96))
+	button.add_theme_color_override("font_pressed_color", Color(0.80, 0.61, 0.31))
+	button.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.92))
+	button.add_theme_constant_override("outline_size", 1)
+
+
+func _apply_selected_text_colors(button: Button, color: Color) -> void:
+	button.add_theme_color_override("font_hover_color", color)
+	button.add_theme_color_override("font_focus_color", color)
+	button.add_theme_color_override("font_pressed_color", color)
+
+
+func _apply_transparent_button(button: Button, font_size: int) -> void:
+	var empty := StyleBoxEmpty.new()
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(state, empty)
+	_apply_button_text(button, font_size, Color(0.97, 0.78, 0.38))
+
+
+func _add_texture(parent: Control, node_name: String, rect: Rect2, texture: Texture2D, nearest: bool) -> TextureRect:
 	var texture_rect := TextureRect.new()
 	texture_rect.name = node_name
 	texture_rect.texture = texture
-	_set_rect(texture_rect, rect)
+	texture_rect.position = rect.position
+	texture_rect.size = rect.size
 	texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	texture_rect.modulate = Color(1.0, 1.0, 1.0, alpha)
+	texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED if rect.size != Vector2(1280, 720) else TextureRect.STRETCH_SCALE
+	texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if nearest else CanvasItem.TEXTURE_FILTER_LINEAR
 	texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(texture_rect)
 	return texture_rect
+
+
+func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color, alignment: HorizontalAlignment, font_role: StringName = &"display") -> Label:
+	var label := Label.new()
+	label.name = node_name
+	label.text = text
+	label.position = rect.position
+	label.size = rect.size
+	label.horizontal_alignment = alignment
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.clip_text = true
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var font: Font = LongTermReadableFont if font_role == &"readable" else _pixel_font_safe()
+	if font == null:
+		font = _pixel_font_safe()
+	if font is Font:
+		label.add_theme_font_override("font", font as Font)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_shadow_color", Color(0.04, 0.02, 0.01, 0.68))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	parent.add_child(label)
+	return label
 
 
 func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Color) -> ColorRect:
 	var color_rect := ColorRect.new()
 	color_rect.name = node_name
 	color_rect.color = color
-	_set_rect(color_rect, rect)
+	color_rect.position = rect.position
+	color_rect.size = rect.size
 	color_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(color_rect)
 	return color_rect
 
 
-func _set_rect(control: Control, rect: Rect2) -> void:
-	Art10UISkinKitScript.set_rect(control, rect)
+func _clear_label_shadow(label: Label) -> void:
+	if label == null:
+		return
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+	label.add_theme_constant_override("shadow_offset_x", 0)
+	label.add_theme_constant_override("shadow_offset_y", 0)
 
 
-func _shorten_copy(text: String, max_chars: int) -> String:
-	return Art10UISkinKitScript.short_summary(text, max_chars)
+func _add_particles(node_name: String, position: Vector2, extents: Vector2, amount: int, color: Color, gravity: Vector2, lifetime: float) -> void:
+	var particles := CPUParticles2D.new()
+	particles.name = node_name
+	particles.position = position
+	particles.amount = amount
+	particles.lifetime = lifetime
+	particles.randomness = 0.85
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	particles.emission_rect_extents = extents * 0.5
+	particles.gravity = gravity
+	particles.initial_velocity_min = 1.0
+	particles.initial_velocity_max = 4.0
+	particles.scale_amount_min = 0.6
+	particles.scale_amount_max = 1.5
+	particles.color = color
+	particles.emitting = true
+	add_child(particles)
 
 
-func _detail_module_copy(description: String, detail: Variant) -> String:
-	var preview: Dictionary = detail if detail is Dictionary else {}
-	var lines: Array = [
-		description,
-		String(preview.get("title", "")),
-		String(preview.get("message", "")),
-	]
-	return "说明\n%s" % Art10UISkinKitScript.budgeted_lines_text(lines, 2, 13, false)
+func _texture(visual_key: StringName) -> Texture2D:
+	if texture_cache.has(visual_key):
+		return texture_cache[visual_key]
+	var texture := Art23LongTermAssetContractScript.texture(visual_key)
+	texture_cache[visual_key] = texture
+	return texture
 
 
-func _card_marker(index: int) -> String:
-	var markers := ["◆", "◇", "▣", "□", "◈", "○", "●", "△", "▲"]
-	return markers[index % markers.size()]
+func _pixel_font_safe() -> Font:
+	if get_node_or_null("/root/AssetCatalog") == null:
+		return null
+	return Art10UISkinKitScript.pixel_font()
+
+
+func _state_label(state: StringName) -> String:
+	match state:
+		&"discovered": return "已发现"
+		&"owned_or_obtained": return "已获得"
+		&"completed": return "已完成"
+		&"empty": return "暂无记录"
+		_: return "未发现"
+
+
+func _format_number(value: int) -> String:
+	var text := str(maxi(0, value))
+	var result := ""
+	while text.length() > 3:
+		result = ",%s%s" % [text.right(3), result]
+		text = text.left(text.length() - 3)
+	return "%s%s" % [text, result]
+
+
+func _focus_is_inside(root: Control) -> bool:
+	var focus := get_viewport().gui_get_focus_owner()
+	return focus != null and (focus == root or root.is_ancestor_of(focus))
+
+
+func _clear_children() -> void:
+	if module_tween != null and module_tween.is_valid():
+		module_tween.kill()
+	if collapse_tween != null and collapse_tween.is_valid():
+		collapse_tween.kill()
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
+	tab_buttons.clear()
+	tab_button_order.clear()
+	secondary_buttons.clear()
+	secondary_button_order.clear()
+	long_term_card_buttons.clear()
+	texture_cache.clear()

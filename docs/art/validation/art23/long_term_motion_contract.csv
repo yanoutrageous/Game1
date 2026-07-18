@@ -1,0 +1,14 @@
+track_id,owner,trigger,duration_seconds,loop,reduce_motion,acceptance
+primary_close,module_group,primary_switch,0.24,false,instant,group fades and scales toward central pivot
+primary_empty_beat,module_group,primary_switch,0.10,false,instant,old furniture is fully closed before replacement
+primary_open,module_group,primary_switch,0.34,false,instant,new furniture and content open as one group
+secondary_content,content_nodes,secondary_switch,0.16,false,instant,panel title body meta and cards fade together
+archive_collapse,module_group,lever_press,0.30,false,instant,central layer leaves the room without moving profile
+archive_expand,module_group,lever_press,0.30,false,instant,central layer returns to exact origin
+lever_focus,archive_lever,focus_or_hover,continuous,false,static,base and label highlight without size change
+character_idle,profile_character,process,0.34,true,freeze_frame_zero,frames 0 to 5 form slow idle and blink rhythm
+character_look,profile_character,5s_then_10s_interval,0.42,true,disabled,frames 6 and 7 only appear in observation action
+warm_lantern_glow,room_environment,process,0.48_period,true,freeze,low alpha pulse remains attached to warm lamp
+blue_research_glow,room_environment,process,0.74_period,true,freeze,low alpha pulse remains attached to blue lamp
+archive_dust,room_environment,always,7.00,true,stop,low density particles avoid text and profile
+blue_motes,room_environment,always,4.80,true,stop,small blue particles stay near research light

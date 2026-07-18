@@ -310,7 +310,7 @@ $closedStageText = Get-Content -LiteralPath $closedStageIndexPath -Raw
 foreach ($token in @("Status: CLOSED / PASS", "Runtime assets: 152 PNG files", "10.40 MiB", "Computer Use")) {
     Assert-TextContains $closeoutText $token "ART21 closeout"
 }
-Assert-TextContains $activeStageText "ART21 closed; successor not yet named" "active stage index"
+Assert-TextContains $activeStageText "closed; successor not yet named" "active stage index"
 Assert-TextContains $closedStageText "ART21 | closed / main-menu scene reconstruction" "closed stage index"
 
 $activeFiles = @($mainModelPath, $mainShellPath, $appShellPath, $contractScriptPath, $placementScriptPath, $reportJsonPath, $contractPath, $motionContractPath, $motionAuditPath)

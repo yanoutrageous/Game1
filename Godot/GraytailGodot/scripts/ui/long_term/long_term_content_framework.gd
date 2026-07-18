@@ -16,9 +16,9 @@ static func build_modules() -> Array:
 			"目标模块保留任务、成就、委托记录三类内容入口。",
 			STATE_PREVIEW,
 			[
-				_group("任务", ["日常任务 preview", "阶段任务 preview", "目标筛选 preview"], "long_term.goals.task.group_icon"),
-				_group("成就", ["成就分类 preview", "达成条件 preview", "展示奖励 preview"], "long_term.goals.achievement.group_icon"),
-				_group("委托记录", ["委托历史 preview", "委托状态 preview", "委托来源 preview"], "long_term.goals.commission.group_icon"),
+				_group(&"task", "任务", ["日常任务", "阶段任务", "目标筛选"], "long_term.goals.task.group_icon"),
+				_group(&"achievement", "成就", ["成就分类", "达成条件", "展示奖励"], "long_term.goals.achievement.group_icon"),
+				_group(&"commission_record", "委托记录", ["委托历史", "委托状态", "委托来源"], "long_term.goals.commission.group_icon"),
 			],
 			[
 				_card("goals_task_card", "任务 preview card", "只展示任务入口和目标摘要，不计算进度。", "任务", LongTermContentSlotModelScript.SLOT_OBJECTIVE),
@@ -36,14 +36,14 @@ static func build_modules() -> Array:
 			"图鉴模块保留地图、怪物、藏品、装备、消耗品、事件、规则和世界观分类。",
 			STATE_PREVIEW,
 			[
-				_group("地图", ["地图条目 preview", "区域线索 preview"], "long_term.codex.map.group_icon"),
-				_group("怪物", ["怪物条目 preview", "遭遇来源 preview"], "long_term.codex.monster.group_icon"),
-				_group("藏品", ["藏品条目 preview", "唯一藏品展示 preview"], "long_term.codex.collectible.group_icon"),
-				_group("装备", ["装备记录 preview", "来源记录 preview"], "long_term.codex.equipment.group_icon"),
-				_group("消耗品", ["消耗品记录 preview", "使用提示 preview"], "long_term.codex.consumable.group_icon"),
-				_group("事件", ["事件条目 preview", "事件来源 preview"], "long_term.codex.event.group_icon"),
-				_group("规则", ["规则说明 preview", "系统提示 preview"], "long_term.codex.rule.group_icon"),
-				_group("世界观", ["背景条目 preview", "文本线索 preview"], "long_term.codex.lore.group_icon"),
+				_group(&"map", "地图", ["地图档案", "区域线索"], "long_term.codex.map.group_icon"),
+				_group(&"monster", "怪物", ["怪物条目", "遭遇来源"], "long_term.codex.monster.group_icon"),
+				_group(&"collectible", "藏品", ["藏品条目", "唯一藏品展示"], "long_term.codex.collectible.group_icon"),
+				_group(&"equipment", "装备", ["装备记录", "来源记录"], "long_term.codex.equipment.group_icon"),
+				_group(&"consumable", "消耗品", ["消耗品记录", "使用提示"], "long_term.codex.consumable.group_icon"),
+				_group(&"event", "事件", ["事件条目", "事件来源"], "long_term.codex.event.group_icon"),
+				_group(&"rule", "规则", ["规则说明", "系统提示"], "long_term.codex.rule.group_icon"),
+				_group(&"lore", "世界观", ["背景条目", "文本线索"], "long_term.codex.lore.group_icon"),
 			],
 			[
 				_card("codex_category_card", "图鉴分类 preview card", "只展示分类和条目位，不生成图鉴数据。", "图鉴", LongTermContentSlotModelScript.SLOT_CODEX_UNLOCK),
@@ -60,8 +60,8 @@ static func build_modules() -> Array:
 			"研究模块保留功能解锁接口和研究入口 preview。",
 			STATE_DISABLED,
 			[
-				_group("功能解锁接口", ["研究节点 preview", "条件字段 preview", "效果摘要 preview"], "long_term.research.unlock.group_icon"),
-				_group("研究入口 preview", ["入口状态 preview", "资源提示 preview", "后续数据表 preview"], "long_term.research.entry.group_icon"),
+				_group(&"unlock_interface", "功能解锁接口", ["研究节点", "条件字段", "效果摘要"], "long_term.research.unlock.group_icon"),
+				_group(&"research_entry", "研究入口", ["入口状态", "资源提示", "后续数据表"], "long_term.research.entry.group_icon"),
 			],
 			[
 				_card("research_node_card", "研究节点 preview card", "只展示研究节点外壳，不解锁、不消耗。", "研究", LongTermContentSlotModelScript.SLOT_RESEARCH_UNLOCK),
@@ -78,12 +78,12 @@ static func build_modules() -> Array:
 			"个人资历模块保留等级、历史战绩、统计、里程碑、称号和徽章。",
 			STATE_PREVIEW,
 			[
-				_group("资历等级", ["等级摘要 preview", "经验来源 preview"], "long_term.profile.level.group_icon"),
-				_group("历史战绩", ["历史战绩卡片 preview", "筛选入口 preview"], "long_term.profile.history.group_icon"),
-				_group("数据统计", ["探索统计 preview", "收益统计 preview"], "long_term.profile.stat.group_icon"),
-				_group("里程碑", ["里程碑列表 preview", "阶段提示 preview"], "long_term.profile.milestone.group_icon"),
-				_group("称号", ["称号展示 preview", "称号来源 preview"], "long_term.profile.title.group_icon"),
-				_group("徽章", ["徽章墙 preview", "徽章状态 preview"], "long_term.profile.badge.group_icon"),
+				_group(&"qualification_level", "资历等级", ["等级摘要", "经验来源"], "long_term.profile.level.group_icon"),
+				_group(&"history", "历史战绩", ["历史战绩卡片", "筛选入口"], "long_term.profile.history.group_icon"),
+				_group(&"statistics", "数据统计", ["探索统计", "收益统计"], "long_term.profile.stat.group_icon"),
+				_group(&"milestone", "里程碑", ["里程碑列表", "阶段提示"], "long_term.profile.milestone.group_icon"),
+				_group(&"title", "称号", ["称号展示", "称号来源"], "long_term.profile.title.group_icon"),
+				_group(&"badge", "徽章", ["徽章墙", "徽章状态"], "long_term.profile.badge.group_icon"),
 			],
 			[
 				_card("profile_history_card", "历史战绩 preview card", "消费 G23 历史快照 preview，不写历史记录。", "个人资历", LongTermContentSlotModelScript.SLOT_HISTORY_RECORD),
@@ -101,9 +101,9 @@ static func build_modules() -> Array:
 			"抽奖模块保留奖池、消耗和结果入口 preview。",
 			STATE_DISABLED,
 			[
-				_group("奖池", ["奖池主题 preview", "奖池状态 preview"], "long_term.gacha.pool.group_icon"),
-				_group("消耗", ["票券需求 preview", "资源提示 preview"], "long_term.gacha.cost.group_icon"),
-				_group("结果入口 preview", ["结果展示 preview", "历史入口 preview"], "long_term.gacha.result.group_icon"),
+				_group(&"pool", "奖池", ["奖池主题", "奖池状态"], "long_term.gacha.pool.group_icon"),
+				_group(&"cost", "消耗", ["票券需求", "资源提示"], "long_term.gacha.cost.group_icon"),
+				_group(&"result_entry", "结果入口", ["结果展示", "历史入口"], "long_term.gacha.result.group_icon"),
 			],
 			[
 				_card("gacha_pool_card", "奖池 preview card", "只展示奖池主题，不计算概率。", "抽奖", LongTermContentSlotModelScript.SLOT_GACHA_POOL),
@@ -121,11 +121,11 @@ static func build_modules() -> Array:
 			"收藏 / 外观模块保留唯一展示、外观配置、展示内容、徽章称号和结算展示。",
 			STATE_PREVIEW,
 			[
-				_group("唯一展示", ["唯一藏品卡 preview", "特殊展示位 preview"], "long_term.collection.unique.group_icon"),
-				_group("外观配置", ["外观库 preview", "装备状态 preview"], "long_term.collection.cosmetic.group_icon"),
-				_group("展示内容", ["展示墙 preview", "展示排序 preview"], "long_term.collection.display.group_icon"),
-				_group("徽章称号", ["徽章称号展示 preview", "来源说明 preview"], "long_term.collection.badge_title.group_icon"),
-				_group("结算展示", ["结算卡面 preview", "历史引用 preview"], "long_term.collection.settlement.group_icon"),
+				_group(&"unique_display", "唯一展示", ["唯一藏品卡", "特殊展示位"], "long_term.collection.unique.group_icon"),
+				_group(&"appearance_config", "外观配置", ["外观库", "装备状态"], "long_term.collection.cosmetic.group_icon"),
+				_group(&"display_content", "展示内容", ["展示墙", "展示排序"], "long_term.collection.display.group_icon"),
+				_group(&"badge_title", "徽章称号", ["徽章称号展示", "来源说明"], "long_term.collection.badge_title.group_icon"),
+				_group(&"settlement_display", "结算展示", ["结算卡面", "历史引用"], "long_term.collection.settlement.group_icon"),
 			],
 			[
 				_card("collection_unique_card", "唯一展示 preview card", "只展示唯一藏品槽位，不获得藏品。", "收藏 / 外观", LongTermContentSlotModelScript.SLOT_UNIQUE_COLLECTIBLE),
@@ -227,7 +227,7 @@ static func _module(
 	}
 
 
-static func _group(title: String, items: Array, group_icon_key: String) -> Dictionary:
+static func _group(group_id: StringName, title: String, items: Array, group_icon_key: String) -> Dictionary:
 	var item_entries := []
 	for item in items:
 		item_entries.append({
@@ -238,6 +238,8 @@ static func _group(title: String, items: Array, group_icon_key: String) -> Dicti
 			"preview": true,
 		})
 	return {
+		"group_id": group_id,
+		"id": group_id,
 		"title": title,
 		"group_icon_key": group_icon_key,
 		"ui_group_key": "long_term.group.%s" % group_icon_key,

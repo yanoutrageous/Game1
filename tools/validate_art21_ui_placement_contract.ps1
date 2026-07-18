@@ -136,7 +136,12 @@ foreach ($relative in $consumerFiles) {
     $path = Join-Path $godotRoot $relative
     Assert-Condition (Test-Path -LiteralPath $path -PathType Leaf) "Missing ART21 consumer file: $path"
     $text = Get-Content -LiteralPath $path -Raw
-    Assert-Condition ($text.Contains("Art21UIPlacementContract")) "Consumer file does not reference Art21UIPlacementContract: $relative"
+    if ($relative -eq "scripts\ui\long_term\long_term_shell.gd") {
+        $usesSuccessorContract = $text.Contains("LongTermLayoutContract") -and $text.Contains("Art23LongTermAssetContract")
+        Assert-Condition ($text.Contains("Art21UIPlacementContract") -or $usesSuccessorContract) "Long-term consumer references neither ART21 placement nor the ART23 successor contracts: $relative"
+    } else {
+        Assert-Condition ($text.Contains("Art21UIPlacementContract")) "Consumer file does not reference Art21UIPlacementContract: $relative"
+    }
 }
 
 $contractScriptText = (Get-Content -LiteralPath $contractScriptPath -Raw) + "`n" + (Get-Content -LiteralPath $mainMenuContractScriptPath -Raw)
