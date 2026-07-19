@@ -4,6 +4,7 @@ class_name DeployPrepCardView
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art22DeployPrepAssetContractScript := preload("res://scripts/presentation/art22_deploy_prep_asset_contract.gd")
+const Art25ContentAssetContractScript := preload("res://scripts/presentation/art25_content_asset_contract.gd")
 
 signal card_pressed(card_id: StringName)
 
@@ -71,7 +72,7 @@ func _build_nodes(tab_id: StringName) -> void:
 	_add_color_rect("CardContentMatte", Rect2(164, 9, 320, 94), Color(0.015, 0.055, 0.060, 0.38))
 	_add_color_rect("CardColumnDivider", Rect2(488, 18, 1, 76), Color(0.28, 0.72, 0.68, 0.34))
 	_add_asset_panel("CardArtworkFrame", Rect2(14, 8, 146, 96), &"slot", &"normal")
-	var art_ref := Art22DeployPrepAssetContractScript.card_art_ref(tab_id, card_id, StringName(card_data.get("filter_id", &"")))
+	var art_ref := Art25ContentAssetContractScript.deploy_card_ref(card_id) if Art25ContentAssetContractScript.handles_deploy_card(card_id) else Art22DeployPrepAssetContractScript.card_art_ref(tab_id, card_id, StringName(card_data.get("filter_id", &"")))
 	artwork = TextureRect.new()
 	artwork.name = "CardArtwork"
 	artwork.texture = Art09ManifestAssetMappingScript.resolve_texture(art_ref)

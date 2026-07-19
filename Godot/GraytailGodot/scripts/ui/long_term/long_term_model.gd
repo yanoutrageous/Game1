@@ -231,6 +231,7 @@ static func _commission_cards(meta: Dictionary) -> Array[Dictionary]:
 		var definition: Dictionary = definitions.get(commission_id, {})
 		cards.append({
 			"id": "commission_record_%d" % reverse_index,
+			"content_id": commission_id,
 			"title": str(definition.get("display_name", commission_id)),
 			"state": "已完成" if bool(record.get("completed", false)) else "未完成",
 			"description": "地图：%s；结局：%s" % [str(record.get("map_id", "未知")), str(record.get("outcome", "未知"))],
@@ -359,6 +360,7 @@ static func _milestone_cards(meta: Dictionary) -> Array[Dictionary]:
 	for definition in M7ContentCatalogScript.profile_levels():
 		var threshold := int(definition.get("exp", 0))
 		cards.append({
+			"id": "profile_level_%d" % int(definition.get("level", 1)),
 			"title": "Lv.%d · %s" % [int(definition.get("level", 1)), str(definition.get("title", "回收员"))],
 			"state": "已达成" if exp_value >= threshold else "还需 %d 经验" % (threshold - exp_value),
 			"description": "资历经验阈值：%d。%s" % [threshold, "徽章：%s" % str(definition.get("badge", "")) if definition.has("badge") else ""],

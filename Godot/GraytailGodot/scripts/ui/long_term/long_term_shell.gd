@@ -9,6 +9,8 @@ const LongTermLayoutContractScript := preload("res://scripts/ui/long_term/long_t
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21MainMenuAssetContractScript := preload("res://scripts/presentation/art21_main_menu_asset_contract.gd")
 const Art23LongTermAssetContractScript := preload("res://scripts/presentation/art23_long_term_asset_contract.gd")
+const Art25ContentAssetContractScript := preload("res://scripts/presentation/art25_content_asset_contract.gd")
+const LongTermContentCardViewScript := preload("res://scripts/ui/long_term/long_term_content_card_view.gd")
 const LongTermReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 
 signal navigation_intent_requested(intent: Dictionary)
@@ -542,14 +544,9 @@ func _rebuild_content_cards(group: Dictionary) -> void:
 	selected_content_card_index = page_start
 	for index in range(page_start, mini(page_start + 3, cards.size())):
 		var card: Dictionary = cards[index]
-		var button := Button.new()
+		var button := LongTermContentCardViewScript.new() as Button
 		button.name = "LongTermCard_%s_%d" % [String(get_selected_secondary_id()), index - page_start]
-		button.text = "%s\n%s" % [String(card.get("title", "档案条目")), String(card.get("state", "已登记"))]
-		button.custom_minimum_size = Vector2(164, 86)
-		button.toggle_mode = true
-		button.button_pressed = index == page_start
-		button.focus_mode = Control.FOCUS_ALL
-		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		button.call("setup", card, LOCKED_MODULES.has(displayed_module_id), index == page_start)
 		button.set_meta("card_index", index)
 		button.pressed.connect(Callable(self, "_set_long_term_card_selected").bind(index))
 		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if index == page_start else &"normal"))
@@ -572,7 +569,7 @@ func _cards_for_group(group: Dictionary) -> Array[Dictionary]:
 		if not cards.is_empty():
 			while cards.size() < 3:
 				cards.append({"title": "暂无更多记录", "state": "未登记", "description": "该分类当前没有更多真实记录。"})
-			return cards
+			return _attach_content_visual_keys(cards, real_key)
 	if displayed_module_id == &"codex" and group_id in [&"monster", &"collectible"]:
 		var expected_kind := group_id
 		var matching_cards: Array = (current_model.get("content_cards", []) as Array).filter(
@@ -607,7 +604,16 @@ func _cards_for_group(group: Dictionary) -> Array[Dictionary]:
 			})
 	while cards.size() < 3:
 		cards.append({"title": "预留档案位", "state": "封存" if LOCKED_MODULES.has(displayed_module_id) else "未发现"})
-	return cards
+	return _attach_content_visual_keys(cards, real_key)
+
+
+func _attach_content_visual_keys(cards: Array[Dictionary], group_key: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for raw_card in cards:
+		var card := raw_card.duplicate(true)
+		card["visual_key"] = Art25ContentAssetContractScript.long_term_visual_key(group_key, card)
+		result.append(card)
+	return result
 
 
 func _profile_cards(group_id: StringName) -> Array[Dictionary]:
@@ -988,6 +994,8 @@ func _apply_generic_button_surface(button: Button, control_id: StringName, state
 func _apply_card_surface(button: Button, state: StringName) -> void:
 	_apply_generic_button_surface(button, &"card", state, 13)
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if button.has_method("apply_visual_state"):
+		button.call("apply_visual_state", state)
 
 
 func _add_image_button(parent: Control, node_name: String, rect: Rect2, text: String, control_id: StringName, callback: Callable, font_size: int) -> Button:
