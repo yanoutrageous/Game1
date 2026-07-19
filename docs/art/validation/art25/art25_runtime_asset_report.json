@@ -1,0 +1,18 @@
+{
+  "stage": "ART25",
+  "runtime_assets": 107,
+  "total_decoded_bytes": 1796864,
+  "total_decoded_mib": 1.71,
+  "decoded_mib_by_load_group": {
+    "art25_deploy_commission": 0.119,
+    "art25_deploy_map": 0.404,
+    "art25_deploy_shop": 0.198,
+    "art25_long_term_codex": 0.658,
+    "art25_long_term_collection": 0.036,
+    "art25_long_term_default": 0.012,
+    "art25_long_term_goals": 0.191,
+    "art25_long_term_profile": 0.06,
+    "art25_long_term_research": 0.036
+  },
+  "manifest_policy": "incremental_ui_art25_rows_only"
+}
