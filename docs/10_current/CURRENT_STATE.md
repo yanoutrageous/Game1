@@ -1,6 +1,6 @@
 # Current State
 
-文档状态：M7 合并、ART24R2 返工恢复后的当前仓库事实；最后更新 2026-07-20。
+文档状态：M7 合并、ART24R2 以验收不通过状态封存后的当前仓库事实；最后更新 2026-07-20。
 
 ## 当前基线
 
@@ -8,15 +8,15 @@
 branch: art/art24r2-g41-m6-combat-ui
 program_baseline: ART23 + G41 + M6 + M7
 art_baseline: ART23
-latest_art_attempt: ART24R2 resumed from 24/61 failed audit
+latest_art_attempt: ART24R2 archived after final 24/61 failed audit
 excluded_baseline: ART24 / ART24R1 / ART24R2
 latest_closed_program_stage: M7
-active_successor_stage: ART24R2 rework
+active_successor_stage: not selected
 godot: D:\AGAME1\active\tools\runtimes\godot\4.6.3\godot_v4.6.3-stable_win64_console.exe
 git: resolved from PATH
 ```
 
-当前仓库必须由 `git rev-parse --show-toplevel` 解析，历史文档中的旧盘符路径不再具有当前执行权威。ART24R2 已合并 M7 最新程序接口并从 24/61 的失败审计继续返工；在重新达到冻结标准前仍不能作为已验收美术基线。
+当前仓库必须由 `git rev-parse --show-toplevel` 解析，历史文档中的旧盘符路径不再具有当前执行权威。ART24R2 已合并 M7 最新程序接口，并按用户指令在 24/61 的最终 Computer Use 结果下结束本阶段；它仍不能作为已验收美术基线，合格美术基线保持 ART23。
 
 ## 已完成的程序闭环
 
@@ -59,7 +59,8 @@ M6 与 ART24 背包场景探针在退出时仍报告 `ObjectDB/resources still i
 - 已改善角色/房间比例、左栏、协议层、底栏、展开地图、背包、结算、世界掉落与可重复开合箱子。
 - 代码门覆盖 8 个一级模块、61 个状态契约和 5 档分辨率；代码门不能替代实机验收。
 - Computer Use 已通过 24 个状态；其余 37 个状态因未形成冻结证据或未完成实机检查统一记为 `FAIL`。
-- 2026-07-19 的封存与 push 不代表 ART24R2 完成；2026-07-20 已按持续目标恢复返工并合并 M7。
+- 2026-07-20 已从生产 `main.tscn` 通过 Computer Use 重新跑通主菜单、出发探索、真实局内、M7 地图打开、标记和关闭返回；该复验没有覆盖并转正其余 37 个失败状态。
+- 用户已明确要求把当前内容跑完后结束阶段，即使验收部分不通过也要 push；因此 ART24R2 以 `FAIL / STAGE_ARCHIVED_BY_USER_DIRECTION` 封存，不再作为当前活动返工阶段。
 - 详细结果见 `docs/validation/ART24R2_FINAL_COMPUTER_USE_RESULTS.md`。
 
 ## 尚未声明完成
