@@ -61,6 +61,14 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = interact()
 		&"fight_current_enemy":
 			action_result = fight_current_enemy()
+		&"apply_runtime_combat_damage":
+			action_result = apply_runtime_combat_damage(command_payload)
+		&"resolve_runtime_combat":
+			action_result = resolve_runtime_combat(command_payload)
+		&"resolve_runtime_combat_defeat":
+			action_result = resolve_runtime_combat_defeat(command_payload)
+		&"flee_runtime_combat":
+			action_result = flee_runtime_combat(command_payload)
 		&"teleport_to_explored":
 			action_result = teleport_to_explored(command_payload.get("pos", Vector2i.ZERO))
 		&"select_event_option":
@@ -253,6 +261,50 @@ func fight_current_enemy() -> Dictionary:
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
+	return result
+
+
+func apply_runtime_combat_damage(payload: Dictionary) -> Dictionary:
+	if not _is_g41_runtime_payload(payload):
+		return _blocked(&"unauthorized_runtime_command", "unauthorized_runtime_command")
+	if not _can_accept_command():
+		return _blocked(&"blocked", _current_blocked_reason())
+	var result: Dictionary = room_resolver.apply_runtime_combat_damage(context, payload)
+	_emit_state()
+	if context.failed:
+		result_available.emit(context.result_snapshot)
+	return result
+
+
+func resolve_runtime_combat(payload: Dictionary) -> Dictionary:
+	if not _is_g41_runtime_payload(payload):
+		return _blocked(&"unauthorized_runtime_command", "unauthorized_runtime_command")
+	if not _can_accept_command():
+		return _blocked(&"blocked", _current_blocked_reason())
+	var result: Dictionary = room_resolver.resolve_runtime_combat(context, payload)
+	_emit_state()
+	return result
+
+
+func resolve_runtime_combat_defeat(payload: Dictionary) -> Dictionary:
+	if not _is_g41_runtime_payload(payload):
+		return _blocked(&"unauthorized_runtime_command", "unauthorized_runtime_command")
+	if context == null:
+		return _blocked(&"not_ready", "not_ready")
+	var result: Dictionary = room_resolver.resolve_runtime_combat_defeat(context, payload)
+	_emit_state()
+	if context.failed:
+		result_available.emit(context.result_snapshot)
+	return result
+
+
+func flee_runtime_combat(payload: Dictionary) -> Dictionary:
+	if not _is_g41_runtime_payload(payload):
+		return _blocked(&"unauthorized_runtime_command", "unauthorized_runtime_command")
+	if not _can_accept_command():
+		return _blocked(&"blocked", _current_blocked_reason())
+	var result: Dictionary = room_resolver.flee_runtime_combat(context, payload)
+	_emit_state()
 	return result
 
 
@@ -607,6 +659,11 @@ func _current_blocked_reason() -> String:
 
 func _is_debug_command_request(command_name: StringName, payload: Dictionary) -> bool:
 	return DebugGateScript.is_debug_command(command_name, payload)
+
+
+func _is_g41_runtime_payload(payload: Dictionary) -> bool:
+	var source := String(payload.get("source", ""))
+	return source == "g41_combat_simulation" or source == "g41_in_run_runtime"
 
 
 func _mark_open_map_placeholder() -> Dictionary:

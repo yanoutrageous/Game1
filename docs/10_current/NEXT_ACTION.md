@@ -1,35 +1,29 @@
 # Next Action
 
-文档状态：ART23 关闭后的下一步边界
-最后更新：2026-07-18
+文档状态：G41 关闭后的下一步边界；最后更新 2026-07-19。
 
-## 当前授权状态
+## 当前状态
 
-ART23 长期系统最终美术 UI 完成后，当前没有已授权的后续 active stage。
-不得仅根据本文件自动启动 MVP 其他内容、代码重构、CI 或发布工作。
+G41“局内基础玩法运行时与交互接口补全”已完成正式执行审计、问题修正和回归，关闭证据为：
 
-## 下一阶段候选
+- `docs/20_product/G41_IN_RUN_CORE_GAMEPLAY_RUNTIME_CONTRACT.md`
+- `docs/validation/G41_IN_RUN_CORE_GAMEPLAY_RUNTIME_VALIDATION.md`
+- `docs/handoff/HANDOFF_G41_IN_RUN_CORE_GAMEPLAY_RUNTIME.md`
+- `Godot/GraytailGodot/tools/validate_g41_in_run_core_gameplay_runtime.ps1`
 
-后续应由用户单独命名和授权，可从以下独立方向中选择：
+当前没有自动授权的后继阶段。下一阶段仍需先与用户确认计划；计划确认后，审计、执行、修正、提交与上传可按用户最新授权直接完成，无需逐门等待批准。
 
-1. 出发探索剩余真实继续 / 放弃持久化与许可 / 奖励业务接口。
-2. 长期系统的真实数据、解锁、抽奖、收藏与档案业务接口。
-3. MVP 其他程序、美术、内容、平衡、引导与完整人工游玩。
-4. 可见 Godot 启动日志完全隔离门。
-5. 最小 CI / export / release gate。
-6. Persistence 往返、失败恢复和版本迁移可靠性。
+## 后继计划必须继承
 
-## 必须继承
+- 基线以 ART23 `7f2e0b304e2cd7959411bfe6422d3d0b3337462f` 加 G41 最终提交为准，不回退到 main 推断状态。
+- 用户已明确排除 ART24：不得把 `art/art24-in-run-final-ui` 作为程序基线或未经重新规划直接接入。
+- `RunAssetLedger` 继续作为物品位置唯一权威；活跃战斗只由 `G41CombatSimulation` 写入；持久局内结果继续经 CommandBus → Rule/Effect 提交。
+- 美术接入只替换 `VisualRoot` 下视觉内容并使用稳定状态、锚点和 `visual_key`；不得用纹理尺寸决定碰撞。
+- 映射/manifest 整合必须指定单一提交所有者，不覆盖并行美术内容。
 
-- I0 的锁定工具链、隔离 harness、污染守卫和声明边界。
-- ART21 的主菜单场景、资产契约、路由和 motion contract。
-- ART22 的出发探索布局、57 资产、5 × 34 状态、动效与 Computer Use 验收边界。
-- ART23 的长期系统布局、58 纹理、6 × 27 页面、字体层级、动效与 Computer Use 验收边界。
-- `git rev-parse --show-toplevel` 的当前路径权威。
-- I0 历史安全不符合项与有限人工覆盖记录。
-- 不使用固定 `D:\AGAME1` 作为当前配置。
+## G41 未声明完成
 
-## 验收边界
-
-本次 ART23 全量 UI 验收与 I0 runner PASS 不等于完整 gameplay、
-人工游玩、最终视觉、性能、CI、导出或发布 PASS。
+- 最终美术、动画、特效、音频与跨分支美术整合。
+- Boss、精英、技能、完整被动、完整事件、最终数值平衡与跨进程局内保存。
+- 完整人工长时间游玩、性能认证、CI、导出和发布。
+- G8.1/G8.2 对既有 `save_adapter.gd` 和 CommandBus 历史直写路径的基线限制。

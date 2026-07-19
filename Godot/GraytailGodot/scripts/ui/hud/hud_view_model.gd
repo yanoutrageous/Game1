@@ -63,6 +63,7 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 	var popup: Dictionary = snapshot.get("tutorial_popup", {})
 	var event_state: Dictionary = snapshot.get("event_state", {})
 	var enemy_state: Dictionary = snapshot.get("enemy_state", {})
+	var combat_runtime: Dictionary = snapshot.get("combat_runtime", {})
 	var popup_text := ""
 	if not popup.is_empty():
 		popup_text = "教学：%s" % _short_text(String(popup.get("message", popup.get("id", ""))), 20)
@@ -70,7 +71,14 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 	if not event_state.is_empty():
 		event_text = "事件：%s" % _event_label(StringName(event_state.get("event_type", &"event")))
 	var enemy_text := ""
-	if not enemy_state.is_empty():
+	if bool(combat_runtime.get("active", false)):
+		var alive_enemies := 0
+		for raw_enemy in (combat_runtime.get("enemies", []) as Array):
+			if raw_enemy is Dictionary and int((raw_enemy as Dictionary).get("hp", 0)) > 0:
+				alive_enemies += 1
+		var combat_player: Dictionary = combat_runtime.get("player", {})
+		enemy_text = "Combat: %d hostiles | %s" % [alive_enemies, String(combat_player.get("state", &"idle"))]
+	elif not enemy_state.is_empty():
 		enemy_text = "异常体：%s / 我方：%s" % [enemy_state.get("enemy_power", 0), enemy_state.get("player_power", 0)]
 	var blocked_text := ""
 	if String(snapshot.get("blocked_reason", "")) != "":

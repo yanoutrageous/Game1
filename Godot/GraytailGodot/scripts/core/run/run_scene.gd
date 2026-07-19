@@ -34,6 +34,7 @@ const RunSceneCommandFeedbackScript := preload("res://scripts/core/run/run_scene
 const RunSceneResultControllerScript := preload("res://scripts/core/run/run_scene_result_controller.gd")
 const RunSceneResponsibilityBudgetScript := preload("res://scripts/core/run/run_scene_responsibility_budget.gd")
 const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
+const G41RoomRuntimeViewScript := preload("res://scripts/gameplay/runtime/g41_room_runtime_view.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
@@ -67,6 +68,7 @@ const G9_UI_NODE_VALIDATION_MARKERS := [
 var run_context: RunContext
 var command_bus: CommandBus
 var runtime_controller
+var in_run_runtime
 var meta_progress_adapter: MetaProgressAdapter
 var save_manager
 var ui_root: Control
@@ -108,6 +110,7 @@ var map_overlay_panel: MapOverlayPanel
 var tutorial_popup_panel: TutorialPopupPanel
 var room_controller: RoomSceneController
 var player_controller: PlayerController
+var room_runtime_view
 var screen_state: StringName = SCREEN_MAIN_MENU
 var current_layout_profile_id: StringName = &"desktop"
 var last_command_result: Dictionary = {}
@@ -125,6 +128,7 @@ func _ready() -> void:
 	runtime_controller = RunRuntimeControllerScript.new()
 	run_context = runtime_controller.context
 	command_bus = runtime_controller.command_bus
+	in_run_runtime = runtime_controller.in_run_runtime
 	command_bus.state_changed.connect(_on_state_changed)
 	command_bus.result_available.connect(_on_result_available)
 	_build_playfield_visuals()
@@ -137,16 +141,33 @@ func _process(delta: float) -> void:
 		return
 	if player_controller == null or command_bus == null or run_context == null:
 		return
-	if _is_runtime_modal_open():
-		return
-	if map_overlay_panel != null and map_overlay_panel.visible:
-		return
-	if run_context.has_blocking_tutorial_popup():
+	var runtime_paused := _is_runtime_modal_open() or (map_overlay_panel != null and map_overlay_panel.visible) or run_context.has_blocking_tutorial_popup()
+	if in_run_runtime != null:
+		in_run_runtime.sync_room(player_controller.get_local_position())
+		in_run_runtime.set_paused(runtime_paused)
+	if runtime_paused:
+		if room_runtime_view != null:
+			room_runtime_view.advance(0.0, player_controller.get_local_position(), in_run_runtime.build_read_only_snapshot() if in_run_runtime != null else {})
 		return
 	var move_vector := player_controller.get_move_vector()
+	if in_run_runtime != null and in_run_runtime.has_active_combat():
+		var combat_aim := move_vector if move_vector.length_squared() > 0.0001 else player_controller.get_facing_vector()
+		var combat_snapshot: Dictionary = in_run_runtime.advance_frame(delta, move_vector, combat_aim)
+		player_controller.set_local_position(in_run_runtime.get_player_local_position(player_controller.get_local_position()))
+		var combat_player: Dictionary = combat_snapshot.get("player", {})
+		player_controller.set_facing_vector(Vector2(combat_player.get("facing", combat_aim)))
+		player_controller.set_runtime_visual_state(StringName(combat_player.get("state", &"idle")))
+		if room_runtime_view != null:
+			room_runtime_view.advance(delta, player_controller.get_local_position(), combat_snapshot)
+		var combat_transition := player_controller.requested_transition(move_vector)
+		if combat_transition != Vector2i.ZERO:
+			_attempt_room_transition(combat_transition)
+		return
 	var local_result := player_controller.move_local(move_vector, delta)
 	if StringName(local_result.get("status", &"")) == &"transition":
 		_attempt_room_transition(local_result.get("direction", Vector2i.ZERO))
+	if room_runtime_view != null:
+		room_runtime_view.advance(delta, player_controller.get_local_position(), in_run_runtime.build_read_only_snapshot() if in_run_runtime != null else {})
 
 
 func _input(event: InputEvent) -> void:
@@ -222,6 +243,10 @@ func _build_playfield_visuals() -> void:
 	room_controller = RoomScene.instantiate() as RoomSceneController
 	room_controller.name = "RoomSceneController"
 	room_layer.add_child(room_controller)
+	room_runtime_view = G41RoomRuntimeViewScript.new()
+	room_runtime_view.name = "G41RoomRuntimeView"
+	room_runtime_view.interaction_commit_requested.connect(_on_g41_interaction_commit_requested)
+	room_layer.add_child(room_runtime_view)
 	player_controller = PlayerScene.instantiate() as PlayerController
 	player_controller.name = "PlayerController"
 	player_layer.add_child(player_controller)
@@ -552,6 +577,8 @@ func _shell_snapshot() -> Dictionary:
 		snapshot = run_context.get_status_snapshot()
 		if not run_context.result_snapshot.is_empty():
 			snapshot["last_result_snapshot"] = run_context.result_snapshot.duplicate(true)
+	if in_run_runtime != null:
+		snapshot["combat_runtime"] = in_run_runtime.build_read_only_snapshot()
 	snapshot["meta_progress_summary"] = _meta_progress_summary()
 	snapshot["run_scene_responsibility_budget"] = RunSceneResponsibilityBudgetScript.describe()
 	return snapshot
@@ -781,6 +808,21 @@ func _on_long_term_entry_requested(entry_id: StringName) -> void:
 func _handle_interact_pressed() -> void:
 	if command_bus == null or run_context == null or _is_runtime_modal_open():
 		return
+	if room_runtime_view != null and player_controller != null:
+		var world_request: Dictionary = room_runtime_view.request_nearest_interaction(player_controller.get_local_position())
+		if bool(world_request.get("accepted", false)):
+			match StringName(world_request.get("interaction_kind", &"none")):
+				&"ground_loot":
+					var payload: Dictionary = world_request.get("payload", {})
+					var instance_id := String(payload.get("instance_id", ""))
+					var pickup_result := _dispatch_command(&"pickup_ground_item", {"source": "g41_world_interaction", "instance_id": instance_id})
+					room_runtime_view.show_pickup_result(instance_id, bool(pickup_result.get("ok", false)))
+					if not bool(pickup_result.get("ok", false)):
+						_show_ground_loot_panel()
+					return
+				&"chest":
+					_show_command_feedback({"ok": true, "status": &"chest_opening", "message": "Opening chest..."})
+					return
 	var snapshot := run_context.get_status_snapshot()
 	var current_room: StringName = StringName(snapshot.get("current_room", &"Unknown"))
 	var search_data: Dictionary = snapshot.get("search_state_data", {})
@@ -794,6 +836,9 @@ func _handle_interact_pressed() -> void:
 			_show_extract_panel(snapshot)
 		else:
 			_request_extract_from_ui()
+		return
+	if current_room == &"Chest":
+		_show_command_feedback({"ok": false, "reason": &"interactable_out_of_range", "message": "Move closer to the chest."})
 		return
 	if bool(search_data.get("can_search", false)):
 		_search_and_show_loot()
@@ -813,6 +858,11 @@ func _search_and_show_loot() -> void:
 
 
 func _fight_and_show_result() -> void:
+	if in_run_runtime != null and in_run_runtime.has_active_combat():
+		var attack_result: Dictionary = in_run_runtime.request_attack()
+		last_command_result = attack_result.duplicate(true)
+		_show_command_feedback(attack_result)
+		return
 	var result := _dispatch_command(&"fight_current_enemy")
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
@@ -820,6 +870,16 @@ func _fight_and_show_result() -> void:
 		_show_loot_panel("战斗结果", reward)
 	else:
 		_show_command_feedback(result)
+
+
+func _on_g41_interaction_commit_requested(interaction_kind: StringName, _payload: Dictionary) -> void:
+	if interaction_kind != &"chest" or run_context == null or command_bus == null:
+		return
+	var result := _dispatch_command(&"search_current_room", {"source": "g41_world_interaction"})
+	if room_runtime_view != null:
+		room_runtime_view.resolve_chest_commit(bool(result.get("ok", false)))
+		room_runtime_view.configure_room(run_context.get_status_snapshot())
+	_show_command_feedback(result)
 
 
 func _pickup_floor_from_ui(instance_id: String = "") -> void:
@@ -937,6 +997,12 @@ func _select_event_option(option_id: StringName) -> void:
 
 
 func _on_encounter_option_selected(_option_id: StringName, command_payload: Dictionary) -> void:
+	if in_run_runtime != null and in_run_runtime.has_active_combat():
+		_fight_and_show_result()
+		return
+	if run_context != null and run_context.current_room_type == &"Chest":
+		_handle_interact_pressed()
+		return
 	var payload := command_payload.duplicate(true)
 	if not payload.has("option_id"):
 		_show_command_feedback({
@@ -1148,6 +1214,13 @@ func _refresh_view_models() -> void:
 		room_controller.configure(PresentationMapping.room_visual_from_snapshot(snapshot))
 	if player_controller != null:
 		player_controller.set_visual_asset(&"sprite.player.default")
+	if in_run_runtime != null and player_controller != null:
+		in_run_runtime.sync_room(player_controller.get_local_position())
+	if room_runtime_view != null:
+		room_runtime_view.configure_room(snapshot)
+		room_runtime_view.apply_combat_snapshot(in_run_runtime.build_read_only_snapshot() if in_run_runtime != null else {})
+		if player_controller != null:
+			player_controller.set_logical_obstacles(room_runtime_view.get_logical_obstacles())
 	_suppress_runtime_scene_labels()
 	if hud != null:
 		hud.apply_layout_profile(layout_profile)
@@ -1572,6 +1645,19 @@ func _start_run_from_route(intent: Dictionary) -> void:
 
 
 func _attempt_room_transition(direction: Vector2i) -> void:
+	if in_run_runtime != null and in_run_runtime.has_active_combat():
+		var transition_check := _g41_transition_precheck(direction)
+		if not bool(transition_check.get("ok", false)):
+			last_command_result = transition_check.duplicate(true)
+			_show_command_feedback(transition_check)
+			player_controller.block_transition(direction)
+			return
+		var flee_result: Dictionary = in_run_runtime.request_flee()
+		last_command_result = flee_result.duplicate(true)
+		_show_command_feedback(flee_result)
+		if not bool(flee_result.get("ok", false)):
+			player_controller.block_transition(direction)
+			return
 	var before := run_context.get_current_pos()
 	var result: Dictionary = command_bus.dispatch(&"attempt_room_transition", {"direction": direction})
 	last_command_result = result.duplicate(true)
@@ -1581,6 +1667,19 @@ func _attempt_room_transition(direction: Vector2i) -> void:
 		player_controller.place_from_entry(direction)
 	else:
 		player_controller.block_transition(direction)
+
+
+func _g41_transition_precheck(direction: Vector2i) -> Dictionary:
+	if run_context == null or abs(direction.x) + abs(direction.y) != 1:
+		return {"ok": false, "reason": &"invalid_direction"}
+	var target := run_context.get_current_pos() + direction
+	if not run_context.is_inside(target):
+		return {"ok": false, "reason": &"out_of_bounds", "message": "No door exists beyond this boundary."}
+	if run_context.intel_map != null and run_context.intel_map.is_flagged(target):
+		return {"ok": false, "reason": &"blocked_flagged", "message": "The target room is flagged."}
+	if run_context.move_requires_revealed and run_context.intel_map != null and not run_context.intel_map.is_revealed(target):
+		return {"ok": false, "reason": &"blocked_hidden", "message": "The target room is not revealed."}
+	return {"ok": true, "target": target}
 
 
 func _on_map_overlay_cell_action_requested(marker: Dictionary) -> void:
@@ -1594,6 +1693,12 @@ func _on_map_overlay_cell_action_requested(marker: Dictionary) -> void:
 			map_overlay_panel.show_action_feedback(marker, flag_result)
 		return
 	if action_id == &"fast_return":
+		if in_run_runtime != null and in_run_runtime.has_active_combat():
+			var blocked_fast_return := {"ok": false, "reason": &"combat_door_locked", "message": "Fast return is unavailable during combat; reach a door to flee."}
+			last_command_result = blocked_fast_return.duplicate(true)
+			if map_overlay_panel != null:
+				map_overlay_panel.show_action_feedback(marker, blocked_fast_return)
+			return
 		var result: Dictionary = _dispatch_command(&"teleport_to_explored", {"pos": pos})
 		if map_overlay_panel != null:
 			map_overlay_panel.show_action_feedback(marker, result)

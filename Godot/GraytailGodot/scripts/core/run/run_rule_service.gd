@@ -102,8 +102,9 @@ static func apply_combat_reward(context: RunContext, pos: Vector2i, reward_gold:
 		return make_rule_result(false, &"combat_reward", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
 	var request: Dictionary = _make_rule_request(context, &"combat_reward", "combat", {"pos": pos, "reward_gold": reward_gold})
 	var item_defs: Array[Dictionary] = []
-	if reward_gold >= 10:
-		item_defs.append(RunRuleContent.monster_trophy(pos, reward_gold))
+	var monster_drop := RunRuleContent.monster_trophy(pos, reward_gold)
+	if not monster_drop.is_empty():
+		item_defs.append(monster_drop)
 	var effects: Array = [
 		_effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "combat", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": reward_gold}),
 		_effect_for_request(request, 2, RunAssetEffectHandler.EFFECT_ADD_REWARD_ITEMS, "combat", pos, {"item_defs": item_defs, "preferred_location": RunAssetLedger.LOCATION_ROOM_FLOOR, "room_pos": pos}),
@@ -116,6 +117,41 @@ static func apply_combat_reward(context: RunContext, pos: Vector2i, reward_gold:
 	result["items"] = _combine_item_results(item_result)
 	result["ground_items"] = item_result.get("ground_items", [])
 	result["blocked_reason"] = item_result.get("blocked_reason", "")
+	result["effect_results"] = applied.get("effect_results", [])
+	return _finalize_rule(context, request, result, applied)
+
+
+static func apply_combat_flee(context: RunContext, pos: Vector2i) -> Dictionary:
+	if context == null or context.asset_ledger == null:
+		return make_rule_result(false, &"combat_flee", DEFAULT_ACTOR_ID, "no_active_asset_ledger", [], ["No active asset ledger."])
+	var request: Dictionary = _make_rule_request(context, &"combat_flee", "combat_flee", {"pos": pos})
+	var pending_black_coin := context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK)
+	var black_coin_loss := int(floor(float(pending_black_coin) * 0.10))
+	var effects: Array = []
+	var effect_index := 1
+	if black_coin_loss > 0:
+		effects.append(_effect_for_request(request, effect_index, RunAssetEffectHandler.EFFECT_SPEND_CURRENCY, "combat_flee", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": black_coin_loss}))
+		effect_index += 1
+	var dropped_instance_ids: Array[String] = []
+	for item in context.asset_ledger.get_items_by_location(RunAssetLedger.LOCATION_INVENTORY):
+		var item_type := StringName(item.get("item_type", item.get("main_type", &"")))
+		var rarity := StringName(item.get("rarity", &"common"))
+		if item_type == M3ItemCatalog.TYPE_CONSUMABLE or rarity not in [&"common", &"tier_1"]:
+			continue
+		var instance_id := String(item.get("instance_id", ""))
+		var roll := absi(context.seed_value * 31 + pos.x * 73856093 + pos.y * 19349663 + instance_id.hash()) % 100
+		if roll >= 25:
+			continue
+		dropped_instance_ids.append(instance_id)
+		effects.append(_effect_for_request(request, effect_index, RunAssetEffectHandler.EFFECT_DROP_INVENTORY_ITEM, "combat_flee", pos, {"instance_id": instance_id, "room_pos": pos}))
+		effect_index += 1
+	var applied: Dictionary = RunAssetEffectHandler.apply_effects(context, effects)
+	var ok := bool(applied.get("ok", true))
+	var result := make_rule_result(ok, &"combat_flee", DEFAULT_ACTOR_ID, String(applied.get("reason", "")), effects, ["Combat flee losses resolved."])
+	result["black_coin_loss"] = black_coin_loss
+	result["dropped_instance_ids"] = dropped_instance_ids
+	result["items_moved_to_room_floor"] = dropped_instance_ids.size()
+	result["room_remains_uncleared"] = true
 	result["effect_results"] = applied.get("effect_results", [])
 	return _finalize_rule(context, request, result, applied)
 

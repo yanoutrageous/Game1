@@ -168,6 +168,107 @@ func fight_current_enemy(context: RunContext) -> Dictionary:
 	return result
 
 
+func apply_runtime_combat_damage(context: RunContext, payload: Dictionary) -> Dictionary:
+	if context == null or not context.run_active:
+		return {"ok": false, "reason": "run_not_active", "blocked_reason": "run_not_active"}
+	if context.current_room_type != &"Monster" or context.truth_map == null or context.truth_map.is_cleared(context.get_current_pos()):
+		return {"ok": false, "reason": "runtime_combat_unavailable", "blocked_reason": "runtime_combat_unavailable"}
+	var damage := maxi(0, int(payload.get("damage", 0)))
+	if damage <= 0:
+		return {"ok": true, "status": &"runtime_combat_damage_ignored", "damage": 0, "hp": context.hp}
+	var applied := RunEffectApplierScript.apply_effects(context, [
+		RunEffectApplierScript.effect_hp_delta(-damage, "runtime_combat_%s" % String(payload.get("damage_kind", &"damage"))),
+	], runtime_controller)
+	context.run_stats["combat_damage"] = int(context.run_stats.get("combat_damage", 0)) + damage
+	context.enemy_state["runtime_combat_tick"] = int(payload.get("combat_tick", 0))
+	context.last_message = "Combat hit: -%d HP." % damage
+	_record_room_event(context, &"runtime_combat_damage", {
+		"position": context.get_current_pos(),
+		"damage": damage,
+		"damage_kind": payload.get("damage_kind", &"damage"),
+		"source_id": payload.get("source_id", ""),
+		"combat_tick": payload.get("combat_tick", 0),
+	})
+	return {
+		"ok": bool(applied.get("ok", false)),
+		"status": &"runtime_combat_damage_applied",
+		"damage": damage,
+		"hp": context.hp,
+		"failed": context.failed,
+		"effect_results": applied.get("effect_results", []),
+	}
+
+
+func resolve_runtime_combat(context: RunContext, payload: Dictionary) -> Dictionary:
+	if context == null or not context.run_active:
+		return {"ok": false, "reason": "run_not_active", "blocked_reason": "run_not_active"}
+	var pos := context.get_current_pos()
+	if context.current_room_type != &"Monster" or context.truth_map == null:
+		return {"ok": false, "reason": "runtime_combat_unavailable", "blocked_reason": "runtime_combat_unavailable"}
+	if context.truth_map.is_cleared(pos):
+		return {"ok": true, "status": &"runtime_combat_already_resolved", "reward_committed": false}
+	var combat_snapshot: Dictionary = payload.get("combat_snapshot", {})
+	if not bool(combat_snapshot.get("cleared", false)):
+		return {"ok": false, "reason": "combat_not_cleared", "blocked_reason": "combat_not_cleared"}
+	var reward_gold := CombatState.preview_reward_gold(context, pos)
+	var reward_result := RunRuleService.apply_combat_reward(context, pos, reward_gold)
+	RunEffectApplierScript.apply_effects(context, [RunEffectApplierScript.effect(RunEffectApplierScript.EFFECT_MONSTER_MARK_DEFEATED, "runtime_combat_cleared", {"position": pos}, pos)], runtime_controller)
+	context.last_reward = reward_result.duplicate(true)
+	context.blocked_reason = String(reward_result.get("blocked_reason", ""))
+	context.enemy_state = combat_snapshot.duplicate(true)
+	context.enemy_state["reward_committed"] = true
+	context.enemy_state["combat_seed"] = int(payload.get("combat_seed", 0))
+	context.last_message = RunTextCatalogScript.monster_cleared(0, reward_gold)
+	_record_room_event(context, RunEventLog.EVENT_COMBAT_RESOLVED, {
+		"position": pos,
+		"runtime": true,
+		"combat_tick": payload.get("combat_tick", 0),
+		"combat_seed": payload.get("combat_seed", 0),
+		"reward": reward_result.duplicate(true),
+	})
+	return {
+		"ok": true,
+		"status": &"runtime_combat_resolved",
+		"reward_committed": true,
+		"reward_gold": reward_gold,
+		"reward": reward_result,
+		"ground_items": reward_result.get("ground_items", []),
+	}
+
+
+func resolve_runtime_combat_defeat(context: RunContext, payload: Dictionary) -> Dictionary:
+	if context == null:
+		return {"ok": false, "reason": "run_not_active"}
+	if context.failed:
+		return {"ok": true, "status": &"runtime_combat_defeat_already_resolved"}
+	context.hp = 0
+	var result := _fail_run(context, "runtime_combat_defeat")
+	result["combat_tick"] = int(payload.get("combat_tick", 0))
+	return result
+
+
+func flee_runtime_combat(context: RunContext, _payload: Dictionary = {}) -> Dictionary:
+	if context == null or not context.run_active:
+		return {"ok": false, "reason": "run_not_active", "blocked_reason": "run_not_active"}
+	var pos := context.get_current_pos()
+	if context.current_room_type != &"Monster" or context.truth_map == null or context.truth_map.is_cleared(pos):
+		return {"ok": false, "reason": "runtime_combat_unavailable", "blocked_reason": "runtime_combat_unavailable"}
+	var result := RunRuleService.apply_combat_flee(context, pos)
+	context.last_reward = result.duplicate(true)
+	context.blocked_reason = String(result.get("blocked_reason", ""))
+	context.enemy_state = {"fled": true, "room_uncleared": true}
+	context.last_message = "Fled combat: lost %d pending black coin; %d item(s) left on this room floor." % [
+		int(result.get("black_coin_loss", 0)),
+		int(result.get("items_moved_to_room_floor", 0)),
+	]
+	_record_room_event(context, &"runtime_combat_fled", {
+		"position": pos,
+		"black_coin_loss": result.get("black_coin_loss", 0),
+		"dropped_instance_ids": result.get("dropped_instance_ids", []),
+	})
+	return result
+
+
 func can_extract(context: RunContext) -> bool:
 	if context == null or context.truth_map == null:
 		return false
