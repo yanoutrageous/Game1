@@ -15,9 +15,10 @@ signal close_requested
 var title_label: Label
 var summary_label: Label
 var item_list: VBoxContainer
+var item_scroll: ScrollContainer
 var tooltip_label: Label
 var last_result_label: Label
-var item_button_minimum_size: Vector2 = Vector2(380, 30)
+var item_button_minimum_size: Vector2 = Vector2(360, 52)
 
 
 func _ready() -> void:
@@ -36,7 +37,8 @@ func build() -> void:
 		return
 	var root := VBoxContainer.new()
 	root.name = "InventoryPanelContent"
-	root.add_theme_constant_override("separation", 8)
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_theme_constant_override("separation", 6)
 	add_child(root)
 
 	var header_panel := PanelContainer.new()
@@ -59,7 +61,8 @@ func build() -> void:
 	close_button.name = "InventoryCloseButton"
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.text = "关闭"
-	_apply_art21r2_modal_button(close_button, &"art21r2.modal.button.secondary", &"secondary", 13)
+	close_button.custom_minimum_size = Vector2(76, 34)
+	_apply_art21r2_modal_button(close_button, &"art21r2.modal.button.secondary", &"secondary", 15)
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	header.add_child(close_button)
 
@@ -73,18 +76,27 @@ func build() -> void:
 	summary_label.clip_text = true
 	summary_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary_label.custom_minimum_size = Vector2(0, 44)
-	summary_label.add_theme_font_size_override("font_size", 13)
+	summary_label.add_theme_font_size_override("font_size", 15)
 	summary_label.add_theme_constant_override("line_spacing", 2)
 	summary_panel.add_child(summary_label)
 
 	var item_list_panel := PanelContainer.new()
 	item_list_panel.name = "InventoryItemListPanel"
+	item_list_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_apply_art21r2_modal_panel(item_list_panel, &"art21r2.modal.section.panel", 8, 32)
 	root.add_child(item_list_panel)
+	item_scroll = ScrollContainer.new()
+	item_scroll.name = "InventoryItemScroll"
+	item_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	item_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	item_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	item_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	item_list_panel.add_child(item_scroll)
 	item_list = VBoxContainer.new()
 	item_list.name = "InventoryItemList"
-	item_list.custom_minimum_size = Vector2(500, 170)
-	item_list_panel.add_child(item_list)
+	item_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	item_list.add_theme_constant_override("separation", 5)
+	item_scroll.add_child(item_list)
 
 	var tooltip_panel := PanelContainer.new()
 	tooltip_panel.name = "InventoryTooltipPanel"
@@ -95,8 +107,8 @@ func build() -> void:
 	tooltip_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	tooltip_label.clip_text = true
 	tooltip_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	tooltip_label.custom_minimum_size = Vector2(500, 84)
-	tooltip_label.add_theme_font_size_override("font_size", 13)
+	tooltip_label.custom_minimum_size = Vector2(500, 54)
+	tooltip_label.add_theme_font_size_override("font_size", 15)
 	tooltip_label.add_theme_constant_override("line_spacing", 2)
 	tooltip_panel.add_child(tooltip_label)
 
@@ -109,6 +121,8 @@ func build() -> void:
 	last_result_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 	last_result_label.clip_text = true
 	last_result_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	last_result_label.custom_minimum_size = Vector2(0, 22)
+	last_result_label.add_theme_font_size_override("font_size", 14)
 	result_panel.add_child(last_result_label)
 
 
@@ -126,7 +140,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		inventory_items.size(),
 		equipped_items.size(),
 	]
-	Art10UISkinKitScript.apply_label(summary_label, 13, PresentationTheme.text_color())
+	Art10UISkinKitScript.apply_label(summary_label, 15, PresentationTheme.text_color())
 	for child in item_list.get_children():
 		child.queue_free()
 	if inventory_items.is_empty() and equipped_items.is_empty():
@@ -135,9 +149,11 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		empty_label.clip_text = true
 		empty_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		empty_label.custom_minimum_size = Vector2(0, 72)
+		empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty_label.add_theme_constant_override("line_spacing", 2)
 		empty_label.text = "背包为空。\n搜索、物资箱或事件可能获得物品。\n空间不足时物品会留在地面。"
-		Art10UISkinKitScript.apply_label(empty_label, 13, PresentationTheme.text_color())
+		Art10UISkinKitScript.apply_label(empty_label, 15, PresentationTheme.text_color())
 		item_list.add_child(empty_label)
 	else:
 		for item: Dictionary in inventory_items:
@@ -146,14 +162,14 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 			_add_item_row(item, false)
 	if tooltip_label != null:
 		tooltip_label.text = "选择物品查看效果。\n背包物品可丢弃；消耗品可直接使用。"
-		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
+		Art10UISkinKitScript.apply_label(tooltip_label, 15, Color(0.75, 0.82, 0.78, 1.0))
 
 
 func show_command_result(result: Dictionary) -> void:
 	if last_result_label == null:
 		return
 	last_result_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.command_result_text(result))
-	Art10UISkinKitScript.apply_label(last_result_label, 13, PresentationTheme.color_for_key(&"ui.accent"))
+	Art10UISkinKitScript.apply_label(last_result_label, 14, PresentationTheme.color_for_key(&"ui.accent"))
 	var pulse_state := &"ready"
 	if not bool(result.get("accepted", result.get("ok", false))):
 		pulse_state = &"warning"
@@ -178,15 +194,15 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	offset_top = rect.position.y
 	offset_right = rect.position.x + rect.size.x
 	offset_bottom = rect.position.y + rect.size.y
-	var content_width: float = max(280.0, rect.size.x - 92.0)
+	var content_width: float = max(280.0, rect.size.x - 72.0)
 	item_button_minimum_size = Vector2(
-		max(220.0, content_width - (150.0 if is_low else 178.0)),
-		30.0 if is_low else (34.0 if is_high else 30.0)
+		max(210.0, content_width - (166.0 if is_low else 184.0)),
+		46.0 if is_low else (56.0 if is_high else 52.0)
 	)
-	if item_list != null:
-		item_list.custom_minimum_size = Vector2(content_width, 148.0 if is_low else (196.0 if is_high else 170.0))
+	if item_scroll != null:
+		item_scroll.custom_minimum_size = Vector2(content_width, 132.0 if is_low else (224.0 if is_high else 184.0))
 	if tooltip_label != null:
-		tooltip_label.custom_minimum_size = Vector2(content_width, 72.0 if is_low else (104.0 if is_high else 84.0))
+		tooltip_label.custom_minimum_size = Vector2(content_width, 48.0 if is_low else (64.0 if is_high else 54.0))
 	_apply_art21_panel_frame()
 
 
@@ -198,10 +214,10 @@ func _main_game_modal_rect(profile: Dictionary, y_shift: float = 0.0) -> Rect2:
 	var left_width: float = min(UILayerContractScript.run_left_width(profile), width * 0.42)
 	var gameplay_left: float = left_width + margin
 	var gameplay_width: float = maxf(260.0, width - gameplay_left - margin)
-	var modal_width: float = clampf(gameplay_width * 0.78, 430.0, 620.0)
+	var modal_width: float = clampf(gameplay_width * 0.90, 520.0, 760.0)
 	if modal_width > gameplay_width:
 		modal_width = maxf(260.0, gameplay_width)
-	var modal_height: float = clampf(height * 0.76, 360.0, 548.0)
+	var modal_height: float = clampf(height * 0.78, 390.0, 590.0)
 	var bottom_reserve: float = 72.0 if bool(profile.get("is_low_resolution", false)) else 92.0
 	modal_height = min(modal_height, maxf(300.0, height - margin * 2.0 - bottom_reserve))
 	var x: float = gameplay_left + maxf(0.0, (gameplay_width - modal_width) * 0.5)
@@ -211,20 +227,22 @@ func _main_game_modal_rect(profile: Dictionary, y_shift: float = 0.0) -> Rect2:
 
 
 func _apply_art21_panel_frame() -> void:
-	var texture := Art21UIPlacementContractScript.texture_for_slot(&"inventory", &"inventory_panel_frame", &"ui.art19.panel.terminal_main")
+	var texture := load("res://assets/art24/ui/modal_frame.png") as Texture2D
+	if texture == null:
+		texture = Art21UIPlacementContractScript.texture_for_slot(&"inventory", &"inventory_panel_frame", &"ui.art19.panel.terminal_main")
 	if texture == null:
 		Art10UISkinKitScript.apply_panel(self, &"modal")
 		return
 	var style := StyleBoxTexture.new()
 	style.texture = texture
-	style.texture_margin_left = 38
-	style.texture_margin_top = 38
-	style.texture_margin_right = 38
-	style.texture_margin_bottom = 38
-	style.content_margin_left = 30
-	style.content_margin_top = 30
-	style.content_margin_right = 30
-	style.content_margin_bottom = 30
+	style.texture_margin_left = 46
+	style.texture_margin_top = 46
+	style.texture_margin_right = 46
+	style.texture_margin_bottom = 46
+	style.content_margin_left = 24
+	style.content_margin_top = 24
+	style.content_margin_right = 24
+	style.content_margin_bottom = 24
 	style.draw_center = true
 	add_theme_stylebox_override("panel", style)
 
@@ -232,35 +250,41 @@ func _apply_art21_panel_frame() -> void:
 func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	var row := HBoxContainer.new()
 	row.name = "InventoryItemRow"
+	row.add_theme_constant_override("separation", 6)
 	item_list.add_child(row)
 	var item_button := Button.new()
 	item_button.name = "InventoryItemButton"
 	item_button.focus_mode = Control.FOCUS_NONE
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
+	item_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	item_button.clip_text = true
+	item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_apply_art09_item_icon(item_button, item)
-	_apply_art21r2_modal_button(item_button, &"art21r2.modal.item_row.normal", &"secondary", 13, 10, 18)
+	_apply_art21r2_modal_button(item_button, &"art21r2.modal.item_row.normal", &"secondary", 15, 10, 18)
 	item_button.pressed.connect(func() -> void:
 		tooltip_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.item_tooltip(item))
-		Art10UISkinKitScript.apply_label(tooltip_label, 13, PresentationTheme.color_for_key(&"ui.muted"))
+		Art10UISkinKitScript.apply_label(tooltip_label, 15, Color(0.75, 0.82, 0.78, 1.0))
 	)
 	row.add_child(item_button)
 	var drop_button := Button.new()
 	drop_button.name = "InventoryDropButton"
 	drop_button.focus_mode = Control.FOCUS_NONE
 	drop_button.text = "丢弃"
+	drop_button.custom_minimum_size = Vector2(72, item_button_minimum_size.y)
 	drop_button.disabled = not can_drop
 	drop_button.tooltip_text = "丢弃到当前房间地面，稍后可从地面物品重新拾取。" if can_drop else "已装备物品暂不可从此面板丢弃。"
-	_apply_art21r2_modal_button(drop_button, &"art21r2.modal.button.danger" if can_drop else &"art21r2.modal.button.secondary", &"danger" if can_drop else &"secondary", 13)
+	_apply_art21r2_modal_button(drop_button, &"art21r2.modal.button.danger" if can_drop else &"art21r2.modal.button.secondary", &"danger" if can_drop else &"secondary", 14)
 	var instance_id: String = String(item.get("instance_id", ""))
 	var use_button := Button.new()
 	use_button.name = "InventoryUseButton"
 	use_button.focus_mode = Control.FOCUS_NONE
 	use_button.text = "使用"
+	use_button.custom_minimum_size = Vector2(72, item_button_minimum_size.y)
 	var can_use := can_drop and bool(item.get("can_consume", false))
 	use_button.disabled = not can_use
 	use_button.tooltip_text = "使用当前消耗品。" if can_use else "只有背包中的消耗品可使用。"
-	_apply_art21r2_modal_button(use_button, &"art21r2.modal.button.primary" if can_use else &"art21r2.modal.button.secondary", &"primary" if can_use else &"secondary", 13)
+	_apply_art21r2_modal_button(use_button, &"art21r2.modal.button.primary" if can_use else &"art21r2.modal.button.secondary", &"primary" if can_use else &"secondary", 14)
 	use_button.pressed.connect(func() -> void: use_item_requested.emit(instance_id))
 	row.add_child(use_button)
 	drop_button.pressed.connect(func() -> void: drop_item_requested.emit(instance_id))
@@ -284,20 +308,52 @@ func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
 
 
 func _apply_art21r2_modal_panel(panel: PanelContainer, visual_key: StringName, padding: int = 8, texture_margin: int = 32) -> void:
-	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.panel.terminal_main", padding, texture_margin)
-	if style == null:
-		panel.add_theme_stylebox_override("panel", Art10UISkinKitScript.transparent_style_box(padding))
-		return
+	var style := StyleBoxFlat.new()
+	var is_title := String(visual_key).find("title") >= 0
+	style.bg_color = Color(0.018, 0.040, 0.043, 0.96) if is_title else Color(0.010, 0.027, 0.030, 0.88)
+	style.border_color = Color(0.78, 0.55, 0.22, 0.90) if is_title else Color(0.18, 0.48, 0.45, 0.72)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 2
+	style.corner_radius_top_right = 2
+	style.corner_radius_bottom_left = 2
+	style.corner_radius_bottom_right = 2
+	style.content_margin_left = padding
+	style.content_margin_top = padding
+	style.content_margin_right = padding
+	style.content_margin_bottom = padding
 	panel.add_theme_stylebox_override("panel", style)
 
 
 func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: StringName, font_size_value: int, padding: int = 8, texture_margin: int = 18) -> void:
 	Art10UISkinKitScript.apply_button(button, tone, font_size_value)
-	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.button.dark", padding, texture_margin)
-	if style == null:
-		return
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.025, 0.065, 0.068, 0.96)
+	style.border_color = Color(0.22, 0.56, 0.51, 0.84)
+	if tone == &"primary":
+		style.border_color = Color(0.90, 0.68, 0.25, 0.94)
+	elif tone == &"danger":
+		style.border_color = Color(0.78, 0.30, 0.22, 0.94)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 2
+	style.corner_radius_top_right = 2
+	style.corner_radius_bottom_left = 2
+	style.corner_radius_bottom_right = 2
+	style.content_margin_left = padding
+	style.content_margin_top = padding
+	style.content_margin_right = padding
+	style.content_margin_bottom = padding
+	var hover_style := style.duplicate() as StyleBoxFlat
+	hover_style.bg_color = Color(0.05, 0.12, 0.12, 0.98)
 	button.add_theme_stylebox_override("normal", style)
-	button.add_theme_stylebox_override("hover", style.duplicate())
-	button.add_theme_stylebox_override("pressed", style.duplicate())
+	button.add_theme_stylebox_override("hover", hover_style)
+	button.add_theme_stylebox_override("pressed", hover_style)
 	button.add_theme_stylebox_override("disabled", style.duplicate())
 	button.add_theme_stylebox_override("focus", Art10UISkinKitScript.transparent_style_box(padding))
+	button.add_theme_color_override("font_color", Color(0.92, 0.95, 0.88, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.54, 0.51, 1.0))

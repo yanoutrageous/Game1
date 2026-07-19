@@ -110,6 +110,7 @@ func build() -> void:
 	left_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.72), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(left_backdrop, &"deep")
 	left_rail_art = _add_nine_patch_from_ref("Art21RunLeftInfoRail", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"left_info_rail", &"ui.art21.shared.panel.page_frame.normal"), 0.96, 14)
+	_apply_art24_frame(left_rail_art, "res://assets/art24/ui/left_rail.png", 14)
 	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"))
 	center_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"), 1))
 	room_background_layer = _add_texture_rect_from_ref("RunRoomBackgroundFill", _room_background_ref(&"Normal"), 1.0)
@@ -124,6 +125,7 @@ func build() -> void:
 	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.70), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(bottom_backdrop, &"summary")
 	bottom_overlay_art = _add_nine_patch_from_ref("Art21RunBottomOverlay", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.96, 12)
+	_apply_art24_frame(bottom_overlay_art, "res://assets/art24/ui/bottom_bar.png", 12)
 	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
 	resource_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.60), PresentationTheme.color_for_key(&"mini.chest"), 2))
 	Art10UISkinKitScript.apply_panel(resource_backdrop, &"card")
@@ -213,9 +215,9 @@ func build() -> void:
 func apply_surface_model(model: Dictionary) -> void:
 	if not built:
 		build()
-	scanner_title_label.text = "小地图"
-	scanner_legend_label.text = "生命 100  |  战力 0\n黑币 0  |  金币 0"
-	scanner_detail_label.text = "背包  Q 展开"
+	scanner_title_label.text = "区域扫描图"
+	scanner_legend_label.text = _resource_lines(String(model.get("resource_summary", "")))
+	scanner_detail_label.text = "作业包  Q 展开\n%s" % _compact_line(String(model.get("backpack_summary", "作业包等待数据")), 30)
 	scanner_summary_label.text = ""
 	room_title_label.text = ""
 	room_body_label.text = ""
@@ -223,11 +225,12 @@ func apply_surface_model(model: Dictionary) -> void:
 	objective_label.visible = false
 	room_background_layer.visible = false
 	player_sprite_layer.visible = false
-	resource_label.text = _resource_copy(model)
+	resource_label.text = "【正常作业】\n%s" % _compact_line(String(model.get("current_objective", "探索当前区域")), 28)
 	var danger_key := StringName(model.get("danger_theme_key", &"ui.warning"))
 	right_title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(danger_key, PresentationTheme.color_for_key(&"ui.warning")))
-	right_body_label.text = _threat_copy(model)
-	event_label.text = "事件\n%s" % _compact_line(String(model.get("event_summary", "无待处理事件。")), 14)
+	right_title_label.text = "协议 %s" % model.get("protocol_level", "--")
+	right_body_label.text = "压力 %s/100\n%s" % [model.get("pressure", "--"), _compact_line(String(model.get("danger_label", "状态稳定")), 12)]
+	event_label.text = _compact_line(String(model.get("room_title", "当前房间")), 10)
 	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", "等待记录。")), 14)
 	command_feedback_label.text = _feedback_copy(String(model.get("command_feedback", "等待输入。")))
 	command_feedback_art.visible = false
@@ -235,14 +238,14 @@ func apply_surface_model(model: Dictionary) -> void:
 
 	var status_text := _lines_text(model.get("status_lines", []), "", 3, 18)
 	if status_text != "":
-		right_body_label.text = "协议\n%s" % _compact_line(status_text.replace("\n", " / "), 28)
+		right_body_label.tooltip_text = status_text
 	right_body_label.tooltip_text = "%s\n%s\n%s\n%s" % [
 		String(model.get("map_domain_summary", "")),
 		String(model.get("run_flow_summary", "")),
 		String(model.get("room_common_rule_summary", "")),
 		String(model.get("rule_effect_modifier_summary", "")),
 	]
-	event_label.text = "事件\n%s" % _compact_line(String(model.get("event_summary", event_label.text)), 14)
+	event_label.text = "%s  ·  %s" % [_compact_line(String(model.get("room_title", "当前房间")), 8), _compact_line(String(model.get("event_summary", "无事件")), 8)]
 	event_label.tooltip_text = String(model.get("event_panel_summary", event_label.text))
 	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", reward_label.text)), 14)
 	reward_label.tooltip_text = String(model.get("loot_panel_summary", reward_label.text))
@@ -253,6 +256,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	_apply_actions(model.get("action_buttons", []))
 	_apply_encounter_section(model.get("encounter_section", {}))
 	_apply_art10_text_refresh()
+	_apply_ue_readability_tokens()
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
@@ -273,19 +277,19 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var gameplay_width: float = max(1.0, width - gameplay_left)
 	var rail_content_left: float = margin + 12.0
 	var rail_content_width: float = max(220.0, left_width - rail_content_left - margin)
-	var right_card_width: float = 210.0 if is_low else (270.0 if is_high else 244.0)
-	var right_card_height: float = 96.0 if is_low else (126.0 if is_high else 110.0)
+	var right_card_width: float = 216.0 if is_low else (252.0 if is_high else 232.0)
+	var right_card_height: float = 106.0 if is_low else (126.0 if is_high else 116.0)
 	var bottom_info_height: float = 34.0 if is_low else 40.0
-	var bottom_key_height: float = 66.0 if is_low else 72.0
+	var bottom_key_height: float = 52.0 if is_low else 58.0
 	var center_left: float = gameplay_left
 	var center_width: float = gameplay_width
 	var right_left: float = width - right_card_width - margin
 	var right_content_left: float = right_left + margin
 	var right_content_width: float = right_card_width - margin * 2.0
 	var scanner_map_top: float = margin + 44.0
-	var scanner_map_height: float = min(height * 0.52, max(250.0, rail_content_width * 1.06))
+	var scanner_map_height: float = min(height * 0.39, max(220.0, rail_content_width * 0.92))
 	var scanner_stats_top: float = scanner_map_top + scanner_map_height + 12.0
-	var backpack_top: float = scanner_stats_top + (102.0 if is_low else 118.0)
+	var backpack_top: float = scanner_stats_top + (118.0 if is_low else 130.0)
 	var bottom_key_left: float = gameplay_left + margin
 	var bottom_key_width: float = max(420.0, gameplay_width - margin * 2.0)
 	var bottom_key_top: float = height - bottom_key_height - margin
@@ -333,8 +337,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	left_rail_art.visible = true
 	right_backdrop.visible = false
 	status_card_art.visible = true
-	bottom_backdrop.visible = false
-	bottom_overlay_art.visible = true
+	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.008, 0.024, 0.027, 0.98), Color(0.58, 0.39, 0.16, 0.96), 2))
+	bottom_backdrop.visible = true
+	bottom_overlay_art.visible = false
 	encounter_backdrop.visible = false
 	center_backdrop.visible = false
 	room_background_layer.visible = false
@@ -355,8 +360,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(scanner_summary_label, Rect2(0, 0, 0, 0))
 	_set_rect(minimap_panel, Rect2(rail_content_left, scanner_map_top, rail_content_width, scanner_map_height))
 	minimap_panel.apply_layout_profile(profile)
-	_set_rect(scanner_legend_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 10.0, rail_content_width - 16.0, 48.0))
-	_set_rect(scanner_detail_label, Rect2(rail_content_left + 8.0, backpack_top + 10.0, rail_content_width - 16.0, 24.0))
+	_set_rect(scanner_legend_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 8.0, rail_content_width - 16.0, 58.0))
+	_set_rect(scanner_detail_label, Rect2(rail_content_left + 8.0, backpack_top + 8.0, rail_content_width - 16.0, 48.0))
 
 	_set_rect(room_title_label, Rect2(gameplay_square_left + 26.0, gameplay_square_top + 22.0, room_info_width - 28.0, 24.0))
 	_set_rect(room_body_label, Rect2(0, 0, 0, 0))
@@ -366,11 +371,11 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(encounter_body_label, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_options_box, Rect2(bottom_info_left + bottom_info_width - encounter_width, bottom_info_top + 4.0, encounter_width, bottom_info_height - 8.0))
 	_set_rect(encounter_result_label, Rect2(0, 0, 0, 0))
-	_set_rect(resource_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 62.0, rail_content_width - 16.0, 26.0))
+	_set_rect(resource_label, Rect2(rail_content_left + 8.0, scanner_stats_top + 72.0, rail_content_width - 16.0, 52.0))
 
 	_set_rect(right_title_label, Rect2(right_content_left, margin, right_content_width, 30))
-	_set_rect(right_body_label, Rect2(right_content_left + 10.0, margin + 40.0, right_content_width - 20.0, 36.0 if is_low else 44.0))
-	_set_rect(event_label, Rect2(right_content_left + 10.0, margin + (76.0 if is_low else 88.0), right_content_width - 20.0, 22.0))
+	_set_rect(right_body_label, Rect2(right_content_left + 10.0, margin + 35.0, right_content_width - 20.0, 48.0 if is_low else 54.0))
+	_set_rect(event_label, Rect2(right_content_left + 10.0, margin + (86.0 if is_low else 94.0), right_content_width - 20.0, 20.0))
 	_set_rect(reward_label, Rect2(0, 0, 0, 0))
 	_set_rect(command_feedback_art, Rect2(bottom_info_left, bottom_info_top, bottom_info_width, bottom_info_height))
 	_set_rect(command_feedback_label, Rect2(bottom_info_left + 18.0, bottom_info_top + 7.0, bottom_info_width - 36.0, bottom_info_height - 12.0))
@@ -380,6 +385,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(action_hint_label, Rect2(0, 0, 0, 0))
 	action_hint_label.visible = false
 	_set_rect(action_bar, Rect2(bottom_key_left + 12.0, bottom_key_top + 10.0, bottom_key_width - 24.0, bottom_key_height - 18.0))
+	action_bar.z_as_relative = true
+	action_bar.z_index = 20
 	_set_rect(feedback_slot, Rect2(0, 0, width, height))
 	_set_rect(overlay_slot, Rect2(0, 0, width, height))
 	_set_rect(modal_slot, Rect2(0, 0, width, height))
@@ -874,13 +881,45 @@ func _panel_style(color: Color, border_color: Color, border_width: int) -> Style
 
 func _apply_action_button_style(button: Button, tone: StringName, enabled: bool) -> void:
 	Art10UISkinKitScript.apply_transparent_button(button, tone, 13, &"key", 0)
-	button.add_theme_color_override("font_color", Color(0.92, 0.86, 0.68, 1.0))
+	var normal_style := _art24_keycap_style("normal")
+	var pressed_style := _art24_keycap_style("pressed")
+	var disabled_style := _art24_keycap_style("disabled")
+	button.add_theme_stylebox_override("normal", normal_style)
+	button.add_theme_stylebox_override("hover", pressed_style)
+	button.add_theme_stylebox_override("pressed", pressed_style)
+	button.add_theme_stylebox_override("disabled", disabled_style)
+	button.add_theme_color_override("font_color", Color(0.98, 0.91, 0.70, 1.0))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.94, 0.70, 1.0))
 	button.add_theme_color_override("font_pressed_color", Color(1.0, 0.82, 0.45, 1.0))
-	button.add_theme_color_override("font_disabled_color", Color(1.0, 0.86, 0.50, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.72, 0.68, 0.56, 1.0))
 	button.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.85))
 	button.add_theme_constant_override("outline_size", 2)
 	button.modulate = Color(1, 1, 1, 1)
+
+
+func _art24_keycap_style(state: String) -> StyleBox:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.018, 0.052, 0.054, 0.98)
+	style.border_color = Color(0.48, 0.67, 0.54, 0.82)
+	if state == "pressed":
+		style.bg_color = Color(0.055, 0.12, 0.11, 1.0)
+		style.border_color = Color(0.94, 0.70, 0.27, 1.0)
+	elif state == "disabled":
+		style.bg_color = Color(0.012, 0.028, 0.030, 0.96)
+		style.border_color = Color(0.26, 0.34, 0.32, 0.78)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 2
+	style.corner_radius_top_right = 2
+	style.corner_radius_bottom_left = 2
+	style.corner_radius_bottom_right = 2
+	style.content_margin_left = 6
+	style.content_margin_top = 4
+	style.content_margin_right = 6
+	style.content_margin_bottom = 4
+	return style
 
 
 func _tone_color(tone: StringName) -> Color:
@@ -947,7 +986,52 @@ func _threat_copy(model: Dictionary) -> String:
 
 
 func _resource_copy(model: Dictionary) -> String:
-	return "物资  暂无待回收"
+	return String(model.get("resource_summary", "生命 --/-- | 作业强度 -- | 待结算黑币 -- | 安全金币 --"))
+
+
+func _resource_lines(text: String) -> String:
+	var parts := text.split(" | ", false)
+	if parts.size() >= 4:
+		return "%s    %s\n%s    %s" % [parts[0], parts[1], parts[2], parts[3]]
+	if text.strip_edges() == "":
+		return "生命 --/--    战力 --\n待结算 --    安全收益 --"
+	return text.replace(" | ", "\n")
+
+
+func _apply_ue_readability_tokens() -> void:
+	for label in [scanner_legend_label, scanner_detail_label, resource_label, right_body_label, event_label]:
+		if label is Label:
+			label.clip_text = false
+			label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+			label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	for label in [scanner_legend_label, scanner_detail_label, resource_label, right_body_label]:
+		if label is Label:
+			label.add_theme_font_size_override("font_size", 16)
+			label.add_theme_constant_override("line_spacing", 4)
+			label.add_theme_color_override("font_color", Color(0.91, 0.94, 0.88, 1.0))
+	scanner_title_label.add_theme_font_size_override("font_size", 20)
+	right_title_label.add_theme_font_size_override("font_size", 19)
+	event_label.add_theme_font_size_override("font_size", 13)
+	event_label.add_theme_color_override("font_color", Color(0.82, 0.90, 0.82, 1.0))
+	for button_value in action_buttons.values():
+		var button := button_value as Button
+		if button != null:
+			button.add_theme_font_size_override("font_size", 14)
+
+
+func _apply_art24_frame(frame: NinePatchRect, texture_path: String, patch_margin: int) -> void:
+	if frame == null:
+		return
+	var texture := load(texture_path) as Texture2D
+	if texture == null:
+		return
+	frame.texture = texture
+	frame.patch_margin_left = patch_margin
+	frame.patch_margin_top = patch_margin
+	frame.patch_margin_right = patch_margin
+	frame.patch_margin_bottom = patch_margin
+	frame.axis_stretch_horizontal = NinePatchRect.AXIS_STRETCH_MODE_STRETCH
+	frame.axis_stretch_vertical = NinePatchRect.AXIS_STRETCH_MODE_STRETCH
 
 
 func _set_rect(control: Control, rect: Rect2) -> void:

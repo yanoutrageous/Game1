@@ -45,12 +45,12 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	offset_bottom = 0.0
 	var dimmer := get_node_or_null("Dimmer") as ColorRect
 	if dimmer != null:
-		dimmer.color = Color(0.0, 0.0, 0.0, 0.58)
+		dimmer.color = Color(0.005, 0.012, 0.014, 0.72)
 	var panel := get_node_or_null("Panel") as Control
 	if panel != null:
-		var panel_width: float = min(width * 0.74, 980.0 if is_high else 760.0)
-		var panel_height: float = min(height * 0.86, 820.0 if is_high else 620.0)
-		panel_width = max(panel_width, 620.0 if not is_low else 540.0)
+		var panel_width: float = min(width * 0.86, 1120.0 if is_high else 1040.0)
+		var panel_height: float = min(height * 0.88, 840.0 if is_high else 650.0)
+		panel_width = max(panel_width, 740.0 if not is_low else 580.0)
 		panel_height = max(panel_height, 500.0 if not is_low else 440.0)
 		var cell_width: float = floor((panel_width - 84.0) / 10.0)
 		var cell_height: float = floor((panel_height - 140.0) / 10.0)
@@ -59,6 +59,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		_set_rect(panel, Rect2((width - panel_width) * 0.5, (height - panel_height) * 0.5, panel_width, panel_height))
 		_apply_overlay_panel_style(panel)
+	var content := get_node_or_null("Panel/Content") as VBoxContainer
+	if content != null:
+		content.add_theme_constant_override("separation", 8 if not is_low else 5)
 	_rebuild_grid()
 
 
@@ -138,7 +141,7 @@ func _rebuild_grid() -> void:
 		title.text = "区域地图"
 	if detail != null:
 		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
-		detail.add_theme_font_size_override("font_size", 11 if footer_font_size <= 12 else 12)
+		detail.add_theme_font_size_override("font_size", 14 if footer_font_size <= 12 else 15)
 		detail.add_theme_constant_override("line_spacing", 2)
 		detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -146,7 +149,7 @@ func _rebuild_grid() -> void:
 		detail.text = _selected_detail_text()
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		footer.add_theme_font_size_override("font_size", footer_font_size)
+		footer.add_theme_font_size_override("font_size", maxi(13, footer_font_size))
 		footer.add_theme_constant_override("line_spacing", 2)
 		footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		footer.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -208,7 +211,23 @@ func _apply_overlay_panel_style(control: Control) -> void:
 	if not (control is PanelContainer):
 		return
 	var panel := control as PanelContainer
-	var style := Art21UIPlacementContractScript.style_box_for_visual_key(ART21R2_MAP_PANEL_FRAME_VISUAL_KEY, &"ui.art19.panel.terminal_main", 30, 38)
+	var style: StyleBox = null
+	var art24_texture := load("res://assets/art24/ui/map_frame.png") as Texture2D
+	if art24_texture != null:
+		var frame := StyleBoxTexture.new()
+		frame.texture = art24_texture
+		frame.texture_margin_left = 18
+		frame.texture_margin_top = 18
+		frame.texture_margin_right = 18
+		frame.texture_margin_bottom = 18
+		frame.content_margin_left = 28
+		frame.content_margin_top = 24
+		frame.content_margin_right = 28
+		frame.content_margin_bottom = 24
+		frame.draw_center = true
+		style = frame
+	if style == null:
+		style = Art21UIPlacementContractScript.style_box_for_visual_key(ART21R2_MAP_PANEL_FRAME_VISUAL_KEY, &"ui.art19.panel.terminal_main", 30, 38)
 	if style == null:
 		style = Art10UISkinKitScript.panel_style(&"deep")
 	panel.add_theme_stylebox_override("panel", style)
@@ -216,36 +235,76 @@ func _apply_overlay_panel_style(control: Control) -> void:
 
 func _apply_overlay_text_hierarchy(title: Label, detail: Label, footer: Label) -> void:
 	if title != null:
-		title.custom_minimum_size = Vector2(0, 30)
+		title.custom_minimum_size = Vector2(0, 36)
 		title.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_TITLE_PLATE_VISUAL_KEY, 8, 18))
 	if detail != null:
-		detail.custom_minimum_size = Vector2(0, 32)
+		detail.custom_minimum_size = Vector2(0, 38)
 		detail.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_DETAIL_PANEL_VISUAL_KEY, 8, 18))
 	if footer != null:
-		footer.custom_minimum_size = Vector2(0, 38)
+		footer.custom_minimum_size = Vector2(0, 42)
 		footer.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY, 8, 18))
 
 
 func _style_box_for_visual_key(visual_key: StringName, padding: int = 8, texture_margin: int = 18) -> StyleBox:
-	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.panel.terminal_main", padding, texture_margin)
-	if style != null:
-		return style
-	return Art10UISkinKitScript.panel_style(&"deep")
+	var style := StyleBoxFlat.new()
+	var is_title := visual_key == ART21R2_MAP_TITLE_PLATE_VISUAL_KEY
+	var is_footer := visual_key == ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY
+	style.bg_color = Color(0.014, 0.040, 0.043, 0.94)
+	style.border_color = Color(0.18, 0.50, 0.47, 0.78)
+	if is_title:
+		style.border_color = Color(0.88, 0.64, 0.24, 0.90)
+	elif is_footer:
+		style.bg_color = Color(0.010, 0.025, 0.028, 0.96)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = 2
+	style.corner_radius_top_right = 2
+	style.corner_radius_bottom_left = 2
+	style.corner_radius_bottom_right = 2
+	style.content_margin_left = padding
+	style.content_margin_top = padding
+	style.content_margin_right = padding
+	style.content_margin_bottom = padding
+	return style
 
 
 func _apply_marker_button_style(button: Button, theme_key: StringName, state: StringName, selected: bool) -> void:
 	var border := PresentationTheme.color_for_key(theme_key)
-	button.add_theme_stylebox_override("normal", Art10UISkinKitScript.transparent_style_box(0))
-	button.add_theme_stylebox_override("hover", Art10UISkinKitScript.transparent_style_box(0))
-	button.add_theme_stylebox_override("pressed", Art10UISkinKitScript.transparent_style_box(0))
+	var tile_style := _art24_map_tile_style(state, selected)
+	button.add_theme_stylebox_override("normal", tile_style)
+	button.add_theme_stylebox_override("hover", _art24_map_tile_style(state, true))
+	button.add_theme_stylebox_override("pressed", _art24_map_tile_style(state, true))
 	button.add_theme_stylebox_override("disabled", Art10UISkinKitScript.transparent_style_box(0))
-	if selected:
-		var selected_style := Art10UISkinKitScript.style_box_from_asset_ref(Art09ManifestAssetMappingScript.art19_skin_ref(&"panel_highlight"), 2, 14)
-		if selected_style != null:
-			button.add_theme_stylebox_override("normal", selected_style)
-			button.add_theme_stylebox_override("hover", selected_style)
-			button.add_theme_stylebox_override("pressed", selected_style)
 	button.add_theme_color_override("font_color", border)
+
+
+func _art24_map_tile_style(state: StringName, selected: bool) -> StyleBox:
+	var token := "selected" if selected else "explored"
+	if not selected:
+		match state:
+			&"unknown":
+				token = "unknown"
+			&"scanned":
+				token = "scanned"
+			&"flagged", &"event":
+				token = "flagged"
+			&"player":
+				token = "player"
+			&"mine":
+				token = "danger"
+	var texture := load("res://assets/art24/ui/map_tile_%s.png" % token) as Texture2D
+	if texture == null:
+		return Art10UISkinKitScript.transparent_style_box(0)
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = 8
+	style.texture_margin_top = 8
+	style.texture_margin_right = 8
+	style.texture_margin_bottom = 8
+	style.draw_center = true
+	return style
 
 
 func _icon_width_for_marker_state(state: StringName, size: Vector2) -> int:

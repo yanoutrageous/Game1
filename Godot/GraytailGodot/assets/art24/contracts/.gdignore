@@ -1,0 +1,2 @@
+# Validation-only CSV contracts. Keep them available to repository tooling while
+# preventing Godot's CSV translation importer from creating runtime resources.

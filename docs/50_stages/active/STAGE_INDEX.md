@@ -1,38 +1,25 @@
 # Active Stage Index
 
-文档状态：ART23 关闭后的当前索引
+文档状态：G41 关闭后无 active stage；最后更新 2026-07-19。
 
-当前没有已授权的后续 active stage。
+## 当前已授权阶段
 
-| Stage | Line | Status | Evidence | Boundary |
-| --- | --- | --- | --- | --- |
-| none | none | ART23 closed; successor not yet named / no_authorized_active_stage | `docs/10_current/NEXT_ACTION.md` | ART23 关闭不自动授权 MVP 后续内容、工程重构、CI 或发布阶段。 |
+无。G41 已通过正式执行审计并移入 closed index；不得在没有新计划的情况下自动扩大到后继功能或美术整合。
 
-## 当前整合基线
+## 当前基线
 
 | Item | Current fact |
 | --- | --- |
-| Active repo | Resolve with `git rev-parse --show-toplevel`; no drive-letter authority |
-| Current art branch | `art/art23-long-term-final-ui` |
-| Integration base | `origin/integration/i0-art21-baseline` |
-| I0 source | `origin/i0/project-baseline-refactor` at `77569579a6c66d9f4350f0ba419906a7814dd502` |
-| ART21 source | `origin/art/art21-main-menu-scene-reconstruction` at `93420a8f3799c540ac8a2b46d3c264d5f3ee10f1` |
+| Active repo | 使用 `git rev-parse --show-toplevel` 解析，不以盘符或旧机器路径作为权威 |
+| Latest closed program stage | G41 局内基础玩法运行时与交互接口补全 |
+| G41 source baseline | ART23 `7f2e0b304e2cd7959411bfe6422d3d0b3337462f`；ART24 由用户明确排除 |
+| G41 branch | `godot/g41-in-run-core-gameplay-runtime` |
 | Godot project | `<git-worktree-root>/Godot/GraytailGodot` |
-| Toolchain contract | Godot 4.6.3 from I0; current-machine path must be explicitly configured or resolved by the I0 bootstrap |
-| Latest closed non-art stage | I0, with its recorded safety nonconformance and limitations |
-| Latest closed art stage | ART23 long-term final art UI |
-| Main-menu design canvas | 1280×720 |
-| Deploy-prep design canvas | 1280×720; 5 primary / 34 secondary states |
-| Long-term design canvas | 1280×720; 6 primary / 27 secondary pages |
+| Current-machine Godot | 用户指定的 `E:\Godot\Tools\Godot`，验证版本 4.6.3 |
+| Latest accepted art baseline | ART23 long-term final UI |
 
-## Interpretation
+## 当前解释边界
 
-- I0 remains the common repository, toolchain, test and governance baseline.
-- ART21 supplies the final scene-based main-menu implementation and evidence.
-- ART21R2, ART21R1 and the earlier ART21 placement work remain preliminary
-  historical slices; they do not supersede the final ART21 main-menu closeout.
-- Historical `D:\AGAME1` paths remain valid inside I0 handoff and validation
-  evidence, but current scripts and current documents must resolve the active
-  repository relative to the current Git worktree.
-- No full-game manual playtest, release, CI, performance or post-ART23 visual stage is
-  implied by this baseline integration.
+- G41 关闭仅声明程序侧局内移动、交互、宝箱、实际掉落、拾取/替换、固定步长战斗、逃跑、奖励、失败与生命周期接口完成。
+- 不声明最终美术、完整人工长时间游玩、发布、CI、性能或跨进程局内保存通过。
+- 后继阶段先与用户确认计划；计划确认后的后续门可自动执行。
