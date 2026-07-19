@@ -185,31 +185,12 @@ static func build_codex_lite(meta_summary: Dictionary = {}) -> Dictionary:
 
 
 static func build_default_loadout(meta_summary: Dictionary = {}) -> Dictionary:
-	var items := normalize_warehouse_items(meta_summary)
 	var profile := build_profile_interfaces(meta_summary)
 	var capacity := int(profile.get("backpack_capacity", BASE_BACKPACK_CAPACITY))
 	var selected_equipment: Array[Dictionary] = []
 	var selected_consumables: Array[Dictionary] = []
 	var used := 0
-	for item in items:
-		if bool(item.get("can_equip", false)) and selected_equipment.size() < 2:
-			selected_equipment.append(item.duplicate(true))
-	for item in items:
-		if not bool(item.get("can_consume", false)):
-			continue
-		var weight := int(item.get("weight", 0))
-		if used + weight <= capacity:
-			selected_consumables.append(item.duplicate(true))
-			used += weight
-		if selected_consumables.size() >= 3:
-			break
 	var equipment_effects := build_equipment_effects(selected_equipment)
-	for effect in equipment_effects:
-		match str(effect.get("effect_kind", "")):
-			"backpack_capacity":
-				capacity += int(effect.get("effect_amount", 0))
-			"salvage_capacity":
-				profile["failure_salvage_capacity"] = int(profile.get("failure_salvage_capacity", BASE_FAILURE_SALVAGE_CAPACITY)) + int(effect.get("effect_amount", 0))
 	return {
 		"selected_equipment": selected_equipment,
 		"selected_consumables": selected_consumables,
@@ -261,7 +242,12 @@ static func build_profile_interfaces(meta_summary: Dictionary = {}) -> Dictionar
 	var failure_salvage_capacity := BASE_FAILURE_SALVAGE_CAPACITY
 	var mine_dmg_reduce := 0
 	var pressure_reduce := 0
-	for talent in talents.slice(0, 3):
+	var active_talents: Array[Dictionary] = []
+	var talent_flags := _array_from(meta_summary.get("talent_flags", []))
+	for talent in talents:
+		if not talent_flags.has(str(talent.get("talent_id", ""))):
+			continue
+		active_talents.append(talent.duplicate(true))
 		match str(talent.get("effect_kind", "")):
 			"backpack_capacity":
 				backpack_capacity += int(talent.get("effect_amount", 0))
@@ -269,6 +255,8 @@ static func build_profile_interfaces(meta_summary: Dictionary = {}) -> Dictionar
 				failure_salvage_capacity += int(talent.get("effect_amount", 0))
 			"mine_damage_reduce":
 				mine_dmg_reduce += int(talent.get("effect_amount", 0))
+			"protocol_pressure_reduce":
+				pressure_reduce += int(talent.get("effect_amount", 0))
 	return {
 		"profile_id": str(meta_summary.get("profile_id", "default")),
 		"profile_level": profile_level,
@@ -276,7 +264,7 @@ static func build_profile_interfaces(meta_summary: Dictionary = {}) -> Dictionar
 		"permit_level": permit_level,
 		"protocol_difficulty": protocol_difficulty,
 		"talent_directions": talents,
-		"active_talent_effects": talents.slice(0, 3),
+		"active_talent_effects": active_talents,
 		"backpack_capacity": backpack_capacity,
 		"failure_salvage_capacity": failure_salvage_capacity,
 		"mine_dmg_reduce": mine_dmg_reduce,
@@ -315,6 +303,9 @@ static func build_run_start_fields(meta_summary: Dictionary = {}) -> Dictionary:
 		"permit_level": int(profile.get("permit_level", 1)),
 		"protocol_difficulty": int(profile.get("protocol_difficulty", 5)),
 		"mine_dmg_reduce": int(profile.get("mine_dmg_reduce", 0)),
+		"protocol_pressure_reduce": int(profile.get("protocol_pressure_reduce", 0)),
+		"search_reward_bonus": 0,
+		"scan_hint_bonus": 0,
 		"read_only": false,
 		"display_only": false,
 		"preview": false,
@@ -338,6 +329,9 @@ static func runtime_config_patch(run_start_config: Dictionary = {}) -> Dictionar
 		"permit_level": int(run_start_config.get("permit_level", 1)),
 		"protocol_difficulty": int(run_start_config.get("protocol_difficulty", 5)),
 		"mine_dmg_reduce": int(run_start_config.get("mine_dmg_reduce", 0)),
+		"protocol_pressure_reduce": int(run_start_config.get("protocol_pressure_reduce", 0)),
+		"search_reward_bonus": int(run_start_config.get("search_reward_bonus", 0)),
+		"scan_hint_bonus": int(run_start_config.get("scan_hint_bonus", 0)),
 		"run_start_config": run_start_config.duplicate(true),
 		"loadout_source": "m3r_warehouse_lite",
 	}

@@ -6,10 +6,9 @@ static func format_expedition_summary(snapshot: Dictionary) -> String:
 	var lines: Array[String] = []
 	lines.append("Run Summary")
 	lines.append("")
-	lines.append("run_black_coin: %s | safe_yield: %s | long_term_gold preview: %s" % [
+	lines.append("run black resource: %s | gold resource: %s" % [
 		snapshot.get("run_black_coin", snapshot.get("black_coin", 0)),
-		snapshot.get("safe_yield", snapshot.get("gold_coin", 0)),
-		snapshot.get("long_term_gold_preview", snapshot.get("long_term_gold", 0)),
+		snapshot.get("gold_coin", snapshot.get("safe_yield", 0)),
 	])
 	lines.append("Backpack: %s/%s | GroundLoot: %s" % [
 		snapshot.get("backpack_used", 0),
@@ -223,6 +222,44 @@ static func compact_transaction_log(snapshot: Dictionary, max_count: int = 5) ->
 
 
 static func result_summary(snapshot: Dictionary) -> Dictionary:
+	var outcome := String(snapshot.get("outcome", "Running"))
+	var settlement := _dict_from(snapshot, "settlement")
+	var settlement_outcome := String(settlement.get("outcome", snapshot.get("settlement_outcome", "")))
+	var title := "探索结算"
+	if outcome == "Extracted" or settlement_outcome == "success":
+		title = "撤离成功"
+	elif outcome == "Failed" or settlement_outcome == "failure":
+		title = "探索失败"
+	elif outcome == "Abandoned" or settlement_outcome == "abandon":
+		title = "已放弃探索"
+	var lines: Array[String] = []
+	lines.append("结局：%s" % _outcome_label(outcome, settlement_outcome))
+	if settlement_outcome == "success":
+		lines.append("黑色资源转化：%s" % settlement.get("black_coin_converted", 0))
+	else:
+		lines.append("失去黑色资源：%s" % settlement.get("black_coin_lost", 0))
+	lines.append("本局写入金色资源：%s" % settlement.get("gold_coin_gained", 0))
+	lines.append("入库：%s　保全：%s　失去：%s　清除消耗品：%s" % [
+		_array_from(settlement, "warehouse_items").size(),
+		_array_from(settlement, "salvaged_items").size(),
+		int(settlement.get("lost_item_count", 0)),
+		int(settlement.get("cleared_consumable_count", 0)),
+	])
+	var meta_commit := _dict_from(snapshot, "meta_progress_commit")
+	if StringName(meta_commit.get("status", &"")) == &"awaiting_salvage_confirmation":
+		lines.append("局外记录：等待玩家确认保全")
+	elif not meta_commit.is_empty():
+		lines.append("局外记录：%s" % ("已存在，未重复写入" if bool(meta_commit.get("duplicate", false)) else "已写入"))
+	lines.append("")
+	lines.append("事件记录")
+	lines.append_array(compact_event_log(snapshot))
+	lines.append("")
+	lines.append("物资流转")
+	lines.append_array(compact_transaction_log(snapshot))
+	return {"title": title, "summary": _join_lines(lines)}
+
+
+static func _legacy_result_summary_m5(snapshot: Dictionary) -> Dictionary:
 	var outcome: String = String(snapshot.get("outcome", "Running"))
 	var settlement: Dictionary = _dict_from(snapshot, "settlement")
 	var settlement_outcome := String(settlement.get("outcome", snapshot.get("settlement_outcome", "")))

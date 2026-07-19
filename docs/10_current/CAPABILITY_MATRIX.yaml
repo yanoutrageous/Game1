@@ -1,142 +1,48 @@
 document_status: current_capability_matrix
-updated: "2026-07-11"
-updated_by: "I0.7_closeout"
+updated: "2026-07-19"
+updated_by: "M6_closeout"
 
 repository:
-  workspace_root: "D:\\AGAME1"
-  active_repo_path: "D:\\AGAME1\\active\\Game1_work"
-  godot_project_path: "D:\\AGAME1\\active\\Game1_work\\Godot\\GraytailGodot"
-  current_branch: "i0/project-baseline-refactor"
-  code_and_path_baseline_head: "ba467dd2afdfd517ce798b9d674742891face4b7"
-  validated_implementation_head: "d34f869e85993704ca4091b26f9e40a39795c860"
-  source_head: "d4168a6111cfd30be28880301ded52be2d32f462"
-  upstream: null
-  old_active_repo_path_exists: false
-  registered_worktree_count: 1
-  protective_stash_touched: false
-
-i0:
-  line: independent_baseline
-  status: closed_with_recorded_safety_nonconformance_and_limitations
-  freeze: complete
-  local_toolchain: complete_with_recorded_chain_limitation
-  isolated_characterization: complete
-  confirmed_defect_repairs: complete
-  run_scene_minimal_extraction: complete
-  atomic_relocation: complete
-  documentation_governance: complete_with_recorded_limitations
-  final_acceptance: complete_with_recorded_safety_nonconformance_and_limited_visible_coverage
-
-progress_estimate:
-  confidence: medium
-  engineering_vertical_slice_percent: "65-75"
-  public_mvp_percent: "40-50"
-  full_product_vision_percent: "25-35"
-  release_readiness_percent: "20-30"
-  note: "I0 improves evidence and engineering health; it does not add product content."
-
-health:
-  audit_start_score_out_of_10: 4.5
-  current_score_out_of_10: 6.0
-  current_band: yellow
-  confidence: medium
-  dimensions:
-    product_direction: 7
-    runtime_vertical_slice: 6
-    architecture: 5
-    automated_validation: 7
-    documentation_governance: 6
-    release_readiness: 3
-  remaining_reasons:
-    - visible_smoke_limited_and_full_manual_playtest_not_claimed
-    - visible_godot_external_appdata_log_nonconformance_recorded
-    - run_scene_still_1668_lines
-    - objectdb_and_resource_cleanup_diagnostics_24
-    - original_dirty_state_protected_not_resolved
-    - historical_screenshot_extension_magic_mismatch_340
-    - ci_and_release_gate_absent
-    - visual_productization_partial
+  workspace_resolution: "git rev-parse --show-toplevel"
+  current_branch: "godot/g41-in-run-core-gameplay-runtime"
+  program_baseline: "ART23 + G41 + M6"
+  art_baseline: "ART23"
+  excluded_baseline: "ART24"
+  active_successor_stage: null
 
 toolchain:
   engine: Godot
   version: "4.6.3.stable.official.7d41c59c4"
-  install_root: "D:\\AGAME1\\tools\\runtimes\\godot\\4.6.3"
-  archive_sha256: "e39986a178d585ce7ac198fb8de6ea436366dc0cc00e594810c2e3e104c04b90"
-  binary_hashes_verified: true
-  authenticode_signer_and_timestamp_present: true
-  certificate_chain_status: chain_untrusted_recorded
+  executable: "E:\\Godot\\Tools\\Godot\\Godot_v4.6.3-stable_win64_console.exe"
+  git: "E:\\git\\cmd\\git.exe"
 
 runtime_capabilities:
-  app_shell_and_navigation: implemented_foundation
-  deploy_prep: implemented_foundation
-  run_exploration: playable_vertical_slice
-  minesweeper_information_loop: playable_vertical_slice
-  encounters_and_basic_combat: implemented_foundation
-  items_ground_loot_inventory: playable_vertical_slice
-  extraction_and_result: playable_vertical_slice
-  save_profile: partial_foundation
-  long_term_systems: display_only_or_partial
-  warehouse_economy: partial_or_display_only
+  app_shell_and_navigation: playable
+  deploy_prep_manual_instance_selection: playable_m6
+  in_process_active_run_continue: playable_m6
+  run_exploration_and_room_interaction: playable_g41
+  deterministic_basic_combat: playable_g41
+  ground_loot_pickup_replace_drop: playable_g41
+  consumable_actual_use: playable
+  equipment_runtime_effects: playable_m6
+  success_failure_abandon_settlement: playable_m6
+  manual_failure_salvage: playable_m6
+  starter_inventory_and_meta_writeback: persistent_m6
+  idempotent_result_history: persistent_m6_max_50
+  long_term_history_display: read_only_m6
+  cross_process_active_run_restore: not_implemented
+  complete_warehouse_economy: not_implemented
   objective_reward_pool: incomplete
-  full_rule_content: incomplete
+  research_gacha_collection_rewards: display_only_or_incomplete
   final_art_productization: incomplete
   release_pipeline: incomplete
 
-i0_repairs:
-  save_abandon_count: pass
-  asset_manifest_rfc4180_and_width: pass
-  required_input_actions: pass
-  debug_surface_toggle_and_open: pass
-  run_scene_art21r2_seeder_extraction: behavior_snapshot_equivalent
-
 validation:
-  suite_entrypoint: "tools/i0/invoke_i0_tests.ps1"
-  profile: remediated
-  final_report: "D:\\AGAME1\\reports\\i0\\I0.2_20260711T064535471Z_5b55f8c8.json"
-  final_report_sha256: "6868337E7E51DB03BA083725914165D6D7456F017252823C866939CF4B98782F"
-  post_move_repeat_count: 2
-  expected_runner_count: 12
-  passing_runner_count: 12
-  blocking_diagnostic_count: 0
-  cleanup_diagnostic_count: 24
-  pollution_guard: pass
-  canonical_run_scene_snapshot_count: 5
-  canonical_run_scene_snapshot_difference_count: 0
-  business_file_count: 656
-  business_fingerprint: "A344034211ACD8299E1FE3F1CDED47A80D58815B4D77D9E6B312A4A0569D0928"
-  protected_status_membership: "12/12"
-  frozen_dirty_raw_byte_identical: "11/12"
-  project_godot_post_i0_preimage_sha256: "CD7C9662E78D0B2EBBB660CD238E1C8E47E9D11D50020F98A811CDD186DE3D46"
-  visible_key_route_smoke: pass_with_notes
-  human_observed_smoke: pass_with_limited_coverage
-  observed_routes:
-    - main_menu_to_deploy_prep_to_run_hud
-    - map_m
-    - inventory_q
-    - ground_loot_g
-    - task_hint_t
-  movement: not_observed
-  extraction_settlement_return: not_run
+  m6_validator: pass
+  m6_headless_runner: pass_with_cleanup_diagnostic
+  art22_deploy_runtime: pass
+  art23_long_term_runtime: pass
+  g41_runtime_regression: pass
+  project_load_smoke: pass
   full_manual_playtest: not_claimed
-  final_visual_acceptance: not_claimed
-  safety_boundary: nonconforming_recorded
-
-protected_dirty_state:
-  status_entry_count: 12
-  staged_entry_count: 0
-  translation_modifications: 7
-  project_godot_modifications: 1
-  run_surface_eol_only_modifications: 1
-  untracked_screenshots: 2
-  untracked_pycache_directories: 1
-  policy: preserve_until_separately_authorized
-
-claim_boundaries:
-  gameplay_runtime_pass: only_for_the_12_recorded_isolated_runners
-  manual_playtest_pass: false
-  final_visual_pass: false
-  release_pass: false
-  i0_final_pass: false
-  i0_stage_closed: true
-  i0_overall_closeout: closed_with_recorded_safety_nonconformance_and_limitations
-  historical_stage_documents_are_current_authority: false
+  performance_ci_export_release: not_claimed

@@ -62,6 +62,7 @@ static func build_from_snapshot(selected_module_id: StringName, app_snapshot: Di
 	var profile_runtime_panel := _profile_runtime_panel(meta_summary, latest_result)
 	var codex_lite_model := CodexLiteModelScript.build(meta_summary)
 	model["meta_progress_summary"] = meta_summary.duplicate(true)
+	model["history_records"] = (meta_summary.get("history_records", []) as Array).duplicate(true)
 	model["codex_lite_model"] = codex_lite_model.duplicate(true)
 	model["latest_run_result_summary"] = _latest_run_result_summary(latest_result)
 	model["profile_runtime_panel"] = profile_runtime_panel
@@ -153,10 +154,12 @@ static func _profile_runtime_panel(meta_summary: Dictionary = {}, latest_result:
 		"run_count": int(meta_summary.get("run_count", 0)),
 		"extract_count": int(meta_summary.get("extract_count", 0)),
 		"fail_count": int(meta_summary.get("fail_count", 0)),
+		"abandon_count": int(meta_summary.get("abandon_count", 0)),
+		"history_record_count": int(meta_summary.get("history_record_count", 0)),
 		"warehouse_items_count": int(meta_summary.get("warehouse_items_count", 0)),
 		"latest_result_id": str(latest_result.get("result_id", "")),
 		"latest_outcome": str(latest_result.get("outcome", "")),
-		"boundary": "LongTerm consumes MetaProgress summary and latest RunResult display-only; it does not write history, rewards, objectives, assets, or save data.",
+		"boundary": "LongTerm reads persisted M6 settlement history and MetaProgress summary; it does not recalculate or write settlement data.",
 		"read_only": true,
 		"display_only": true,
 		"preview": true,

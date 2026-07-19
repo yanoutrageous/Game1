@@ -147,10 +147,18 @@ func _run() -> void:
 	await _frames(2)
 	var modal := shell.get("modal_layer") as Control
 	_check(modal.visible, "Cancel action did not open the strong-confirm boundary")
-	_check((shell.get("modal_confirm_button") as Button).disabled, "Unavailable abandon settlement can be falsely confirmed")
+	_check(not (shell.get("modal_confirm_button") as Button).disabled, "M6 real abandon settlement is not confirmable")
 	(shell.get("modal_cancel_button") as Button).emit_signal("pressed")
 	await _frames(2)
 	_check(not modal.visible, "Cancel modal did not close")
+	cancel_button.emit_signal("pressed")
+	await _frames(2)
+	(shell.get("modal_confirm_button") as Button).emit_signal("pressed")
+	await _frames(2)
+	_check(start_intents.size() == 2, "Confirmed abandon did not emit one additional run intent")
+	if start_intents.size() == 2:
+		var abandon_payload := (start_intents[1].get("payload", {}) as Dictionary)
+		_check(bool(abandon_payload.get("abandon_active_run", false)), "Confirmed abandon intent lacks M6 runtime authority marker")
 
 	var appearance := shell.get_node("PrimaryActionRoot/DeployAppearanceButton") as Button
 	appearance.emit_signal("pressed")
@@ -159,6 +167,33 @@ func _run() -> void:
 	if route_intents.size() == 1:
 		var payload := (route_intents[0].get("payload", {}) as Dictionary)
 		_check(StringName(payload.get("module_id", &"")) == &"collection_appearance", "Appearance hook routes to the wrong long-term module")
+
+	var result_scene := load("res://scenes/ui/result/result_panel.tscn") as PackedScene
+	_check(result_scene != null, "M6 ResultPanel scene could not be loaded")
+	if result_scene != null:
+		var result_panel = result_scene.instantiate()
+		canvas.add_child(result_panel)
+		await _frames(2)
+		result_panel.show_summary({
+			"outcome": "Failed",
+			"settlement": {
+				"outcome": &"failure",
+				"requires_salvage_selection": true,
+				"finalized": false,
+				"salvage_capacity": 4,
+				"settlement_pool": [{"instance_id": "art22_m6_candidate", "display_name": "M6 Candidate", "weight": 1}],
+			},
+		})
+		await _frames(2)
+		_check(result_panel.requires_salvage_confirmation(), "M6 failure result does not expose manual salvage selection")
+		var result_actions := result_panel.get_node_or_null("ResultActions") as HBoxContainer
+		_check(result_actions != null and not result_actions.visible, "M6 failure result allows leaving before salvage confirmation")
+		result_panel.show_summary({"outcome": "Failed", "settlement": {"outcome": &"failure", "requires_salvage_selection": false, "finalized": true}})
+		await _frames(2)
+		_check(not result_panel.requires_salvage_confirmation(), "M6 failure selector remains after settlement confirmation")
+		_check(result_actions != null and result_actions.visible, "M6 final result does not restore navigation actions")
+		result_panel.queue_free()
+		await _frames(2)
 
 	_check_focus_neighbors(shell)
 	_finish()

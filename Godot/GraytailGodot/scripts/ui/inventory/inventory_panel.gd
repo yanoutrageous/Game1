@@ -126,6 +126,14 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		inventory_items.size(),
 		equipped_items.size(),
 	]
+	summary_label.text = "背包 %s/%s　黑色资源 %s　金色资源 %s　物品 %s　装备 %s" % [
+		snapshot.get("backpack_used", 0),
+		snapshot.get("backpack_capacity", 0),
+		snapshot.get("run_black_coin", snapshot.get("black_coin", 0)),
+		snapshot.get("gold_coin", snapshot.get("safe_yield", 0)),
+		inventory_items.size(),
+		equipped_items.size(),
+	]
 	Art10UISkinKitScript.apply_label(summary_label, 13, PresentationTheme.text_color())
 	for child in item_list.get_children():
 		child.queue_free()

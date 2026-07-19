@@ -29,6 +29,9 @@ var max_hp: int = 100
 var power: int = 5
 var mine_immunity: int = 0
 var mine_dmg_reduce: int = 0
+var protocol_pressure_reduce: int = 0
+var search_reward_bonus: int = 0
+var scan_hint_bonus: int = 0
 var pressure: int = 0
 var protocol_level: int = 5
 var asset_ledger: RunAssetLedger
@@ -104,6 +107,9 @@ func reset() -> void:
 	power = 5
 	mine_immunity = 0
 	mine_dmg_reduce = 0
+	protocol_pressure_reduce = 0
+	search_reward_bonus = 0
+	scan_hint_bonus = 0
 	pressure = 0
 	protocol_level = 5
 	asset_ledger = null
@@ -196,6 +202,9 @@ func start_run(config: Dictionary) -> void:
 	power = int(config.get("power", 5))
 	mine_immunity = int(config.get("mine_immunity", 0))
 	mine_dmg_reduce = int(config.get("mine_dmg_reduce", 0))
+	protocol_pressure_reduce = int(config.get("protocol_pressure_reduce", 0))
+	search_reward_bonus = int(config.get("search_reward_bonus", 0))
+	scan_hint_bonus = int(config.get("scan_hint_bonus", 0))
 	protocol_level = int(config.get("protocol_level", config.get("protocol_difficulty", 5)))
 	mine_hits_are_fatal = bool(config.get("mine_hits_are_fatal", false))
 	move_requires_revealed = bool(config.get("move_requires_revealed", false))
@@ -276,15 +285,34 @@ func has_blocking_tutorial_popup() -> bool:
 
 func fail_run(reason: String) -> void:
 	record_event(RunEventLog.EVENT_RUN_FAILED, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"system")), "run_context", {"reason": reason, "position": player_pos})
-	var settlement := RunRuleService.settle_failure(self)
-	settlement_result = settlement.duplicate(true)
-	failure_salvage = settlement.duplicate(true)
+	var preview := asset_ledger.build_failure_preview() if asset_ledger != null else {}
+	settlement_result = preview.duplicate(true)
+	failure_salvage = preview.duplicate(true)
 	failed = true
 	run_active = false
-	phase = &"failed"
+	phase = &"failure_salvage"
 	outcome = "Failed"
-	last_message = "Run failed: %s." % reason
+	last_message = "Run failed: %s. Select the items to salvage." % reason
 	result_snapshot = build_result_snapshot()
+	result_snapshot["settlement"] = preview
+
+
+func confirm_failure_salvage(selected_instance_ids: Array) -> Dictionary:
+	if phase != &"failure_salvage" or not failed:
+		return {"ok": false, "status": &"not_awaiting_salvage", "reason": "failure_salvage_not_pending"}
+	var settlement := RunRuleService.settle_failure(self, selected_instance_ids)
+	if not bool(settlement.get("ok", false)):
+		failure_salvage = settlement.duplicate(true)
+		last_message = "Salvage selection blocked: %s." % String(settlement.get("reason", "invalid_selection"))
+		return settlement
+	settlement_result = settlement.duplicate(true)
+	failure_salvage = settlement.duplicate(true)
+	phase = &"failed"
+	last_message = "Failure settlement confirmed."
+	record_event(&"failure_salvage_confirmed", String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"player")), "run_context", {"selected_instance_ids": selected_instance_ids.duplicate(true), "selected_weight": settlement.get("selected_salvage_weight", 0)})
+	result_snapshot = build_result_snapshot()
+	result_snapshot["settlement"] = settlement
+	return settlement
 
 
 func complete_extract() -> void:

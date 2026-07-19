@@ -9,6 +9,9 @@ static func build(snapshot: Dictionary = {}) -> Dictionary:
 	var run_active := bool(snapshot.get("run_active", snapshot.get("has_active_run", false)))
 	var meta_summary: Dictionary = snapshot.get("meta_progress_summary", {})
 	var config := DeployConfigScript.with_active_run_preview(DeployConfigScript.default_config(1, meta_summary), run_active)
+	var active_run_config: Dictionary = snapshot.get("run_start_config", {})
+	if run_active and not active_run_config.is_empty():
+		config = DeployConfigScript.with_active_run_config(config, active_run_config)
 	var active_tab := DeployTabModelScript.DEFAULT_TAB
 	var selected_filter := DeployTabModelScript.default_filter_for(active_tab)
 	var selected_card := DeployTabModelScript.default_card_for(active_tab)
@@ -49,6 +52,13 @@ static func model_with_action_message(model: Dictionary, message: String, confir
 	return result
 
 
+static func model_with_config(model: Dictionary, config: Dictionary, selected_card: StringName, message: String = "") -> Dictionary:
+	var run_active := _has_active_run(config)
+	var active_tab := StringName(model.get("active_tab", DeployTabModelScript.DEFAULT_TAB))
+	var selected_filter := StringName(model.get("selected_filter", DeployTabModelScript.default_filter_for(active_tab)))
+	return _build_model(config, run_active, active_tab, selected_filter, selected_card, false, message)
+
+
 static func _build_model(
 	config: Dictionary,
 	run_active: bool,
@@ -75,7 +85,7 @@ static func _build_model(
 	return {
 		"title": "出发探索",
 		"subtitle": "整备、路线、背包和出勤确认",
-		"boundary": "本页只展示当前可用的出发配置；完整仓库经济、奖励池和后续流程由后续阶段接入。",
+		"boundary": "本页使用真实仓库实例生成本局出勤配置；完整仓库经济、研究与抽奖不在 M6 范围。",
 		"tabs": DeployTabModelScript.build_tabs(),
 		"active_tab": active_tab,
 		"selected_filter": selected_filter,
@@ -95,7 +105,7 @@ static func _build_model(
 			"objective_preview": (config.get("objective_preview", {}) as Dictionary).duplicate(true),
 			"config_validity_preview": (config.get("config_validity_preview", {}) as Dictionary).duplicate(true),
 			"action_intent_boundaries": (config.get("action_intent_boundaries", {}) as Dictionary).duplicate(true),
-			"summary": "M3R consumes real warehouse_items for minimal loadout; asset contracts remain read-only and do not write assets here.",
+			"summary": "M6 reads real warehouse instances and keeps selection in the deploy draft until the run starts.",
 			"read_only": true,
 			"display_only": false,
 			"preview": false,
@@ -146,14 +156,14 @@ static func _run_flow_route_preview(config: Dictionary, run_active: bool) -> Dic
 		},
 		"continue": {
 			"disabled": not run_active,
-			"disabled_reason": &"" if run_active else &"no_active_run_persistence",
-			"preview": true,
+			"disabled_reason": &"" if run_active else &"no_active_run",
+			"preview": false,
 		},
 		"abandon": {
-			"disabled": true,
-			"disabled_reason": &"settlement_runtime_not_connected",
+			"disabled": not run_active,
+			"disabled_reason": &"" if run_active else &"no_active_run",
 			"strong_confirm_required": run_active,
-			"preview": true,
+			"preview": false,
 		},
 		"read_only": true,
 		"display_only": false,
@@ -180,25 +190,25 @@ static func _actions(run_active: bool) -> Dictionary:
 			"read_only": false,
 		},
 		"continue": {
-			"label": "Continue preview",
-			"tooltip": "Continue remains a read-only active-run status placeholder; active run persistence is future work.",
+			"label": "Continue run",
+			"tooltip": "Return to the active in-process exploration without creating another run.",
 			"disabled": not run_active,
 			"has_active_run": run_active,
-			"disabled_reason": &"" if run_active else &"no_active_run_persistence",
-			"preview": true,
-			"display_only": true,
-			"read_only": true,
+			"disabled_reason": &"" if run_active else &"no_active_run",
+			"preview": false,
+			"display_only": false,
+			"read_only": false,
 		},
 		"abandon": {
-			"label": "Abandon preview",
-			"tooltip": "Abandon remains confirm/display-only in M3R.",
+			"label": "Abandon run",
+			"tooltip": "Abandon the active run after strong confirmation and resolve the zero-salvage branch.",
 			"disabled": not run_active,
 			"requires_confirm": run_active,
-			"disabled_reason": &"settlement_runtime_not_connected",
-			"confirm_copy": "Confirm preview: abandon settlement is not implemented in M3R.",
-			"preview": true,
-			"display_only": true,
-			"read_only": true,
+			"disabled_reason": &"" if run_active else &"no_active_run",
+			"confirm_copy": "Black resources and all items are lost; direct gold is retained.",
+			"preview": false,
+			"display_only": false,
+			"read_only": false,
 		},
 	}
 
@@ -287,7 +297,7 @@ static func _loadout_cards(config: Dictionary, selected_filter: StringName) -> A
 			"category": "Loadout",
 			"state": "minimal_real",
 			"summary": "%d consumable item(s) will enter the next run backpack." % consumables.size(),
-			"detail": "Unused carry-in consumables return on success and become failure salvage candidates under the M3 settlement rule.",
+			"detail": "Carry-in and in-run consumables are cleared when the run ends, even when unused.",
 			"lines": _item_lines(consumables),
 			"link_preview": ["Warehouse Lite", "Backpack"],
 			"preview": false,

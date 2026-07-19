@@ -1,5 +1,7 @@
 # Handoff Docs
 
+当前程序交接：`HANDOFF_M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP.md`；当前美术基线仍为 ART23，ART24 不作为程序基线。
+
 文档状态：阶段交接原文入口
 适用范围：`docs/handoff` 下阶段 handoff 原文
 最后更新：2026-07-18（ART23 长期系统最终美术 UI）

@@ -1,109 +1,54 @@
 # Current State
 
-文档状态：ART23 关闭后的当前权威事实摘要
-最后更新：2026-07-18
+文档状态：M6 关闭后的当前仓库事实；最后更新 2026-07-19。
 
-## 1. 基线身份
+## 当前基线
 
 ```text
-branch: art/art23-long-term-final-ui
-base: origin/integration/i0-art21-baseline
-I0_source: origin/i0/project-baseline-refactor
-I0_source_head: 77569579a6c66d9f4350f0ba419906a7814dd502
-ART21_source: origin/art/art21-main-menu-scene-reconstruction
-ART21_source_head: 93420a8f3799c540ac8a2b46d3c264d5f3ee10f1
-common_base: 3dbb843e34f16a9a10b7122a0e094c457a7057c6
-latest_closed_art_stage: ART23
+branch: godot/g41-in-run-core-gameplay-runtime
+program_baseline: ART23 + G41 + M6
+art_baseline: ART23
+excluded_baseline: ART24
+latest_closed_program_stage: M6
 active_successor_stage: none
+godot: E:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe
+git: E:\git\cmd\git.exe
 ```
 
-当前路径从 Git worktree 解析。旧机器 `D:\AGAME1` 路径继续保留在历史
-validation / handoff 中，但不控制当前执行。
+当前仓库必须由 `git rev-parse --show-toplevel` 解析，历史文档中的旧盘符路径不再具有当前执行权威。ART24 因用户确认的重大运行问题被明确排除，不能作为程序基线。
 
-## 2. I0 工程基线
+## 已完成的程序闭环
 
-I0 仍是最新关闭的非美术阶段，关闭状态为
-`CLOSED_WITH_RECORDED_SAFETY_NONCONFORMANCE_AND_LIMITATIONS`。
+- ART21/22/23：主菜单、出发页和长期页的既有美术运行基线。
+- G41：连续房间移动、距离交互、宝箱、地面掉落、拾取/替换/丢弃、固定步长战斗、怪物、逃跑和生命周期清理。
+- M6：仓库真实实例、玩家手动出勤、局内获取与使用、成功/失败/放弃结算、仓库写回和最多 50 条历史记录。
+- 新档初始库存：护目镜、绝缘套、压缩饼两份、胶带卷、扫描针；金色资源为 0。
+- 出勤上限：最多 2 件装备、3 个消耗品实例；基础背包 10，基础失败保全容量 4。
+- 消耗品在所有终局清除；失败由玩家按重量手动确认非消耗品保全；放弃保全容量为 0。
+- 当前进程内可以从局内返回出发页，再继续同一个 `run_id`；确认放弃走真实结算。
+- 所有非唯一实体物品已有搜索、宝箱、战斗、事件或祭坛来源；旅商收据是虚拟记录，唯一占位保持锁定。
 
-整合后仍保留：
-
-- `abandon_count` 默认值与规范化。
-- RFC 4180 资产 CSV 解析。
-- `open_inventory`、`open_ground_loot`、`request_extract` InputMap。
-- DebugGate 对调试面板入口的约束。
-- ART21R2 smoke seeder 与 RunScene 的职责拆分。
-- 12 个 I0 headless runner、污染守卫和文档编码门。
-
-历史 I0 的有限可见 smoke、24 条退出清理提示类别、AppData log
-安全不符合记录和未完成完整人工游玩结论均未被本次整合抹除。
-
-## 3. ART21 美术基线
-
-ART21 是已关闭的主菜单美术基线。主菜单已使用场景式布局：
-
-- 1280×720 clean plate。
-- 左侧地牢、标题招牌、公告和主角。
-- 右侧公司与四个入口：出发探索、长期系统、设置、退出游戏。
-- 引擎渲染中文文字、设置与退出覆盖层、路由过渡。
-- 152 个主菜单运行时 PNG、66 个 live / interaction-reachable 资产。
-- 默认保守解码预算 10.40 MiB。
-- 10 个运行时 motion group、6 张三分辨率/状态证据图。
-
-ART21R2、ART21R1 与早期 ART21 placement 工作仍是历史预备切片。
-
-## 4. ART22 美术基线
-
-ART22 是已关闭的出发探索美术基线：
-
-- 真实 `main.tscn → AppShell → DeployPrepShell` 接入。
-- 57 个运行时 PNG，默认 8.18 MiB，总量 9.36 MiB。
-- 5 个一级页签、34 个二级状态、四页摘要、可收起羊皮纸。
-- 8 张角色帧、8 组环境帧动画、2 组粒子。
-- 12 张状态 / 五分辨率截图、5 张矩阵联系表、6 张动作时序截图。
-- `ART22-CU-FROZEN-2` Computer Use 全量验收 PASS。
-- Asset manifest 为 388 行、17 列、唯一 ID。
-
-## 5. ART23 美术基线
-
-ART23 是最新关闭的美术阶段：
-
-- 真实 `main.tscn → AppShell → LongTermShell` 接入。
-- 58 个运行时纹理与 1 个 OFL 正文字体 manifest 条目；默认 6.86 MiB，总量 16.27 MiB。
-- 6 个一级模块、27 个二级页面、六种家具隐喻、固定角色档案与可收起档案室。
-- 8 张角色资源帧、暖/蓝呼吸光、档案尘与蓝色微粒。
-- 5 × 27 = 135 个分辨率/页面状态，135 个截图哈希唯一。
-- `ART23-CU-FROZEN-2` Computer Use 全量验收 27/27 PASS，连续动效观察 60 秒 PASS。
-- Asset manifest 为 447 行、17 列、唯一 ID。
-
-## 6. 整合验证事实
-
-2026-07-18 的 ART23 提交前工作树验收：
+## 当前验证事实
 
 ```text
-I0 overall: PASS_WITH_NOTES
-I0 characterization: PASS_REMEDIATED_WITH_NOTES
-I0 runners: 12/12
-blocking diagnostics: 0
-cleanup diagnostics: 24
-document encoding: PASS_WITH_RECORDED_LIMITATION
-pollution guard: PASS
-asset_manifest rows: 447
-ART21 runtime: PASS entries=4 overlays=2 transitions=2 shortcuts=2 motion_groups=10
-ART22 runtime: PASS tabs=5 secondary_states=34 summary_pages=4 character_frames=8 ambient_tracks=10
-ART23 runtime: PASS primary_modules=6 secondary_pages=27 character_frames=8 states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING
-ART21 scene / placement / ART20 / ART21R1 / G39 / ART17 regressions: PASS
-Computer Use: ART23 PASS, 27/27 pages plus route, interaction and 60-second motion checks
-visible Godot: launched for ART23 acceptance
+M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_VALIDATION=PASS
+M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP=PASS
+ART22_DEPLOY_PREP_RUNTIME=PASS
+ART23_LONG_TERM_RUNTIME=PASS
+G41_IN_RUN_CORE_GAMEPLAY_RUNTIME_VALIDATION=PASS
+Godot headless editor/project-load smoke=PASS
+git diff --check=PASS
 ```
 
-I0 工作树报告：
-`D:\AGAME1\active\reports\i0\I0.2_20260718T122432575Z_5876e072.json`。
-该绝对路径是当前机器运行证据，不是仓库路径权威。
+M6 外部 headless runner 在退出时仍报告既有的 `ObjectDB/resources still in use` 清理诊断，但进程退出码和 M6 断言均通过；该诊断不被扩写为完整长期运行或发布通过。
 
-## 7. 当前边界
+## 尚未声明完成
 
-- 当前没有已授权的 ART23 后继、工程、内容、CI 或发布阶段。
-- 完整人工游玩、最终视觉、性能、兼容性、导出与发布 PASS 未声明。
-- 其他原始 worktree 的 dirty 文件和 stash 不属于本整合提交。
-- ART23 详细证据见 `docs/validation/ART23_LONG_TERM_FINAL_UI_VALIDATION.md`；ART22 出发探索证据仍见 `docs/validation/ART22_DEPLOY_PREP_FINAL_UI_VALIDATION.md`；
-  I0 + ART21 工程基线仍见 `docs/validation/I0_ART21_BASELINE_INTEGRATION_VALIDATION.md`。
+- 完整仓库经济、购买、整理、堆叠、扩容、保险和托运；
+- 装备强化、耐久、随机词条、完整被动与最终数值平衡；
+- 完整目标/奖励/奖池、研究、抽奖、收藏奖励；
+- Boss、精英、完整事件与更深内容量；
+- 退出 Godot 进程后的局内检查点恢复；
+- 最终美术、音频、完整人工长时间游玩、性能、CI、导出和发布。
+
+详细证据见 `docs/validation/M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_VALIDATION.md` 和 `docs/handoff/HANDOFF_M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP.md`。

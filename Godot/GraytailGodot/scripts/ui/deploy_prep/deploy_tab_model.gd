@@ -77,7 +77,7 @@ static func build_tabs() -> Array:
 			[
 				"仓库主分类固定为：装备 / 消耗品 / 藏品 / 特殊物。",
 				"唯一、样本、任务物、委托物、未判断价值只作为 rarity、state、tag 或 source。",
-				"出售、装备、加入出勤和移出出勤在本轮都是 preview / in-memory intent，不写真实仓库。",
+				"装备和消耗品卡片可真实加入或移出本次出勤草稿；确认出发后交给当局实例处理。",
 			],
 			[
 				_filter(FILTER_ALL, "全部"),
@@ -102,8 +102,8 @@ static func build_tabs() -> Array:
 			"catalog-first：展示可购买、可领取、可回收、未解锁和推荐目录。",
 			[
 				"申领页从“当前能提供什么”出发，不替代仓库 ownership 视角。",
-				"购买 / 领取 / 回收 / 购买并加入出勤在本轮只表达 preview intent。",
-				"购买或领取的规则目标是入长期仓库；不得绕过仓库创建临时本局物资。",
+				"M6 开放每局一次的应急压缩饼；它只进入本局出勤，终局清空且不进入仓库。",
+				"购买、回收和长期申领仍保留为后续仓库经济接口。",
 			],
 			[
 				_filter(FILTER_ALL, "全部"),
@@ -115,7 +115,7 @@ static func build_tabs() -> Array:
 			],
 			[
 				_card("purchase_first_aid", "简易急救包 / 可购买", "申领", "preview", "购买事件 preview。", "显示资源需求和入仓结果，但不扣费、不发放、不入仓。", ["需求：金币 x40", "结果：进入长期仓库", "快捷：购买并加入出勤需拆成两个事件"], ["查看仓库"], FILTER_CLAIM_PURCHASE),
-				_card("claim_starter_gear", "基础装备 / 可领取", "申领", "preview", "基础装备领取 preview。", "基础装备默认进入长期仓库，除非明确标记临时租借。", ["领取条件：教学完成", "结果：装备入仓", "临时租借：否"], ["查看出勤配置"], FILTER_CLAIM_RECEIVE),
+				_card("claim_emergency_ration", "应急压缩饼 / 本局可领取", "申领", "ready", "每局可领取一次的基础补给。", "点击加入或移出本次出勤；不进入长期仓库，本局结束后清空。", ["花费：0", "重量：1", "每局：最多 1 个", "结算：终局清空"], ["加入本局出勤"], FILTER_CLAIM_RECEIVE),
 				_card("recycle_relic", "后勤回收 / 可回收目录", "申领", "preview", "回收目录 preview。", "申领页只展示可回收类型；出售仍需玩家拥有且未加入当前出勤。", ["接受：普通藏品", "拒绝：唯一藏品", "冲突：已配置需先移出"], ["查看仓库状态"], FILTER_CLAIM_RECYCLE),
 				_card("locked_supply", "高级保障物 / 未解锁", "申领", "locked", "未解锁预览。", "只显示条件，不创建服务或情报独立系统。", ["条件：后续接口", "标签：保障类消耗品", "许可：后续开放"], ["查看开放事项"], FILTER_CLAIM_LOCKED),
 				_card("recommended_for_target", "目标相关推荐", "申领", "preview", "按地图 / 目标 / 仓库缺口推荐。", "推荐只读显示，不写购买清单。", ["推荐：探测类消耗品", "原因：目标需要探索房间", "状态：display_only"], ["前往目标"], FILTER_CLAIM_RECOMMENDED),
@@ -153,7 +153,7 @@ static func build_tabs() -> Array:
 			[
 				"出勤配置只汇总当前 draft，不重新展开完整选择器。",
 				"背包容量统一表达本次出勤携带物占用；仓库库存本身不占出勤背包容量。",
-				"开始 / 继续 / 放弃只保留按钮状态、强确认和 intent 边界，不接真实 RunBootstrapper。",
+				"开始使用玩家当前选择；有进行中探索时只能继续或强确认放弃。",
 			],
 			[
 				_filter(FILTER_ALL, "全部"),
@@ -174,7 +174,7 @@ static func build_tabs() -> Array:
 				_card("loadout_consumable_summary", "消耗品摘要", "配置", "preview", "已带消耗品和地图拓扑说明。", "未使用消耗品按结算结果处理：成功入仓，失败进入 salvage candidate。", ["简易急救包 x2", "照明棒组 x1", "拓扑：常规扫雷 8 邻域说明", "结算：成功入仓 / 失败抢救候选"], ["返回仓库"], FILTER_LOADOUT_CONSUMABLE),
 				_card("loadout_special_summary", "特殊物摘要", "配置", "preview", "特殊物 / 委托物引用。", "只显示目标相关状态，不写仓库或目标进度。", ["委托标记物", "目标相关：是", "状态：已配置"], ["返回目标"], FILTER_LOADOUT_SPECIAL),
 				_card("loadout_bag_capacity", "背包容量", "配置", "preview", "统一使用背包容量口径。", "不新增补给容量；购买但未带入的物品不计入本局配置。", ["背包容量：3 / 12", "购买未带入：1", "超限：否"], ["查看风险"], FILTER_LOADOUT_BAG),
-				_card("loadout_validity", "配置合法性", "配置", "preview", "开始探索前合法性摘要。", "只做 display-only 校验提示，不启动真实 RunFlow。", ["地图：已选", "目标：可用", "不可出勤物：无", "需要二次确认：否"], ["查看摘要"], FILTER_LOADOUT_VALIDITY),
+				_card("loadout_validity", "配置合法性", "配置", "ready", "开始探索前合法性摘要。", "校验真实仓库实例、装备槽、消耗品数量与背包重量，通过后进入既有 RunFlow。", ["地图：已选", "装备上限：2", "消耗品上限：3", "背包：实时校验"], ["查看摘要"], FILTER_LOADOUT_VALIDITY),
 				_card("loadout_intents", "开始 / 继续 / 放弃 intent", "配置", "preview", "主操作边界。", "开始、继续、放弃都只产生 preview intent；放弃必须强确认。", ["开始：preview", "继续：按 active_run 状态", "放弃：强确认 preview"], ["查看按钮"], FILTER_LOADOUT_INTENT),
 				_card("permission_interface", "作业许可 / 后续接口", "配置", "locked", "作业许可降级为接口。", "当前不设置许可槽、容量、主动启用、消耗或互斥，只显示 locked state。", ["required_permission：预留", "future_permission_hook：预留", "状态：后续开放"], ["查看未决事项"], FILTER_LOADOUT_PERMISSION),
 			]

@@ -1,5 +1,7 @@
 # Validation Docs
 
+当前程序阶段验证：`M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_VALIDATION.md`。历史验证保留，但其中与 M6 冲突的自动出勤、消耗品返还/保全和放弃资源待定语义不再是当前规则。
+
 文档状态：阶段验证原文入口
 适用范围：`docs/validation` 下阶段验证记录
 最后更新：2026-07-18

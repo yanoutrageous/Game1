@@ -1,6 +1,8 @@
 extends RefCounted
 class_name SaveAdapter
 
+const M3ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
+
 const M1_META_PROGRESS_PATH := "user://graytail_m1_meta_progress.json"
 const SAVE_ROOT_DIR := "user://saves"
 const SAVE_MANIFEST_PATH := "user://saves/manifest.json"
@@ -45,9 +47,11 @@ func describe_boundary() -> Dictionary:
 
 func default_meta_progress() -> Dictionary:
 	return {
-		"schema_version": 1,
+		"schema_version": 2,
 		"gold": 0,
-		"warehouse_items": [],
+		"warehouse_items": _starter_warehouse_items(),
+		"starter_grant_version": 1,
+		"history_records": [],
 		"profile_level": 1,
 		"profile_exp": 0,
 		"permit_level": 1,
@@ -120,9 +124,20 @@ func _ensure_parent_dir(path: String) -> void:
 
 func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Dictionary:
 	var result := fallback.duplicate(true)
-	result["schema_version"] = int(data.get("schema_version", result.get("schema_version", 1)))
+	result["schema_version"] = maxi(int(data.get("schema_version", 1)), int(result.get("schema_version", 2)))
 	result["gold"] = maxi(0, int(data.get("gold", result.get("gold", 0))))
 	result["warehouse_items"] = _array_from(data.get("warehouse_items", result.get("warehouse_items", [])))
+	var starter_version := maxi(0, int(data.get("starter_grant_version", 0)))
+	if starter_version < 1:
+		var warehouse_items: Array = result.get("warehouse_items", [])
+		_append_missing_starter_items(warehouse_items)
+		result["warehouse_items"] = warehouse_items
+		starter_version = 1
+	result["starter_grant_version"] = starter_version
+	var history_records := _array_from(data.get("history_records", result.get("history_records", [])))
+	while history_records.size() > 50:
+		history_records.pop_front()
+	result["history_records"] = history_records
 	result["profile_level"] = maxi(1, int(data.get("profile_level", result.get("profile_level", 1))))
 	result["profile_exp"] = maxi(0, int(data.get("profile_exp", result.get("profile_exp", 0))))
 	result["permit_level"] = maxi(1, int(data.get("permit_level", result.get("permit_level", 1))))
@@ -137,6 +152,46 @@ func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Diction
 	result["debug_commands"] = _array_from(data.get("debug_commands", result.get("debug_commands", [])))
 	result["committed_result_ids"] = _array_from(data.get("committed_result_ids", result.get("committed_result_ids", [])))
 	return result
+
+
+func _starter_warehouse_items() -> Array:
+	var result: Array = []
+	var quantities := {
+		"eq_goggles": 1,
+		"eq_insulated_sleeve": 1,
+		"con_ration": 2,
+		"con_tape_roll": 1,
+		"con_scan_pin": 1,
+	}
+	for item_id in quantities.keys():
+		var definition := _catalog_item(str(item_id))
+		for index in range(int(quantities[item_id])):
+			var item := definition.duplicate(true)
+			item["instance_id"] = "m6_starter:%s:%d" % [str(item_id), index + 1]
+			item["source"] = "m6_starter_grant"
+			item["source_label"] = "M6 初始整备"
+			item["location_state"] = &"warehouse"
+			result.append(item)
+	return result
+
+
+func _append_missing_starter_items(items: Array) -> void:
+	var known: Dictionary = {}
+	for raw_item in items:
+		var item := _dictionary_from(raw_item)
+		known[str(item.get("instance_id", ""))] = true
+	for raw_starter in _starter_warehouse_items():
+		var starter := _dictionary_from(raw_starter)
+		if not known.has(str(starter.get("instance_id", ""))):
+			items.append(starter)
+
+
+func _catalog_item(item_id: String) -> Dictionary:
+	for raw_item in M3ItemCatalogScript.all_items():
+		var item := _dictionary_from(raw_item)
+		if str(item.get("item_id", "")) == item_id:
+			return item
+	return {"item_id": item_id, "display_name": item_id, "item_type": "special", "weight": 1, "base_value": 0}
 
 
 func _load_result(ok: bool, status: String, data: Dictionary, error: String) -> Dictionary:

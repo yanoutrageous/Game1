@@ -15,6 +15,7 @@ const EncounterContractScript := preload("res://scripts/core/run/encounter/encou
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
 const RunEffectApplierScript := preload("res://scripts/core/run/run_effect_applier.gd")
 const M3ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
+const RunStartConfigScript := preload("res://scripts/core/run/run_start_config.gd")
 
 var context: RunContext
 var runtime_controller
@@ -89,6 +90,8 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = unequip_item(String(command_payload.get("instance_id", "")))
 		&"abandon_run":
 			action_result = abandon_run(String(command_payload.get("reason", "player_abandoned")))
+		&"confirm_failure_salvage":
+			action_result = confirm_failure_salvage(command_payload.get("selected_instance_ids", []))
 		&"request_extract":
 			action_result = request_extract()
 		&"confirm_extract":
@@ -166,7 +169,13 @@ func start_tutorial_run() -> Dictionary:
 func start_standard_run(payload: Dictionary = {}) -> Dictionary:
 	if runtime_controller == null:
 		return _blocked(&"not_ready", "runtime_controller_missing")
-	var result: Dictionary = runtime_controller.start_standard_run(room_resolver, payload.get("run_start_config", {}))
+	var run_start_config: Dictionary = payload.get("run_start_config", {})
+	var validation := RunStartConfigScript.validate(run_start_config)
+	if not bool(validation.get("ok", false)):
+		var blocked := _blocked(&"invalid_run_start_config", "invalid_run_start_config")
+		blocked["issues"] = validation.get("issues", [])
+		return blocked
+	var result: Dictionary = runtime_controller.start_standard_run(room_resolver, run_start_config)
 	_emit_state()
 	return result
 
@@ -447,6 +456,16 @@ func abandon_run(reason: String = "player_abandoned") -> Dictionary:
 	var result: Dictionary = runtime_controller.abandon_run(reason)
 	_emit_state()
 	if bool(result.get("ok", false)) and context != null and context.result_snapshot.has("outcome"):
+		result_available.emit(context.result_snapshot)
+	return result
+
+
+func confirm_failure_salvage(selected_instance_ids: Array) -> Dictionary:
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	var result: Dictionary = runtime_controller.confirm_failure_salvage(selected_instance_ids)
+	_emit_state()
+	if bool(result.get("ok", false)) and context != null and context.phase == &"failed":
 		result_available.emit(context.result_snapshot)
 	return result
 

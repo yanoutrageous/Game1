@@ -417,6 +417,7 @@ func _build_run_overlay() -> void:
 	result_panel.name = "ResultPanel"
 	result_panel.return_main_requested.connect(_return_from_result_to_main)
 	result_panel.return_deploy_requested.connect(_return_from_result_to_deploy)
+	result_panel.failure_salvage_confirmed.connect(_confirm_failure_salvage_from_result)
 	result_panel.hide_result()
 	surface_overlay_slot.add_child(result_panel)
 
@@ -600,6 +601,7 @@ func _show_main_menu() -> void:
 func _show_deploy_shell(selected_tab: StringName = &"config") -> void:
 	screen_state = SCREEN_DEPLOY
 	_set_gameplay_visible(false)
+	ui_shell.call("apply_snapshot", _shell_snapshot())
 	ui_shell.call("show_deploy", _normalize_deploy_tab(selected_tab))
 	run_overlay_root.visible = false
 	_hide_runtime_popups()
@@ -673,11 +675,7 @@ func _continue_from_pause() -> void:
 
 
 func _return_from_pause_to_deploy() -> void:
-	if _has_active_run_for_pause_exit():
-		pause_exit_confirm_pending = false
-		if pause_status_label != null:
-			pause_status_label.text = "Active run is still running. Use Exit current run first, then return to DeployPrep."
-		return
+	pause_exit_confirm_pending = false
 	if pause_panel != null:
 		pause_panel.visible = false
 	_show_deploy_shell(&"config")
@@ -1131,6 +1129,8 @@ func _close_top_runtime_modal() -> bool:
 		_cancel_extract_from_ui()
 		return true
 	if result_panel != null and result_panel.visible:
+		if result_panel.requires_salvage_confirmation():
+			return true
 		_return_from_result_to_deploy()
 		return true
 	if pause_panel != null and pause_panel.visible:
@@ -1177,6 +1177,12 @@ func _on_result_available(snapshot: Dictionary) -> void:
 	_hide_runtime_popups()
 	if result_panel != null:
 		result_panel.show_summary(display_snapshot)
+
+
+func _confirm_failure_salvage_from_result(selected_instance_ids: Array) -> void:
+	var result := _dispatch_command(&"confirm_failure_salvage", {"selected_instance_ids": selected_instance_ids})
+	if not bool(result.get("ok", false)) and result_panel != null:
+		result_panel.show_summary(RunSceneResultControllerScript.build_result_display_snapshot(meta_progress_adapter, run_context.result_snapshot))
 
 
 func _refresh_view_models() -> void:
@@ -1632,6 +1638,20 @@ func _start_standard_from_ui() -> void:
 
 
 func _start_run_from_route(intent: Dictionary) -> void:
+	var payload := NavigationIntentScript.payload(intent)
+	if bool(payload.get("continue_active_run", false)):
+		if run_context != null and run_context.run_active:
+			last_command_result = {"ok": true, "status": &"continued_active_run"}
+			_show_run_screen()
+		else:
+			last_command_result = {"ok": false, "status": &"no_active_run", "reason": "no_active_run_to_continue"}
+			_show_command_feedback(last_command_result)
+		return
+	if bool(payload.get("abandon_active_run", false)):
+		var abandon_result := _dispatch_command(&"abandon_run", {"reason": String(payload.get("reason", "player_deploy_abandon")), "source": "deploy_prep"})
+		if not bool(abandon_result.get("ok", false)):
+			_show_deploy_shell(&"config")
+		return
 	var route_result := RunSceneRouteControllerScript.start_from_intent(intent, command_bus)
 	var command_result: Dictionary = route_result.get("command_result", route_result)
 	last_command_result = command_result.duplicate(true)
