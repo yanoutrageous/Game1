@@ -85,3 +85,4 @@ debug_restart_run={
 
 renderer/rendering_method="gl_compatibility"
 textures/canvas_textures/default_texture_filter=0
+environment/defaults/default_clear_color=Color(0.015, 0.018, 0.017, 1)

@@ -7,6 +7,7 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
+const ReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const LEGACY_RESULT_VALIDATION_MARKERS := ["Outcome:", "Mode:", "Moves:", "Mine Hits:", "Monsters Defeated:", "Failure Pending Lost:", "Failure Salvaged Items:", "Carried Items:", "Carried Value:", "Safe Gold:", "Final HP:", "Final Pressure:", "Black Coin:", "Gold Coin:", "Warehouse Lite Items:", "Room Floor Lost:", "Settlement Log Entries:"]
 
 signal return_main_requested
@@ -47,6 +48,7 @@ func set_result_summary(title: String, summary: String) -> void:
 		title_node.text = title
 
 	if summary_node != null:
+		summary_node.add_theme_font_override("font", ReadableFont)
 		summary_node.add_theme_color_override("font_color", PresentationTheme.text_color())
 		summary_node.add_theme_font_size_override("font_size", 13)
 		summary_node.add_theme_constant_override("line_spacing", 2)
@@ -164,12 +166,14 @@ func _ensure_result_metrics() -> void:
 		card.add_child(stack)
 		var metric_title := Label.new()
 		metric_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		metric_title.add_theme_font_override("font", ReadableFont)
 		metric_title.add_theme_font_size_override("font_size", 11)
 		metric_title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		stack.add_child(metric_title)
 		result_metric_title_labels.append(metric_title)
 		var metric_value := Label.new()
 		metric_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		metric_value.add_theme_font_override("font", ReadableFont)
 		metric_value.add_theme_font_size_override("font_size", 20)
 		metric_value.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		stack.add_child(metric_value)
@@ -275,6 +279,7 @@ func _ensure_salvage_panel() -> void:
 	content.add_child(heading)
 	salvage_capacity_label = Label.new()
 	salvage_capacity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	salvage_capacity_label.add_theme_font_override("font", ReadableFont)
 	salvage_capacity_label.add_theme_color_override("font_color", PresentationTheme.text_color())
 	content.add_child(salvage_capacity_label)
 	var scroll := ScrollContainer.new()
@@ -328,6 +333,7 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 	if candidates.is_empty():
 		var empty_label := Label.new()
 		empty_label.text = "没有可保全的非消耗品；可以直接确认结算。"
+		empty_label.add_theme_font_override("font", ReadableFont)
 		salvage_candidates_box.add_child(empty_label)
 	for raw_item in candidates:
 		if not raw_item is Dictionary:
@@ -341,6 +347,7 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 		button.custom_minimum_size = Vector2(0, 42)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		_apply_art21r2_modal_button(button, &"art21r2.modal.item_row.normal", &"secondary", 13, 10)
+		button.add_theme_font_override("font", ReadableFont)
 		button.set_meta("instance_id", instance_id)
 		button.set_meta("weight", int(item.get("weight", 1)))
 		button.toggled.connect(func(pressed: bool) -> void: _toggle_salvage_item(instance_id, pressed))

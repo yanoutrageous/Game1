@@ -36,6 +36,7 @@ const RunSceneResultControllerScript := preload("res://scripts/core/run/run_scen
 const RunSceneResponsibilityBudgetScript := preload("res://scripts/core/run/run_scene_responsibility_budget.gd")
 const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
 const G41RoomRuntimeViewScript := preload("res://scripts/gameplay/runtime/g41_room_runtime_view.gd")
+const Art25GameplayBackdropScript := preload("res://scripts/presentation/art25_gameplay_backdrop.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
@@ -113,6 +114,7 @@ var tutorial_popup_panel: TutorialPopupPanel
 var room_controller: RoomSceneController
 var player_controller: PlayerController
 var room_runtime_view
+var gameplay_backdrop: Art25GameplayBackdrop
 var screen_state: StringName = SCREEN_MAIN_MENU
 var current_layout_profile_id: StringName = &"desktop"
 var last_command_result: Dictionary = {}
@@ -299,6 +301,8 @@ func _direction_from_key_event(event: InputEvent) -> Vector2:
 func _build_playfield_visuals() -> void:
 	var room_layer := get_node("RoomLayer") as Node2D
 	var player_layer := get_node("PlayerLayer") as Node2D
+	gameplay_backdrop = Art25GameplayBackdropScript.new() as Art25GameplayBackdrop
+	add_child(gameplay_backdrop)
 	room_controller = RoomScene.instantiate() as RoomSceneController
 	room_controller.name = "RoomSceneController"
 	room_layer.add_child(room_controller)
@@ -707,6 +711,8 @@ func _set_gameplay_visible(visible: bool) -> void:
 		room_layer.visible = visible
 	if player_layer != null:
 		player_layer.visible = visible
+	if gameplay_backdrop != null:
+		gameplay_backdrop.visible = visible
 	if ui_shell != null:
 		ui_shell.visible = not visible
 
@@ -1335,6 +1341,8 @@ func _refresh_view_models() -> void:
 	_apply_runtime_modal_layout(layout_profile)
 	_apply_game_stage_layout(layout_profile)
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
+	if gameplay_backdrop != null:
+		gameplay_backdrop.apply_room_type(StringName(snapshot.get("current_room", &"Normal")))
 	var minimap_vm := RunSceneUIBridgeScript.minimap_from_snapshot_or_intel(snapshot, run_context)
 	if run_surface != null:
 		var surface_model := RunSceneUIBridgeScript.build_surface_model(snapshot, minimap_vm, layout_profile, last_command_result)
@@ -1411,6 +1419,8 @@ func _apply_game_stage_layout(layout_profile: Dictionary) -> void:
 	var height: float = maxf(1.0, viewport_size.y)
 	var left_width: float = UILayerContractScript.run_left_width(layout_profile)
 	var gameplay_width: float = maxf(1.0, width - left_width)
+	if gameplay_backdrop != null:
+		gameplay_backdrop.apply_layout(viewport_size, left_width)
 	var room_visual_size := Vector2(560.0, 560.0)
 	var room_visual_center := Vector2(640.0, 360.0)
 	if room_controller != null:

@@ -15,15 +15,18 @@ func _initialize() -> void:
 
 func _capture_matrix() -> void:
 	var options := _parse_options(OS.get_cmdline_user_args())
+	var width := int(options.get("width", 1280))
+	var height := int(options.get("height", 720))
 	var output_dir := String(options.get("output-dir", "res://art22_filter_matrix_full"))
 	var output_path := output_dir if output_dir.is_absolute_path() else ProjectSettings.globalize_path(output_dir)
 	DirAccess.make_dir_recursive_absolute(output_path)
 
-	root.size = Vector2i(1280, 720)
+	root.size = Vector2i(width, height)
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
 	var canvas := Control.new()
 	canvas.name = "Art22MatrixCanvas"
 	canvas.size = Vector2(1280, 720)
+	canvas.scale = Vector2(float(width) / 1280.0, float(height) / 720.0)
 	root.add_child(canvas)
 
 	var app_shell_script := load("res://scripts/ui/app_shell/app_shell.gd")
@@ -49,14 +52,14 @@ func _capture_matrix() -> void:
 			deploy.call("_on_filter_pressed", filter_id)
 			await _frames(5)
 			var image := root.get_texture().get_image()
-			var file_path := output_path.path_join("%s__%s.png" % [String(tab_id), String(filter_id)])
+			var file_path := output_path.path_join("%s__%s__%dx%d.png" % [String(tab_id), String(filter_id), width, height])
 			var result := image.save_png(file_path)
 			if result != OK:
 				push_error("ART22 matrix capture failed: %s -> %s" % [file_path, error_string(result)])
 				quit(2)
 				return
 			captured += 1
-	print("ART22_MATRIX_CAPTURE=PASS states=%d output=%s" % [captured, output_path])
+	print("ART22_MATRIX_CAPTURE=PASS states=%d size=%dx%d output=%s" % [captured, width, height, output_path])
 	quit(0 if captured == 34 else 2)
 
 

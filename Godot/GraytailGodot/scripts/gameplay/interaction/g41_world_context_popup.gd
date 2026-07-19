@@ -8,6 +8,7 @@ signal chest_toggle_requested
 const POPUP_WIDTH := 308.0
 const ROW_HEIGHT := 44.0
 const ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
+const ReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 
 var title_label: Label
 var hint_label: Label
@@ -126,6 +127,7 @@ func _build() -> void:
 	hint_label = Label.new()
 	hint_label.name = "ContextHint"
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint_label.add_theme_font_override("font", ReadableFont)
 	hint_label.add_theme_font_size_override("font_size", 12)
 	hint_label.add_theme_color_override("font_color", Color(0.70, 0.80, 0.76, 1.0))
 	root.add_child(hint_label)
@@ -149,6 +151,7 @@ func _build() -> void:
 	status_label = Label.new()
 	status_label.name = "ContextStatus"
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.add_theme_font_override("font", ReadableFont)
 	status_label.add_theme_font_size_override("font_size", 12)
 	status_label.add_theme_color_override("font_color", Color(0.66, 0.76, 0.72, 1.0))
 	status_label.visible = false
@@ -226,6 +229,7 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty.custom_minimum_size = Vector2(0, ROW_HEIGHT)
 		empty.add_theme_font_size_override("font_size", 13)
+		empty.add_theme_font_override("font", ReadableFont)
 		empty.add_theme_color_override("font_color", Color(0.88, 0.48, 0.34, 1.0))
 		item_list.add_child(empty)
 		return
@@ -245,6 +249,7 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		item_button.tooltip_text = String(item.get("short_description", ""))
 		_apply_item_icon(item_button, item)
 		_style_button(item_button, &"secondary", 12)
+		item_button.add_theme_font_override("font", ReadableFont)
 		row.add_child(item_button)
 		var candidate_id := String(item.get("instance_id", ""))
 		var candidate_weight := int(item.get("weight", 0))
@@ -267,6 +272,7 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty.custom_minimum_size = Vector2(0, ROW_HEIGHT)
 		empty.add_theme_font_size_override("font_size", 13)
+		empty.add_theme_font_override("font", ReadableFont)
 		empty.add_theme_color_override("font_color", Color(0.62, 0.68, 0.65, 1.0))
 		item_list.add_child(empty)
 		return
@@ -289,6 +295,7 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		item_button.tooltip_text = String(item.get("short_description", ""))
 		_apply_item_icon(item_button, item)
 		_style_button(item_button, &"secondary", 12)
+		item_button.add_theme_font_override("font", ReadableFont)
 		row.add_child(item_button)
 		var instance_id := String(item.get("instance_id", ""))
 		var blocked := int(item.get("weight", 0)) > backpack_remaining
