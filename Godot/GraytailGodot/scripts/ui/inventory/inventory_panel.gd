@@ -6,6 +6,7 @@ const PresentationMappingScript := preload("res://scripts/presentation/presentat
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
+const Art24ItemVisualCatalogScript := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 
 signal drop_item_requested(instance_id: String)
@@ -16,6 +17,7 @@ var title_label: Label
 var summary_label: Label
 var item_list: VBoxContainer
 var item_scroll: ScrollContainer
+var item_backdrop: TextureRect
 var tooltip_label: Label
 var last_result_label: Label
 var item_button_minimum_size: Vector2 = Vector2(360, 52)
@@ -85,6 +87,14 @@ func build() -> void:
 	item_list_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_apply_art21r2_modal_panel(item_list_panel, &"art21r2.modal.section.panel", 8, 32)
 	root.add_child(item_list_panel)
+	item_backdrop = TextureRect.new()
+	item_backdrop.name = "InventoryBackpackWatermark"
+	item_backdrop.texture = load("res://assets/art24/ui/ue/ui_icon_backpack.png") as Texture2D
+	item_backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	item_backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	item_backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	item_backdrop.modulate = Color(0.72, 0.96, 0.91, 0.12)
+	item_list_panel.add_child(item_backdrop)
 	item_scroll = ScrollContainer.new()
 	item_scroll.name = "InventoryItemScroll"
 	item_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -131,12 +141,16 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		build()
 	var inventory_items: Array = _array_from(snapshot, "inventory_items")
 	var equipped_items: Array = _array_from(snapshot, "equipped_items")
-	summary_label.text = "背包 %s/%s  黑币 %s  安全收益 %s\n长期金币 %s  物品 %s  装备 %s" % [
+	if item_backdrop != null:
+		var visible_item_count := inventory_items.size() + equipped_items.size()
+		item_backdrop.visible = item_backdrop.texture != null and visible_item_count < 6
+		var watermark_alpha := 0.12 if visible_item_count == 0 else (0.075 if visible_item_count <= 2 else 0.04)
+		item_backdrop.modulate = Color(0.72, 0.96, 0.91, watermark_alpha)
+	summary_label.text = "背包 %s/%s　黑色资源 %s　金色资源 %s\n物品 %s　装备 %s" % [
 		snapshot.get("backpack_used", 0),
 		snapshot.get("backpack_capacity", 0),
 		snapshot.get("run_black_coin", snapshot.get("black_coin", 0)),
-		snapshot.get("safe_yield", snapshot.get("gold_coin", 0)),
-		snapshot.get("long_term_gold_preview", 0),
+		snapshot.get("gold_coin", snapshot.get("safe_yield", 0)),
 		inventory_items.size(),
 		equipped_items.size(),
 	]
@@ -210,17 +224,24 @@ func _main_game_modal_rect(profile: Dictionary, y_shift: float = 0.0) -> Rect2:
 	var viewport_size := UILayerContractScript.viewport_size_from_profile(profile)
 	var width: float = maxf(1.0, viewport_size.x)
 	var height: float = maxf(1.0, viewport_size.y)
-	var margin: float = 18.0 if bool(profile.get("is_low_resolution", false)) else 24.0
+	var is_low := bool(profile.get("is_low_resolution", false))
+	var is_high := bool(profile.get("is_high_resolution", false))
+	var margin: float = 18.0 if is_low else 24.0
 	var left_width: float = min(UILayerContractScript.run_left_width(profile), width * 0.42)
 	var gameplay_left: float = left_width + margin
 	var gameplay_width: float = maxf(260.0, width - gameplay_left - margin)
-	var modal_width: float = clampf(gameplay_width * 0.90, 520.0, 760.0)
+	# UE keeps inventory authority in the left rail. The expanded Godot view adds
+	# item actions that UE does not have, so present it as a field-bag drawer next
+	# to that rail instead of a generic modal covering almost the entire room.
+	var modal_min_width := 500.0 if is_low else 540.0
+	var modal_max_width := 620.0 if is_low else (760.0 if is_high else 680.0)
+	var modal_width: float = clampf(gameplay_width * 0.58, modal_min_width, modal_max_width)
 	if modal_width > gameplay_width:
 		modal_width = maxf(260.0, gameplay_width)
-	var modal_height: float = clampf(height * 0.78, 390.0, 590.0)
-	var bottom_reserve: float = 72.0 if bool(profile.get("is_low_resolution", false)) else 92.0
+	var modal_height: float = clampf(height * 0.65, 420.0 if is_low else 460.0, 480.0 if is_low else (580.0 if is_high else 540.0))
+	var bottom_reserve: float = 72.0 if is_low else 92.0
 	modal_height = min(modal_height, maxf(300.0, height - margin * 2.0 - bottom_reserve))
-	var x: float = gameplay_left + maxf(0.0, (gameplay_width - modal_width) * 0.5)
+	var x: float = gameplay_left
 	var y: float = margin + maxf(0.0, (height - bottom_reserve - modal_height) * 0.45) + y_shift
 	y = clampf(y, margin + 36.0, maxf(margin + 36.0, height - bottom_reserve - modal_height))
 	return Rect2(x, y, modal_width, modal_height)
@@ -299,8 +320,10 @@ func _array_from(source: Dictionary, key: String) -> Array:
 
 
 func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
-	var asset_ref := PresentationMappingScript.inventory_item_icon_ref(item)
-	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	var texture := Art24ItemVisualCatalogScript.texture_for(item)
+	if texture == null:
+		var asset_ref := PresentationMappingScript.inventory_item_icon_ref(item)
+		texture = Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
 	if texture == null:
 		return
 	button.icon = texture

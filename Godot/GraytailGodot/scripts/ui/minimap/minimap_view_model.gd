@@ -144,19 +144,22 @@ static func _detail_text(marker: Dictionary, action: Dictionary) -> String:
 	var distance := int(marker.get("distance_to_player", -1))
 	var action_label := String(action.get("label", "查看"))
 	var reason := String(action.get("reason", ""))
+	# The expanded map has one compact status band above a large 10x10 grid.
+	# Keep the player-facing summary to two lines instead of forwarding the old
+	# four-line diagnostic dump, which both leaked raw enum values and crushed
+	# the type hierarchy at 1280x720.
 	var lines: Array[String] = [
-		"格子 (%d,%d) | 状态 %s | 房型 %s" % [pos.x, pos.y, _known_state_label(state), _room_type_label(room_type)],
-		"周边雷险：%s | 与当前位置距离：%s" % [str(adjacent) if adjacent >= 0 else "未知", str(distance) if distance >= 0 else "未知"],
-		"动作：%s%s" % [action_label, "" if reason == "" else "（%s）" % _reason_label(reason)],
+		"格子 (%d,%d) · %s · %s · 距离 %s" % [pos.x, pos.y, _known_state_label(state), _room_type_label(room_type), str(distance) if distance >= 0 else "未知"],
+		"周边雷险 %s · %s%s" % [str(adjacent) if adjacent >= 0 else "未知", action_label, "" if reason == "" else "（%s）" % _reason_label(reason)],
 	]
 	if bool(marker.get("flagged", false)):
-		lines.append("标记：疑似危险；再次点击可取消标记。")
+		lines[1] += " · 已标记疑似危险，再次点击取消"
 	elif not bool(marker.get("revealed", false)):
-		lines.append("未知格：不能直接进入；相邻时请通过移动探索，非相邻可先标记。")
+		lines[1] += " · 未知格需移动探索"
 	elif bool(marker.get("scanned", false)) and not bool(marker.get("explored", false)):
-		lines.append("已扫描未探索：信息可见，但不能回传。")
+		lines[1] += " · 尚不可回传"
 	elif bool(marker.get("explored", false)):
-		lines.append("已探索：安全公开房间可尝试回传，雷险房只允许查看。")
+		lines[1] += " · 安全公开房间可回传"
 	return _join_lines(lines)
 
 
@@ -176,6 +179,8 @@ static func _known_state_label(state: String) -> String:
 
 static func _room_type_label(room_type: String) -> String:
 	match room_type:
+		"Unknown", "unknown", "":
+			return "未知房间"
 		"Spawn":
 			return "出发点"
 		"Normal":
@@ -191,7 +196,7 @@ static func _room_type_label(room_type: String) -> String:
 		"Exit":
 			return "撤离点"
 		_:
-			return room_type
+			return "未知房间"
 
 
 static func _reason_label(reason: String) -> String:

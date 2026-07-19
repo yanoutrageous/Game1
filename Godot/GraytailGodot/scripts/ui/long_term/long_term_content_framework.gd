@@ -86,12 +86,12 @@ static func build_modules() -> Array:
 				_group(&"badge", "徽章", ["徽章墙", "徽章状态"], "long_term.profile.badge.group_icon"),
 			],
 			[
-				_card("profile_history_card", "历史战绩 preview card", "消费 G23 历史快照 preview，不写历史记录。", "个人资历", LongTermContentSlotModelScript.SLOT_HISTORY_RECORD),
+				_card("profile_history_card", "历史战绩", "读取 M6 已提交的最近结算快照，不重算也不写历史记录。", "个人资历", LongTermContentSlotModelScript.SLOT_HISTORY_RECORD),
 				_card("profile_qualification_card", "资历变化 preview card", "只展示资历变化接口，不升级资历。", "个人资历", LongTermContentSlotModelScript.SLOT_QUALIFICATION),
 				_card("profile_badge_card", "徽章称号 preview card", "只展示称号和徽章位置，不发放奖励。", "个人资历", LongTermContentSlotModelScript.SLOT_REWARD_EVENT),
 			],
 			[
-				_link("结算历史", "历史战绩未来消费 settlement/history snapshot；当前 display-only。"),
+				_link("结算历史", "历史战绩读取 MetaProgress 中最多 50 条 M6 结算快照。"),
 				_link("目标", "目标达成未来可影响资历；当前不写目标或资历。"),
 			]
 		),

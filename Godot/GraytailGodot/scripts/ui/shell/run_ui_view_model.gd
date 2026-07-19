@@ -6,10 +6,9 @@ static func format_expedition_summary(snapshot: Dictionary) -> String:
 	var lines: Array[String] = []
 	lines.append("Run Summary")
 	lines.append("")
-	lines.append("run_black_coin: %s | safe_yield: %s | long_term_gold preview: %s" % [
+	lines.append("run black resource: %s | gold resource: %s" % [
 		snapshot.get("run_black_coin", snapshot.get("black_coin", 0)),
-		snapshot.get("safe_yield", snapshot.get("gold_coin", 0)),
-		snapshot.get("long_term_gold_preview", snapshot.get("long_term_gold", 0)),
+		snapshot.get("gold_coin", snapshot.get("safe_yield", 0)),
 	])
 	lines.append("Backpack: %s/%s | GroundLoot: %s" % [
 		snapshot.get("backpack_used", 0),
@@ -54,7 +53,6 @@ static func item_display_line(item: Dictionary) -> String:
 static func item_tooltip(item: Dictionary) -> String:
 	if item.is_empty():
 		return "尚未选择物品。"
-	var tags: Array = _array_from(item, "tags")
 	var lines: Array[String] = []
 	lines.append(item_display_line(item))
 	if String(item.get("short_description", "")) != "":
@@ -65,8 +63,10 @@ static func item_tooltip(item: Dictionary) -> String:
 		lines.append("可使用：%s %s" % [_effect_kind_label(String(item.get("effect_kind", ""))), item.get("effect_amount", 0)])
 	if bool(item.get("can_equip", false)):
 		lines.append("可装备：%s" % _equipment_slot_label(String(item.get("equipment_slot", ""))))
-	if not tags.is_empty():
-		lines.append("标签：%s" % _join_variants(tags, " / "))
+	# `tags` drive rules, drop tables and codex grouping.  They are not localized
+	# player copy and must not leak strings such as `collectible / level_4` into
+	# the in-run art surface. Type, rarity, description and explicit effects
+	# already carry the useful information.
 	return _join_lines(lines)
 
 
@@ -76,6 +76,10 @@ static func _item_type_label(item_type: String) -> String:
 			return "消耗品"
 		"equipment":
 			return "装备"
+		"collectible":
+			return "藏品"
+		"special":
+			return "特殊物资"
 		"recovered", "treasure":
 			return "回收物"
 		"currency":
@@ -96,6 +100,10 @@ static func _rarity_label(rarity: String) -> String:
 			return "珍贵"
 		"tier_5", "legendary":
 			return "传奇"
+		"tier_6", "mythic":
+			return "秘藏"
+		"unique":
+			return "唯一物"
 		_:
 			return "未鉴定"
 
@@ -223,6 +231,52 @@ static func compact_transaction_log(snapshot: Dictionary, max_count: int = 5) ->
 
 
 static func result_summary(snapshot: Dictionary) -> Dictionary:
+	var outcome := String(snapshot.get("outcome", "Running"))
+	var settlement := _dict_from(snapshot, "settlement")
+	var settlement_outcome := String(settlement.get("outcome", snapshot.get("settlement_outcome", "")))
+	var title := "探索结算"
+	if outcome == "Extracted" or settlement_outcome == "success":
+		title = "撤离成功"
+	elif outcome == "Failed" or settlement_outcome == "failure":
+		title = "探索失败"
+	elif outcome == "Abandoned" or settlement_outcome == "abandon":
+		title = "已放弃探索"
+	var lines: Array[String] = []
+	lines.append("结局：%s" % _outcome_label(outcome, settlement_outcome))
+	var is_success := outcome == "Extracted" or settlement_outcome == "success"
+	if is_success:
+		lines.append("黑资转化：%s　金资写入：%s" % [
+			settlement.get("black_coin_converted", 0),
+			settlement.get("gold_coin_gained", 0),
+		])
+		lines.append("物资入库：%s　物资损失：%s" % [
+			_array_from(settlement, "warehouse_items").size(),
+			settlement.get("lost_item_count", _array_from(settlement, "lost_items").size()),
+		])
+	else:
+		lines.append("黑资损失：%s　物资保全：%s" % [
+			settlement.get("black_coin_lost", 0),
+			_array_from(settlement, "salvaged_items").size(),
+		])
+		lines.append("物资损失：%s" % settlement.get("lost_item_count", _array_from(settlement, "lost_items").size()))
+	var cleared_consumables := int(settlement.get("cleared_consumable_count", 0))
+	if cleared_consumables > 0:
+		lines.append("消耗品清除：%s" % cleared_consumables)
+	var meta_commit := _dict_from(snapshot, "meta_progress_commit")
+	if StringName(meta_commit.get("status", &"")) == &"awaiting_salvage_confirmation":
+		lines.append("局外记录：等待玩家确认保全")
+	elif not meta_commit.is_empty():
+		lines.append("局外记录：%s" % ("已存在，未重复写入" if bool(meta_commit.get("duplicate", false)) else "已写入"))
+	# Raw event/source codes remain in diagnostics. The player-facing result
+	# keeps their counts without turning the settlement card into a debug log.
+	lines.append("行动记录：%s 条　物资流转：%s 条" % [
+		_array_from(snapshot, "event_log").size(),
+		_array_from(snapshot, "transaction_log").size(),
+	])
+	return {"title": title, "summary": _join_lines(lines)}
+
+
+static func _legacy_result_summary_m5(snapshot: Dictionary) -> Dictionary:
 	var outcome: String = String(snapshot.get("outcome", "Running"))
 	var settlement: Dictionary = _dict_from(snapshot, "settlement")
 	var settlement_outcome := String(settlement.get("outcome", snapshot.get("settlement_outcome", "")))

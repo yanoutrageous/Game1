@@ -1,47 +1,31 @@
 # Validation Index
 
-文档状态：I0 + ART21 整合后的当前验证索引
-最后更新：2026-07-16
+文档状态：ART24R2 未通过封存后的当前验证入口；最后更新 2026-07-19。
 
-## 当前入口
-
-```powershell
-powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
-  -File tools\i0\invoke_i0_tests.ps1 `
-  -Profile remediated
-```
+## 当前程序入口
 
 ```powershell
 powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
-  -File tools\validate_art21_main_menu_scene.ps1
+  -File tools\validate_m6_real_asset_deploy_settlement_loop.ps1 `
+  -RepoRoot E:\AGAME1 `
+  -GodotExecutable E:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe
 ```
 
 ## 当前结果
 
 | 验证 | 结果 | 边界 |
 | --- | --- | --- |
-| I0 工具链 | PASS | Godot 4.6.3 版本、大小、SHA-256 与 Authenticode 通过 |
-| I0 文档编码 | PASS_WITH_RECORDED_LIMITATION | 5 个冻结历史异常精确匹配；linked worktree 支持通过 |
-| I0 静态基线 | PASS | 12 runner、331 行资产、保存、输入、调试门通过 |
-| I0 Godot runners | 12/12 PASS_WITH_CLEANUP_DIAGNOSTIC | 0 blocking、24 cleanup |
-| I0 污染守卫 | PASS | Git 与业务文件快照前后不变 |
-| ART21 runtime | PASS | 4 entries、2 overlays、2 transitions、2 shortcuts、10 motion groups |
-| ART21 scene / asset gates | PASS | 152 PNG、10.40 MiB、6 captures、无运行时 sidecar |
-| ART20 / ART21R1 / G39 / ART17 regression | PASS | 管线、结构、路由和层级回归通过 |
-| Computer Use | not_run_by_direction | 本阶段明确不使用 |
-| 完整人工游玩 / 发布 | not_run | 不得声明 PASS |
+| ART24R2 最终 Computer Use | FAIL / 24 of 61 PASS | 角色/房间、背包五态、地图基础态、箱子与单件地面物/替换、成功和失败最终态已有实机证据；其余 37 态不得视为通过 |
+| ART24R2 静态与聚焦探针 | PASS / 8 of 8 | 只证明布局、场景和状态契约，不替代 Computer Use |
+| G41 当前分支包装校验 | FAIL | 核心 runtime runner 通过；美术路径审计标记与两处最终美术路径规则未通过 |
+| M6 静态门与 headless runner | PASS_WITH_CLEANUP_DIAGNOSTIC | 真实出勤、装备效果、终局结算、手动保全、幂等历史通过；退出有既有资源清理诊断 |
+| ART22 DeployPrep runtime | PASS | 5 个页签、34 个状态、继续/放弃强确认和失败保全界面回归通过 |
+| ART23 LongTerm runtime | PASS | 6 个模块、27 个二级页面与动效状态通过 |
+| G41 in-run runtime | PASS | 固定步长战斗、交互、掉落和生命周期回归通过 |
+| Godot project-load/parser smoke | PASS | Godot 4.6.3 headless editor 加载通过 |
+| 完整人工长时间游玩 | not_run | 不得声明 PASS |
+| 性能、CI、导出、发布 | not_run | 不得声明 PASS |
 
-本次整合原文：
-`docs/validation/I0_ART21_BASELINE_INTEGRATION_VALIDATION.md`。
+当前程序原文：`docs/validation/M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_VALIDATION.md`。当前美术封存原文：`docs/validation/ART24R2_FINAL_COMPUTER_USE_RESULTS.md`。
 
-历史原文：
-
-- `docs/validation/I0_PROJECT_BASELINE_REFACTOR_VALIDATION.md`
-- `docs/art/validation/art21/ART21_MAIN_MENU_SCENE_VALIDATION.md`
-
-## 声明边界
-
-- `PASS_WITH_NOTES` 不是纯 PASS。
-- headless / runner 不等于完整人工游玩。
-- 版本化截图不等于当前机器 Computer Use 验收。
-- 阶段关闭不抹除 I0 的 `SAFETY_NONCONFORMANCE`。
+历史验证继续保留在 `docs/validation/`，但不能覆盖 M6 的最新规则；尤其 M3R/M5 中的自动出勤和放弃金色资源待定语义已被 M6 明确替代。

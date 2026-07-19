@@ -90,7 +90,7 @@ static func monster_drop_items() -> Array[Dictionary]:
 static func special_items() -> Array[Dictionary]:
 	return [
 		item("sp_altar_residue", "祭坛残渣", TYPE_SPECIAL, "祭坛事件材料；不会产出 unique。", 1, 28, &"tier_3", ["special", "altar"], SOURCE_ALTAR, {"flavor": "像灰，又像被折碎的条款。"}),
-		item("sp_trader_receipt", "旅商收据", TYPE_SPECIAL, "旅商安全收益来源记录。", 0, 1, &"tier_1", ["special", "trader"], "trader", {"flavor": "收据没有金额，只有一句：已经保管。"}),
+		item("sp_trader_receipt", "旅商收据", TYPE_SPECIAL, "旅商交易记录；不作为可拾取、可入仓的实体物品。", 0, 0, &"tier_1", ["record", "trader"], "trader", {"flavor": "收据没有金额，只有一句：已经保管。", "is_virtual_record": true, "ordinary_drop_allowed": false, "can_store": false, "can_sell": false}),
 	]
 
 
@@ -99,8 +99,8 @@ static func unique_concept_items() -> Array[Dictionary]:
 		{
 			"item_id": "unique_gacha_only_01",
 			"display_name": "唯一物占位",
-			"item_type": TYPE_SPECIAL,
-			"main_type": TYPE_SPECIAL,
+			"item_type": TYPE_COLLECTIBLE,
+			"main_type": TYPE_COLLECTIBLE,
 			"rarity": &"unique",
 			"collectible_level": 7,
 			"is_unique": true,
@@ -116,15 +116,15 @@ static func unique_concept_items() -> Array[Dictionary]:
 static func drop_table(table_id: StringName) -> Array[Dictionary]:
 	match table_id:
 		&"search":
-			return _take([collectible_items()[0], collectible_items()[4], consumable_items()[0], equipment_items()[2]], 4)
+			return _take(collectible_items().slice(0, 8) + [consumable_items()[0], consumable_items()[2], equipment_items()[5]], 11)
 		&"chest":
-			return _take([collectible_items()[8], collectible_items()[12], consumable_items()[1], consumable_items()[5], equipment_items()[0]], 5)
+			return _take(collectible_items().slice(8, 16) + [consumable_items()[1], consumable_items()[3], equipment_items()[1], equipment_items()[3]], 12)
 		&"monster":
-			return monster_drop_items()
+			return _take(monster_drop_items() + [consumable_items()[5], equipment_items()[0]], 7)
 		&"event":
-			return _take([collectible_items()[5], collectible_items()[9], consumable_items()[3], equipment_items()[4]], 4)
+			return _take(collectible_items().slice(16, 20) + [consumable_items()[4], equipment_items()[4]], 6)
 		&"altar":
-			return [special_items()[0], consumable_items()[4], equipment_items()[5]]
+			return _take(collectible_items().slice(20, 24) + [special_items()[0], equipment_items()[2]], 6)
 		&"debug":
 			return [debug_item()]
 	return []

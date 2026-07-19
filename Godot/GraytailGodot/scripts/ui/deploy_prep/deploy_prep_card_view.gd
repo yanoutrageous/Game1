@@ -44,7 +44,7 @@ func apply_selected(value: bool) -> void:
 	if title_label != null:
 		title_label.modulate = Color(1.08, 1.03, 0.90, 1.0) if selected else Color.WHITE
 	if state_label != null:
-		state_label.text = "已选" if selected else _display_state(state)
+		state_label.text = _display_state(state)
 	if state_hint_label != null:
 		state_hint_label.text = _state_hint()
 
@@ -149,7 +149,7 @@ func _state_hint() -> String:
 	if state.find("lock") >= 0:
 		return "仍可查看"
 	if selected:
-		return "当前选择"
+		return "当前条目"
 	return "可切换"
 
 

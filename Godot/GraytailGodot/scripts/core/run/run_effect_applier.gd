@@ -133,6 +133,8 @@ static func _apply_hp_delta(context: RunContext, payload: Dictionary, runtime_au
 static func _apply_pressure_delta(context: RunContext, payload: Dictionary) -> Dictionary:
 	var before := {"pressure": context.pressure, "protocol_level": context.protocol_level}
 	var amount := int(payload.get("amount", 0))
+	if amount > 0:
+		amount = maxi(0, amount - context.protocol_pressure_reduce)
 	var pressure_result := ProtocolService.add_pressure(context, amount)
 	return _result(EFFECT_PROTOCOL_PRESSURE_DELTA, true, "", before, pressure_result)
 

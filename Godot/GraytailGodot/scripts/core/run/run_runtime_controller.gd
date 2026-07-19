@@ -96,6 +96,12 @@ func fail_run(reason: String = "forced_failure") -> Dictionary:
 	return result
 
 
+func confirm_failure_salvage(selected_instance_ids: Array) -> Dictionary:
+	var result := _with_actor(state_machine.confirm_failure_salvage(context, selected_instance_ids))
+	in_run_runtime.reset()
+	return result
+
+
 func abandon_run(reason: String = "player_abandoned") -> Dictionary:
 	var result := _with_actor(state_machine.abandon_run(context, reason))
 	in_run_runtime.reset()

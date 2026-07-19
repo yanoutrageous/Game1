@@ -40,6 +40,9 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"search_summary": _search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
 		"reward_summary": RunUIViewModel.reward_text(reward, last_message),
 		"backpack_summary": _backpack_summary(snapshot),
+		"backpack_items": _array_from(snapshot, "inventory_items"),
+		"backpack_used": snapshot.get("backpack_used", 0),
+		"backpack_capacity": snapshot.get("backpack_capacity", 0),
 		"resource_summary": _resource_summary(snapshot),
 		"command_feedback": command_feedback,
 		"encounter_section": encounter_section,
@@ -448,21 +451,63 @@ static func _action_tone(action_id: StringName) -> StringName:
 static func event_modal_text(event_state: Dictionary) -> String:
 	if event_state.is_empty():
 		return "事件：当前没有待处理事件。"
-	var event_type := String(event_state.get("event_type", event_state.get("type", "event")))
+	var event_type := StringName(event_state.get("event_type", event_state.get("type", &"event")))
 	var options: Array = _array_variant(event_state.get("options", []))
 	var lines: Array[String] = []
-	lines.append("事件通道：%s" % event_type)
-	lines.append("状态：等待选择处理方式；完成后不会重复结算奖励。")
-	lines.append("可选项：%s" % options.size())
-	for option_variant in options:
-		if not (option_variant is Dictionary):
-			continue
-		var option: Dictionary = option_variant
-		var option_label := String(option.get("label", option.get("id", "option")))
-		var enabled_text := "可执行" if bool(option.get("enabled", true)) else "暂不可用"
-		lines.append("- %s [%s]" % [option_label, enabled_text])
-	lines.append("提示：选择后会回到当前探索节奏。")
+	match event_type:
+		&"trader":
+			lines.append("旅商的货架只为这次相遇开放。")
+			lines.append("交易会立即结算；离开后可继续探索。")
+		&"dice":
+			lines.append("骰盅已经落桌，筹码只收本局黑币。")
+			lines.append("下注结果会立即结算，也可以直接离开。")
+		&"altar":
+			lines.append("祭坛仍在搏动，献祭生命可换取一次恩赐。")
+			lines.append("生命不会降至 1 以下；离开不会消耗资源。")
+		&"trap":
+			lines.append("机关尚未解除，贸然操作可能触发反噬。")
+			lines.append("处理结果会立即生效，也可以保持现状离开。")
+		_:
+			lines.append("异常信号正在等待回应。")
+			lines.append("选择一种处理方式，或暂时离开。")
+	lines.append("本事件完成后不会重复结算。")
 	return _join_lines(lines)
+
+
+static func event_option_label(event_type: StringName, option: Dictionary) -> String:
+	var option_id := StringName(option.get("id", &"leave"))
+	var label := "处理事件"
+	match option_id:
+		&"sell_best_item":
+			label = "出售背包中价值最高的物品"
+		&"confirm_high_value_sale":
+			label = "确认出售高价值物品"
+		&"buy_treatment":
+			label = "购买治疗"
+		&"buy_info":
+			label = "购买路线情报"
+		&"bet_small":
+			label = "押注 20 黑币"
+		&"offer_hp":
+			var hp_cost := _first_integer(String(option.get("label", "")))
+			label = "献祭 %s 点生命" % hp_cost if hp_cost > 0 else "献祭生命"
+		&"disarm":
+			label = "尝试解除机关"
+		&"leave":
+			match event_type:
+				&"trader":
+					label = "离开旅商"
+				&"dice":
+					label = "离开赌桌"
+				&"altar":
+					label = "离开祭坛"
+				&"trap":
+					label = "离开机关"
+				_:
+					label = "离开"
+	if not bool(option.get("enabled", true)):
+		label += "（条件不足）"
+	return label
 
 
 static func loot_modal_text(reward: Dictionary, last_message: String = "") -> String:
@@ -474,12 +519,15 @@ static func loot_modal_text(reward: Dictionary, last_message: String = "") -> St
 
 static func extract_modal_text(snapshot: Dictionary) -> String:
 	var lines: Array[String] = []
-	lines.append("撤离协议：等待最终确认")
-	lines.append("待结算黑币：%s" % snapshot.get("black_coin", snapshot.get("pending_gold", 0)))
+	var risky := int(snapshot.get("protocol_level", 5)) <= 1
+	lines.append("警告：当前协议已进入极端危险区间。" if risky else "当前协议稳定，可安全确认带出。")
+	lines.append("离开后将结算本次探索收益。")
+	lines.append("本局黑币：%s" % snapshot.get("black_coin", snapshot.get("pending_gold", 0)))
 	lines.append("安全金币：%s" % snapshot.get("gold_coin", snapshot.get("safe_gold", 0)))
-	lines.append("背包：%s/%s" % [snapshot.get("backpack_used", 0), snapshot.get("backpack_capacity", 0)])
-	lines.append("当前房间地面遗留：%s" % snapshot.get("room_floor_item_count", 0))
-	lines.append("确认后进入既有结算路径；取消会返回当前 run。")
+	lines.append("背包负重：%s/%s" % [snapshot.get("backpack_used", 0), snapshot.get("backpack_capacity", 0)])
+	var floor_count := int(snapshot.get("room_floor_item_count", 0))
+	lines.append("当前房间仍有 %s 件物资未回收。" % floor_count if floor_count > 0 else "当前房间没有遗留物资。")
+	lines.append("确认撤离将结束本局；取消可继续探索。")
 	return _join_lines(lines)
 
 
@@ -529,7 +577,32 @@ static func _event_summary(event_state: Dictionary) -> String:
 	var options: Variant = event_state.get("options", [])
 	if options is Array:
 		option_count = (options as Array).size()
-	return "事件：%s | 可选项：%s" % [event_type, option_count]
+	return "事件：%s | 可选方案 %s" % [_event_type_label(StringName(event_type)), option_count]
+
+
+static func _event_type_label(event_type: StringName) -> String:
+	match event_type:
+		&"trader":
+			return "旅商"
+		&"dice":
+			return "骰局"
+		&"altar":
+			return "祭坛"
+		&"trap":
+			return "机关"
+		_:
+			return "异常事件"
+
+
+static func _first_integer(text: String) -> int:
+	var digits := ""
+	for index in range(text.length()):
+		var character := text.substr(index, 1)
+		if character >= "0" and character <= "9":
+			digits += character
+		elif digits != "":
+			break
+	return int(digits) if digits != "" else 0
 
 
 static func _search_summary(search_data: Dictionary, search_state: String) -> String:

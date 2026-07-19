@@ -11,6 +11,13 @@ const BLOCKED_EDGE_REBOUND := 0.035
 const ART24_PLAYER_ROOT := "res://assets/art24/actors/player/"
 const FRAME_INTERVAL := 0.14
 const STEP_PREVIEW_SECONDS := 0.20
+# The UE prototype presents the player in a 64 px slot inside a 560 px room.
+# The first 0.40 pass measured only about 51 visible pixels in the running
+# 1280x720 build because the imported frame and room transforms both affect
+# the final silhouette. 0.50 restores the observed 62-65 px target while the
+# logical collider and movement radius remain unchanged.
+const PLAYER_ART_SCALE := 0.50
+const Art24MotionSettingsScript := preload("res://scripts/presentation/art24/art24_motion_settings.gd")
 
 var input_enabled := true
 var facing_asset_id: StringName = &"sprite.player.default"
@@ -187,7 +194,9 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	visual_clock += delta
+	var reduce_motion := Art24MotionSettingsScript.reduce_motion_enabled()
+	if not reduce_motion:
+		visual_clock += delta
 	var move_vector := get_move_vector()
 	var is_moving := move_vector.length() > 0.01
 	if is_moving:
@@ -196,10 +205,14 @@ func _process(delta: float) -> void:
 	else:
 		step_preview_remaining = maxf(0.0, step_preview_remaining - delta)
 	var show_walk := is_moving or step_preview_remaining > 0.0
-	animation_elapsed += delta
-	if animation_elapsed >= FRAME_INTERVAL:
-		animation_elapsed = fmod(animation_elapsed, FRAME_INTERVAL)
-		animation_frame = (animation_frame + 1) % 4
+	if reduce_motion:
+		animation_elapsed = 0.0
+		animation_frame = 0
+	else:
+		animation_elapsed += delta
+		if animation_elapsed >= FRAME_INTERVAL:
+			animation_elapsed = fmod(animation_elapsed, FRAME_INTERVAL)
+			animation_frame = (animation_frame + 1) % 4
 	_apply_art24_frame(show_walk)
 	_apply_idle_motion(show_walk)
 
@@ -248,7 +261,7 @@ func _apply_visual() -> void:
 		sprite.name = "Sprite"
 		add_child(sprite)
 		move_child(sprite, 0)
-	sprite.scale = Vector2(0.38, 0.38)
+	sprite.scale = Vector2.ONE * PLAYER_ART_SCALE
 	sprite.position = Vector2(0, -20)
 	if body != null:
 		body.visible = false
@@ -282,7 +295,7 @@ func _apply_art24_frame(walking: bool) -> void:
 			var suffix := "b" if animation_frame >= 2 else "a"
 			if walking:
 				var walk_cycle := ["idle_a", "walk_a", "walk_b", "idle_b"]
-				var token: String = walk_cycle[animation_frame]
+				var token: String = "walk_a" if Art24MotionSettingsScript.reduce_motion_enabled() else walk_cycle[animation_frame]
 				motion = token.get_slice("_", 0)
 				suffix = token.get_slice("_", 1)
 			texture_path = "%s%s_%s_%s.png" % [ART24_PLAYER_ROOT, String(facing), motion, suffix]
@@ -303,10 +316,10 @@ func _apply_idle_motion(walking: bool) -> void:
 	if sprite == null:
 		return
 	var action_visual := visual_state in [&"attack_windup", &"attack_active", &"attack_recovery", &"hurt", &"dead"]
-	var pulse := sin(visual_clock * (11.0 if action_visual else (8.0 if walking else 2.4)))
+	var pulse := 0.0 if Art24MotionSettingsScript.reduce_motion_enabled() else sin(visual_clock * (11.0 if action_visual else (8.0 if walking else 2.4)))
 	sprite.position.y = -20.0 + pulse * (1.8 if walking else 0.8)
 	var scale_pulse := 1.0 + pulse * (0.012 if walking else 0.006)
-	sprite.scale = Vector2.ONE * 0.38 * scale_pulse
+	sprite.scale = Vector2.ONE * PLAYER_ART_SCALE * scale_pulse
 	sprite.modulate = Color(1.0, 0.62, 0.58, 1.0) if visual_state == &"hurt" else Color.WHITE
 	sprite.rotation = -0.18 if visual_state == &"dead" else 0.0
 

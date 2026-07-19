@@ -6,6 +6,7 @@ const MonsterCatalogScript := preload("res://scripts/gameplay/combat/g41_monster
 
 const FIXED_STEP := 1.0 / 60.0
 const MAX_FRAME_DELTA := 0.25
+const MAX_CATCH_UP_STEPS := 12
 const ROOM_MIN := 0.055
 const ROOM_MAX := 0.945
 const PLAYER_SPEED := 0.385
@@ -43,6 +44,10 @@ var move_input := Vector2.ZERO
 var aim_input := Vector2.RIGHT
 var attack_queued: bool = false
 var next_projectile_index: int = 1
+var previous_player_pos := Vector2.ZERO
+var previous_enemy_positions: Dictionary = {}
+var previous_projectile_positions: Dictionary = {}
+var previous_laser_origins: Dictionary = {}
 
 
 func start(config: Dictionary = {}) -> void:
@@ -80,6 +85,7 @@ func start(config: Dictionary = {}) -> void:
 	var monster_types: Array = config.get("monster_types", MonsterCatalogScript.default_encounter())
 	for monster_index in range(monster_types.size()):
 		_spawn_enemy(StringName(monster_types[monster_index]), monster_index)
+	_capture_previous_transforms()
 	_emit_event(&"combat_started", {"seed": encounter_seed, "enemy_count": enemies.size()})
 
 
@@ -107,7 +113,7 @@ func advance_frame(delta: float) -> int:
 		return 0
 	accumulator += minf(delta, MAX_FRAME_DELTA)
 	var advanced := 0
-	while accumulator + EPSILON >= FIXED_STEP:
+	while accumulator + EPSILON >= FIXED_STEP and advanced < MAX_CATCH_UP_STEPS:
 		accumulator -= FIXED_STEP
 		_step()
 		advanced += 1
@@ -148,6 +154,41 @@ func sync_player_durable_stats(hp: int, max_hp: int, power: int) -> void:
 
 
 func build_snapshot() -> Dictionary:
+	var render_alpha := clampf(accumulator / FIXED_STEP, 0.0, 1.0)
+	var render_player := player.duplicate(true)
+	var current_player_pos := Vector2(player.get("pos", Vector2.ZERO))
+	render_player["simulation_pos"] = current_player_pos
+	render_player["previous_pos"] = previous_player_pos
+	render_player["pos"] = previous_player_pos.lerp(current_player_pos, render_alpha)
+	var render_enemies: Array[Dictionary] = []
+	for enemy in enemies:
+		var render_enemy := enemy.duplicate(true)
+		var enemy_id := String(enemy.get("enemy_id", ""))
+		var enemy_pos := Vector2(enemy.get("pos", Vector2.ZERO))
+		var previous_pos := Vector2(previous_enemy_positions.get(enemy_id, enemy_pos))
+		render_enemy["simulation_pos"] = enemy_pos
+		render_enemy["previous_pos"] = previous_pos
+		render_enemy["pos"] = previous_pos.lerp(enemy_pos, render_alpha)
+		render_enemies.append(render_enemy)
+	var render_projectiles: Array[Dictionary] = []
+	for projectile in projectiles:
+		var render_projectile := projectile.duplicate(true)
+		var projectile_id := String(projectile.get("projectile_id", ""))
+		var projectile_pos := Vector2(projectile.get("pos", Vector2.ZERO))
+		var previous_pos := Vector2(previous_projectile_positions.get(projectile_id, projectile_pos))
+		render_projectile["simulation_pos"] = projectile_pos
+		render_projectile["previous_pos"] = previous_pos
+		render_projectile["pos"] = previous_pos.lerp(projectile_pos, render_alpha)
+		render_projectiles.append(render_projectile)
+	var render_lasers: Array[Dictionary] = []
+	for laser in lasers:
+		var render_laser := laser.duplicate(true)
+		var laser_id := String(laser.get("laser_id", laser.get("owner_id", "")))
+		var laser_origin := Vector2(laser.get("origin", Vector2.ZERO))
+		var previous_origin := Vector2(previous_laser_origins.get(laser_id, laser_origin))
+		render_laser["simulation_origin"] = laser_origin
+		render_laser["origin"] = previous_origin.lerp(laser_origin, render_alpha)
+		render_lasers.append(render_laser)
 	return {
 		"active": active,
 		"paused": paused,
@@ -156,10 +197,11 @@ func build_snapshot() -> Dictionary:
 		"reward_emitted": reward_emitted,
 		"tick": tick_index,
 		"seed": encounter_seed,
-		"player": player.duplicate(true),
-		"enemies": enemies.duplicate(true),
-		"projectiles": projectiles.duplicate(true),
-		"lasers": lasers.duplicate(true),
+		"render_alpha": render_alpha,
+		"player": render_player,
+		"enemies": render_enemies,
+		"projectiles": render_projectiles,
+		"lasers": render_lasers,
 	}
 
 
@@ -196,6 +238,7 @@ func build_canonical_snapshot() -> Dictionary:
 
 
 func _step() -> void:
+	_capture_previous_transforms()
 	tick_index += 1
 	_update_player(FIXED_STEP)
 	var enemy_count_at_step_start := enemies.size()
@@ -206,6 +249,20 @@ func _step() -> void:
 	_update_projectiles(FIXED_STEP)
 	_update_lasers(FIXED_STEP)
 	_check_terminal_state()
+
+
+func _capture_previous_transforms() -> void:
+	previous_player_pos = Vector2(player.get("pos", previous_player_pos))
+	previous_enemy_positions.clear()
+	for enemy in enemies:
+		previous_enemy_positions[String(enemy.get("enemy_id", ""))] = Vector2(enemy.get("pos", Vector2.ZERO))
+	previous_projectile_positions.clear()
+	for projectile in projectiles:
+		previous_projectile_positions[String(projectile.get("projectile_id", ""))] = Vector2(projectile.get("pos", Vector2.ZERO))
+	previous_laser_origins.clear()
+	for laser in lasers:
+		var laser_id := String(laser.get("laser_id", laser.get("owner_id", "")))
+		previous_laser_origins[laser_id] = Vector2(laser.get("origin", Vector2.ZERO))
 
 
 func _update_player(delta: float) -> void:

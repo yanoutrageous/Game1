@@ -135,7 +135,7 @@ func _draw_room_prop(room_type: String, visual_state: String, reduce_motion: boo
 				var frame := 5 if reduce_motion else int(elapsed * 12.0) % 6
 				_draw_texture(StringName("visual.art24.fx.mine_burst.%d" % frame), Rect2(Layout.PRIMARY_PROP_ANCHOR - Vector2(128, 128), Vector2(256, 256)))
 		"chest":
-			var open := visual_state in ["open", "empty"]
+			var open := visual_state in ["container_open", "reopened", "empty"]
 			if visual_state == "opening" and not reduce_motion:
 				open = fmod(elapsed, 1.0) > 0.48
 			var key := &"visual.art24.prop.chest_open" if open else &"visual.art24.prop.chest_closed"
@@ -294,8 +294,6 @@ func _draw_bottom_bar(room_type: String, visual_state: String) -> void:
 		prompt = "按 Space / J 清理当前威胁"
 	elif room_type == "exit":
 		prompt = "按 E 请求撤离，按 T 查看撤离状态"
-	elif visual_state == "loot_spawned":
-		prompt = "按 G 查看地面物品"
 	_draw_text(prompt, Vector2(392, 670), 14, Color("e3a747"), 500, HORIZONTAL_ALIGNMENT_CENTER)
 	var actions := [["WASD", "移动"], ["M", "地图"], ["E", "交互"], ["Q", "背包"], ["G", "地面"], ["SPC", "战斗"], ["T", "撤离"], ["ESC", "暂停"]]
 	for index in range(actions.size()):
@@ -311,15 +309,13 @@ func _draw_modal(active_modal: String, room_type: String, visual_state: String, 
 			_draw_search_progress()
 		elif visual_state == "depleted":
 			_draw_toast("warning", "当前房间已耗尽，没有可继续搜索的目标。")
-		elif visual_state == "loot_hover":
-			_draw_toast("info", "发现可回收物：按 G 打开地面物品。")
 		return
 	if active_modal == "map" or active_modal.begins_with("map_"):
 		_draw_map_modal(active_modal)
 	elif active_modal.begins_with("inventory"):
 		_draw_inventory_modal(active_modal)
-	elif active_modal.begins_with("ground_loot"):
-		_draw_ground_loot_modal(active_modal)
+	elif active_modal.begins_with("world_loot") or active_modal.begins_with("chest_context"):
+		_draw_world_context_overlay(active_modal)
 	elif active_modal == "tutorial":
 		_draw_tutorial_modal()
 	elif active_modal == "event":
@@ -408,6 +404,70 @@ func _draw_inventory_modal(mode: String) -> void:
 		_draw_text(inventory_summary, tip_rect.position + Vector2(18, 59), 13, Color("cfd3c6"), 560)
 
 
+func _draw_world_context_overlay(mode: String) -> void:
+	# The panel is anchored beside the nearby object and never blocks the room.
+	# Production uses the same rules: approach to show, leave to hide.
+	var is_chest := mode.begins_with("chest_context")
+	var expanded := mode in ["world_loot_context_multi", "world_loot_replace", "chest_context_open", "chest_context_reopened"]
+	var panel_size := Vector2(342, 236 if expanded else 146)
+	if mode == "world_loot_replace_confirm":
+		panel_size.y = 120
+	elif mode == "chest_context_empty":
+		panel_size.y = 132
+	var anchor: Vector2 = Layout.PRIMARY_PROP_ANCHOR if is_chest else Layout.LOOT_ANCHORS[0]
+	var panel := Rect2(anchor + Vector2(-panel_size.x - 34, -panel_size.y * 0.52), panel_size)
+	panel.position.x = clampf(panel.position.x, Layout.GAMEPLAY.position.x + 12.0, Layout.GAMEPLAY.end.x - panel.size.x - 12.0)
+	panel.position.y = clampf(panel.position.y, Layout.GAMEPLAY.position.y + 12.0, Layout.GAMEPLAY.end.y - panel.size.y - 12.0)
+	var frame_key := &"visual.art24.ui.tooltip.warning" if mode in ["world_loot_blocked", "world_loot_replace"] else &"visual.art24.ui.tooltip.normal"
+	_draw_texture(frame_key, panel)
+	draw_line(panel.position + Vector2(14, 43), panel.position + Vector2(panel.size.x - 14, 43), Color(0.56, 0.46, 0.27, 0.72), 1.0)
+
+	if is_chest:
+		_draw_text("物资箱", panel.position + Vector2(16, 29), 18, Color("e9bd68"), 160)
+		if mode == "chest_context_closed":
+			_draw_text("首次开启后可反复查看", panel.position + Vector2(16, 68), 13, Color("c9c5b5"), 300)
+			_draw_text("[E]  打开箱子", panel.position + Vector2(16, 112), 15, Color("73d7c2"), 300)
+		elif mode == "chest_context_closed_after_open":
+			_draw_text("箱盖已关闭，内容保持不变", panel.position + Vector2(16, 68), 13, Color("c9c5b5"), 300)
+			_draw_text("[E]  再次打开", panel.position + Vector2(16, 112), 15, Color("73d7c2"), 300)
+		elif mode == "chest_context_empty":
+			_draw_text("箱内已空", panel.position + Vector2(16, 73), 15, Color("aeb8b3"), 180)
+			_draw_text("[E]  关闭", panel.position + Vector2(218, 103), 13, Color("d7b466"), 100)
+		else:
+			_draw_context_item_row(panel.position + Vector2(14, 54), "emergency_bandage", "应急止血贴", "拾取")
+			_draw_context_item_row(panel.position + Vector2(14, 112), "copper_coil", "断裂铜线圈", "拾取")
+			_draw_text("[E]  关闭箱子", panel.position + Vector2(190, panel.size.y - 17), 12, Color("d7b466"), 126)
+		return
+
+	_draw_text("附近回收物", panel.position + Vector2(16, 29), 18, Color("74d9c7"), 180)
+	if mode == "world_loot_replace_confirm":
+		_draw_text("已放下低价值物并完成拾取", panel.position + Vector2(16, 72), 14, Color("75d6b4"), 300)
+		return
+	if mode == "world_loot_blocked":
+		_draw_context_item_row(panel.position + Vector2(14, 54), "emergency_bandage", "应急止血贴", "替换")
+		_draw_text("容量不足：选择替换项", panel.position + Vector2(16, 129), 13, Color("ed7a56"), 300)
+		return
+	if mode == "world_loot_replace":
+		_draw_context_item_row(panel.position + Vector2(14, 54), "emergency_bandage", "换入：应急止血贴", "取消")
+		_draw_context_item_row(panel.position + Vector2(14, 112), "copper_coil", "放下：断裂铜线圈", "确认")
+		_draw_text("替换只改变背包内容，不关闭探索", panel.position + Vector2(16, 210), 12, Color("c8c0ad"), 306)
+		return
+	_draw_context_item_row(panel.position + Vector2(14, 54), "emergency_bandage", "应急止血贴", "拾取")
+	if mode == "world_loot_context_multi":
+		_draw_context_item_row(panel.position + Vector2(14, 112), "scanner_probe", "扫描针", "拾取")
+		_draw_text("离开范围自动收起", panel.position + Vector2(16, 210), 12, Color("aeb8b3"), 280)
+	else:
+		_draw_text("离开范围自动收起", panel.position + Vector2(16, 129), 12, Color("aeb8b3"), 280)
+
+
+func _draw_context_item_row(position: Vector2, item_key: String, label: String, action: String) -> void:
+	var row := Rect2(position, Vector2(314, 50))
+	_draw_texture(&"visual.art24.ui.item_row.normal", row)
+	_draw_texture(StringName("visual.art24.item.world_loot.%s" % item_key), Rect2(row.position + Vector2(2, -5), Vector2(60, 60)))
+	_draw_text(label, row.position + Vector2(66, 30), 13, Color("e2d8c2"), 160)
+	_draw_text(action, row.position + Vector2(245, 31), 13, Color("69d3bb"), 58, HORIZONTAL_ALIGNMENT_CENTER)
+
+
 func _draw_ground_loot_modal(mode: String) -> void:
 	draw_rect(Layout.GAMEPLAY, Color(0.01, 0.025, 0.03, 0.64), true)
 	_draw_texture(&"visual.art24.ui.modal_frame", Layout.GAMEPLAY_MODAL)
@@ -472,11 +532,14 @@ func _draw_extract_modal(mode: String, protocol_level: int) -> void:
 func _draw_result_modal(mode: String) -> void:
 	draw_rect(Rect2(Vector2.ZERO, Layout.LOGICAL_SIZE), Color(0.01, 0.02, 0.025, 0.78), true)
 	_draw_texture(&"visual.art24.ui.modal_frame", Layout.GAMEPLAY_MODAL)
-	var result_state := "success" if mode == "result_success" else ("failure" if mode == "result_failure" else "abandoned")
+	var result_state := "success" if mode == "result_success" else ("failure" if mode.begins_with("result_failure") else "abandoned")
 	_draw_texture(StringName("visual.art24.ui.result_banner.%s" % result_state), Layout.RESULT_BANNER)
 	var title: String = {"success": "撤离完成", "failure": "探索失败", "abandoned": "探索中止"}[result_state]
 	var color := Color("6fd6c1") if result_state == "success" else (Color("e56a54") if result_state == "failure" else Color("e0a34d"))
 	_draw_text(title, Layout.RESULT_BANNER.position + Vector2(28, 72), 32, color, 464, HORIZONTAL_ALIGNMENT_CENTER)
+	if mode.begins_with("result_failure_salvage"):
+		_draw_result_salvage_modal(mode)
+		return
 	var lines := ["黑币带出        12", "安全收益         8", "长期金币预览    20", "探索房间         7", "最终协议         3"]
 	if result_state == "failure":
 		lines = ["失败原因      生命耗尽", "安全收益保留      8", "风险物资丢失      2", "可抢救物品        1", "最终协议          1"]
@@ -496,6 +559,28 @@ func _draw_result_modal(mode: String) -> void:
 		_draw_text(item_status, cell.position + Vector2(66, 51), 11, Color("e36b50") if item_status == "丢失" else Color("67cdb6"), 82)
 	_draw_text("返回出发探索", Layout.GAMEPLAY_MODAL.position + Vector2(110, 516), 15, Color("e2ae54"), 220, HORIZONTAL_ALIGNMENT_CENTER)
 	_draw_text("返回主菜单", Layout.GAMEPLAY_MODAL.position + Vector2(430, 516), 15, Color("79cdbc"), 220, HORIZONTAL_ALIGNMENT_CENTER)
+
+
+func _draw_result_salvage_modal(mode: String) -> void:
+	var used := 0
+	if mode == "result_failure_salvage_selected":
+		used = 1
+	elif mode == "result_failure_salvage_capacity_blocked":
+		used = 4
+	_draw_text("选择要保全的非消耗品", Layout.GAMEPLAY_MODAL.position + Vector2(70, 188), 18, Color("e5b35c"), 620)
+	_draw_text("保全容量：%d / 4 · 未选择物品与消耗品将在确认后清除" % used, Layout.GAMEPLAY_MODAL.position + Vector2(70, 222), 14, Color("d8d1c2"), 620)
+	var names := ["调试回收箱 · 重量 1", "破损终端 · 重量 3", "过热核心 · 重量 2"]
+	for index in range(names.size()):
+		var selected := (mode == "result_failure_salvage_selected" and index == 0) or (mode == "result_failure_salvage_capacity_blocked" and index < 2)
+		var blocked := mode == "result_failure_salvage_capacity_blocked" and index == 2
+		var row := Rect2(Layout.GAMEPLAY_MODAL.position + Vector2(70, 250 + index * 58), Vector2(620, 48))
+		_draw_texture(StringName("visual.art24.ui.item_row.%s" % ("blocked" if blocked else ("selected" if selected else "normal"))), row)
+		_draw_text(names[index], row.position + Vector2(18, 31), 14, Color("8f9692") if blocked else Color("e2d8c5"), 470)
+		_draw_text("容量不足" if blocked else ("已选择" if selected else "可保全"), row.position + Vector2(486, 31), 12, Color("e46a52") if blocked else Color("68cfb8"), 112, HORIZONTAL_ALIGNMENT_CENTER)
+	var confirm_rect := Rect2(Layout.GAMEPLAY_MODAL.position + Vector2(170, 448), Vector2(420, 52))
+	_draw_texture(&"visual.art24.ui.item_row.selected", confirm_rect)
+	_draw_text("确认保全并完成结算", confirm_rect.position + Vector2(18, 34), 15, Color("e7bb63"), 384, HORIZONTAL_ALIGNMENT_CENTER)
+	_draw_text("返回检查 · 确认后不可撤销", Layout.GAMEPLAY_MODAL.position + Vector2(170, 528), 13, Color("aebbb5"), 420, HORIZONTAL_ALIGNMENT_CENTER)
 
 
 func _draw_standard_modal(title: String, body: String, options: Array, danger: bool = false) -> void:

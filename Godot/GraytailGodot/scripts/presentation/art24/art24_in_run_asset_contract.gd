@@ -52,6 +52,11 @@ static func path_for(visual_key: StringName) -> String:
 		return "res://assets/art24/actors/player/%s_%s.png" % [facing, motion]
 	if tail.begins_with("actor.ironback."):
 		return "res://assets/art24/actors/ironback/%s.png" % tail.get_slice(".", 2)
+	for subject in ["slime", "bat", "drone"]:
+		if tail.begins_with("actor.%s.ue_" % subject):
+			return "res://assets/art24/actors/%s/%s.png" % [subject, tail.get_slice(".", 2)]
+		if tail.begins_with("actor.%s.variant." % subject):
+			return "res://assets/art24/actors/%s/%s.png" % [subject, tail.get_slice(".", 3)]
 	if tail.begins_with("item.world_loot."):
 		return "res://assets/art24/items/world/%s.png" % tail.get_slice(".", 2)
 	if tail.begins_with("ui.protocol.level_"):
@@ -70,6 +75,8 @@ static func path_for(visual_key: StringName) -> String:
 		return "res://assets/art24/ui/keycap_%s.png" % tail.get_slice(".", 2)
 	if tail.begins_with("ui.map_tile."):
 		return "res://assets/art24/ui/map_tile_%s.png" % tail.get_slice(".", 2)
+	if tail.begins_with("ui.ue."):
+		return "res://assets/art24/ui/ue/%s.png" % tail.get_slice(".", 2)
 	if tail == "ui.left_rail":
 		return "res://assets/art24/ui/left_rail.png"
 	if tail == "ui.bottom_bar":
@@ -78,6 +85,8 @@ static func path_for(visual_key: StringName) -> String:
 		return "res://assets/art24/ui/map_frame.png"
 	if tail == "ui.modal_frame":
 		return "res://assets/art24/ui/modal_frame.png"
+	if tail.begins_with("fx.ue_"):
+		return "res://assets/art24/fx/%s.png" % tail.get_slice(".", 1)
 	if tail.begins_with("fx."):
 		var family := tail.get_slice(".", 1)
 		var frame := tail.get_slice(".", 2)
@@ -91,6 +100,12 @@ static func fallback_path(visual_key: StringName) -> String:
 		return "res://assets/art24/actors/player/down_idle_a.png"
 	if key.contains("actor.ironback"):
 		return "res://assets/art24/actors/ironback/idle_a.png"
+	if key.contains("actor.slime"):
+		return "res://assets/art24/actors/slime/ue_idle.png"
+	if key.contains("actor.bat"):
+		return "res://assets/art24/actors/bat/ue_idle_0.png"
+	if key.contains("actor.drone"):
+		return "res://assets/art24/actors/drone/ue_idle_0.png"
 	if key.contains("world_loot"):
 		return "res://assets/art24/items/world/salvage_satchel.png"
 	if key.contains("ui.map_tile"):

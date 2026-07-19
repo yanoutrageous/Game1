@@ -1,7 +1,7 @@
 extends "res://scripts/gameplay/interaction/g41_interactable.gd"
 class_name G41GroundLootEntity
 
-const WORLD_ITEM_ROOT := "res://assets/art24/items/world/"
+const ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const PICKUP_BEAM_ROOT := "res://assets/art24/fx/pickup_beam_"
 const BEAM_FRAME_COUNT := 8
 const BEAM_FRAME_SECONDS := 0.09
@@ -54,13 +54,19 @@ func _apply_visual_state() -> void:
 	var beam := get_node_or_null("VisualRoot/PickupBeam") as Sprite2D
 	if art_visual != null:
 		art_visual.modulate = Color(1.0, 0.58, 0.52, 1.0) if visual_state == &"blocked" else (Color(1.16, 1.08, 0.76, 1.0) if focused else Color.WHITE)
-		art_visual.scale = Vector2.ONE * (0.29 if focused else 0.25)
+		art_visual.scale = Vector2.ONE * (0.21 if focused else 0.18)
 	if beam != null:
 		beam.modulate = Color(1.0, 0.48, 0.32, 0.92) if visual_state == &"blocked" else Color(0.32, 0.78, 1.0, 0.90)
 	var prompt := get_node_or_null("PromptAnchor/InteractionPrompt") as Label
 	if prompt != null:
 		prompt.text = "[G] 地面回收 · 1件物资"
-		prompt.visible = focused and enabled
+		# The proximity context popup is the only interaction copy. Keeping a
+		# second floating label on every floor item recreated the fixed clutter
+		# that ART24R2 is removing.
+		prompt.visible = false
+	var caption := get_node_or_null("PromptAnchor/LootCaption") as Label
+	if caption != null:
+		caption.visible = false
 
 
 func _ensure_art_visuals() -> void:
@@ -71,7 +77,7 @@ func _ensure_art_visuals() -> void:
 		var beam := Sprite2D.new()
 		beam.name = "PickupBeam"
 		beam.position = Vector2(0, -20)
-		beam.scale = Vector2(0.72, 0.72)
+		beam.scale = Vector2(0.45, 0.45)
 		visual_root.add_child(beam)
 		visual_root.move_child(beam, 0)
 	if visual_root.get_node_or_null("ArtVisual") == null:
@@ -96,7 +102,7 @@ func _ensure_art_visuals() -> void:
 func _apply_item_visual() -> void:
 	var art_visual := get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
 	if art_visual != null:
-		art_visual.texture = load(_item_texture_path()) as Texture2D
+		art_visual.texture = ItemVisualCatalog.texture_for(item)
 	var beam := get_node_or_null("VisualRoot/PickupBeam") as Sprite2D
 	if beam != null:
 		beam.texture = load("%s0.png" % PICKUP_BEAM_ROOT) as Texture2D
@@ -106,28 +112,8 @@ func _apply_item_visual() -> void:
 			String(item.get("display_name", item.get("item_id", "回收物"))),
 			int(item.get("base_value", item.get("value", 0))),
 		]
+		caption.visible = false
 	_apply_visual_state()
-
-
-func _item_texture_path() -> String:
-	var item_id := String(item.get("item_id", "")).to_lower()
-	if item_id.contains("key"):
-		return WORLD_ITEM_ROOT + "access_key.png"
-	if item_id.contains("scan") or item_id.contains("goggle"):
-		return WORLD_ITEM_ROOT + "scanner_probe.png"
-	if item_id.contains("bag") or item_id.contains("cache"):
-		return WORLD_ITEM_ROOT + "salvage_satchel.png"
-	if item_id.contains("coin") or item_id.contains("receipt"):
-		return WORLD_ITEM_ROOT + "coin_cache.png"
-	match StringName(item.get("item_type", item.get("main_type", &"collectible"))):
-		&"equipment":
-			return WORLD_ITEM_ROOT + "armor_plate.png"
-		&"consumable":
-			return WORLD_ITEM_ROOT + "emergency_bandage.png"
-		&"special":
-			return WORLD_ITEM_ROOT + "anomaly_shard.png"
-		_:
-			return WORLD_ITEM_ROOT + "copper_coil.png"
 
 
 func _placeholder_color() -> Color:

@@ -6,6 +6,7 @@ const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
+const Art24MapOverlayLayoutScript := preload("res://scripts/presentation/art24/art24_map_overlay_layout.gd")
 
 signal cell_action_requested(marker: Dictionary)
 
@@ -13,6 +14,7 @@ var view_model: MiniMapViewModel
 var selected_feedback_text: String = ""
 var selected_marker: Dictionary = {}
 var layout_profile: Dictionary = {}
+var layout_metrics: Dictionary = {}
 var marker_size: Vector2 = Vector2(42, 42)
 var title_font_size: int = 20
 var footer_font_size: int = 13
@@ -32,10 +34,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	layout_profile = profile.duplicate(true)
 	var is_low := bool(layout_profile.get("is_low_resolution", false))
 	var is_high := bool(layout_profile.get("is_high_resolution", false))
-	var supported_size: Vector2 = layout_profile.get("supported_size", Vector2(1280, 720))
-	var actual_size: Vector2i = layout_profile.get("actual_viewport_size", Vector2i(int(supported_size.x), int(supported_size.y)))
-	var width: float = float(max(1, actual_size.x))
-	var height: float = float(max(1, actual_size.y))
+	layout_metrics = Art24MapOverlayLayoutScript.calculate(layout_profile)
 	title_font_size = 16 if is_low else (20 if is_high else 18)
 	footer_font_size = 11 if is_low else (13 if is_high else 12)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -45,23 +44,21 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	offset_bottom = 0.0
 	var dimmer := get_node_or_null("Dimmer") as ColorRect
 	if dimmer != null:
-		dimmer.color = Color(0.005, 0.012, 0.014, 0.72)
+		dimmer.color = Color(0.0, 0.0, 0.0, 0.70)
 	var panel := get_node_or_null("Panel") as Control
 	if panel != null:
-		var panel_width: float = min(width * 0.86, 1120.0 if is_high else 1040.0)
-		var panel_height: float = min(height * 0.88, 840.0 if is_high else 650.0)
-		panel_width = max(panel_width, 740.0 if not is_low else 580.0)
-		panel_height = max(panel_height, 500.0 if not is_low else 440.0)
-		var cell_width: float = floor((panel_width - 84.0) / 10.0)
-		var cell_height: float = floor((panel_height - 140.0) / 10.0)
-		var cell_size: float = maxf(42.0, min(cell_width, cell_height))
+		# The full state contains ten rows plus title, four-line selected detail,
+		# two-line feedback and frame padding. Budget every fixed-height element
+		# before sizing cells; the previous 140 px estimate let the VBox exceed
+		# the panel and clipped both header and footer at 1280x720.
+		var cell_size := float(layout_metrics.get("marker_size", 36.0))
 		marker_size = Vector2(cell_size, cell_size)
 		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		_set_rect(panel, Rect2((width - panel_width) * 0.5, (height - panel_height) * 0.5, panel_width, panel_height))
+		_set_rect(panel, layout_metrics.get("panel_rect", Rect2(120, 18, 1040, 604)))
 		_apply_overlay_panel_style(panel)
 	var content := get_node_or_null("Panel/Content") as VBoxContainer
 	if content != null:
-		content.add_theme_constant_override("separation", 8 if not is_low else 5)
+		content.add_theme_constant_override("separation", int(layout_metrics.get("content_gap", 5)))
 	_rebuild_grid()
 
 
@@ -111,7 +108,9 @@ func _apply_layer_order() -> void:
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
-	if event.is_action_pressed("cancel") or _event_matches_key(event, [KEY_ESCAPE]):
+	var right_click := event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT and (event as InputEventMouseButton).pressed
+	var toggle_map := event.is_action_pressed("open_map") or _event_matches_key(event, [KEY_M])
+	if event.is_action_pressed("cancel") or _event_matches_key(event, [KEY_ESCAPE]) or toggle_map or right_click:
 		hide_overlay()
 		get_viewport().set_input_as_handled()
 
@@ -123,7 +122,7 @@ func _rebuild_grid() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
-	var grid_gap := 5 if marker_size.x <= 44.0 else 8
+	var grid_gap := int(layout_metrics.get("grid_gap", 4 if marker_size.x <= 42.0 else 6))
 	grid.add_theme_constant_override("h_separation", grid_gap)
 	grid.add_theme_constant_override("v_separation", grid_gap)
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -136,24 +135,20 @@ func _rebuild_grid() -> void:
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		title.add_theme_font_size_override("font_size", title_font_size)
-		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		title.text = "区域地图"
+		title.text = "区域扫描图（点击格子标记雷险 / 回传）"
 	if detail != null:
-		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
-		detail.add_theme_font_size_override("font_size", 14 if footer_font_size <= 12 else 15)
-		detail.add_theme_constant_override("line_spacing", 2)
-		detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		detail.text = _selected_detail_text()
+		detail.visible = false
+		detail.custom_minimum_size = Vector2.ZERO
+		detail.text = ""
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		footer.add_theme_font_size_override("font_size", maxi(13, footer_font_size))
+		footer.add_theme_font_size_override("font_size", 12 if bool(layout_profile.get("is_low_resolution", false)) else maxi(13, footer_font_size))
 		footer.add_theme_constant_override("line_spacing", 2)
-		footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		footer.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		footer.text = "Esc 关闭 · 点击格子查看 / 标记"
+		footer.text = "左键：未知格标记雷险 / 取消 · 已探索格回传 · M / Esc / 右键关闭"
 
 	if footer != null and selected_feedback_text != "":
 		footer.text += "\n" + selected_feedback_text
@@ -186,9 +181,11 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	_apply_marker_button_style(button, theme_key, state, selected)
 	var texture := Art09ManifestAssetMappingScript.resolve_texture(_map_overlay_asset_ref_for_marker(marker))
 	if texture != null:
-		var art21r2_marker := _art21_marker_state(marker) in [&"flagged", &"event"]
 		button.icon = texture
-		button.expand_icon = art21r2_marker
+		# Every icon must be allowed to shrink with the tile. Leaving the default
+		# map icons at native size silently raises Button's minimum height and makes
+		# the ten-row GridContainer expand the whole modal at 720p.
+		button.expand_icon = true
 		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
 		button.add_theme_constant_override("icon_max_width", _icon_width_for_marker_state(state, marker_size))
@@ -211,38 +208,39 @@ func _apply_overlay_panel_style(control: Control) -> void:
 	if not (control is PanelContainer):
 		return
 	var panel := control as PanelContainer
-	var style: StyleBox = null
-	var art24_texture := load("res://assets/art24/ui/map_frame.png") as Texture2D
-	if art24_texture != null:
-		var frame := StyleBoxTexture.new()
-		frame.texture = art24_texture
-		frame.texture_margin_left = 18
-		frame.texture_margin_top = 18
-		frame.texture_margin_right = 18
-		frame.texture_margin_bottom = 18
-		frame.content_margin_left = 28
-		frame.content_margin_top = 24
-		frame.content_margin_right = 28
-		frame.content_margin_bottom = 24
-		frame.draw_center = true
-		style = frame
-	if style == null:
-		style = Art21UIPlacementContractScript.style_box_for_visual_key(ART21R2_MAP_PANEL_FRAME_VISUAL_KEY, &"ui.art19.panel.terminal_main", 30, 38)
-	if style == null:
-		style = Art10UISkinKitScript.panel_style(&"deep")
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.005, 0.012, 0.014, 0.16)
+	style.content_margin_left = 16
+	style.content_margin_top = float(layout_metrics.get("frame_vertical_padding", 24.0)) * 0.5
+	style.content_margin_right = 16
+	style.content_margin_bottom = float(layout_metrics.get("frame_vertical_padding", 24.0)) * 0.5
 	panel.add_theme_stylebox_override("panel", style)
 
 
 func _apply_overlay_text_hierarchy(title: Label, detail: Label, footer: Label) -> void:
+	var label_padding := int(layout_metrics.get("label_padding", 8))
 	if title != null:
-		title.custom_minimum_size = Vector2(0, 36)
-		title.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_TITLE_PLATE_VISUAL_KEY, 8, 18))
+		title.custom_minimum_size = Vector2(620, float(layout_metrics.get("title_height", 32)))
+		title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		title.add_theme_stylebox_override("normal", _transparent_text_style(label_padding))
 	if detail != null:
-		detail.custom_minimum_size = Vector2(0, 38)
-		detail.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_DETAIL_PANEL_VISUAL_KEY, 8, 18))
+		detail.custom_minimum_size = Vector2(620, float(layout_metrics.get("detail_height", 72)))
+		detail.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		detail.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_DETAIL_PANEL_VISUAL_KEY, label_padding, 18))
 	if footer != null:
-		footer.custom_minimum_size = Vector2(0, 42)
-		footer.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY, 8, 18))
+		footer.custom_minimum_size = Vector2(620, float(layout_metrics.get("footer_height", 48)))
+		footer.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		footer.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY, label_padding, 18))
+
+
+func _transparent_text_style(padding: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
+	style.content_margin_left = padding
+	style.content_margin_top = padding
+	style.content_margin_right = padding
+	style.content_margin_bottom = padding
+	return style
 
 
 func _style_box_for_visual_key(visual_key: StringName, padding: int = 8, texture_margin: int = 18) -> StyleBox:
@@ -272,7 +270,10 @@ func _style_box_for_visual_key(visual_key: StringName, padding: int = 8, texture
 
 func _apply_marker_button_style(button: Button, theme_key: StringName, state: StringName, selected: bool) -> void:
 	var border := PresentationTheme.color_for_key(theme_key)
-	var tile_style := _art24_map_tile_style(state, selected)
+	# A confirmed flag/unflag action must keep the cell's semantic state visible.
+	# Selection is represented by a restrained brightness lift and by hover/
+	# pressed styles; it must not replace the UE-like red flag tile with cyan.
+	var tile_style := _art24_map_tile_style(state, false)
 	button.add_theme_stylebox_override("normal", tile_style)
 	button.add_theme_stylebox_override("hover", _art24_map_tile_style(state, true))
 	button.add_theme_stylebox_override("pressed", _art24_map_tile_style(state, true))
@@ -281,8 +282,12 @@ func _apply_marker_button_style(button: Button, theme_key: StringName, state: St
 
 
 func _art24_map_tile_style(state: StringName, selected: bool) -> StyleBox:
-	var token := "selected" if selected else "explored"
-	if not selected:
+	# Selection may brighten neutral/unknown cells, but it must never replace a
+	# semantic marker (flag, player, hazard, chest, exit or event) with the cyan
+	# generic selected tile.
+	var semantic_state := state in [&"flagged", &"event", &"player", &"mine", &"chest", &"exit"]
+	var token := "selected" if selected and not semantic_state else "explored"
+	if not selected or semantic_state:
 		match state:
 			&"unknown":
 				token = "unknown"
@@ -304,6 +309,11 @@ func _art24_map_tile_style(state: StringName, selected: bool) -> StyleBox:
 	style.texture_margin_right = 8
 	style.texture_margin_bottom = 8
 	style.draw_center = true
+	if token == "flagged":
+		# UE communicates a player-authored danger flag with a red cell field.  The
+		# source tile remains copper/yellow and reusable; tint only the background
+		# style so the separately rendered flag icon keeps its gold identity.
+		style.modulate_color = Color(1.20, 0.42, 0.42, 1.0)
 	return style
 
 
@@ -420,8 +430,11 @@ func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 	_rebuild_grid()
 
 
-func show_open_feedback(source: StringName) -> void:
-	selected_feedback_text = "地图已展开。"
+func show_open_feedback(_source: StringName) -> void:
+	# The UE overview keeps its status row quiet until the player acts. Opening
+	# the map is already visually explicit; repeating it added an unnecessary
+	# second footer line and competed with the control hint.
+	selected_feedback_text = ""
 	_rebuild_grid()
 
 
@@ -441,8 +454,8 @@ func _ensure_detail_label() -> Label:
 		return detail
 	detail = Label.new()
 	detail.name = "Detail"
-	detail.custom_minimum_size = Vector2(0, 34)
-	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.visible = false
+	detail.custom_minimum_size = Vector2.ZERO
 	content.add_child(detail)
 	var grid := get_node_or_null("Panel/Content/Grid")
 	if grid != null:
@@ -453,4 +466,6 @@ func _ensure_detail_label() -> Label:
 func _selected_detail_text() -> String:
 	if selected_marker.is_empty():
 		return "点击格子查看状态。"
-	return String(selected_marker.get("detail_text", "选中格详情不可用。"))
+	# Keep the scan grid dominant. Technical models may provide four diagnostic
+	# lines, but the UE overlay presents selection status as one compact band.
+	return String(selected_marker.get("detail_text", "选中格详情不可用。")).replace("\n", " · ")

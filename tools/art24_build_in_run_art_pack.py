@@ -118,6 +118,23 @@ def grid_cells(image: Image.Image, columns: int, rows: int) -> list[Image.Image]
     return cells
 
 
+def region_cells(image: Image.Image, x_edges: list[int], y_edges: list[int]) -> list[Image.Image]:
+    """Cut an atlas whose authored sprite centers do not follow an even grid.
+
+    The player movement source is a 6x4 presentation atlas, but the vertical
+    gutters are intentionally uneven and some sprites extend beyond a naive
+    256x256 cell. Explicit gap boundaries keep neighboring poses out of the
+    per-frame alpha trim while retaining the entire subject.
+    """
+    if x_edges[0] != 0 or y_edges[0] != 0 or x_edges[-1] != image.width or y_edges[-1] != image.height:
+        raise ValueError("atlas region edges must cover the complete image")
+    cells: list[Image.Image] = []
+    for row in range(len(y_edges) - 1):
+        for column in range(len(x_edges) - 1):
+            cells.append(image.crop((x_edges[column], y_edges[row], x_edges[column + 1], y_edges[row + 1])))
+    return cells
+
+
 def rounded_mask(size: tuple[int, int], radius: int) -> Image.Image:
     mask = Image.new("L", size, 0)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, size[0] - 1, size[1] - 1), radius=radius, fill=255)
@@ -172,9 +189,21 @@ def save(records: list[AssetRecord], image: Image.Image, relative: str, visual_k
     records.append(AssetRecord(asset_id, visual_key, path, source, role, state, variant, load_group, "art24_generated"))
 
 
-def build_actor_and_loot(records: list[AssetRecord]) -> None:
+def record_existing(records: list[AssetRecord], relative: str, visual_key: str, source: str, role: str, state: str, variant: str, load_group: str) -> None:
+    path = ASSET_ROOT / relative
+    if not path.is_file():
+        raise FileNotFoundError(f"audited runtime asset missing: {path}")
+    asset_id = "ui.art24." + visual_key.removeprefix("visual.art24.")
+    records.append(AssetRecord(asset_id, visual_key, path, source, role, state, variant, load_group, "art24_ue_audited_import"))
+
+
+def build_player_movement(records: list[AssetRecord]) -> None:
     player_atlas = Image.open(ACTOR_ROOT / "player_action_atlas.png").convert("RGBA")
-    player_cells = grid_cells(player_atlas, 6, 4)
+    player_cells = region_cells(
+        player_atlas,
+        [0, 280, 536, 792, 1048, 1304, 1536],
+        [0, 270, 500, 735, 1024],
+    )
     facings = ["down", "left", "right", "up"]
     motions = ["idle_a", "idle_b", "walk_a", "walk_b", "hit", "interact"]
     for row, facing in enumerate(facings):
@@ -182,6 +211,11 @@ def build_actor_and_loot(records: list[AssetRecord]) -> None:
             image = contain_trimmed(player_cells[row * 6 + column], (160, 160), 5)
             key = f"visual.art24.actor.player.{facing}.{motion}"
             save(records, image, f"actors/player/{facing}_{motion}.png", key, "imagegen player atlas + chroma removal", "player_actor", motion, facing, "art24_actor")
+
+
+def build_actor_and_loot(records: list[AssetRecord]) -> None:
+    build_player_movement(records)
+    facings = ["down", "left", "right", "up"]
 
     combat_atlas = Image.open(ACTOR_ROOT / "player_combat_atlas.png").convert("RGBA")
     combat_cells = grid_cells(combat_atlas, 4, 4)
@@ -200,6 +234,73 @@ def build_actor_and_loot(records: list[AssetRecord]) -> None:
         key = f"visual.art24.actor.ironback.{state}"
         save(records, image, f"actors/ironback/{state}.png", key, "imagegen ironback atlas + chroma removal", "monster_actor", state, "ironback", "art24_monster")
 
+    ue_commit = "de4ece1163505d9fe08e31cd0dbe10477909f963"
+    ue_enemy_frames = [
+        ("slime", "ue_idle.png", "assets/Textures/enemy_slime.png", "idle"),
+        ("slime", "ue_slimeling_idle.png", "assets/Textures/generated/monsters/enemy_slimeling.png", "slimeling_idle"),
+        ("slime", "ue_warning.png", "assets/Textures/generated/monsters/slime_attack_0.png", "warning"),
+        ("slime", "ue_attack.png", "assets/Textures/generated/monsters/slime_attack_1.png", "attack"),
+        ("bat", "ue_warning.png", "assets/Textures/generated/monsters/bat_attack_0.png", "warning"),
+        ("bat", "ue_attack.png", "assets/Textures/generated/monsters/bat_attack_1.png", "attack"),
+        ("drone", "ue_warning_0.png", "assets/Textures/generated/monsters/drone_charge_0.png", "warning_0"),
+        ("drone", "ue_warning_1.png", "assets/Textures/generated/monsters/drone_charge_1.png", "warning_1"),
+        ("drone", "ue_attack.png", "assets/Textures/generated/monsters/drone_charge_2.png", "attack"),
+    ]
+    for subject in ("bat", "drone"):
+        for index in range(4):
+            ue_enemy_frames.append((subject, f"ue_idle_{index}.png", f"assets/Textures/generated/monsters/{subject}_idle_{index}.png", f"idle_{index}"))
+    for subject in ("slime", "bat", "drone"):
+        for index in range(5):
+            ue_enemy_frames.append((subject, f"ue_defeated_{index}.png", f"assets/Textures/generated/effects/{subject}_shatter_{index}.png", f"defeated_{index}"))
+    for subject, filename, source_relative, state in ue_enemy_frames:
+        record_existing(
+            records,
+            f"actors/{subject}/{filename}",
+            f"visual.art24.actor.{subject}.ue_{state}",
+            f"ue_prototype@{ue_commit}:{source_relative}",
+            "monster_actor",
+            state,
+            subject,
+            "art24_monster",
+        )
+
+    ue_enemy_fx = [
+        ("ue_bat_bolt.png", "assets/Textures/generated/effects/bat_bolt.png", "bat_bolt"),
+        ("ue_drone_laser_beam.png", "assets/Textures/generated/effects/drone_laser_beam.png", "drone_laser_beam"),
+        ("ue_drone_laser_muzzle.png", "assets/Textures/generated/effects/drone_laser_muzzle.png", "drone_laser_muzzle"),
+        ("ue_drone_laser_impact.png", "assets/Textures/generated/effects/drone_laser_impact.png", "drone_laser_impact"),
+    ]
+    for filename, source_relative, state in ue_enemy_fx:
+        record_existing(
+            records,
+            f"fx/{filename}",
+            f"visual.art24.fx.ue_{state}",
+            f"ue_prototype@{ue_commit}:{source_relative}",
+            "combat_fx",
+            state,
+            "ue_runtime",
+            "art24_fx",
+        )
+
+    generated_variant_states = ["idle_a", "idle_b", "warning", "attack", "hurt", "defeated"]
+    for subject in ("slime", "bat", "drone"):
+        enemy_atlas = Image.open(ACTOR_ROOT / f"{subject}_action_atlas.png").convert("RGBA")
+        enemy_cells = grid_cells(enemy_atlas, 3, 2)
+        for index, state in enumerate(generated_variant_states):
+            image = contain_trimmed(enemy_cells[index], (240, 200), 5)
+            key = f"visual.art24.actor.{subject}.variant.{state}"
+            save(
+                records,
+                image,
+                f"actors/{subject}/{state}.png",
+                key,
+                f"imagegen {subject} atlas + chroma removal; optional visual_variant",
+                "monster_actor",
+                state,
+                f"{subject}_generated_variant",
+                "art24_monster_variant",
+            )
+
     loot_atlas = Image.open(ITEM_ROOT / "world_loot_atlas.png").convert("RGBA")
     loot_cells = grid_cells(loot_atlas, 4, 2)
     loot_states = ["emergency_bandage", "copper_coil", "scanner_probe", "armor_plate", "coin_cache", "anomaly_shard", "access_key", "salvage_satchel"]
@@ -210,6 +311,35 @@ def build_actor_and_loot(records: list[AssetRecord]) -> None:
 
 
 def build_ui(records: list[AssetRecord]) -> None:
+    ue_commit = "de4ece1163505d9fe08e31cd0dbe10477909f963"
+    ue_hud_assets = [
+        "ui_panel_left.png",
+        "ui_panel_protocol.png",
+        "ui_bottom_bar.png",
+        "ui_icon_backpack.png",
+        "ui_bar_frame.png",
+        "ui_bar_warning.png",
+        "stat_hp.png",
+        "stat_power.png",
+        "stat_pending.png",
+        "stat_searched.png",
+        "stat_parts.png",
+        "stat_locked.png",
+        "ui_mine_risk_tag.png",
+    ]
+    for filename in ue_hud_assets:
+        state = filename.removesuffix(".png")
+        record_existing(
+            records,
+            f"ui/ue/{filename}",
+            f"visual.art24.ui.ue.{state}",
+            f"ue_prototype@{ue_commit}:assets/ui/hud/{filename}",
+            "hud_skin",
+            state,
+            "ue_runtime",
+            "art24_hud",
+        )
+
     save(records, panel((300, 648), TEAL, 246, 0), "ui/left_rail.png", "visual.art24.ui.left_rail", "deterministic ART24 generator", "hud_panel", "normal", "default", "art24_hud")
     save(records, panel((1280, 72), BRASS, 248, 0), "ui/bottom_bar.png", "visual.art24.ui.bottom_bar", "deterministic ART24 generator", "hud_panel", "normal", "default", "art24_hud")
     protocol_colors = {5: TEAL, 4: GREEN, 3: AMBER, 2: ORANGE, 1: RED}
@@ -382,6 +512,13 @@ def write_reports(records: list[AssetRecord]) -> None:
     manifest_fields = ["asset_id", "source_repo_path", "godot_path", "type", "category", "usage", "import_preset", "license_status", "replacement_needed", "linked_scene", "linked_data", "note", "theme_key", "presentation_role", "state", "variant", "source_status"]
     manifest_rows = []
     for row in report_rows:
+        is_ue_import = row["source_status"] == "art24_ue_audited_import"
+        if row["role"] == "monster_actor":
+            linked_scene = "scripts/gameplay/runtime/g41_runtime_actor_view.gd"
+        elif row["role"] == "hud_skin":
+            linked_scene = "scripts/ui/run_surface/run_surface.gd"
+        else:
+            linked_scene = "scripts/presentation/art24/art24_in_run_preview.gd"
         manifest_rows.append({
             "asset_id": row["asset_id"],
             "source_repo_path": row["source"],
@@ -390,9 +527,9 @@ def write_reports(records: list[AssetRecord]) -> None:
             "category": "ui_art" if row["role"].endswith(("panel", "row", "slot", "toast", "tile", "keycap", "banner")) else "sprite",
             "usage": f"ART24 {row['role']} {row['state']}",
             "import_preset": "pixel_ui",
-            "license_status": "internal_generated",
+            "license_status": "same_project_audited" if is_ue_import else "internal_generated",
             "replacement_needed": "false",
-            "linked_scene": "scripts/presentation/art24/art24_in_run_preview.gd",
+            "linked_scene": linked_scene,
             "linked_data": "ART24_RUN_PRESENTATION_INTERFACE_V1",
             "note": f"ART24 modular art fragment; sha256={row['sha256']}",
             "theme_key": row["visual_key"],

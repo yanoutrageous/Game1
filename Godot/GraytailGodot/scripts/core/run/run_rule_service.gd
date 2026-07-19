@@ -73,7 +73,7 @@ static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_min
 	var request: Dictionary = _make_rule_request(context, &"search_reward", "search", {"pos": pos, "adjacent_mines": adjacent_mines, "is_chest": is_chest})
 	var black_coin: int = RunRuleContent.default_search_black_coin(context, pos, adjacent_mines, is_chest)
 	var modifier_black_coin_delta: int = _numeric_modifier_delta(context, &"search_reward", "black_coin")
-	black_coin = maxi(0, black_coin + modifier_black_coin_delta)
+	black_coin = maxi(0, black_coin + modifier_black_coin_delta + context.search_reward_bonus)
 	var item_defs: Array[Dictionary] = RunRuleContent.default_search_items(pos, adjacent_mines, is_chest, black_coin)
 	var effects: Array = [
 		_effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_ADD_CURRENCY, "search", pos, {"currency_id": RunAssetLedger.CURRENCY_BLACK, "amount": black_coin}),
@@ -88,6 +88,7 @@ static func apply_search_reward(context: RunContext, pos: Vector2i, adjacent_min
 	result["gold"] = black_coin
 	result["black_coin_delta"] = black_coin
 	result["modifier_black_coin_delta"] = modifier_black_coin_delta
+	result["equipment_search_reward_bonus"] = context.search_reward_bonus
 	result["items"] = combined_items
 	result["inventory_items"] = item_result.get("inventory_items", [])
 	result["equipped_items"] = item_result.get("equipped_items", [])
@@ -243,7 +244,7 @@ static func execute_trader_sell_best(context: RunContext, confirm_high_value: bo
 	result["safe_yield"] = context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_GOLD)
 	result["safe_gold"] = gold_coin
 	result["sold_item"] = sold.get("sold_item", {})
-	result["message"] = "Trader sale complete: safe_yield +%d. Long-term gold writes only at settlement." % gold_coin
+	result["message"] = "Trader sale complete: gold resource +%d. It writes to MetaProgress at settlement." % gold_coin
 	return _finalize_rule(context, request, result, applied)
 
 
@@ -422,14 +423,14 @@ static func settle_success(context: RunContext) -> Dictionary:
 	return _finalize_rule(context, request, result, applied)
 
 
-static func settle_failure(context: RunContext) -> Dictionary:
+static func settle_failure(context: RunContext, selected_instance_ids: Array = []) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return {}
-	var request: Dictionary = _make_rule_request(context, &"settle_failure", "settlement", {"outcome": &"failure"})
-	var effect: Dictionary = _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SETTLE_FAILURE, "settlement", context.get_current_pos(), {})
+	var request: Dictionary = _make_rule_request(context, &"settle_failure", "settlement", {"outcome": &"failure", "selected_instance_ids": selected_instance_ids.duplicate(true)})
+	var effect: Dictionary = _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SETTLE_FAILURE, "settlement", context.get_current_pos(), {"selected_instance_ids": selected_instance_ids.duplicate(true)})
 	var applied: Dictionary = RunAssetEffectHandler.apply_effects(context, [effect])
 	var result: Dictionary = _dictionary_from_variant(applied.get("last_result", {}))
-	result.merge(make_rule_result(true, &"settle_failure", DEFAULT_ACTOR_ID, "", [effect], ["Failure settlement resolved."]), false)
+	result.merge(make_rule_result(bool(result.get("ok", false)), &"settle_failure", DEFAULT_ACTOR_ID, String(result.get("reason", "")), [effect], ["Failure settlement resolved."]), false)
 	return _finalize_rule(context, request, result, applied)
 
 
@@ -494,6 +495,9 @@ static func _reveal_nearby_for_consumable(context: RunContext) -> Array[Dictiona
 		return revealed
 	var center: Vector2i = context.get_current_pos()
 	var deltas: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
+	var bonus_deltas: Array[Vector2i] = [Vector2i(-1, -1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(1, 1)]
+	for index in range(mini(context.scan_hint_bonus, bonus_deltas.size())):
+		deltas.append(bonus_deltas[index])
 	for delta: Vector2i in deltas:
 		var target: Vector2i = center + delta
 		if not context.is_inside(target):

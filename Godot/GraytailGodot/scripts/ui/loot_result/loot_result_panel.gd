@@ -3,6 +3,7 @@ class_name LootResultPanel
 
 const PresentationTheme := preload("res://scripts/presentation/presentation_theme.gd")
 const PresentationMapping := preload("res://scripts/presentation/presentation_mapping.gd")
+const Art24ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const Art09ManifestAssetMapping := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 
 signal close_requested
@@ -255,7 +256,9 @@ func _collect_items(reward: Dictionary) -> Array[Dictionary]:
 
 
 func _item_texture(item: Dictionary) -> Texture2D:
-	var mapped := Art09ManifestAssetMapping.resolve_texture(PresentationMapping.inventory_item_icon_ref(item))
+	var mapped := Art24ItemVisualCatalog.texture_for(item)
+	if mapped == null:
+		mapped = Art09ManifestAssetMapping.resolve_texture(PresentationMapping.inventory_item_icon_ref(item))
 	if mapped != null:
 		return mapped
 	var item_id := String(item.get("item_id", "salvage_satchel")).to_lower()

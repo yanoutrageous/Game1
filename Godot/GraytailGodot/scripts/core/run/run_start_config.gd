@@ -32,6 +32,9 @@ const SUPPORTED_PREVIEW_FIELDS := [
 	"permit_level",
 	"protocol_difficulty",
 	"mine_dmg_reduce",
+	"protocol_pressure_reduce",
+	"search_reward_bonus",
+	"scan_hint_bonus",
 	"preview",
 	"display_only",
 	"read_only",
@@ -67,6 +70,9 @@ static func default_config() -> Dictionary:
 		"permit_level": 1,
 		"protocol_difficulty": 5,
 		"mine_dmg_reduce": 0,
+		"protocol_pressure_reduce": 0,
+		"search_reward_bonus": 0,
+		"scan_hint_bonus": 0,
 		"preview": false,
 		"display_only": false,
 		"read_only": false,
@@ -116,6 +122,41 @@ static func validate(config: Dictionary) -> Dictionary:
 		issues.append("route_must_use_existing_start_path")
 	if not SUPPORTED_ROUTE_MODES.has(StringName(normalized.get("route_mode", &""))):
 		issues.append("unsupported_route_mode")
+	var equipment := _array_from(normalized.get("selected_equipment_items", []))
+	var consumables := _array_from(normalized.get("selected_consumable_items", []))
+	if equipment.size() > 2:
+		issues.append("equipment_count_exceeds_2")
+	if consumables.size() > 3:
+		issues.append("consumable_count_exceeds_3")
+	var instance_ids: Dictionary = {}
+	var equipment_slots: Dictionary = {}
+	for raw_item in equipment:
+		var item := _dictionary_from(raw_item)
+		var instance_id := str(item.get("instance_id", ""))
+		if instance_id == "" or instance_ids.has(instance_id):
+			issues.append("duplicate_or_empty_equipment_instance")
+		else:
+			instance_ids[instance_id] = true
+		if item.has("can_equip") and not bool(item.get("can_equip", false)):
+			issues.append("non_equipment_in_equipment_selection")
+		var slot := str(item.get("equipment_slot", ""))
+		if slot != "" and equipment_slots.has(slot):
+			issues.append("duplicate_equipment_slot:%s" % slot)
+		elif slot != "":
+			equipment_slots[slot] = true
+	var carried_weight := 0
+	for raw_item in consumables:
+		var item := _dictionary_from(raw_item)
+		var instance_id := str(item.get("instance_id", ""))
+		if instance_id == "" or instance_ids.has(instance_id):
+			issues.append("duplicate_or_empty_consumable_instance")
+		else:
+			instance_ids[instance_id] = true
+		if item.has("can_consume") and not bool(item.get("can_consume", false)):
+			issues.append("non_consumable_in_consumable_selection")
+		carried_weight += maxi(0, int(item.get("weight", 0)))
+	if carried_weight > int(normalized.get("backpack_capacity", normalized.get("bag_limit", 10))):
+		issues.append("carry_weight_exceeds_backpack_capacity")
 	return {
 		"ok": issues.is_empty(),
 		"issues": issues,

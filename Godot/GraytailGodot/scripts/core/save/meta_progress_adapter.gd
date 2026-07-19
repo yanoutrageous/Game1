@@ -110,6 +110,15 @@ func apply_settlement(result_snapshot: Dictionary) -> Dictionary:
 
 	var previous_data := data.duplicate(true)
 	var settlement: Dictionary = _dictionary_from(result_snapshot.get("settlement", {}))
+	if bool(settlement.get("requires_salvage_selection", false)) and not bool(settlement.get("finalized", false)):
+		last_commit = {
+			"ok": false,
+			"status": "awaiting_salvage_selection",
+			"reason": "failure_settlement_not_finalized",
+			"result_id": result_id,
+			"summary": get_summary(),
+		}
+		return last_commit.duplicate(true)
 	var outcome := str(result_snapshot.get("outcome", settlement.get("outcome", "")))
 	var settlement_outcome := str(settlement.get("outcome", ""))
 	var is_success := outcome == "Extracted" or outcome == "Training Complete" or settlement_outcome == "success"
@@ -140,7 +149,14 @@ func apply_settlement(result_snapshot: Dictionary) -> Dictionary:
 			data["warehouse_items"] = warehouse_items
 	elif is_abandon:
 		data["abandon_count"] = int(data.get("abandon_count", 0)) + 1
+		data["gold"] = int(data.get("gold", 0)) + _settlement_gold(result_snapshot, settlement)
 		data["warehouse_items"] = warehouse_items
+	if is_success or is_failure or is_abandon:
+		var history_records: Array = _array_from(data.get("history_records", []))
+		history_records.append(_history_record(result_id, outcome, result_snapshot, settlement))
+		while history_records.size() > 50:
+			history_records.pop_front()
+		data["history_records"] = history_records
 	var run_debug_commands: Array = _array_from(result_snapshot.get("debug_commands", []))
 	if not run_debug_commands.is_empty():
 		for debug_entry in run_debug_commands:
@@ -176,6 +192,8 @@ func get_summary() -> Dictionary:
 		"long_term_gold": int(data.get("gold", 0)),
 		"warehouse_items_count": warehouse_items.size(),
 		"warehouse_items": warehouse_items.duplicate(true),
+		"history_records": _array_from(data.get("history_records", [])),
+		"history_record_count": _array_from(data.get("history_records", [])).size(),
 		"profile_level": maxi(1, int(data.get("profile_level", 1))),
 		"profile_exp": maxi(0, int(data.get("profile_exp", 0))),
 		"permit_level": maxi(1, int(data.get("permit_level", 1))),
@@ -273,6 +291,33 @@ func _result_id(result_snapshot: Dictionary) -> String:
 		return explicit_id
 	var run_id := str(result_snapshot.get("run_id", result_snapshot.get("mode", "run")))
 	return "%s:%s:%s" % [run_id, str(result_snapshot.get("outcome", "")), int(result_snapshot.get("turn", 0))]
+
+
+func _history_record(result_id: String, outcome: String, result_snapshot: Dictionary, settlement: Dictionary) -> Dictionary:
+	var run_start := _dictionary_from(result_snapshot.get("run_start_config", {}))
+	if run_start.is_empty():
+		var run_result := _dictionary_from(result_snapshot.get("RunResult", result_snapshot.get("run_result", {})))
+		run_start = _dictionary_from(run_result.get("run_start_config", {}))
+	var record := {
+		"history_id": result_id,
+		"result_id": result_id,
+		"run_id": str(result_snapshot.get("run_id", "")),
+		"outcome": outcome,
+		"mode": str(result_snapshot.get("mode", "")),
+		"seed": int(result_snapshot.get("seed", 0)),
+		"recorded_at_unix": int(Time.get_unix_time_from_system()),
+		"carried_equipment": _array_from(run_start.get("selected_equipment_items", [])),
+		"carried_consumables": _array_from(run_start.get("selected_consumable_items", [])),
+		"extracted_items": _array_from(settlement.get("extracted_items", settlement.get("warehouse_items", []))),
+		"salvaged_items": _array_from(settlement.get("salvaged_items", [])),
+		"lost_items": _array_from(settlement.get("lost_items", [])),
+		"cleared_consumables": _array_from(settlement.get("cleared_consumables", [])),
+		"black_coin_converted": int(settlement.get("black_coin_converted", 0)),
+		"black_coin_lost": int(settlement.get("black_coin_lost", 0)),
+		"gold_delta": int(settlement.get("gold_coin_gained", 0)),
+		"settlement_log": _array_from(settlement.get("settlement_log", [])),
+	}
+	return _dictionary_from(_json_safe(record))
 
 
 func _settlement_gold(result_snapshot: Dictionary, settlement: Dictionary) -> int:

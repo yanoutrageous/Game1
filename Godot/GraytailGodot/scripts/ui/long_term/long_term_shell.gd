@@ -581,11 +581,17 @@ func _profile_cards(group_id: StringName) -> Array[Dictionary]:
 				{"title": "累计经验", "state": str(int(runtime.get("profile_exp", 0)))},
 			]
 		&"history":
-			var latest: Dictionary = current_model.get("latest_run_result_summary", {})
-			return [
-				{"title": "最近记录", "state": String(latest.get("outcome", "暂无"))},
-				{"title": "记录编号", "state": String(latest.get("result_id", "未登记"))},
-			]
+			var records: Array = current_model.get("history_records", [])
+			var cards: Array[Dictionary] = []
+			for reverse_index in range(records.size() - 1, maxi(-1, records.size() - 4), -1):
+				var record: Dictionary = records[reverse_index] if records[reverse_index] is Dictionary else {}
+				cards.append({
+					"title": String(record.get("outcome", "未知结局")),
+					"state": String(record.get("result_id", record.get("history_id", "未登记"))),
+				})
+			if cards.is_empty():
+				cards.append({"title": "暂无探索记录", "state": "完成一局后登记"})
+			return cards
 		&"statistics":
 			return [
 				{"title": "探索", "state": str(int(runtime.get("run_count", 0)))},

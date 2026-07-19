@@ -3,6 +3,7 @@ class_name GroundLootPanel
 
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
+const Art24ItemVisualCatalogScript := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
@@ -281,8 +282,10 @@ func _array_from(source: Dictionary, key: String) -> Array:
 
 
 func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
-	var asset_ref := PresentationMappingScript.inventory_item_icon_ref(item)
-	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	var texture := Art24ItemVisualCatalogScript.texture_for(item)
+	if texture == null:
+		var asset_ref := PresentationMappingScript.inventory_item_icon_ref(item)
+		texture = Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
 	if texture == null:
 		return
 	button.icon = texture

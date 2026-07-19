@@ -89,7 +89,16 @@ func fail_run(context: RunContext, reason: String = "forced_failure") -> Diction
 	if context == null:
 		return _blocked(&"not_ready", "not_ready")
 	context.fail_run(reason)
-	return {"ok": true, "status": &"failed", "transition": TRANSITION_FAIL, "reason": reason, "result_snapshot": context.result_snapshot.duplicate(true)}
+	return {"ok": true, "status": &"failure_salvage_pending", "transition": TRANSITION_FAIL, "reason": reason, "result_snapshot": context.result_snapshot.duplicate(true)}
+
+
+func confirm_failure_salvage(context: RunContext, selected_instance_ids: Array) -> Dictionary:
+	if context == null:
+		return _blocked(&"not_ready", "not_ready")
+	var settlement := context.confirm_failure_salvage(selected_instance_ids)
+	if not bool(settlement.get("ok", false)):
+		return settlement
+	return {"ok": true, "status": &"failure_settled", "transition": TRANSITION_FAIL, "settlement": settlement, "result_snapshot": context.result_snapshot.duplicate(true)}
 
 
 func abandon_run(context: RunContext, reason: String = "player_abandoned") -> Dictionary:

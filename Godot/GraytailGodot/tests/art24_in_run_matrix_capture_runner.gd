@@ -47,7 +47,7 @@ func _capture_matrix() -> void:
 			return
 		captured += 1
 	print("ART24_MATRIX_CAPTURE=PASS states=%d size=%dx%d output=%s" % [captured, width, height, output_path])
-	quit(0 if captured == 54 else 2)
+	quit(0 if captured == Catalog.STATES.size() else 2)
 
 
 func _frames(count: int) -> void:

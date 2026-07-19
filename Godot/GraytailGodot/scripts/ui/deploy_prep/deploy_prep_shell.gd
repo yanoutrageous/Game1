@@ -395,11 +395,11 @@ func _build_cancel_modal() -> void:
 	scrim.mouse_filter = Control.MOUSE_FILTER_STOP
 	_add_texture(modal_layer, "DeployCancelModalBoard", DeployPrepLayoutContractScript.MODAL_BOARD, &"deploy_prep.panel.modal_board", 1)
 	_add_label(modal_layer, "DeployCancelModalTitle", DeployPrepLayoutContractScript.MODAL_TITLE, "取消当前探索", 26, Color(0.97, 0.72, 0.38), HORIZONTAL_ALIGNMENT_CENTER, VERTICAL_ALIGNMENT_CENTER, 2)
-	var body := _add_label(modal_layer, "DeployCancelModalBody", DeployPrepLayoutContractScript.MODAL_BODY, "当前运行的真实结算与放弃接口尚未接入。\n本窗口只展示强确认边界，不会删除进度。", 16, Color(0.94, 0.88, 0.76), HORIZONTAL_ALIGNMENT_CENTER, VERTICAL_ALIGNMENT_CENTER, 2)
+	var body := _add_label(modal_layer, "DeployCancelModalBody", DeployPrepLayoutContractScript.MODAL_BODY, "放弃后，本局黑色资源与全部物品都会失去；已直接获得的金色资源保留。\n该操作不可撤销。", 16, Color(0.94, 0.88, 0.76), HORIZONTAL_ALIGNMENT_CENTER, VERTICAL_ALIGNMENT_CENTER, 2)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	modal_confirm_button = _add_image_button(modal_layer, "DeployCancelModalConfirm", DeployPrepLayoutContractScript.MODAL_CONFIRM, "尚未接入", &"danger", Callable(), 16)
-	modal_confirm_button.disabled = true
-	_apply_image_button_surface(modal_confirm_button, &"danger", &"disabled")
+	modal_confirm_button = _add_image_button(modal_layer, "DeployCancelModalConfirm", DeployPrepLayoutContractScript.MODAL_CONFIRM, "确认放弃", &"danger", _confirm_cancel_active_run, 16)
+	modal_confirm_button.disabled = false
+	_apply_image_button_surface(modal_confirm_button, &"danger", &"normal")
 	modal_cancel_button = _add_image_button(modal_layer, "DeployCancelModalBack", DeployPrepLayoutContractScript.MODAL_CANCEL, "返回", &"nav", _hide_cancel_modal, 16)
 
 
@@ -573,7 +573,22 @@ func _on_filter_pressed(filter_id: StringName) -> void:
 
 func _on_card_pressed(card_id: StringName) -> void:
 	var scroll_value := card_scroll.scroll_vertical if card_scroll != null else 0
-	current_model = DeployPrepModelScript.model_with_card(current_model, card_id)
+	var active_tab := _active_tab()
+	if _has_active_run() and active_tab in [DeployTabModelScript.TAB_WAREHOUSE, DeployTabModelScript.TAB_CLAIM]:
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "当前探索进行中，出勤实例已锁定；请继续本局或确认放弃。")
+		_refresh_summary()
+		Art10UISkinKitScript.play_feedback_pulse(primary_action_button, &"warning", 0.5)
+		return
+	var card_action := DeployConfigScript.apply_card_action(_config(), active_tab, card_id)
+	if bool(card_action.get("changed", false)) or active_tab in [DeployTabModelScript.TAB_WAREHOUSE, DeployTabModelScript.TAB_CLAIM]:
+		current_model = DeployPrepModelScript.model_with_config(
+			current_model,
+			_dictionary_from(card_action.get("config", _config())),
+			card_id,
+			str(card_action.get("message", ""))
+		)
+	else:
+		current_model = DeployPrepModelScript.model_with_card(current_model, card_id)
 	var state := _state_for_tab(_active_tab())
 	state["card"] = card_id
 	state["scroll"] = scroll_value
@@ -589,14 +604,19 @@ func _on_card_pressed(card_id: StringName) -> void:
 
 func _on_primary_action_pressed() -> void:
 	if _has_active_run():
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, "已检测到进行中的探索；继续接口尚未连接到持久化运行。")
+		var continue_payload := {"target_route": &"run", "route_mode": &"continue_run", "entry_id": &"m6_continue_active_run", "uses_existing_route": true, "continue_active_run": true}
+		deploy_start_intent_requested.emit(NavigationIntentScript.make_run(&"deploy_prep", continue_payload))
+		return
+	var config := _config()
+	var validity := _dictionary_from(config.get("config_validity_preview", {}))
+	if not bool(validity.get("can_start", true)):
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "当前配置不合法，无法出发。")
 		_refresh_summary()
 		Art10UISkinKitScript.play_feedback_pulse(primary_action_button, &"warning", 0.7)
 		return
-	var config := _config()
 	current_model["run_start_config"] = DeployConfigScript.build_run_start_config(config)
 	current_model["preview_lines"] = DeployConfigScript.build_preview_lines(config)
-	current_model["action_message"] = "已使用当前携带配置进入探索。"
+	current_model["action_message"] = "已使用玩家确认的携带配置进入探索。"
 	_refresh_summary()
 	var start_action := _action("start")
 	var run_payload := _dictionary_from(start_action.get("run_intent", {}))
@@ -609,15 +629,25 @@ func _on_primary_action_pressed() -> void:
 func _show_cancel_modal() -> void:
 	if not _has_active_run():
 		return
-	current_model = DeployPrepModelScript.model_with_action_message(current_model, "取消探索需要强确认；当前不会执行真实结算。", true)
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, "放弃探索需要再次确认。", true)
 	_refresh_modal_state()
 	_refresh_summary()
 
 
 func _hide_cancel_modal() -> void:
-	current_model = DeployPrepModelScript.model_with_action_message(current_model, "已关闭取消确认，没有修改当前运行。", false)
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, "已取消放弃操作，当前探索保持不变。", false)
 	_refresh_modal_state()
 	_refresh_summary()
+
+
+func _confirm_cancel_active_run() -> void:
+	if not _has_active_run():
+		_hide_cancel_modal()
+		return
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, "正在放弃当前探索并进入结算。", false)
+	_hide_cancel_modal_visual()
+	var payload := {"target_route": &"run", "route_mode": &"abandon_run", "entry_id": &"m6_abandon_active_run", "uses_existing_route": true, "abandon_active_run": true, "reason": "player_deploy_abandon"}
+	deploy_start_intent_requested.emit(NavigationIntentScript.make_run(&"deploy_prep", payload))
 
 
 func _show_cancel_modal_visual() -> void:

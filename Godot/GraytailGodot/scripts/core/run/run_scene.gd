@@ -99,7 +99,10 @@ var event_body_label: Label
 var event_options_box: VBoxContainer
 var loot_panel: Control
 var extract_panel: PanelContainer
+var extract_title_label: Label
 var extract_body_label: Label
+var extract_confirm_button: Button
+var extract_cancel_button: Button
 var inventory_panel: Control
 var ground_loot_panel: Control
 var hud: Hud
@@ -141,6 +144,8 @@ func _process(delta: float) -> void:
 	if player_controller == null or command_bus == null or run_context == null:
 		return
 	var runtime_paused := _is_runtime_modal_open() or (map_overlay_panel != null and map_overlay_panel.visible) or run_context.has_blocking_tutorial_popup()
+	if room_runtime_view != null:
+		room_runtime_view.set_context_ui_suppressed(runtime_paused)
 	if in_run_runtime != null:
 		in_run_runtime.sync_room(player_controller.get_local_position())
 		in_run_runtime.set_paused(runtime_paused)
@@ -202,6 +207,13 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 		return false
 	if run_context.has_blocking_tutorial_popup():
 		return false
+	var run_action := RunSceneInputRouterScript.run_action(event)
+	# Q is a reversible field-bag drawer. Handle its close action before the
+	# generic modal guard, otherwise the open panel consumes the state that would
+	# allow the same shortcut to close it again.
+	if inventory_panel != null and inventory_panel.visible and run_action == RunSceneInputRouterScript.ACTION_OPEN_INVENTORY:
+		inventory_panel.call("hide_panel")
+		return true
 	if _is_runtime_modal_open():
 		return false
 	if map_overlay_panel != null and map_overlay_panel.visible:
@@ -214,7 +226,7 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 			_attempt_room_transition(step_result.get("direction", Vector2i.ZERO))
 		return true
 
-	match RunSceneInputRouterScript.run_action(event):
+	match run_action:
 		RunSceneInputRouterScript.ACTION_INTERACT:
 			_handle_interact_pressed()
 			return true
@@ -228,7 +240,7 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 			_show_inventory_panel()
 			return true
 		RunSceneInputRouterScript.ACTION_OPEN_GROUND_LOOT:
-			_show_ground_loot_panel()
+			_activate_world_context_primary()
 			return true
 		RunSceneInputRouterScript.ACTION_REQUEST_EXTRACT:
 			_request_extract_from_ui()
@@ -293,6 +305,7 @@ func _build_playfield_visuals() -> void:
 	room_runtime_view = G41RoomRuntimeViewScript.new()
 	room_runtime_view.name = "G41RoomRuntimeView"
 	room_runtime_view.interaction_commit_requested.connect(_on_g41_interaction_commit_requested)
+	room_runtime_view.context_action_requested.connect(_on_world_context_action_requested)
 	room_layer.add_child(room_runtime_view)
 	player_controller = PlayerScene.instantiate() as PlayerController
 	player_controller.name = "PlayerController"
@@ -334,7 +347,7 @@ func _build_run_overlay() -> void:
 	run_surface.build()
 	run_surface.interact_requested.connect(_handle_interact_pressed)
 	run_surface.inventory_requested.connect(_show_inventory_panel)
-	run_surface.ground_loot_requested.connect(_show_ground_loot_panel)
+	run_surface.ground_loot_requested.connect(_activate_world_context_primary)
 	run_surface.map_requested.connect(_open_map_from_ui)
 	run_surface.combat_requested.connect(_fight_and_show_result)
 	run_surface.extract_requested.connect(_request_extract_from_ui)
@@ -345,6 +358,10 @@ func _build_run_overlay() -> void:
 	hud = run_surface.get_hud()
 	minimap_panel = run_surface.get_minimap_panel()
 	var surface_overlay_slot: Control = run_surface.get_overlay_slot()
+	# The nearby-loot/chest panel tracks world anchors, but it is an interactive
+	# UI surface.  Hosting it in the overlay slot keeps mouse input above the
+	# full-screen HUD without replacing the runtime view that owns its state.
+	room_runtime_view.attach_context_popup(surface_overlay_slot)
 
 	debug_toggle_button = _add_button(run_overlay_root, "DebugToggleButton", Rect2(1010, 226, 170, 34), "诊断", func() -> void: _toggle_debug_panel())
 	debug_toggle_button.visible = false
@@ -419,6 +436,7 @@ func _build_run_overlay() -> void:
 	_add_debug_button(debug_content, "Spawn Floor Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_floor", {"source": "debug"}))
 	_add_debug_button(debug_content, "Spawn Backpack Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_backpack", {"source": "debug"}))
 	_add_debug_button(debug_content, "Full HP", func() -> void: _dispatch_command(&"debug_heal_full", {"source": "debug"}))
+	_add_debug_button(debug_content, "Toggle Reduced Motion", func() -> void: _debug_toggle_reduced_motion())
 	_add_debug_button(debug_content, "Force Extract Success", func() -> void: _dispatch_command(&"debug_force_extract", {"source": "debug"}))
 	_add_debug_button(debug_content, "Force Fail", func() -> void: _dispatch_command(&"debug_force_fail", {"reason": "debug_forced_failure", "source": "debug"}))
 	_add_debug_section(debug_content, "Run Utility")
@@ -453,17 +471,11 @@ func _build_run_overlay() -> void:
 	inventory_panel.connect("close_requested", func() -> void: inventory_panel.call("hide_panel"))
 	surface_overlay_slot.add_child(inventory_panel)
 
-	ground_loot_panel = GroundLootPanelScript.new() as Control
-	ground_loot_panel.name = "GroundLootPanel"
-	ground_loot_panel.connect("pickup_item_requested", _on_ground_loot_pickup_requested)
-	ground_loot_panel.connect("replace_item_requested", _on_ground_loot_replace_requested)
-	ground_loot_panel.connect("close_requested", func() -> void: ground_loot_panel.call("hide_panel"))
-	surface_overlay_slot.add_child(ground_loot_panel)
-
 	result_panel = ResultPanelScene.instantiate() as ResultPanel
 	result_panel.name = "ResultPanel"
 	result_panel.return_main_requested.connect(_return_from_result_to_main)
 	result_panel.return_deploy_requested.connect(_return_from_result_to_deploy)
+	result_panel.failure_salvage_confirmed.connect(_confirm_failure_salvage_from_result)
 	result_panel.hide_result()
 	surface_overlay_slot.add_child(result_panel)
 
@@ -518,23 +530,25 @@ func _build_runtime_modals() -> void:
 	extract_content.name = "ExtractConfirmContent"
 	extract_content.add_theme_constant_override("separation", 8)
 	extract_panel.add_child(extract_content)
-	var extract_title := Label.new()
-	extract_title.text = "确认撤离"
-	extract_title.add_theme_font_size_override("font_size", 20)
-	extract_content.add_child(extract_title)
+	extract_title_label = Label.new()
+	extract_title_label.text = "确认撤离"
+	extract_title_label.add_theme_font_size_override("font_size", 20)
+	extract_content.add_child(extract_title_label)
 	extract_body_label = Label.new()
 	extract_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	extract_body_label.custom_minimum_size = Vector2(250, 120)
 	extract_content.add_child(extract_body_label)
 	var extract_buttons := HBoxContainer.new()
 	extract_content.add_child(extract_buttons)
-	_add_menu_button(extract_buttons, "确认", func() -> void: _confirm_extract_from_ui())
-	_add_menu_button(extract_buttons, "取消", func() -> void: _cancel_extract_from_ui())
+	extract_confirm_button = _add_menu_button(extract_buttons, "确认", func() -> void: _confirm_extract_from_ui())
+	extract_cancel_button = _add_menu_button(extract_buttons, "取消", func() -> void: _cancel_extract_from_ui())
 
 	if run_surface != null:
 		run_surface.apply_legacy_modal_style(extract_panel, &"mini.exit")
+		run_surface.apply_legacy_button_style(extract_confirm_button, &"primary")
+		run_surface.apply_legacy_button_style(extract_cancel_button, &"secondary")
 
-	pause_panel = _new_modal_panel("PauseSettingsOverlayPanel", Rect2(440, 146, 400, 270))
+	pause_panel = _new_modal_panel("PauseSettingsOverlayPanel", Rect2(440, 146, 400, 400))
 	var pause_content := VBoxContainer.new()
 	pause_content.name = "PauseSettingsOverlayContent"
 	pause_content.add_theme_constant_override("separation", 8)
@@ -548,13 +562,25 @@ func _build_runtime_modals() -> void:
 	pause_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	pause_status_label.text = "本面板只暂停 UI 并提供设置入口；继续会返回当前局，不写本地持久化偏好。"
 	pause_content.add_child(pause_status_label)
+	var diagnostics_button: Button
 	if m1_debug_panel_enabled:
-		_add_menu_button(pause_content, "诊断面板", func() -> void: _open_debug_panel_from_pause())
-	_add_menu_button(pause_content, "继续", func() -> void: _continue_from_pause())
-	_add_menu_button(pause_content, "设置说明", func() -> void: _open_settings_from_pause())
-	_add_menu_button(pause_content, "返回出发", func() -> void: _return_from_pause_to_deploy())
-	_add_menu_button(pause_content, "返回主菜单", func() -> void: _return_from_pause_to_main())
-	_add_menu_button(pause_content, "退出当前局", func() -> void: _request_abandon_from_pause())
+		diagnostics_button = _add_menu_button(pause_content, "诊断面板", func() -> void: _open_debug_panel_from_pause())
+	var continue_button := _add_menu_button(pause_content, "继续", func() -> void: _continue_from_pause())
+	var settings_button := _add_menu_button(pause_content, "设置说明", func() -> void: _open_settings_from_pause())
+	var deploy_button := _add_menu_button(pause_content, "返回出发", func() -> void: _return_from_pause_to_deploy())
+	var main_button := _add_menu_button(pause_content, "返回主菜单", func() -> void: _return_from_pause_to_main())
+	var abandon_button := _add_menu_button(pause_content, "退出当前局", func() -> void: _request_abandon_from_pause())
+	if run_surface != null:
+		run_surface.apply_legacy_modal_style(pause_panel, &"ui.accent")
+		if diagnostics_button != null:
+			run_surface.apply_legacy_button_style(diagnostics_button, &"secondary")
+		run_surface.apply_legacy_button_style(continue_button, &"primary")
+		run_surface.apply_legacy_button_style(settings_button, &"secondary")
+		run_surface.apply_legacy_button_style(deploy_button, &"secondary")
+		run_surface.apply_legacy_button_style(main_button, &"secondary")
+		run_surface.apply_legacy_button_style(abandon_button, &"danger")
+	pause_title.add_theme_color_override("font_color", Color(0.98, 0.81, 0.42, 1.0))
+	pause_status_label.add_theme_color_override("font_color", Color(0.72, 0.76, 0.70, 1.0))
 	_apply_runtime_modal_layout(_current_layout_profile())
 
 
@@ -589,7 +615,7 @@ func _apply_runtime_modal_layout(profile: Dictionary) -> void:
 	if loot_panel != null:
 		loot_panel.call("apply_layout_profile", profile)
 	_set_control_rect(extract_panel, Rect2(modal_left, modal_top, modal_width, min(260.0, available_height)))
-	_set_control_rect(pause_panel, Rect2(modal_left, modal_top, modal_width, min(270.0, available_height)))
+	_set_control_rect(pause_panel, Rect2(modal_left, modal_top, modal_width, min(400.0, available_height)))
 	_apply_debug_panel_layout(profile)
 
 
@@ -638,6 +664,7 @@ func _show_main_menu() -> void:
 func _show_deploy_shell(selected_tab: StringName = &"config") -> void:
 	screen_state = SCREEN_DEPLOY
 	_set_gameplay_visible(false)
+	ui_shell.call("apply_snapshot", _shell_snapshot())
 	ui_shell.call("show_deploy", _normalize_deploy_tab(selected_tab))
 	run_overlay_root.visible = false
 	_hide_runtime_popups()
@@ -689,9 +716,8 @@ func _show_pause_panel() -> void:
 	pause_exit_confirm_pending = false
 	if pause_status_label != null and run_context != null:
 		var snapshot: Dictionary = run_context.get_status_snapshot()
-		pause_status_label.text = "暂停中。当前阶段=%s，房间=%s。点击继续返回当前局；设置入口不保存偏好。" % [
-			snapshot.get("phase", ""),
-			snapshot.get("current_room", ""),
+		pause_status_label.text = "探索已暂停。当前位于%s，点击继续即可返回；设置入口暂不保存偏好。" % [
+			_run_room_label(StringName(snapshot.get("current_room", &"Unknown"))),
 		]
 	_apply_runtime_modal_layout(_current_layout_profile())
 	pause_panel.visible = true
@@ -711,11 +737,7 @@ func _continue_from_pause() -> void:
 
 
 func _return_from_pause_to_deploy() -> void:
-	if _has_active_run_for_pause_exit():
-		pause_exit_confirm_pending = false
-		if pause_status_label != null:
-			pause_status_label.text = "Active run is still running. Use Exit current run first, then return to DeployPrep."
-		return
+	pause_exit_confirm_pending = false
 	if pause_panel != null:
 		pause_panel.visible = false
 	_show_deploy_shell(&"config")
@@ -725,7 +747,7 @@ func _return_from_pause_to_main() -> void:
 	if _has_active_run_for_pause_exit():
 		pause_exit_confirm_pending = false
 		if pause_status_label != null:
-			pause_status_label.text = "Active run is still running. Use Exit current run first, then return to MainMenu."
+			pause_status_label.text = "当前探索仍在进行。请先选择“退出当前局”完成放弃结算，再返回主菜单。"
 		return
 	if pause_panel != null:
 		pause_panel.visible = false
@@ -736,12 +758,12 @@ func _request_abandon_from_pause() -> void:
 	if not _has_active_run_for_pause_exit():
 		pause_exit_confirm_pending = false
 		if pause_status_label != null:
-			pause_status_label.text = "No active run is available to abandon. Return to DeployPrep or MainMenu is allowed."
+			pause_status_label.text = "当前没有可放弃的探索，可直接返回出发页或主菜单。"
 		return
 	if not pause_exit_confirm_pending:
 		pause_exit_confirm_pending = true
 		if pause_status_label != null:
-			pause_status_label.text = "Press Exit current run again to abandon through runtime authority and open the result page."
+			pause_status_label.text = "再次点击“退出当前局”将立即中止探索。本局未保全物资与未结算收益会按放弃规则处理。"
 		return
 	pause_exit_confirm_pending = false
 	if pause_panel != null:
@@ -855,11 +877,14 @@ func _handle_interact_pressed() -> void:
 					var instance_id := String(payload.get("instance_id", ""))
 					var pickup_result := _dispatch_command(&"pickup_ground_item", {"source": "g41_world_interaction", "instance_id": instance_id})
 					room_runtime_view.show_pickup_result(instance_id, bool(pickup_result.get("ok", false)))
-					if not bool(pickup_result.get("ok", false)):
-						_show_ground_loot_panel()
+					room_runtime_view.show_context_result(pickup_result)
 					return
 				&"chest":
-					_show_command_feedback({"ok": true, "status": &"chest_opening", "message": "Opening chest..."})
+					if bool(world_request.get("container_toggled", false)):
+						var opened := bool(world_request.get("container_open", false))
+						room_runtime_view.show_context_result({"ok": true, "message": "箱子已打开。" if opened else "箱子已关闭。"})
+					else:
+						_show_command_feedback({"ok": true, "status": &"chest_opening", "message": "正在打开物资箱……"})
 					return
 	var snapshot := run_context.get_status_snapshot()
 	var current_room: StringName = StringName(snapshot.get("current_room", &"Unknown"))
@@ -890,9 +915,7 @@ func _search_and_show_loot() -> void:
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
-		_show_loot_panel("回收结果", reward)
-	else:
-		_show_command_feedback(result)
+		_show_world_reward_feedback(result, reward, &"search")
 
 
 func _fight_and_show_result() -> void:
@@ -905,9 +928,7 @@ func _fight_and_show_result() -> void:
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
-		_show_loot_panel("战斗结果", reward)
-	else:
-		_show_command_feedback(result)
+		_show_world_reward_feedback(result, reward, &"combat")
 
 
 func _on_g41_interaction_commit_requested(interaction_kind: StringName, _payload: Dictionary) -> void:
@@ -919,10 +940,12 @@ func _on_g41_interaction_commit_requested(interaction_kind: StringName, _payload
 	if room_runtime_view != null:
 		room_runtime_view.resolve_chest_commit(bool(result.get("ok", false)))
 		room_runtime_view.configure_room(snapshot)
-	if not reward.is_empty():
-		_show_loot_panel("回收结果", reward)
-	else:
-		_show_command_feedback(result)
+		room_runtime_view.show_context_result({
+			"ok": bool(result.get("ok", false)),
+			"message": "物资箱已打开，内容只生成一次。" if bool(result.get("ok", false)) else String(result.get("reason", "物资箱无法打开。")),
+		})
+	elif not reward.is_empty():
+		_show_world_reward_feedback(result, reward, &"chest")
 
 
 func _pickup_floor_from_ui(instance_id: String = "") -> void:
@@ -930,6 +953,8 @@ func _pickup_floor_from_ui(instance_id: String = "") -> void:
 	if instance_id != "":
 		payload["instance_id"] = instance_id
 	var result := _dispatch_command(&"pickup_ground_item", payload)
+	if room_runtime_view != null:
+		room_runtime_view.show_context_result(result)
 	if ground_loot_panel != null:
 		ground_loot_panel.call("show_command_result", result)
 	if inventory_panel != null:
@@ -937,11 +962,15 @@ func _pickup_floor_from_ui(instance_id: String = "") -> void:
 	_refresh_view_models()
 
 
-func _replace_floor_from_ui(instance_id: String = "") -> void:
+func _replace_floor_from_ui(instance_id: String = "", drop_instance_id: String = "") -> void:
 	var payload: Dictionary = {"source": "ui"}
 	if instance_id != "":
 		payload["ground_instance_id"] = instance_id
+	if drop_instance_id != "":
+		payload["drop_instance_id"] = drop_instance_id
 	var result := _dispatch_command(&"replace_ground_item", payload)
+	if room_runtime_view != null:
+		room_runtime_view.show_context_result(result)
 	if ground_loot_panel != null:
 		ground_loot_panel.call("show_command_result", result)
 	if inventory_panel != null:
@@ -978,17 +1007,26 @@ func _show_inventory_panel() -> void:
 		return
 	inventory_panel.call("apply_snapshot", run_context.get_status_snapshot())
 	inventory_panel.call("show_panel")
-	if ground_loot_panel != null:
-		ground_loot_panel.call("hide_panel")
+
+
+func _activate_world_context_primary() -> void:
+	if room_runtime_view != null and room_runtime_view.activate_context_primary():
+		return
+	_show_command_feedback({"ok": false, "reason": &"world_context_out_of_range", "message": "靠近地面物品或物资箱后再操作。"})
 
 
 func _show_ground_loot_panel() -> void:
-	if ground_loot_panel == null:
-		return
-	ground_loot_panel.call("apply_snapshot", run_context.get_status_snapshot())
-	ground_loot_panel.call("show_panel")
-	if inventory_panel != null:
-		inventory_panel.call("hide_panel")
+	_activate_world_context_primary()
+
+
+func _on_world_context_action_requested(action: StringName, payload: Dictionary) -> void:
+	match action:
+		&"pickup":
+			_pickup_floor_from_ui(String(payload.get("instance_id", "")))
+		&"replace":
+			_replace_floor_from_ui(String(payload.get("instance_id", "")), String(payload.get("drop_instance_id", "")))
+		&"chest_toggle":
+			_handle_interact_pressed()
 
 
 func _on_inventory_drop_requested(instance_id: String) -> void:
@@ -1018,7 +1056,7 @@ func _show_event_panel(event_state: Dictionary) -> void:
 	var options: Array = event_state.get("options", [])
 	for option: Dictionary in options:
 		var option_id: StringName = StringName(option.get("id", &"leave"))
-		var option_label: String = String(option.get("label", String(option_id)))
+		var option_label := RunSurfaceModel.event_option_label(StringName(event_state.get("event_type", &"event")), option)
 		var button := _add_menu_button(event_options_box, option_label, func() -> void: _select_event_option(option_id))
 		button.disabled = not bool(option.get("enabled", true))
 		button.tooltip_text = "事件选项：仍通过既有 select_event_option 命令处理。"
@@ -1034,9 +1072,7 @@ func _select_event_option(option_id: StringName) -> void:
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
-		_show_loot_panel("事件结果", reward)
-	else:
-		_show_command_feedback(result)
+		_show_world_reward_feedback(result, reward, &"event")
 
 
 func _on_encounter_option_selected(_option_id: StringName, command_payload: Dictionary) -> void:
@@ -1061,9 +1097,7 @@ func _on_encounter_option_selected(_option_id: StringName, command_payload: Dict
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
-		_show_loot_panel("遭遇结果", reward)
-	else:
-		_show_command_feedback(result)
+		_show_world_reward_feedback(result, reward, &"encounter")
 
 
 func _request_extract_from_ui() -> void:
@@ -1077,16 +1111,17 @@ func _request_extract_from_ui() -> void:
 func _show_extract_panel(snapshot: Dictionary) -> void:
 	if StringName(snapshot.get("phase", &"running")) != &"confirm_extract":
 		return
-	extract_body_label.text = "待结算黑币：%s\n安全金币：%s\n背包：%s/%s\n当前房间地面遗留：%s\n\n确认从该出口撤离？" % [
-		snapshot.get("black_coin", snapshot.get("pending_gold", 0)),
-		snapshot.get("gold_coin", snapshot.get("safe_gold", 0)),
-		snapshot.get("backpack_used", 0),
-		snapshot.get("backpack_capacity", 0),
-		snapshot.get("room_floor_item_count", 0),
-	]
+	var risky := int(snapshot.get("protocol_level", 5)) <= 1
+	extract_title_label.text = "高危撤离确认" if risky else "确认撤离"
 	extract_body_label.text = RunSurfaceModel.extract_modal_text(snapshot)
 	if run_surface != null:
-		run_surface.apply_legacy_modal_style(extract_panel, &"mini.exit")
+		run_surface.apply_legacy_modal_style(extract_panel, &"ui.danger" if risky else &"mini.exit")
+		run_surface.apply_legacy_button_style(extract_confirm_button, &"danger" if risky else &"primary")
+		run_surface.apply_legacy_button_style(extract_cancel_button, &"secondary")
+	extract_title_label.add_theme_color_override(
+		"font_color",
+		PresentationTheme.color_for_key(&"ui.danger") if risky else PresentationTheme.text_color()
+	)
 	_apply_runtime_modal_layout(_current_layout_profile())
 	extract_panel.visible = true
 
@@ -1109,6 +1144,29 @@ func _show_loot_panel(title: String, reward: Dictionary) -> void:
 	_refresh_view_models()
 
 
+func _show_world_reward_feedback(result: Dictionary, reward: Dictionary, source: StringName) -> void:
+	var ground_count := _reward_array_size(reward, "ground_items")
+	var backpack_count := _reward_array_size(reward, "inventory_items") + _reward_array_size(reward, "equipped_items")
+	var feedback := result.duplicate(true)
+	if ground_count > 0:
+		feedback["message"] = "发现 %d 件物资，已落在附近地面。靠近后可查看并拾取。" % ground_count
+	elif backpack_count > 0:
+		feedback["message"] = "回收 %d 件物资，已装入临时回收包。" % backpack_count
+	elif source == &"combat":
+		feedback["message"] = "威胁已清除，房间恢复通行。"
+	elif source == &"event" or source == &"encounter":
+		feedback["message"] = "事件处理完成，探索继续。"
+	else:
+		feedback["message"] = "搜索完成，未发现新的可回收物。"
+	feedback["ok"] = bool(result.get("ok", true))
+	_show_command_feedback(feedback)
+
+
+func _reward_array_size(reward: Dictionary, key: String) -> int:
+	var value: Variant = reward.get(key, [])
+	return (value as Array).size() if value is Array else 0
+
+
 func _restart_run_from_ui() -> void:
 	_dispatch_command(&"restart_run")
 	if player_controller != null:
@@ -1127,6 +1185,24 @@ func _event_type_label(event_type: StringName) -> String:
 			return "机关"
 		_:
 			return "异常事件"
+
+
+func _run_room_label(room_type: StringName) -> String:
+	match room_type:
+		&"Normal":
+			return "普通房间"
+		&"Chest":
+			return "回收物资房"
+		&"Monster":
+			return "战斗房"
+		&"Event":
+			return "异常事件房"
+		&"Mine":
+			return "雷险房"
+		&"Exit":
+			return "撤离点"
+		_:
+			return "未知区域"
 
 
 func _is_runtime_modal_open() -> bool:
@@ -1170,6 +1246,8 @@ func _close_top_runtime_modal() -> bool:
 		_cancel_extract_from_ui()
 		return true
 	if result_panel != null and result_panel.visible:
+		if result_panel.requires_salvage_confirmation():
+			return true
 		_return_from_result_to_deploy()
 		return true
 	if pause_panel != null and pause_panel.visible:
@@ -1216,6 +1294,12 @@ func _on_result_available(snapshot: Dictionary) -> void:
 	_hide_runtime_popups()
 	if result_panel != null:
 		result_panel.show_summary(display_snapshot)
+
+
+func _confirm_failure_salvage_from_result(selected_instance_ids: Array) -> void:
+	var result := _dispatch_command(&"confirm_failure_salvage", {"selected_instance_ids": selected_instance_ids})
+	if not bool(result.get("ok", false)) and result_panel != null:
+		result_panel.show_summary(RunSceneResultControllerScript.build_result_display_snapshot(meta_progress_adapter, run_context.result_snapshot))
 
 
 func _refresh_view_models() -> void:
@@ -1302,7 +1386,7 @@ func _apply_game_stage_layout(layout_profile: Dictionary) -> void:
 	var height: float = maxf(1.0, viewport_size.y)
 	var left_width: float = UILayerContractScript.run_left_width(layout_profile)
 	var gameplay_width: float = maxf(1.0, width - left_width)
-	var room_visual_size := Vector2(576.0, 324.0)
+	var room_visual_size := Vector2(560.0, 560.0)
 	var room_visual_center := Vector2(640.0, 360.0)
 	if room_controller != null:
 		var background_sprite := room_controller.get_node_or_null("Background/BackgroundSprite") as Sprite2D
@@ -1310,11 +1394,16 @@ func _apply_game_stage_layout(layout_profile: Dictionary) -> void:
 			room_visual_center = background_sprite.position
 			if background_sprite.texture != null:
 				room_visual_size = background_sprite.texture.get_size() * background_sprite.scale.abs()
-	var bottom_overlay_budget: float = maxf(96.0, height * 0.15)
-	var target_height: float = maxf(1.0, height - bottom_overlay_budget - 18.0)
-	var scale_value: float = maxf(gameplay_width / maxf(1.0, room_visual_size.x), target_height / maxf(1.0, room_visual_size.y))
+	# UE's room view uses ScaleToFit.  The former max() behaved like Cover:
+	# it filled the wide gameplay lane by cropping the top and bottom of the
+	# square room, making the floor look like wallpaper and shrinking every
+	# actor perceptually.  Reserve only the real hotbar band and fit the entire
+	# room plate inside the remaining area.
+	var bottom_overlay_budget: float = maxf(64.0, height * 0.09)
+	var target_height: float = maxf(1.0, height - bottom_overlay_budget - 16.0)
+	var scale_value: float = minf(gameplay_width / maxf(1.0, room_visual_size.x), target_height / maxf(1.0, room_visual_size.y))
 	scale_value = clampf(scale_value, 0.90, 1.82)
-	var gameplay_center := Vector2(left_width + gameplay_width * 0.50, target_height * 0.52 + 10.0)
+	var gameplay_center := Vector2(left_width + gameplay_width * 0.50, target_height * 0.50 + 8.0)
 	var origin := gameplay_center - room_visual_center * scale_value
 	room_layer.position = origin
 	player_layer.position = origin
@@ -1328,6 +1417,9 @@ func _suppress_runtime_scene_labels() -> void:
 		if room_title != null:
 			room_title.visible = false
 			room_title.text = ""
+		var legacy_prop := room_controller.get_node_or_null("Interactables/PropSprite") as Sprite2D
+		if legacy_prop != null and room_runtime_view != null and room_runtime_view.room_type == &"Chest":
+			legacy_prop.visible = false
 	if player_controller != null:
 		var player_label := player_controller.get_node_or_null("Label") as Label
 		if player_label != null:
@@ -1503,7 +1595,14 @@ func _debug_teleport_to_room_type(room_type: StringName) -> void:
 		return
 	var result := _dispatch_command(&"debug_teleport_to", {"pos": target, "enter_room": true, "source": "debug", "target_room_type": room_type})
 	if bool(result.get("ok", false)) and player_controller != null:
-		player_controller.reset_local_position()
+		# Acceptance helpers seed a real room snapshot, then put the avatar at a
+		# deterministic *walkable* inspection point.  Chest verification must land
+		# inside the production interaction radius so open/close/reopen can be
+		# exercised through the same E/click interfaces used by players.
+		if room_type == &"Chest":
+			player_controller.set_local_position(Vector2(0.56, 0.53))
+		else:
+			player_controller.reset_local_position()
 	_sync_debug_coordinates()
 
 
@@ -1526,6 +1625,15 @@ func _debug_search_and_show_loot() -> void:
 		_show_loot_panel("Debug Search Result", reward)
 	else:
 		_show_command_feedback(result)
+
+
+func _debug_toggle_reduced_motion() -> void:
+	var enabled := not bool(ProjectSettings.get_setting("accessibility/reduce_motion", false))
+	ProjectSettings.set_setting("accessibility/reduce_motion", enabled)
+	_show_command_feedback({
+		"ok": true,
+		"message": "减弱动态已开启：动画冻结在可辨识姿态。" if enabled else "完整动态已开启：恢复循环动画与脉冲反馈。",
+	})
 
 
 func _debug_meta_add_gold() -> void:
@@ -1671,6 +1779,20 @@ func _start_standard_from_ui() -> void:
 
 
 func _start_run_from_route(intent: Dictionary) -> void:
+	var payload := NavigationIntentScript.payload(intent)
+	if bool(payload.get("continue_active_run", false)):
+		if run_context != null and run_context.run_active:
+			last_command_result = {"ok": true, "status": &"continued_active_run"}
+			_show_run_screen()
+		else:
+			last_command_result = {"ok": false, "status": &"no_active_run", "reason": "no_active_run_to_continue"}
+			_show_command_feedback(last_command_result)
+		return
+	if bool(payload.get("abandon_active_run", false)):
+		var abandon_result := _dispatch_command(&"abandon_run", {"reason": String(payload.get("reason", "player_deploy_abandon")), "source": "deploy_prep"})
+		if not bool(abandon_result.get("ok", false)):
+			_show_deploy_shell(&"config")
+		return
 	var route_result := RunSceneRouteControllerScript.start_from_intent(intent, command_bus)
 	var command_result: Dictionary = route_result.get("command_result", route_result)
 	last_command_result = command_result.duplicate(true)

@@ -1,6 +1,6 @@
 # Closed Stage Index
 
-Status: current closed-stage summary after G41 in-run core gameplay runtime completion.
+Status: current closed-stage summary after ART24R2 failed-acceptance archive.
 
 This index points to evidence without rewriting historical validation or
 handoff originals.
@@ -9,6 +9,8 @@ handoff originals.
 
 | Stage | Status | Primary evidence | Boundary |
 | --- | --- | --- | --- |
+| ART24R2 | archived / acceptance failed | `docs/validation/ART24R2_FINAL_COMPUTER_USE_RESULTS.md`; `docs/validation/ART24R2_UE_CODE_VISUAL_GAP_AUDIT.md`; `docs/art/ART24R2_G41_M6_COMBAT_UI_REWORK_PLAN.md` | UE/Godot code and actual-effect comparison, layout realignment, world loot/chest context, inventory, map, result UI and focused probes were delivered. Final Computer Use passed 24/61 states; 37 states failed or lacked frozen evidence. User directed archive and push despite failed acceptance. Not an accepted art baseline. |
+| M6 | closed / real asset, deploy and settlement loop | `docs/20_product/M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_CONTRACT.md`; `docs/validation/M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_VALIDATION.md`; `docs/handoff/HANDOFF_M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP.md`; `tools/validate_m6_real_asset_deploy_settlement_loop.ps1` | Real warehouse instances, manual loadout, starter stock, actual equipment effects, terminal consumable clearing, manual failure salvage, strong-confirm abandon, idempotent MetaProgress writeback, max-50 history and in-process continue passed. ART24, complete warehouse economy, cross-process run restore, full manual playtest, CI and release are excluded. |
 | G41 | closed / in-run core gameplay runtime and interaction completion | `docs/20_product/G41_IN_RUN_CORE_GAMEPLAY_RUNTIME_CONTRACT.md`; `docs/validation/G41_IN_RUN_CORE_GAMEPLAY_RUNTIME_VALIDATION.md`; `docs/handoff/HANDOFF_G41_IN_RUN_CORE_GAMEPLAY_RUNTIME.md`; `Godot/GraytailGodot/tools/validate_g41_in_run_core_gameplay_runtime.ps1` | Program-side continuous room movement, distance interaction, one-shot chest, real room-floor loot, pickup/replace/drop, deterministic 60 Hz combat, four monster types, reward/flee/failure and lifecycle cleanup passed. Final art, long playtest, persistence, CI and release are not claimed. ART24 is explicitly excluded by user direction. |
 | ART23 | closed / long-term final art UI | `docs/art/ART23_CLOSEOUT_LONG_TERM_FINAL_UI.md`; `docs/validation/ART23_LONG_TERM_FINAL_UI_VALIDATION.md`; `docs/art/validation/art23/`; `tools/validate_art23_long_term_final_ui.ps1` | Real main-route integration, 58 textures plus readable CJK font, 6 × 27 pages, collapse/restore, fixed profile, 8 character frames, ambient motion and frozen Computer Use acceptance passed. Does not close the full MVP or long-term gameplay logic. |
 | ART22 | closed / deploy-prep final art UI | `docs/art/ART22_CLOSEOUT_DEPLOY_PREP_FINAL_UI.md`; `docs/validation/ART22_DEPLOY_PREP_FINAL_UI_VALIDATION.md`; `docs/art/validation/art22/`; `tools/validate_art22_deploy_prep_final_ui.ps1` | Real main-route integration, 57 assets, 5 × 34 states, four summary pages, collapse, active-run boundary, 8 character frames, 10 ambient tracks and frozen Computer Use acceptance passed. Does not close the full MVP or long-term system. |

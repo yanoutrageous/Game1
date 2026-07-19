@@ -185,17 +185,20 @@ static func run_root_for_node(node: Node) -> StringName:
 	var node_name := String(node.name)
 	if node_name.find("Modal") >= 0:
 		return &"RunModalRoot"
-	if node_name.find("Overlay") >= 0 or node_name.find("FeedbackSlot") >= 0:
-		return &"RunOverlayRoot"
+	# BottomOverlay is the action-bar skin, not a full-screen overlay. Route
+	# specific action-layer names before the generic Overlay match so buttons
+	# and their copy remain above the frame texture.
 	if node_name.find("Bottom") >= 0 or node_name.find("Action") >= 0 or node_name.find("Key") >= 0:
 		return &"RunActionOverlayRoot"
+	if node_name.find("Overlay") >= 0 or node_name.find("FeedbackSlot") >= 0:
+		return &"RunOverlayRoot"
 	if node_name.find("Encounter") >= 0 or node_name.find("PlayerTag") >= 0:
 		return &"RunInteractionPromptRoot"
 	if node_name.find("CommandFeedback") >= 0 or node_name.find("RoomText") >= 0 or node_name.find("RoomTitle") >= 0 or node_name.find("RoomBody") >= 0 or node_name.find("Objective") >= 0:
 		return &"RunFloatingInfoRoot"
 	if node_name.find("Protocol") >= 0 or node_name.find("Threat") >= 0 or node_name.find("Event") >= 0 or node_name.find("Reward") >= 0 or node_name.find("Right") >= 0:
 		return &"RunTopRightStatusRoot"
-	if node_name.find("Scanner") >= 0 or node_name.find("MiniMap") >= 0 or node_name.find("Resource") >= 0 or node_name.find("Left") >= 0:
+	if node_name.find("Scanner") >= 0 or node_name.find("MiniMap") >= 0 or node_name.find("Resource") >= 0 or node_name.find("Backpack") >= 0 or node_name.find("Left") >= 0:
 		return &"RunLeftInfoRailRoot"
 	return &"RunRoomViewportRoot"
 

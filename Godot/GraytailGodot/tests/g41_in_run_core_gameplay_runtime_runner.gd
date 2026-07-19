@@ -6,6 +6,7 @@ const RuntimeControllerScript := preload("res://scripts/core/run/run_runtime_con
 const RoomRuntimeViewScript := preload("res://scripts/gameplay/runtime/g41_room_runtime_view.gd")
 const RuntimeActorViewScript := preload("res://scripts/gameplay/runtime/g41_runtime_actor_view.gd")
 const ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
+const ItemVisualCatalogScript := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const PlayerControllerScript := preload("res://scripts/gameplay/player/player_controller.gd")
 
 var failures: Array[String] = []
@@ -26,8 +27,12 @@ func _check(condition: bool, message: String) -> void:
 func _run() -> void:
 	_check_visual_contract()
 	_check_runtime_visual_states_and_swap()
+	_check_reduced_motion_contract()
+	_check_item_visual_catalog()
 	_check_program_collision_contract()
 	_check_outer_frame_determinism()
+	_check_render_interpolation()
+	_check_laser_visual_bounds()
 	_check_pause_contract()
 	_check_cone_and_split()
 	_check_monster_behaviors()
@@ -50,7 +55,7 @@ func _check_runtime_visual_states_and_swap() -> void:
 	var actor = RuntimeActorViewScript.new()
 	actor.name = "G41VisualContractActor"
 	root.add_child(actor)
-	actor.configure(&"slime", {
+	actor.configure(&"unknown", {
 		"enemy_id": "visual-contract-enemy",
 		"state": &"warning",
 		"hp": 12,
@@ -62,10 +67,7 @@ func _check_runtime_visual_states_and_swap() -> void:
 	var placeholder := actor.get_node_or_null("VisualRoot/ProgramPlaceholder") as Polygon2D
 	var state_label := actor.get_node_or_null("PromptAnchor/StateLabel") as Label
 	_check(placeholder != null and placeholder.visible, "Missing art did not retain the program placeholder")
-	_check(state_label != null and state_label.visible and state_label.text == "warning", "Warning state was not projected to the visual contract")
-	var art_visual := Node2D.new()
-	art_visual.name = "ArtVisual"
-	actor.get_node("VisualRoot").add_child(art_visual)
+	_check(state_label != null and not state_label.visible and state_label.text == "warning", "Runtime state was not retained behind the production no-floating-copy policy")
 	actor.configure(&"slime", {
 		"enemy_id": "visual-contract-enemy",
 		"state": &"active",
@@ -73,9 +75,71 @@ func _check_runtime_visual_states_and_swap() -> void:
 		"max_hp": 24,
 		"pos": Vector2(0.5, 0.5),
 	})
-	_check(placeholder != null and not placeholder.visible, "ArtVisual replacement did not hide only the program placeholder")
+	var art_visual := actor.get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
+	var ground_shadow := actor.get_node_or_null("VisualRoot/GroundShadow") as Sprite2D
+	_check(art_visual != null and art_visual.texture != null, "ART24 slime visual was not projected from the gameplay state")
+	_check(ground_shadow != null and ground_shadow.texture != null, "ART24 enemy visual omitted the reusable ground shadow")
+	_check(placeholder != null and not placeholder.visible, "ART24 enemy visual did not hide only the program placeholder")
 	_check(actor.visual_state == &"active", "VisualRoot replacement altered the gameplay-provided state")
+	var base_texture_path := art_visual.texture.resource_path
+	actor.configure(&"slime", {
+		"enemy_id": "visual-contract-enemy",
+		"state": &"active",
+		"visual_variant": &"art24_generated",
+		"hp": 12,
+		"max_hp": 24,
+		"pos": Vector2(0.5, 0.5),
+	})
+	_check(actor.visual_variant == &"art24_generated", "ART24 generated monster variant was not retained by the presentation interface")
+	_check(art_visual.texture != null and art_visual.texture.resource_path != base_texture_path, "ART24 generated monster variant did not swap the presentation texture")
+	_check(actor.hp == 12 and actor.max_hp == 24 and actor.visual_state == &"active", "Monster visual variant altered gameplay-provided state")
 	actor.free()
+
+
+func _check_reduced_motion_contract() -> void:
+	var setting_key := "accessibility/reduce_motion"
+	var had_setting := ProjectSettings.has_setting(setting_key)
+	var previous_value: Variant = ProjectSettings.get_setting(setting_key, false)
+	ProjectSettings.set_setting(setting_key, true)
+	var actor = RuntimeActorViewScript.new()
+	root.add_child(actor)
+	actor.configure(&"bat", {
+		"enemy_id": "reduced-motion-bat",
+		"state": &"idle",
+		"hp": 8,
+		"max_hp": 8,
+		"pos": Vector2(0.5, 0.5),
+	})
+	actor.animation_frame = 3
+	actor.animation_elapsed = 1.0
+	actor.call("_process", 0.25)
+	var actor_sprite := actor.get_node("VisualRoot/ArtVisual") as Sprite2D
+	_check(actor.animation_frame == 0 and is_zero_approx(actor.animation_elapsed), "Reduced motion did not freeze enemy texture animation")
+	_check(is_zero_approx(actor_sprite.position.y + 14.0), "Reduced motion retained enemy bob displacement")
+	var player = PlayerControllerScript.new()
+	root.add_child(player)
+	player.animation_frame = 3
+	player.call("_apply_art24_frame", true)
+	player.call("_apply_idle_motion", true)
+	var player_sprite := player.get_node("Sprite") as Sprite2D
+	_check(player.last_texture_path.ends_with("down_walk_a.png"), "Reduced motion did not retain a readable player movement pose")
+	_check(is_equal_approx(player_sprite.position.y, -20.0), "Reduced motion retained player idle bob")
+	ProjectSettings.set_setting(setting_key, false)
+	actor.call("_process", 0.50)
+	_check(actor.animation_frame != 0, "Full motion did not restore enemy texture animation")
+	actor.free()
+	player.free()
+	ProjectSettings.set_setting(setting_key, previous_value if had_setting else null)
+
+
+func _check_item_visual_catalog() -> void:
+	var all_items: Array[Dictionary] = ItemCatalogScript.all_items()
+	_check(all_items.size() == 43, "M3 item visual validation expected 43 catalog items")
+	for item in all_items:
+		var item_id := String(item.get("item_id", ""))
+		_check(ItemVisualCatalogScript.has_explicit_mapping(item_id), "ART24 item visual catalog omitted %s" % item_id)
+		var texture_path := ItemVisualCatalogScript.texture_path(item)
+		_check(ResourceLoader.exists(texture_path, "Texture2D"), "ART24 item texture is missing for %s: %s" % [item_id, texture_path])
 
 
 func _check_program_collision_contract() -> void:
@@ -103,6 +167,33 @@ func _check_outer_frame_determinism() -> void:
 	_check(with_hitch.get("events", []) == at_60.get("events", []), "0.2 second hitch schedule changed the domain-event order")
 	var canonical_state: Dictionary = at_60.get("state", {})
 	_check(int(canonical_state.get("tick", 0)) == 180, "Three simulated seconds must resolve to 180 fixed ticks")
+
+
+func _check_render_interpolation() -> void:
+	var simulation := CombatSimulationScript.new()
+	simulation.start(_base_config())
+	simulation.set_player_input(Vector2.RIGHT, Vector2.RIGHT)
+	for _unused in range(3):
+		simulation.advance_frame(1.0 / 144.0)
+	var snapshot: Dictionary = simulation.build_snapshot()
+	var player_snapshot: Dictionary = snapshot.get("player", {})
+	var previous_pos := Vector2(player_snapshot.get("previous_pos", Vector2.ZERO))
+	var render_pos := Vector2(player_snapshot.get("pos", Vector2.ZERO))
+	var simulation_pos := Vector2(player_snapshot.get("simulation_pos", Vector2.ZERO))
+	_check(float(snapshot.get("render_alpha", -1.0)) > 0.0, "144 Hz presentation snapshot did not expose interpolation alpha")
+	_check(render_pos.x > previous_pos.x and render_pos.x < simulation_pos.x, "Presentation position did not interpolate between fixed simulation states")
+
+
+func _check_laser_visual_bounds() -> void:
+	var view = RoomRuntimeViewScript.new()
+	var room_rect := Rect2(205.0, 30.0, 634.0, 450.0)
+	var origin := Vector2(600.0, 160.0)
+	for direction in [Vector2.LEFT, Vector2.RIGHT, Vector2.UP, Vector2.DOWN, Vector2(-1.0, 0.65), Vector2(0.75, -1.0)]:
+		var endpoint: Vector2 = view.call("_ray_endpoint_inside_room", origin, direction.normalized(), room_rect)
+		_check(endpoint.x >= room_rect.position.x - 0.01 and endpoint.x <= room_rect.end.x + 0.01, "Laser presentation escaped the room horizontally")
+		_check(endpoint.y >= room_rect.position.y - 0.01 and endpoint.y <= room_rect.end.y + 0.01, "Laser presentation escaped the room vertically")
+		_check(endpoint.distance_to(origin) > 1.0, "Laser presentation collapsed before reaching the room boundary")
+	view.free()
 
 
 func _check_pause_contract() -> void:
@@ -235,7 +326,21 @@ func _check_integrated_chest_and_ground_loot() -> void:
 	_enter_test_room(controller, Vector2i(1, 1))
 	var view = RoomRuntimeViewScript.new()
 	view.name = "G41IntegratedRoomView"
+	# Match the production composition: the room is ScaleToFit-transformed while
+	# the contextual panel is hosted in an unscaled full-screen UI overlay.
+	view.position = Vector2(136, -34)
+	view.scale = Vector2.ONE * 1.18
 	root.add_child(view)
+	var context_overlay := Control.new()
+	context_overlay.name = "G41IntegratedContextOverlay"
+	context_overlay.size = Vector2(1280, 720)
+	root.add_child(context_overlay)
+	view.attach_context_popup(context_overlay)
+	var debug_inventory_before: int = integration_context.asset_ledger.get_items_by_location(RunAssetLedger.LOCATION_INVENTORY).size()
+	var debug_backpack_result: Dictionary = integration_bus.dispatch(&"debug_spawn_test_item_backpack", {"source": "g41_art_qa"})
+	var debug_inventory_after: int = integration_context.asset_ledger.get_items_by_location(RunAssetLedger.LOCATION_INVENTORY).size()
+	_check(bool(debug_backpack_result.get("ok", false)), "Backpack QA seed command was rejected")
+	_check(debug_inventory_after == debug_inventory_before + 1, "Backpack QA seed command did not create an inventory item")
 	view.interaction_commit_requested.connect(_on_integration_interaction_commit)
 	view.configure_room(integration_context.get_status_snapshot())
 	var request: Dictionary = view.request_nearest_interaction(Vector2(0.68, 0.53))
@@ -243,9 +348,23 @@ func _check_integrated_chest_and_ground_loot() -> void:
 	view.advance(0.30, Vector2(0.68, 0.53), {})
 	_check(integration_chest_commit_count == 1, "Chest opening did not commit exactly once")
 	_check(integration_context.searched_cells.has(integration_context.cell_key(Vector2i(1, 1))), "Chest commit did not mark the room searched")
+	view.resolve_chest_commit(true)
 	var floor_after_open: Array[Dictionary] = integration_context.asset_ledger.get_room_floor_items(Vector2i(1, 1))
 	_check(not floor_after_open.is_empty(), "Chest reward did not enter room_floor")
 	view.configure_room(integration_context.get_status_snapshot())
+	_check(view.chest != null and view.chest.is_opened(), "Committed chest did not retain its opened state")
+	view.advance(0.0, Vector2(0.68, 0.53), {})
+	_check(view.context_popup != null and view.context_popup.visible, "Approaching the chest did not reveal its contextual popup")
+	var chest_anchor_ui: Vector2 = view.chest.get_global_transform().origin
+	var chest_popup_rect := Rect2(view.context_popup.position, view.context_popup.size * view.context_popup.scale)
+	_check(not chest_popup_rect.has_point(chest_anchor_ui), "Scaled room-to-UI mapping placed the contextual popup over the visible chest")
+	var reward_count_before_reopen := floor_after_open.size()
+	_check(view.chest.toggle_container(), "Opened chest could not be closed")
+	_check(not view.chest.is_container_open(), "Closing the opened chest did not update its container state")
+	_check(view.chest.toggle_container(), "Opened chest could not be reopened")
+	_check(view.chest.is_container_open(), "Reopening the chest did not restore its container state")
+	_check(integration_context.asset_ledger.get_room_floor_items(Vector2i(1, 1)).size() == reward_count_before_reopen, "Repeated chest open/close duplicated its contents")
+	_check(integration_chest_commit_count == 1, "Repeated chest open/close committed search more than once")
 	var view_snapshot: Dictionary = view.build_read_only_snapshot()
 	var ground_entity_count := 0
 	var target_ground_id := ""
