@@ -72,8 +72,11 @@
 
 ## 提交与远端状态
 
-- 当前门禁：全部验收项 PASS，允许 commit/push。
-- 实现提交与远端分支：将在同分支审计封口记录中补充实际提交号与 `origin/art/art24r1-ue-parity-gameplay` 验证结果。
+- 门禁结果：全部验收项先于提交 PASS，随后才执行 commit/push。
+- 实现与验收合并提交：`1b6985e74297ca3887f5c2282d136e7894aa41d0`。
+- 合并父提交：ART24 `d5d5a42d909d0326b17d5651a8053dc1b15d595c`，G41 `7fc32feccda1005d11b7eb514e88c540133af136`。
+- 远端分支：`origin/art/art24r1-ue-parity-gameplay`；首次推送后以 `git ls-remote` 验证远端头为 `1b6985e74297ca3887f5c2282d136e7894aa41d0`。
+- 本次仅补充提交号与远端事实的审计封口文档将作为后续纯文档提交继续推送到同一分支，不改变生产代码和验收结论。
 
 ## 最终结论
 
