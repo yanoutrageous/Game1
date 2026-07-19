@@ -136,8 +136,9 @@ func select_event_option(context: RunContext, option_id: StringName) -> Dictiona
 	if context.current_room_type != &"Event":
 		context.last_message = "No event option is available here."
 		return {"ok": false, "reason": "event_option_unavailable", "blocked_reason": "event_option_unavailable", "message": context.last_message}
+	var event_type := EventService.get_event_type(context, pos)
 	var result := EventService.execute_option(context, pos, option_id, runtime_controller)
-	_record_room_event(context, RunEventLog.EVENT_EVENT_OPTION_SELECTED, {"position": pos, "option_id": option_id, "result": result.duplicate(true)})
+	_record_room_event(context, RunEventLog.EVENT_EVENT_OPTION_SELECTED, {"position": pos, "event_type": event_type, "option_id": option_id, "result": result.duplicate(true)})
 	if bool(result.get("completed", false)):
 		context.truth_map.mark_cleared(pos)
 		context.intel_map.refresh_revealed_cell(pos, context.truth_map)
@@ -219,11 +220,18 @@ func resolve_runtime_combat(context: RunContext, payload: Dictionary) -> Diction
 	context.enemy_state["reward_committed"] = true
 	context.enemy_state["combat_seed"] = int(payload.get("combat_seed", 0))
 	context.last_message = RunTextCatalogScript.monster_cleared(0, reward_gold)
+	var monster_types: Array[String] = []
+	for raw_enemy in combat_snapshot.get("enemies", []):
+		var enemy: Dictionary = raw_enemy if raw_enemy is Dictionary else {}
+		var monster_type := str(enemy.get("monster_type", ""))
+		if monster_type != "" and not monster_types.has(monster_type):
+			monster_types.append(monster_type)
 	_record_room_event(context, RunEventLog.EVENT_COMBAT_RESOLVED, {
 		"position": pos,
 		"runtime": true,
 		"combat_tick": payload.get("combat_tick", 0),
 		"combat_seed": payload.get("combat_seed", 0),
+		"monster_types": monster_types,
 		"reward": reward_result.duplicate(true),
 	})
 	return {

@@ -101,6 +101,10 @@ func setup_standard_map(config: Dictionary) -> void:
 	_place_rooms(ROOM_MONSTER, int(config.get("monster_room_count", 10)), rng)
 	_place_rooms(ROOM_CHEST, int(config.get("chest_room_count", 10)), rng)
 	_place_rooms(ROOM_EVENT, int(config.get("event_room_count", 10)), rng)
+	for i in range(int(config.get("visible_exit_count", 0))):
+		var pos := _take_random_candidate(_safe_normal_candidates(), rng)
+		_set_cell(pos, {"room_type": ROOM_EXIT, "exit_id": StringName("visible_%d" % [i + 1]), "random_exit": false})
+		exits.append(pos)
 	for i in range(int(config.get("random_exit_count", 2))):
 		var pos := _take_random_candidate(_safe_normal_candidates(), rng)
 		_set_cell(pos, {"room_type": ROOM_EXIT, "exit_id": StringName("random_%d" % [i + 1]), "random_exit": true})

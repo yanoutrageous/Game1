@@ -224,7 +224,10 @@ func toggle_flag_cell(pos = null) -> Dictionary:
 	if context == null or context.intel_map == null:
 		return _blocked(&"not_ready", "not_ready")
 	var target: Vector2i = context.get_current_pos() if pos == null else pos
+	var was_flagged := context.intel_map.is_flagged(target)
 	context.intel_map.toggle_flag(target)
+	if not was_flagged and context.intel_map.is_flagged(target) and not context.intel_map.is_revealed(target):
+		context.run_stats["flags_placed"] = int(context.run_stats.get("flags_placed", 0)) + 1
 	context.last_message = "Flag toggled at %s." % _format_pos(target)
 	_emit_state()
 	return {"ok": true, "status": &"flag_toggled", "position": target, "actor_id": DEFAULT_ACTOR_ID}
@@ -688,6 +691,7 @@ func _is_g41_runtime_payload(payload: Dictionary) -> bool:
 func _mark_open_map_placeholder() -> Dictionary:
 	if context == null:
 		return _blocked(&"not_ready", "not_ready")
+	context.run_stats["map_open_count"] = int(context.run_stats.get("map_open_count", 0)) + 1
 	context.last_message = "Map overlay placeholder opened."
 	_emit_state()
 	return {"ok": true, "status": &"map_opened", "actor_id": DEFAULT_ACTOR_ID}

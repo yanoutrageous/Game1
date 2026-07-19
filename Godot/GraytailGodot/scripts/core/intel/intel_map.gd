@@ -49,6 +49,32 @@ func reveal_cell(pos: Vector2i, truth_map: TruthMap = null) -> void:
 	info_reliability_layer[_key(pos)] = _reliability_cell(pos, &"direct_explore", 1.0)
 
 
+func register_visible_exit(pos: Vector2i, exit_id: StringName) -> void:
+	if not _has_cell(pos):
+		return
+	var cell: Dictionary = known_rooms[_key(pos)]
+	cell["room_type"] = &"Exit"
+	cell["exit_id"] = exit_id
+	cell["random_exit"] = false
+	cell["visible_exit"] = true
+	cell["scanned"] = true
+	cell["known_state"] = &"scanned"
+	cell["public_state"] = &"scanned"
+	cell["visibility"] = &"position_known"
+	known_rooms[_key(pos)] = cell
+	scan_layer[_key(pos)] = {
+		"schema_kind": &"ScanLayer",
+		"pos": pos,
+		"scanned": true,
+		"scan_hint": &"visible_exit",
+		"reliability": 1.0,
+		"read_only": true,
+		"display_only": true,
+		"preview": false,
+	}
+	info_reliability_layer[_key(pos)] = _reliability_cell(pos, &"visible_exit", 1.0)
+
+
 func toggle_flag(pos: Vector2i) -> void:
 	if not _has_cell(pos):
 		return
@@ -204,7 +230,7 @@ func get_public_room_detail(pos: Vector2i, truth_map: TruthMap = null, player_po
 		"is_current": pos == player_pos,
 		"known_state": known_state,
 		"visibility": cell.get("visibility", &"unknown"),
-		"room_type": cell.get("room_type", &"Unknown") if bool(cell.get("revealed", false)) else &"Unknown",
+		"room_type": cell.get("room_type", &"Unknown") if bool(cell.get("revealed", false)) or bool(cell.get("visible_exit", false)) else &"Unknown",
 		"adjacent_mines": cell.get("adjacent_mines", -1),
 		"flagged": bool(cell.get("flagged", false)),
 		"scanned": bool(cell.get("scanned", false)),
@@ -285,6 +311,7 @@ func _base_public_cell(pos: Vector2i) -> Dictionary:
 		"explored": false,
 		"cleared": false,
 		"scanned": false,
+		"visible_exit": false,
 		"known_state": &"unknown",
 		"public_state": &"unknown",
 		"visibility": &"unknown",

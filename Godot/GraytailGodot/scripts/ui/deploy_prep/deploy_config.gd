@@ -6,8 +6,9 @@ const AssetProjectionSchemaScript := preload("res://scripts/core/asset/asset_pro
 const WarehouseViewSchemaScript := preload("res://scripts/core/asset/warehouse_view_schema.gd")
 const WarehouseViewContentSchemaScript := preload("res://scripts/core/asset/warehouse_view_content_schema.gd")
 const M3RItemUsabilityModelScript := preload("res://scripts/core/content/m3r_item_usability_model.gd")
+const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
 
-const CONFIG_VERSION := 5
+const CONFIG_VERSION := 6
 const START_MODE_STANDARD_PREVIEW := &"standard_preview"
 const MAP_MODE_CLASSIC_PREVIEW := &"classic_minesweeper_preview"
 const DIFFICULTY_NORMAL := &"normal"
@@ -21,22 +22,34 @@ const EMERGENCY_CLAIM_ID := &"m6_emergency_ration"
 
 static func default_config(sequence: int = 1, meta_summary: Dictionary = {}) -> Dictionary:
 	var m3r_fields: Dictionary = M3RItemUsabilityModelScript.build_run_start_fields(meta_summary)
+	var unlocked_maps: Array = _array_copy(meta_summary.get("unlocked_map_ids", M7ContentCatalogScript.DEFAULT_UNLOCKED_MAPS))
+	var default_map_id := "classic_7x7_simple" if unlocked_maps.has("classic_7x7_simple") else str(unlocked_maps[0] if not unlocked_maps.is_empty() else "classic_10x10_standard")
+	var map_definition := M7ContentCatalogScript.map_definition(default_map_id)
+	var candidate_seed := maxi(1, sequence * 1009 + int(meta_summary.get("run_count", 0)) * 97 + int(meta_summary.get("gold", 0)) * 13)
+	var commission_candidates := M7ContentCatalogScript.commission_candidates(default_map_id, candidate_seed)
+	var selected_commission: Dictionary = commission_candidates[0] if not commission_candidates.is_empty() else M7ContentCatalogScript.commission_definition("commission_recover_supply")
 	var config := {
 		"config_id": "deploy_m3r_%04d" % maxi(sequence, 1),
 		"config_version": CONFIG_VERSION,
 		"start_mode": START_MODE_STANDARD_PREVIEW,
 		"map_mode": MAP_MODE_CLASSIC_PREVIEW,
-		"map_mode_label": "Classic Minesweeper",
-		"difficulty": DIFFICULTY_NORMAL,
-		"difficulty_label": "Normal",
+		"map_mode_label": "常规扫雷",
+		"map_config_id": default_map_id,
+		"map_display_name": str(map_definition.get("display_name", "7×7 简单")),
+		"difficulty": StringName(map_definition.get("difficulty", DIFFICULTY_NORMAL)),
+		"difficulty_label": str(map_definition.get("difficulty_label", "简单")),
 		"region_id": REGION_GRAYTAIL_EDGE,
 		"region_label": "Graytail Edge",
 		"seed_policy": SEED_POLICY_DEFER,
 		"selected_loadout": _array_copy(m3r_fields.get("selected_equipment_ids", [])),
 		"carried_consumables": _array_copy(m3r_fields.get("selected_consumable_ids", [])),
 		"enabled_claims": [],
-		"selected_objective_id": &"objective_recover_cache",
-		"selected_objective_label": "Recover Cache",
+		"selected_objective_id": StringName(selected_commission.get("id", "commission_recover_supply")),
+		"selected_objective_label": str(selected_commission.get("display_name", "回收补给箱")),
+		"commission_candidates": commission_candidates,
+		"commission_candidate_seed": candidate_seed,
+		"unlocked_map_ids": unlocked_maps,
+		"meta_progress_summary": meta_summary.duplicate(true),
 		"enabled_services": [],
 		"enabled_work_permits": [],
 		"enabled_intel_flags": [],
@@ -45,12 +58,12 @@ static func default_config(sequence: int = 1, meta_summary: Dictionary = {}) -> 
 		"source_page": &"deploy_prep",
 		"created_at_or_sequence": maxi(sequence, 1),
 		"run_origin": RUN_ORIGIN_PREVIEW,
-		"deploy_summary": "M6 deploy config reads real warehouse instances and uses only the equipment and supplies selected by the player.",
-		"selected_map_summary": "Classic Minesweeper / Normal / Graytail Edge; true map layout is still generated after run start.",
-		"selected_difficulty": DIFFICULTY_NORMAL,
+		"deploy_summary": "M7 出勤配置读取真实仓库实例、已解锁地图与本局委托。",
+		"selected_map_summary": "%s；地图真相在确认出发后生成。" % str(map_definition.get("display_name", "7×7 简单")),
+		"selected_difficulty": StringName(map_definition.get("difficulty", DIFFICULTY_NORMAL)),
 		"selected_permits": [],
 		"selected_services": [],
-		"selected_objective_summary": "Recover Cache objective placeholder; M3R does not implement a complete objective/reward system.",
+		"selected_objective_summary": "%s：%s" % [str(selected_commission.get("display_name", "回收补给箱")), str(selected_commission.get("description", ""))],
 		"profile_snapshot_ref": &"m3r_profile_minimal",
 		"unlock_snapshot_ref": &"m3r_unlock_minimal",
 		"asset_attendance_preview": _asset_attendance_preview(),
@@ -111,7 +124,47 @@ static func with_active_run_config(config: Dictionary, run_start_config: Diction
 	return result
 
 
+static func refresh_from_meta(config: Dictionary, meta_summary: Dictionary, has_active_run: bool = false) -> Dictionary:
+	var sequence := maxi(1, int(config.get("created_at_or_sequence", 1)))
+	var refreshed := default_config(sequence, meta_summary)
+	refreshed["commission_candidate_seed"] = int(config.get("commission_candidate_seed", refreshed.get("commission_candidate_seed", 1)))
+	var previous_map_id := str(config.get("map_config_id", "classic_7x7_simple"))
+	if (refreshed.get("unlocked_map_ids", []) as Array).has(previous_map_id):
+		refreshed = _dictionary_copy(_select_m7_map(refreshed, previous_map_id).get("config", refreshed))
+	var previous_commission_id := str(config.get("selected_objective_id", ""))
+	var commission_result := _select_m7_commission(refreshed, previous_commission_id)
+	if bool(commission_result.get("changed", false)):
+		refreshed = _dictionary_copy(commission_result.get("config", refreshed))
+	var equipment: Array = []
+	var consumables: Array = []
+	for raw_item in _array_copy(config.get("selected_equipment_items", [])):
+		var previous_item := _dictionary_copy(raw_item)
+		var current_item := _find_warehouse_item(refreshed, str(previous_item.get("instance_id", "")))
+		if not current_item.is_empty() and bool(current_item.get("can_equip", false)):
+			equipment.append(current_item)
+	for raw_item in _array_copy(config.get("selected_consumable_items", [])):
+		var previous_item := _dictionary_copy(raw_item)
+		var current_item := _find_warehouse_item(refreshed, str(previous_item.get("instance_id", "")))
+		if not current_item.is_empty() and bool(current_item.get("can_consume", false)):
+			consumables.append(current_item)
+	var recalculated := _recalculate_loadout(refreshed, equipment, consumables)
+	if bool(recalculated.get("valid", false)):
+		refreshed = _dictionary_copy(recalculated.get("config", refreshed))
+	return with_active_run_preview(refreshed, has_active_run)
+
+
 static func apply_card_action(config: Dictionary, tab_id: StringName, card_id: StringName) -> Dictionary:
+	if tab_id == &"map" and String(card_id).begins_with("m7_map_"):
+		return _select_m7_map(config, String(card_id).trim_prefix("m7_map_"))
+	if tab_id == &"objective" and String(card_id).begins_with("m7_commission_"):
+		return _select_m7_commission(config, String(card_id).trim_prefix("m7_commission_"))
+	if tab_id == &"claim" and String(card_id).begins_with("m7_shop_"):
+		return {
+			"config": config.duplicate(true),
+			"changed": false,
+			"message": "正在提交基地购买。",
+			"meta_action": {"action": &"purchase", "item_id": String(card_id).trim_prefix("m7_shop_")},
+		}
 	if tab_id == &"warehouse" and String(card_id).begins_with("m3r_") and card_id != &"m3r_warehouse_status":
 		return _toggle_warehouse_item(config, String(card_id).trim_prefix("m3r_"))
 	if tab_id == &"claim" and card_id == &"claim_emergency_ration":
@@ -123,8 +176,68 @@ static func apply_card_action(config: Dictionary, tab_id: StringName, card_id: S
 	}
 
 
+static func _select_m7_map(config: Dictionary, map_id: String) -> Dictionary:
+	var unlocked: Array = _array_copy(config.get("unlocked_map_ids", []))
+	if not unlocked.has(map_id):
+		return {"config": config.duplicate(true), "changed": false, "message": "该地图尚未解锁。"}
+	var result := config.duplicate(true)
+	var definition := M7ContentCatalogScript.map_definition(map_id)
+	result["map_config_id"] = map_id
+	result["map_display_name"] = str(definition.get("display_name", map_id))
+	result["difficulty"] = definition.get("difficulty", &"normal")
+	result["difficulty_label"] = str(definition.get("difficulty_label", "普通"))
+	result["selected_difficulty"] = result["difficulty"]
+	result["selected_map_summary"] = "%s；地图真相在确认出发后生成。" % str(definition.get("display_name", map_id))
+	var candidate_seed := int(result.get("commission_candidate_seed", 1)) + map_id.hash()
+	var candidates := M7ContentCatalogScript.commission_candidates(map_id, candidate_seed)
+	result["commission_candidates"] = candidates
+	if not candidates.is_empty():
+		var selected: Dictionary = candidates[0]
+		result["selected_objective_id"] = StringName(selected.get("id", "commission_recover_supply"))
+		result["selected_objective_label"] = str(selected.get("display_name", "回收补给箱"))
+		result["selected_objective_summary"] = "%s：%s" % [str(selected.get("display_name", "")), str(selected.get("description", ""))]
+	result["right_summary_preview"] = right_summary_preview(result)
+	return {"config": result, "changed": true, "message": "已选择 %s。" % str(definition.get("display_name", map_id))}
+
+
+static func _select_m7_commission(config: Dictionary, commission_id: String) -> Dictionary:
+	var available := false
+	var selected := {}
+	for raw_candidate in _array_copy(config.get("commission_candidates", [])):
+		var candidate := _dictionary_copy(raw_candidate)
+		if str(candidate.get("id", "")) == commission_id:
+			available = true
+			selected = candidate
+			break
+	if not available:
+		return {"config": config.duplicate(true), "changed": false, "message": "该委托不在本局候选中。"}
+	var result := config.duplicate(true)
+	result["selected_objective_id"] = StringName(commission_id)
+	result["selected_objective_label"] = str(selected.get("display_name", commission_id))
+	result["selected_objective_summary"] = "%s：%s" % [str(selected.get("display_name", "")), str(selected.get("description", ""))]
+	result["right_summary_preview"] = right_summary_preview(result)
+	return {"config": result, "changed": true, "message": "已选择委托：%s。" % str(selected.get("display_name", commission_id))}
+
+
 static func _toggle_warehouse_item(config: Dictionary, instance_id: String) -> Dictionary:
 	var item := _find_warehouse_item(config, instance_id)
+	if not item.is_empty() and str(item.get("item_type", "")) == "collectible":
+		if not bool(item.get("can_sell", false)) or bool(item.get("is_unique", false)):
+			return {"config": config.duplicate(true), "changed": false, "message": "该藏品不可出售。"}
+		if str(config.get("sell_confirm_pending_instance_id", "")) != instance_id:
+			var pending := config.duplicate(true)
+			pending["sell_confirm_pending_instance_id"] = instance_id
+			return {
+				"config": pending,
+				"changed": true,
+				"message": "再次点击确认出售 %s，获得 %d 金币。" % [str(item.get("display_name", item.get("item_id", "藏品"))), int(item.get("base_value", 0))],
+			}
+		return {
+			"config": config.duplicate(true),
+			"changed": false,
+			"message": "正在提交单件藏品出售。",
+			"meta_action": {"action": &"sell_collectible", "instance_id": instance_id},
+		}
 	if item.is_empty() or not bool(item.get("can_carry", false)):
 		return {"config": config.duplicate(true), "changed": false, "message": "该物品不能加入本次出勤。"}
 	var result := config.duplicate(true)
@@ -229,8 +342,8 @@ static func _recalculate_loadout(config: Dictionary, equipment: Array, consumabl
 	result["backpack_capacity_preview"] = _capacity_from_m3r(result)
 	result["config_validity_preview"] = _config_validity_for(result)
 	result["right_summary_preview"] = right_summary_preview(result)
-	result["risk_summary"] = {"level": &"m6", "label": "M6 risk summary", "lines": _array_copy(result["right_summary_preview"].get("risk", []))}
-	result["effect_summary"] = {"label": "M6 effect summary", "lines": _array_copy(result["right_summary_preview"].get("effect", []))}
+	result["risk_summary"] = {"level": &"m7", "label": "M7 risk summary", "lines": _array_copy(result["right_summary_preview"].get("risk", []))}
+	result["effect_summary"] = {"label": "M7 effect summary", "lines": _array_copy(result["right_summary_preview"].get("effect", []))}
 	result["initial_bag_summary"] = {"used": used, "limit": capacity, "label": "Carry weight %d / %d" % [used, capacity]}
 	return {"config": result, "valid": true, "message": "配置已更新。"}
 
@@ -267,6 +380,9 @@ static func build_run_start_config(config: Dictionary) -> Dictionary:
 	return {
 		"config_id": str(source.get("config_id", "")),
 		"config_version": int(source.get("config_version", CONFIG_VERSION)),
+		"map_config_id": str(source.get("map_config_id", "classic_7x7_simple")),
+		"map_display_name": str(source.get("map_display_name", "7×7 简单")),
+		"seed_value": int(source.get("seed_value", 0)),
 		"start_mode": StringName(source.get("start_mode", START_MODE_STANDARD_PREVIEW)),
 		"map_mode": StringName(source.get("map_mode", MAP_MODE_CLASSIC_PREVIEW)),
 		"map_mode_label": str(source.get("map_mode_label", "Classic Minesweeper")),
@@ -281,6 +397,7 @@ static func build_run_start_config(config: Dictionary) -> Dictionary:
 		"selected_consumable_items": _array_copy(source.get("selected_consumable_items", [])),
 		"selected_equipment_ids": _array_copy(source.get("selected_equipment_ids", source.get("selected_loadout", []))),
 		"selected_consumable_ids": _array_copy(source.get("selected_consumable_ids", source.get("carried_consumables", []))),
+		"commission_candidates": _array_copy(source.get("commission_candidates", [])),
 		"equipment_effects": _array_copy(source.get("equipment_effects", [])),
 		"warehouse_lite": _dictionary_copy(source.get("warehouse_lite", {})),
 		"codex_lite": _dictionary_copy(source.get("codex_lite", {})),
@@ -365,10 +482,10 @@ static func right_summary_preview(config: Dictionary) -> Dictionary:
 	var active_run := _dictionary_copy(config.get("active_run_preview", active_run_preview(false)))
 	return {
 		"map": ["地图：%s" % map_label, "难度：%s" % difficulty_label, "区域：%s" % region_label],
-		"objective": ["目标：%s" % str(config.get("selected_objective_label", "Recover Cache")), "本阶段不发放完整目标奖励", "当前探索：%s" % str(active_run.get("label", "no active run"))],
+		"objective": ["委托：%s" % str(config.get("selected_objective_label", "回收补给箱")), "达成条件并成功撤离后自动发放奖励", "当前探索：%s" % str(active_run.get("label", "no active run"))],
 		"config": ["装备实例：%s" % _join_array(equipment_ids, "无"), "消耗品实例：%s" % _join_array(consumable_ids, "无"), "背包：%d/%d" % [int(config.get("bag_used", 0)), int(config.get("bag_limit", 10))]],
 		"effect": ["已选装备在本局生效且不占背包", "携入消耗品占用背包", "所有消耗品在任意终局清除", "失败保全按重量由玩家确认"],
-		"risk": ["黑色资源仅成功时转为金色资源", "放弃不保全物品但保留直接获得的金色资源", "当前进程可返回整备并继续同一局", "跨进程局内续玩不在 M6 范围"],
+		"risk": ["黑色资源仅成功时转为金色资源", "放弃不保全物品但保留直接获得的金色资源", "当前进程可返回整备并继续同一局", "失败抢救确认前不会写入局外进度"],
 	}
 
 

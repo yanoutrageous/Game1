@@ -12,6 +12,7 @@ const Art23LongTermAssetContractScript := preload("res://scripts/presentation/ar
 const LongTermReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 
 signal navigation_intent_requested(intent: Dictionary)
+signal meta_action_requested(action: Dictionary)
 
 const STATE_CLOSED := &"CLOSED"
 const STATE_OPENING := &"OPENING"
@@ -30,7 +31,7 @@ const MODULE_LABELS := {
 	&"gacha": "抽奖",
 	&"collection_appearance": "收藏外观",
 }
-const LOCKED_MODULES := {&"research": true, &"gacha": true}
+const LOCKED_MODULES := {&"gacha": true}
 const CHARACTER_IDLE_SEQUENCE := [0, 0, 1, 1, 2, 1, 0, 0, 3, 3, 0, 4, 5, 4, 0, 0]
 const CHARACTER_LOOK_SEQUENCE := [0, 6, 6, 7, 7, 6, 0]
 const CHARACTER_IDLE_FRAME_SECONDS := 0.34
@@ -40,32 +41,32 @@ const CHARACTER_LOOK_INTERVAL_SECONDS := 10.0
 const CANCEL_DEBOUNCE_MSEC := 600
 
 const PAGE_COPY := {
-	"goals/task": "整理可见的长期任务与阶段目标。当前只读，不在这里计算或写入任务进度。",
-	"goals/achievement": "按类别陈列成就条件与奖励预览。达成判断和奖励领取仍由后续系统负责。",
-	"goals/commission_record": "回看委托来源、状态与历史记录；本页不接取当前探索委托。",
-	"codex/map": "归档已经接触的地图与区域线索；未知区域保持遮蔽。",
-	"codex/monster": "整理怪物样本、遭遇来源和发现状态；仓库样本是当前真实发现依据。",
-	"codex/collectible": "陈列已回收藏品和唯一物件引用，不改变仓库所有权。",
-	"codex/equipment": "记录装备类型、来源与发现状态，不在图鉴中装备或强化。",
-	"codex/consumable": "记录消耗品条目与使用提示，不在图鉴中消耗物品。",
-	"codex/event": "归档已经登记的事件入口和来源线索，不主动触发事件。",
-	"codex/rule": "集中展示已公开的规则说明与系统提示，不改变运行规则。",
+	"goals/task": "当前任务按顺序推进；达成后在这里手动领取奖励。",
+	"goals/achievement": "成就由真实探索记录判定；达成后在这里手动领取奖励。",
+	"goals/commission_record": "回看每局真实委托结果；本页不改变下一局选择。",
+	"codex/map": "永久归档已经进入过的地图；未知地图保持遮蔽。",
+	"codex/monster": "永久归档已经遭遇或通过研究解析的怪物。",
+	"codex/collectible": "按曾经成功回收的藏品登记，出售实体不会抹除发现。",
+	"codex/equipment": "记录已经接触的装备；本页不改变出勤配置。",
+	"codex/consumable": "记录已经接触的补给；本页不会消耗仓库物品。",
+	"codex/event": "归档已经完成的旅商、骰子局、祭坛和机关遭遇。",
+	"codex/rule": "显示已公开或通过研究解读的真实游戏规则。",
 	"codex/lore": "保存世界背景与文本线索；未知条目维持未发现状态。",
-	"research/unlock_interface": "研究节点和条件接口预览。研究系统未接入，不扣除资源也不解锁功能。",
-	"research/research_entry": "预留研究入口、资源需求和未来数据表位置，当前保持封存。",
+	"research/unlock_interface": "研究会原子地消耗金币与一件指定仓库材料，并立即开放对应内容。",
+	"research/research_entry": "选择课题后使用确认按钮提交；材料若正在出勤配置中则不会被消耗。",
 	"profile/qualification_level": "展示真实资历等级与绝对经验值；没有阈值时不伪造百分比。",
 	"profile/history": "读取最近结算与历史快照，不写入或重算历史记录。",
 	"profile/statistics": "汇总探索、撤离、失败和长期金币等已存在统计。",
-	"profile/milestone": "陈列阶段性里程碑与后续条件，当前不自动发放奖励。",
-	"profile/title": "展示称号位置、来源与锁定状态，不在这里修改称号。",
-	"profile/badge": "整理徽章墙与徽章状态，不生成或授予新徽章。",
+	"profile/milestone": "展示真实资历阈值及距离下一阶段所需经验。",
+	"profile/title": "展示已经由资历等级永久授予的称号。",
+	"profile/badge": "展示已经由资历等级永久授予的徽章。",
 	"gacha/pool": "奖池主题仅作界面预留；概率、保底和真实奖池尚未接入。",
 	"gacha/cost": "消耗字段仅作预览，不读取可支付状态，也不会扣除货币。",
 	"gacha/result_entry": "结果入口保持封存，不生成、保存或发放任何抽奖结果。",
-	"collection_appearance/unique_display": "展示唯一藏品的陈列位置，不改变仓库与收藏所有权。",
+	"collection_appearance/unique_display": "展示三组真实藏品收集进度；出售物品不降低历史收集。",
 	"collection_appearance/appearance_config": "外观配置入口已落位；真实换装保存未接入时保持只读。",
-	"collection_appearance/display_content": "规划展示墙内容与排序，不写入收藏配置。",
-	"collection_appearance/badge_title": "组合预览徽章与称号展示，不改变个人资历。",
+	"collection_appearance/display_content": "展示三组各 8 件藏品的永久收集进度。",
+	"collection_appearance/badge_title": "组合展示已经获得的徽章与称号。",
 	"collection_appearance/settlement_display": "预览结算卡面和历史引用，不修改结算快照。",
 }
 
@@ -101,6 +102,12 @@ var interface_preview_label: Label
 var history_preview_label: Label
 var next_stage_label: Label
 var card_grid_container: HBoxContainer
+var content_action_button: Button
+var content_previous_button: Button
+var content_next_button: Button
+var current_content_cards: Array[Dictionary] = []
+var selected_content_card_index := 0
+var content_card_page_by_group: Dictionary = {}
 
 var profile_level_label: Label
 var profile_exp_value_label: Label
@@ -165,6 +172,7 @@ func show_module(module_id: StringName = &"goals") -> void:
 	selected_module_id = normalized
 	requested_module_id = normalized
 	_refresh_module_buttons()
+	call_deferred("_mark_current_module_viewed", normalized)
 	if not is_inside_tree() or reduced_motion:
 		_apply_module_immediately(normalized)
 		return
@@ -375,6 +383,17 @@ func _build_module_group() -> void:
 	card_grid_container.size = LongTermLayoutContractScript.CONTENT_CARDS.size
 	card_grid_container.add_theme_constant_override("separation", 8)
 	module_group.add_child(card_grid_container)
+	content_action_button = Button.new()
+	content_action_button.name = "LongTermContentAction"
+	content_action_button.position = LongTermLayoutContractScript.CONTENT_ACTION.position
+	content_action_button.size = LongTermLayoutContractScript.CONTENT_ACTION.size
+	content_action_button.focus_mode = Control.FOCUS_ALL
+	content_action_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	content_action_button.pressed.connect(_on_content_action_pressed)
+	module_group.add_child(content_action_button)
+	_apply_generic_button_surface(content_action_button, &"secondary", &"normal", 12)
+	content_previous_button = _add_content_page_button("LongTermContentPrevious", LongTermLayoutContractScript.CONTENT_PREVIOUS, "上一页", -1)
+	content_next_button = _add_content_page_button("LongTermContentNext", LongTermLayoutContractScript.CONTENT_NEXT, "下一页", 1)
 
 
 func _build_profile_column() -> void:
@@ -503,7 +522,7 @@ func _refresh_content() -> void:
 	var module_label := String(MODULE_LABELS.get(displayed_module_id, displayed_module_id))
 	content_detail_title_label.text = "%s · %s" % [module_label, String(group.get("title", "档案"))]
 	content_detail_body_label.text = String(PAGE_COPY.get("%s/%s" % [String(displayed_module_id), String(group_id)], "当前档案只读展示。"))
-	content_detail_meta_label.text = "只读档案" if not LOCKED_MODULES.has(displayed_module_id) else "系统封存 · 仅展示接口预览"
+	content_detail_meta_label.text = "真实进度" if not LOCKED_MODULES.has(displayed_module_id) else "系统封存 · 仅展示接口预览"
 	_rebuild_content_cards(group)
 	_refresh_secondary_buttons()
 
@@ -513,28 +532,47 @@ func _rebuild_content_cards(group: Dictionary) -> void:
 	for child in card_grid_container.get_children():
 		card_grid_container.remove_child(child)
 		child.queue_free()
-	var cards := _cards_for_group(group)
-	for index in range(mini(3, cards.size())):
+	current_content_cards = _cards_for_group(group)
+	var cards := current_content_cards
+	var group_key := "%s/%s" % [String(displayed_module_id), String(get_selected_secondary_id())]
+	var page_count := maxi(1, ceili(float(cards.size()) / 3.0))
+	var page := clampi(int(content_card_page_by_group.get(group_key, 0)), 0, page_count - 1)
+	content_card_page_by_group[group_key] = page
+	var page_start := page * 3
+	selected_content_card_index = page_start
+	for index in range(page_start, mini(page_start + 3, cards.size())):
 		var card: Dictionary = cards[index]
 		var button := Button.new()
-		button.name = "LongTermCard_%s_%d" % [String(get_selected_secondary_id()), index]
+		button.name = "LongTermCard_%s_%d" % [String(get_selected_secondary_id()), index - page_start]
 		button.text = "%s\n%s" % [String(card.get("title", "档案条目")), String(card.get("state", "已登记"))]
 		button.custom_minimum_size = Vector2(164, 86)
 		button.toggle_mode = true
-		button.button_pressed = index == 0
+		button.button_pressed = index == page_start
 		button.focus_mode = Control.FOCUS_ALL
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		button.set_meta("card_index", index)
 		button.pressed.connect(Callable(self, "_set_long_term_card_selected").bind(index))
-		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if index == 0 else &"normal"))
+		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if index == page_start else &"normal"))
 		card_grid_container.add_child(button)
 		long_term_card_buttons.append(button)
+	_refresh_selected_content_card(false)
+	_refresh_content_page_buttons(page, page_count)
 	_wire_long_term_card_focus()
 
 
 func _cards_for_group(group: Dictionary) -> Array[Dictionary]:
 	var cards: Array[Dictionary] = []
 	var group_id := StringName(group.get("group_id", group.get("id", &"")))
+	var cards_by_group: Dictionary = current_model.get("m7_cards_by_group", {})
+	var real_key := "%s/%s" % [String(displayed_module_id), String(group_id)]
+	if cards_by_group.has(real_key):
+		for raw_card in cards_by_group.get(real_key, []):
+			if raw_card is Dictionary:
+				cards.append((raw_card as Dictionary).duplicate(true))
+		if not cards.is_empty():
+			while cards.size() < 3:
+				cards.append({"title": "暂无更多记录", "state": "未登记", "description": "该分类当前没有更多真实记录。"})
+			return cards
 	if displayed_module_id == &"codex" and group_id in [&"monster", &"collectible"]:
 		var expected_kind := group_id
 		var matching_cards: Array = (current_model.get("content_cards", []) as Array).filter(
@@ -620,12 +658,15 @@ func _refresh_profile() -> void:
 
 
 func _refresh_module_buttons() -> void:
+	var red_dots: Dictionary = current_model.get("m7_red_dot_state", {})
 	for module_id_variant in tab_buttons.keys():
 		var module_id := StringName(module_id_variant)
 		var button := tab_buttons[module_id] as Button
 		if button == null:
 			continue
 		button.button_pressed = module_id == selected_module_id
+		var has_red_dot := _module_has_red_dot(module_id, red_dots)
+		button.text = "%s%s" % ["● " if has_red_dot else "", String(MODULE_LABELS.get(module_id, module_id))]
 		_apply_module_button_surface(button, module_id, button.button_pressed)
 
 
@@ -805,12 +846,107 @@ func _wire_long_term_card_focus() -> void:
 
 
 func _set_long_term_card_selected(card_index: int) -> void:
+	selected_content_card_index = clampi(card_index, 0, maxi(0, current_content_cards.size() - 1))
 	for button in long_term_card_buttons:
 		var selected := int(button.get_meta("card_index", -1)) == card_index
 		button.button_pressed = selected
 		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if selected else &"normal"))
 		if selected:
 			button.grab_focus()
+	_refresh_selected_content_card(true)
+
+
+func _refresh_selected_content_card(_from_input: bool) -> void:
+	if current_content_cards.is_empty():
+		if content_action_button != null:
+			content_action_button.visible = false
+		return
+	var card: Dictionary = current_content_cards[clampi(selected_content_card_index, 0, current_content_cards.size() - 1)]
+	var description := str(card.get("description", ""))
+	if description != "":
+		content_detail_body_label.text = description
+	content_detail_meta_label.text = str(card.get("state", "真实进度"))
+	var action: Dictionary = card.get("action", {})
+	content_action_button.visible = not action.is_empty() and not LOCKED_MODULES.has(displayed_module_id)
+	content_action_button.disabled = action.is_empty()
+	content_action_button.text = str(card.get("action_label", "确认"))
+
+
+func _on_content_action_pressed() -> void:
+	if current_content_cards.is_empty():
+		return
+	var card: Dictionary = current_content_cards[clampi(selected_content_card_index, 0, current_content_cards.size() - 1)]
+	var action: Dictionary = card.get("action", {})
+	if action.is_empty():
+		return
+	content_detail_meta_label.text = "正在提交……"
+	content_action_button.disabled = true
+	meta_action_requested.emit(action.duplicate(true))
+
+
+func _add_content_page_button(node_name: String, rect: Rect2, text: String, page_delta: int) -> Button:
+	var button := Button.new()
+	button.name = node_name
+	button.position = rect.position
+	button.size = rect.size
+	button.text = text
+	button.focus_mode = Control.FOCUS_ALL
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.pressed.connect(Callable(self, "_change_content_page").bind(page_delta))
+	module_group.add_child(button)
+	_apply_generic_button_surface(button, &"secondary", &"normal", 12)
+	return button
+
+
+func _change_content_page(page_delta: int) -> void:
+	if current_content_cards.size() <= 3:
+		return
+	var group_key := "%s/%s" % [String(displayed_module_id), String(get_selected_secondary_id())]
+	var page_count := maxi(1, ceili(float(current_content_cards.size()) / 3.0))
+	content_card_page_by_group[group_key] = clampi(int(content_card_page_by_group.get(group_key, 0)) + page_delta, 0, page_count - 1)
+	_rebuild_content_cards(_selected_group())
+	if not long_term_card_buttons.is_empty():
+		long_term_card_buttons[0].grab_focus()
+
+
+func _refresh_content_page_buttons(page: int, page_count: int) -> void:
+	if content_previous_button == null or content_next_button == null:
+		return
+	var paged := page_count > 1
+	content_previous_button.visible = paged
+	content_next_button.visible = paged
+	content_previous_button.disabled = page <= 0
+	content_next_button.disabled = page >= page_count - 1
+	content_previous_button.text = "上一页"
+	content_next_button.text = "下一页 %d/%d" % [page + 1, page_count]
+
+
+func _module_has_red_dot(module_id: StringName, red_dots: Dictionary) -> bool:
+	match module_id:
+		&"goals": return int(red_dots.get("claimable_rewards", 0)) > 0
+		&"codex": return int(red_dots.get("new_codex", 0)) > 0
+		&"research": return int(red_dots.get("research_available", 0)) > 0
+		&"profile": return int(red_dots.get("new_history", 0)) > 0
+		&"collection_appearance": return int(red_dots.get("collection_completed", 0)) > 0
+	return false
+
+
+func _mark_current_module_viewed(module_id: StringName) -> void:
+	var red_dots: Dictionary = current_model.get("m7_red_dot_state", {})
+	var view_kind := ""
+	var count := 0
+	match module_id:
+		&"codex":
+			view_kind = "codex"
+			count = int(red_dots.get("new_codex", 0))
+		&"profile":
+			view_kind = "history"
+			count = int(red_dots.get("new_history", 0))
+		&"collection_appearance":
+			view_kind = "collection"
+			count = int(red_dots.get("collection_completed", 0))
+	if view_kind != "" and count > 0:
+		meta_action_requested.emit({"action": &"mark_viewed", "view_kind": view_kind})
 
 
 func _grab_long_term_initial_focus() -> void:

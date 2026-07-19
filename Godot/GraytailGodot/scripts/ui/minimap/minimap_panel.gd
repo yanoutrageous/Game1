@@ -134,8 +134,8 @@ func _apply_marker_scale_for_view_model() -> void:
 	var grid_gap: float = 2.0
 	var cell_width: float = floor((panel_size.x - 16.0 - grid_gap * maxf(0.0, columns - 1.0)) / columns)
 	var cell_height: float = floor((panel_size.y - 16.0 - grid_gap * maxf(0.0, rows - 1.0)) / rows)
-	marker_size = Vector2(clampf(cell_width, 20.0, 56.0), clampf(cell_height, 18.0, 48.0))
-	marker_font_size = clampi(int(min(marker_size.x, marker_size.y) * 0.62), 11, 20)
+	marker_size = Vector2(clampf(cell_width, 14.0, 56.0), clampf(cell_height, 14.0, 48.0))
+	marker_font_size = clampi(int(min(marker_size.x, marker_size.y) * 0.62), 9, 20)
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) -> void:

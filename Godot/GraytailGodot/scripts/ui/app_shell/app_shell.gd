@@ -13,6 +13,7 @@ const Art21UIPlacementContractScript := preload("res://scripts/presentation/art2
 
 signal host_route_requested(intent: Dictionary)
 signal page_changed(page_id: StringName, payload: Dictionary)
+signal meta_action_requested(action: Dictionary)
 
 var main_menu_shell: Control
 var deploy_page: Control
@@ -112,6 +113,8 @@ func _build_deploy_prep() -> void:
 		deploy_page.connect("navigation_intent_requested", _on_navigation_intent_requested)
 	if deploy_page.has_signal("deploy_start_intent_requested"):
 		deploy_page.connect("deploy_start_intent_requested", _on_deploy_start_intent_requested)
+	if deploy_page.has_signal("meta_action_requested"):
+		deploy_page.connect("meta_action_requested", _forward_meta_action)
 
 
 func _build_long_term() -> void:
@@ -121,6 +124,17 @@ func _build_long_term() -> void:
 	long_term_page.call("build")
 	if long_term_page.has_signal("navigation_intent_requested"):
 		long_term_page.connect("navigation_intent_requested", _on_navigation_intent_requested)
+	if long_term_page.has_signal("meta_action_requested"):
+		long_term_page.connect("meta_action_requested", _forward_meta_action)
+
+
+func _forward_meta_action(action: Dictionary) -> void:
+	var forwarded := action.duplicate(true)
+	if deploy_page != null and deploy_page.has_method("get_selected_instance_ids"):
+		var selected: Dictionary = deploy_page.call("get_selected_instance_ids")
+		forwarded["selected_equipment_ids"] = (selected.get("selected_equipment_ids", []) as Array).duplicate()
+		forwarded["selected_consumable_ids"] = (selected.get("selected_consumable_ids", []) as Array).duplicate()
+	meta_action_requested.emit(forwarded)
 
 
 func _build_placeholder_page(page_name: String, title: String, body: String) -> Control:

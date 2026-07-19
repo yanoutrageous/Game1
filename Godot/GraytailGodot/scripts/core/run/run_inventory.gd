@@ -25,6 +25,8 @@ static func setup_stats(context: RunContext) -> void:
 		"events_altar": 0,
 		"events_trap": 0,
 		"turns": 0,
+		"map_open_count": 0,
+		"flags_placed": 0,
 	}
 
 

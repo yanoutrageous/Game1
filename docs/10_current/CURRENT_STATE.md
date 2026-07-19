@@ -1,15 +1,15 @@
 # Current State
 
-文档状态：M6 关闭后的当前仓库事实；最后更新 2026-07-19。
+文档状态：M7 关闭后的当前仓库事实；最后更新 2026-07-19。
 
 ## 当前基线
 
 ```text
-branch: godot/g41-in-run-core-gameplay-runtime
-program_baseline: ART23 + G41 + M6
+branch: godot/m7-map-difficulty-long-term-content
+program_baseline: ART23 + G41 + M6 + M7
 art_baseline: ART23
 excluded_baseline: ART24
-latest_closed_program_stage: M6
+latest_closed_program_stage: M7
 active_successor_stage: none
 godot: E:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe
 git: E:\git\cmd\git.exe
@@ -27,12 +27,20 @@ git: E:\git\cmd\git.exe
 - 消耗品在所有终局清除；失败由玩家按重量手动确认非消耗品保全；放弃保全容量为 0。
 - 当前进程内可以从局内返回出发页，再继续同一个 `run_id`；确认放弃走真实结算。
 - 所有非唯一实体物品已有搜索、宝箱、战斗、事件或祭坛来源；旅商收据是虚拟记录，唯一占位保持锁定。
+- M7：八档真实地图已实装，包括 7×7 两档、10×10 三档、13×13 普通 / 困难 / 地狱三档；地图、难度和委托贯穿出发、局内、结算与历史。
+- M7：六个本局委托、七段顺序任务、一个失败可选任务、八项成就和三项研究均接入权威事件、奖励与持久化。
+- M7：基地商店、普通藏品单件出售、永久图鉴、五级资历、三组收藏和五类真实红点已实装；抽奖与实际外观继续锁定。
+- ART23 长期页保留六模块容器；目标、图鉴、研究、资历和收藏已有真实状态与分页，全部策划条目可以访问。
 
 ## 当前验证事实
 
 ```text
 M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_VALIDATION=PASS
 M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP=PASS
+M7_CONTENT_RUNTIME=PASS maps=8 seeds_per_map=100
+M7_META_UI_RUNTIME=PASS
+M7_13X13_VISIBILITY=PASS sizes=1280x720,1600x900,1920x1080
+M7_META_VISIBILITY=PASS states=deploy_map,goals,research,collection
 ART22_DEPLOY_PREP_RUNTIME=PASS
 ART23_LONG_TERM_RUNTIME=PASS
 G41_IN_RUN_CORE_GAMEPLAY_RUNTIME_VALIDATION=PASS
@@ -44,11 +52,11 @@ M6 外部 headless runner 在退出时仍报告既有的 `ObjectDB/resources sti
 
 ## 尚未声明完成
 
-- 完整仓库经济、购买、整理、堆叠、扩容、保险和托运；
+- 完整仓库整理、堆叠、扩容、保险、寄售、批量出售和更深经济；
 - 装备强化、耐久、随机词条、完整被动与最终数值平衡；
-- 完整目标/奖励/奖池、研究、抽奖、收藏奖励；
+- 更深目标 / 奖励池、更多研究、抽奖、唯一物真实获取和实际外观；
 - Boss、精英、完整事件与更深内容量；
 - 退出 Godot 进程后的局内检查点恢复；
 - 最终美术、音频、完整人工长时间游玩、性能、CI、导出和发布。
 
-详细证据见 `docs/validation/M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_VALIDATION.md` 和 `docs/handoff/HANDOFF_M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP.md`。
+M7 详细证据见 `docs/validation/M7_COMPLETE_MAP_DIFFICULTY_LONG_TERM_CONTENT_VALIDATION.md` 和 `docs/audits/AUDIT_M7_EXECUTION_COMPLETE_MAP_DIFFICULTY_LONG_TERM_CONTENT.md`；M6 原始证据继续保留。

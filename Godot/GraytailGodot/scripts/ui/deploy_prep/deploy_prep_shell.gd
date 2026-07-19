@@ -17,6 +17,7 @@ const Art22DeployPrepAssetContractScript := preload("res://scripts/presentation/
 
 signal deploy_start_intent_requested(intent: Dictionary)
 signal navigation_intent_requested(intent: Dictionary)
+signal meta_action_requested(action: Dictionary)
 
 const SUMMARY_PAGES := [
 	{"id": &"summary", "label": "摘要"},
@@ -105,7 +106,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	_save_active_view_state()
 	current_snapshot = snapshot.duplicate(true)
 	var previous_tab := _active_tab()
-	current_model = DeployPrepModelScript.build(current_snapshot)
+	current_model = DeployPrepModelScript.refresh_from_snapshot(current_model, current_snapshot)
 	current_model = DeployPrepModelScript.model_with_tab(current_model, previous_tab)
 	_restore_model_state(previous_tab)
 	_refresh_all(true)
@@ -580,6 +581,14 @@ func _on_card_pressed(card_id: StringName) -> void:
 		Art10UISkinKitScript.play_feedback_pulse(primary_action_button, &"warning", 0.5)
 		return
 	var card_action := DeployConfigScript.apply_card_action(_config(), active_tab, card_id)
+	var meta_action := _dictionary_from(card_action.get("meta_action", {}))
+	if not meta_action.is_empty():
+		meta_action["selected_equipment_ids"] = _array_from(_config().get("selected_equipment_ids", []))
+		meta_action["selected_consumable_ids"] = _array_from(_config().get("selected_consumable_ids", []))
+		meta_action_requested.emit(meta_action)
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, str(card_action.get("message", "正在提交操作。")))
+		_refresh_summary()
+		return
 	if bool(card_action.get("changed", false)) or active_tab in [DeployTabModelScript.TAB_WAREHOUSE, DeployTabModelScript.TAB_CLAIM]:
 		current_model = DeployPrepModelScript.model_with_config(
 			current_model,
@@ -1043,6 +1052,13 @@ func _has_active_run() -> bool:
 
 func _config() -> Dictionary:
 	return _dictionary_from(current_model.get("config", DeployConfigScript.default_config()))
+
+
+func get_selected_instance_ids() -> Dictionary:
+	return {
+		"selected_equipment_ids": _array_from(_config().get("selected_equipment_ids", [])),
+		"selected_consumable_ids": _array_from(_config().get("selected_consumable_ids", [])),
+	}
 
 
 func _action(action_id: String) -> Dictionary:

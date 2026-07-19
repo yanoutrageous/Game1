@@ -60,7 +60,7 @@ func _run() -> void:
 	var active_filter_after := (shell.get("filter_buttons") as Dictionary)[&"all"] as Button
 	_check(active_filter_before == active_filter_after, "Selecting a secondary filter rebuilt the clicked button")
 	_check(active_filter_after.button_pressed and active_filter_after.text == "全部", "Reselecting the active filter lost its selected state or label")
-	_check((shell.get("card_views") as Array).size() == 5, "Default map cards must expose five entries")
+	_check((shell.get("card_views") as Array).size() == 8, "M7 default map cards must expose all eight playable entries")
 	_check_motion_contract(shell)
 
 	var card_views := shell.get("card_views") as Array
@@ -68,7 +68,7 @@ func _run() -> void:
 	var card_button := (card_views[1] as Control).call("focus_button") as Button
 	card_button.emit_signal("pressed")
 	await _frames(2)
-	_check((shell.get("card_views") as Array).size() == 5, "Card selection rebuilt or dropped cards")
+	_check((shell.get("card_views") as Array).size() == 8, "Card selection rebuilt or dropped M7 map cards")
 	_check(is_equal_approx((shell.get("card_views") as Array)[1].size.y, initial_height), "Selected card changed fixed row height")
 
 	var parchment := shell.get("parchment_group") as Control
@@ -79,10 +79,10 @@ func _run() -> void:
 	_check(parchment.position == Vector2.ZERO, "Parchment did not restore to its layout contract")
 
 	var expected_counts := {
-		&"map": [6, 5],
+		&"map": [6, 8],
 		&"warehouse": [6, 1],
 		&"claim": [6, 5],
-		&"objective": [6, 5],
+		&"objective": [6, 1],
 		&"loadout": [10, 5],
 	}
 	var secondary_state_count := 0

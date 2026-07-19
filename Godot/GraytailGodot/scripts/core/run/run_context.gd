@@ -194,6 +194,8 @@ func start_run(config: Dictionary) -> void:
 	height = truth_map.height
 	intel_map = IntelMap.new()
 	intel_map.setup(width, height)
+	for visible_exit_pos in truth_map.get_visible_exits(null):
+		intel_map.register_visible_exit(visible_exit_pos, truth_map.get_exit_id(visible_exit_pos))
 	minefield_service = MinefieldService.new()
 	player_pos = truth_map.spawn_pos
 	current_pos = player_pos

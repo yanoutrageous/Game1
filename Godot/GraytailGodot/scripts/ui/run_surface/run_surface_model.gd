@@ -24,6 +24,10 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 	if command_feedback == "":
 		command_feedback = _player_message(last_message)
 	var action_data := _action_buttons(snapshot, search_data, event_state, room_type)
+	var status_lines := _status_lines(snapshot, room_type, adjacent_mines, search_data, current_room_detail, return_eligibility, run_flow_snapshot, rule_effect_summary, content_delivery_summary)
+	var commission_line := _commission_progress_line(snapshot)
+	if commission_line != "":
+		status_lines.push_front(commission_line)
 
 	return {
 		"room_title": _room_label(room_type),
@@ -47,7 +51,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"scanner_legend_lines": _scanner_legend_lines(minimap_view_model),
 		"scanner_detail": _scanner_detail(minimap_view_model, run_map_snapshot),
 		"scanner_markers": _scanner_markers(minimap_view_model),
-		"status_lines": _status_lines(snapshot, room_type, adjacent_mines, search_data, current_room_detail, return_eligibility, run_flow_snapshot, rule_effect_summary, content_delivery_summary),
+		"status_lines": status_lines,
 		"map_domain_summary": _map_domain_summary(run_map_snapshot),
 		"run_flow_summary": _run_flow_summary(run_flow_snapshot),
 		"rule_effect_modifier_summary": _rule_effect_modifier_summary(rule_effect_summary, content_delivery_summary),
@@ -64,6 +68,38 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"action_buttons": action_data,
 		"layout_profile": layout_profile.duplicate(true),
 	}
+
+
+static func _commission_progress_line(snapshot: Dictionary) -> String:
+	var run_start := _dict_from(snapshot, "run_start_config")
+	var commission_id := str(run_start.get("selected_objective_id", ""))
+	if commission_id == "":
+		return ""
+	var label := str(run_start.get("selected_objective_label", commission_id))
+	var stats := _dict_from(snapshot, "stats")
+	var current := 0
+	var target := 1
+	match commission_id:
+		"commission_recover_supply":
+			target = 2
+			for raw_item in (snapshot.get("inventory_items", []) as Array):
+				if raw_item is Dictionary and str((raw_item as Dictionary).get("item_type", "")) != "consumable":
+					current += 1
+		"commission_route_survey":
+			target = 12
+			current = int(snapshot.get("unique_rooms_explored", stats.get("moves", 0)))
+		"commission_anomaly_cleanup":
+			target = 2
+			current = int(stats.get("monsters_defeated", 0))
+		"commission_open_crates":
+			target = 2
+			current = int(stats.get("chest_rooms", 0))
+		"commission_event_evidence":
+			target = 2
+			current = int(stats.get("events_completed", 0))
+		"commission_critical_extract":
+			current = 1 if int(snapshot.get("protocol_level", 5)) == 1 else 0
+	return "委托 %s %d/%d" % [label, mini(current, target), target]
 
 
 static func _encounter_section(snapshot: Dictionary) -> Dictionary:

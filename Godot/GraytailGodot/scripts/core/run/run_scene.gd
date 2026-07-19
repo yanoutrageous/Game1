@@ -271,6 +271,7 @@ func _build_shell_pages() -> void:
 	ui_shell.call("build")
 	ui_shell.connect("host_route_requested", _on_app_shell_host_route_requested)
 	ui_shell.connect("page_changed", _on_app_shell_page_changed)
+	ui_shell.connect("meta_action_requested", _on_m7_meta_action_requested)
 	main_menu_panel = ui_shell.call("get_main_page") as Control
 	deploy_shell_panel = ui_shell.call("get_deploy_page") as Control
 	long_term_shell_panel = ui_shell.call("get_long_term_page") as Control
@@ -801,6 +802,30 @@ func _on_long_term_entry_requested(entry_id: StringName) -> void:
 			_show_deploy_shell()
 		_:
 			_show_long_term_shell(entry_id)
+
+
+func _on_m7_meta_action_requested(action: Dictionary) -> void:
+	if meta_progress_adapter == null:
+		return
+	var blocked_ids: Array = action.get("selected_equipment_ids", []) + action.get("selected_consumable_ids", [])
+	var result := {}
+	match StringName(action.get("action", &"")):
+		&"purchase":
+			result = meta_progress_adapter.purchase_item(str(action.get("item_id", "")))
+		&"sell_collectible":
+			result = meta_progress_adapter.sell_collectible(str(action.get("instance_id", "")), blocked_ids)
+		&"complete_research":
+			result = meta_progress_adapter.complete_research(str(action.get("research_id", "")), blocked_ids)
+		&"claim_goal":
+			result = meta_progress_adapter.claim_goal_reward(str(action.get("goal_kind", "")), str(action.get("goal_id", "")))
+		&"mark_viewed":
+			result = meta_progress_adapter.mark_long_term_viewed(str(action.get("view_kind", "")))
+		_:
+			result = {"ok": false, "status": "unknown_meta_action"}
+	last_command_result = result.duplicate(true)
+	_show_command_feedback(result)
+	if ui_shell != null:
+		ui_shell.call("apply_snapshot", _shell_snapshot())
 
 
 func _handle_interact_pressed() -> void:

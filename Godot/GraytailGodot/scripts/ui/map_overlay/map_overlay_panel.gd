@@ -25,7 +25,10 @@ const ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY := &"art21r2.modal.action_strip"
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
 	view_model = next_view_model
-	_rebuild_grid()
+	if not layout_profile.is_empty():
+		apply_layout_profile(layout_profile)
+	else:
+		_rebuild_grid()
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
@@ -52,9 +55,11 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		var panel_height: float = min(height * 0.86, 820.0 if is_high else 620.0)
 		panel_width = max(panel_width, 620.0 if not is_low else 540.0)
 		panel_height = max(panel_height, 500.0 if not is_low else 440.0)
-		var cell_width: float = floor((panel_width - 84.0) / 10.0)
-		var cell_height: float = floor((panel_height - 140.0) / 10.0)
-		var cell_size: float = maxf(42.0, min(cell_width, cell_height))
+		var map_columns: float = float(maxi(1, view_model.width if view_model != null else 10))
+		var map_rows: float = float(maxi(1, view_model.height if view_model != null else 10))
+		var cell_width: float = floor((panel_width - 84.0) / map_columns)
+		var cell_height: float = floor((panel_height - 140.0) / map_rows)
+		var cell_size: float = clampf(min(cell_width, cell_height), 28.0, 64.0)
 		marker_size = Vector2(cell_size, cell_size)
 		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		_set_rect(panel, Rect2((width - panel_width) * 0.5, (height - panel_height) * 0.5, panel_width, panel_height))
@@ -120,7 +125,7 @@ func _rebuild_grid() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
-	var grid_gap := 5 if marker_size.x <= 44.0 else 8
+	var grid_gap := 3 if marker_size.x <= 38.0 else (5 if marker_size.x <= 44.0 else 8)
 	grid.add_theme_constant_override("h_separation", grid_gap)
 	grid.add_theme_constant_override("v_separation", grid_gap)
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -177,7 +182,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	if label_text == "?":
 		marker_color = Color(0.58, 0.72, 0.68, 0.74)
 	button.add_theme_color_override("font_color", marker_color)
-	button.add_theme_font_size_override("font_size", maxi(12, int(min(marker_size.x, marker_size.y) * 0.52)))
+	button.add_theme_font_size_override("font_size", maxi(9, int(min(marker_size.x, marker_size.y) * 0.52)))
 	var state := _art21_marker_state(marker)
 	var selected := _is_selected_marker(marker)
 	_apply_marker_button_style(button, theme_key, state, selected)

@@ -3,6 +3,7 @@ class_name DeployPrepModel
 
 const DeployConfigScript := preload("res://scripts/ui/deploy_prep/deploy_config.gd")
 const DeployTabModelScript := preload("res://scripts/ui/deploy_prep/deploy_tab_model.gd")
+const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
 
 
 static func build(snapshot: Dictionary = {}) -> Dictionary:
@@ -16,6 +17,25 @@ static func build(snapshot: Dictionary = {}) -> Dictionary:
 	var selected_filter := DeployTabModelScript.default_filter_for(active_tab)
 	var selected_card := DeployTabModelScript.default_card_for(active_tab)
 	return _build_model(config, run_active, active_tab, selected_filter, selected_card, false, "")
+
+
+static func refresh_from_snapshot(model: Dictionary, snapshot: Dictionary = {}) -> Dictionary:
+	if model.is_empty():
+		return build(snapshot)
+	var run_active := bool(snapshot.get("run_active", snapshot.get("has_active_run", false)))
+	var config := DeployConfigScript.refresh_from_meta(_config_from(model), snapshot.get("meta_progress_summary", {}), run_active)
+	var active_run_config: Dictionary = snapshot.get("run_start_config", {})
+	if run_active and not active_run_config.is_empty():
+		config = DeployConfigScript.with_active_run_config(config, active_run_config)
+	return _build_model(
+		config,
+		run_active,
+		StringName(model.get("active_tab", DeployTabModelScript.DEFAULT_TAB)),
+		StringName(model.get("selected_filter", DeployTabModelScript.FILTER_ALL)),
+		StringName(model.get("selected_card", &"")),
+		false,
+		str(model.get("action_message", ""))
+	)
 
 
 static func model_with_tab(model: Dictionary, tab_id: StringName) -> Dictionary:
@@ -75,6 +95,8 @@ static func _build_model(
 	var dynamic_cards := _dynamic_cards_for_tab(config, active_tab, selected_filter)
 	if not dynamic_cards.is_empty():
 		cards = dynamic_cards
+		if _find_visible_card(cards, selected_card).is_empty():
+			selected_card = StringName((cards[0] as Dictionary).get("id", &""))
 	var selected_detail := _find_visible_card(cards, selected_card)
 	if selected_detail.is_empty():
 		selected_detail = DeployTabModelScript.find_card(active_tab, selected_card)
@@ -85,7 +107,7 @@ static func _build_model(
 	return {
 		"title": "出发探索",
 		"subtitle": "整备、路线、背包和出勤确认",
-		"boundary": "本页使用真实仓库实例生成本局出勤配置；完整仓库经济、研究与抽奖不在 M6 范围。",
+		"boundary": "本页使用真实仓库、地图解锁、委托与基地商店生成本局出勤配置；抽奖仍保持封存。",
 		"tabs": DeployTabModelScript.build_tabs(),
 		"active_tab": active_tab,
 		"selected_filter": selected_filter,
@@ -105,7 +127,7 @@ static func _build_model(
 			"objective_preview": (config.get("objective_preview", {}) as Dictionary).duplicate(true),
 			"config_validity_preview": (config.get("config_validity_preview", {}) as Dictionary).duplicate(true),
 			"action_intent_boundaries": (config.get("action_intent_boundaries", {}) as Dictionary).duplicate(true),
-			"summary": "M6 reads real warehouse instances and keeps selection in the deploy draft until the run starts.",
+			"summary": "M7 读取真实仓库实例并保留玩家的地图、委托与出勤选择，直至本局开始。",
 			"read_only": true,
 			"display_only": false,
 			"preview": false,
@@ -215,11 +237,94 @@ static func _actions(run_active: bool) -> Dictionary:
 
 static func _dynamic_cards_for_tab(config: Dictionary, active_tab: StringName, selected_filter: StringName) -> Array:
 	match active_tab:
+		DeployTabModelScript.TAB_MAP:
+			return _m7_map_cards(config, selected_filter)
 		DeployTabModelScript.TAB_WAREHOUSE:
 			return _warehouse_cards(config, selected_filter)
+		DeployTabModelScript.TAB_CLAIM:
+			return _m7_claim_cards(config, selected_filter)
+		DeployTabModelScript.TAB_OBJECTIVE:
+			return _m7_objective_cards(config, selected_filter)
 		DeployTabModelScript.TAB_LOADOUT:
 			return _loadout_cards(config, selected_filter)
 	return []
+
+
+static func _m7_map_cards(config: Dictionary, selected_filter: StringName) -> Array:
+	if selected_filter in [DeployTabModelScript.FILTER_MAP_HONEYCOMB, DeployTabModelScript.FILTER_MAP_SPECIAL]:
+		return []
+	var cards := []
+	var unlocked: Array = config.get("unlocked_map_ids", [])
+	var selected_map_id := str(config.get("map_config_id", "classic_7x7_simple"))
+	for definition in M7ContentCatalogScript.map_definitions():
+		var map_id := str(definition.get("id", ""))
+		var is_unlocked := unlocked.has(map_id)
+		if selected_filter == DeployTabModelScript.FILTER_MAP_UNLOCKED and not is_unlocked:
+			continue
+		if selected_filter == DeployTabModelScript.FILTER_MAP_RECOMMENDED and map_id != selected_map_id:
+			continue
+		cards.append({
+			"id": "m7_map_%s" % map_id,
+			"title": str(definition.get("display_name", map_id)),
+			"category": "地图",
+			"state": "selected" if map_id == selected_map_id else ("ready" if is_unlocked else "locked"),
+			"summary": "%s；雷房 %d，每类内容房 %d，撤离点 %d。" % [
+				str(definition.get("role", "")),
+				int(definition.get("mine_count", 0)),
+				int(definition.get("content_room_count", 0)),
+				int(definition.get("visible_exit_count", 0)) + int(definition.get("hidden_exit_count", 0)),
+			],
+			"detail": "已解锁并可真实进入。" if is_unlocked else "需要通过地图成功、研究或成就解锁。",
+			"filter_id": DeployTabModelScript.FILTER_MAP_CLASSIC,
+		})
+	return cards
+
+
+static func _m7_claim_cards(config: Dictionary, selected_filter: StringName) -> Array:
+	var cards := []
+	if selected_filter in [DeployTabModelScript.FILTER_ALL, DeployTabModelScript.FILTER_CLAIM_RECEIVE]:
+		cards.append(DeployTabModelScript.find_card(DeployTabModelScript.TAB_CLAIM, &"claim_emergency_ration"))
+	var meta := _dictionary_from(config.get("meta_progress_summary", {}))
+	for raw_shop in _array_from(meta.get("shop_catalog", M7ContentCatalogScript.shop_definitions())):
+		var shop := _dictionary_from(raw_shop)
+		var unlocked := bool(shop.get("unlocked", M7ContentCatalogScript.is_shop_unlocked(shop, meta)))
+		if selected_filter == DeployTabModelScript.FILTER_CLAIM_PURCHASE and not unlocked:
+			continue
+		if selected_filter == DeployTabModelScript.FILTER_CLAIM_LOCKED and unlocked:
+			continue
+		if not (selected_filter in [DeployTabModelScript.FILTER_ALL, DeployTabModelScript.FILTER_CLAIM_PURCHASE, DeployTabModelScript.FILTER_CLAIM_LOCKED, DeployTabModelScript.FILTER_CLAIM_RECOMMENDED]):
+			continue
+		var item_id := str(shop.get("item_id", ""))
+		cards.append({
+			"id": "m7_shop_%s" % item_id,
+			"title": str(shop.get("display_name", item_id)),
+			"category": "申领",
+			"state": "ready" if unlocked else "locked",
+			"summary": "价格 %d 金币；购买后生成真实仓库实例。" % int(shop.get("price", 0)),
+			"detail": "金币充足时可购买。" if unlocked else "研究或资历条件尚未满足。",
+			"filter_id": DeployTabModelScript.FILTER_CLAIM_PURCHASE if unlocked else DeployTabModelScript.FILTER_CLAIM_LOCKED,
+		})
+	return cards
+
+
+static func _m7_objective_cards(config: Dictionary, selected_filter: StringName) -> Array:
+	if selected_filter in [DeployTabModelScript.FILTER_OBJECTIVE_LOCKED, DeployTabModelScript.FILTER_OBJECTIVE_REWARD]:
+		return []
+	var cards := []
+	var selected_id := str(config.get("selected_objective_id", ""))
+	for raw_candidate in _array_from(config.get("commission_candidates", [])):
+		var candidate := _dictionary_from(raw_candidate)
+		var commission_id := str(candidate.get("id", ""))
+		cards.append({
+			"id": "m7_commission_%s" % commission_id,
+			"title": str(candidate.get("display_name", commission_id)),
+			"category": "目标",
+			"state": "selected" if selected_id == commission_id else "ready",
+			"summary": str(candidate.get("description", "")),
+			"detail": "成功撤离且达成条件后自动发放委托奖励。",
+			"filter_id": DeployTabModelScript.FILTER_OBJECTIVE_COMMISSION,
+		})
+	return cards
 
 
 static func _warehouse_cards(config: Dictionary, selected_filter: StringName) -> Array:
@@ -352,7 +457,7 @@ static func _loadout_cards(config: Dictionary, selected_filter: StringName) -> A
 			"category": "出勤",
 			"state": "ready",
 			"summary": "使用当前整备进入常规路线。",
-			"detail": "当前只确认可用路线、装备和补给；完整出勤经济后续接入。",
+			"detail": "确认当前地图、委托、装备与补给后进入真实探索；终局按成功、失败或放弃结算。",
 			"lines": [
 				"路线：常规探索",
 				"模式：标准房间",
@@ -378,7 +483,7 @@ static func _warehouse_item_card(item: Dictionary, group_label: String, filter_i
 		"category": group_label,
 		"state": "selected" if selected else "owned",
 		"summary": "%s | weight %d | value %d | source %s" % [str(item.get("item_type", group_label)), int(item.get("weight", 0)), int(item.get("base_value", 0)), str(item.get("source_label", item.get("source", "warehouse")))],
-		"detail": str(item.get("short_description", "")),
+		"detail": "%s%s" % [str(item.get("short_description", "")), "；藏品需连续点击两次确认单件出售。" if str(item.get("item_type", "")) == "collectible" and bool(item.get("can_sell", false)) else ""],
 		"lines": [
 			"item_id=%s" % item_id,
 			"instance_id=%s" % instance_id,
@@ -404,7 +509,7 @@ static func _warehouse_status_card(warehouse: Dictionary) -> Dictionary:
 		"category": "Warehouse",
 		"state": "minimal_real",
 		"summary": "%d real warehouse item(s) are available from MetaProgress." % int(warehouse.get("item_count", 0)),
-		"detail": "This page reads warehouse_items and derives carry-in candidates; it does not implement sell pricing or a complete warehouse economy.",
+		"detail": "读取真实仓库实例；装备与补给可加入出勤，可出售藏品需连续点击两次确认。",
 		"lines": [
 			"equipment=%d" % int(counts.get("equipment", 0)),
 			"consumable=%d" % int(counts.get("consumable", 0)),
