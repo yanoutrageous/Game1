@@ -1,10 +1,15 @@
 extends RefCounted
 class_name RunStartConfig
 
+const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
+
 const SUPPORTED_ROUTE_MODES := [&"standard_run", &"demo_run", &"tutorial_run"]
 const SUPPORTED_PREVIEW_FIELDS := [
 	"config_id",
 	"config_version",
+	"map_config_id",
+	"map_display_name",
+	"seed_value",
 	"start_mode",
 	"map_mode",
 	"difficulty",
@@ -17,6 +22,9 @@ const SUPPORTED_PREVIEW_FIELDS := [
 	"selected_consumable_items",
 	"selected_equipment_ids",
 	"selected_consumable_ids",
+	"commission_candidates",
+	"selected_objective_id",
+	"selected_objective_label",
 	"equipment_effects",
 	"warehouse_lite",
 	"codex_lite",
@@ -48,6 +56,9 @@ static func default_config() -> Dictionary:
 		"source_page": &"unknown",
 		"profile_id": "default",
 		"config_id": "standard_10x10",
+		"map_config_id": "classic_10x10_standard",
+		"map_display_name": "10×10 标准",
+		"seed_value": 0,
 		"uses_existing_route": true,
 		"unsupported_config_fields": [],
 		"fallback_reason": "",
@@ -55,6 +66,9 @@ static func default_config() -> Dictionary:
 		"selected_consumable_items": [],
 		"selected_equipment_ids": [],
 		"selected_consumable_ids": [],
+		"commission_candidates": [],
+		"selected_objective_id": &"commission_recover_supply",
+		"selected_objective_label": "回收补给箱",
 		"equipment_effects": [],
 		"warehouse_lite": {},
 		"codex_lite": {},
@@ -122,6 +136,13 @@ static func validate(config: Dictionary) -> Dictionary:
 		issues.append("route_must_use_existing_start_path")
 	if not SUPPORTED_ROUTE_MODES.has(StringName(normalized.get("route_mode", &""))):
 		issues.append("unsupported_route_mode")
+	var known_map := false
+	for definition in M7ContentCatalogScript.map_definitions():
+		if str(definition.get("id", "")) == str(normalized.get("map_config_id", "")):
+			known_map = true
+			break
+	if not known_map:
+		issues.append("unknown_map_config_id")
 	var equipment := _array_from(normalized.get("selected_equipment_items", []))
 	var consumables := _array_from(normalized.get("selected_consumable_items", []))
 	if equipment.size() > 2:

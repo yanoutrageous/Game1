@@ -467,6 +467,16 @@ func _check_integrated_combat_reward_and_flee() -> void:
 		controller.in_run_runtime.advance_frame(1.0 / 60.0, move, aim)
 		step_count += 1
 	_check(context.truth_map.is_cleared(Vector2i(1, 5)), "Combat clear did not commit the room-cleared effect")
+	var combat_fact_found := false
+	for raw_event in context.run_event_log.snapshot():
+		var event: Dictionary = raw_event if raw_event is Dictionary else {}
+		if StringName(event.get("event_type", &"")) != &"combat_resolved":
+			continue
+		var payload: Dictionary = event.get("payload", {})
+		if not (payload.get("monster_types", []) as Array).is_empty():
+			combat_fact_found = true
+			break
+	_check(combat_fact_found, "Combat fact omitted monster types required by the M7 codex")
 	var combat_floor_items: Array = context.asset_ledger.get_room_floor_items(Vector2i(1, 5))
 	_check(not combat_floor_items.is_empty(), "Combat reward did not create an actual room-floor monster drop")
 	var reward_view = RoomRuntimeViewScript.new()

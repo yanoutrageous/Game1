@@ -27,14 +27,21 @@ const ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY := &"art21r2.modal.action_strip"
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
 	view_model = next_view_model
-	_rebuild_grid()
+	if not layout_profile.is_empty():
+		apply_layout_profile(layout_profile)
+	else:
+		_rebuild_grid()
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
 	layout_profile = profile.duplicate(true)
 	var is_low := bool(layout_profile.get("is_low_resolution", false))
 	var is_high := bool(layout_profile.get("is_high_resolution", false))
-	layout_metrics = Art24MapOverlayLayoutScript.calculate(layout_profile)
+	var grid_size := Vector2i(
+		maxi(1, view_model.width if view_model != null else 10),
+		maxi(1, view_model.height if view_model != null else 10)
+	)
+	layout_metrics = Art24MapOverlayLayoutScript.calculate(layout_profile, grid_size)
 	title_font_size = 16 if is_low else (20 if is_high else 18)
 	footer_font_size = 11 if is_low else (13 if is_high else 12)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -47,10 +54,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		dimmer.color = Color(0.0, 0.0, 0.0, 0.70)
 	var panel := get_node_or_null("Panel") as Control
 	if panel != null:
-		# The full state contains ten rows plus title, four-line selected detail,
-		# two-line feedback and frame padding. Budget every fixed-height element
-		# before sizing cells; the previous 140 px estimate let the VBox exceed
-		# the panel and clipped both header and footer at 1280x720.
+		# Budget the real M7 grid dimensions plus title, feedback and frame
+		# padding. This keeps 7x7, 10x10 and 13x13 maps inside the same ART24
+		# fullscreen composition without returning to a narrow dialog.
 		var cell_size := float(layout_metrics.get("marker_size", 36.0))
 		marker_size = Vector2(cell_size, cell_size)
 		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
@@ -122,7 +128,7 @@ func _rebuild_grid() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
-	var grid_gap := int(layout_metrics.get("grid_gap", 4 if marker_size.x <= 42.0 else 6))
+	var grid_gap := int(layout_metrics.get("grid_gap", 3 if marker_size.x <= 38.0 else 5))
 	grid.add_theme_constant_override("h_separation", grid_gap)
 	grid.add_theme_constant_override("v_separation", grid_gap)
 	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -175,7 +181,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	if label_text == "?":
 		marker_color = Color(0.58, 0.72, 0.68, 0.74)
 	button.add_theme_color_override("font_color", marker_color)
-	button.add_theme_font_size_override("font_size", maxi(12, int(min(marker_size.x, marker_size.y) * 0.52)))
+	button.add_theme_font_size_override("font_size", maxi(9, int(min(marker_size.x, marker_size.y) * 0.52)))
 	var state := _art21_marker_state(marker)
 	var selected := _is_selected_marker(marker)
 	_apply_marker_button_style(button, theme_key, state, selected)

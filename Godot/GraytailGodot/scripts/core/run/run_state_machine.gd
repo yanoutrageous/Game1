@@ -43,7 +43,7 @@ func start_tutorial_run(context: RunContext) -> Dictionary:
 
 
 func start_standard_run(context: RunContext, run_start_config: Dictionary = {}) -> Dictionary:
-	return start_run(context, RunConfig.standard_10x10(run_start_config))
+	return start_run(context, RunConfig.m7_map(run_start_config))
 
 
 func request_extract(context: RunContext, can_extract: bool, command_id: String = "", actor_id: StringName = &"player") -> Dictionary:

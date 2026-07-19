@@ -2,6 +2,7 @@ extends RefCounted
 class_name SaveAdapter
 
 const M3ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
+const M7ProgressionServiceScript := preload("res://scripts/core/progression/m7_progression_service.gd")
 
 const M1_META_PROGRESS_PATH := "user://graytail_m1_meta_progress.json"
 const SAVE_ROOT_DIR := "user://saves"
@@ -46,8 +47,8 @@ func describe_boundary() -> Dictionary:
 
 
 func default_meta_progress() -> Dictionary:
-	return {
-		"schema_version": 2,
+	var result := {
+		"schema_version": 3,
 		"gold": 0,
 		"warehouse_items": _starter_warehouse_items(),
 		"starter_grant_version": 1,
@@ -66,6 +67,9 @@ func default_meta_progress() -> Dictionary:
 		"debug_commands": [],
 		"committed_result_ids": [],
 	}
+	for key in M7ProgressionServiceScript.default_meta_fields().keys():
+		result[key] = M7ProgressionServiceScript.default_meta_fields()[key]
+	return result
 
 
 func load_json_or_default(path: String = M1_META_PROGRESS_PATH, default_data: Dictionary = {}, normalize_meta_progress: bool = true) -> Dictionary:
@@ -124,7 +128,7 @@ func _ensure_parent_dir(path: String) -> void:
 
 func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Dictionary:
 	var result := fallback.duplicate(true)
-	result["schema_version"] = maxi(int(data.get("schema_version", 1)), int(result.get("schema_version", 2)))
+	result["schema_version"] = maxi(int(data.get("schema_version", 1)), int(result.get("schema_version", 3)))
 	result["gold"] = maxi(0, int(data.get("gold", result.get("gold", 0))))
 	result["warehouse_items"] = _array_from(data.get("warehouse_items", result.get("warehouse_items", [])))
 	var starter_version := maxi(0, int(data.get("starter_grant_version", 0)))
@@ -151,7 +155,10 @@ func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Diction
 	result["debug_used"] = bool(data.get("debug_used", result.get("debug_used", false)))
 	result["debug_commands"] = _array_from(data.get("debug_commands", result.get("debug_commands", [])))
 	result["committed_result_ids"] = _array_from(data.get("committed_result_ids", result.get("committed_result_ids", [])))
-	return result
+	for key in M7ProgressionServiceScript.default_meta_fields().keys():
+		if data.has(key):
+			result[key] = data[key]
+	return M7ProgressionServiceScript.normalize_meta(result)
 
 
 func _starter_warehouse_items() -> Array:

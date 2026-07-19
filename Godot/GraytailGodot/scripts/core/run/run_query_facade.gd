@@ -237,6 +237,7 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"result_snapshot": context.result_snapshot.duplicate(true),
 		"failure_salvage": context.failure_salvage.duplicate(true),
 		"stats": context.run_stats.duplicate(true),
+		"unique_rooms_explored": context.explored_cells.size(),
 	}
 
 

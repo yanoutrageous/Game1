@@ -61,6 +61,8 @@ static func build(context: RunContext, ledger_snapshot: Dictionary = {}, run_map
 		"run_map_snapshot_ref": &"RunMapSnapshot" if not run_map_snapshot.is_empty() else &"unavailable",
 		"run_flow_snapshot_ref": &"RunFlowSnapshot" if not run_flow_snapshot.is_empty() else &"unavailable",
 		"run_stats": context.run_stats.duplicate(true),
+		"unique_rooms_explored": context.explored_cells.size(),
+		"run_events": context.run_event_log.snapshot() if context.run_event_log != null else [],
 		"debug_used": context.debug_used,
 		"debug_commands": context.debug_commands.duplicate(true),
 		"failure_salvage": context.failure_salvage.duplicate(true),

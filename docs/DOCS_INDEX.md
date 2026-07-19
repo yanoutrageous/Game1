@@ -37,6 +37,12 @@ G21-R5 design alignment calibration records the full Base Docs consistency audit
 
 ## Current Fact Sources
 
+- `docs/20_product/M7_0_CURRENT_INSTANCE_CONTENT_BASELINE.md` - M7 开始前的局内 / 局外实例总览，区分真实可玩、真实持久、只读、预览、锁定和调试内容，并记录 M7 必须补齐的主要缺口。
+- `docs/20_product/M7_COMPLETE_MAP_DIFFICULTY_LONG_TERM_CONTENT_CONTRACT.md` - M7 八档地图、委托、基地经济、任务、成就、研究、图鉴、资历、收藏、红点、切片与验收契约。
+- `docs/audits/AUDIT_M7_PLAN_COMPLETE_MAP_DIFFICULTY_LONG_TERM_CONTENT.md` - M7 计划审计，结论为 PASS_WITH_NOTES，并固定高风险执行门禁。
+- `docs/validation/M7_COMPLETE_MAP_DIFFICULTY_LONG_TERM_CONTENT_VALIDATION.md` - M7 八档地图、局外交易、首轮长期成长、回归和可见证据的执行验证。
+- `docs/audits/AUDIT_M7_EXECUTION_COMPLETE_MAP_DIFFICULTY_LONG_TERM_CONTENT.md` - M7 执行审计、硬门禁复核、修正项与上传结论。
+
 - `docs/10_current/CURRENT_STATE.md` - P2 current fact summary entry.
 - `docs/PROJECT_BASELINE.md` - pre-P2 expanded engineering fact evidence.
 - `docs/ENGINEERING_STATUS.md` - broader engineering status and validation list.
