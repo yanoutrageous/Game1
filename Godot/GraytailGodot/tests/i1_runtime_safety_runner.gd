@@ -56,7 +56,7 @@ func _test_router_identity() -> void:
 	_require_equal(action, RunSceneInputRouterScript.ACTION_DEBUG_RESTART_RUN, "router debug action")
 	_require_equal(action, &"debug_restart_run", "router command identity")
 	_require(action != &"restart_run", "router downgraded debug restart to ordinary restart")
-	var run_scene_source := FileAccess.get_file_as_string("res://scripts/core/run/run_scene.gd")
+	var run_scene_source := FileAccess.get_file_as_string("res://scripts/core/run/run_scene.gd").replace("\r\n", "\n").replace("\r", "\n")
 	_require(run_scene_source.contains("RunSceneInputRouterScript.ACTION_DEBUG_RESTART_RUN:\n\t\t\t_debug_restart_run_from_ui()"), "RunScene does not route the debug input identity to its debug handler")
 
 
