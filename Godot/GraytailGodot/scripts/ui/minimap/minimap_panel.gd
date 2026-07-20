@@ -1,6 +1,8 @@
 extends Control
 class_name MiniMapPanel
 
+const ContentDBAccessScript := preload("res://scripts/core/content/content_db_access.gd")
+
 # UI reads MiniMapViewModel only. UI must not read TruthMap directly.
 
 signal open_map_requested
@@ -143,7 +145,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 	var asset_ref: Resource = null
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
 	if asset_id != &"":
-		asset_ref = ContentDB.get_asset_ref(asset_id)
+		asset_ref = ContentDBAccessScript.get_asset_ref(asset_id)
 
 	if asset_ref is Texture2D:
 		var cell := Control.new()
@@ -160,7 +162,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		cell.add_child(base_icon)
 		var overlay_id := _overlay_asset_id_for_marker(marker)
 		if overlay_id != &"":
-			var overlay_ref := ContentDB.get_asset_ref(overlay_id)
+			var overlay_ref := ContentDBAccessScript.get_asset_ref(overlay_id)
 			if overlay_ref is Texture2D:
 				var overlay_icon := TextureRect.new()
 				overlay_icon.texture = overlay_ref

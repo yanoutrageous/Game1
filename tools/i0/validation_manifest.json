@@ -19,7 +19,10 @@
     "excluded_directory_names": [
       ".git",
       ".godot",
-      "__pycache__"
+      ".tmp",
+      "__pycache__",
+      "reports",
+      "runtimes"
     ]
   },
   "business_roots": [

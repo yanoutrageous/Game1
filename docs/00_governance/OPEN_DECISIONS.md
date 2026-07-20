@@ -1,3 +1,19 @@
+# I1 Open Decisions Update
+
+文档状态：当前 I1 未决事项摘要；下方 I0/M/G/P 各段保留为历史时间点记录，只有被本段或当前 contract 重新确认的事项才继续生效。
+最后更新：2026-07-20
+
+- `OD-I1-001`: I1 static/worktree 与最新 27 张预览的静态布局、层级、文字、无遮挡与无裁切证据已回填；full committed HEAD、commit/push 与最终 Git/metadata 证据尚待完成，完成前不得关闭 I1。
+- `OD-I1-002`: active-run 跨进程检查点、恢复和 schema migration 未实现，需要独立契约。
+- `OD-I1-003`: `RunScene` 仍是大型协调器；后续一次只提取一个有 characterization 的职责。
+- `OD-I1-004`: 完整人工长局、鼠标/手柄/动画手感和最终视觉/音频需要独立可见验收。
+- `OD-I1-005`: 通用性能、设备/输入矩阵、导出和发布阈值尚未定义；combat refresh 微基准不得外推。
+- `OD-I1-006`: GitHub Actions quick 已配置但远端成功 run 尚未证明，状态保持 `configured_unproven`。
+- `OD-I1-007`: cleanup diagnostic 是否升级为零容忍 blocking gate，待专门 lifecycle 评估。
+- `OD-I1-008`: 完整仓库经济、装备深度、Boss/精英、更深内容、抽奖/唯一物和实际外观仍由未来增量决定。
+- `OD-I1-009`: I1 已在明确 project metadata gate 下移除无运行时消费者的 `GameKernel` autoload；下方关于“未来才可移除”的旧决议由当前代码和 I1 gate 取代。
+- `OD-I1-010`: M6/I1 当前规则已取代下方 M3/M3H 的旧 pending safe-yield/abandon 语义；历史文字不得重新成为当前规则。
+
 # I0 Open Decisions Update
 
 - `OD-I0-001`: 原始 12 项 dirty 的最终归属仍需用户单独决定；I0 只保护，不清理、丢弃或自动提交。

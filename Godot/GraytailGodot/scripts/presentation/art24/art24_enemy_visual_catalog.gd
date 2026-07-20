@@ -3,6 +3,7 @@ class_name Art24EnemyVisualCatalog
 
 const ACTOR_ROOT := "res://assets/art24/actors/"
 const ENEMY_SUBJECTS := [&"slime", &"slimeling", &"bat", &"drone"]
+const TextureCache := preload("res://scripts/presentation/runtime_texture_cache.gd")
 
 
 static func supports(subject: StringName) -> bool:
@@ -16,6 +17,8 @@ static func texture_path(subject: StringName, runtime_state: StringName, frame_i
 		return "%s%s.png" % [directory, _generated_variant_frame(runtime_state, frame_index)]
 	if runtime_state in [&"dead", &"defeated"]:
 		return "%sue_defeated_%d.png" % [directory, mini(frame_index, 4)]
+	if runtime_state == &"hurt":
+		return "%shurt.png" % directory
 	if runtime_state in [&"active", &"fire"]:
 		return "%sue_attack.png" % directory
 	if runtime_state in [&"warning", &"aim"]:
@@ -30,7 +33,7 @@ static func texture_path(subject: StringName, runtime_state: StringName, frame_i
 
 
 static func texture_for(subject: StringName, runtime_state: StringName, frame_index: int = 0, visual_variant: StringName = &"base") -> Texture2D:
-	return load(texture_path(subject, runtime_state, frame_index, visual_variant)) as Texture2D
+	return TextureCache.texture(texture_path(subject, runtime_state, frame_index, visual_variant))
 
 
 static func frame_count(subject: StringName, runtime_state: StringName, visual_variant: StringName = &"base") -> int:
@@ -57,6 +60,16 @@ static func frame_duration(runtime_state: StringName) -> float:
 
 static func loops(runtime_state: StringName) -> bool:
 	return runtime_state not in [&"dead", &"defeated"]
+
+
+static func reduced_motion_frame(subject: StringName, runtime_state: StringName, visual_variant: StringName = &"base") -> int:
+	if runtime_state in [&"dead", &"defeated"] and visual_variant == &"base":
+		return frame_count(subject, runtime_state, visual_variant) - 1
+	return 0
+
+
+static func minimum_visible_seconds(runtime_state: StringName) -> float:
+	return 0.12 if runtime_state == &"hurt" else 0.0
 
 
 static func visual_scale(subject: StringName, visual_variant: StringName = &"base") -> float:

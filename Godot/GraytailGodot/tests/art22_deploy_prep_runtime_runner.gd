@@ -261,7 +261,9 @@ func _check_card_layout(shell: Control, tab_id: StringName, filter_id: StringNam
 		var summary := view.get_node_or_null("CardSummary") as Label
 		var state := view.get_node_or_null("CardState") as Label
 		_check(title != null and title.clip_text, "Card title is not bounded for %s/%s" % [String(tab_id), String(filter_id)])
-		_check(summary != null and summary.autowrap_mode != TextServer.AUTOWRAP_OFF, "Card summary is not wrapped for %s/%s" % [String(tab_id), String(filter_id)])
+		_check(summary != null and summary.autowrap_mode != TextServer.AUTOWRAP_OFF and summary.clip_text, "Card summary is not safely bounded for %s/%s" % [String(tab_id), String(filter_id)])
+		if summary != null and tab_id == &"map":
+			_check(summary.get_line_count() == 1, "Map card summary wraps into the chip row for %s/%s: %s" % [String(tab_id), String(filter_id), summary.text])
 		_check(state != null and state.clip_text, "Card state is not bounded for %s/%s" % [String(tab_id), String(filter_id)])
 
 

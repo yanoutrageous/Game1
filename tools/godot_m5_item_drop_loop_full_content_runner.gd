@@ -172,13 +172,19 @@ func _validate_settlement_branches() -> void:
 	var abandon_settlement: Dictionary = abandon_context.result_snapshot.get("settlement", {})
 	if StringName(abandon_settlement.get("outcome", &"")) != &"abandon":
 		_fail("abandon settlement outcome mismatch")
-	if StringName(abandon_settlement.get("safe_yield_state", &"")) != &"pending_undecided":
-		_fail("abandon safe yield state not explicit")
+	if StringName(abandon_settlement.get("safe_yield_state", &"")) != &"retained":
+		_fail("abandon safe yield state was not retained")
+	if int(abandon_settlement.get("long_term_gold_gained", -1)) != 2:
+		_fail("abandon did not retain direct gold as long-term gold")
 
 
 func _start_controller():
 	var controller = RunRuntimeControllerScript.new()
-	_require_ok(controller.command_bus.dispatch(&"start_standard_run"), "start standard run")
+	_require_ok(controller.command_bus.dispatch(&"start_standard_run", {
+		"run_start_config": {
+			"seed_value": 1001,
+		},
+	}), "start standard run")
 	return controller
 
 

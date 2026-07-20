@@ -1,20 +1,25 @@
 document_status: current_capability_matrix
-updated: "2026-07-19"
-updated_by: "M6_closeout"
+updated: "2026-07-20"
+updated_by: "I1_worktree_accepted_head_pending"
 
 repository:
   workspace_resolution: "git rev-parse --show-toplevel"
-  current_branch: "godot/g41-in-run-core-gameplay-runtime"
-  program_baseline: "ART23 + G41 + M6"
-  art_baseline: "ART23"
-  excluded_baseline: "ART24"
-  active_successor_stage: null
+  godot_project: "<git-worktree-root>/Godot/GraytailGodot"
+  observed_branch: "codex/i1-baseline-stabilization"
+  source_head_before_i1: "2212992337aeef7cda412dbaaa191c3ad6cbb81a"
+  current_stage: "I1_worktree_accepted_head_pending"
+  latest_closed_non_art_baseline: "I0"
+  latest_closed_art_stage: "ART21"
+  later_accepted_page_ui_evidence: "ART23"
+  failed_historical_art_attempt: "ART24R2_24_of_61_pass"
 
 toolchain:
   engine: Godot
   version: "4.6.3.stable.official.7d41c59c4"
-  executable: "E:\\Godot\\Tools\\Godot\\Godot_v4.6.3-stable_win64_console.exe"
-  git: "E:\\git\\cmd\\git.exe"
+  local_observed_executable: "E:\\Godot\\Tools\\Godot\\Godot_v4.6.3-stable_win64_console.exe"
+  local_path_authority: false
+  portable_resolution: "GodotExe_then_I1_GODOT_EXE_GODOT4_GODOT_EXE_then_PATH"
+  identity_check: "version_size_sha256_and_companion_executable"
 
 runtime_capabilities:
   app_shell_and_navigation: playable
@@ -29,20 +34,50 @@ runtime_capabilities:
   manual_failure_salvage: playable_m6
   starter_inventory_and_meta_writeback: persistent_m6
   idempotent_result_history: persistent_m6_max_50
-  long_term_history_display: read_only_m6
+  m7_map_difficulty_and_first_meta_content: playable_and_persistent
   cross_process_active_run_restore: not_implemented
   complete_warehouse_economy: not_implemented
-  objective_reward_pool: incomplete
-  research_gacha_collection_rewards: display_only_or_incomplete
-  final_art_productization: incomplete
-  release_pipeline: incomplete
+  complete_content_and_balance: incomplete
+  final_art_audio_productization: incomplete
+  export_and_release_pipeline: incomplete
+
+i1_implementation:
+  restart_confirmation_and_debug_gate: validated_worktree_head_pending
+  save_atomic_backup_future_schema_protection: validated_worktree_head_pending
+  state_machine_single_phase_authority: validated_worktree_head_pending
+  terminal_commit_single_authority: validated_worktree_head_pending
+  item_command_module_boundary: validated_worktree_head_pending
+  content_db_access_compile_boundary: validated_worktree_head_pending
+  combat_scoped_refresh: validated_worktree_head_pending
+  visible_page_revision_refresh: validated_worktree_head_pending
+  runtime_animation_cache_and_state_frames: validated_worktree_head_pending
+  ui_focus_font_feedback_three_resolutions: validated_worktree_head_pending
+  art25_source_license_determinism_gate: validated_worktree_head_pending
+  production_preview_capture: generated_27_of_27_machine_review_required_static_human_pass
+  unified_headless_harness: validated_worktree_head_pending
 
 validation:
-  m6_validator: pass
-  m6_headless_runner: pass_with_cleanup_diagnostic
-  art22_deploy_runtime: pass
-  art23_long_term_runtime: pass
-  g41_runtime_regression: pass
-  project_load_smoke: pass
+  static_final: pass_39_blocking_46_inventory_13_exclusions_705_checks
+  preflight_worktree: pass_120233_ms
+  quick_worktree: pass_21_of_21
+  core_worktree: pass_24_of_24
+  ui_worktree: pass_23_of_23
+  full_worktree: pass_39_of_39_current_precommit_candidate
+  m5_seed_fixture_stability: pass_three_independent_then_full
+  production_preview_human_review: pass_static_layout_27_of_27
+  production_preview_machine_status: pass_with_visual_review_required
+  production_preview_visual_acceptance: not_run
+  preview_static_evidence_applicability: retained_no_visible_path_delta
+  full_committed_head: pending
+  combat_performance_scope: "microbenchmark_only"
+  combat_p95_core_us: 519
+  combat_p95_full_us: 321
+  full_refresh_p95_full_us: 333855
+  latest_full_duration_ms: 400736
+  full_cleanup_runner_count: 22
+  full_business_file_count: 2121
+  full_business_fingerprint_sha256: "BD1BD6D26C6BC4C794FBA3ADAFA73E642B56BCD4670836E661E1A74E71F94038"
   full_manual_playtest: not_claimed
-  performance_ci_export_release: not_claimed
+  general_performance: not_claimed
+  ci: configured_unproven
+  export_release: not_claimed

@@ -1,11 +1,13 @@
 # Text Encoding Ledger
 
-文档状态：I0 当前文本编码台账
-最后更新：2026-07-11
+文档状态：I1 继承的当前文本编码台账
+最后更新：2026-07-20
 
 ## 审计结论
 
-I0 严格 UTF-8 审计扫描活动仓库 368 个 Git 跟踪文档文本，确认 5 个文件在 I0 前已经发生字节损坏。损坏模式不是 GBK / GB18030，而是 UTF-8 三字节字符的第三字节被 `0x3F` 替换；Git 历史及 `D:\AGAME1` 冻结 / 镜像副本均无正常来源，因此不能声称可无损转码恢复。
+I0 严格 UTF-8 审计曾扫描 368 个 Git 跟踪文档文本，确认 5 个文件在 I0 前已经发生字节损坏。该数量是 I0 时间点证据，不是 I1 的固定文件数。损坏模式不是 GBK / GB18030，而是 UTF-8 三字节字符的第三字节被 `0x3F` 替换；Git 历史及当时 `D:\AGAME1` 冻结 / 镜像副本均无正常来源，因此不能声称可无损转码恢复。
+
+I1 继续使用相同的五组精确例外；所有新增/修改文档必须严格 UTF-8。2026-07-20 worktree evidence update 后的编码门为 `PASS_WITH_RECORDED_LIMITATION`：1,080 inventory、474 text、606 binary、5 个精确历史例外、0 error；详细边界见 `docs/validation/I1_INCREMENTAL_DEVELOPMENT_BASELINE_VALIDATION.md`。
 
 ## 原样保留的精确例外
 

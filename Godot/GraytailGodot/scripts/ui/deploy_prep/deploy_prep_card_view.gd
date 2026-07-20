@@ -89,6 +89,7 @@ func _build_nodes(tab_id: StringName) -> void:
 	summary_label = _add_label("CardSummary", Rect2(176, 43, 296, 35), _summary_text(), 13, Color(0.76, 0.82, 0.76), HORIZONTAL_ALIGNMENT_LEFT)
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	summary_label.clip_text = true
 	_add_chip("CardCategoryChip", Rect2(176, 81, 142, 22), _category_chip_text())
 	_add_chip("CardModeChip", Rect2(326, 81, 148, 22), _mode_chip_text())
 	state_panel = _add_asset_panel("CardStatePanel", Rect2(501, 14, 96, 32), &"slot", &"normal")

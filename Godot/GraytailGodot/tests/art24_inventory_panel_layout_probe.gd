@@ -1,4 +1,4 @@
-extends Node
+extends SceneTree
 
 const InventoryPanelScript := preload("res://scripts/ui/inventory/inventory_panel.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
@@ -14,7 +14,7 @@ const RESOLUTIONS := [
 ]
 
 
-func _ready() -> void:
+func _initialize() -> void:
 	call_deferred("_run")
 
 
@@ -54,8 +54,8 @@ func _run() -> void:
 	panel.free()
 	if failures.is_empty():
 		print("ART24_INVENTORY_PANEL_LAYOUT=PASS resolutions=5 rail=preserved hotbar=reserved")
-		get_tree().quit(0)
+		quit(0)
 		return
 	for failure in failures:
 		push_error(failure)
-	get_tree().quit(2)
+	quit(2)

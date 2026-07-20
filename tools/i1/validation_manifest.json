@@ -1,0 +1,795 @@
+{
+  "schema_version": 1,
+  "suite_id": "I1-V1_unified_headless_baseline",
+  "path_policy": "runtime_parameters",
+  "source_modes": [
+    "worktree",
+    "head"
+  ],
+  "powershell": {
+    "edition": "Desktop",
+    "major": 5,
+    "minimum_version": "5.1"
+  },
+  "godot": {
+    "version": "4.6.3",
+    "project_relative_path": "Godot/GraytailGodot",
+    "toolchain_lock_relative_path": "tools/i0/toolchain.lock.json",
+    "i0_library_relative_path": "tools/i0/i0_test_lib.ps1",
+    "environment_probe_relative_path": "tools/i0/godot_i0_environment_probe.gd",
+    "main_executable": "Godot_v4.6.3-stable_win64.exe",
+    "console_executable": "Godot_v4.6.3-stable_win64_console.exe",
+    "resolution_env_vars": [
+      "I1_GODOT_EXE",
+      "GODOT4",
+      "GODOT_EXE"
+    ],
+    "path_command_names": [
+      "Godot_v4.6.3-stable_win64_console.exe",
+      "godot4.exe",
+      "godot.exe"
+    ],
+    "version_regex": "^4\\.6\\.3\\.stable\\.official\\.7d41c59c4$"
+  },
+  "mirror": {
+    "run_root_relative_path": ".tmp/i1",
+    "worktree_directory": "worktree",
+    "excluded_directory_names": [
+      ".git",
+      ".godot",
+      ".tmp",
+      "__pycache__",
+      "reports",
+      "runtimes"
+    ],
+    "forbidden_relative_paths": [
+      ".tmp",
+      "reports",
+      "tools/runtimes"
+    ]
+  },
+  "business_roots": [
+    "Godot/GraytailGodot",
+    "tools"
+  ],
+  "i0_manifest_relative_path": "tools/i0/validation_manifest.json",
+  "i0_required_runner_ids": [
+    "G37_COMMAND_SEQUENCE",
+    "G39_NAVIGATION_BOUNDARY",
+    "I04_RUN_SCENE_CONTRACT",
+    "I04_ART21R2_NO_FLAGS",
+    "I04_ART21R2_MODAL",
+    "I04_ART21R2_FULL_MAP",
+    "I04_ART21R2_SPARSE_MAP",
+    "M2_LUA_UE_EFFECT_FIRST_LOOP",
+    "M3_MINIMUM_ITEM_DROP_LOOP",
+    "M3H_ITEM_LOOP_HARDENING",
+    "M3R_ITEM_USABILITY_COMPLETION",
+    "M5_ITEM_DROP_LOOP_FULL_CONTENT"
+  ],
+  "required_runner_ids": [
+    "G37_COMMAND_SEQUENCE",
+    "G39_NAVIGATION_BOUNDARY",
+    "I04_RUN_SCENE_CONTRACT",
+    "I04_ART21R2_NO_FLAGS",
+    "I04_ART21R2_MODAL",
+    "I04_ART21R2_FULL_MAP",
+    "I04_ART21R2_SPARSE_MAP",
+    "M2_LUA_UE_EFFECT_FIRST_LOOP",
+    "M3_MINIMUM_ITEM_DROP_LOOP",
+    "M3H_ITEM_LOOP_HARDENING",
+    "M3R_ITEM_USABILITY_COMPLETION",
+    "M5_ITEM_DROP_LOOP_FULL_CONTENT",
+    "M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP",
+    "G41_IN_RUN_CORE_GAMEPLAY_RUNTIME",
+    "M7_CONTENT_RUNTIME",
+    "M7_META_UI_RUNTIME",
+    "I1_RUNTIME_SAFETY",
+    "I1_SAVE_RELIABILITY",
+    "I1_TERMINAL_AUTHORITY",
+    "I1_REFRESH_SCOPE",
+    "I1_COMBAT_REFRESH",
+    "I1_STATE_AUTHORITY",
+    "I1_ANIMATION_RUNTIME",
+    "I1_COMMAND_MODULE",
+    "I1_UI_INTERACTION",
+    "I1_PROJECT_METADATA",
+    "ART21_MAIN_MENU_RUNTIME",
+    "ART22_DEPLOY_PREP_RUNTIME",
+    "ART22_DEPLOY_PREP_MAIN_ROUTE",
+    "ART23_LONG_TERM_RUNTIME",
+    "ART23_LONG_TERM_MAIN_ROUTE",
+    "ART24_IN_RUN_RUNTIME",
+    "ART24_RUN_SURFACE_LAYER_ROUTING",
+    "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
+    "ART24_MAP_OVERLAY_LAYOUT",
+    "ART24_CONTEXT_ANCHOR_INTEGRATION",
+    "ART24_INVENTORY_PANEL_LAYOUT",
+    "ART24_MAP_OVERLAY_SCENE",
+    "ART24_RESULT_PANEL_SCENE"
+  ],
+  "profiles": {
+    "preflight": {
+      "description": "Manifest, mirror, locked toolchain, import, and environment isolation only.",
+      "runner_ids": []
+    },
+    "quick": {
+      "description": "Short cross-layer smoke for core, meta, routes, and the current in-run surface.",
+      "runner_ids": [
+        "G37_COMMAND_SEQUENCE",
+        "G39_NAVIGATION_BOUNDARY",
+        "I04_RUN_SCENE_CONTRACT",
+        "M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP",
+        "G41_IN_RUN_CORE_GAMEPLAY_RUNTIME",
+        "M7_CONTENT_RUNTIME",
+        "M7_META_UI_RUNTIME",
+        "I1_RUNTIME_SAFETY",
+        "I1_SAVE_RELIABILITY",
+        "I1_TERMINAL_AUTHORITY",
+        "I1_REFRESH_SCOPE",
+        "I1_STATE_AUTHORITY",
+        "I1_ANIMATION_RUNTIME",
+        "I1_COMMAND_MODULE",
+        "I1_UI_INTERACTION",
+        "I1_PROJECT_METADATA",
+        "ART21_MAIN_MENU_RUNTIME",
+        "ART22_DEPLOY_PREP_MAIN_ROUTE",
+        "ART23_LONG_TERM_MAIN_ROUTE",
+        "ART24_IN_RUN_RUNTIME",
+        "ART24_CONTEXT_ANCHOR_INTEGRATION"
+      ]
+    },
+    "core": {
+      "description": "All I0 characterization cases plus M6, G41, and M7 content/meta runtime gates.",
+      "runner_ids": [
+        "G37_COMMAND_SEQUENCE",
+        "G39_NAVIGATION_BOUNDARY",
+        "I04_RUN_SCENE_CONTRACT",
+        "I04_ART21R2_NO_FLAGS",
+        "I04_ART21R2_MODAL",
+        "I04_ART21R2_FULL_MAP",
+        "I04_ART21R2_SPARSE_MAP",
+        "M2_LUA_UE_EFFECT_FIRST_LOOP",
+        "M3_MINIMUM_ITEM_DROP_LOOP",
+        "M3H_ITEM_LOOP_HARDENING",
+        "M3R_ITEM_USABILITY_COMPLETION",
+        "M5_ITEM_DROP_LOOP_FULL_CONTENT",
+        "M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP",
+        "G41_IN_RUN_CORE_GAMEPLAY_RUNTIME",
+        "M7_CONTENT_RUNTIME",
+        "M7_META_UI_RUNTIME",
+        "I1_RUNTIME_SAFETY",
+        "I1_SAVE_RELIABILITY",
+        "I1_TERMINAL_AUTHORITY",
+        "I1_REFRESH_SCOPE",
+        "I1_COMBAT_REFRESH",
+        "I1_STATE_AUTHORITY",
+        "I1_COMMAND_MODULE",
+        "I1_PROJECT_METADATA"
+      ]
+    },
+    "ui": {
+      "description": "Headless UI routes, runtime contracts, and deterministic ART24 layout probes.",
+      "runner_ids": [
+        "G39_NAVIGATION_BOUNDARY",
+        "I04_RUN_SCENE_CONTRACT",
+        "I04_ART21R2_NO_FLAGS",
+        "I04_ART21R2_MODAL",
+        "I04_ART21R2_FULL_MAP",
+        "I04_ART21R2_SPARSE_MAP",
+        "M7_META_UI_RUNTIME",
+        "I1_REFRESH_SCOPE",
+        "I1_ANIMATION_RUNTIME",
+        "I1_UI_INTERACTION",
+        "ART21_MAIN_MENU_RUNTIME",
+        "ART22_DEPLOY_PREP_RUNTIME",
+        "ART22_DEPLOY_PREP_MAIN_ROUTE",
+        "ART23_LONG_TERM_RUNTIME",
+        "ART23_LONG_TERM_MAIN_ROUTE",
+        "ART24_IN_RUN_RUNTIME",
+        "ART24_RUN_SURFACE_LAYER_ROUTING",
+        "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
+        "ART24_MAP_OVERLAY_LAYOUT",
+        "ART24_CONTEXT_ANCHOR_INTEGRATION",
+        "ART24_INVENTORY_PANEL_LAYOUT",
+        "ART24_MAP_OVERLAY_SCENE",
+        "ART24_RESULT_PANEL_SCENE"
+      ]
+    },
+    "full": {
+      "description": "Every registered blocking I1-V1 headless runner.",
+      "runner_ids": [
+        "G37_COMMAND_SEQUENCE",
+        "G39_NAVIGATION_BOUNDARY",
+        "I04_RUN_SCENE_CONTRACT",
+        "I04_ART21R2_NO_FLAGS",
+        "I04_ART21R2_MODAL",
+        "I04_ART21R2_FULL_MAP",
+        "I04_ART21R2_SPARSE_MAP",
+        "M2_LUA_UE_EFFECT_FIRST_LOOP",
+        "M3_MINIMUM_ITEM_DROP_LOOP",
+        "M3H_ITEM_LOOP_HARDENING",
+        "M3R_ITEM_USABILITY_COMPLETION",
+        "M5_ITEM_DROP_LOOP_FULL_CONTENT",
+        "M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP",
+        "G41_IN_RUN_CORE_GAMEPLAY_RUNTIME",
+        "M7_CONTENT_RUNTIME",
+        "M7_META_UI_RUNTIME",
+        "I1_RUNTIME_SAFETY",
+        "I1_SAVE_RELIABILITY",
+        "I1_TERMINAL_AUTHORITY",
+        "I1_REFRESH_SCOPE",
+        "I1_COMBAT_REFRESH",
+        "I1_STATE_AUTHORITY",
+        "I1_ANIMATION_RUNTIME",
+        "I1_COMMAND_MODULE",
+        "I1_UI_INTERACTION",
+        "I1_PROJECT_METADATA",
+        "ART21_MAIN_MENU_RUNTIME",
+        "ART22_DEPLOY_PREP_RUNTIME",
+        "ART22_DEPLOY_PREP_MAIN_ROUTE",
+        "ART23_LONG_TERM_RUNTIME",
+        "ART23_LONG_TERM_MAIN_ROUTE",
+        "ART24_IN_RUN_RUNTIME",
+        "ART24_RUN_SURFACE_LAYER_ROUTING",
+        "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
+        "ART24_MAP_OVERLAY_LAYOUT",
+        "ART24_CONTEXT_ANCHOR_INTEGRATION",
+        "ART24_INVENTORY_PANEL_LAYOUT",
+        "ART24_MAP_OVERLAY_SCENE",
+        "ART24_RESULT_PANEL_SCENE"
+      ]
+    }
+  },
+  "inventory": {
+    "sources": [
+      {
+        "root": "tools",
+        "recurse": false,
+        "file_name_regex": "^godot_.*_runner\\.gd$"
+      },
+      {
+        "root": "Godot/GraytailGodot/tests",
+        "recurse": false,
+        "file_name_regex": ".*_(runner|probe)\\.gd$"
+      }
+    ]
+  },
+  "exclusions": [
+    {
+      "id": "ART21_MAIN_MENU_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/art21_main_menu_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Writes visual evidence and requires image review; I1-V1 is headless behavioral validation only."
+    },
+    {
+      "id": "ART22_DEPLOY_PREP_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/art22_deploy_prep_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Writes visual evidence and requires image review."
+    },
+    {
+      "id": "ART22_DEPLOY_PREP_MATRIX_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/art22_deploy_prep_matrix_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Matrix capture is a visual acceptance workflow, not a headless PASS gate."
+    },
+    {
+      "id": "ART23_LONG_TERM_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/art23_long_term_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Writes visual evidence and requires image review."
+    },
+    {
+      "id": "ART23_LONG_TERM_MATRIX_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/art23_long_term_matrix_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Matrix capture is a visual acceptance workflow, not a headless PASS gate."
+    },
+    {
+      "id": "ART24_IN_RUN_ART_PREVIEW",
+      "relative_path": "Godot/GraytailGodot/tests/art24_in_run_art_preview_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Preview capture produces review artifacts and is not self-verifying."
+    },
+    {
+      "id": "ART24_IN_RUN_MATRIX_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/art24_in_run_matrix_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Matrix capture produces review artifacts and is not self-verifying."
+    },
+    {
+      "id": "ART25_PRODUCTION_VISUAL_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/art25_production_visual_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "ART25 capture is outside the explicitly requested ART24 I1-V1 runtime slice."
+    },
+    {
+      "id": "I1_PRODUCTION_PREVIEW_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/i1_production_preview_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Generates production-scene PNG evidence for rapid review; a successful capture is not automated visual acceptance."
+    },
+    {
+      "id": "M7_13X13_VISIBILITY_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/m7_13x13_visibility_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Visibility capture requires human image review and must not be reported as automated PASS."
+    },
+    {
+      "id": "M7_META_VISIBILITY_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/m7_meta_visibility_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Visibility capture requires human image review and must not be reported as automated PASS."
+    },
+    {
+      "id": "I1_PERFORMANCE_BASELINE",
+      "relative_path": null,
+      "category": "performance",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "I1_COMBAT_REFRESH is a registered blocking microbenchmark; broader production performance acceptance has no approved workload or threshold and cannot silently pass."
+    },
+    {
+      "id": "I1_VISIBLE_INTERACTION_ACCEPTANCE",
+      "relative_path": null,
+      "category": "visible",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Mouse feel, animation feel, and visible-computer-use acceptance require a separate operator workflow."
+    }
+  ],
+  "runners": [
+    {
+      "id": "G37_COMMAND_SEQUENCE",
+      "relative_path": "tools/godot_g37_command_sequence_runner.gd",
+      "pass_marker": "G37_COMMAND_SEQUENCE_REGRESSION=PASS",
+      "fail_marker": "G37_COMMAND_SEQUENCE_REGRESSION=FAIL",
+      "coverage": ["command", "runtime", "extraction"]
+    },
+    {
+      "id": "G39_NAVIGATION_BOUNDARY",
+      "relative_path": "tools/godot_g39_navigation_boundary_runner.gd",
+      "pass_marker": "G39_NAVIGATION_BOUNDARY=PASS",
+      "fail_marker": "G39_NAVIGATION_BOUNDARY=FAIL",
+      "coverage": ["ui", "navigation", "abandon"]
+    },
+    {
+      "id": "I04_RUN_SCENE_CONTRACT",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_RUN_SCENE_CONTRACT=PASS",
+      "fail_marker": "I04_RUN_SCENE_CONTRACT=FAIL",
+      "coverage": ["scene", "signals", "input", "modal"]
+    },
+    {
+      "id": "I04_ART21R2_NO_FLAGS",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_ART21R2_NO_FLAGS=PASS",
+      "fail_marker": "I04_ART21R2_NO_FLAGS=FAIL",
+      "user_args": ["--i04-case=no_flags"],
+      "coverage": ["scene", "debug_gate", "negative_smoke"]
+    },
+    {
+      "id": "I04_ART21R2_MODAL",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_ART21R2_MODAL=PASS",
+      "fail_marker": "I04_ART21R2_MODAL=FAIL",
+      "user_args": ["--i04-case=modal", "--art21r2-seed-modal-items"],
+      "coverage": ["scene", "modal", "seeded_smoke"]
+    },
+    {
+      "id": "I04_ART21R2_FULL_MAP",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_ART21R2_FULL_MAP=PASS",
+      "fail_marker": "I04_ART21R2_FULL_MAP=FAIL",
+      "user_args": ["--i04-case=full_map", "--art21r2-seed-map-markers"],
+      "coverage": ["scene", "map", "seeded_smoke"]
+    },
+    {
+      "id": "I04_ART21R2_SPARSE_MAP",
+      "relative_path": "tools/godot_i04_run_scene_contract_runner.gd",
+      "pass_marker": "I04_ART21R2_SPARSE_MAP=PASS",
+      "fail_marker": "I04_ART21R2_SPARSE_MAP=FAIL",
+      "user_args": ["--i04-case=sparse_map", "--art21r2-seed-map-sparse-markers"],
+      "coverage": ["scene", "map", "seeded_smoke"]
+    },
+    {
+      "id": "M2_LUA_UE_EFFECT_FIRST_LOOP",
+      "relative_path": "tools/godot_m2_lua_ue_effect_first_runner.gd",
+      "pass_marker": "M2_LUA_UE_EFFECT_FIRST_LOOP=PASS",
+      "fail_marker": "M2_LUA_UE_EFFECT_FIRST_LOOP=FAIL",
+      "coverage": ["rules", "effects", "parity"]
+    },
+    {
+      "id": "M3_MINIMUM_ITEM_DROP_LOOP",
+      "relative_path": "tools/godot_m3_minimum_item_drop_loop_runner.gd",
+      "pass_marker": "M3_MINIMUM_ITEM_DROP_LOOP=PASS",
+      "fail_marker": "M3_MINIMUM_ITEM_DROP_LOOP=FAIL",
+      "coverage": ["items", "drop_loop", "settlement"]
+    },
+    {
+      "id": "M3H_ITEM_LOOP_HARDENING",
+      "relative_path": "tools/godot_m3h_item_loop_hardening_runner.gd",
+      "pass_marker": "M3H_ITEM_LOOP_HARDENING=PASS",
+      "fail_marker": "M3H_ITEM_LOOP_HARDENING=FAIL",
+      "coverage": ["items", "hardening", "abandon"]
+    },
+    {
+      "id": "M3R_ITEM_USABILITY_COMPLETION",
+      "relative_path": "tools/godot_m3r_item_usability_completion_runner.gd",
+      "pass_marker": "M3R_ITEM_USABILITY_COMPLETION=PASS",
+      "fail_marker": "M3R_ITEM_USABILITY_COMPLETION=FAIL",
+      "coverage": ["items", "warehouse", "loadout"]
+    },
+    {
+      "id": "M5_ITEM_DROP_LOOP_FULL_CONTENT",
+      "relative_path": "tools/godot_m5_item_drop_loop_full_content_runner.gd",
+      "pass_marker": "M5_ITEM_DROP_LOOP_FULL_CONTENT=PASS",
+      "fail_marker": "M5_ITEM_DROP_LOOP_FULL_CONTENT=FAIL",
+      "coverage": ["items", "content", "ground_loot"]
+    },
+    {
+      "id": "M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP",
+      "relative_path": "tools/godot_m6_real_asset_deploy_settlement_loop_runner.gd",
+      "pass_marker": "M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP=PASS",
+      "fail_marker": "M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP=FAIL",
+      "coverage": ["assets", "deploy", "settlement"]
+    },
+    {
+      "id": "G41_IN_RUN_CORE_GAMEPLAY_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/g41_in_run_core_gameplay_runtime_runner.gd",
+      "pass_marker": "G41_IN_RUN_CORE_GAMEPLAY_RUNTIME=PASS fixed_hz=60 outer_schedules=30,60,144,hitch monsters=slime,slimeling,bat,drone visual_contract=v1",
+      "fail_marker": "G41_IN_RUN_CORE_GAMEPLAY_RUNTIME=FAIL",
+      "timeout_seconds": 360,
+      "coverage": ["combat", "determinism", "lifecycle", "performance_schedule"]
+    },
+    {
+      "id": "M7_CONTENT_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/m7_content_runtime_runner.gd",
+      "pass_marker": "M7_CONTENT_RUNTIME:PASS maps=8 seeds_per_map=100 transactions=PASS progression=PASS",
+      "fail_marker": "M7_CONTENT_RUNTIME:FAIL",
+      "timeout_seconds": 300,
+      "coverage": ["content", "transactions", "progression"]
+    },
+    {
+      "id": "M7_META_UI_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/m7_meta_ui_runtime_runner.gd",
+      "pass_marker": "M7_META_UI_RUNTIME:PASS long_term=PASS deploy_refresh=PASS sale_confirm=PASS map_fact=PASS",
+      "fail_marker": "M7_META_UI_RUNTIME:FAIL",
+      "coverage": ["meta", "ui_model", "transactions"]
+    },
+    {
+      "id": "I1_RUNTIME_SAFETY",
+      "relative_path": "Godot/GraytailGodot/tests/i1_runtime_safety_runner.gd",
+      "pass_marker": "I1_RUNTIME_SAFETY=PASS",
+      "fail_marker": "I1_RUNTIME_SAFETY=FAIL",
+      "coverage": ["state_machine", "runtime", "invariants"]
+    },
+    {
+      "id": "I1_SAVE_RELIABILITY",
+      "relative_path": "Godot/GraytailGodot/tests/i1_save_reliability_runner.gd",
+      "pass_marker": "I1_SAVE_RELIABILITY=PASS atomic_replace=PASS backup_recovery=PASS future_schema=PASS",
+      "fail_marker": "I1_SAVE_RELIABILITY=FAIL",
+      "coverage": ["save", "atomic_replace", "recovery", "schema"]
+    },
+    {
+      "id": "I1_TERMINAL_AUTHORITY",
+      "relative_path": "Godot/GraytailGodot/tests/i1_terminal_authority_runner.gd",
+      "pass_marker": "I1_TERMINAL_AUTHORITY=PASS no_ui_commit=PASS exactly_once=PASS pending_failure=PASS",
+      "fail_marker": "I1_TERMINAL_AUTHORITY=FAIL",
+      "coverage": ["terminal_state", "persistence", "exactly_once"]
+    },
+    {
+      "id": "I1_REFRESH_SCOPE",
+      "relative_path": "Godot/GraytailGodot/tests/i1_refresh_scope_runner.gd",
+      "pass_marker": "I1_REFRESH_SCOPE=PASS",
+      "fail_marker": "I1_REFRESH_SCOPE=FAIL",
+      "coverage": ["ui", "refresh_scope", "hidden_page_cache"]
+    },
+    {
+      "id": "I1_COMBAT_REFRESH",
+      "relative_path": "Godot/GraytailGodot/tests/i1_combat_refresh_runner.gd",
+      "pass_marker": "I1_COMBAT_REFRESH=PASS",
+      "fail_marker": "I1_COMBAT_REFRESH=FAIL",
+      "timeout_seconds": 300,
+      "coverage": ["combat", "refresh_scope", "performance_microbenchmark"]
+    },
+    {
+      "id": "I1_STATE_AUTHORITY",
+      "relative_path": "Godot/GraytailGodot/tests/i1_state_authority_runner.gd",
+      "pass_marker": "I1_STATE_AUTHORITY=PASS",
+      "fail_marker": "I1_STATE_AUTHORITY=FAIL",
+      "coverage": ["state_machine", "transition_authority", "terminal_state"]
+    },
+    {
+      "id": "I1_ANIMATION_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/i1_animation_runtime_runner.gd",
+      "pass_marker": "I1_ANIMATION_RUNTIME=PASS",
+      "fail_marker": "I1_ANIMATION_RUNTIME=FAIL",
+      "coverage": ["animation", "texture_cache", "reduced_motion"]
+    },
+    {
+      "id": "I1_COMMAND_MODULE",
+      "relative_path": "Godot/GraytailGodot/tests/i1_command_module_runner.gd",
+      "pass_marker": "I1_COMMAND_MODULE=PASS",
+      "fail_marker": "I1_COMMAND_MODULE=FAIL",
+      "coverage": ["command", "module_boundary", "normalization"]
+    },
+    {
+      "id": "I1_PROJECT_METADATA",
+      "relative_path": "Godot/GraytailGodot/tests/i1_project_metadata_runner.gd",
+      "pass_marker": "I1_PROJECT_METADATA=PASS",
+      "fail_marker": "I1_PROJECT_METADATA=FAIL",
+      "coverage": ["project_metadata", "autoload", "runtime_authority"]
+    },
+    {
+      "id": "I1_UI_INTERACTION",
+      "relative_path": "Godot/GraytailGodot/tests/i1_ui_interaction_runner.gd",
+      "pass_marker": "I1_UI_INTERACTION=PASS",
+      "fail_marker": "I1_UI_INTERACTION=FAIL",
+      "coverage": ["ui", "interaction", "focus", "resolution_matrix"]
+    },
+    {
+      "id": "ART21_MAIN_MENU_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/art21_main_menu_runtime_runner.gd",
+      "pass_marker": "ART21_MAIN_MENU_RUNTIME=PASS entries=4 overlays=2 transitions=2 shortcuts=2 motion_groups=10",
+      "fail_marker": "ART21_MAIN_MENU_RUNTIME=FAIL",
+      "coverage": ["main_menu", "transitions", "motion"]
+    },
+    {
+      "id": "ART22_DEPLOY_PREP_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/art22_deploy_prep_runtime_runner.gd",
+      "pass_marker": "ART22_DEPLOY_PREP_RUNTIME=PASS tabs=5 secondary_states=34 summary_pages=4 states=expanded,collapsed,active_run,cancel_modal character_frames=8 ambient_tracks=10",
+      "fail_marker": "ART22_DEPLOY_PREP_RUNTIME=FAIL",
+      "coverage": ["deploy_prep", "layout", "state"]
+    },
+    {
+      "id": "ART22_DEPLOY_PREP_MAIN_ROUTE",
+      "relative_path": "Godot/GraytailGodot/tests/art22_deploy_prep_main_route_runner.gd",
+      "pass_marker": "ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy shell=DeployPrepShell",
+      "fail_marker": "ART22_DEPLOY_PREP_MAIN_ROUTE=FAIL",
+      "coverage": ["main_route", "deploy_prep"]
+    },
+    {
+      "id": "ART23_LONG_TERM_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/art23_long_term_runtime_runner.gd",
+      "pass_marker": "ART23_LONG_TERM_RUNTIME=PASS primary_modules=6 secondary_pages=27 character_frames=8 states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING",
+      "fail_marker": "ART23_LONG_TERM_RUNTIME=FAIL",
+      "coverage": ["long_term", "layout", "state"]
+    },
+    {
+      "id": "ART23_LONG_TERM_MAIN_ROUTE",
+      "relative_path": "Godot/GraytailGodot/tests/art23_long_term_main_route_runner.gd",
+      "pass_marker": "ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=6",
+      "fail_marker": "ART23_LONG_TERM_MAIN_ROUTE=FAIL",
+      "coverage": ["main_route", "long_term"]
+    },
+    {
+      "id": "ART24_IN_RUN_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/art24_in_run_runtime_runner.gd",
+      "pass_marker": "ART24_IN_RUN_RUNTIME=PASS primary_modules=8 secondary_states=61 required_visual_keys=33",
+      "fail_marker": "ART24_IN_RUN_RUNTIME=FAIL",
+      "timeout_seconds": 300,
+      "coverage": ["in_run", "state_catalog", "visual_contract"]
+    },
+    {
+      "id": "ART24_RUN_SURFACE_LAYER_ROUTING",
+      "relative_path": "Godot/GraytailGodot/tests/art24_run_surface_layout_probe.gd",
+      "pass_marker": "ART24_RUN_SURFACE_LAYER_ROUTING=PASS bottom_skin_and_buttons=action_root",
+      "fail_marker": "ART24_RUN_SURFACE_LAYER_ROUTING=FAIL",
+      "coverage": ["layout", "layer_routing"]
+    },
+    {
+      "id": "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
+      "relative_path": "Godot/GraytailGodot/tests/art24_world_context_popup_layout_probe.gd",
+      "pass_marker": "ART24_WORLD_CONTEXT_POPUP_LAYOUT=PASS",
+      "pass_line_regex": "^ART24_WORLD_CONTEXT_POPUP_LAYOUT=PASS closed_chest=\\([^\\r\\n]+\\) ground_loot_target_clear$",
+      "fail_marker": "ART24_WORLD_CONTEXT_POPUP_LAYOUT=FAIL",
+      "coverage": ["layout", "world_context", "safe_area"]
+    },
+    {
+      "id": "ART24_MAP_OVERLAY_LAYOUT",
+      "relative_path": "Godot/GraytailGodot/tests/art24_map_overlay_layout_probe.gd",
+      "pass_marker": "ART24_MAP_OVERLAY_LAYOUT=PASS resolutions=5 cells=100 safe_bottom=reserved",
+      "fail_marker": "ART24_MAP_OVERLAY_LAYOUT=FAIL",
+      "coverage": ["layout", "map_overlay", "resolution_matrix"]
+    },
+    {
+      "id": "ART24_CONTEXT_ANCHOR_INTEGRATION",
+      "relative_path": "Godot/GraytailGodot/tests/art24_context_anchor_integration_probe.gd",
+      "pass_marker": "ART24_CONTEXT_ANCHOR_INTEGRATION=PASS room=scaled overlay=unscaled target_clear",
+      "fail_marker": "ART24_CONTEXT_ANCHOR_INTEGRATION=FAIL",
+      "coverage": ["layout", "integration", "anchor"]
+    },
+    {
+      "id": "ART24_INVENTORY_PANEL_LAYOUT",
+      "relative_path": "Godot/GraytailGodot/tests/art24_inventory_panel_layout_probe.gd",
+      "pass_marker": "ART24_INVENTORY_PANEL_LAYOUT=PASS resolutions=5 rail=preserved hotbar=reserved",
+      "fail_marker": "ART24_INVENTORY_PANEL_LAYOUT=FAIL",
+      "coverage": ["layout", "inventory", "resolution_matrix"]
+    },
+    {
+      "id": "ART24_MAP_OVERLAY_SCENE",
+      "relative_path": "Godot/GraytailGodot/tests/art24_map_overlay_scene_probe.gd",
+      "pass_marker": "ART24_MAP_OVERLAY_SCENE=PASS resolutions=5 states=overview,selected controls=inside_panel toggle=m_close",
+      "fail_marker": "ART24_MAP_OVERLAY_SCENE=FAIL",
+      "coverage": ["layout", "map_overlay", "interaction"]
+    },
+    {
+      "id": "ART24_RESULT_PANEL_SCENE",
+      "relative_path": "Godot/GraytailGodot/tests/art24_result_panel_scene_probe.gd",
+      "pass_marker": "ART24_RESULT_PANEL_SCENE=PASS resolutions=5 states=success,failure_empty,failure_pending,failure_selected,failure_capacity_blocked,failure_final,abandon",
+      "fail_marker": "ART24_RESULT_PANEL_SCENE=FAIL",
+      "coverage": ["layout", "result_panel", "state_matrix"]
+    }
+  ],
+  "diagnostics": {
+    "expected_cleanup_diagnostics_by_gate": {
+      "editor_bootstrap": [],
+      "environment_isolation": []
+    },
+    "expected_cleanup_diagnostics_by_runner": {
+      "G37_COMMAND_SEQUENCE": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "G39_NAVIGATION_BOUNDARY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I04_RUN_SCENE_CONTRACT": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I04_ART21R2_NO_FLAGS": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I04_ART21R2_MODAL": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I04_ART21R2_FULL_MAP": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I04_ART21R2_SPARSE_MAP": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "M2_LUA_UE_EFFECT_FIRST_LOOP": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "M3_MINIMUM_ITEM_DROP_LOOP": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "M3H_ITEM_LOOP_HARDENING": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "M3R_ITEM_USABILITY_COMPLETION": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "M5_ITEM_DROP_LOOP_FULL_CONTENT": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "G41_IN_RUN_CORE_GAMEPLAY_RUNTIME": [],
+      "M7_CONTENT_RUNTIME": [],
+      "M7_META_UI_RUNTIME": [],
+      "I1_RUNTIME_SAFETY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I1_SAVE_RELIABILITY": [],
+      "I1_TERMINAL_AUTHORITY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I1_REFRESH_SCOPE": [],
+      "I1_COMBAT_REFRESH": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 21 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I1_STATE_AUTHORITY": [],
+      "I1_ANIMATION_RUNTIME": [],
+      "I1_COMMAND_MODULE": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 16 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I1_UI_INTERACTION": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I1_PROJECT_METADATA": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 7 resources still in use at exit (run with --verbose for details)."
+      ],
+      "ART21_MAIN_MENU_RUNTIME": [],
+      "ART22_DEPLOY_PREP_RUNTIME": [],
+      "ART22_DEPLOY_PREP_MAIN_ROUTE": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
+      "ART23_LONG_TERM_RUNTIME": [],
+      "ART23_LONG_TERM_MAIN_ROUTE": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
+      "ART24_IN_RUN_RUNTIME": [],
+      "ART24_RUN_SURFACE_LAYER_ROUTING": [],
+      "ART24_WORLD_CONTEXT_POPUP_LAYOUT": [],
+      "ART24_MAP_OVERLAY_LAYOUT": [],
+      "ART24_CONTEXT_ANCHOR_INTEGRATION": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "ART24_INVENTORY_PANEL_LAYOUT": [],
+      "ART24_MAP_OVERLAY_SCENE": [],
+      "ART24_RESULT_PANEL_SCENE": []
+    },
+    "preview_capture_expected_cleanup_diagnostics_by_scene": {
+      "main_menu": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
+      "deploy": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
+      "long_term": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
+      "run": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "combat": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 20 resources still in use at exit (run with --verbose for details)."
+      ],
+      "inventory": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "map": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "result_success": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "result_failure": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ]
+    }
+  },
+  "timeouts_seconds": {
+    "mirror_copy": 600,
+    "static_validation": 120,
+    "engine_version": 30,
+    "editor_bootstrap": 240,
+    "environment_probe": 120,
+    "runner": 180,
+    "git_probe": 30
+  }
+}

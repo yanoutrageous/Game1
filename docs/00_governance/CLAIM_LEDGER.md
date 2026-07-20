@@ -1,6 +1,6 @@
 ﻿# Claim Ledger
 
-文档状态补充：下表是 P2 时间点声明台账；当前声明权威已由 I0 的 `CURRENT_STATE.md`、`CAPABILITY_MATRIX.yaml`、assessment 和 validation 链取代。旧 hash 不回写。
+文档状态补充：下表是 P2 时间点声明台账；当前声明权威已由 I1 的 `CURRENT_STATE.md`、`CAPABILITY_MATRIX.yaml`、assessment、contract 和 validation 链取代。旧 hash 不回写。I1 worktree acceptance 可以登记为 scoped PASS，但 committed HEAD 与 Git 交付仍 pending，阶段不得登记为 closed。
 
 文档状态：声明台账
 适用范围：P2 后当前声明、来源、哈希与确认状态

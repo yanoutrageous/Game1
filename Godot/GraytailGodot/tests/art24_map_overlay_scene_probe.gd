@@ -1,4 +1,4 @@
-extends Node
+extends SceneTree
 
 const MapOverlayScene := preload("res://scenes/ui/map_overlay/map_overlay_panel.tscn")
 const MiniMapViewModelScript := preload("res://scripts/ui/minimap/minimap_view_model.gd")
@@ -13,7 +13,7 @@ const RESOLUTIONS := [
 ]
 
 
-func _ready() -> void:
+func _initialize() -> void:
 	call_deferred("_run")
 
 
@@ -23,10 +23,10 @@ func _run() -> void:
 		var profile: Dictionary = UILayoutProfileScript.profile_for_resolution(resolution_id)
 		var viewport_size: Vector2i = profile.get("supported_size", Vector2i(1280, 720))
 		profile["actual_viewport_size"] = viewport_size
-		get_window().size = viewport_size
+		root.size = viewport_size
 		var canvas := Control.new()
 		canvas.size = viewport_size
-		get_window().add_child(canvas)
+		root.add_child(canvas)
 		var overlay := MapOverlayScene.instantiate() as MapOverlayPanel
 		canvas.add_child(overlay)
 		overlay.apply_layout_profile(profile)
@@ -58,12 +58,12 @@ func _run() -> void:
 		await _frames(2)
 	if failures.is_empty():
 		print("ART24_MAP_OVERLAY_SCENE=PASS resolutions=5 states=overview,selected controls=inside_panel toggle=m_close")
-		get_tree().quit(0)
+		quit(0)
 	else:
 		for failure in failures:
 			push_error(failure)
 		print("ART24_MAP_OVERLAY_SCENE=FAIL failures=%d" % failures.size())
-		get_tree().quit(2)
+		quit(2)
 
 
 func _assert_controls_inside_panel(overlay: MapOverlayPanel, state_id: StringName, viewport_size: Vector2i, failures: Array[String]) -> void:
@@ -121,4 +121,4 @@ func _full_map_model() -> MiniMapViewModel:
 
 func _frames(count: int) -> void:
 	for _index in range(count):
-		await get_tree().process_frame
+		await process_frame

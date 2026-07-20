@@ -6,6 +6,7 @@ class_name RunContext
 # UI reads ViewModels/snapshots, never TruthMap directly.
 
 const RunTextCatalogScript := preload("res://scripts/core/run/run_text_catalog.gd")
+const RUN_STATE_MACHINE_PATH := "res://scripts/core/run/run_state_machine.gd"
 
 var run_id: StringName = &""
 var mode: StringName = &""
@@ -85,10 +86,13 @@ var active_talent_effects: Array = []
 
 
 func reset() -> void:
+	_new_lifecycle_authority().reset_context(self)
+
+
+func _reset_data() -> void:
 	run_id = &""
 	mode = &""
 	seed_value = 0
-	phase = &"idle"
 	turn = 0
 	truth_map = null
 	intel_map = null
@@ -162,15 +166,18 @@ func reset() -> void:
 
 
 func start_run(config: Dictionary) -> void:
+	_new_lifecycle_authority().start_run(self, config)
+
+
+func _initialize_run(config: Dictionary) -> void:
 	var command_before_reset := active_command.duplicate(true)
-	reset()
+	_reset_data()
 	active_command = command_before_reset
 	var run_template_id := String(config.get("id", &"run"))
 	run_instance_sequence += 1
 	run_id = StringName("%s_%d_%d" % [run_template_id, Time.get_ticks_msec(), run_instance_sequence])
 	mode = StringName(config.get("mode", &"standard"))
 	seed_value = int(config.get("seed", 1001))
-	phase = &"running"
 	run_event_log = RunEventLog.new()
 	transaction_log = RunTransactionLog.new()
 	rule_pipeline = RunRulePipeline.new()
@@ -286,13 +293,16 @@ func has_blocking_tutorial_popup() -> bool:
 
 
 func fail_run(reason: String) -> void:
+	_new_lifecycle_authority().fail_run(self, reason)
+
+
+func _apply_failure(reason: String) -> void:
 	record_event(RunEventLog.EVENT_RUN_FAILED, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"system")), "run_context", {"reason": reason, "position": player_pos})
 	var preview := asset_ledger.build_failure_preview() if asset_ledger != null else {}
 	settlement_result = preview.duplicate(true)
 	failure_salvage = preview.duplicate(true)
 	failed = true
 	run_active = false
-	phase = &"failure_salvage"
 	outcome = "Failed"
 	last_message = "Run failed: %s. Select the items to salvage." % reason
 	result_snapshot = build_result_snapshot()
@@ -300,8 +310,13 @@ func fail_run(reason: String) -> void:
 
 
 func confirm_failure_salvage(selected_instance_ids: Array) -> Dictionary:
-	if phase != &"failure_salvage" or not failed:
-		return {"ok": false, "status": &"not_awaiting_salvage", "reason": "failure_salvage_not_pending"}
+	var result: Dictionary = _new_lifecycle_authority().confirm_failure_salvage(self, selected_instance_ids)
+	if bool(result.get("ok", false)):
+		return result.get("settlement", {}).duplicate(true)
+	return result
+
+
+func _settle_failure_salvage(selected_instance_ids: Array) -> Dictionary:
 	var settlement := RunRuleService.settle_failure(self, selected_instance_ids)
 	if not bool(settlement.get("ok", false)):
 		failure_salvage = settlement.duplicate(true)
@@ -309,22 +324,27 @@ func confirm_failure_salvage(selected_instance_ids: Array) -> Dictionary:
 		return settlement
 	settlement_result = settlement.duplicate(true)
 	failure_salvage = settlement.duplicate(true)
-	phase = &"failed"
 	last_message = "Failure settlement confirmed."
 	record_event(&"failure_salvage_confirmed", String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"player")), "run_context", {"selected_instance_ids": selected_instance_ids.duplicate(true), "selected_weight": settlement.get("selected_salvage_weight", 0)})
-	result_snapshot = build_result_snapshot()
-	result_snapshot["settlement"] = settlement
 	return settlement
 
 
+func _finalize_failure_salvage(settlement: Dictionary) -> void:
+	result_snapshot = build_result_snapshot()
+	result_snapshot["settlement"] = settlement
+
+
 func complete_extract() -> void:
+	_new_lifecycle_authority().complete_extract(self)
+
+
+func _apply_extract() -> void:
 	record_event(RunEventLog.EVENT_EXTRACTION_SUCCESS, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"player")), "command_bus", {"position": player_pos, "exit_id": exit_id})
 	var settlement := RunRuleService.settle_success(self)
 	settlement_result = settlement.duplicate(true)
 	var extracted_pending := int(settlement.get("black_coin_converted", 0))
 	extracted = true
 	run_active = false
-	phase = &"extracted"
 	outcome = "Extracted" if mode != &"tutorial" else "Training Complete"
 	result_snapshot = build_result_snapshot()
 	result_snapshot["extracted_pending_gold"] = extracted_pending
@@ -332,12 +352,15 @@ func complete_extract() -> void:
 
 
 func abandon_run(reason: String = "player_abandoned") -> void:
+	_new_lifecycle_authority().abandon_run(self, reason)
+
+
+func _apply_abandon(reason: String = "player_abandoned") -> void:
 	record_event(&"run_abandoned", String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"player")), "run_context", {"reason": reason, "position": player_pos})
 	var settlement := RunRuleService.settle_abandon(self, reason)
 	settlement_result = settlement.duplicate(true)
 	abandoned = true
 	run_active = false
-	phase = &"abandoned"
 	outcome = "Abandoned"
 	last_message = "Run abandoned: %s." % reason
 	result_snapshot = build_result_snapshot()
@@ -391,6 +414,11 @@ func _query() -> RunQueryFacade:
 	if query_facade == null:
 		query_facade = RunQueryFacade.new()
 	return query_facade
+
+
+func _new_lifecycle_authority():
+	var state_machine_script := load(RUN_STATE_MACHINE_PATH)
+	return state_machine_script.new()
 
 
 func _json_safe(value: Variant) -> Variant:

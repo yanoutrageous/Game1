@@ -1,75 +1,98 @@
 # Current State
 
-文档状态：M7 合并、ART24R2 以验收不通过状态封存后的当前仓库事实；最后更新 2026-07-20。
+文档状态：I1 worktree candidate 已验收、committed HEAD 与 Git 交付待完成的当前仓库事实。
+最后更新：2026-07-20
 
-## 当前基线
-
-```text
-branch: art/art24r2-g41-m6-combat-ui
-program_baseline: ART23 + G41 + M6 + M7
-art_baseline: ART23
-latest_art_attempt: ART24R2 archived after final 24/61 failed audit
-excluded_baseline: ART24 / ART24R1 / ART24R2
-latest_closed_program_stage: M7
-active_successor_stage: not selected
-godot: D:\AGAME1\active\tools\runtimes\godot\4.6.3\godot_v4.6.3-stable_win64_console.exe
-git: resolved from PATH
-```
-
-当前仓库必须由 `git rev-parse --show-toplevel` 解析，历史文档中的旧盘符路径不再具有当前执行权威。ART24R2 已合并 M7 最新程序接口，并按用户指令在 24/61 的最终 Computer Use 结果下结束本阶段；它仍不能作为已验收美术基线，合格美术基线保持 ART23。
-
-## 已完成的程序闭环
-
-- ART21/22/23：主菜单、出发页和长期页的既有美术运行基线。
-- G41：连续房间移动、距离交互、宝箱、地面掉落、拾取/替换/丢弃、固定步长战斗、怪物、逃跑和生命周期清理。
-- M6：仓库真实实例、玩家手动出勤、局内获取与使用、成功/失败/放弃结算、仓库写回和最多 50 条历史记录。
-- 新档初始库存：护目镜、绝缘套、压缩饼两份、胶带卷、扫描针；金色资源为 0。
-- 出勤上限：最多 2 件装备、3 个消耗品实例；基础背包 10，基础失败保全容量 4。
-- 消耗品在所有终局清除；失败由玩家按重量手动确认非消耗品保全；放弃保全容量为 0。
-- 当前进程内可以从局内返回出发页，再继续同一个 `run_id`；确认放弃走真实结算。
-- 所有非唯一实体物品已有搜索、宝箱、战斗、事件或祭坛来源；旅商收据是虚拟记录，唯一占位保持锁定。
-- M7：八档真实地图已实装，包括 7×7 两档、10×10 三档、13×13 普通 / 困难 / 地狱三档；地图、难度和委托贯穿出发、局内、结算与历史。
-- M7：六个本局委托、七段顺序任务、一个失败可选任务、八项成就和三项研究均接入权威事件、奖励与持久化。
-- M7：基地商店、普通藏品单件出售、永久图鉴、五级资历、三组收藏和五类真实红点已实装；抽奖与实际外观继续锁定。
-- ART23 长期页保留六模块容器；目标、图鉴、研究、资历和收藏已有真实状态与分页，全部策划条目可以访问。
-
-## 当前验证事实
+## 当前身份
 
 ```text
-M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP=PASS
-M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_VALIDATION=PASS_WITH_CLEANUP_DIAGNOSTIC
-M7_CONTENT_RUNTIME=PASS maps=8 seeds_per_map=100
-M7_META_UI_RUNTIME=PASS
-M7_13X13_VISIBILITY=PASS sizes=1280x720,1600x900,1920x1080
-M7_META_VISIBILITY=PASS states=deploy_map,goals,research,collection
-ART22_DEPLOY_PREP_RUNTIME=PASS
-ART23_LONG_TERM_RUNTIME=PASS
-G41_IN_RUN_CORE_GAMEPLAY_RUNTIME=PASS
-ART24_STATIC_VALIDATION=PASS
-ART24_FOCUSED_PROBES=PASS (8/8)
-ART24R2_FINAL_COMPUTER_USE=FAIL (24/61 PASS)
-G41_WRAPPER_VALIDATION=FAIL (art-path audit markers)
-git diff --check=PASS
+active_repo: git rev-parse --show-toplevel
+observed_branch: codex/i1-baseline-stabilization
+source_head_before_i1: 2212992337aeef7cda412dbaaa191c3ad6cbb81a
+current_stage: I1 / worktree accepted / committed HEAD pending
+latest_closed_non_art_baseline: I0
+latest_closed_art_stage: ART21
+later_accepted_page_ui_evidence: ART23
+latest_failed_art_attempt: ART24R2 archived at 24/61 PASS
+godot_project: <active_repo>/Godot/GraytailGodot
+local_godot_observation: E:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe
 ```
 
-M6 与 ART24 背包场景探针在退出时仍报告 `ObjectDB/resources still in use` 清理诊断；逻辑断言通过，但该诊断和 G41 包装校验失败均被保留，不得扩写为完整长期运行、最终美术或发布通过。
+仓库路径和 Godot 工程位置必须动态解析。本机 Godot 路径只是观测/示例；I1 runner 仍按显式参数、环境变量、PATH 顺序解析并对照 lock 验证。
 
-## ART24R2 返工事实
+## 已有运行能力
 
-- 已改善角色/房间比例、左栏、协议层、底栏、展开地图、背包、结算、世界掉落与可重复开合箱子。
-- 代码门覆盖 8 个一级模块、61 个状态契约和 5 档分辨率；代码门不能替代实机验收。
-- Computer Use 已通过 24 个状态；其余 37 个状态因未形成冻结证据或未完成实机检查统一记为 `FAIL`。
-- 2026-07-20 已从生产 `main.tscn` 通过 Computer Use 重新跑通主菜单、出发探索、真实局内、M7 地图打开、标记和关闭返回；该复验没有覆盖并转正其余 37 个失败状态。
-- 用户已明确要求把当前内容跑完后结束阶段，即使验收部分不通过也要 push；因此 ART24R2 以 `FAIL / STAGE_ARCHIVED_BY_USER_DIRECTION` 封存，不再作为当前活动返工阶段。
-- 详细结果见 `docs/validation/ART24R2_FINAL_COMPUTER_USE_RESULTS.md`。
+- 主菜单、出发整备、长期页、局内和结果页由生产 `main.tscn` 路由。
+- G41 提供连续房间移动、距离交互、宝箱/地面掉落、拾取/替换/丢弃、固定步长战斗、怪物、逃跑和生命周期清理。
+- M6 提供真实仓库实例、手动出勤、局内获取/使用、成功/失败/放弃结算、手动失败保全、幂等局外写回和最多 50 条历史。
+- M7 提供八档地图、难度、委托、任务、成就、研究、图鉴、资历、收藏和红点的首轮真实内容。
+- 当前进程内可继续相同 `run_id`；退出 Godot 进程后的 active-run 检查点恢复未实现。
+- 消耗品终局清除；失败保全在玩家确认后提交；UI 不应拥有结算或持久化权威。
 
-## 尚未声明完成
+## I1 当前实现事实
 
-- 完整仓库整理、堆叠、扩容、保险、寄售、批量出售和更深经济；
-- 装备强化、耐久、随机词条、完整被动与最终数值平衡；
-- 更深目标 / 奖励池、更多研究、抽奖、唯一物真实获取和实际外观；
-- Boss、精英、完整事件与更深内容量；
-- 退出 Godot 进程后的局内检查点恢复；
-- 最终美术、音频、完整人工长时间游玩、性能、CI、导出和发布。
+### 程序与可靠性
 
-M7 详细证据见 `docs/validation/M7_COMPLETE_MAP_DIFFICULTY_LONG_TERM_CONTENT_VALIDATION.md` 和 `docs/audits/AUDIT_M7_EXECUTION_COMPLETE_MAP_DIFFICULTY_LONG_TERM_CONTENT.md`；M6 原始证据继续保留。
+- 普通 restart 强制确认；debug restart 使用独立动作和 debug gate，standard/demo 启动配置身份保持。
+- `RunStateMachine` 集中 phase 写入；`RunContext` 兼容入口委托状态机。
+- `RunRuntimeController` 在 UI 之前监听结果并协调 terminal settlement 的单次提交；pending failure salvage 不提交。
+- `SaveAdapter` 使用临时写入、flush、解析、backup、替换后复验和 backup 恢复，并阻止当前 schema 覆盖未来 schema。
+- 物品命令细节进入 `ItemCommandHandler`；CommandBus 保留接收、归一化、信号和跨服务协调。
+- `ContentDBAccess` 为可复用脚本提供运行时内容访问边界，消除对 autoload symbol 的编译期耦合；`ContentDB` 仍是 production 内容权威。
+- `GameKernel` 不再作为 autoload；当前项目保留 `ContentDB` 与 `SettingsManager`，feature target 为 Godot 4.6。
+
+### 刷新与性能
+
+- combat damage 发出最小 `scope=combat` 快照；生产 RunSurface 走轻量 HP/威胁/压力/消息刷新，不重建地图、背包或完整页面。
+- AppShell 只刷新可见页面，隐藏页面缓存 revision，显示时追到最新一次。
+- `I1_COMBAT_REFRESH` 在 core / latest full 两轮分别得到 combat p95 519 μs / 321 μs，full refresh p95 267,793 μs / 333,855 μs；两轮均满足 combat p95 ≤ 8 ms 且低于 full p95。
+- 上述是战斗刷新微基准，不是通用性能、长局、内存或设备验收。
+
+### UI、动画与资源
+
+- 生产交互契约覆盖 1280×720、1600×900、1920×1080；共享按钮可聚焦、可见字号不低于 13 px，命令反馈和禁用原因必须可见。
+- run/combat 底部双行状态框已修正边框内距与行高，deploy 摘要已收敛为单行；`I1_UI_INTERACTION` 三分辨率与 ART22 34 状态定向 runner 均 PASS，并由最新 full 覆盖。
+- 运行时贴图缓存和动画 catalog 覆盖 idle/move/attack/hurt/dead 状态、受击最短可见时间与 reduced motion；玩家独立 death bitmap 和最终 motion feel 未完成。
+- ART25 来源/许可/content validator 已以 107 assets 通过，确定性生成前后 fingerprint 一致；production 字体使用 Noto Sans CJK。
+- 最新生产预览已生成主菜单、出发、长期、局内、战斗、背包、地图、成功/失败结果 × 三分辨率 27/27 PNG，并完成人工静态布局、层级、文字、无遮挡与无裁切检查。机器状态仍要求视觉复核；鼠标/手柄手感、动态动画观感和音频仍排除。
+- 15:46 preview 早于后续 `game_kernel` diagnostic 校准与 M5 固定 seed 测试夹具；两项都不改变 autoload、消费者或 UI 可见执行路径，因此静态图证据仍适用于当前 candidate，且不升级为自动视觉 PASS。
+
+### 验证与治理
+
+- `tools/i1/invoke_i1.ps1` 提供 preflight/quick/core/ui/full 和 worktree/head 两种 source mode，使用隔离 mirror、锁定 Godot、JSON 报告、超时、marker、diagnostic 分类和污染守卫。
+- preflight 以单次剪枝源检查和复制后完整目标检查替代 7 次包含 `.tmp` 历史 mirror 的全树扫描；最新耗时 120,233 ms，较旧观测下降 69,172 ms / 36.5%，安全门未减少。
+- 16:05 full 曾因 M5 旧夹具未固定地图 seed 而 38/39 FAIL；fixture 固定 `seed_value=1001` 后独立进程连续 3 次 PASS，当前 16:15 full 39/39 PASS。production 的 M7 无 seed 时间随机规则未改变。
+- `tools/i1/invoke_i1_preview.ps1` 提供生产场景快速阅览；其 runner 明确登记为 `EXCLUDED_NON_SLICE`。
+- `.github/workflows/i1-quick.yml` 已配置；没有远端成功 run 前只能记为 `configured_unproven`。
+- 当前入口、来源、Godot docs hash、重复台账和 I1 文档链正在统一；历史原文不删除。
+
+## 阶段判断
+
+当前 worktree 验收结果支持：在 committed HEAD 验证和 Git 交付完成后，将项目从“核心能力集中开发”切换为“新增能力与存量修改并行”是正确的。项目已不再缺少最小运行闭环，后续主要风险转为权威漂移、局部修改回归、热路径成本、界面新增状态和历史文档冲突；I1 的 runner 与 preview 已为这些风险提供快速反馈。
+
+这不表示项目进入维护期。跨进程恢复、完整经济、更深内容、最终视觉/音频、人工长局、通用性能、设备/输入、CI 远端证明、导出和发布仍需要独立增量。
+
+## 当前验证状态
+
+```text
+I1_STATIC_FINAL=PASS_39_BLOCKING_46_INVENTORY_13_EXCLUSIONS_705_CHECKS
+I1_PREFLIGHT_WORKTREE=PASS
+I1_QUICK_WORKTREE=PASS_21_OF_21
+I1_CORE_WORKTREE=PASS_24_OF_24
+I1_UI_WORKTREE=PASS_23_OF_23
+I1_FULL_WORKTREE=PASS_39_OF_39_CURRENT_PRECOMMIT_CANDIDATE
+I1_PRODUCTION_PREVIEW_REVIEW=PASS_STATIC_LAYOUT_27_OF_27
+I1_FULL_HEAD=PENDING
+I1_CI=CONFIGURED_UNPROVEN
+```
+
+上述结果接受 worktree candidate，不替代 committed HEAD 验收。当前权威记录见 `docs/validation/I1_INCREMENTAL_DEVELOPMENT_BASELINE_VALIDATION.md`。
+
+## 明确未完成
+
+- `RunScene` 仍是大型协调器；I1 不宣称全面解耦。
+- active-run 跨进程检查点与迁移未实现。
+- 完整仓库整理/堆叠/扩容/保险/寄售/批量出售和更深经济未完成。
+- 装备强化、耐久、随机词条、完整被动、最终数值平衡未完成。
+- Boss、精英、更深事件与内容量、抽奖、唯一物真实获取和实际外观未完成。
+- 22 个 full runner 的已分类 cleanup diagnostic、完整人工长局、最终美术/音频、通用性能、导出和发布未关闭。

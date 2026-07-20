@@ -8,6 +8,10 @@ build/
 .DS_Store
 Thumbs.db
 
+# Workspace-local validation runtimes and generated reports
+tools/runtimes/
+reports/
+
 # Unreal Engine generated files
 UE/Graytail/Binaries/
 UE/Graytail/Intermediate/

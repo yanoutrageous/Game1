@@ -174,7 +174,7 @@ func _validate_connections() -> void:
 	]:
 		_require_connected(run_surface, signal_name)
 	_require_connected(scene.get("inventory_panel"), &"close_requested")
-	_require_connected(scene.get("ground_loot_panel"), &"close_requested")
+	_require_connected(scene.get("room_runtime_view"), &"context_action_requested")
 	_require_connected(scene.get("result_panel"), &"return_main_requested")
 	_require_connected(scene.get("result_panel"), &"return_deploy_requested")
 	_require_connected(scene.get("map_overlay_panel"), &"cell_action_requested")
@@ -219,15 +219,12 @@ func _validate_started_run() -> void:
 func _validate_modal_and_cancel_contract() -> void:
 	var run_surface: Object = scene.get("run_surface")
 	var inventory := scene.get("inventory_panel") as Control
-	var ground := scene.get("ground_loot_panel") as Control
 	var map_overlay := scene.get("map_overlay_panel") as Control
 	var pause := scene.get("pause_panel") as Control
 	run_surface.emit_signal("inventory_requested")
-	_require(inventory.visible and not ground.visible, "inventory signal did not enforce modal exclusivity")
-	run_surface.emit_signal("ground_loot_requested")
-	_require(ground.visible and not inventory.visible, "ground-loot signal did not enforce modal exclusivity")
-	_require(bool(scene.call("_handle_cancel_input", _key_event(KEY_ESCAPE))), "Esc did not handle ground-loot close")
-	_require(not ground.visible, "Esc did not close ground-loot panel")
+	_require(inventory != null and inventory.visible, "inventory signal did not open the inventory modal")
+	_require(bool(scene.call("_handle_cancel_input", _key_event(KEY_ESCAPE))), "Esc did not handle inventory close")
+	_require(not inventory.visible, "Esc did not close inventory panel")
 	_require(bool(scene.call("_handle_cancel_input", _key_event(KEY_ESCAPE))), "Esc did not open pause")
 	_require(pause.visible, "Esc did not open pause with no modal")
 	_require(bool(scene.call("_handle_cancel_input", _key_event(KEY_ESCAPE))), "Esc did not close pause")
@@ -261,8 +258,8 @@ func _validate_smoke_case() -> void:
 			_require(counts.revealed < context.width * context.height, "no-flag case revealed the full map")
 		CASE_MODAL:
 			_require(debug_items.total == 2, "modal flag did not seed exactly two debug items")
-			_require(debug_items.room_floor == 2, "modal seed baseline no longer has two floor items")
-			_require(debug_items.inventory == 0, "modal seed baseline unexpectedly placed an item in inventory")
+			_require(debug_items.room_floor == 1, "modal seed did not place exactly one floor item")
+			_require(debug_items.inventory == 1, "modal seed did not place exactly one backpack item")
 		CASE_FULL_MAP:
 			_require(counts.revealed == context.width * context.height, "full-map flag did not reveal every cell")
 			var full_event := _full_event_pos(context)

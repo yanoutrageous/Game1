@@ -26,7 +26,6 @@ const SaveManagerScript := preload("res://scripts/core/save/save_manager.gd")
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
 const Art21R2RunSmokeSeederScript := preload("res://scripts/core/run/art21r2_run_smoke_seeder.gd")
 const RunSceneDebugBridgeScript := preload("res://scripts/core/run/run_scene_debug_bridge.gd")
-const RunSceneMetaCommitterScript := preload("res://scripts/core/run/run_scene_meta_committer.gd")
 const RunSceneUIBridgeScript := preload("res://scripts/core/run/run_scene_ui_bridge.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
 const RunSceneInputRouterScript := preload("res://scripts/core/run/run_scene_input_router.gd")
@@ -34,6 +33,7 @@ const RunSceneRouteControllerScript := preload("res://scripts/core/run/run_scene
 const RunSceneCommandFeedbackScript := preload("res://scripts/core/run/run_scene_command_feedback.gd")
 const RunSceneResultControllerScript := preload("res://scripts/core/run/run_scene_result_controller.gd")
 const RunSceneResponsibilityBudgetScript := preload("res://scripts/core/run/run_scene_responsibility_budget.gd")
+const RunSceneRefreshControllerScript := preload("res://scripts/core/run/run_scene_refresh_controller.gd")
 const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
 const G41RoomRuntimeViewScript := preload("res://scripts/gameplay/runtime/g41_room_runtime_view.gd")
 const Art25GameplayBackdropScript := preload("res://scripts/presentation/art25_gameplay_backdrop.gd")
@@ -120,16 +120,18 @@ var current_layout_profile_id: StringName = &"desktop"
 var last_command_result: Dictionary = {}
 var m1_debug_panel_enabled: bool = false
 var pause_exit_confirm_pending: bool = false
+var refresh_controller
 
 
 func _ready() -> void:
 	m1_debug_panel_enabled = DebugGateScript.is_debug_tools_enabled()
-	ContentDB.load_asset_manifest()
+	refresh_controller = RunSceneRefreshControllerScript.new()
 	save_manager = SaveManagerScript.new()
 	save_manager.load_manifest()
 	meta_progress_adapter = MetaProgressAdapterScript.new()
 	save_manager.configure_meta_adapter(meta_progress_adapter)
 	runtime_controller = RunRuntimeControllerScript.new()
+	runtime_controller.bind_meta_progress_adapter(meta_progress_adapter)
 	run_context = runtime_controller.context
 	command_bus = runtime_controller.command_bus
 	in_run_runtime = runtime_controller.in_run_runtime
@@ -137,6 +139,17 @@ func _ready() -> void:
 	command_bus.result_available.connect(_on_result_available)
 	_build_playfield_visuals()
 	_build_accessible_ui()
+	refresh_controller.bind_targets(
+		run_context,
+		in_run_runtime,
+		run_surface,
+		hud,
+		Callable(self, "_build_hud_view_model"),
+		dev_diagnostics_panel,
+		debug_log,
+		Callable(self, "_shell_snapshot"),
+		Callable(self, "_apply_dev_diagnostics")
+	)
 	_show_main_menu()
 
 
@@ -250,8 +263,8 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 		RunSceneInputRouterScript.ACTION_OPEN_MAP:
 			_open_map_from_ui(&"keyboard")
 			return true
-		RunSceneInputRouterScript.ACTION_RESTART_RUN:
-			_restart_run_from_ui()
+		RunSceneInputRouterScript.ACTION_DEBUG_RESTART_RUN:
+			_debug_restart_run_from_ui()
 			return true
 		_:
 			return false
@@ -654,7 +667,7 @@ func _shell_snapshot() -> Dictionary:
 
 
 func _meta_progress_summary() -> Dictionary:
-	return RunSceneResultControllerScript.meta_summary(meta_progress_adapter)
+	return runtime_controller.meta_progress_summary() if runtime_controller != null else {}
 
 
 func _show_main_menu() -> void:
@@ -1198,9 +1211,9 @@ func _reward_array_size(reward: Dictionary, key: String) -> int:
 	return (value as Array).size() if value is Array else 0
 
 
-func _restart_run_from_ui() -> void:
-	_dispatch_command(&"restart_run")
-	if player_controller != null:
+func _debug_restart_run_from_ui() -> void:
+	var result := _dispatch_command(&"debug_restart_run")
+	if bool(result.get("ok", false)) and player_controller != null:
 		player_controller.reset_local_position()
 
 
@@ -1315,12 +1328,12 @@ func _hide_runtime_popups() -> void:
 		map_overlay_panel.hide_overlay()
 
 
-func _on_state_changed(_snapshot: Dictionary) -> void:
-	_refresh_view_models()
+func _on_state_changed(snapshot: Dictionary) -> void:
+	refresh_controller.route_state_change(snapshot, Callable(self, "_apply_full_view_models"))
 
 
 func _on_result_available(snapshot: Dictionary) -> void:
-	var display_snapshot := RunSceneResultControllerScript.build_result_display_snapshot(meta_progress_adapter, snapshot)
+	var display_snapshot := _build_result_display_snapshot(snapshot)
 	_refresh_view_models()
 	_hide_runtime_popups()
 	if result_panel != null:
@@ -1330,12 +1343,29 @@ func _on_result_available(snapshot: Dictionary) -> void:
 func _confirm_failure_salvage_from_result(selected_instance_ids: Array) -> void:
 	var result := _dispatch_command(&"confirm_failure_salvage", {"selected_instance_ids": selected_instance_ids})
 	if not bool(result.get("ok", false)) and result_panel != null:
-		result_panel.show_summary(RunSceneResultControllerScript.build_result_display_snapshot(meta_progress_adapter, run_context.result_snapshot))
+		result_panel.show_summary(_build_result_display_snapshot(run_context.result_snapshot))
+
+
+func _build_result_display_snapshot(snapshot: Dictionary) -> Dictionary:
+	var commit: Dictionary = runtime_controller.last_meta_commit if runtime_controller != null else {}
+	return RunSceneResultControllerScript.build_result_display_snapshot(snapshot, _meta_progress_summary(), commit)
+
+
+func get_refresh_metrics() -> Dictionary:
+	return refresh_controller.get_metrics()
+
+
+func reset_refresh_metrics() -> void:
+	refresh_controller.reset_metrics()
 
 
 func _refresh_view_models() -> void:
 	if run_context == null:
 		return
+	refresh_controller.run_full_refresh(Callable(self, "_apply_full_view_models"))
+
+
+func _apply_full_view_models() -> void:
 	var snapshot := _shell_snapshot()
 	var layout_profile: Dictionary = _current_layout_profile()
 	_apply_runtime_modal_layout(layout_profile)
@@ -1407,6 +1437,10 @@ func _refresh_view_models() -> void:
 		_sync_debug_coordinates()
 	if result_panel != null and bool(snapshot.get("run_active", false)):
 		result_panel.hide_result()
+
+
+func _build_hud_view_model(snapshot: Dictionary) -> HUDViewModel:
+	return HUDViewModel.build_from_snapshot(snapshot)
 
 
 func _apply_game_stage_layout(layout_profile: Dictionary) -> void:
@@ -1944,7 +1978,7 @@ func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, 
 	button.offset_top = rect.position.y
 	button.offset_right = rect.position.x + rect.size.x
 	button.offset_bottom = rect.position.y + rect.size.y
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -1963,7 +1997,7 @@ func _add_menu_button(parent: Control, label: String, callback: Callable) -> But
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(110, 34)
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -1982,7 +2016,7 @@ func _add_debug_button(parent: Control, label: String, callback: Callable) -> Bu
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(180, 28)
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button

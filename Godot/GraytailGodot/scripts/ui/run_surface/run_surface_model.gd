@@ -748,7 +748,7 @@ static func _action_hint(actions: Array[Dictionary]) -> String:
 			continue
 		var reason := String(action.get("disabled_reason", ""))
 		if reason != "":
-			return "%s %s 暂不可用：%s" % [keyboard_hint, String(action.get("label", "行动")), reason]
+			return "%s 暂不可用：%s" % [String(action.get("label", "行动")), reason]
 	return keyboard_hint
 
 

@@ -1,10 +1,10 @@
 ﻿# Godot Docs Registry
 
-文档状态：工程 docs 只读注册表
+文档状态：I1 工程 docs 只读注册表
 适用范围：`Godot/GraytailGodot/docs` 的当前工程文档证据索引
-最后更新：2026/07/11（I0.6 路径迁移复核）
+最后更新：2026/07/20（I1 路径语义与 hash 复核）
 
-本注册表只读登记 Godot 内部 docs 文件及 SHA256，不复制、不修改 Godot 目录。
+本注册表只读登记 Godot 内部 docs 文件及 SHA256，不复制、不修改 Godot 目录。表内 `source_path` 是 I0 时点的历史绝对路径，保留证据属性；当前文件必须从 `<git-worktree-root>/Godot/GraytailGodot/docs/<file>` 解析，不能用表内盘符选择 active repo。
 
 | file | source_path | sha256 | status | notes |
 | --- | --- | --- | --- | --- |
@@ -16,9 +16,9 @@
 | `GODOT_ARCHITECTURE_NOTES.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_ARCHITECTURE_NOTES.md` | `7986904CEB43FB6EF911ED081E3778DC5861B20B4B42C3CF7C0BF7D8746175BD` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
 | `GODOT_ASSET_RULES_G8_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_ASSET_RULES_G8_REPORT.md` | `64CBED047FE5083903EEE49495E33B400496CFD878CA5ADAAC96573035557889` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
 | `GODOT_ASSET_UI_PARITY_G5_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_ASSET_UI_PARITY_G5_REPORT.md` | `20A2A164E3E76C49126BD0EFCDFE4B3C5989ECAFCE1B2AF053A1FA665A09C889` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
-| `GODOT_CURRENT_STATUS.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_CURRENT_STATUS.md` | `7696F2FA9BF4F85BC1CE70720C132EFFB1E53AE435AD1FE6326927E9F8982CA6` | read_only_engineering_doc | I0 重新计算 hash；源文件本轮未修改 |
+| `GODOT_CURRENT_STATUS.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_CURRENT_STATUS.md` | `8C8977E40085C41159EB71967B259051879C7560500920CAA48E181FBD5C2439` | read_only_engineering_doc | I1 从当前 repo-relative 文件重算；source_path 仅为历史 I0 路径 |
 | `GODOT_ENVIRONMENT_FINAL_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_ENVIRONMENT_FINAL_REPORT.md` | `6170F78912659FDFBADB2932CEC8E368556BAEA4C4C4A84EBFE9178D880D4374` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
-| `GODOT_G10_PROGRESS_ART_SMOKE_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_G10_PROGRESS_ART_SMOKE_REPORT.md` | `33678B8B851C377DE2A134E557717E33452EDEE6E198A5AB42B14D40896BB8AC` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
+| `GODOT_G10_PROGRESS_ART_SMOKE_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_G10_PROGRESS_ART_SMOKE_REPORT.md` | `12465C16D48138F400A355ADC9796E3588924397B4B639936499E4F42B9B53B6` | read_only_engineering_doc | I1 从当前 repo-relative 文件重算；source_path 仅为历史 I0 路径 |
 | `GODOT_KERNEL_PROTOCOL_G8_2_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_KERNEL_PROTOCOL_G8_2_REPORT.md` | `C6DB5662829BD9A00A05945B188287BE93382ECC906AB55C343A56393C686EFD` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
 | `GODOT_LUA_PARITY_P0_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_LUA_PARITY_P0_REPORT.md` | `9509775D5BF9352D453FEB12481E442B1A3CAD55E1D3D971DBC7B3ADAD3BC823` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
 | `GODOT_LUA_PLAYABLE_PARITY_G6_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_LUA_PLAYABLE_PARITY_G6_REPORT.md` | `9C8C097C7DE996577F1D301C67909B1FBA4BE5D4A12E4443A8DAF64E123C86B5` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
@@ -26,7 +26,7 @@
 | `GODOT_PLAYABLE_GRAYBOX_V0_1_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_PLAYABLE_GRAYBOX_V0_1_REPORT.md` | `56487DEEEB50207FC6DD8C2D93C1084086018430EAE68A84A428879F80AE7EDD` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
 | `GODOT_READY_FOR_ASSET_TRANSFER.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_READY_FOR_ASSET_TRANSFER.md` | `A9364984EBF6DA6C5C40E6A5883993462F090BFC72B74E3DC64245B02893487C` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
 | `GODOT_UI_FINAL_G9_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\GODOT_UI_FINAL_G9_REPORT.md` | `E25E98EB5364088B07F330274778788E71AF08E97E16F5D1A28260AB92C1D7C4` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
-| `MANUAL_PLAYTEST_GUIDE.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\MANUAL_PLAYTEST_GUIDE.md` | `D298D413E73DC6DAE2EF4E8551FB74669F1026EA736F736F9EA5C9DBC68826FD` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
+| `MANUAL_PLAYTEST_GUIDE.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\MANUAL_PLAYTEST_GUIDE.md` | `05FE3799451AA4D44C966EB5CD5FBF08996F9B24A50A9CB0BF100CD8E333C292` | read_only_engineering_doc | I1 从当前 repo-relative 文件重算；source_path 仅为历史 I0 路径 |
 | `S1_ASSET_AND_PLACEHOLDER_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\S1_ASSET_AND_PLACEHOLDER_REPORT.md` | `EEFA021390AACF9C4EE2282FA90E3A2A7539ED98880C2FDE4A79773375C96DB7` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
 | `S1_INTERFACE_CONTRACTS.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\S1_INTERFACE_CONTRACTS.md` | `82F0D2CD6254D051815A6E309BE1087D3D47CE2AA4D81F882CDD7BF764C08CBA` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
 | `S2_PATH_NORMALIZATION_REPORT.md` | `D:\AGAME1\active\Game1_work\Godot\GraytailGodot\docs\S2_PATH_NORMALIZATION_REPORT.md` | `5418BB572D487A435BA03662C833C85DD2DDCB38B837B35BBF8295CBFC3C3FC9` | read_only_engineering_doc | Godot docs 只读登记；未复制、未修改 |
@@ -37,7 +37,8 @@
 ## 使用边界
 
 ```text
-1. 当前工程事实以仓库 docs 统一入口和原 Godot docs 证据共同核对。
+1. 当前工程事实以仓库 docs 统一入口和当前代码为准；Godot docs 作为历史/工程证据共同核对。
 2. 本文件不修改 Godot 工程、脚本、场景、资源、导入文件或项目配置。
 3. Godot headless project-load/parser smoke PASS 不等于 gameplay runtime PASS 或 manual playtest PASS。
+4. 历史 absolute `source_path` 不等于当前文件不存在；当前定位只用 worktree-relative path。
 ```

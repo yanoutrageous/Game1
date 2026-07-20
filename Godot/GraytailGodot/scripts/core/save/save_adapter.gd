@@ -12,6 +12,9 @@ const DEFAULT_PROFILE_ID := "default"
 const DEFAULT_PROFILE_META_PROGRESS_PATH := "user://saves/profiles/default/meta_progress.json"
 const DEFAULT_PROFILE_RUN_CHECKPOINT_PATH := "user://saves/profiles/default/run_checkpoint.json"
 const DEFAULT_PROFILE_PREVIEW_PATH := "user://saves/profiles/default/preview.json"
+const ATOMIC_TEMP_SUFFIX := ".tmp"
+const LAST_VALID_BACKUP_SUFFIX := ".bak"
+const CORRUPT_RECOVERY_SUFFIX := ".corrupt"
 
 var last_error: String = ""
 var last_load_status: String = ""
@@ -81,37 +84,107 @@ func load_json_result(path: String = M1_META_PROGRESS_PATH, default_data: Dictio
 	last_error = ""
 	last_load_status = ""
 	var fallback := default_meta_progress() if default_data.is_empty() else default_data.duplicate(true)
-	if not FileAccess.file_exists(path):
+	var primary := _read_json_file(path)
+	if not bool(primary.get("exists", false)):
+		var missing_backup := _read_json_file(path + LAST_VALID_BACKUP_SUFFIX)
+		if bool(missing_backup.get("ok", false)):
+			var missing_backup_dict := _dictionary_from(missing_backup.get("data", {}))
+			var missing_backup_schema := int(missing_backup_dict.get("schema_version", fallback.get("schema_version", 1)))
+			if missing_backup_schema <= int(fallback.get("schema_version", 1)):
+				var missing_recovered_data := _normalize_meta_progress(missing_backup_dict, fallback) if normalize_meta_progress else missing_backup_dict.duplicate(true)
+				return _recovered_load_result(missing_recovered_data, path + LAST_VALID_BACKUP_SUFFIX, "missing")
+			last_error = "future_schema:%d" % missing_backup_schema
+			return _load_result(false, "future_schema", fallback, last_error)
 		return _load_result(true, "missing", fallback, "")
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		last_error = "open_failed:%s" % FileAccess.get_open_error()
-		return _load_result(false, "open_failed", fallback, last_error)
-	var text := file.get_as_text()
-	file.close()
-	var parsed: Variant = JSON.parse_string(text)
-	if parsed is Dictionary:
-		var parsed_dict := parsed as Dictionary
+	if bool(primary.get("ok", false)):
+		var parsed_dict := _dictionary_from(primary.get("data", {}))
 		var schema_version := int(parsed_dict.get("schema_version", fallback.get("schema_version", 1)))
 		if schema_version > int(fallback.get("schema_version", 1)):
 			last_error = "future_schema:%d" % schema_version
 			return _load_result(false, "future_schema", fallback, last_error)
 		var loaded_data := _normalize_meta_progress(parsed_dict, fallback) if normalize_meta_progress else parsed_dict.duplicate(true)
 		return _load_result(true, "loaded", loaded_data, "")
-	last_error = "parse_failed"
-	return _load_result(false, "parse_failed", fallback, last_error)
+	var backup_path := path + LAST_VALID_BACKUP_SUFFIX
+	var backup := _read_json_file(backup_path)
+	if bool(backup.get("ok", false)):
+		var backup_dict := _dictionary_from(backup.get("data", {}))
+		var backup_schema := int(backup_dict.get("schema_version", fallback.get("schema_version", 1)))
+		if backup_schema <= int(fallback.get("schema_version", 1)):
+			var recovered_data := _normalize_meta_progress(backup_dict, fallback) if normalize_meta_progress else backup_dict.duplicate(true)
+			return _recovered_load_result(recovered_data, backup_path, str(primary.get("status", "parse_failed")))
+		last_error = "future_schema:%d" % backup_schema
+		return _load_result(false, "future_schema", fallback, last_error)
+	last_error = str(primary.get("error", primary.get("status", "parse_failed")))
+	return _load_result(false, str(primary.get("status", "parse_failed")), fallback, last_error)
 
 
 func save_json(data: Dictionary, path: String = M1_META_PROGRESS_PATH, normalize_meta_progress: bool = true) -> bool:
 	last_error = ""
 	_ensure_parent_dir(path)
-	var file := FileAccess.open(path, FileAccess.WRITE)
+	var temp_path := path + ATOMIC_TEMP_SUFFIX
+	var backup_path := path + LAST_VALID_BACKUP_SUFFIX
+	var corrupt_path := path + CORRUPT_RECOVERY_SUFFIX
+	_remove_file_if_exists(temp_path)
+	var file := FileAccess.open(temp_path, FileAccess.WRITE)
 	if file == null:
 		last_error = "open_failed:%s" % FileAccess.get_open_error()
 		return false
 	var output := _normalize_meta_progress(data, default_meta_progress()) if normalize_meta_progress else data.duplicate(true)
 	file.store_string(JSON.stringify(output, "\t"))
+	file.flush()
+	var write_error := file.get_error()
 	file.close()
+	if write_error != OK:
+		last_error = "write_failed:%s" % write_error
+		_remove_file_if_exists(temp_path)
+		return false
+	var staged := _read_json_file(temp_path)
+	if not bool(staged.get("ok", false)):
+		last_error = "staged_validation_failed:%s" % staged.get("status", "parse_failed")
+		_remove_file_if_exists(temp_path)
+		return false
+	var staged_data := _dictionary_from(staged.get("data", {}))
+	var staged_schema := int(staged_data.get("schema_version", 0))
+	for protected_path in [path, backup_path]:
+		var protected := _read_json_file(protected_path)
+		if not bool(protected.get("ok", false)):
+			continue
+		var protected_data := _dictionary_from(protected.get("data", {}))
+		var protected_schema := int(protected_data.get("schema_version", 0))
+		if protected_schema > 0 and protected_schema > staged_schema:
+			last_error = "future_schema_write_blocked:%d" % protected_schema
+			_remove_file_if_exists(temp_path)
+			return false
+
+	var previous_location := ""
+	if FileAccess.file_exists(path):
+		var existing := _read_json_file(path)
+		if bool(existing.get("ok", false)):
+			_remove_file_if_exists(backup_path)
+			if not _rename_file(path, backup_path):
+				last_error = "backup_replace_failed"
+				_remove_file_if_exists(temp_path)
+				return false
+			previous_location = backup_path
+		else:
+			_remove_file_if_exists(corrupt_path)
+			if not _rename_file(path, corrupt_path):
+				last_error = "corrupt_preserve_failed"
+				_remove_file_if_exists(temp_path)
+				return false
+			previous_location = corrupt_path
+
+	if not _rename_file(temp_path, path):
+		last_error = "atomic_replace_failed"
+		_restore_previous_file(previous_location, path)
+		_remove_file_if_exists(temp_path)
+		return false
+	var committed := _read_json_file(path)
+	if not bool(committed.get("ok", false)):
+		last_error = "committed_validation_failed:%s" % committed.get("status", "parse_failed")
+		_remove_file_if_exists(path)
+		_restore_previous_file(previous_location, path)
+		return false
 	return true
 
 
@@ -124,6 +197,57 @@ func _ensure_parent_dir(path: String) -> void:
 	if base_dir == "" or base_dir == ".":
 		return
 	DirAccess.make_dir_recursive_absolute(base_dir)
+
+
+func _read_json_file(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {"exists": false, "ok": false, "status": "missing", "error": ""}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		var open_error := "open_failed:%s" % FileAccess.get_open_error()
+		return {"exists": true, "ok": false, "status": "open_failed", "error": open_error}
+	var text := file.get_as_text()
+	file.close()
+	var parser := JSON.new()
+	if parser.parse(text) != OK:
+		return {"exists": true, "ok": false, "status": "parse_failed", "error": "parse_failed"}
+	var parsed: Variant = parser.data
+	if not (parsed is Dictionary):
+		return {"exists": true, "ok": false, "status": "parse_failed", "error": "parse_failed"}
+	return {"exists": true, "ok": true, "status": "loaded", "error": "", "data": (parsed as Dictionary).duplicate(true)}
+
+
+func _rename_file(source_path: String, target_path: String) -> bool:
+	var source_absolute := ProjectSettings.globalize_path(source_path)
+	var target_absolute := ProjectSettings.globalize_path(target_path)
+	return DirAccess.rename_absolute(source_absolute, target_absolute) == OK
+
+
+func _remove_file_if_exists(path: String) -> void:
+	if not FileAccess.file_exists(path):
+		return
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+
+
+func _restore_previous_file(previous_path: String, target_path: String) -> void:
+	if previous_path == "" or not FileAccess.file_exists(previous_path) or FileAccess.file_exists(target_path):
+		return
+	_rename_file(previous_path, target_path)
+
+
+func _recovered_load_result(data: Dictionary, recovery_path: String, primary_status: String) -> Dictionary:
+	last_load_status = "recovered_backup"
+	last_load_result = {
+		"ok": true,
+		"status": "recovered_backup",
+		"data": data.duplicate(true),
+		"error": "",
+		"read_only_fallback": false,
+		"writes_storage": false,
+		"recovery_path": recovery_path,
+		"primary_status": primary_status,
+	}
+	return last_load_result.duplicate(true)
 
 
 func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Dictionary:

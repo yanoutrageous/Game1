@@ -268,8 +268,8 @@ static func _m7_map_cards(config: Dictionary, selected_filter: StringName) -> Ar
 			"title": str(definition.get("display_name", map_id)),
 			"category": "地图",
 			"state": "selected" if map_id == selected_map_id else ("ready" if is_unlocked else "locked"),
-			"summary": "%s；雷房 %d，每类内容房 %d，撤离点 %d。" % [
-				str(definition.get("role", "")),
+			"summary": "%s；雷房%d，内容房各%d，撤离点%d。" % [
+				str(definition.get("role", "")).replace(" / ", "/"),
 				int(definition.get("mine_count", 0)),
 				int(definition.get("content_room_count", 0)),
 				int(definition.get("visible_exit_count", 0)) + int(definition.get("hidden_exit_count", 0)),

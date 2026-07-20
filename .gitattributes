@@ -1,4 +1,5 @@
 # Binary assets and validation screenshots stay binary in Git.
+/.gitattributes text eol=lf
 *.png binary
 *.jpg binary
 *.jpeg binary
@@ -6,3 +7,9 @@
 
 # Godot binary resources should not be line-ending normalized.
 *.res binary
+
+# I1 byte-level HEAD provenance requires deterministic control-plane bytes.
+/tools/i1/validation_manifest.json text eol=lf
+/tools/i1/invoke_i1.ps1 text eol=lf
+/tools/i1/invoke_i1_preview.ps1 text eol=lf
+/tools/i0/i0_test_lib.ps1 text eol=lf

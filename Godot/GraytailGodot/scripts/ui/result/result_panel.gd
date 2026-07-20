@@ -167,7 +167,7 @@ func _ensure_result_metrics() -> void:
 		var metric_title := Label.new()
 		metric_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		metric_title.add_theme_font_override("font", ReadableFont)
-		metric_title.add_theme_font_size_override("font_size", 11)
+		metric_title.add_theme_font_size_override("font_size", 13)
 		metric_title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		stack.add_child(metric_title)
 		result_metric_title_labels.append(metric_title)
@@ -532,4 +532,4 @@ func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: S
 	button.add_theme_stylebox_override("hover", style.duplicate())
 	button.add_theme_stylebox_override("pressed", style.duplicate())
 	button.add_theme_stylebox_override("disabled", style.duplicate())
-	button.add_theme_stylebox_override("focus", Art10UISkinKitScript.transparent_style_box(padding))
+	button.add_theme_stylebox_override("focus", style.duplicate())

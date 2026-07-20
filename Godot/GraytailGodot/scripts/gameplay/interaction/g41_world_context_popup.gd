@@ -128,7 +128,7 @@ func _build() -> void:
 	hint_label.name = "ContextHint"
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint_label.add_theme_font_override("font", ReadableFont)
-	hint_label.add_theme_font_size_override("font_size", 12)
+	hint_label.add_theme_font_size_override("font_size", 13)
 	hint_label.add_theme_color_override("font_color", Color(0.70, 0.80, 0.76, 1.0))
 	root.add_child(hint_label)
 	item_scroll = ScrollContainer.new()
@@ -152,7 +152,7 @@ func _build() -> void:
 	status_label.name = "ContextStatus"
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status_label.add_theme_font_override("font", ReadableFont)
-	status_label.add_theme_font_size_override("font_size", 12)
+	status_label.add_theme_font_size_override("font_size", 13)
 	status_label.add_theme_color_override("font_color", Color(0.66, 0.76, 0.72, 1.0))
 	status_label.visible = false
 	root.add_child(status_label)
@@ -248,7 +248,7 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		item_button.text = "%s　重量 %d" % [String(item.get("display_name", item.get("item_id", "物品"))), int(item.get("weight", 0))]
 		item_button.tooltip_text = String(item.get("short_description", ""))
 		_apply_item_icon(item_button, item)
-		_style_button(item_button, &"secondary", 12)
+		_style_button(item_button, &"secondary", 13)
 		item_button.add_theme_font_override("font", ReadableFont)
 		row.add_child(item_button)
 		var candidate_id := String(item.get("instance_id", ""))
@@ -260,7 +260,7 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		choose.custom_minimum_size = Vector2(72, ROW_HEIGHT)
 		choose.disabled = not eligible
 		choose.tooltip_text = "放下该物品并拾取地面物。" if eligible else "即使放下该物品，背包容量仍不足。"
-		_style_button(choose, &"warning" if eligible else &"secondary", 12)
+		_style_button(choose, &"warning" if eligible else &"secondary", 13)
 		choose.pressed.connect(func() -> void: replace_requested.emit(replacement_ground_id, candidate_id))
 		row.add_child(choose)
 
@@ -294,7 +294,7 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		]
 		item_button.tooltip_text = String(item.get("short_description", ""))
 		_apply_item_icon(item_button, item)
-		_style_button(item_button, &"secondary", 12)
+		_style_button(item_button, &"secondary", 13)
 		item_button.add_theme_font_override("font", ReadableFont)
 		row.add_child(item_button)
 		var instance_id := String(item.get("instance_id", ""))
@@ -304,7 +304,7 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		action.text = "替换" if blocked else "拾取"
 		action.custom_minimum_size = Vector2(58, ROW_HEIGHT)
 		action.tooltip_text = "背包空间不足，选择一件背包物品进行替换。" if blocked else "拾取当前物品。"
-		_style_button(action, &"warning" if blocked else &"primary", 12)
+		_style_button(action, &"warning" if blocked else &"primary", 13)
 		if blocked:
 			action.pressed.connect(func() -> void: _begin_replacement(instance_id))
 		else:
@@ -321,6 +321,7 @@ func _apply_item_icon(button: Button, item: Dictionary) -> void:
 
 
 func _style_button(button: Button, tone: StringName, font_size: int) -> void:
+	button.focus_mode = Control.FOCUS_ALL
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = Color(0.025, 0.055, 0.058, 0.96)
 	normal.border_color = Color(0.24, 0.50, 0.46, 0.86)

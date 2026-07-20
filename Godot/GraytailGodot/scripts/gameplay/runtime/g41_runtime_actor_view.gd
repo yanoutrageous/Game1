@@ -18,21 +18,27 @@ var last_visual_signature := ""
 var last_texture_path := ""
 var animation_elapsed := 0.0
 var animation_frame := 0
+var pending_visual_state: StringName = &""
+var transient_state_remaining := 0.0
 
 
 func configure(next_subject: StringName, snapshot: Dictionary) -> void:
 	var previous_subject := subject
-	var previous_state := visual_state
 	var previous_variant := visual_variant
+	var next_visual_state := StringName(snapshot.get("state", &"idle"))
 	subject = next_subject
 	actor_id = String(snapshot.get("enemy_id", snapshot.get("projectile_id", snapshot.get("actor_id", actor_id))))
 	visual_key = G41RuntimeVisualContract.visual_key_for(subject)
-	visual_state = StringName(snapshot.get("state", &"idle"))
 	visual_variant = StringName(snapshot.get("visual_variant", &"base"))
-	if subject != previous_subject or visual_state != previous_state or visual_variant != previous_variant:
+	if subject != previous_subject or visual_variant != previous_variant:
+		pending_visual_state = &""
+		visual_state = next_visual_state
+		transient_state_remaining = EnemyVisualCatalog.minimum_visible_seconds(visual_state)
 		animation_elapsed = 0.0
 		animation_frame = 0
 		last_texture_path = ""
+	else:
+		_request_visual_state(next_visual_state)
 	max_hp = maxi(1, int(snapshot.get("max_hp", max_hp)))
 	hp = clampi(int(snapshot.get("hp", hp)), 0, max_hp)
 	position = local_to_world(Vector2(snapshot.get("pos", Vector2(0.5, 0.5))))
@@ -56,6 +62,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not EnemyVisualCatalog.supports(subject):
 		return
+	_advance_transient_state(delta)
 	var frame_count := EnemyVisualCatalog.frame_count(subject, visual_state, visual_variant)
 	var reduce_motion := Art24MotionSettingsScript.reduce_motion_enabled()
 	if reduce_motion:
@@ -76,6 +83,37 @@ func _process(delta: float) -> void:
 	# drone sets continue to use their real frames. No texture is reloaded while
 	# the path is unchanged.
 	_apply_enemy_visual()
+
+
+func _request_visual_state(next_state: StringName) -> void:
+	if visual_state == &"hurt" and transient_state_remaining > 0.0 and next_state not in [&"hurt", &"dead", &"defeated"]:
+		pending_visual_state = next_state
+		return
+	pending_visual_state = &""
+	_set_visual_state_now(next_state)
+
+
+func _set_visual_state_now(next_state: StringName) -> void:
+	if visual_state == next_state:
+		return
+	visual_state = next_state
+	animation_elapsed = 0.0
+	animation_frame = 0
+	last_texture_path = ""
+	transient_state_remaining = EnemyVisualCatalog.minimum_visible_seconds(visual_state)
+
+
+func _advance_transient_state(delta: float) -> void:
+	if transient_state_remaining <= 0.0:
+		return
+	transient_state_remaining = maxf(0.0, transient_state_remaining - delta)
+	if transient_state_remaining > 0.0 or pending_visual_state == &"":
+		return
+	var next_state := pending_visual_state
+	pending_visual_state = &""
+	_set_visual_state_now(next_state)
+	last_visual_signature = ""
+	_apply_placeholder()
 
 
 func _ensure_contract_nodes() -> void:
@@ -174,12 +212,16 @@ func _apply_enemy_visual() -> void:
 	var sprite := get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
 	if sprite == null:
 		return
-	var texture_path := EnemyVisualCatalog.texture_path(subject, visual_state, animation_frame, visual_variant)
+	var reduce_motion := Art24MotionSettingsScript.reduce_motion_enabled()
+	var texture_frame := EnemyVisualCatalog.reduced_motion_frame(subject, visual_state, visual_variant) if reduce_motion else animation_frame
+	var texture_path := EnemyVisualCatalog.texture_path(subject, visual_state, texture_frame, visual_variant)
 	if texture_path != last_texture_path:
-		sprite.texture = load(texture_path) as Texture2D
-		last_texture_path = texture_path
+		var texture := EnemyVisualCatalog.texture_for(subject, visual_state, texture_frame, visual_variant)
+		if texture != null:
+			sprite.texture = texture
+			last_texture_path = texture_path
 	var base_scale := EnemyVisualCatalog.visual_scale(subject, visual_variant)
-	var motion_phase := 0.0 if Art24MotionSettingsScript.reduce_motion_enabled() else sin(animation_elapsed / EnemyVisualCatalog.frame_duration(visual_state) * TAU)
+	var motion_phase := 0.0 if reduce_motion else sin(animation_elapsed / EnemyVisualCatalog.frame_duration(visual_state) * TAU)
 	var active_scale := base_scale * (1.04 if visual_state in [&"warning", &"aim", &"active", &"fire"] else 1.0)
 	if subject in [&"slime", &"slimeling"] and visual_state not in [&"dead", &"defeated"]:
 		sprite.scale = Vector2(

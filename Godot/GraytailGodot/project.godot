@@ -7,11 +7,10 @@ config_version=5
 
 config/name="GraytailGodot"
 run/main_scene="res://scenes/main/main.tscn"
-config/features=PackedStringArray("4.0")
+config/features=PackedStringArray("4.6")
 
 [autoload]
 
-GameKernel="*res://scripts/core/run/game_kernel.gd"
 ContentDB="*res://scripts/core/content/content_db.gd"
 SettingsManager="*res://scripts/core/settings/settings_manager.gd"
 

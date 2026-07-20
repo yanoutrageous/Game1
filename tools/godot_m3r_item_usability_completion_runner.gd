@@ -38,14 +38,19 @@ func _validate_models_from_meta_summary() -> void:
 		_fail("warehouse_lite missing collectible group")
 	if int(codex.get("discovered_count", 0)) < 1:
 		_fail("codex_lite did not derive discoveries from warehouse_items")
-	if (loadout.get("selected_equipment", []) as Array).is_empty():
-		_fail("default loadout did not select equipment")
-	if (loadout.get("selected_consumables", []) as Array).is_empty():
-		_fail("default loadout did not select consumables")
+	if not (loadout.get("selected_equipment", []) as Array).is_empty():
+		_fail("default loadout bypassed explicit equipment selection authority")
+	if not (loadout.get("selected_consumables", []) as Array).is_empty():
+		_fail("default loadout bypassed explicit consumable selection authority")
 
 
 func _validate_deploy_prep_run_start_config() -> void:
-	var deploy_config: Dictionary = DeployConfigScript.default_config(1, _sample_meta_summary())
+	var default_config: Dictionary = DeployConfigScript.default_config(1, _sample_meta_summary())
+	if not (default_config.get("selected_equipment_items", []) as Array).is_empty():
+		_fail("default deploy config silently selected equipment")
+	if not (default_config.get("selected_consumable_items", []) as Array).is_empty():
+		_fail("default deploy config silently selected consumables")
+	var deploy_config: Dictionary = _selected_deploy_config(default_config)
 	var run_start: Dictionary = DeployConfigScript.build_run_start_config(deploy_config)
 	if bool(run_start.get("preview", true)):
 		_fail("RunStartConfig still marked preview")
@@ -64,7 +69,8 @@ func _validate_deploy_prep_run_start_config() -> void:
 func _validate_runtime_carry_in_loop() -> void:
 	var controller = RunRuntimeControllerScript.new()
 	var bus = controller.command_bus
-	var run_start: Dictionary = DeployConfigScript.build_run_start_config(DeployConfigScript.default_config(1, _sample_meta_summary()))
+	var deploy_config := _selected_deploy_config(DeployConfigScript.default_config(1, _sample_meta_summary()))
+	var run_start: Dictionary = DeployConfigScript.build_run_start_config(deploy_config)
 	var start_result: Dictionary = bus.dispatch(&"start_standard_run", {"run_start_config": run_start})
 	_require_ok(start_result, "start standard run with M3R loadout")
 	var context = controller.context
@@ -82,7 +88,7 @@ func _validate_runtime_carry_in_loop() -> void:
 	var use_result: Dictionary = bus.dispatch(&"use_consumable", {"instance_id": consumable_id})
 	_require_ok(use_result, "use carry-in consumable")
 	var consumed_item: Dictionary = context.asset_ledger.item_instances.get(consumable_id, {})
-	if StringName(consumed_item.get("location_state", &"")) != RunAssetLedgerScript.LOCATION_LOST:
+	if StringName(consumed_item.get("location_state", &"")) != RunAssetLedgerScript.LOCATION_CONSUMED:
 		_fail("carry-in consumable was not consumed through ledger")
 	var snapshot: Dictionary = context.asset_ledger.get_public_snapshot(context.player_pos)
 	if (snapshot.get("equipped_items", []) as Array).is_empty():
@@ -94,8 +100,8 @@ func _validate_runtime_carry_in_loop() -> void:
 func _sample_meta_summary() -> Dictionary:
 	return {
 		"warehouse_items": [
-			_item_with_instance(M3ItemCatalogScript.equipment_items()[2], "wh_eq_salvage_hook"),
-			_item_with_instance(M3ItemCatalogScript.equipment_items()[5], "wh_eq_carry_rig"),
+			_item_with_instance(M3ItemCatalogScript.equipment_items()[0], "wh_eq_old_vest"),
+			_item_with_instance(M3ItemCatalogScript.equipment_items()[4], "wh_eq_signal_pin"),
 			_item_with_instance(M3ItemCatalogScript.consumable_items()[0], "wh_con_med_patch"),
 			_item_with_instance(M3ItemCatalogScript.consumable_items()[4], "wh_con_rescue_tag"),
 			_item_with_instance(M3ItemCatalogScript.collectible_items()[0], "wh_col_relic"),
@@ -106,6 +112,27 @@ func _sample_meta_summary() -> Dictionary:
 		"permit_level": 1,
 		"protocol_difficulty": 5,
 	}
+
+
+func _selected_deploy_config(config: Dictionary) -> Dictionary:
+	var selected := _changed_config(
+		DeployConfigScript.apply_card_action(config, &"warehouse", &"m3r_wh_eq_old_vest"),
+		"select old vest"
+	)
+	selected = _changed_config(
+		DeployConfigScript.apply_card_action(selected, &"warehouse", &"m3r_wh_eq_signal_pin"),
+		"select signal pin"
+	)
+	return _changed_config(
+		DeployConfigScript.apply_card_action(selected, &"warehouse", &"m3r_wh_con_med_patch"),
+		"select medical patch"
+	)
+
+
+func _changed_config(result: Dictionary, label: String) -> Dictionary:
+	if not bool(result.get("changed", false)):
+		_fail("%s did not change deploy config: %s" % [label, JSON.stringify(result)])
+	return (result.get("config", {}) as Dictionary).duplicate(true)
 
 
 func _item_with_instance(source_item: Dictionary, instance_id: String) -> Dictionary:

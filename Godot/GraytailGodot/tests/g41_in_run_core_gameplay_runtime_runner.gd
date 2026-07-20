@@ -505,8 +505,8 @@ func _check_integrated_combat_reward_and_flee() -> void:
 		_check(_item_location(context, String(instance_id)) == RunAssetLedger.LOCATION_ROOM_FLOOR, "Flee-selected item was deleted instead of moved to room_floor")
 	controller.in_run_runtime.sync_room(Vector2(0.50, 0.50))
 	_check(controller.in_run_runtime.has_active_combat(), "Re-entering an uncleared fled room did not restart combat")
-	controller.start_demo_run(bus.room_resolver)
-	_check(not controller.in_run_runtime.has_active_combat() and controller.in_run_runtime.encounter_ordinals.is_empty(), "Starting a new run did not clear G41 runtime lifecycle state")
+	controller.restart_run(bus.room_resolver)
+	_check(not controller.in_run_runtime.has_active_combat() and controller.in_run_runtime.encounter_ordinals.is_empty(), "Restarting the run did not clear G41 runtime lifecycle state")
 	_release_controller(controller)
 
 

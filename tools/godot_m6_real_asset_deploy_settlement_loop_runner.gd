@@ -169,11 +169,11 @@ func _validate_terminal_settlement_and_history() -> void:
 	var temp_path := "user://m6_validation/meta_%d.json" % Time.get_ticks_usec()
 	adapter.active_meta_progress_path = temp_path
 	adapter.data = save_adapter.default_meta_progress()
-	var display_pending := RunSceneResultControllerScript.build_result_display_snapshot(adapter, {
+	var display_pending := RunSceneResultControllerScript.build_result_display_snapshot({
 		"result_id": "m6_pending_guard",
 		"outcome": "Failed",
 		"settlement": {"requires_salvage_selection": true, "finalized": false},
-	})
+	}, adapter.get_summary(), {})
 	if bool((display_pending.get("meta_progress_commit", {}) as Dictionary).get("committed", true)):
 		_fail("pending failure reached MetaProgress commit")
 	var commit := adapter.apply_settlement(context.result_snapshot)

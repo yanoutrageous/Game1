@@ -1,24 +1,28 @@
 # Known Unfinished Systems
 
-文档状态：I0 当前未完成系统清单
-最后更新：2026-07-11
+文档状态：I1 当前未完成系统清单。
+最后更新：2026-07-20
 
-本文件阻止工程 foundation、preview 或局部 runner PASS 被误写成完整产品能力。
+本文件阻止 foundation、preview、schema、runner 或局部 PASS 被扩写为完整产品能力。
 
-| 系统 | 当前事实 | 建议后续门 |
+| 系统 | 当前事实 | 后续门 |
 | --- | --- | --- |
-| 可见启动安全隔离 | I0 已关闭，但可见 Godot 曾写入范围外 AppData logs | 在任何新可见运行前建立并验证日志隔离门 |
-| 完整人工游玩 | I0.7 仅观察 main menu → deploy prep → run HUD 与 M / Q / G / T；移动、撤离、结算、返回未覆盖 | 安全启动门之后的独立 manual regression stage |
-| `RunScene` 职责 | I0.4 后仍有 1,668 行 | 每次只迁移一个有特征测试的职责 |
-| active-run persistence | save/profile 边界存在，完整往返、恢复和迁移不足 | persistence stage |
-| Complete LongTerm | shell / preview / partial foundation | long-term product stage |
-| Objective / Reward / Pool | contract / preview foundation，不是完整闭环 | MVP progression stage |
-| Complete Rule Engine / content | schema、adapter 和基础执行存在，内容与完整策略不足 | rule runtime/content stage |
-| Complete Warehouse economy | lite / display / loadout 基础，不是完整经济 | warehouse/economy stage |
-| Final art productization | ART21R2 为 visual partial | independent visual acceptance gate |
-| Cleanup diagnostics | 每轮 24 条 ObjectDB/resource 退出提示 | lifecycle diagnostic stage |
-| CI / release gate | 未建立为当前能力 | CI then export/release gate |
-| Performance / device matrix | 无权威性能、分辨率和输入设备矩阵 | performance/compatibility stage |
-| 用户原始 dirty 归属 | 12 项状态被保护，未清理或提交 | separate user decision |
+| I1 最终验收 | worktree 39/39 与 preview 静态 review 27/27 已通过；full committed HEAD、commit、push 尚未完成 | 验证精确 HEAD 并回填 Git 交付证据后才能关闭 |
+| `RunScene` 职责 | 仍是大型协调器；I1 已提取若干边界但未完成拆分 | 一次一个有特征测试的职责提取；以所有权和回归门而非行数判断 |
+| active-run persistence | 当前进程内 continue 可用；退出 Godot 后恢复未实现 | schema/migration/crash/idempotency stage |
+| 完整人工游玩 | 历史阶段只有有限或局部人工证据 | 独立长局、多终局、返回与恢复 regression |
+| UI / 动画手感 | 自动焦点、字号、布局、状态帧有门；最终鼠标/手柄/动画观感未验收 | visible interaction and motion acceptance |
+| 玩家死亡表现 | 无独立 death bitmap；当前使用已有帧/姿态表达 | approved art asset + runtime + visible gate |
+| 完整仓库经济 | 手动出勤和写回可用；整理、堆叠、扩容、保险、寄售、批售等未完成 | warehouse/economy contract |
+| 装备深度 | 基础效果可用；强化、耐久、随机词条、完整被动和平衡未完成 | equipment/content/balance contract |
+| 内容量 | M7 首轮内容可用；Boss、精英、更深事件、奖励池与长期内容不足 | content runtime + persistence + UI gate |
+| 抽奖/唯一物/外观 | UI 或锁定状态存在；真实获取、消费和实际外观未闭环 | product rule and acquisition gate |
+| Save future evolution | I1 保护未来 schema 不被降级；真正的未来 migration 尚未实现 | versioned migration tests |
+| Cleanup diagnostics | full 中 22 个 runner 共保留 44 条已分类 shutdown cleanup diagnostic；blocking diagnostic 为 0 | lifecycle diagnostic stage |
+| 历史 validator 漂移 | G35/G36 与 M3/M3H/M3R/M5 独立 wrapper 含旧模块位置、旧语义或 blanket metadata 规则，不是 I1 当前入口 | 需要复用时单独校准；当前使用 I1 manifest + `I1_PROJECT_METADATA` |
+| 通用性能 | 只有 combat refresh 微基准 | frame/memory/long-run/device workload matrix |
+| CI | workflow 已配置，远端成功 run 尚无当前证据 | push 后 Actions success + artifact audit |
+| 导出 / 发布 | 未建立为当前能力 | target export, package, smoke, release gate |
+| 最终美术 / 音频 | I1 改善 UI、动画与资源治理；不构成最终验收 | independent visual/audio acceptance |
 
-自动化 runner 通过只能证明它覆盖的契约；不能替代内容完成、人工游玩、最终视觉或发布验收。
+自动化 runner 只证明其覆盖的契约；预览生成只证明图像被写出；二者都不能替代人工、最终视觉、通用性能或发布验收。

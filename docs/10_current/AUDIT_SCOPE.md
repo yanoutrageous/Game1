@@ -1,29 +1,35 @@
 # Audit Scope
 
-文档状态：I0 当前审计范围
-最后更新：2026-07-11
+文档状态：I1 当前审计范围。
+最后更新：2026-07-20
 
 ## 已纳入
 
-- `D:\AGAME1` 全目录、活动仓库、Godot 工程、当前文档、来源登记和历史报告。
-- Git branch / HEAD / index / refs / stash / worktree / dirty state。
-- 所有可定位的 AGAME1 相关 Codex 根对话与子代理 rollout。
-- 项目本地 Godot 4.6.3 的来源、版本、哈希、签名限制、编辑器导入与 12 个隔离运行器。
-- 四个已确认缺陷、`RunScene` 的最小职责提取、仓库原子迁移和路径重绑定。
-- 当前事实、阶段、验证、安全和编码治理。
-- I0.7 的有限可见烟测、范围外日志不符合、活动工程业务恢复和恢复后最终套件。
+- 由 `git rev-parse --show-toplevel` 解析的活动仓库、Godot 工程、当前文档和注册表。
+- Git branch / HEAD / origin / index / refs / stash / worktree / dirty / staged / untracked。
+- 当前代码的命令、状态、刷新、保存、终局提交、UI、动画、资源和项目元数据边界。
+- I1 static、preflight/quick/core/ui/full、worktree/head、报告、marker、diagnostic 和污染守卫。
+- production `main.tscn` 的九状态 × 三分辨率预览生成与人工图片复核。
+- ART25 来源、许可、hash、manifest、确定性与 production runtime key。
+- 当前入口、来源、Godot docs registry、重复/生命周期/编码与阶段索引。
+- 本机 Godot 4.6.3 路径、版本、大小与 SHA-256；跨机器解析规则另行核对。
+
+## 历史证据使用
+
+- I0 是上一闭合非美术基线，ART21 是项目级上一闭合美术阶段。
+- ART23 是较晚页面/UI 验收证据切片；ART24R2 是 24/61 失败封存。
+- G41/M6/M7 与更早 runner/validation 可用于回归，但当前实现和 I1 结果优先。
+- 历史 `D:\AGAME1` source/report/worktree 路径只证明当时机器布局；本机 external source pack 当前不可用。
 
 ## 明确未声称完成
 
-- 完整产品内容、长期系统、仓库经济、目标 / 奖励 / Pool 和完整规则引擎。
-- 最终美术产品化、全分辨率视觉 QA、性能基线、发布导出或 CI。
-- 完整人工游玩：基础移动、撤离完成、结算和返回路线未观察。
-- 最终视觉、全分辨率与交互状态矩阵；I0.7 只做会话内有限可见观察，未持久化截图。
-- 用户原始 12 项脏状态的归属或清理决定。
-- 远端 push、main merge、历史重写或分支删除。
+- 退出 Godot 进程后的 active-run 检查点恢复和迁移。
+- 完整仓库经济、装备深度、Boss/精英、更深内容、抽奖/唯一物/实际外观。
+- 完整人工长时间游玩、最终视觉/音频、鼠标/手柄/动画手感。
+- 除 combat refresh 微基准外的通用性能、设备/输入矩阵。
+- 未实际成功运行的 GitHub Actions、导出、发布或 release gate。
+- 对所有历史文档、branch 或 external source pack 的破坏性清理。
 
 ## 证据等级
 
-实现、可运行测试和可见结果优先于对话自述；当前入口优先于历史导航；历史文档只证明其明确记录的时间点和范围。
-
-I0 阶段已关闭，但总体状态保留 `CLOSED_WITH_RECORDED_SAFETY_NONCONFORMANCE_AND_LIMITATIONS`；阶段关闭不得被解释为安全边界、完整人工、最终视觉或发布 PASS。
+当前代码与可运行/可见证据优先于对话或历史摘要。worktree runner、committed HEAD、capture、人审、performance、CI 和 release 各自只能证明其明确范围。当前 I1 worktree acceptance 已通过，但 committed HEAD、commit/push 和最终 Git/metadata 证据仍 pending，因此不得关闭。

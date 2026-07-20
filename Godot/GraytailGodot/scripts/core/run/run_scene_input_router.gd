@@ -10,7 +10,7 @@ const ACTION_OPEN_MAP := &"open_map"
 const ACTION_OPEN_INVENTORY := &"open_inventory"
 const ACTION_OPEN_GROUND_LOOT := &"open_ground_loot"
 const ACTION_REQUEST_EXTRACT := &"request_extract"
-const ACTION_RESTART_RUN := &"restart_run"
+const ACTION_DEBUG_RESTART_RUN := &"debug_restart_run"
 
 
 static func cancel_action(event: InputEvent) -> StringName:
@@ -43,7 +43,7 @@ static func run_action(event: InputEvent) -> StringName:
 	if event.is_action_pressed("open_map") or _event_matches_key(event, [KEY_M, KEY_TAB]):
 		return ACTION_OPEN_MAP
 	if event.is_action_pressed("debug_restart_run"):
-		return ACTION_RESTART_RUN
+		return ACTION_DEBUG_RESTART_RUN
 	return ACTION_NONE
 
 

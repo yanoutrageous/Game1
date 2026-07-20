@@ -1,6 +1,6 @@
 # M4 Branch Governance Ledger
 
-文档状态补充：本文件是 M4 / M4S 时间点分支证据。其旧仓库路径和旧 refs 不改写；当前分支事实见 I0 `CURRENT_STATE.md`。
+文档状态补充：本文件是 M4 / M4S 时间点分支证据。其旧仓库路径和旧 refs 不改写；I1 当前分支事实见 `docs/10_current/CURRENT_STATE.md` 和 `docs/50_stages/active/STAGE_INDEX.md`。
 
 文档状态：M4 / M4S 仓库同步 / 分支治理台账
 适用范围：当前本地与 origin 分支的审计、合并候选判断、清理建议

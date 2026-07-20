@@ -1,4 +1,4 @@
-extends Node
+extends SceneTree
 
 const ResultPanelScene := preload("res://scenes/ui/result/result_panel.tscn")
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
@@ -12,7 +12,7 @@ const RESOLUTIONS := [
 ]
 
 
-func _ready() -> void:
+func _initialize() -> void:
 	call_deferred("_run")
 
 
@@ -22,11 +22,11 @@ func _run() -> void:
 		var profile: Dictionary = UILayoutProfileScript.profile_for_resolution(resolution_id)
 		var viewport_size: Vector2i = profile.get("supported_size", Vector2i(1280, 720))
 		profile["actual_viewport_size"] = viewport_size
-		get_window().size = viewport_size
+		root.size = viewport_size
 		for state_id in [&"success", &"failure_empty", &"failure_pending", &"failure_selected", &"failure_capacity_blocked", &"failure_final", &"abandon"]:
 			var canvas := Control.new()
 			canvas.size = viewport_size
-			get_window().add_child(canvas)
+			root.add_child(canvas)
 			var panel := ResultPanelScene.instantiate() as ResultPanel
 			canvas.add_child(panel)
 			await _frames(2)
@@ -44,12 +44,12 @@ func _run() -> void:
 			await _frames(2)
 	if failures.is_empty():
 		print("ART24_RESULT_PANEL_SCENE=PASS resolutions=5 states=success,failure_empty,failure_pending,failure_selected,failure_capacity_blocked,failure_final,abandon")
-		get_tree().quit(0)
+		quit(0)
 	else:
 		for failure in failures:
 			push_error(failure)
 		print("ART24_RESULT_PANEL_SCENE=FAIL failures=%d" % failures.size())
-		get_tree().quit(2)
+		quit(2)
 
 
 func _assert_state(panel: ResultPanel, state_id: StringName, viewport_size: Vector2i, visual_state: StringName, failures: Array[String]) -> void:
@@ -175,4 +175,4 @@ func _snapshot_for(state_id: StringName) -> Dictionary:
 
 func _frames(count: int) -> void:
 	for _index in range(count):
-		await get_tree().process_frame
+		await process_frame

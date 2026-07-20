@@ -11,22 +11,25 @@ const DEFAULT_ACTOR_ID := &"player"
 const REJECTION_EVENT_OPTION_UNAVAILABLE := "event_option_unavailable"
 const REJECTION_CANNOT_EXTRACT := "cannot_extract"
 const REJECTION_NO_EXTRACT_REQUEST := "no_extract_request"
+const REJECTION_RESTART_CONFIRMATION_REQUIRED := "restart_confirmation_required"
 const EncounterContractScript := preload("res://scripts/core/run/encounter/encounter_contract.gd")
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
 const RunEffectApplierScript := preload("res://scripts/core/run/run_effect_applier.gd")
 const M3ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
 const RunStartConfigScript := preload("res://scripts/core/run/run_start_config.gd")
+const ItemCommandHandlerScript := preload("res://scripts/core/command/item_command_handler.gd")
 
 var context: RunContext
 var runtime_controller
 var room_resolver: RoomResolver = RoomResolver.new()
+var item_command_handler: ItemCommandHandler = ItemCommandHandlerScript.new()
 var command_sequence: int = 0
 
 
 func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 	var command: Dictionary = _normalize_command(command_name, payload)
 	var command_payload: Dictionary = command.get("payload", {})
-	if _is_debug_command_request(command_name, command_payload) and not DebugGateScript.is_debug_tools_enabled():
+	if _is_debug_command_request(command_name, command_payload) and not _debug_tools_enabled():
 		var blocked := DebugGateScript.disabled_result(DEFAULT_ACTOR_ID)
 		return CommandResult.from_action(command, blocked, [], [], _snapshot_delta_for(blocked))
 	if context == null and runtime_controller != null:
@@ -102,6 +105,8 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = extract()
 		&"restart_run":
 			action_result = restart_run()
+		&"debug_restart_run":
+			action_result = debug_restart_run()
 		&"confirm_tutorial_popup":
 			action_result = confirm_tutorial_popup()
 		&"open_map":
@@ -282,7 +287,7 @@ func apply_runtime_combat_damage(payload: Dictionary) -> Dictionary:
 	if not _can_accept_command():
 		return _blocked(&"blocked", _current_blocked_reason())
 	var result: Dictionary = room_resolver.apply_runtime_combat_damage(context, payload)
-	_emit_state()
+	_emit_state(&"combat")
 	if context.failed:
 		result_available.emit(context.result_snapshot)
 	return result
@@ -351,105 +356,39 @@ func select_encounter_option(option_id: StringName = &"default") -> Dictionary:
 
 
 func pickup_ground_item(instance_id: String = "") -> Dictionary:
-	if not _can_accept_command():
-		return _blocked(&"blocked", "command_blocked")
-	var result: Dictionary = RunRuleService.pickup_ground_item(context, instance_id)
-	context.last_reward = result.duplicate(true)
-	if bool(result.get("ok", false)):
-		context.blocked_reason = ""
-		var item: Dictionary = result.get("item", {})
-		context.last_message = "Picked up floor item: %s." % String(item.get("display_name", item.get("item_id", "item")))
-	else:
-		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
-		context.last_message = "Pickup blocked: %s." % context.blocked_reason
-	_emit_state()
-	return result
+	return _execute_item_command(ItemCommandHandlerScript.ACTION_PICKUP, {"instance_id": instance_id})
 
 
 func replace_ground_item(ground_instance_id: String = "", drop_instance_id: String = "") -> Dictionary:
-	if not _can_accept_command():
-		return _blocked(&"blocked", "command_blocked")
-	var result: Dictionary = RunRuleService.replace_ground_item(context, ground_instance_id, drop_instance_id)
-	context.last_reward = result.duplicate(true)
-	if bool(result.get("ok", false)):
-		context.blocked_reason = ""
-		var item: Dictionary = result.get("item", {})
-		var dropped: Dictionary = result.get("dropped_item", {})
-		context.last_message = "Replaced floor item: picked %s, dropped %s." % [
-			String(item.get("display_name", item.get("item_id", "item"))),
-			String(dropped.get("display_name", dropped.get("item_id", "item"))),
-		]
-	else:
-		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
-		context.last_message = "Replace blocked: %s." % context.blocked_reason
-	_emit_state()
-	return result
+	return _execute_item_command(ItemCommandHandlerScript.ACTION_REPLACE, {
+		"ground_instance_id": ground_instance_id,
+		"drop_instance_id": drop_instance_id,
+	})
 
 
 func drop_inventory_item(instance_id: String = "") -> Dictionary:
-	if not _can_accept_command():
-		return _blocked(&"blocked", "command_blocked")
-	var result: Dictionary = RunRuleService.drop_inventory_item(context, instance_id)
-	context.last_reward = result.duplicate(true)
-	if bool(result.get("ok", false)):
-		context.blocked_reason = ""
-		var item: Dictionary = result.get("item", {})
-		context.last_message = "Dropped inventory item: %s." % String(item.get("display_name", item.get("item_id", "item")))
-	else:
-		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
-		context.last_message = "Drop blocked: %s." % context.blocked_reason
-	_emit_state()
-	return result
+	return _execute_item_command(ItemCommandHandlerScript.ACTION_DROP, {"instance_id": instance_id})
 
 
 func use_consumable(instance_id: String = "") -> Dictionary:
-	if not _can_accept_command():
-		return _blocked(&"blocked", "command_blocked")
-	var result: Dictionary = RunRuleService.use_consumable(context, instance_id)
-	context.last_reward = result.duplicate(true)
-	if bool(result.get("ok", false)):
-		context.blocked_reason = ""
-		context.last_message = String(result.get("message", "Consumable used."))
-	else:
-		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
-		context.last_message = "Use blocked: %s." % context.blocked_reason
-	_emit_state()
-	return result
+	return _execute_item_command(ItemCommandHandlerScript.ACTION_USE, {"instance_id": instance_id})
 
 
 func equip_item(instance_id: String = "") -> Dictionary:
-	if not _can_accept_command():
-		return _blocked(&"blocked", "command_blocked")
-	if context == null or context.asset_ledger == null:
-		return _blocked(&"not_ready", "not_ready")
-	var result: Dictionary = context.asset_ledger.equip_inventory_item(instance_id)
-	context.asset_ledger.sync_compat_fields(context)
-	if bool(result.get("ok", false)):
-		context.blocked_reason = ""
-		var item: Dictionary = result.get("item", {})
-		context.last_message = "Equipped item: %s." % String(item.get("display_name", item.get("item_id", "item")))
-	else:
-		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
-		context.last_message = "Equip blocked: %s." % context.blocked_reason
-	_emit_state()
-	return result
+	return _execute_item_command(ItemCommandHandlerScript.ACTION_EQUIP, {"instance_id": instance_id})
 
 
 func unequip_item(instance_id: String = "") -> Dictionary:
+	return _execute_item_command(ItemCommandHandlerScript.ACTION_UNEQUIP, {"instance_id": instance_id})
+
+
+func _execute_item_command(action: StringName, payload: Dictionary) -> Dictionary:
 	if not _can_accept_command():
 		return _blocked(&"blocked", "command_blocked")
-	if context == null or context.asset_ledger == null:
-		return _blocked(&"not_ready", "not_ready")
-	var result: Dictionary = context.asset_ledger.unequip_item(instance_id)
-	context.asset_ledger.sync_compat_fields(context)
-	if bool(result.get("ok", false)):
-		context.blocked_reason = ""
-		var item: Dictionary = result.get("item", {})
-		context.last_message = "Unequipped item: %s." % String(item.get("display_name", item.get("item_id", "item")))
-	else:
-		context.blocked_reason = String(result.get("reason", result.get("blocked_reason", "blocked")))
-		context.last_message = "Unequip blocked: %s." % context.blocked_reason
-	_emit_state()
+	var handled: Dictionary = item_command_handler.execute(context, action, payload)
+	var result: Dictionary = handled.get("action_result", _blocked(&"blocked", "item_command_handler_invalid_result"))
+	if bool(handled.get("emit_state", false)):
+		_emit_state()
 	return result
 
 
@@ -539,6 +478,10 @@ func extract() -> Dictionary:
 
 
 func restart_run() -> Dictionary:
+	return _blocked(&"restart_confirmation_required", REJECTION_RESTART_CONFIRMATION_REQUIRED)
+
+
+func debug_restart_run() -> Dictionary:
 	if runtime_controller == null:
 		return _blocked(&"not_ready", "runtime_controller_missing")
 	var result: Dictionary = runtime_controller.restart_run(room_resolver)
@@ -688,6 +631,10 @@ func _is_debug_command_request(command_name: StringName, payload: Dictionary) ->
 	return DebugGateScript.is_debug_command(command_name, payload)
 
 
+func _debug_tools_enabled() -> bool:
+	return DebugGateScript.is_debug_tools_enabled()
+
+
 func _is_g41_runtime_payload(payload: Dictionary) -> bool:
 	var source := String(payload.get("source", ""))
 	return source == "g41_combat_simulation" or source == "g41_in_run_runtime"
@@ -702,9 +649,30 @@ func _mark_open_map_placeholder() -> Dictionary:
 	return {"ok": true, "status": &"map_opened", "actor_id": DEFAULT_ACTOR_ID}
 
 
-func _emit_state() -> void:
+func _emit_state(change_scope: StringName = &"all") -> void:
 	if context != null:
-		state_changed.emit(context.get_status_snapshot())
+		var snapshot := _combat_state_snapshot() if change_scope == &"combat" else context.get_status_snapshot()
+		snapshot["_change_scope"] = change_scope
+		state_changed.emit(snapshot)
+
+
+func _combat_state_snapshot() -> Dictionary:
+	return {
+		"run_id": context.run_id,
+		"mode": context.mode,
+		"phase": context.phase,
+		"run_active": context.run_active,
+		"failed": context.failed,
+		"hp": context.hp,
+		"max_hp": context.max_hp,
+		"power": context.power,
+		"pressure": context.pressure,
+		"protocol_level": context.protocol_level,
+		"current_room": context.current_room_type,
+		"position": context.get_current_pos(),
+		"last_message": context.last_message,
+		"outcome": context.outcome,
+	}
 
 
 func _format_pos(pos: Vector2i) -> String:

@@ -43,7 +43,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	)
 	layout_metrics = Art24MapOverlayLayoutScript.calculate(layout_profile, grid_size)
 	title_font_size = 16 if is_low else (20 if is_high else 18)
-	footer_font_size = 11 if is_low else (13 if is_high else 12)
+	footer_font_size = 13
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	offset_left = 0.0
 	offset_top = 0.0
@@ -150,7 +150,7 @@ func _rebuild_grid() -> void:
 		detail.text = ""
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		footer.add_theme_font_size_override("font_size", 12 if bool(layout_profile.get("is_low_resolution", false)) else maxi(13, footer_font_size))
+		footer.add_theme_font_size_override("font_size", maxi(13, footer_font_size))
 		footer.add_theme_constant_override("line_spacing", 2)
 		footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		footer.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -174,14 +174,14 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	button.custom_minimum_size = marker_size
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	button.text = label_text
 	button.tooltip_text = ""
 	var marker_color := PresentationTheme.color_for_key(theme_key)
 	if label_text == "?":
 		marker_color = Color(0.58, 0.72, 0.68, 0.74)
 	button.add_theme_color_override("font_color", marker_color)
-	button.add_theme_font_size_override("font_size", maxi(9, int(min(marker_size.x, marker_size.y) * 0.52)))
+	button.add_theme_font_size_override("font_size", maxi(13, int(min(marker_size.x, marker_size.y) * 0.52)))
 	var state := _art21_marker_state(marker)
 	var selected := _is_selected_marker(marker)
 	_apply_marker_button_style(button, theme_key, state, selected)
@@ -283,6 +283,7 @@ func _apply_marker_button_style(button: Button, theme_key: StringName, state: St
 	button.add_theme_stylebox_override("normal", tile_style)
 	button.add_theme_stylebox_override("hover", _art24_map_tile_style(state, true))
 	button.add_theme_stylebox_override("pressed", _art24_map_tile_style(state, true))
+	button.add_theme_stylebox_override("focus", _art24_map_tile_style(state, true))
 	button.add_theme_stylebox_override("disabled", Art10UISkinKitScript.transparent_style_box(0))
 	button.add_theme_color_override("font_color", border)
 

@@ -91,7 +91,7 @@ func _validate_consumable_use() -> void:
 	if context.hp <= damaged_hp:
 		_fail("consumable did not apply HP recovery")
 	var consumed_item: Dictionary = context.asset_ledger.item_instances.get(instance_id, {})
-	if StringName(consumed_item.get("location_state", &"")) != RunAssetLedger.LOCATION_LOST:
+	if StringName(consumed_item.get("location_state", &"")) != RunAssetLedger.LOCATION_CONSUMED:
 		_fail("consumable was not consumed from backpack")
 
 
@@ -143,12 +143,24 @@ func _validate_failure_settlement() -> void:
 	var context = controller.context
 	context.asset_ledger.add_currency(RunAssetLedger.CURRENCY_BLACK, 20, "m3_runner_failure")
 	context.asset_ledger.add_currency(RunAssetLedger.CURRENCY_GOLD, 7, "m3_runner_failure_safe")
-	context.asset_ledger.add_reward_items([_inventory_item_def(M3ItemCatalogScript.consumable_items()[1])], RunAssetLedger.LOCATION_INVENTORY, context.get_current_pos(), "m3_runner_failure")
+	var salvage_item: Dictionary = _inventory_item_def(M3ItemCatalogScript.equipment_items()[0])
+	salvage_item["instance_id"] = "m3_runner_failure_salvage"
+	context.asset_ledger.add_reward_items([salvage_item], RunAssetLedger.LOCATION_INVENTORY, context.get_current_pos(), "m3_runner_failure")
 	context.asset_ledger.add_reward_items([M3ItemCatalogScript.collectible_items()[2]], RunAssetLedger.LOCATION_ROOM_FLOOR, context.get_current_pos(), "m3_runner_floor_lost")
 	var applied: Dictionary = RunEffectApplierScript.apply_effects(context, [
 		RunEffectApplierScript.effect(RunEffectApplierScript.EFFECT_RUN_FAIL, "m3_runner_fail", {"reason": "m3_runner_failure"}),
 	], controller)
 	_require_ok(applied, "runtime failure")
+	var pending: Dictionary = context.result_snapshot.get("settlement", {})
+	if not bool(pending.get("requires_salvage_selection", false)) or bool(pending.get("finalized", true)):
+		_fail("failure did not pause for explicit salvage selection")
+	var candidate_found := false
+	for item in (pending.get("settlement_pool", []) as Array):
+		if String((item as Dictionary).get("instance_id", "")) == "m3_runner_failure_salvage":
+			candidate_found = true
+	if not candidate_found:
+		_fail("failure salvage candidate missing from settlement pool")
+	_require_ok(controller.confirm_failure_salvage(["m3_runner_failure_salvage"]), "confirm failure salvage")
 	var settlement: Dictionary = context.result_snapshot.get("settlement", {})
 	if str(settlement.get("outcome", "")) != "failure":
 		_fail("failure settlement did not report failure")
@@ -177,10 +189,10 @@ func _validate_abandon_settlement() -> void:
 		_fail("abandon settlement did not report abandon")
 	if int(settlement.get("black_coin_lost", 0)) < 20:
 		_fail("abandon did not lose run_black_coin")
-	if int(settlement.get("long_term_gold_gained", 0)) != 0:
-		_fail("abandon must not convert safe_yield this stage")
-	if str(settlement.get("safe_yield_state", "")) != "pending_undecided":
-		_fail("abandon safe_yield state not explicit")
+	if int(settlement.get("long_term_gold_gained", 0)) != 7:
+		_fail("abandon did not retain safe_yield to long_term_gold")
+	if str(settlement.get("safe_yield_state", "")) != "retained":
+		_fail("abandon safe_yield state was not retained")
 	_validate_run_result_boundary(context.result_snapshot, "abandon")
 
 

@@ -6,6 +6,7 @@ const RunContextScript := preload("res://scripts/core/run/run_context.gd")
 const G37_GAME_KERNEL_RUNTIME_DRIVER_ENABLED := false
 const G38_GAME_KERNEL_COMPATIBILITY_FACADE := true
 const G38_GAME_KERNEL_REMOVAL_CONDITION := "remove_autoload_in_project_metadata_only_in_a_future_project_godot_gate"
+const I1_GAME_KERNEL_AUTOLOAD_STATUS := "removed_from_project_autoload_by_i1_metadata_gate"
 
 var current_run_context
 var command_bus
@@ -29,7 +30,8 @@ func dispatch_command(command_name: StringName, payload: Dictionary = {}) -> Dic
 			"status": &"inactive_kernel",
 			"reason": "runtime_controller_authoritative",
 			"message": "GameKernel is a compatibility facade; RunRuntimeController and RunStateMachine own active runtime lifecycle.",
-			"removal_condition": G38_GAME_KERNEL_REMOVAL_CONDITION,
+			"autoload_status": I1_GAME_KERNEL_AUTOLOAD_STATUS,
+			"historical_g38_removal_condition": G38_GAME_KERNEL_REMOVAL_CONDITION,
 		}
 	if command_bus == null:
 		command_bus = CommandBusScript.new()
@@ -43,7 +45,8 @@ func describe_ownership() -> Dictionary:
 		"compatibility_facade": G38_GAME_KERNEL_COMPATIBILITY_FACADE,
 		"active_owner": "RunRuntimeController" if not authoritative_runtime else "GameKernel",
 		"lifecycle_owner": "RunStateMachine" if not authoritative_runtime else "GameKernel",
-		"boundary": "G38 keeps GameKernel as an inactive compatibility facade because project.godot autoload removal is out of scope.",
+		"boundary": "I1 removed the inactive GameKernel autoload; this script remains only as a non-authoritative historical compatibility facade.",
 		"legacy_marker": "RunScene owns the authoritative scene orchestration marker; active runtime ownership is RunRuntimeController.",
-		"removal_condition": G38_GAME_KERNEL_REMOVAL_CONDITION,
+		"autoload_status": I1_GAME_KERNEL_AUTOLOAD_STATUS,
+		"historical_g38_removal_condition": G38_GAME_KERNEL_REMOVAL_CONDITION,
 	}

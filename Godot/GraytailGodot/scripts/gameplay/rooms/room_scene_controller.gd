@@ -1,6 +1,8 @@
 extends Node2D
 class_name RoomSceneController
 
+const ContentDBAccessScript := preload("res://scripts/core/content/content_db_access.gd")
+
 var room_data: Dictionary = {}
 
 
@@ -23,8 +25,8 @@ func _apply_visuals() -> void:
 	var prop := get_node_or_null("Interactables/PropSprite") as Sprite2D
 	var background_asset := StringName(room_data.get("background_asset_id", &""))
 	var prop_asset := StringName(room_data.get("prop_asset_id", &""))
-	var background_ref := ContentDB.get_asset_ref(background_asset) if background_asset != &"" else null
-	var prop_ref := ContentDB.get_asset_ref(prop_asset) if prop_asset != &"" else null
+	var background_ref := ContentDBAccessScript.get_asset_ref(background_asset) if background_asset != &"" else null
+	var prop_ref := ContentDBAccessScript.get_asset_ref(prop_asset) if prop_asset != &"" else null
 
 	if background != null and background_ref is Texture2D:
 		background.texture = background_ref

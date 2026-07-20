@@ -221,7 +221,7 @@ func _add_item_card(item: Dictionary) -> void:
 
 	var meta_label := Label.new()
 	meta_label.text = "%s  ·  %s%s" % [_item_type_label(String(item.get("item_type", item.get("main_type", "collectible")))), _rarity_label(rarity), _effect_copy(item)]
-	meta_label.add_theme_font_size_override("font_size", 12)
+	meta_label.add_theme_font_size_override("font_size", 13)
 	meta_label.add_theme_color_override("font_color", Color("b7c4c0"))
 	copy.add_child(meta_label)
 
@@ -229,7 +229,7 @@ func _add_item_card(item: Dictionary) -> void:
 	description.text = String(item.get("short_description", "可回收物资。撤离成功后按结算规则入库。"))
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description.max_lines_visible = 2
-	description.add_theme_font_size_override("font_size", 12)
+	description.add_theme_font_size_override("font_size", 13)
 	description.add_theme_color_override("font_color", Color("919d99"))
 	copy.add_child(description)
 

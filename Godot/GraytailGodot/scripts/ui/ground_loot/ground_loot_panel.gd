@@ -60,7 +60,7 @@ func build() -> void:
 	header.add_child(title_label)
 	var close_button := Button.new()
 	close_button.name = "GroundLootCloseButton"
-	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.focus_mode = Control.FOCUS_ALL
 	close_button.text = "关闭"
 	close_button.custom_minimum_size = Vector2(76, 34)
 	_apply_art21r2_modal_button(close_button, &"art21r2.modal.button.secondary", &"secondary", 15)
@@ -240,7 +240,7 @@ func _add_item_row(item: Dictionary) -> void:
 	item_list.add_child(row)
 	var item_button := Button.new()
 	item_button.name = "GroundLootItemButton"
-	item_button.focus_mode = Control.FOCUS_NONE
+	item_button.focus_mode = Control.FOCUS_ALL
 	item_button.text = RunUIViewModel.item_display_line(item)
 	item_button.custom_minimum_size = item_button_minimum_size
 	item_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -255,7 +255,7 @@ func _add_item_row(item: Dictionary) -> void:
 	row.add_child(item_button)
 	var pickup_button := Button.new()
 	pickup_button.name = "GroundLootPickupButton"
-	pickup_button.focus_mode = Control.FOCUS_NONE
+	pickup_button.focus_mode = Control.FOCUS_ALL
 	pickup_button.text = "拾取"
 	pickup_button.custom_minimum_size = Vector2(72, item_button_minimum_size.y)
 	pickup_button.tooltip_text = "拾取到背包；容量不足时保留在地面。"
@@ -265,7 +265,7 @@ func _add_item_row(item: Dictionary) -> void:
 	row.add_child(pickup_button)
 	var replace_button := Button.new()
 	replace_button.name = "GroundLootReplaceButton"
-	replace_button.focus_mode = Control.FOCUS_NONE
+	replace_button.focus_mode = Control.FOCUS_ALL
 	replace_button.text = "替换"
 	replace_button.custom_minimum_size = Vector2(72, item_button_minimum_size.y)
 	replace_button.tooltip_text = "容量不足时，放下能够腾出空间的最低价值物品，再拾取此物。"
@@ -339,6 +339,6 @@ func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: S
 	button.add_theme_stylebox_override("hover", hover_style)
 	button.add_theme_stylebox_override("pressed", hover_style)
 	button.add_theme_stylebox_override("disabled", style.duplicate())
-	button.add_theme_stylebox_override("focus", Art10UISkinKitScript.transparent_style_box(padding))
+	button.add_theme_stylebox_override("focus", hover_style.duplicate())
 	button.add_theme_color_override("font_color", Color(0.92, 0.95, 0.88, 1.0))
 	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.54, 0.51, 1.0))

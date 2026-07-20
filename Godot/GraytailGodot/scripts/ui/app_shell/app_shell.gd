@@ -23,10 +23,23 @@ var settings_close_button: Button
 var exit_confirm_panel: Control
 var exit_confirm_body: Label
 var current_snapshot: Dictionary = {}
+var _has_snapshot := false
+var _snapshot_revision := 0
+var _page_snapshot_revisions: Dictionary = {
+	PageRouterScript.PAGE_MAIN_MENU: -1,
+	PageRouterScript.PAGE_DEPLOY_PREP: -1,
+	PageRouterScript.PAGE_LONG_TERM: -1,
+}
+var _snapshot_refresh_counts: Dictionary = {
+	PageRouterScript.PAGE_MAIN_MENU: 0,
+	PageRouterScript.PAGE_DEPLOY_PREP: 0,
+	PageRouterScript.PAGE_LONG_TERM: 0,
+}
 
 
 func build() -> void:
 	_clear_children()
+	_reset_page_snapshot_revisions()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_main_menu()
 	_build_deploy_prep()
@@ -38,13 +51,15 @@ func build() -> void:
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	current_snapshot = snapshot.duplicate(true)
-	if main_menu_shell != null and main_menu_shell.has_method("apply_snapshot"):
-		main_menu_shell.call("apply_snapshot", current_snapshot)
-	if deploy_page != null and deploy_page.has_method("apply_snapshot"):
-		deploy_page.call("apply_snapshot", current_snapshot)
-	if long_term_page != null and long_term_page.has_method("apply_snapshot"):
-		long_term_page.call("apply_snapshot", current_snapshot)
-	_refresh_exit_confirm_text()
+	_has_snapshot = true
+	_snapshot_revision += 1
+	_refresh_visible_snapshot_page()
+	if exit_confirm_panel != null and exit_confirm_panel.visible and is_visible_in_tree():
+		_refresh_exit_confirm_text()
+
+
+func get_snapshot_refresh_counts() -> Dictionary:
+	return _snapshot_refresh_counts.duplicate(true)
 
 
 func show_main() -> void:
@@ -229,6 +244,44 @@ func _set_page_visible(active_page: Control) -> void:
 		if page != null:
 			page.visible = page == active_page
 	_hide_settings()
+	_refresh_snapshot_page(active_page)
+
+
+func _refresh_visible_snapshot_page() -> void:
+	if not is_visible_in_tree():
+		return
+	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+		if page != null and page.visible:
+			_refresh_snapshot_page(page)
+			return
+
+
+func _refresh_snapshot_page(page: Control) -> void:
+	if not _has_snapshot or page == null or not page.visible or not is_visible_in_tree():
+		return
+	var page_id := _snapshot_page_id(page)
+	if page_id == &"" or int(_page_snapshot_revisions.get(page_id, -1)) == _snapshot_revision:
+		return
+	if not page.has_method("apply_snapshot"):
+		return
+	page.call("apply_snapshot", current_snapshot)
+	_page_snapshot_revisions[page_id] = _snapshot_revision
+	_snapshot_refresh_counts[page_id] = int(_snapshot_refresh_counts.get(page_id, 0)) + 1
+
+
+func _snapshot_page_id(page: Control) -> StringName:
+	if page == main_menu_shell:
+		return PageRouterScript.PAGE_MAIN_MENU
+	if page == deploy_page:
+		return PageRouterScript.PAGE_DEPLOY_PREP
+	if page == long_term_page:
+		return PageRouterScript.PAGE_LONG_TERM
+	return &""
+
+
+func _reset_page_snapshot_revisions() -> void:
+	for page_id: StringName in _page_snapshot_revisions:
+		_page_snapshot_revisions[page_id] = -1
 
 
 func _show_exit_confirm() -> void:
@@ -263,7 +316,7 @@ func _refresh_exit_confirm_text() -> void:
 		return
 	var has_active_run := bool(current_snapshot.get("run_active", false))
 	if has_active_run:
-		exit_confirm_body.text = "检测到当前可能存在进行中探索。退出游戏不等于放弃探索；下次进入后应从出发探索页继续。若要放弃探索，需要进入出发探索页执行强确认。"
+		exit_confirm_body.text = "检测到当前存在进行中探索。退出游戏只会关闭程序，不执行探索放弃、结算或资源变动；当前不保证重新启动后能够恢复本次探索。若要放弃探索，请进入出发探索页执行强确认。"
 	else:
 		exit_confirm_body.text = "确认退出游戏？本操作只关闭程序，不执行探索放弃、结算或资源变动。"
 

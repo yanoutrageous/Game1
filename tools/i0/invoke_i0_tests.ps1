@@ -227,7 +227,7 @@ $manifest = Get-Content -LiteralPath $requestedManifestPath -Raw | ConvertFrom-J
 if ([int]$manifest.schema_version -ne 2 -or [string]$manifest.path_policy -cne 'runtime_parameters') {
     throw 'I0.2 validation manifest schema or path policy is unsupported'
 }
-Assert-I0PathWithin -Path $repo -Root $workspaceRoot -Label "active repo"
+Assert-I0PathWithin -Path $repo -Root $workspaceRoot -AllowRoot -Label "active repo"
 Assert-I0NoReparseExistingAncestor -Path $repo -Root $workspaceRoot -Label "active repo"
 
 $runtimeTempRoot = if ([string]::IsNullOrWhiteSpace($RuntimeTempRoot)) {

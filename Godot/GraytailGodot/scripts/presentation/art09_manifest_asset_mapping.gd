@@ -1,6 +1,8 @@
 extends RefCounted
 class_name Art09ManifestAssetMapping
 
+const ContentDBAccessScript := preload("res://scripts/core/content/content_db_access.gd")
+
 # ART-09 keeps runtime wiring manifest-backed: UI receives asset_id metadata,
 # then resolves through ContentDB instead of constructing res:// paths.
 
@@ -380,7 +382,7 @@ static func resolve_texture(asset_ref: Dictionary) -> Texture2D:
 static func _texture_for(asset_id: StringName) -> Texture2D:
 	if asset_id == &"":
 		return null
-	var resource := ContentDB.get_asset_ref(asset_id)
+	var resource := ContentDBAccessScript.get_asset_ref(asset_id)
 	if resource is Texture2D:
 		return resource as Texture2D
 	return null

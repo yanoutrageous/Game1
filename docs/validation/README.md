@@ -1,20 +1,27 @@
 # Validation Docs
 
-当前程序阶段验证：`M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP_VALIDATION.md`。历史验证保留，但其中与 M6 冲突的自动出勤、消耗品返还/保全和放弃资源待定语义不再是当前规则。
+文档状态：阶段验证原文入口。
+最后更新：2026-07-20
 
-文档状态：阶段验证原文入口
-适用范围：`docs/validation` 下阶段验证记录
-最后更新：2026-07-18
+当前活动验证：`I1_INCREMENTAL_DEVELOPMENT_BASELINE_VALIDATION.md`，状态 `WORKTREE_ACCEPTANCE_PASS_HEAD_PENDING`。
 
-本目录保存阶段验证原文。验证记录只证明其明确验证范围，不扩大为玩法通过或手测通过。
+本目录保存阶段验证原文。验证记录只证明明确覆盖的范围；static、headless、capture、manual、performance、CI、export 和 release 证据分别声明。
 
-当前美术阶段封存验证：`ART24R2_FINAL_COMPUTER_USE_RESULTS.md`（`FAIL / 24 of 61 PASS`）。合格美术基线仍为 `ART23_LONG_TERM_FINAL_UI_VALIDATION.md`。I0 + ART21 整合验证继续作为工程基线记录。
+## 当前证据口径
+
+- I0 validation：上一闭合非美术基线，冻结历史。
+- ART21 closeout/validation：项目级上一闭合美术阶段。
+- ART23 validation：较晚且已验收的页面/UI 证据切片，不提升项目级 stage authority。
+- ART24R2 final Computer Use：`FAIL / 24 of 61 PASS`，保持失败封存。
+- I1 validation：full worktree 39/39、ART25 与 27/27 预览静态图片复核已通过；full committed HEAD、commit/push 与最终 Git/metadata 证据完成后才能关闭。
 
 ## 使用规则
 
 ```text
-1. 新 validation 命名建议：Gxx_主题_VALIDATION.md。
-2. 新 validation 至少提供中文摘要。
-3. gameplay runtime PASS 和 manual playtest PASS 必须有对应实际验证记录，否则不得声明。
-4. parser/headless smoke 不等于 gameplay runtime PASS 或 manual playtest PASS。
+1. 新 validation 直接落位 docs/validation/，至少提供中文摘要。
+2. 旧 validation 不改写为当前事实；索引负责标注 superseded / historical / failed。
+3. gameplay runtime PASS 和 manual playtest PASS 必须有对应实际证据。
+4. preview/capture 生成不等于视觉 PASS。
+5. worktree PASS 不等于 committed HEAD PASS。
+6. 未运行的性能、CI、导出或发布不得声明通过。
 ```

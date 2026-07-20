@@ -119,8 +119,8 @@ MONSTERS = ["slime", "slimeling", "bat", "drone"]
 MONSTER_SOURCES = {
     "slime": "assets/art24/actors/slime/ue_idle.png",
     "slimeling": "assets/art24/actors/slime/ue_slimeling_idle.png",
-    "bat": "assets/art24/actors/bat/ue_idle.png",
-    "drone": "assets/art24/actors/drone/ue_idle.png",
+    "bat": "assets/art24/actors/bat/ue_idle_0.png",
+    "drone": "assets/art24/actors/drone/ue_idle_0.png",
 }
 
 ITEM_SOURCE_POOL = [
@@ -195,8 +195,27 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def require_godot_source(relative: str) -> Path:
+    source = GODOT / relative
+    if not source.is_file():
+        raise FileNotFoundError(f"declared ART25 source is missing: {relative}")
+    return source
+
+
+def validate_declared_sources() -> None:
+    declared = {
+        "assets/ui/art22/deploy_prep/routes/classic_grid.png",
+        *SHOP_SOURCES.values(),
+        *MONSTER_SOURCES.values(),
+        *ITEM_SOURCE_POOL,
+    }
+    missing = sorted(relative for relative in declared if not (GODOT / relative).is_file())
+    if missing:
+        raise FileNotFoundError("declared ART25 sources are missing:\n" + "\n".join(missing))
+
+
 def fit_source(relative: str, size: tuple[int, int], tint: tuple[int, int, int] | None = None) -> Image.Image:
-    source = Image.open(GODOT / relative).convert("RGBA")
+    source = Image.open(require_godot_source(relative)).convert("RGBA")
     bbox = source.getchannel("A").getbbox()
     if bbox:
         source = source.crop(bbox)
@@ -227,6 +246,8 @@ def frame_icon(subject: Image.Image | None, accent: tuple[int, int, int, int], g
         draw.ellipse((51, 49, 66, 64), fill=PALETTE["ink"], outline=accent, width=2)
         for offset in range(min(badge, 4)):
             draw.rectangle((55 + (offset % 2) * 5, 54 + (offset // 2) * 5, 57 + (offset % 2) * 5, 56 + (offset // 2) * 5), fill=accent)
+        if badge >= 5:
+            draw.rectangle((58, 51, 60, 53), fill=accent)
     return image
 
 
@@ -287,7 +308,7 @@ def draw_glyph(draw: ImageDraw.ImageDraw, glyph: str, accent: tuple[int, int, in
 
 
 def build_map(map_id: str, size: int, difficulty: str) -> Image.Image:
-    base = Image.open(GODOT / "assets/ui/art22/deploy_prep/routes/classic_grid.png").convert("RGBA")
+    base = Image.open(require_godot_source("assets/ui/art22/deploy_prep/routes/classic_grid.png")).convert("RGBA")
     base = ImageEnhance.Brightness(base).enhance(0.62)
     image = base.copy()
     draw = ImageDraw.Draw(image)
@@ -346,7 +367,7 @@ def save_asset(records: list[AssetRecord], image: Image.Image, relative: str, as
 
 def symbolic_series(records: list[AssetRecord], kind: str, ids: list[str], glyph: str, load_group: str, accent: tuple[int, int, int, int]) -> None:
     for index, item_id in enumerate(ids):
-        image = frame_icon(None, accent, glyph, (index % 4) + 1).resize((56, 56), Image.Resampling.LANCZOS)
+        image = frame_icon(None, accent, glyph, index + 1).resize((56, 56), Image.Resampling.LANCZOS)
         save_asset(records, image, f"long_term/{kind}/{item_id}.png", f"ui.art25.long_term.{kind}.{item_id}", f"art25.long_term.{kind}.{item_id}", "tools/art25_build_content_art.py", f"long_term_{kind}", item_id, load_group)
 
 
@@ -357,6 +378,7 @@ def semantic_series(records: list[AssetRecord], kind: str, glyphs: dict[str, str
 
 
 def build() -> list[AssetRecord]:
+    validate_declared_sources()
     records: list[AssetRecord] = []
     for map_id, size, difficulty in MAPS:
         image = build_map(map_id, size, difficulty)
@@ -382,14 +404,10 @@ def build() -> list[AssetRecord]:
 
     for monster_id in MONSTERS:
         source = MONSTER_SOURCES[monster_id]
-        source_path = GODOT / source
-        if source_path.is_file():
-            subject = fit_source(source, (50, 50))
-            image = frame_icon(subject, PALETTE["danger"], "claw")
-        else:
-            image = frame_icon(None, PALETTE["danger"], "claw")
+        subject = fit_source(source, (50, 50))
+        image = frame_icon(subject, PALETTE["danger"], "claw")
         image = image.resize((56, 56), Image.Resampling.LANCZOS)
-        save_asset(records, image, f"long_term/monster/{monster_id}.png", f"ui.art25.long_term.monster.{monster_id}", f"art25.long_term.monster.{monster_id}", source if source_path.is_file() else "tools/art25_build_content_art.py", "long_term_monster", monster_id, "art25_long_term_codex")
+        save_asset(records, image, f"long_term/monster/{monster_id}.png", f"ui.art25.long_term.monster.{monster_id}", f"art25.long_term.monster.{monster_id}", source, "long_term_monster", monster_id, "art25_long_term_codex")
 
     for index, item_id in enumerate(ALL_ITEM_IDS):
         if item_id in SHOP_SOURCES:

@@ -11,7 +11,7 @@ var failures: Array[String] = []
 func _init() -> void:
 	_validate_in_run_equipment_requires_extraction()
 	_validate_carry_in_equipment_remains_active()
-	_validate_unused_consumable_failure_salvage_candidate()
+	_validate_unused_consumable_terminal_clear()
 	_validate_abandon_settlement_branch()
 	if failures.is_empty():
 		print("M3H_ITEM_LOOP_HARDENING=PASS")
@@ -79,7 +79,7 @@ func _validate_carry_in_equipment_remains_active() -> void:
 		_fail("carry-in equipped item missing equip_allowed_now flag")
 
 
-func _validate_unused_consumable_failure_salvage_candidate() -> void:
+func _validate_unused_consumable_terminal_clear() -> void:
 	var controller = RunRuntimeControllerScript.new()
 	var bus = controller.command_bus
 	var consumable: Dictionary = M3ItemCatalogScript.consumable_items()[0].duplicate(true)
@@ -96,14 +96,33 @@ func _validate_unused_consumable_failure_salvage_candidate() -> void:
 	_require_ok(bus.dispatch(&"start_standard_run", start_payload), "start standard run with salvage consumable")
 	var fail_result: Dictionary = controller.fail_run("m3h_failure_salvage")
 	_require_ok(fail_result, "runtime failure settlement")
-	var settlement: Dictionary = controller.context.failure_salvage.duplicate(true)
-	var salvaged: Array = settlement.get("salvaged_items", [])
-	var found := false
-	for item in salvaged:
+	var pending_settlement: Dictionary = controller.context.failure_salvage.duplicate(true)
+	if not bool(pending_settlement.get("requires_salvage_selection", false)) or bool(pending_settlement.get("finalized", true)):
+		_fail("failure did not enter the authoritative salvage-selection phase")
+	var candidate_found := false
+	for item in (pending_settlement.get("settlement_pool", []) as Array):
 		if String((item as Dictionary).get("instance_id", "")) == "m3h_unused_consumable":
-			found = true
-	if not found:
-		_fail("unused carry-in consumable was not available as failure salvage candidate")
+			candidate_found = true
+	if candidate_found:
+		_fail("unused carry-in consumable incorrectly entered the failure settlement pool")
+	var pending_clear_found := false
+	for item in (pending_settlement.get("cleared_consumables", []) as Array):
+		if String((item as Dictionary).get("instance_id", "")) == "m3h_unused_consumable":
+			pending_clear_found = true
+	if not pending_clear_found:
+		_fail("unused carry-in consumable was not declared for terminal clearing")
+	var confirm_result: Dictionary = bus.dispatch(&"confirm_failure_salvage", {"selected_instance_ids": []})
+	_require_ok(confirm_result, "confirm failure salvage selection")
+	var settlement: Dictionary = controller.context.result_snapshot.get("settlement", {})
+	var cleared_found := false
+	for item in (settlement.get("cleared_consumables", []) as Array):
+		if String((item as Dictionary).get("instance_id", "")) == "m3h_unused_consumable":
+			cleared_found = true
+	if not cleared_found:
+		_fail("unused carry-in consumable was not cleared at failure finalization")
+	for item in (settlement.get("salvaged_items", []) as Array):
+		if String((item as Dictionary).get("instance_id", "")) == "m3h_unused_consumable":
+			_fail("unused carry-in consumable was salvaged despite terminal-clear rule")
 
 
 func _validate_abandon_settlement_branch() -> void:
@@ -126,10 +145,10 @@ func _validate_abandon_settlement_branch() -> void:
 		_fail("abandon snapshot outcome was not abandon")
 	if StringName(settlement.get("settlement_outcome", &"")) != &"abandon":
 		_fail("abandon settlement_outcome was not abandon")
-	if int(settlement.get("long_term_gold_gained", -1)) != 0:
-		_fail("abandon granted long_term_gold")
-	if StringName(settlement.get("safe_yield_state", &"")) != &"pending_undecided":
-		_fail("abandon safe_yield_state was not pending_undecided")
+	if int(settlement.get("long_term_gold_gained", -1)) != 3:
+		_fail("abandon did not retain direct gold as long_term_gold")
+	if StringName(settlement.get("safe_yield_state", &"")) != &"retained":
+		_fail("abandon safe_yield_state was not retained")
 	if settlement.has("extracted_items") or settlement.has("warehouse_items"):
 		_fail("abandon exposed success extraction/warehouse write fields")
 	var run_state: Dictionary = RunFlowStateContractScript.build_run_state(controller.context)

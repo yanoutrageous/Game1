@@ -1,6 +1,8 @@
 extends RefCounted
 class_name G10ArtSmokeRegistry
 
+const ContentDBAccessScript := preload("res://scripts/core/content/content_db_access.gd")
+
 # G10 art smoke uses manifest asset_ids only. It must not introduce direct resource paths.
 
 const SMOKE_ENTRIES := [
@@ -55,9 +57,9 @@ static func build_smoke_report() -> Dictionary:
 			entry = raw_entry
 		var asset_id: StringName = StringName(entry.get("asset_id", &""))
 		var fallback_asset_id: StringName = StringName(entry.get("fallback_asset_id", &""))
-		if asset_id == &"" or not ContentDB.has_asset(asset_id):
+		if asset_id == &"" or not ContentDBAccessScript.has_asset(asset_id):
 			missing_asset_ids.append(asset_id)
-		if fallback_asset_id == &"" or not ContentDB.has_asset(fallback_asset_id):
+		if fallback_asset_id == &"" or not ContentDBAccessScript.has_asset(fallback_asset_id):
 			missing_fallback_ids.append(fallback_asset_id)
 	return {
 		"ok": missing_asset_ids.is_empty() and missing_fallback_ids.is_empty(),

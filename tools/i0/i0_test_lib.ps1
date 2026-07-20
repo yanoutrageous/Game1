@@ -370,6 +370,33 @@ function Get-I0Sha256Text {
 }
 
 
+function Get-I0Sha256File {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $fullPath = Get-I0CanonicalPath -Path $Path
+    if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
+        throw "File not found for SHA-256: $fullPath"
+    }
+    $algorithm = [System.Security.Cryptography.SHA256]::Create()
+    $stream = $null
+    try {
+        $stream = [System.IO.File]::Open(
+            $fullPath,
+            [System.IO.FileMode]::Open,
+            [System.IO.FileAccess]::Read,
+            [System.IO.FileShare]::Read
+        )
+        return ([System.BitConverter]::ToString($algorithm.ComputeHash($stream))).Replace('-', '').ToUpperInvariant()
+    }
+    finally {
+        if ($null -ne $stream) {
+            $stream.Dispose()
+        }
+        $algorithm.Dispose()
+    }
+}
+
+
 function Assert-I0TreeHasNoReparseEntries {
     param(
         [Parameter(Mandatory = $true)][string]$Root,
@@ -389,6 +416,60 @@ function Assert-I0TreeHasNoReparseEntries {
                 $pending.Push($entry.FullName)
             }
         }
+    }
+}
+
+
+function Get-I0WorktreeMirrorSourceInspection {
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Parameter(Mandatory = $true)][object[]]$ExcludedDirectoryNames
+    )
+
+    $treeRoot = Get-I0CanonicalPath -Path $Root
+    Assert-I0NoReparseExistingAncestor -Path $treeRoot -Root $script:I0WorkspaceRoot -Label 'mirror source'
+    $excludedNames = @{}
+    foreach ($nameValue in $ExcludedDirectoryNames) {
+        $name = [string]$nameValue
+        if ($name -notmatch '^[A-Za-z0-9_.-]+$' -or $name -in @('.', '..')) {
+            throw "Unsafe excluded directory name in validation manifest: $name"
+        }
+        $excludedNames[$name.ToLowerInvariant()] = $true
+    }
+
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $excludedPaths = New-Object System.Collections.Generic.List[string]
+    $pending = New-Object 'System.Collections.Generic.Stack[string]'
+    $pending.Push($treeRoot)
+    $visitedDirectoryCount = 0
+    $visitedFileCount = 0
+    while ($pending.Count -gt 0) {
+        $directory = $pending.Pop()
+        $visitedDirectoryCount += 1
+        foreach ($entry in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop)) {
+            if (($entry.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw "mirror source contains a reparse entry; refusing recursive access: $($entry.FullName)"
+            }
+            if ($entry.PSIsContainer) {
+                if ($excludedNames.ContainsKey($entry.Name.ToLowerInvariant())) {
+                    [void]$excludedPaths.Add($entry.FullName)
+                }
+                else {
+                    $pending.Push($entry.FullName)
+                }
+            }
+            else {
+                $visitedFileCount += 1
+            }
+        }
+    }
+    $stopwatch.Stop()
+    return [pscustomobject][ordered]@{
+        duration_ms = [int64]$stopwatch.ElapsedMilliseconds
+        visited_directory_count = $visitedDirectoryCount
+        visited_file_count = $visitedFileCount
+        excluded_directory_count = $excludedPaths.Count
+        excluded_directories = @($excludedPaths | Sort-Object -Unique)
     }
 }
 
@@ -435,7 +516,7 @@ function Get-I0BusinessHashSnapshot {
             if ($entries.ContainsKey($relativePath)) {
                 throw "Duplicate business file in hash roots: $relativePath"
             }
-            $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToUpperInvariant()
+            $hash = Get-I0Sha256File -Path $file.FullName
             $entries[$relativePath] = "$($file.Length)|$hash"
         }
     }
@@ -505,34 +586,21 @@ function Copy-I0WorktreeMirror {
     $source = Get-I0CanonicalPath -Path $SourceRepo
     $destinationPath = Get-I0CanonicalPath -Path $Destination
     $tempRoot = Get-I0CanonicalPath -Path $RuntimeTempRoot
-    Assert-I0PathWithin -Path $source -Root $script:I0WorkspaceRoot -Label "mirror source"
+    Assert-I0PathWithin -Path $source -Root $script:I0WorkspaceRoot -AllowRoot -Label "mirror source"
     Assert-I0NoReparseExistingAncestor -Path $source -Root $script:I0WorkspaceRoot -Label "mirror source"
     Assert-I0PathWithin -Path $destinationPath -Root $tempRoot -Label "mirror destination"
     Assert-I0NoReparseExistingAncestor -Path $destinationPath -Root $script:I0WorkspaceRoot -Label "mirror destination"
     if (Test-Path -LiteralPath $destinationPath) {
         throw "Refusing to copy into an existing mirror destination: $destinationPath"
     }
-    Assert-I0TreeHasNoReparseEntries -Root $source -Label "mirror source"
+    $totalStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $sourceInspection = Get-I0WorktreeMirrorSourceInspection -Root $source -ExcludedDirectoryNames $ExcludedDirectoryNames
     [void](New-Item -ItemType Directory -Path $destinationPath -Force)
 
     $arguments = @($source, $destinationPath, '/E', '/COPY:DAT', '/DCOPY:DAT', '/R:1', '/W:1', '/XJ', '/NFL', '/NDL', '/NJH', '/NJS', '/NP')
-    $excludedPaths = New-Object System.Collections.Generic.List[string]
-    foreach ($nameValue in $ExcludedDirectoryNames) {
-        $name = [string]$nameValue
-        if ($name -notmatch '^[A-Za-z0-9_.-]+$' -or $name -in @('.', '..')) {
-            throw "Unsafe excluded directory name in validation manifest: $name"
-        }
-        foreach ($directory in @(Get-ChildItem -LiteralPath $source -Directory -Force -Recurse -ErrorAction Stop | Where-Object { $_.Name -ceq $name })) {
-            [void]$excludedPaths.Add($directory.FullName)
-        }
-        $topLevel = Join-Path $source $name
-        if (Test-Path -LiteralPath $topLevel -PathType Container) {
-            [void]$excludedPaths.Add($topLevel)
-        }
-    }
-    if ($excludedPaths.Count -gt 0) {
+    if ($sourceInspection.excluded_directory_count -gt 0) {
         $arguments += '/XD'
-        $arguments += @($excludedPaths | Sort-Object -Unique)
+        $arguments += @($sourceInspection.excluded_directories)
     }
 
     $robocopy = Join-Path $env:SystemRoot 'System32\robocopy.exe'
@@ -540,6 +608,13 @@ function Copy-I0WorktreeMirror {
     if ($result.timed_out -or $result.exit_code -lt 0 -or $result.exit_code -gt 7) {
         throw "robocopy failed with exit code $($result.exit_code): $($result.stderr) $($result.stdout)"
     }
+    $destinationInspectionStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    Assert-I0TreeHasNoReparseEntries -Root $destinationPath -Label 'worktree mirror'
+    $destinationInspectionStopwatch.Stop()
+    $totalStopwatch.Stop()
+    $result | Add-Member -NotePropertyName source_inspection -NotePropertyValue $sourceInspection
+    $result | Add-Member -NotePropertyName destination_inspection_duration_ms -NotePropertyValue ([int64]$destinationInspectionStopwatch.ElapsedMilliseconds)
+    $result | Add-Member -NotePropertyName total_duration_ms -NotePropertyValue ([int64]$totalStopwatch.ElapsedMilliseconds)
     return $result
 }
 
@@ -561,7 +636,7 @@ function Copy-I0HeadMirror {
     $source = Get-I0CanonicalPath -Path $SourceRepo
     $destinationPath = Get-I0CanonicalPath -Path $Destination
     $tempRoot = Get-I0CanonicalPath -Path $RuntimeTempRoot
-    Assert-I0PathWithin -Path $source -Root $script:I0WorkspaceRoot -Label "HEAD mirror source"
+    Assert-I0PathWithin -Path $source -Root $script:I0WorkspaceRoot -AllowRoot -Label "HEAD mirror source"
     Assert-I0NoReparseExistingAncestor -Path $source -Root $script:I0WorkspaceRoot -Label "HEAD mirror source"
     Assert-I0PathWithin -Path $destinationPath -Root $tempRoot -Label "HEAD mirror destination"
     Assert-I0NoReparseExistingAncestor -Path $destinationPath -Root $script:I0WorkspaceRoot -Label "HEAD mirror destination"

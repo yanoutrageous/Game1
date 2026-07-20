@@ -155,9 +155,9 @@ func build() -> void:
 
 	scanner_title_label = _add_label("RunScannerTitle", "小地图", 18, PresentationTheme.color_for_key(&"ui.accent"))
 	scanner_summary_label = _add_label("RunScannerSummary", "", 13, PresentationTheme.text_color())
-	scanner_legend_label = _add_label("RunScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	scanner_legend_label = _add_label("RunScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 13, PresentationTheme.color_for_key(&"ui.muted"))
 
-	scanner_detail_label = _add_label("RunScannerDetail", "已知 / 危险 / 撤离", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	scanner_detail_label = _add_label("RunScannerDetail", "已知 / 危险 / 撤离", 13, PresentationTheme.color_for_key(&"ui.muted"))
 	backpack_strip = GridContainer.new()
 	backpack_strip.name = "RunBackpackStrip"
 	# UE shows four compact bag rows. A 2x2 card grid made the left rail read as
@@ -176,7 +176,7 @@ func build() -> void:
 	backpack_empty_watermark.modulate = Color(0.58, 0.72, 0.64, 0.16)
 	backpack_empty_watermark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backpack_empty_watermark)
-	backpack_capacity_label = _add_label("RunBackpackCapacity", "0 / 0", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	backpack_capacity_label = _add_label("RunBackpackCapacity", "0 / 0", 13, PresentationTheme.color_for_key(&"ui.muted"))
 
 	minimap_panel = MiniMapScene.instantiate() as MiniMapPanel
 	minimap_panel.name = "RunScannerMiniMap"
@@ -210,10 +210,16 @@ func build() -> void:
 	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.94)
 	command_feedback_art.stretch_mode = TextureRect.STRETCH_SCALE
 	command_feedback_label = _add_label("RunCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
+	command_feedback_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	command_feedback_label.clip_text = true
+	command_feedback_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	layout_label = _add_label("RunLayoutProfileStatus", "", 11, PresentationTheme.color_for_key(&"ui.muted"))
 	layout_label.visible = false
 
-	action_hint_label = _add_label("RunActionHint", "E 搜索  Q 背包  G 拾取  M 地图  Spc 清理  Esc 暂停", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	action_hint_label = _add_label("RunActionHint", "E 搜索  Q 背包  G 拾取  M 地图  Spc 清理  Esc 暂停", 13, PresentationTheme.color_for_key(&"ui.muted"))
+	action_hint_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	action_hint_label.clip_text = true
+	action_hint_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 
 	action_bar = HBoxContainer.new()
 	action_bar.name = "RunBottomActionButtons"
@@ -261,9 +267,10 @@ func apply_surface_model(model: Dictionary) -> void:
 	event_label.text = ""
 	event_label.visible = false
 	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", "等待记录。")), 14)
-	command_feedback_label.text = _feedback_copy(String(model.get("command_feedback", "等待输入。")))
-	command_feedback_art.visible = false
-	command_feedback_label.visible = false
+	var command_feedback := String(model.get("command_feedback", "")).strip_edges()
+	command_feedback_label.text = _feedback_copy(command_feedback)
+	command_feedback_art.visible = command_feedback != ""
+	command_feedback_label.visible = command_feedback != ""
 
 	var status_text := _lines_text(model.get("status_lines", []), "", 3, 18)
 	if status_text != "":
@@ -279,7 +286,9 @@ func apply_surface_model(model: Dictionary) -> void:
 	event_label.tooltip_text = String(model.get("event_panel_summary", ""))
 	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", reward_label.text)), 14)
 	reward_label.tooltip_text = String(model.get("loot_panel_summary", reward_label.text))
-	action_hint_label.text = ""
+	action_hint_label.text = String(model.get("action_hint", "")).strip_edges()
+	action_hint_label.visible = action_hint_label.text != ""
+	command_feedback_art.visible = command_feedback_label.visible or action_hint_label.visible
 
 	var profile: Dictionary = model.get("layout_profile", {})
 	layout_label.text = ""
@@ -287,6 +296,24 @@ func apply_surface_model(model: Dictionary) -> void:
 	_apply_encounter_section(model.get("encounter_section", {}))
 	_apply_art10_text_refresh()
 	_apply_ue_readability_tokens(profile)
+
+
+func apply_combat_snapshot(snapshot: Dictionary) -> void:
+	if not built:
+		return
+	var combat_runtime: Dictionary = snapshot.get("combat_runtime", {})
+	var alive_enemies := 0
+	for raw_enemy in (combat_runtime.get("enemies", []) as Array):
+		if raw_enemy is Dictionary and int((raw_enemy as Dictionary).get("hp", 0)) > 0:
+			alive_enemies += 1
+	right_title_label.text = "协议 %s" % snapshot.get("protocol_level", "--")
+	right_body_label.text = "生命 %s/%s\n威胁 %d | 压力 %s/100" % [
+		snapshot.get("hp", 0),
+		snapshot.get("max_hp", 0),
+		alive_enemies,
+		snapshot.get("pressure", 0),
+	]
+	resource_label.text = "【战斗中】%s" % _compact_line(String(snapshot.get("last_message", "")), 18)
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
@@ -314,7 +341,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var rail_content_width: float = max(220.0, left_width - rail_content_left - margin)
 	var right_card_width: float = clampf(204.0 * ue_reference_scale, 152.0 if is_low else 164.0, 274.0)
 	var right_card_height: float = clampf(122.0 * ue_reference_scale, 104.0 if is_low else 112.0, 164.0)
-	var bottom_info_height: float = 28.0 if is_low else 30.0
+	var bottom_info_height: float = 60.0
 	var bottom_key_height: float = 40.0 if is_low else (48.0 if is_high else 44.0)
 	var center_left: float = gameplay_left
 	var center_width: float = gameplay_width
@@ -324,7 +351,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var scanner_map_top: float = margin + 40.0
 	var scanner_map_height: float = minf(rail_content_width, 300.0 * ue_reference_scale)
 	var scanner_stats_top: float = scanner_map_top + scanner_map_height + 10.0
-	var stats_height: float = 80.0 if is_low else 90.0
+	var stats_height: float = 84.0 if is_low else 94.0
 	var backpack_top: float = scanner_stats_top + stats_height + 10.0
 	var backpack_panel_height: float = maxf(192.0, height - backpack_top - 28.0)
 	# UE's bag summary is four compact 48 px rows at the 1920x1080 reference.
@@ -338,7 +365,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var bottom_info_top: float = bottom_key_top - bottom_info_height - 6.0
 	var bottom_info_width: float = min(bottom_key_width * 0.72, 520.0 if is_high else 480.0)
 	var bottom_info_left: float = gameplay_left + gameplay_width * 0.5 - bottom_info_width * 0.5
-	var encounter_width: float = 164.0 if is_low else 196.0
+	var encounter_width: float = 150.0 if is_low else 180.0
 	var encounter_height: float = 44.0 if is_low else 50.0
 	var encounter_left: float = clampf(gameplay_left + gameplay_width * 0.58, gameplay_left + margin, width - encounter_width - margin)
 	var encounter_top: float = clampf(height * 0.52 - encounter_height * 0.5, margin + 110.0, bottom_info_top - encounter_height - 12.0)
@@ -402,10 +429,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(scanner_summary_label, Rect2(0, 0, 0, 0))
 	_set_rect(minimap_panel, Rect2(rail_content_left, scanner_map_top, rail_content_width, scanner_map_height))
 	minimap_panel.apply_layout_profile(profile)
-	_set_rect(scanner_legend_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 7.0, rail_content_width - 20.0, 45.0))
-	_set_rect(scanner_detail_label, Rect2(rail_content_left + 10.0, backpack_top + 8.0, rail_content_width - 20.0, 24.0))
-	_set_rect(backpack_strip, Rect2(rail_content_left + 10.0, backpack_top + 36.0, rail_content_width - 20.0, backpack_grid_height))
-	var backpack_empty_top: float = backpack_top + 36.0 + backpack_grid_height + 8.0
+	_set_rect(scanner_legend_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 8.0, rail_content_width - 20.0, 42.0))
+	_set_rect(scanner_detail_label, Rect2(rail_content_left + 10.0, backpack_top + 10.0, rail_content_width - 20.0, 20.0))
+	_set_rect(backpack_strip, Rect2(rail_content_left + 10.0, backpack_top + 40.0, rail_content_width - 20.0, backpack_grid_height))
+	var backpack_empty_top: float = backpack_top + 40.0 + backpack_grid_height + 8.0
 	var backpack_empty_height: float = maxf(0.0, backpack_top + backpack_panel_height - 34.0 - backpack_empty_top)
 	_set_rect(backpack_empty_watermark, Rect2(rail_content_left + 20.0, backpack_empty_top, rail_content_width - 40.0, backpack_empty_height))
 	_set_rect(backpack_capacity_label, Rect2(rail_content_left + 10.0, backpack_top + backpack_panel_height - 24.0, rail_content_width - 20.0, 20.0))
@@ -417,10 +444,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(encounter_title_label, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_body_label, Rect2(0, 0, 0, 0))
 	var encounter_option_rect := Rect2(
-		bottom_info_left + bottom_info_width - encounter_width - 4.0,
-		bottom_info_top,
-		encounter_width + 8.0,
-		bottom_info_height
+		bottom_info_left + bottom_info_width - encounter_width - 5.0,
+		bottom_info_top + 5.0,
+		encounter_width,
+		bottom_info_height - 10.0
 	)
 	_set_rect(encounter_backdrop, encounter_option_rect)
 	_set_rect(encounter_options_box, Rect2(
@@ -428,7 +455,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		encounter_option_rect.size - Vector2(10.0, 10.0)
 	))
 	_set_rect(encounter_result_label, Rect2(0, 0, 0, 0))
-	_set_rect(resource_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 54.0, rail_content_width - 20.0, 22.0))
+	_set_rect(resource_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 56.0, rail_content_width - 20.0, 20.0))
 
 	_set_rect(right_title_label, Rect2(right_content_left, margin, right_content_width, 26))
 	_set_rect(right_body_label, Rect2(right_content_left + 8.0, margin + 34.0, right_content_width - 16.0, 58.0))
@@ -436,12 +463,13 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	event_label.visible = false
 	_set_rect(reward_label, Rect2(0, 0, 0, 0))
 	_set_rect(command_feedback_art, Rect2(bottom_info_left, bottom_info_top, bottom_info_width, bottom_info_height))
-	_set_rect(command_feedback_label, Rect2(bottom_info_left + 18.0, bottom_info_top + 7.0, bottom_info_width - 36.0, bottom_info_height - 12.0))
+	var bottom_info_text_width: float = maxf(120.0, encounter_option_rect.position.x - 8.0 - (bottom_info_left + 18.0))
+	_set_rect(command_feedback_label, Rect2(bottom_info_left + 18.0, bottom_info_top + 6.0, bottom_info_text_width, 22.0))
 	_set_rect(layout_label, Rect2(right_content_left, height - 46.0, right_content_width, 24))
 	layout_label.visible = false
 
-	_set_rect(action_hint_label, Rect2(0, 0, 0, 0))
-	action_hint_label.visible = false
+	_set_rect(action_hint_label, Rect2(bottom_info_left + 18.0, bottom_info_top + 31.0, bottom_info_text_width, 22.0))
+	action_hint_label.visible = action_hint_label.text.strip_edges() != ""
 	_set_rect(action_bar, Rect2(bottom_key_left + 12.0, bottom_key_top + 8.0, bottom_key_width - 24.0, bottom_key_height - 16.0))
 	action_bar.z_as_relative = true
 	action_bar.z_index = 20
@@ -454,10 +482,6 @@ func show_command_feedback(result: Dictionary) -> void:
 	if command_feedback_label == null or result.is_empty():
 		return
 	var accepted := bool(result.get("accepted", result.get("ok", false)))
-	if accepted:
-		command_feedback_art.visible = false
-		command_feedback_label.visible = false
-		return
 	command_feedback_art.visible = true
 	command_feedback_label.visible = true
 	var text := RunUIViewModel.command_result_text(result)
@@ -514,7 +538,7 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 			empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 			empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 			empty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			empty.add_theme_font_size_override("font_size", 11)
+			empty.add_theme_font_size_override("font_size", 13)
 			empty.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 			row.add_child(empty)
 			continue
@@ -532,7 +556,7 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		item_copy.text = _compact_line(String(item.get("display_name", item.get("item_id", "物资"))), 5)
 		item_copy.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		item_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		item_copy.add_theme_font_size_override("font_size", 11)
+		item_copy.add_theme_font_size_override("font_size", 13)
 		item_copy.add_theme_color_override("font_color", PresentationTheme.text_color())
 		row.add_child(item_copy)
 
@@ -777,9 +801,9 @@ func _add_action_button(action_id: StringName, label: String, callback: Callable
 	button.custom_minimum_size = Vector2(0, 28)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	button.pressed.connect(callback)
-	button.add_theme_font_size_override("font_size", 12)
+	button.add_theme_font_size_override("font_size", 13)
 	var copy := Label.new()
 	copy.name = "ActionCopy"
 	copy.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -903,16 +927,17 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 		var title := String(option.get("title", String(option_id)))
 		button.name = "RunEncounterOption_%s" % String(option_id)
 		button.text = "%s%s" % [_compact_line(title, 9), "  确认" if requires_confirm else ""]
-		button.custom_minimum_size = Vector2(176, 28)
-		button.focus_mode = Control.FOCUS_NONE
+		button.custom_minimum_size = Vector2(0, 28)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.focus_mode = Control.FOCUS_ALL
 		button.disabled = disabled
 		# The default project tooltip has no reliable backing panel and visually
 		# floats over the room. Keep the full copy as data for a future detail
 		# view, but make the in-run action a bounded, readable control.
 		button.tooltip_text = ""
 		button.set_meta(&"art24_detail_copy", _encounter_option_tooltip(option))
-		button.add_theme_font_size_override("font_size", 12)
-		Art10UISkinKitScript.apply_button(button, &"primary" if not disabled else &"secondary", 12, &"key")
+		button.add_theme_font_size_override("font_size", 13)
+		Art10UISkinKitScript.apply_button(button, &"primary" if not disabled else &"secondary", 13, &"key")
 		if not disabled:
 			var payload := _dict_variant(option.get("command_payload", {}))
 			button.pressed.connect(_on_encounter_option_pressed.bind(option_id, payload))
@@ -980,6 +1005,12 @@ func _apply_art10_text_refresh() -> void:
 		command_feedback_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		command_feedback_label.clip_text = true
 		command_feedback_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		command_feedback_label.size = Vector2(command_feedback_label.size.x, maxf(22.0, command_feedback_label.get_combined_minimum_size().y))
+	if action_hint_label is Label:
+		action_hint_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		action_hint_label.clip_text = true
+		action_hint_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		action_hint_label.size = Vector2(action_hint_label.size.x, maxf(22.0, action_hint_label.get_combined_minimum_size().y))
 	for left_label in [scanner_summary_label, scanner_legend_label, scanner_detail_label, resource_label]:
 		if left_label is Label:
 			left_label.clip_text = true
@@ -990,7 +1021,7 @@ func _apply_art10_text_refresh() -> void:
 		_apply_action_button_style(action_button, &"secondary", not action_button.disabled)
 		_apply_key_prompt_icon(action_button, StringName(action_id))
 	for button in encounter_option_buttons:
-		Art10UISkinKitScript.apply_transparent_button(button, &"primary" if button != null and not button.disabled else &"secondary", 12, &"key", 0)
+		Art10UISkinKitScript.apply_transparent_button(button, &"primary" if button != null and not button.disabled else &"secondary", 13, &"key", 0)
 
 
 func _array_variant(raw: Variant) -> Array:
@@ -1162,17 +1193,20 @@ func _resource_lines(text: String) -> String:
 func _apply_ue_readability_tokens(profile: Dictionary = {}) -> void:
 	var is_low := bool(profile.get("is_low_resolution", false))
 	var is_high := bool(profile.get("is_high_resolution", false))
-	for label in [scanner_legend_label, scanner_detail_label, resource_label, right_body_label, event_label]:
+	for label in [scanner_legend_label, scanner_detail_label, right_body_label, event_label]:
 		if label is Label:
 			label.clip_text = false
 			label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 			label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	resource_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	resource_label.clip_text = true
+	resource_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var body_size := 13 if is_low else (16 if is_high else 14)
 	for label in [scanner_legend_label, scanner_detail_label, right_body_label]:
 		label.add_theme_font_size_override("font_size", body_size)
 		label.add_theme_constant_override("line_spacing", 2 if is_low else 3)
 		label.add_theme_color_override("font_color", Color(0.91, 0.94, 0.88, 1.0))
-	resource_label.add_theme_font_size_override("font_size", 12 if is_low else (15 if is_high else 13))
+	resource_label.add_theme_font_size_override("font_size", 13 if is_low else (15 if is_high else 13))
 	resource_label.add_theme_constant_override("line_spacing", 1)
 	resource_label.add_theme_color_override("font_color", Color(0.91, 0.94, 0.88, 1.0))
 	scanner_title_label.add_theme_font_size_override("font_size", 16 if is_low else (20 if is_high else 18))

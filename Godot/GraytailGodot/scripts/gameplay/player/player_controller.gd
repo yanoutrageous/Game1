@@ -8,8 +8,6 @@ const LOCAL_DECELERATION := 12.0
 const PLAYER_RADIUS := 0.055
 const DOOR_ALIGN_HALF := 0.16
 const BLOCKED_EDGE_REBOUND := 0.035
-const ART24_PLAYER_ROOT := "res://assets/art24/actors/player/"
-const FRAME_INTERVAL := 0.14
 const STEP_PREVIEW_SECONDS := 0.20
 # The UE prototype presents the player in a 64 px slot inside a 560 px room.
 # The first 0.40 pass measured only about 51 visible pixels in the running
@@ -18,6 +16,8 @@ const STEP_PREVIEW_SECONDS := 0.20
 # logical collider and movement radius remain unchanged.
 const PLAYER_ART_SCALE := 0.50
 const Art24MotionSettingsScript := preload("res://scripts/presentation/art24/art24_motion_settings.gd")
+const RuntimeAnimationCatalog := preload("res://scripts/presentation/art24/art24_runtime_animation_catalog.gd")
+const TextureCache := preload("res://scripts/presentation/runtime_texture_cache.gd")
 
 var input_enabled := true
 var facing_asset_id: StringName = &"sprite.player.default"
@@ -33,6 +33,8 @@ var animation_frame := 0
 var visual_clock := 0.0
 var step_preview_remaining := 0.0
 var last_texture_path := ""
+var pending_visual_state: StringName = &""
+var transient_state_remaining := 0.0
 
 
 func set_input_enabled(enabled: bool) -> void:
@@ -84,10 +86,29 @@ func set_facing_vector(next_facing: Vector2) -> void:
 
 
 func set_runtime_visual_state(next_state: StringName) -> void:
-	if G41RuntimeVisualContract.supports_state(&"player", next_state):
-		if visual_state != next_state:
-			last_texture_path = ""
-		visual_state = next_state
+	if not G41RuntimeVisualContract.supports_state(&"player", next_state):
+		return
+	if visual_state == &"hurt" and transient_state_remaining > 0.0 and next_state not in [&"hurt", &"dead"]:
+		pending_visual_state = next_state
+		_update_state_label()
+		return
+	pending_visual_state = &""
+	_set_visual_state_now(next_state)
+
+
+func _set_visual_state_now(next_state: StringName) -> void:
+	if visual_state == next_state:
+		_update_state_label()
+		return
+	visual_state = next_state
+	animation_elapsed = 0.0
+	animation_frame = 0
+	last_texture_path = ""
+	transient_state_remaining = RuntimeAnimationCatalog.minimum_visible_seconds(visual_state)
+	_update_state_label()
+
+
+func _update_state_label() -> void:
 	var state_label := get_node_or_null("PromptAnchor/RuntimeState") as Label
 	if state_label != null:
 		state_label.text = String(visual_state)
@@ -120,7 +141,7 @@ func play_step(direction: Vector2) -> void:
 		return
 	_set_facing_from_vector(direction)
 	step_preview_remaining = STEP_PREVIEW_SECONDS
-	animation_elapsed = FRAME_INTERVAL
+	animation_elapsed = RuntimeAnimationCatalog.player_frame_duration(&"move")
 
 
 func place_from_entry(direction: Vector2i) -> void:
@@ -194,6 +215,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_advance_transient_state(delta)
 	var reduce_motion := Art24MotionSettingsScript.reduce_motion_enabled()
 	if not reduce_motion:
 		visual_clock += delta
@@ -204,17 +226,33 @@ func _process(delta: float) -> void:
 		step_preview_remaining = STEP_PREVIEW_SECONDS
 	else:
 		step_preview_remaining = maxf(0.0, step_preview_remaining - delta)
-	var show_walk := is_moving or step_preview_remaining > 0.0
+	var show_walk := visual_state == &"move" or is_moving or step_preview_remaining > 0.0
 	if reduce_motion:
 		animation_elapsed = 0.0
 		animation_frame = 0
 	else:
 		animation_elapsed += delta
-		if animation_elapsed >= FRAME_INTERVAL:
-			animation_elapsed = fmod(animation_elapsed, FRAME_INTERVAL)
-			animation_frame = (animation_frame + 1) % 4
+		var frame_duration := RuntimeAnimationCatalog.player_frame_duration(visual_state, show_walk)
+		var frame_count := maxi(1, RuntimeAnimationCatalog.player_frame_count(visual_state, show_walk))
+		var next_frame := int(animation_elapsed / frame_duration)
+		if RuntimeAnimationCatalog.player_loops(&"move" if show_walk and visual_state == &"idle" else visual_state):
+			next_frame %= frame_count
+		else:
+			next_frame = mini(next_frame, frame_count - 1)
+		animation_frame = next_frame
 	_apply_art24_frame(show_walk)
 	_apply_idle_motion(show_walk)
+
+
+func _advance_transient_state(delta: float) -> void:
+	if transient_state_remaining <= 0.0:
+		return
+	transient_state_remaining = maxf(0.0, transient_state_remaining - delta)
+	if transient_state_remaining > 0.0 or pending_visual_state == &"":
+		return
+	var next_state := pending_visual_state
+	pending_visual_state = &""
+	_set_visual_state_now(next_state)
 
 
 func _transition_for_next_pos(next_pos: Vector2, direction: Vector2) -> Vector2i:
@@ -279,29 +317,16 @@ func _set_facing_from_vector(direction: Vector2) -> void:
 
 
 func _apply_art24_frame(walking: bool) -> void:
-	var texture_path := ""
-	match visual_state:
-		&"attack_windup":
-			texture_path = "%s%s_attack_windup.png" % [ART24_PLAYER_ROOT, String(facing)]
-		&"attack_active":
-			var attack_motion := "attack_swing" if animation_frame < 2 else "attack_impact"
-			texture_path = "%s%s_%s.png" % [ART24_PLAYER_ROOT, String(facing), attack_motion]
-		&"attack_recovery":
-			texture_path = "%s%s_attack_recover.png" % [ART24_PLAYER_ROOT, String(facing)]
-		&"hurt", &"dead":
-			texture_path = "%s%s_hit.png" % [ART24_PLAYER_ROOT, String(facing)]
-		_:
-			var motion := "idle"
-			var suffix := "b" if animation_frame >= 2 else "a"
-			if walking:
-				var walk_cycle := ["idle_a", "walk_a", "walk_b", "idle_b"]
-				var token: String = "walk_a" if Art24MotionSettingsScript.reduce_motion_enabled() else walk_cycle[animation_frame]
-				motion = token.get_slice("_", 0)
-				suffix = token.get_slice("_", 1)
-			texture_path = "%s%s_%s_%s.png" % [ART24_PLAYER_ROOT, String(facing), motion, suffix]
+	var texture_path := RuntimeAnimationCatalog.player_texture_path(
+		facing,
+		visual_state,
+		animation_frame,
+		Art24MotionSettingsScript.reduce_motion_enabled(),
+		walking
+	)
 	if texture_path == last_texture_path:
 		return
-	var texture := load(texture_path) as Texture2D
+	var texture := TextureCache.texture(texture_path)
 	if texture == null:
 		return
 	var sprite := get_node_or_null("Sprite") as Sprite2D

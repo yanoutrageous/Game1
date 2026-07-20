@@ -1,6 +1,8 @@
 extends RefCounted
 class_name Art10UISkinKit
 
+const ContentDBAccessScript := preload("res://scripts/core/content/content_db_access.gd")
+
 # ART-10R UI skin kit is presentation-only. It owns shared pixel UI styling,
 # player-visible copy cleanup, and Base confirmed draft layout metrics.
 
@@ -8,7 +10,7 @@ const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
-const FONT_ASSET_ID := &"ui.font.fusion_pixel"
+const FONT_ASSET_ID := &"ui.art23.long_term.font.body"
 const CANVAS_SIZE := Vector2(1280, 720)
 
 const FONT_TOKENS := {
@@ -147,7 +149,7 @@ const RUN_RECTS := {
 
 
 static func pixel_font() -> Resource:
-	var resource := ContentDB.get_asset_ref(FONT_ASSET_ID)
+	var resource := ContentDBAccessScript.get_asset_ref(FONT_ASSET_ID)
 	if resource is Font:
 		return resource
 	return null
@@ -403,6 +405,7 @@ static func apply_label_token(label: Label, token: StringName, color_token: Stri
 static func apply_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button") -> void:
 	if button == null:
 		return
+	button.focus_mode = Control.FOCUS_ALL
 	button.text = sanitize_player_copy(button.text)
 	button.tooltip_text = sanitize_player_copy(button.tooltip_text)
 	var font := pixel_font()
@@ -419,6 +422,7 @@ static func apply_button(button: Button, tone: StringName = &"secondary", font_s
 	button.add_theme_stylebox_override("normal", button_style(tone, false, false))
 	button.add_theme_stylebox_override("hover", button_style(tone, true, false))
 	button.add_theme_stylebox_override("pressed", button_style(tone, false, true))
+	button.add_theme_stylebox_override("focus", button_style(tone, true, false))
 	button.add_theme_stylebox_override("disabled", button_style(&"disabled", false, false))
 	button.modulate = Color(1, 1, 1, 1) if not button.disabled else Color(0.72, 0.76, 0.74, 1.0)
 
@@ -519,7 +523,7 @@ static func make_small_button(text: String, tone: StringName = &"secondary") -> 
 	var button := Button.new()
 	button.text = text
 	button.custom_minimum_size = Vector2(92, 32)
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	apply_button_token(button, tone, &"caption", &"button")
 	return button
 
@@ -530,7 +534,7 @@ static func make_tab_button(text: String, selected: bool = false, state: Variant
 	button.toggle_mode = true
 	button.button_pressed = selected
 	button.custom_minimum_size = Vector2(112, 40)
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	apply_button_token(button, visual_state_tone(state, selected), &"tab", &"tab")
 	return button
 
@@ -592,7 +596,7 @@ static func make_bottom_key_button(text: String, key_label: String = "", icon: T
 	button.text = text if key_label == "" else "%s  %s" % [key_label, text]
 	button.icon = icon
 	button.custom_minimum_size = Vector2(126, 36)
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	apply_button_token(button, &"secondary", &"key_prompt", &"key")
 	return button
 
