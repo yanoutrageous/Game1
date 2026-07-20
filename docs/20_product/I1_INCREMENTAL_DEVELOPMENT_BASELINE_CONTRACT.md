@@ -1,8 +1,8 @@
 # I1 Incremental Development Baseline Contract
 
-文档状态：当前 I1 实施契约；worktree acceptance 已通过，committed HEAD 与交付待完成。
+文档状态：已关闭的 I1 实施契约；验收结果 `CLOSED / PASS_WITH_NOTES`。
 阶段：`I1`
-最后更新：2026-07-20
+最后更新：2026-07-21
 
 ## 1. 中文摘要
 

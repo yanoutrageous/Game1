@@ -1,14 +1,19 @@
 document_status: current_capability_matrix
-updated: "2026-07-20"
-updated_by: "I1_worktree_accepted_head_pending"
+updated: "2026-07-21"
+updated_by: "I1_closed_pass_with_notes"
 
 repository:
   workspace_resolution: "git rev-parse --show-toplevel"
   godot_project: "<git-worktree-root>/Godot/GraytailGodot"
   observed_branch: "codex/i1-baseline-stabilization"
   source_head_before_i1: "2212992337aeef7cda412dbaaa191c3ad6cbb81a"
-  current_stage: "I1_worktree_accepted_head_pending"
-  latest_closed_non_art_baseline: "I0"
+  implementation_commit: "6a4f207d743583c7342655488c2d9a652b9ab05c"
+  closure_fix_commit: "492d74fcdc94cb75e47401c203defd49dac11ae9"
+  validated_head: "492d74fcdc94cb75e47401c203defd49dac11ae9"
+  validated_tree: "96a5272e50ff80aad400ccde3db9d313fa1456a1"
+  upstream: "origin/codex/i1-baseline-stabilization"
+  current_stage: "none_i1_closed_pass_with_notes"
+  latest_closed_non_art_baseline: "I1"
   latest_closed_art_stage: "ART21"
   later_accepted_page_ui_evidence: "ART23"
   failed_historical_art_attempt: "ART24R2_24_of_61_pass"
@@ -42,19 +47,19 @@ runtime_capabilities:
   export_and_release_pipeline: incomplete
 
 i1_implementation:
-  restart_confirmation_and_debug_gate: validated_worktree_head_pending
-  save_atomic_backup_future_schema_protection: validated_worktree_head_pending
-  state_machine_single_phase_authority: validated_worktree_head_pending
-  terminal_commit_single_authority: validated_worktree_head_pending
-  item_command_module_boundary: validated_worktree_head_pending
-  content_db_access_compile_boundary: validated_worktree_head_pending
-  combat_scoped_refresh: validated_worktree_head_pending
-  visible_page_revision_refresh: validated_worktree_head_pending
-  runtime_animation_cache_and_state_frames: validated_worktree_head_pending
-  ui_focus_font_feedback_three_resolutions: validated_worktree_head_pending
-  art25_source_license_determinism_gate: validated_worktree_head_pending
+  restart_confirmation_and_debug_gate: validated_closed
+  save_atomic_backup_future_schema_protection: validated_closed
+  state_machine_single_phase_authority: validated_closed
+  terminal_commit_single_authority: validated_closed
+  item_command_module_boundary: validated_closed
+  content_db_access_compile_boundary: validated_closed
+  combat_scoped_refresh: validated_closed
+  visible_page_revision_refresh: validated_closed
+  runtime_animation_cache_and_state_frames: validated_closed
+  ui_focus_font_feedback_three_resolutions: validated_closed
+  art25_source_license_determinism_gate: validated_closed
   production_preview_capture: generated_27_of_27_machine_review_required_static_human_pass
-  unified_headless_harness: validated_worktree_head_pending
+  unified_headless_harness: validated_closed
 
 validation:
   static_final: pass_39_blocking_46_inventory_13_exclusions_705_checks
@@ -62,22 +67,32 @@ validation:
   quick_worktree: pass_21_of_21
   core_worktree: pass_24_of_24
   ui_worktree: pass_23_of_23
-  full_worktree: pass_39_of_39_current_precommit_candidate
+  full_worktree: pass_39_of_39_precommit_evidence
   m5_seed_fixture_stability: pass_three_independent_then_full
   production_preview_human_review: pass_static_layout_27_of_27
   production_preview_machine_status: pass_with_visual_review_required
   production_preview_visual_acceptance: not_run
   preview_static_evidence_applicability: retained_no_visible_path_delta
-  full_committed_head: pending
+  closure_status: pass_with_notes
+  full_committed_head: pass_39_of_39
+  full_head_report_sha256: "AF6F7C5A4B74B6E8E17FA89443E0DD77BCC25E6F0E2752E07DE707439B1E2851"
   combat_performance_scope: "microbenchmark_only"
   combat_p95_core_us: 519
-  combat_p95_full_us: 321
-  full_refresh_p95_full_us: 333855
-  latest_full_duration_ms: 400736
+  combat_p50_head_full_us: 110
+  combat_p95_head_full_us: 222
+  combat_p99_head_full_us: 310
+  combat_max_head_full_us: 356
+  full_refresh_p95_head_full_us: 151070
+  latest_full_head_duration_ms: 291203
+  full_plain_pass_runner_count: 17
   full_cleanup_runner_count: 22
+  full_cleanup_diagnostic_total: 44
+  full_blocking_diagnostic_count: 0
+  full_report_fatal_error: none
   full_business_file_count: 2121
-  full_business_fingerprint_sha256: "BD1BD6D26C6BC4C794FBA3ADAFA73E642B56BCD4670836E661E1A74E71F94038"
+  full_business_fingerprint_sha256: "6367CCAB6D542F8B9562EA09E484FC40104E2D8843F1085A8191A18EEEF15460"
   full_manual_playtest: not_claimed
   general_performance: not_claimed
-  ci: configured_unproven
+  ci_quick: pass_run_29760789712_job_88414602442
+  ci_full: not_claimed
   export_release: not_claimed

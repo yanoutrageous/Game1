@@ -1,7 +1,7 @@
 # Audit Entrypoint
 
 文档状态：I1 当前审计入口
-最后更新：2026-07-20
+最后更新：2026-07-21
 
 ## 读取顺序
 
@@ -25,9 +25,11 @@ I1 核心材料：
 ```text
 active_repo: git rev-parse --show-toplevel
 observed_branch: codex/i1-baseline-stabilization
-source_head: 2212992337aeef7cda412dbaaa191c3ad6cbb81a
-stage: I1 / worktree accepted / committed HEAD pending
-latest_closed_non_art_baseline: I0
+implementation_commit: 6a4f207d743583c7342655488c2d9a652b9ab05c
+validated_head: 492d74fcdc94cb75e47401c203defd49dac11ae9
+validated_tree: 96a5272e50ff80aad400ccde3db9d313fa1456a1
+stage: none active / I1 closed PASS_WITH_NOTES
+latest_closed_non_art_baseline: I1
 latest_closed_art_stage: ART21
 later_accepted_page_ui_evidence: ART23
 ART24R2: historical failed acceptance, 24/61 PASS
@@ -37,15 +39,15 @@ ART24R2: historical failed acceptance, 24/61 PASS
 
 1. 解析 Git worktree root，核对 branch、HEAD、origin、dirty、staged、untracked、stash 和 worktree。
 2. 以当前代码和 runner 为事实源，再核对契约与文档是否准确。
-3. 复核已冻结的 static、preflight、quick、core、ui、full worktree JSON；当前结果分别为 PASS、PASS、21/21、24/24、23/23、39/39。
+3. 复核 static、preflight、quick、core、ui、full worktree 证据，以及提交态 full HEAD 报告；最终 HEAD 结果为 39/39 PASS。
 4. 复核最新 27/27 production capture 与 9 状态 × 3 分辨率人工静态图片结论；机器状态保持 review required，人工结论只覆盖布局、层级、文字、无遮挡与无裁切。
 5. 复核已通过的 ART25 来源/许可/manifest/确定性证据，并完成文档引用/编码、`git diff --check` 和 metadata 暂存边界检查。
-6. 精确暂存并提交后以 `SourceMode head` 运行 full；只有该结果证明确切提交。
-7. push 后另行观察 GitHub Actions；没有成功 run 时 CI 仍为 unproven。
+6. 核对提交态 full 报告 `E:\AGAME1\.tmp\i1\20260720T163703897Z_ba791ba4\report.json`、SHA-256 `AF6F7C5A4B74B6E8E17FA89443E0DD77BCC25E6F0E2752E07DE707439B1E2851` 与 validated HEAD/tree。
+7. 核对分支交付和 GitHub Actions quick run `29760789712`；该远端结果只证明 quick，不替代本地 full/head。
 
 ## 声明边界
 
-- I1 当前 validation/handoff 已记录 worktree acceptance，但 committed HEAD、commit、push 仍 pending，不能靠 worktree 证据关闭阶段。
+- I1 已按 validation/handoff 关闭；权威自动化证据是本地提交态 full/head，远端 Actions 只证明 quick。
 - headless / runner / 静态结果不替代完整人工游玩、最终视觉、交互手感、通用性能、导出或发布。
 - ART23 只作为较晚页面/UI 证据；项目级 latest closed art stage 仍按治理权威记为 ART21。
 - 历史绝对路径不能选择当前仓库、Godot 或外部 source pack。

@@ -1,7 +1,7 @@
 # Duplicate Document Ledger
 
 文档状态：I1 当前重复文档台账。
-最后更新：2026-07-20
+最后更新：2026-07-21
 
 本台账登记权威与重复组，不单独授权删除、移动、归档或重写历史证据。
 
@@ -16,7 +16,6 @@
 | `docs/10_current/CURRENT_STATE.md` | current_state | verified/implemented facts and explicit pending state |
 | `docs/10_current/CAPABILITY_MATRIX.yaml` | current_state | machine-readable capability status |
 | `docs/10_current/NEXT_ACTION.md` | current_state | next gate and candidate increments |
-| `docs/10_current/I1_BASELINE_ASSESSMENT.md` | baseline_assessment_current | freeze only after I1 closeout |
 | `docs/00_governance/DOC_PLACEMENT_STANDARD.md` | governance_current | placement authority |
 | `docs/00_governance/SOURCE_REGISTRY.md` | registry_current | source ownership and path status |
 | `docs/00_governance/DUPLICATE_DOC_LEDGER.md` | registry_current | duplicate decisions |
@@ -25,6 +24,7 @@
 
 | Document group | Current handling |
 | --- | --- |
+| `docs/10_current/I1_BASELINE_ASSESSMENT.md` | frozen I1 baseline evidence after closeout; future facts go to current state or a new approved assessment |
 | `docs/10_current/I0_BASELINE_ASSESSMENT.md` | frozen I0 baseline evidence; future changes must not edit it into I1 facts |
 | I0 / ART21 validation and handoff | retain originals; current indexes only summarize scope |
 | ART23 validation/art evidence | retain as later accepted page/UI evidence; not project-level art-stage authority |
@@ -49,13 +49,13 @@ G40 曾在 `D:\AGAME1\reports\g40` 记录 inventory、resolution plan、cleanup 
 
 | Conflict | Current decision |
 | --- | --- |
-| I0+ART21 integration 与 M6/M7/ART24R2 摘要互相作为“当前” | current chain 统一到 I1 worktree-accepted/head-pending；旧原文保留历史时间点 |
+| I0+ART21 integration 与 M6/M7/ART24R2 摘要互相作为“当前” | current chain 统一到 I1 closed/PASS_WITH_NOTES；旧原文保留历史时间点 |
 | ART21 与 ART23 都被写成 latest art | ART21 = project-level latest closed art stage；ART23 = later accepted page/UI evidence slice |
 | ART24R2 代码/探针改善与最终失败结果冲突 | final 24/61 failed acceptance wins; archived historical attempt |
 | `D:\AGAME1` 被写成当前来源/仓库 | 统一标记 historical; active repo 动态解析；外部 pack 本机 unavailable |
 | `E:\Godot` 本机路径与跨机器执行规则 | 只作 local observation/example；I1 resolution + lock verification 为可移植规则 |
 | preview/capture marker 与视觉验收 | capture 属 `EXCLUDED_NON_SLICE`; 必须另有人审 |
-| workflow 文件存在与 CI 通过 | `configured_unproven`，直到远端成功 run |
+| workflow 文件存在与 CI 通过 | quick 以远端 run `29760789712` 证明；full、导出与 release 继续标记未证明 |
 
 ## 删除与归档规则
 

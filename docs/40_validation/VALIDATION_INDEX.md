@@ -1,7 +1,7 @@
 # Validation Index
 
-文档状态：I1 worktree 验收通过、committed HEAD 待验证的当前入口。
-最后更新：2026-07-20
+文档状态：I1 已关闭、提交态 full/head 已通过的当前验证入口。
+最后更新：2026-07-21
 
 ## I1 统一入口
 
@@ -46,14 +46,14 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
 | I1 quick worktree | PASS / 21 of 21 | 短跨层回归 |
 | I1 core worktree | PASS / 24 of 24 | 程序权威、保存、结算；combat p95 519 μs |
 | I1 ui worktree | PASS / 23 of 23 | UI/布局/动画自动契约 |
-| I1 full worktree | PASS / 39 of 39 | current pre-commit candidate；pollution PASS；combat p95 321 μs；duration 400,736 ms |
+| I1 full worktree | PASS / 39 of 39 | pre-commit evidence；pollution PASS；combat p95 321 μs；duration 400,736 ms |
 | I1 production preview | PASS_WITH_VISUAL_REVIEW_REQUIRED / 27 of 27 generated / PASS_STATIC_REVIEW | machine visual acceptance NOT_RUN；人工仅覆盖布局、层级、文字、无遮挡与无裁切 |
-| I1 full committed HEAD | PENDING | 精确提交快照 |
-| I1 GitHub Actions quick | CONFIGURED_UNPROVEN | 需要远端实际成功 run |
+| I1 full committed HEAD | PASS / 39 of 39 | head `492d74fcdc94cb75e47401c203defd49dac11ae9`；combat p50/p95/p99/max 110/222/310/356 μs；full p95 151,070 μs；291,203 ms |
+| I1 GitHub Actions quick | PASS_QUICK_ONLY | run `29760789712` / job `88414602442` success；不证明 full、导出或 release |
 
 详细证据、报告路径、SHA-256、cleanup 分类和排除项见 `docs/validation/I1_INCREMENTAL_DEVELOPMENT_BASELINE_VALIDATION.md`。
 
-16:05 candidate 的 38/39 FAIL 与 M5 固定 seed 测试夹具修复保留在详细 validation 中；不得只保留最终绿色结果而删除失败链。当前 15:46 preview 的人工静态证据继续适用，但 wrapper 仍不是自动视觉 PASS。
+16:05 worktree candidate 的 38/39 FAIL 与 M5 固定 seed 测试夹具修复，以及首次提交态 full/head 因 CRLF/LF 硬编码而 38/39 FAIL 的修复链，都保留在详细 validation 中；不得只保留最终绿色结果。当前 15:46 preview 的人工静态证据继续适用，但 wrapper 仍不是自动视觉 PASS。
 
 ## 已登记的性能边界
 
@@ -63,8 +63,9 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
 
 | 证据 | 当前用法 |
 | --- | --- |
-| I0 validation | 上一闭合非美术基线；冻结历史，不覆盖 I1 |
-| ART21 closeout/validation | 项目级上一闭合美术阶段 |
+| I1 validation | 最新闭合非美术基线；`CLOSED / PASS_WITH_NOTES` |
+| I0 validation | 前序闭合非美术基线；冻结历史，不覆盖 I1 |
+| ART21 closeout/validation | 项目级最新闭合美术阶段 |
 | ART23 validation | 较晚页面/UI 验收证据切片；不提升项目级 stage authority |
 | ART24R2 final Computer Use | 失败封存，24/61 PASS；不得改写 |
 | G41/M6/M7 runners | I1 core/full 的行为回归来源 |
@@ -78,6 +79,6 @@ I1 对应处理是：行为回归由 manifest 中已校准的 runner 承担；`p
 
 - 精确 PASS marker、exit code 和无 blocking diagnostic 才构成单 runner PASS。
 - cleanup diagnostic 必须保留分类，不能假装不存在。
-- worktree PASS 不代替提交后的 head PASS。
+- worktree PASS 不代替提交后的 head PASS；Actions quick 也不代替本地 full/head。
 - screenshot/capture、静态、headless、manual、performance、CI 和 release 分开声明。
 - 历史 stage validator 的失败或旧 PASS 都不替代 I1 manifest + 专门 gate 的当前结果。

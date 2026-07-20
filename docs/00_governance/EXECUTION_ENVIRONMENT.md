@@ -1,7 +1,7 @@
 # Current Execution Environment
 
-文档状态：I1 当前执行环境契约。
-最后更新：2026-07-20
+文档状态：I1 关闭后继续适用的当前执行环境契约。
+最后更新：2026-07-21
 
 ## 路径解析
 
@@ -58,7 +58,7 @@ version: 4.6.3.stable.official.7d41c59c4
 - 允许只读审计、任务相关精确暂存/提交和用户明确授权的普通 push。
 - 禁止 `reset --hard`、`clean`、stash apply/pop/drop/clear、历史重写和 force push。
 - 提交前验证 worktree，提交后以 `SourceMode head` 验证确切提交。
-- `.github/workflows/i1-quick.yml` 的存在只表示 CI 已配置；远端成功 run 之前状态是 `configured_unproven`。
+- `.github/workflows/i1-quick.yml` 只有与提交关联的成功远端 run 才能证明 quick；I1 关闭证据为 run `29760789712` success。该结果不证明 full、导出或 release。
 
 ## 历史安全记录
 

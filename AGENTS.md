@@ -39,5 +39,5 @@ Rules:
 - ART21 main-menu scene reconstruction is the latest closed art stage. The
   earlier ART21 and ART21R1 branches remain preliminary slices of that stage;
   do not infer or start ART22 without an explicit new requirement.
-- I0 is the latest closed non-art project stage. M5 and G40 remain historical
+- I1 is the latest closed non-art project stage. M5 and G40 remain historical
   baselines and must not be presented as the latest overall project progress.

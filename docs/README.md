@@ -1,6 +1,6 @@
 # Game1 Docs
 
-本目录是当前仓库文档入口。当前 I1 worktree candidate 已通过自动化、资源与预览静态图片验收，committed HEAD 与 Git 交付仍待完成；I0、ART21 及其前后历史 validation / handoff / closeout 保留原文，不被当前摘要重写。
+本目录是当前仓库文档入口。I1 已以提交态 full/head 39/39、Git 交付和远端 quick 成功关闭为 `PASS_WITH_NOTES`；I0、ART21 及其前后历史 validation / handoff / closeout 保留原文，不被当前摘要重写。
 
 ## 第一读取顺序
 
@@ -12,11 +12,11 @@
 
 ## 当前基线口径
 
-- 上一闭合非美术基线：I0。
-- 项目级上一闭合美术阶段：ART21 主菜单场景重构。
+- 最新闭合非美术基线：I1。
+- 项目级最新闭合美术阶段：ART21 主菜单场景重构。
 - ART23：较晚且已验收的页面/UI 运行证据切片，可用于具体页面回归，但不提升为项目级 art-stage authority。
 - ART24R2：`FAIL (24/61 PASS)` 后封存的历史美术尝试。
-- I1：当前跨程序、美术、验证与治理基线；validation/handoff 已记录 worktree acceptance，但 stage closeout 仍为 committed HEAD pending。
+- I1：当前最新闭合的跨程序、美术、验证与治理基线，状态 `CLOSED / PASS_WITH_NOTES`；当前无自动授权的后继阶段。
 
 ## 目录职责
 

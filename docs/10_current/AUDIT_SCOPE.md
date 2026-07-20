@@ -1,7 +1,7 @@
 # Audit Scope
 
 文档状态：I1 当前审计范围。
-最后更新：2026-07-20
+最后更新：2026-07-21
 
 ## 已纳入
 
@@ -16,7 +16,7 @@
 
 ## 历史证据使用
 
-- I0 是上一闭合非美术基线，ART21 是项目级上一闭合美术阶段。
+- I1 是最新闭合非美术基线，ART21 是项目级最新闭合美术阶段；I0 保留为其前序冻结基线。
 - ART23 是较晚页面/UI 验收证据切片；ART24R2 是 24/61 失败封存。
 - G41/M6/M7 与更早 runner/validation 可用于回归，但当前实现和 I1 结果优先。
 - 历史 `D:\AGAME1` source/report/worktree 路径只证明当时机器布局；本机 external source pack 当前不可用。
@@ -27,9 +27,9 @@
 - 完整仓库经济、装备深度、Boss/精英、更深内容、抽奖/唯一物/实际外观。
 - 完整人工长时间游玩、最终视觉/音频、鼠标/手柄/动画手感。
 - 除 combat refresh 微基准外的通用性能、设备/输入矩阵。
-- 未实际成功运行的 GitHub Actions、导出、发布或 release gate。
+- GitHub Actions full、导出、发布或 release gate；已成功的 Actions quick 只证明 quick profile。
 - 对所有历史文档、branch 或 external source pack 的破坏性清理。
 
 ## 证据等级
 
-当前代码与可运行/可见证据优先于对话或历史摘要。worktree runner、committed HEAD、capture、人审、performance、CI 和 release 各自只能证明其明确范围。当前 I1 worktree acceptance 已通过，但 committed HEAD、commit/push 和最终 Git/metadata 证据仍 pending，因此不得关闭。
+当前代码与可运行/可见证据优先于对话或历史摘要。worktree runner、committed HEAD、capture、人审、performance、CI 和 release 各自只能证明其明确范围。I1 以提交态 full/head 39/39、Git 交付与远端 quick 成功关闭为 `PASS_WITH_NOTES`；其排除项不因阶段关闭而转为已完成。

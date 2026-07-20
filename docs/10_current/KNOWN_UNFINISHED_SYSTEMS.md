@@ -1,13 +1,12 @@
 # Known Unfinished Systems
 
-文档状态：I1 当前未完成系统清单。
-最后更新：2026-07-20
+文档状态：I1 关闭后的当前未完成系统清单。
+最后更新：2026-07-21
 
-本文件阻止 foundation、preview、schema、runner 或局部 PASS 被扩写为完整产品能力。
+本文件阻止 foundation、preview、schema、runner 或局部 PASS 被扩写为完整产品能力。下列项目是 I1 的保留边界和后续候选，不重新打开已关闭的 I1。
 
 | 系统 | 当前事实 | 后续门 |
 | --- | --- | --- |
-| I1 最终验收 | worktree 39/39 与 preview 静态 review 27/27 已通过；full committed HEAD、commit、push 尚未完成 | 验证精确 HEAD 并回填 Git 交付证据后才能关闭 |
 | `RunScene` 职责 | 仍是大型协调器；I1 已提取若干边界但未完成拆分 | 一次一个有特征测试的职责提取；以所有权和回归门而非行数判断 |
 | active-run persistence | 当前进程内 continue 可用；退出 Godot 后恢复未实现 | schema/migration/crash/idempotency stage |
 | 完整人工游玩 | 历史阶段只有有限或局部人工证据 | 独立长局、多终局、返回与恢复 regression |
@@ -21,7 +20,7 @@
 | Cleanup diagnostics | full 中 22 个 runner 共保留 44 条已分类 shutdown cleanup diagnostic；blocking diagnostic 为 0 | lifecycle diagnostic stage |
 | 历史 validator 漂移 | G35/G36 与 M3/M3H/M3R/M5 独立 wrapper 含旧模块位置、旧语义或 blanket metadata 规则，不是 I1 当前入口 | 需要复用时单独校准；当前使用 I1 manifest + `I1_PROJECT_METADATA` |
 | 通用性能 | 只有 combat refresh 微基准 | frame/memory/long-run/device workload matrix |
-| CI | workflow 已配置，远端成功 run 尚无当前证据 | push 后 Actions success + artifact audit |
+| CI | GitHub Actions quick run `29760789712` 已成功；full、导出与 release 仍无远端证明 | 为目标 profile/平台建立独立 Actions 与 artifact gate |
 | 导出 / 发布 | 未建立为当前能力 | target export, package, smoke, release gate |
 | 最终美术 / 音频 | I1 改善 UI、动画与资源治理；不构成最终验收 | independent visual/audio acceptance |
 

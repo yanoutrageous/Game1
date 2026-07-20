@@ -1,7 +1,7 @@
 # I1 Architecture Baseline
 
-文档状态：当前 I1 工程架构基线；worktree 验收通过，committed HEAD 待验证。
-最后更新：2026-07-20
+文档状态：I1 已关闭并冻结的工程架构基线；提交态 full/head 已验证。
+最后更新：2026-07-21
 
 ## 1. 目的
 
@@ -64,7 +64,7 @@ RunAssetLedger final settlement snapshot
 - `scope=all` 用于需要重新构建地图、背包、布局、页面摘要等完整视图模型的变化。
 - `scope=combat` 只更新战斗 HP、威胁/压力、消息和必要的可见诊断；不得重建地图或隐藏页面。
 - AppShell 只刷新可见页面；隐藏页面缓存 revision，切换显示时追上最新状态一次。
-- `I1_COMBAT_REFRESH` 在生产 `main.tscn` 中采 180 次 combat 和 40 次 full 对照；combat p95 门为 8 ms 且必须低于 full p95。当前 core/latest-full worktree 分别测得 combat p95 519 μs / 321 μs，full p95 267,793 μs / 333,855 μs。
+- `I1_COMBAT_REFRESH` 在生产 `main.tscn` 中采 180 次 combat 和 40 次 full 对照；combat p95 门为 8 ms 且必须低于 full p95。最终提交态 full/head 测得 combat p50/p95/p99/max 110/222/310/356 μs，full p95 151,070 μs。
 - 上述门只验证一次微基准。不得从它推断整局帧时间、显存、低端设备或发布性能。
 
 ## 6. 保存与兼容规则
@@ -101,4 +101,4 @@ RunAssetLedger final settlement snapshot
 - `RunScene` 仍是大型协调器，I1 只完成有证据支持的职责拆分。
 - CommandBus 仍协调非物品命令，后续只能按稳定边界继续拆分。
 - 玩家动画没有完整独立 death bitmap；音频和最终 motion feel 未验收。
-- cleanup diagnostic、完整人工长局、通用性能、CI 远端成功、导出和发布仍未关闭。
+- cleanup diagnostic、完整人工长局、通用性能、远端 full CI、导出和发布仍未关闭；远端 quick 已由 run `29760789712` 证明。

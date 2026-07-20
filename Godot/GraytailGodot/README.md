@@ -5,8 +5,8 @@
 ```text
 project_path: <git-worktree-root>/Godot/GraytailGodot
 engine_version: 4.6.3.stable.official.7d41c59c4
-current_stage: I1 / worktree accepted / committed HEAD pending
-latest_closed_non_art_baseline: I0
+current_stage: none / I1 closed PASS_WITH_NOTES
+latest_closed_non_art_baseline: I1
 latest_closed_art_stage: ART21
 ```
 

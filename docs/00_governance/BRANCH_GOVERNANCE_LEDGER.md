@@ -1,6 +1,6 @@
 # M4 Branch Governance Ledger
 
-文档状态补充：本文件是 M4 / M4S 时间点分支证据。其旧仓库路径和旧 refs 不改写；I1 当前分支事实见 `docs/10_current/CURRENT_STATE.md` 和 `docs/50_stages/active/STAGE_INDEX.md`。
+文档状态补充：本文件主体是 M4 / M4S 时间点分支证据，其旧仓库路径和旧 refs 不改写。I1 implementation delivery checkpoint 为分支 `codex/i1-baseline-stabilization` 的 `492d74fcdc94cb75e47401c203defd49dac11ae9`；关闭审计当时已用 `ls-remote` 验证该 checkpoint 的本地、upstream 与远端一致，Actions quick run `29760789712` 成功。该 checkpoint 早于 documentation-only closeout commit，不表示分支永久停在该提交。当前权威见 `docs/10_current/CURRENT_STATE.md` 和两个 stage index。
 
 文档状态：M4 / M4S 仓库同步 / 分支治理台账
 适用范围：当前本地与 origin 分支的审计、合并候选判断、清理建议

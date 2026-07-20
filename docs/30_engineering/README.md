@@ -1,7 +1,7 @@
 # Engineering Docs Entry
 
 文档状态：I1 当前工程文档入口。
-最后更新：2026-07-20
+最后更新：2026-07-21
 
 ## 当前入口
 
@@ -21,7 +21,7 @@
 3. 当前执行以 tools/i1 和锁定 Godot 身份为准；固定盘符只可作本机示例或历史证据。
 4. 架构新增直接落位 docs/30_engineering/architecture/；操作说明落位 docs/30_engineering/godot/。
 5. 已登记的损坏历史 README 不做无审计重写；有效 companion/index 继续承担导航。
-6. I1 validation 未关闭前，不把 implementation-present 写成 accepted baseline。
+6. I1 已按提交态 full/head 证据关闭；后续变更不得用 implementation-present 或 worktree PASS 替代对应验收。
 ```
 
 ## 工程修改最低要求
