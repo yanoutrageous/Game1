@@ -1,20 +1,21 @@
 # Current State
 
-文档状态：I1 已关闭后的当前仓库事实。
-最后更新：2026-07-21
+文档状态：I2 已启动的当前仓库事实；实现尚未声明。
+最后更新：2026-07-22
 
 ## 当前身份
 
 ```text
 active_repo: git rev-parse --show-toplevel
-observed_branch: codex/i1-baseline-stabilization
+observed_branch: codex/i2-player-experience-refactor
 source_head_before_i1: 2212992337aeef7cda412dbaaa191c3ad6cbb81a
 implementation_commit: 6a4f207d743583c7342655488c2d9a652b9ab05c
 closure_fix_commit: 492d74fcdc94cb75e47401c203defd49dac11ae9
-validated_head: 492d74fcdc94cb75e47401c203defd49dac11ae9
-validated_tree: 96a5272e50ff80aad400ccde3db9d313fa1456a1
-upstream: origin/codex/i1-baseline-stabilization
-current_stage: none / I1 closed PASS_WITH_NOTES
+i1_closure_commit: b77132b9de655b36f71c930a35a191c383b55522
+i2_entry_validated_head: b77132b9de655b36f71c930a35a191c383b55522
+i2_entry_validated_tree: 1d26f1415851755f1a8cc57f4804dfb12d9cea4d
+observed_base_ref: origin/main at b77132b9de655b36f71c930a35a191c383b55522
+current_stage: I2 ACTIVE / implementation not yet claimed
 latest_closed_non_art_baseline: I1
 latest_closed_art_stage: ART21
 later_accepted_page_ui_evidence: ART23
@@ -25,6 +26,15 @@ local_godot_observation: E:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.
 
 仓库路径和 Godot 工程位置必须动态解析。本机 Godot 路径只是观测/示例；I1 runner 仍按显式参数、环境变量、PATH 顺序解析并对照 lock 验证。
 
+## I2 当前启动事实
+
+- I2 是用户明确授权的跨程序、美术、产品和治理集成阶段，内部按 I2.0–I2.7 切片执行，但只有一个阶段状态和一次综合验收。
+- 当前仅执行 I2.0 文档/治理启动：契约、起点评估、反馈追踪、目标架构、验证计划和切片门账已进入工作范围；Godot 运行时、场景、资源和项目设置没有因这些文档获得完成声明。
+- Godot 是唯一实现目标；`E:\UE\Game\UE\Graytail` 只作只读语义/交互/视觉参考，不是架构、代码、性能或素材许可权威。
+- Deploy 地图固定为同一页面的双栏信息架构：左侧地图名称与比例/规模，右侧难度与详情；现有 8 个地图 ID 保持不变，不引入“区域 → 难度”分步页。
+- I1 的 `RunStateMachine`、`RunAssetLedger`、terminal settlement、`SaveAdapter`、结算幂等和失败保全确认边界全部继承。
+- I2 runtime capability delta 当前为 `none claimed`；能力矩阵中的既有 playable/persistent 项仍只代表 I1/G41/M6/M7 基线。
+
 ## 已有运行能力
 
 - 主菜单、出发整备、长期页、局内和结果页由生产 `main.tscn` 路由。
@@ -34,7 +44,7 @@ local_godot_observation: E:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.
 - 当前进程内可继续相同 `run_id`；退出 Godot 进程后的 active-run 检查点恢复未实现。
 - 消耗品终局清除；失败保全在玩家确认后提交；UI 不应拥有结算或持久化权威。
 
-## I1 当前实现事实
+## I1 继承实现事实
 
 ### 程序与可靠性
 
@@ -74,9 +84,9 @@ local_godot_observation: E:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.
 
 ## 阶段判断
 
-I1 的提交态验收与 Git 交付已经支持：将项目从“核心能力集中开发”切换为“新增能力与存量修改并行”是正确的。项目已不再缺少最小运行闭环，后续主要风险转为权威漂移、局部修改回归、热路径成本、界面新增状态和历史文档冲突；I1 的 runner 与 preview 已为这些风险提供快速反馈。
+I1 的提交态验收与 Git 交付已经支持：将项目从“核心能力集中开发”切换为“新增能力与存量修改并行”是正确的。项目已不再缺少最小运行闭环，后续主要风险转为权威漂移、局部修改回归、热路径成本、界面新增状态和历史文档冲突；I1 的 runner 与 preview 已为这些风险提供快速反馈。I2 已作为这个判断下的玩家体验重构阶段被明确授权并处于 `ACTIVE`。
 
-这不表示项目进入维护期。跨进程恢复、完整经济、更深内容、最终视觉/音频、人工长局、通用性能、设备/输入、远端 full、导出和发布仍需要独立增量。当前没有自动授权的后继阶段。
+这不表示项目进入维护期。跨进程恢复、完整经济、更深内容、最终视觉/音频、人工长局、通用性能、设备/输入、远端 full、导出和发布仍需要独立增量。I2 也不因启动自动包含这些排除项；只有通过门账明确纳入的切片可以实施。
 
 ## 当前验证状态
 
@@ -91,9 +101,13 @@ I1_PRODUCTION_PREVIEW_REVIEW=PASS_STATIC_LAYOUT_27_OF_27
 I1_FULL_HEAD=PASS_39_OF_39_HEAD_492D74F
 I1_CI_QUICK=PASS_RUN_29760789712
 I1_STAGE=CLOSED_PASS_WITH_NOTES
+I2_ENTRY_FULL_HEAD=PASS_39_OF_39_HEAD_B77132B
+I2_ENTRY_REPORT_SHA256=2072F1DBD067C607E82220F06DEFE15F410ED68807BFAA4EF36B5202007167E8
+I2_STAGE=ACTIVE_IMPLEMENTATION_NOT_YET_CLAIMED
+I2_RUNTIME_CAPABILITY_DELTA=NONE_CLAIMED
 ```
 
-关闭权威是提交态 full/head；worktree、preview 和 Actions quick 只证明各自范围。完整记录见 `docs/validation/I1_INCREMENTAL_DEVELOPMENT_BASELINE_VALIDATION.md`。
+I1 关闭权威仍是其 validation/handoff。`b77132b` 的新 39/39 full/head 是 I2 进入基线，不改写历史 I1 关闭证据；worktree、preview 和 Actions quick 只证明各自范围。I2 当前没有 validation/handoff。
 
 ## 明确未完成
 

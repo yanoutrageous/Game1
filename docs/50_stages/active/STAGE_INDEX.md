@@ -1,40 +1,78 @@
 # Active Stage Index
 
-文档状态：当前无已授权 active stage；I1 已关闭。
-最后更新：2026-07-21
+文档状态：I2 active stage 入口；实现尚未声明。
+最后更新：2026-07-22
 
 ## 当前阶段
 
 | Item | Current fact |
 | --- | --- |
-| Stage | NONE |
-| Status | no authorized successor; I1 closed `PASS_WITH_NOTES` |
+| Stage | I2 Player-experience Refactor and Incremental Baseline |
+| Status | `ACTIVE / implementation not yet claimed` |
+| Stage type | user-authorized cross-line integration baseline exception |
 | Active repo | `git rev-parse --show-toplevel` |
-| Observed branch | `codex/i1-baseline-stabilization` |
-| Validated head | `492d74fcdc94cb75e47401c203defd49dac11ae9` |
-| Latest closed non-art baseline | I1 |
+| Observed worktree | `E:\AGAME1\.tmp\worktrees\i2` |
+| Observed branch | `codex/i2-player-experience-refactor` |
+| Entry HEAD | `b77132b9de655b36f71c930a35a191c383b55522` |
+| Entry tree | `1d26f1415851755f1a8cc57f4804dfb12d9cea4d` |
+| Entry regression | `full/head 39/39 PASS`; no I2 capability claim |
+| Implementation target | `<active_repo>/Godot/GraytailGodot` |
+| Read-only reference | `E:\UE\Game\UE\Graytail` concept/interaction/visual only |
+| Latest closed non-art baseline | I1 / `CLOSED / PASS_WITH_NOTES` |
 | Latest closed art stage | ART21 |
 | Later accepted page/UI evidence | ART23 |
-| Failed historical art attempt | ART24R2 / 24 of 61 PASS |
-| Local Godot observation | `E:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe` |
+| Current slice | I2.1 pre-execution audit; I2.0 accepted with notes |
+| Runtime slices | I2.1–I2.7 not authorized until their gates pass |
 
-## 已关闭的 I1 基线
+## 阶段目标
 
-把已有 playable program、UI/动画/资源和文档治理整理为统一的增量开发基线，使后续变更能够快速运行隔离自动化、生产场景预览和明确的人工复核。
+在不破坏 I1 权威、保存、结算和快速回归基线的前提下，对主菜单、出发探索、长期系统、局内、特殊房和结果解释进行面向玩家体验的受控重构，使后续新增与修改可以快速生产预览、自动测试、动态复核并附明确操作说明。
 
-## 已完成的关闭门
+I2 是单一阶段。I2.0–I2.7 只是内部切片；任何局部通过不能被写成 I2 已关闭。
 
-- static PASS：39 blocking / 46 inventory / 13 exclusions / 705 checks。
-- preflight、quick 21/21、core 24/24、ui 23/23、full 39/39 worktree PASS，污染守卫 PASS。
-- ART25 107 assets 来源、许可、manifest 与确定性门 PASS。
-- 九状态 × 三分辨率 27/27 生产预览已生成；机器状态仍要求视觉复核，人工静态布局、层级、文字、无遮挡与无裁切 PASS。
-- implementation commit `6a4f207d743583c7342655488c2d9a652b9ab05c` 与 newline safety fix `492d74fcdc94cb75e47401c203defd49dac11ae9` 已交付；最终提交态 full/head 39/39 PASS。
-- 分支已推送到 `origin/codex/i1-baseline-stabilization`；GitHub Actions quick run `29760789712` 成功。
+## 当前 I2.0
 
-## 后继授权
+I2.0 只建立：
 
-当前没有自动授权的后继 G/ART/M/P/I 阶段。后续工作必须先建立范围、验收门和证据入口，并以 I1 contract、architecture、runbook、validation 与 handoff 为基线。
+- pre-execution scope/risk audit；
+- refactor/incremental baseline contract；
+- exact entry baseline assessment；
+- 43 条玩家反馈/跨域判断追踪矩阵；
+- target architecture/migration plan；
+- validation/preview/manual review plan；
+- slice gate ledger 与当前入口。
 
-## 未授权扩张
+I2.0 不修改 Godot、资产、项目设置、tools、validation 或 handoff，不提升 capability。
 
-I1 不自动包含跨进程 active-run 恢复、完整经济/内容、最终美术/音频、完整人工长局、通用性能、设备矩阵、导出或发布。远端 quick 成功也不证明 full、导出或 release。
+## 冻结约束
+
+- Godot 是实现目标；UE 只读借鉴概念，拒绝 UE 架构、烤字固定布局与未知许可素材。
+- Deploy 地图保持同一页面：左地图名称+比例/规模，右难度+详情；保留 8 个现有 ID，不做 region→difficulty 分步页。
+- `RunStateMachine`、`RunAssetLedger`、terminal settlement、`SaveAdapter`、失败保全和幂等继承 I1。
+- 素材先复用已登记 Godot 内容，再审计外部来源；只有确认缺口后才走批准的生成门。
+- 性能必须测真实工作负载；combat refresh 微基准不能代表 FPS。
+- 键鼠/手柄/焦点、reduced motion/颜色冗余、长文本/本地化和生命周期/保存失败进入相关切片验收。
+
+## 当前门与下一步
+
+| Gate | Status |
+| --- | --- |
+| I2 entry exact full/head | PASS 39/39 at `b77132b` |
+| I2.0 docs self-check | `ACCEPTED_WITH_NOTES`; allowed paths / 43 IDs / refs / UTF-8 / YAML basic / diff / static PASS；quick/worktree 21/21 PASS |
+| I2.1 scope/risk/paths | AUDIT_REQUIRED |
+| I2 runtime implementation | NOT_STARTED |
+| I2 visual/manual/performance acceptance | NOT_RUN |
+| I2 validation/handoff | NOT_CREATED |
+| I2 capability promotion | NONE |
+
+下一步是冻结 I2.1 的精确 allowed/protected paths、设置字段、输入/焦点权属与回退门；在门账变为 `READY` 前不修改 Godot。详细状态见 `docs/00_governance/I2_SLICE_GATE_LEDGER.md`。
+
+## 进入材料
+
+- `docs/00_governance/I2_PRE_EXECUTION_SCOPE_RISK_AUDIT.md`
+- `docs/20_product/I2_REFACTOR_DIRECTION_AND_INCREMENTAL_BASELINE_CONTRACT.md`
+- `docs/10_current/I2_PRE_EXECUTION_BASELINE_ASSESSMENT.md`
+- `docs/20_product/I2_PLAYER_FEEDBACK_TRACEABILITY_MATRIX.md`
+- `docs/30_engineering/architecture/I2_TARGET_ARCHITECTURE_AND_MIGRATION_PLAN.md`
+- `docs/30_engineering/godot/I2_VALIDATION_PREVIEW_AND_MANUAL_REVIEW_PLAN.md`
+- `docs/00_governance/I2_SLICE_GATE_LEDGER.md`

@@ -1,8 +1,8 @@
 # DOC-GOV-003 Stage Process Minimal
 
 Status: current governance rule.
-Scope: stage planning, audit, execution, closeout, and thread continuation for G / ART / M / P work.
-Updated: 2026-07-02.
+Scope: stage planning, audit, execution, closeout, and thread continuation for G / ART / M / P work and explicitly authorized I integration baselines.
+Updated: 2026-07-22.
 
 ## 0. 中文摘要
 
@@ -25,7 +25,7 @@ A formal stage must represent a meaningful state change for one line:
 
 Single-point repairs are slices by default, not stages. A narrow task can become stage-worthy only when it closes a blocker, repairs a release gate, or produces reusable validation / pipeline / contract capability.
 
-I0 is a one-time, user-approved independent baseline stage. It does not create a reusable new stage line; later G / ART / M / P stages inherit the I0 repository, toolchain, validation and claim baseline.
+I0 is the original one-time, user-approved independent baseline stage. I1 and I2 are separately user-authorized cross-line integration baseline exceptions: I1 established the incremental-development baseline, and I2 applies that baseline to a single player-experience refactor stage made of gated slices. These exceptions do not create an automatically incrementing I line. Any later I stage still requires explicit user authorization, its own Stage Card and scope/risk audit. An I stage may integrate G / ART / M / P evidence, but its claim cannot exceed the evidence of its constituent slices or replace their runtime, visual, product and governance gates.
 
 Stricter stage-specific rules win. If a Stage Card, audit verdict, or user instruction requires stronger validation, narrower paths, or per-slice audit, follow the stricter rule.
 

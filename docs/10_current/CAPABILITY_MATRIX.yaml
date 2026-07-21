@@ -1,18 +1,18 @@
 document_status: current_capability_matrix
-updated: "2026-07-21"
-updated_by: "I1_closed_pass_with_notes"
+updated: "2026-07-22"
+updated_by: "I2_startup_no_capability_promotion"
 
 repository:
   workspace_resolution: "git rev-parse --show-toplevel"
   godot_project: "<git-worktree-root>/Godot/GraytailGodot"
-  observed_branch: "codex/i1-baseline-stabilization"
+  observed_branch: "codex/i2-player-experience-refactor"
   source_head_before_i1: "2212992337aeef7cda412dbaaa191c3ad6cbb81a"
   implementation_commit: "6a4f207d743583c7342655488c2d9a652b9ab05c"
   closure_fix_commit: "492d74fcdc94cb75e47401c203defd49dac11ae9"
-  validated_head: "492d74fcdc94cb75e47401c203defd49dac11ae9"
-  validated_tree: "96a5272e50ff80aad400ccde3db9d313fa1456a1"
-  upstream: "origin/codex/i1-baseline-stabilization"
-  current_stage: "none_i1_closed_pass_with_notes"
+  validated_head: "b77132b9de655b36f71c930a35a191c383b55522"
+  validated_tree: "1d26f1415851755f1a8cc57f4804dfb12d9cea4d"
+  observed_base_ref: "origin/main_at_b77132b9de655b36f71c930a35a191c383b55522"
+  current_stage: "i2_active_implementation_not_yet_claimed"
   latest_closed_non_art_baseline: "I1"
   latest_closed_art_stage: "ART21"
   later_accepted_page_ui_evidence: "ART23"
@@ -61,6 +61,16 @@ i1_implementation:
   production_preview_capture: generated_27_of_27_machine_review_required_static_human_pass
   unified_headless_harness: validated_closed
 
+i2_startup:
+  stage_status: active
+  runtime_implementation: not_started_not_claimed
+  runtime_capability_delta: none_claimed
+  current_slice: i2_0_docs_and_governance_only
+  implementation_target: godot
+  ue_reference: read_only_concept_interaction_visual_only
+  deploy_map_route: same_page_no_region_difficulty_step
+  final_validation_handoff: not_created
+
 validation:
   static_final: pass_39_blocking_46_inventory_13_exclusions_705_checks
   preflight_worktree: pass_120233_ms
@@ -96,3 +106,14 @@ validation:
   ci_quick: pass_run_29760789712_job_88414602442
   ci_full: not_claimed
   export_release: not_claimed
+  i2_entry_full_head: pass_39_of_39_at_b77132b
+  i2_entry_full_head_report_sha256: "2072F1DBD067C607E82220F06DEFE15F410ED68807BFAA4EF36B5202007167E8"
+  i2_entry_full_head_duration_ms: 254980
+  i2_entry_business_file_count: 1216
+  i2_entry_business_fingerprint_sha256: "73130F67772D58B6CD7B1959482FE2FB2F7A61BA1BCCC4E32842D7325B00B289"
+  i2_entry_combat_p50_us: 106
+  i2_entry_combat_p95_us: 208
+  i2_entry_combat_p99_us: 276
+  i2_entry_combat_max_us: 290
+  i2_entry_full_refresh_p95_us: 139759
+  i2_visual_manual_performance_acceptance: not_run
