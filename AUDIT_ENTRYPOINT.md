@@ -37,7 +37,7 @@ entry_head: b77132b9de655b36f71c930a35a191c383b55522
 entry_tree: 1d26f1415851755f1a8cc57f4804dfb12d9cea4d
 observed_base_ref: origin/main at b77132b9de655b36f71c930a35a191c383b55522
 stage: I2 ACTIVE / implementation not yet claimed
-current_slice: I2.1 pre-execution audit; I2.0 accepted with notes
+current_slice: I2.1A/I2.1B foundation and isolated I2.5A ready; I2.0 accepted with notes
 latest_closed_non_art_baseline: I1
 latest_closed_art_stage: ART21
 later_accepted_page_ui_evidence: ART23

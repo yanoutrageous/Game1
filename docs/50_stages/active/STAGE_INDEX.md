@@ -21,7 +21,7 @@
 | Latest closed non-art baseline | I1 / `CLOSED / PASS_WITH_NOTES` |
 | Latest closed art stage | ART21 |
 | Later accepted page/UI evidence | ART23 |
-| Current slice | I2.1 pre-execution audit; I2.0 accepted with notes |
+| Current slice | I2.1A/I2.1B foundation and isolated I2.5A ready; I2.0 accepted with notes |
 | Runtime slices | I2.1–I2.7 not authorized until their gates pass |
 
 ## 阶段目标
@@ -59,13 +59,14 @@ I2.0 不修改 Godot、资产、项目设置、tools、validation 或 handoff，
 | --- | --- |
 | I2 entry exact full/head | PASS 39/39 at `b77132b` |
 | I2.0 docs self-check | `ACCEPTED_WITH_NOTES`; allowed paths / 43 IDs / refs / UTF-8 / YAML basic / diff / static PASS；quick/worktree 21/21 PASS |
-| I2.1 scope/risk/paths | AUDIT_REQUIRED |
+| I2.1 scope/risk/paths | READY for exact I2.1A and I2.1B foundation allowlists; integration remains gated |
+| I2.5 asset binding | READY only for exact I2.5A existing-result/protocol/item binding allowlist |
 | I2 runtime implementation | NOT_STARTED |
 | I2 visual/manual/performance acceptance | NOT_RUN |
 | I2 validation/handoff | NOT_CREATED |
 | I2 capability promotion | NONE |
 
-下一步是冻结 I2.1 的精确 allowed/protected paths、设置字段、输入/焦点权属与回退门；在门账变为 `READY` 前不修改 Godot。详细状态见 `docs/00_governance/I2_SLICE_GATE_LEDGER.md`。
+下一步是执行互不重叠的 I2.1A、I2.1B foundation 与 I2.5A，主审统一登记 runner 并完成交叉回归；任何 AppShell/Run 设置集成或其他局内改动仍需新门。详细状态见 `docs/00_governance/I2_SLICE_GATE_LEDGER.md`。
 
 ## 进入材料
 

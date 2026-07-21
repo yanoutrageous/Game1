@@ -9,7 +9,7 @@ I1 已以 `CLOSED / PASS_WITH_NOTES` 收口，I2 已由用户明确授权为单�
 
 ```text
 I2 stage: ACTIVE
-I2 current slice: I2.1 pre-execution audit
+I2 current slice: I2.1A/I2.1B foundation and isolated I2.5A ready for implementation
 I2 runtime implementation: NOT_STARTED / NOT_CLAIMED
 entry head: b77132b9de655b36f71c930a35a191c383b55522
 entry full/head: 39/39 PASS
@@ -18,13 +18,8 @@ entry full/head: 39/39 PASS
 ## 立即下一步
 
 1. 保持 I2.0 `ACCEPTED_WITH_NOTES / no runtime delta`；其 quick/worktree 21/21 PASS，不创建 validation/handoff，不提升 capability。
-2. 对 I2.1 建立独立高风险切片审计，冻结：
-   - 当前 route、Esc/modal/focus、settings 和角色 animation characterization；
-   - 真实设置字段、持久化/回滚/失败语义；
-   - 离线 rig-assisted/baked frame 与现有逐帧方案的 proof 范围；
-   - shared navigation/transition、reduced motion、style/layer seam 的最小 allowed paths；
-   - feature gate、回退点、quick/ui/full 与动态/输入验收。
-3. I2.1 只有在 `I2_SLICE_GATE_LEDGER.md` 变为 `READY` 后才可修改 Godot。
+2. 按门账并行执行互不重叠的 I2.1A 状态/生命周期、I2.1B 设置/输入 foundation 与 I2.5A 既有资产接线；不得越过各自精确 allowed paths。
+3. 主审统一登记新增 runner，并在定向测试、quick/ui 与交叉 claim review 后再开放 AppShell/Run 的设置/焦点集成门。
 
 ## 后续切片顺序
 
