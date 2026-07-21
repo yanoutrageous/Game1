@@ -95,6 +95,9 @@
     "I1_UI_INTERACTION",
     "I1_PROJECT_METADATA",
     "ART21_MAIN_MENU_RUNTIME",
+    "I2_MAIN_MENU_ANCHOR_TEXT",
+    "I2_MAIN_MENU_TRANSITION_COORDINATOR",
+    "I2_MAIN_MENU_TRANSITION_FALLBACK",
     "ART22_DEPLOY_PREP_RUNTIME",
     "ART22_DEPLOY_PREP_MAIN_ROUTE",
     "ART23_LONG_TERM_RUNTIME",
@@ -141,6 +144,9 @@
         "I1_UI_INTERACTION",
         "I1_PROJECT_METADATA",
         "ART21_MAIN_MENU_RUNTIME",
+        "I2_MAIN_MENU_ANCHOR_TEXT",
+        "I2_MAIN_MENU_TRANSITION_COORDINATOR",
+        "I2_MAIN_MENU_TRANSITION_FALLBACK",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_MAIN_ROUTE",
         "ART24_IN_RUN_RUNTIME",
@@ -200,6 +206,9 @@
         "I1_ANIMATION_RUNTIME",
         "I1_UI_INTERACTION",
         "ART21_MAIN_MENU_RUNTIME",
+        "I2_MAIN_MENU_ANCHOR_TEXT",
+        "I2_MAIN_MENU_TRANSITION_COORDINATOR",
+        "I2_MAIN_MENU_TRANSITION_FALLBACK",
         "ART22_DEPLOY_PREP_RUNTIME",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_RUNTIME",
@@ -256,6 +265,9 @@
         "I1_UI_INTERACTION",
         "I1_PROJECT_METADATA",
         "ART21_MAIN_MENU_RUNTIME",
+        "I2_MAIN_MENU_ANCHOR_TEXT",
+        "I2_MAIN_MENU_TRANSITION_COORDINATOR",
+        "I2_MAIN_MENU_TRANSITION_FALLBACK",
         "ART22_DEPLOY_PREP_RUNTIME",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_RUNTIME",
@@ -579,9 +591,30 @@
     {
       "id": "ART21_MAIN_MENU_RUNTIME",
       "relative_path": "Godot/GraytailGodot/tests/art21_main_menu_runtime_runner.gd",
-      "pass_marker": "ART21_MAIN_MENU_RUNTIME=PASS entries=4 overlays=2 transitions=2 shortcuts=2 motion_groups=10",
+      "pass_marker": "ART21_MAIN_MENU_RUNTIME=PASS entries=4 overlays=2 transitions=4 shortcuts=2 motion_groups=10",
       "fail_marker": "ART21_MAIN_MENU_RUNTIME=FAIL",
       "coverage": ["main_menu", "transitions", "motion"]
+    },
+    {
+      "id": "I2_MAIN_MENU_ANCHOR_TEXT",
+      "relative_path": "Godot/GraytailGodot/tests/i2_main_menu_anchor_text_runner.gd",
+      "pass_marker": "I2_MAIN_MENU_ANCHOR_TEXT=PASS contract_cases=36 resolutions=3 text_profiles=3 focus_states=4 entry_lines_max=2 entry_font_min=18",
+      "fail_marker": "I2_MAIN_MENU_ANCHOR_TEXT=FAIL",
+      "coverage": ["main_menu", "layout", "text", "focus", "contract_matrix"]
+    },
+    {
+      "id": "I2_MAIN_MENU_TRANSITION_COORDINATOR",
+      "relative_path": "Godot/GraytailGodot/tests/i2_main_menu_transition_coordinator_runner.gd",
+      "pass_marker": "I2_MAIN_MENU_TRANSITION_COORDINATOR=PASS profiles=4 duplicate=rejected stale=ignored cancel=recovered prepare_fail=recovered commit_fail=recovered reduced_midflight=profile_only commit_once=true",
+      "fail_marker": "I2_MAIN_MENU_TRANSITION_COORDINATOR=FAIL",
+      "coverage": ["main_menu", "navigation_transition", "state_authority", "failure_recovery", "reduced_motion"]
+    },
+    {
+      "id": "I2_MAIN_MENU_TRANSITION_FALLBACK",
+      "relative_path": "Godot/GraytailGodot/tests/i2_main_menu_transition_fallback_runner.gd",
+      "pass_marker": "I2_MAIN_MENU_TRANSITION_FALLBACK=PASS registered=3 missing_character=null missing_flag=null missing_transition=null unknown=null builder_fallback=null",
+      "fail_marker": "I2_MAIN_MENU_TRANSITION_FALLBACK=FAIL",
+      "coverage": ["main_menu", "assets", "exact_fallback", "transition", "builder_parity"]
     },
     {
       "id": "ART22_DEPLOY_PREP_RUNTIME",
@@ -688,7 +721,7 @@
       "relative_path": "Godot/GraytailGodot/tests/i2_settings_shell_wiring_runner.gd",
       "pass_marker": "I2_SETTINGS_SHELL_WIRING=PASS owner=default_then_injected panel=production rollback=complete user_files=clean",
       "fail_marker": "I2_SETTINGS_SHELL_WIRING=FAIL",
-      "coverage": ["settings", "accessibility", "runtime_wiring", "rollback", "page_lifecycle"]
+      "coverage": ["settings", "accessibility", "runtime_wiring", "rollback", "page_lifecycle", "navigation_transition_interruptions"]
     },
     {
       "id": "I2_RUNTIME_INPUT_PROFILE",
@@ -817,6 +850,9 @@
         "ERROR: 7 resources still in use at exit (run with --verbose for details)."
       ],
       "ART21_MAIN_MENU_RUNTIME": [],
+      "I2_MAIN_MENU_ANCHOR_TEXT": [],
+      "I2_MAIN_MENU_TRANSITION_COORDINATOR": [],
+      "I2_MAIN_MENU_TRANSITION_FALLBACK": [],
       "ART22_DEPLOY_PREP_RUNTIME": [],
       "ART22_DEPLOY_PREP_MAIN_ROUTE": [
         "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",

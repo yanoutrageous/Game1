@@ -32,7 +32,7 @@ entry full/head: 39/39 PASS
 | --- | --- | --- | --- | --- |
 | I2.0 | 启动审计、契约、评估、矩阵、架构、验证计划、门账、入口 | I1 closed + exact entry baseline | `ACCEPTED_WITH_NOTES` | 独立复核修正 I1/I2 报告字段后，16/16 allowed paths、43/43 IDs、refs/UTF-8/YAML basic/diff/static 与 quick 21/21 PASS；无 runtime claim |
 | I2.1 | 共享导航/转场、设置、focus/modal、character presentation、style/layer seam | I2.0；设置字段与动画技术决策 | `IN_PROGRESS` | I2.1A/B/C 的路由、真实设置、输入、focus 与生命周期基础已 `READY_FOR_REVIEW`；character/transition/style seam 随 I2.2 继续，不提前关闭 I2.1 |
-| I2.2 | 主菜单文字/场景/锚点/动效/空间转场 | I2.1 最小 seam | `NOT_STARTED` | 需四入口动态标准、素材复用清单、回退到现有 fade |
+| I2.2 | 主菜单文字/场景/锚点/动效/空间转场 | I2.1 最小 seam | `IN_PROGRESS` | I2.2A 主菜单安全回退切片已 `ACCEPTED_WITH_NOTES`；完整洞口步行动画、下层连续背景与玩家手感复核仍待后续切片，不关闭 I2.2 |
 | I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `NOT_STARTED` | 需八地图 ID no-regression、真实命令与批量售卖门 |
 | I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `NOT_STARTED` | 先证明任务/成就/红点/领取不丢失，再改 Goal 入口 |
 | I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `AUDIT_REQUIRED` | 独立 I2.5A 结果框/协议色板/物品 binding 已 `READY_FOR_REVIEW`；其余局内职责仍待分项授权 |
@@ -369,3 +369,71 @@ protected scene/resource/project/uid/translation/import dirty in I2 worktree: NO
 full/worktree and exact full/head: NOT_RUN (reserved for I2.7 closeout)
 visible GPU/input-feel acceptance: NOT_RUN
 ```
+
+## 13. I2.2A 主菜单安全回退切片（2026-07-22）
+
+```text
+status: ACCEPTED_WITH_NOTES (safe fallback only; I2.2 remains IN_PROGRESS)
+feedback: MAIN-01, MAIN-02(partial), MAIN-03, MAIN-04(partial), MAIN-05(no-regression), CROSS-01, CROSS-04, CROSS-05, CROSS-07, CROSS-08
+rollback: c053293 (I2 runtime foundation checkpoint)
+```
+
+本切片把四个主菜单入口冻结为语义 profile：`enter_cave`、`descend`、`open_overlay`、`open_confirm`。`AppShell` 的 navigation transition coordinator 是路由编排 owner：prepare、play、commit、settle 每次只允许一个有效 token，重复请求拒绝、过期回调忽略，且 route/page commit 至多一次。`MainMenu` presenter 只生成画面 pose，不拥有页面、Run、设置或退出权威；transition profile 不进入 `NavigationIntent` 领域载荷。取消、准备失败、提交失败与页面隐藏都必须回到 Main 并恢复原入口焦点；运行中启用 `reduce_motion` 时吸附到可理解终态并仍由 coordinator 单次提交，不能由动画计时器直接改路由。
+
+安全回退边界如下：
+
+- Deploy 只使用角色 focus pose、cave glow 与暗渐变；没有完整步行动画，不能宣称“角色已经完整走入洞口”。ART21 的 4 帧 `walk_dungeon`/`walk_company` 继续保持 deferred，既不作为生产加载依赖，也不据此关闭 MAIN-04。
+- Long Term 对全部非 overlay 场景根统一下移 48 个 logical px，并使用固定底色/暖渐变维持连续观感；当前没有可连续展示的完整下层空间或背景，不能宣称“已经实现完整下层场景”。
+- Settings/Exit 分别使用 `open_overlay`/`open_confirm` 的短 pressed/dim 反馈；设置仍复用真实 `SettingsPanel`，失败不冒充进入 Settings。
+
+布局契约矩阵覆盖 1280×720、1600×900、1920×1080 三个分辨率，三个文字 profile 与四个焦点状态，共 36 个 contract case；它锁定入口木牌、文字、命中区和焦点反馈共享语义锚点、文字最多两行且最小字号 18，但不冒充真实字体渲染或截图验收。公告栏改为单条标题 + 可换行正文，不再压入四条工程式小字。快捷键 F2 的“仓库”入口归属 Deploy，并通过 `tab=warehouse` 打开同页内容；不得把地图拆成 region→difficulty 流程。缺失的角色、旗帜、transition 或未知 key 使用精确 `null` fallback，不再误回退到整张主菜单背景；同一规则已同时落到 ART21 权威 builder 与生成产物，并由 parity runner 锁定。
+
+独立复核发现并关闭了两项并发/生成源问题：busy coordinator 会拒绝 direct intent；公开 `show_*` 仅在成功取消未提交转场后才切页，`COMMITTING + commit_issued` 被拒绝取消时保持原 token、页面与生命周期。权威 route commit 只调用 private internal show path，不会自我取消。ART21 builder 不再再生整屏背景 fallback。复核后的剩余 P0/P1/P2 为零。
+
+本切片只复用已审计并已登记的 ART21 主菜单输出；没有从 UE、外部 source pack 或未知许可来源导入素材，也没有生成新素材。生产截图位于 worktree 临时目录 `E:\AGAME1\.tmp\worktrees\i2\.tmp\i2-main-menu-captures`：已生成 1280×720、1600×900、1920×1080 默认态，以及 Deploy、Long Term、Settings、Exit 四个 1280×720 中间态并完成当前检查点目检。截图/定向 runner 只证明当前切片证据，不能代替统一 quick/ui/full 门，也不能冒充最终玩家手感验收。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+Godot/GraytailGodot/scripts/presentation/art21_main_menu_asset_contract.gd
+Godot/GraytailGodot/scripts/ui/app_shell/app_shell.gd
+Godot/GraytailGodot/scripts/ui/app_shell/navigation_transition_coordinator.gd
+Godot/GraytailGodot/scripts/ui/main_menu/main_menu_layout_contract.gd
+Godot/GraytailGodot/scripts/ui/main_menu/main_menu_model.gd
+Godot/GraytailGodot/scripts/ui/main_menu/main_menu_shell.gd
+Godot/GraytailGodot/scripts/ui/main_menu/main_menu_transition_presenter.gd
+Godot/GraytailGodot/tests/art21_main_menu_capture_runner.gd
+Godot/GraytailGodot/tests/art21_main_menu_runtime_runner.gd
+Godot/GraytailGodot/tests/art22_deploy_prep_main_route_runner.gd
+Godot/GraytailGodot/tests/art23_long_term_main_route_runner.gd
+Godot/GraytailGodot/tests/i2_main_menu_anchor_text_runner.gd
+Godot/GraytailGodot/tests/i2_main_menu_transition_coordinator_runner.gd
+Godot/GraytailGodot/tests/i2_main_menu_transition_fallback_runner.gd
+Godot/GraytailGodot/tests/i2_settings_shell_wiring_runner.gd
+tools/art21_build_main_menu_runtime.py
+tools/i1/validation_manifest.json
+```
+
+保护边界：`project.godot`、全部 scene/resource/`.uid`/`.translation`/import metadata、PNG/音频/字体等素材本体、七个 `asset_manifest.*.translation`、RunStateMachine、RunAssetLedger、terminal settlement、SaveAdapter、经济/库存/地图 schema 与 I1 closed evidence 均禁止修改。UE 仍为只读视觉参考。本切片实际未修改 scene/resource/project/uid/translation/import 或任何素材本体。
+
+定向与兼容门记录：
+
+```text
+I2_MAIN_MENU_TRANSITION_COORDINATOR: PASS; profiles=4; duplicate rejected; stale ignored; cancel/prepare_fail/commit_fail recovered; reduced_midflight profile-only; commit_once=true
+I2_MAIN_MENU_ANCHOR_TEXT: PASS; contract_cases=36; resolutions=3; text_profiles=3; focus_states=4; entry_lines_max=2; entry_font_min=18
+I2_MAIN_MENU_TRANSITION_FALLBACK: PASS; registered=3; missing_character/flag/transition/unknown=null; builder_fallback=null
+ART21_MAIN_MENU_RUNTIME: PASS; entries=4; overlays=2; transitions=4; shortcuts=2; motion_groups=10
+ART22_DEPLOY_PREP_MAIN_ROUTE: PASS; route=main_menu_to_deploy
+ART23_LONG_TERM_MAIN_ROUTE: PASS; route=main_menu_to_long_term
+I2_SETTINGS_SHELL_WIRING: PASS; production panel; rollback complete; busy direct rejected; external show cancel-gated; commit-in-flight reentry blocked
+I2_ROUTE_AUTHORITY_LIFECYCLE: PASS; command failure no route; duplicate deduplicated; hidden pages paused; active run canonical locked
+capture matrix/manual checkpoint review: PASS_WITH_VISUAL_REVIEW_REQUIRED
+quick/worktree: 31/31 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260721T234455058Z_43021d2c\report.json; SHA-256=E9D57CAF4193D19FF1A3B9D9B09C3A803AF3E6F30A6F0F7AEF4ECBF3E2BC0DF7
+ui/worktree: 32/32 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260721T234917077Z_70a01046\report.json; SHA-256=3CAAEAEC4D040FD9687536001E4D96DD4A0456270D07FB71E97D40E6EC902CE2
+manifest SHA-256: D0712E9421C877B84A3C3111E4F5089C13287FA875575CE26ABFBCCEBEBF2603; static=PASS; pollution_guard=PASS
+full/worktree and exact full/head: NOT_RUN
+player input-feel acceptance: NOT_RUN
+```
+
+I2.2A 已通过定向、兼容、统一 quick/ui、独立复核与三分辨率截图检查点，因此只以安全回退范围 `ACCEPTED_WITH_NOTES`。full/head 仍保留到 I2.7；完整洞口步行动画、连续下层空间与玩家手感复核继续留在 I2.2 后续 gate，不能据此关闭整个 I2.2。

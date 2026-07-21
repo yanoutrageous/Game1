@@ -318,7 +318,7 @@ const LOAD_GROUP_BY_VISUAL_KEY := {
 static func component_ref(visual_key: StringName, role: StringName = &"main_menu_scene") -> Dictionary:
 	return Art09ManifestAssetMappingScript.asset_ref(
 		ASSET_ID_BY_VISUAL_KEY.get(visual_key, &""),
-		&"ui.main_menu.background.no_text",
+		&"",
 		role,
 		visual_key,
 		true

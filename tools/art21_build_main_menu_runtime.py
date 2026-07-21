@@ -845,7 +845,7 @@ class Builder:
                 'static func component_ref(visual_key: StringName, role: StringName = &"main_menu_scene") -> Dictionary:',
                 "\treturn Art09ManifestAssetMappingScript.asset_ref(",
                 '\t\tASSET_ID_BY_VISUAL_KEY.get(visual_key, &""),',
-                '\t\t&"ui.main_menu.background.no_text",',
+                '\t\t&"",',
                 "\t\trole,",
                 "\t\tvisual_key,",
                 "\t\ttrue",

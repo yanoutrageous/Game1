@@ -1,6 +1,8 @@
 extends SceneTree
 
 var failures: Array[String] = []
+var page_change_count := 0
+var last_page: StringName = &""
 
 
 func _initialize() -> void:
@@ -37,6 +39,7 @@ func _run() -> void:
 	if app_shell == null:
 		_finish()
 		return
+	app_shell.connect("page_changed", _on_page_changed)
 
 	var main_menu := app_shell.get_node_or_null("MainMenuShell") as Control
 	var deploy_page := app_shell.get_node_or_null("DeployPrepShell") as Control
@@ -53,14 +56,23 @@ func _run() -> void:
 		return
 
 	deploy_button.emit_signal("pressed")
-	# The real main-menu transition owns route emission. Advance its public process
-	# contract instead of calling RunScene's private page switch directly.
+	var playing: Dictionary = app_shell.call("get_navigation_transition_snapshot")
+	_check(StringName(playing.get("state", &"")) == &"playing", "Deploy route did not enter coordinator PLAYING")
+	_check(StringName(playing.get("profile_id", &"")) == &"enter_cave", "Deploy route did not use enter_cave")
+	_check(StringName(run_scene.get("screen_state")) == &"main_menu", "Deploy route changed screen before presentation completion")
+	_check(not deploy_page.visible and page_change_count == 0, "Deploy route committed before presentation completion")
+	# AppShell owns the route commit; MainMenuShell only advances presentation.
 	main_menu.call("_process", 1.2)
 	await _frames(8)
 
 	_check(StringName(run_scene.get("screen_state")) == &"deploy_shell", "Main-menu exploration entry did not reach deploy_shell")
 	_check(deploy_page.visible, "DeployPrepShell is hidden after the actual main-menu route")
 	_check(not main_menu.visible, "MainMenuShell remained visible over DeployPrepShell")
+	var settled: Dictionary = app_shell.call("get_navigation_transition_snapshot")
+	var last_result := settled.get("last_result", {}) as Dictionary
+	_check(StringName(settled.get("state", &"")) == &"idle", "Deploy coordinator did not settle IDLE")
+	_check(StringName(last_result.get("outcome", &"")) == &"committed" and int(last_result.get("commit_count", 0)) == 1, "Deploy route did not commit exactly once")
+	_check(page_change_count == 1 and last_page == &"deploy_prep", "Deploy route emitted duplicate or false page changes")
 	_check(deploy_page.get_node_or_null("BackgroundRoot/DeployPrepSceneCleanPlate") is TextureRect, "Actual deploy route is missing the ART22 clean plate")
 	_check(deploy_page.get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployParchment") is TextureRect, "Actual deploy route is missing the ART22 parchment")
 	_check(deploy_page.get_node_or_null("SideStatusRoot/DeploySummaryBoard") is TextureRect, "Actual deploy route is missing the ART22 hanging summary")
@@ -73,6 +85,11 @@ func _run() -> void:
 func _frames(count: int) -> void:
 	for _index in range(count):
 		await process_frame
+
+
+func _on_page_changed(page_id: StringName, _payload: Dictionary) -> void:
+	page_change_count += 1
+	last_page = page_id
 
 
 func _finish() -> void:

@@ -3,33 +3,18 @@ class_name MainMenuShell
 
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const MainMenuModelScript := preload("res://scripts/ui/main_menu/main_menu_model.gd")
+const MainMenuLayoutContractScript := preload("res://scripts/ui/main_menu/main_menu_layout_contract.gd")
+const MainMenuTransitionPresenterScript := preload("res://scripts/ui/main_menu/main_menu_transition_presenter.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
 signal navigation_intent_requested(intent: Dictionary)
+signal navigation_transition_requested(intent: Dictionary, profile_id: StringName, entry_id: StringName)
+signal navigation_transition_finished(token: int)
+signal navigation_transition_cancel_requested(token: int, reason_code: StringName)
 
-const ENTRY_RECTS := {
-	&"deploy": Rect2(790, 181, 370, 146),
-	&"long_term": Rect2(865, 329, 249, 96),
-	&"settings": Rect2(887, 434, 221, 84),
-	&"exit_game": Rect2(897, 528, 211, 75),
-}
-
-const ENTRY_TEXT_RECTS := {
-	&"deploy": Rect2(881, 222, 230, 54),
-	&"long_term": Rect2(904, 350, 172, 42),
-	&"settings": Rect2(944, 453, 108, 38),
-	&"exit_game": Rect2(929, 543, 147, 36),
-}
-
-const ENTRY_HIT_RECTS := {
-	&"deploy": Rect2(776, 168, 395, 171),
-	&"long_term": Rect2(852, 318, 274, 119),
-	&"settings": Rect2(875, 424, 245, 105),
-	&"exit_game": Rect2(884, 518, 236, 96),
-}
-
+const LOGICAL_VIEWPORT_SIZE := Vector2i(1280, 720)
 const ENTRY_BOARD_NAMES := {
 	&"deploy": "explore",
 	&"long_term": "long_term",
@@ -37,15 +22,13 @@ const ENTRY_BOARD_NAMES := {
 	&"exit_game": "exit",
 }
 
-const ENTRY_FONT_SIZES := {
-	&"deploy": 44,
-	&"long_term": 32,
-	&"settings": 32,
-	&"exit_game": 29,
+const ENTRY_TRANSITION_PROFILES := {
+	&"deploy": &"enter_cave",
+	&"long_term": &"descend",
+	&"settings": &"open_overlay",
+	&"exit_game": &"open_confirm",
 }
 
-const TRANSITION_FRAME_MARKS := [0.0, 0.25, 0.50, 0.78]
-const TRANSITION_DURATION := 1.10
 const CHARACTER_IDLE_FRAME_SECONDS := 0.32
 const CHARACTER_IDLE_SEQUENCE := [0, 0, 1, 1, 2, 1, 0, 0, 0, 3, 3, 0, 0, 4, 5, 4, 0, 0]
 const AMBIENT_PROFILES := {
@@ -91,10 +74,9 @@ var entry_by_id: Dictionary = {}
 var current_focus: StringName = &"deploy"
 
 var character_texture: TextureRect
+var character_shadow_texture: TextureRect
 var character_idle_frames: Array[Texture2D] = []
 var character_focus_frames: Array[Texture2D] = []
-var character_walk_dungeon_frames: Array[Texture2D] = []
-var character_walk_company_frames: Array[Texture2D] = []
 var cave_interior_texture: TextureRect
 var dungeon_gate_texture: TextureRect
 var company_door_texture: TextureRect
@@ -110,9 +92,13 @@ var idle_elapsed := 0.0
 var scene_elapsed := 0.0
 var idle_frame_index := 0
 var transition_active := false
-var transition_elapsed := 0.0
-var transition_frame_index := 0
-var pending_transition_entry: Dictionary = {}
+var transition_token := 0
+var transition_profile_id: StringName = &""
+var transition_entry_id: StringName = &""
+var transition_origin_focus: StringName = &"deploy"
+var transition_finished_emitted := false
+var transition_root_base_positions: Dictionary = {}
+var transition_presenter = MainMenuTransitionPresenterScript.new()
 var reduced_motion := false
 var page_active := true
 
@@ -146,7 +132,7 @@ func set_page_active(value: bool) -> void:
 	page_active = value
 	if page_active:
 		process_mode = Node.PROCESS_MODE_INHERIT
-		set_process(not reduced_motion)
+		set_process(transition_active or not reduced_motion)
 		set_process_input(true)
 		set_process_unhandled_input(true)
 		if reduced_motion:
@@ -157,10 +143,7 @@ func set_page_active(value: bool) -> void:
 	set_process(false)
 	set_process_input(false)
 	set_process_unhandled_input(false)
-	transition_active = false
-	pending_transition_entry.clear()
-	if transition_texture != null:
-		transition_texture.visible = false
+	_reset_navigation_transition(false)
 	if is_inside_tree():
 		var focus := get_viewport().gui_get_focus_owner()
 		if focus != null and (focus == self or is_ancestor_of(focus)):
@@ -173,27 +156,68 @@ func is_page_active() -> bool:
 
 
 func set_reduced_motion_enabled(value: bool) -> void:
-	var pending_entry: Dictionary = {}
-	if value and transition_active:
-		pending_entry = pending_transition_entry.duplicate(true)
-		transition_active = false
-		pending_transition_entry.clear()
-		if transition_texture != null:
-			transition_texture.visible = false
 	reduced_motion = value
 	if reduced_motion:
 		_apply_reduced_motion_pose()
+		if transition_active and transition_token > 0:
+			var terminal_pose: Dictionary = transition_presenter.snap_to_end(transition_token)
+			if bool(terminal_pose.get("ok", false)):
+				_apply_transition_pose(terminal_pose)
+				_finish_navigation_transition()
 	elif page_active:
 		_update_cloud_drift()
 		_update_ambient_motion(0.0)
 	if page_active:
-		set_process(not reduced_motion)
-	if not pending_entry.is_empty():
-		_emit_entry(pending_entry)
+		set_process(transition_active or not reduced_motion)
 
 
 func is_reduced_motion_enabled() -> bool:
 	return reduced_motion
+
+
+func play_navigation_transition(token: int, profile_id: StringName, entry_id: StringName, reduced_motion_enabled: bool) -> bool:
+	if not page_active or token <= 0 or transition_token > 0:
+		return false
+	if not ENTRY_TRANSITION_PROFILES.has(entry_id):
+		return false
+	if StringName(ENTRY_TRANSITION_PROFILES[entry_id]) != profile_id:
+		return false
+	transition_origin_focus = current_focus
+	transition_token = token
+	transition_profile_id = profile_id
+	transition_entry_id = entry_id
+	transition_finished_emitted = false
+	_capture_transition_root_positions()
+	var initial_pose: Dictionary = transition_presenter.begin(token, profile_id, reduced_motion_enabled)
+	if not bool(initial_pose.get("ok", false)):
+		_reset_navigation_transition(false)
+		return false
+	transition_active = not bool(initial_pose.get("complete", false))
+	_set_entry_visual_state(entry_id, &"pressed")
+	_apply_transition_pose(initial_pose)
+	if transition_active:
+		set_process(true)
+	else:
+		_finish_navigation_transition()
+	return true
+
+
+func cancel_navigation_transition(token: int, restore_focus: bool = true) -> bool:
+	if token <= 0 or token != transition_token:
+		return false
+	var result: Dictionary = transition_presenter.cancel(token)
+	if not bool(result.get("ok", false)):
+		return false
+	var focus_to_restore := transition_origin_focus
+	_reset_navigation_transition(false)
+	if entry_nodes.has(focus_to_restore):
+		current_focus = focus_to_restore
+		_set_focus_state(focus_to_restore)
+		if restore_focus and page_active and is_visible_in_tree():
+			var button := _dictionary_from(entry_nodes[focus_to_restore]).get("button") as Button
+			if button != null and is_instance_valid(button):
+				button.grab_focus()
+	return true
 
 
 func _clear_children() -> void:
@@ -207,10 +231,16 @@ func _clear_children() -> void:
 	company_window_nodes.clear()
 	character_idle_frames.clear()
 	character_focus_frames.clear()
-	character_walk_dungeon_frames.clear()
-	character_walk_company_frames.clear()
+	character_texture = null
+	character_shadow_texture = null
+	transition_texture = null
+	transition_presenter.reset()
 	transition_active = false
-	pending_transition_entry.clear()
+	transition_token = 0
+	transition_profile_id = &""
+	transition_entry_id = &""
+	transition_finished_emitted = false
+	transition_root_base_positions.clear()
 
 
 func _create_layer_roots() -> void:
@@ -229,6 +259,9 @@ func _root(root_name: StringName) -> Control:
 
 
 func _build_background_scene() -> void:
+	var fixed_underlay := _add_color_rect(self, "MainMenuFixedTransitionUnderlay", Rect2(0, 0, 1280, 720), Color(0.055, 0.34, 0.64, 1.0))
+	fixed_underlay.z_as_relative = false
+	fixed_underlay.z_index = UILayerContractScript.BACKGROUND - 1
 	var background_root := _root(&"BackgroundRoot")
 	_add_color_rect(background_root, "MainMenuSceneBackdrop", Rect2(0, 0, 1280, 720), Color(0.035, 0.12, 0.20, 1.0))
 	_add_texture(background_root, "MainMenuSceneCleanPlate", Rect2(0, 0, 1280, 720), &"main_menu.scene.background.scene_clean_plate", 1)
@@ -293,34 +326,54 @@ func _build_brand_sign() -> void:
 
 func _build_character_scene() -> void:
 	var character_root := _root(&"CharacterRoot")
-	_add_texture(character_root, "MainMenuCharacterShadow", Rect2(286, 594, 196, 24), &"main_menu.scene.character.shadow", 0)
+	character_shadow_texture = _add_texture(character_root, "MainMenuCharacterShadow", Rect2(286, 594, 196, 24), &"main_menu.scene.character.shadow", 0)
 	character_idle_frames = _texture_sequence("main_menu.scene.character.idle", 8)
 	character_focus_frames = _texture_sequence("main_menu.scene.character.focus", 4)
-	character_walk_dungeon_frames = _texture_sequence("main_menu.scene.character.walk_dungeon", 4)
-	character_walk_company_frames = _texture_sequence("main_menu.scene.character.walk_company", 4)
 	character_texture = _add_texture(character_root, "MainMenuCharacter", Rect2(286, 408, 190, 216), &"main_menu.scene.character.idle.00", 1)
 
 
 func _build_notice_board() -> void:
 	var notice_root := _root(&"SideStatusRoot")
-	_add_scene_label(notice_root, "MainMenuNoticeTitle", Rect2(72, 378, 146, 34), "公告", 24, Color(0.95, 0.75, 0.35), 2, 2)
-	var notices := _array_from(current_model, "notices")
-	var body_text := ""
-	for index in range(mini(4, notices.size())):
-		if index > 0:
-			body_text += "\n"
-		body_text += String(notices[index])
-	var body := _add_scene_label(notice_root, "MainMenuNoticeText", Rect2(92, 446, 124, 120), body_text, 16, Color(0.24, 0.15, 0.09), 3, 0)
+	var notice: Dictionary = _dictionary_from(current_model.get("notice", {}))
+	var title_text := String(notice.get("title", "回收站简报"))
+	var body_text := String(notice.get("body", ""))
+	var text_fit: Dictionary = MainMenuLayoutContractScript.fit_notice(title_text, body_text)
+	var title_fit: Dictionary = _dictionary_from(text_fit.get("title", {}))
+	var body_fit: Dictionary = _dictionary_from(text_fit.get("description", {}))
+	_add_scene_label(notice_root, "MainMenuNoticeHeading", _layout_rect(&"notice.heading"), "公告", 22, Color(0.95, 0.75, 0.35), 2, 2)
+	var title := _add_scene_label(
+		notice_root,
+		"MainMenuNoticeTitle",
+		_layout_rect(&"notice.title"),
+		String(title_fit.get("display_text", title_text)),
+		int(title_fit.get("font_size", 20)),
+		Color(0.38, 0.22, 0.10),
+		3,
+		0
+	)
+	if title != null:
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var body := _add_scene_label(
+		notice_root,
+		"MainMenuNoticeText",
+		_layout_rect(&"notice.description"),
+		String(body_fit.get("display_text", body_text)),
+		int(body_fit.get("font_size", 16)),
+		Color(0.24, 0.15, 0.09),
+		3,
+		0
+	)
 	if body != null:
 		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		body.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-		body.add_theme_constant_override("line_spacing", 7)
+		body.autowrap_mode = TextServer.AUTOWRAP_OFF
+		body.add_theme_constant_override("line_spacing", 4)
 
 
 func _build_menu_signpost() -> void:
 	var action_root := _root(&"PrimaryActionRoot")
-	explore_focus_texture = _add_texture(_root(&"FloatingInfoRoot"), "MainMenuExploreFocusOutline", Rect2(784, 175, 382, 158), &"main_menu.scene.fx.focus_explore", 3)
-	generic_focus_texture = _add_focus_outline(_root(&"FloatingInfoRoot"), "MainMenuUtilityFocusOutline", Rect2(862, 326, 255, 102), 3)
+	explore_focus_texture = _add_texture(_root(&"FloatingInfoRoot"), "MainMenuExploreFocusOutline", _entry_component_rect(&"deploy", &"focus"), &"main_menu.scene.fx.focus_explore", 3)
+	generic_focus_texture = _add_focus_outline(_root(&"FloatingInfoRoot"), "MainMenuUtilityFocusOutline", _entry_component_rect(&"long_term", &"focus"), 3)
 	cave_activation_texture = _add_texture(_root(&"FloatingInfoRoot"), "MainMenuCaveFocusGlow", Rect2(230, 245, 218, 286), &"main_menu.scene.fx.cave_activation", 1)
 	company_activation_texture = _add_texture(_root(&"FloatingInfoRoot"), "MainMenuCompanyFocusGlow", Rect2(687, 287, 224, 126), &"main_menu.scene.fx.company_activation", 1)
 	if explore_focus_texture != null:
@@ -340,17 +393,30 @@ func _build_menu_signpost() -> void:
 
 func _build_entry(parent: Control, entry: Dictionary) -> void:
 	var entry_id := StringName(entry.get("id", &""))
-	if not ENTRY_RECTS.has(entry_id):
+	if not ENTRY_BOARD_NAMES.has(entry_id):
 		return
 	var board_name := String(ENTRY_BOARD_NAMES[entry_id])
-	var board := _add_texture(parent, "MainMenuBoard_" + String(entry_id), ENTRY_RECTS[entry_id], StringName("main_menu.scene.menu.%s.normal" % board_name), 1)
-	var label := _add_scene_label(parent, "MainMenuBoardLabel_" + String(entry_id), ENTRY_TEXT_RECTS[entry_id], String(entry.get("label", "")), int(ENTRY_FONT_SIZES[entry_id]), Color(0.98, 0.79, 0.39), 2)
+	var label_text := String(entry.get("label", ""))
+	var text_fit: Dictionary = MainMenuLayoutContractScript.fit_entry_text(entry_id, label_text)
+	var board_rect := _entry_component_rect(entry_id, &"board")
+	var text_rect := _entry_component_rect(entry_id, &"text")
+	var hit_rect := _entry_component_rect(entry_id, &"hit")
+	var board := _add_texture(parent, "MainMenuBoard_" + String(entry_id), board_rect, StringName("main_menu.scene.menu.%s.normal" % board_name), 1)
+	var label := _add_scene_label(
+		parent,
+		"MainMenuBoardLabel_" + String(entry_id),
+		text_rect,
+		String(text_fit.get("display_text", label_text)),
+		int(text_fit.get("font_size", 24)),
+		Color(0.98, 0.79, 0.39),
+		2
+	)
 	var button := Button.new()
 	button.name = "MainMenuEntry_%s" % String(entry_id)
 	button.text = ""
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	_set_rect(button, ENTRY_HIT_RECTS[entry_id])
+	_set_rect(button, hit_rect)
 	_apply_transparent_button_style(button)
 	button.focus_entered.connect(func() -> void: _set_focus_state(entry_id))
 	button.mouse_entered.connect(func() -> void:
@@ -365,8 +431,9 @@ func _build_entry(parent: Control, entry: Dictionary) -> void:
 		"board": board,
 		"label": label,
 		"button": button,
-		"base_board_rect": ENTRY_RECTS[entry_id],
-		"base_label_rect": ENTRY_TEXT_RECTS[entry_id],
+		"base_board_rect": board_rect,
+		"base_label_rect": text_rect,
+		"base_hit_rect": hit_rect,
 		"board_name": board_name,
 	}
 
@@ -425,7 +492,7 @@ func _grab_default_focus() -> void:
 
 
 func _set_focus_state(entry_id: StringName) -> void:
-	if not entry_nodes.has(entry_id) or transition_active:
+	if not entry_nodes.has(entry_id) or transition_token > 0:
 		return
 	current_focus = entry_id
 	for raw_id in entry_nodes.keys():
@@ -440,13 +507,12 @@ func _set_focus_state(entry_id: StringName) -> void:
 		company_activation_texture.visible = company_focused
 	if explore_focus_texture != null:
 		explore_focus_texture.visible = explore_focused
+		if explore_focused:
+			_set_rect(explore_focus_texture, _entry_component_rect(entry_id, &"focus", &"focused"))
 	if generic_focus_texture != null:
 		generic_focus_texture.visible = not explore_focused
-		var focus_rect := ENTRY_RECTS.get(entry_id, ENTRY_RECTS[&"long_term"]) as Rect2
-		# Utility boards slide four pixels left when focused. Keep the outline on
-		# the moved board instead of leaving it on the baked, unfocused position.
-		focus_rect.position.x -= 4.0
-		_set_rect(generic_focus_texture, focus_rect.grow(4.0))
+		if not explore_focused:
+			_set_rect(generic_focus_texture, _entry_component_rect(entry_id, &"focus", &"focused"))
 	if cave_interior_texture != null:
 		cave_interior_texture.texture = _texture(&"main_menu.scene.architecture.cave.focused" if explore_focused else &"main_menu.scene.architecture.cave.normal")
 	if dungeon_gate_texture != null:
@@ -464,27 +530,26 @@ func _set_entry_visual_state(entry_id: StringName, state: StringName) -> void:
 	var node_set := _dictionary_from(entry_nodes[entry_id])
 	var board := node_set.get("board") as TextureRect
 	var label := node_set.get("label") as Label
+	var button := node_set.get("button") as Button
 	var board_name := String(node_set.get("board_name", ""))
 	if board != null:
 		board.texture = _texture(StringName("main_menu.scene.menu.%s.%s" % [board_name, String(state)]))
-		var rect := node_set.get("base_board_rect", Rect2()) as Rect2
-		if state == &"focused":
-			rect.position.x -= 4.0
-		elif state == &"pressed":
-			rect.position += Vector2(2, 2)
-		_set_rect(board, rect)
+		_set_rect(board, _entry_component_rect(entry_id, &"board", state))
 	if label != null:
-		var label_rect := node_set.get("base_label_rect", Rect2()) as Rect2
-		if state == &"focused":
-			label_rect.position.x -= 4.0
-		elif state == &"pressed":
-			label_rect.position += Vector2(2, 2)
-		_set_rect(label, label_rect)
+		_set_rect(label, _entry_component_rect(entry_id, &"text", state))
 		label.modulate = Color(1.10, 1.06, 0.92, 1.0) if state == &"focused" else Color.WHITE
+	if button != null:
+		_set_rect(button, _entry_component_rect(entry_id, &"hit", state))
+	if entry_id == current_focus:
+		var focus_rect := _entry_component_rect(entry_id, &"focus", state)
+		if entry_id == &"deploy" and explore_focus_texture != null:
+			_set_rect(explore_focus_texture, focus_rect)
+		elif entry_id != &"deploy" and generic_focus_texture != null:
+			_set_rect(generic_focus_texture, focus_rect)
 
 
 func _update_character_focus_texture() -> void:
-	if character_texture == null or transition_active:
+	if character_texture == null or transition_token > 0:
 		return
 	if current_focus == &"deploy" and character_focus_frames.size() >= 2:
 		character_texture.texture = character_focus_frames[1]
@@ -499,23 +564,15 @@ func _update_character_focus_texture() -> void:
 
 
 func _activate_entry(entry: Dictionary) -> void:
-	if not page_active or transition_active:
+	if not page_active or transition_token > 0:
 		return
 	var entry_id := StringName(entry.get("id", &""))
-	if entry_id == &"deploy" or entry_id == &"long_term":
-		if reduced_motion:
-			_emit_entry(entry)
-			return
-		transition_active = true
-		pending_transition_entry = entry.duplicate(true)
-		transition_elapsed = 0.0
-		transition_frame_index = 0
-		if transition_texture != null:
-			transition_texture.color = Color(0.018, 0.024, 0.032, 0.0) if entry_id == &"deploy" else Color(0.13, 0.075, 0.025, 0.0)
-			transition_texture.visible = true
-		_set_entry_visual_state(entry_id, &"pressed")
+	var intent := _intent_from_entry(entry)
+	var profile_id := StringName(ENTRY_TRANSITION_PROFILES.get(entry_id, &""))
+	if profile_id != &"" and not navigation_transition_requested.get_connections().is_empty():
+		navigation_transition_requested.emit(intent, profile_id, entry_id)
 		return
-	_emit_entry(entry)
+	navigation_intent_requested.emit(intent)
 
 
 func _process(delta: float) -> void:
@@ -526,6 +583,8 @@ func _process(delta: float) -> void:
 		_update_cloud_drift()
 	if transition_active:
 		_update_transition(delta)
+		return
+	if transition_token > 0:
 		return
 	if not reduced_motion:
 		idle_elapsed += delta
@@ -646,28 +705,142 @@ func _apply_reduced_motion_pose() -> void:
 		company_activation_texture.modulate = Color(1, 1, 1, 0.30)
 
 
-func _update_transition(delta: float) -> void:
-	transition_elapsed += delta
-	var next_frame := 0
-	for index in range(TRANSITION_FRAME_MARKS.size()):
-		if transition_elapsed >= float(TRANSITION_FRAME_MARKS[index]):
-			next_frame = index
-	if next_frame != transition_frame_index:
-		transition_frame_index = next_frame
+func _finish_navigation_transition() -> void:
+	transition_active = false
+	if transition_finished_emitted or transition_token <= 0:
+		return
+	transition_finished_emitted = true
+	var finished_token := transition_token
+	navigation_transition_finished.emit(finished_token)
+	if page_active:
+		set_process(not reduced_motion)
+
+
+func _apply_transition_pose(pose: Dictionary) -> void:
+	if int(pose.get("token", 0)) != transition_token:
+		return
+	_apply_transition_scene_offset(pose.get("scene_offset", Vector2.ZERO) as Vector2)
+	var overlay_color := pose.get("overlay_color", Color(0.018, 0.024, 0.032, 0.0)) as Color
+	overlay_color.a = clampf(float(pose.get("overlay_alpha", 0.0)), 0.0, 1.0)
 	if transition_texture != null:
-		var progress := clampf(transition_elapsed / TRANSITION_DURATION, 0.0, 1.0)
-		transition_texture.color.a = smoothstep(0.0, 1.0, progress)
-	if transition_elapsed >= TRANSITION_DURATION:
-		var entry := pending_transition_entry.duplicate(true)
-		transition_active = false
-		pending_transition_entry.clear()
-		if transition_texture != null:
-			transition_texture.visible = false
-		_emit_entry(entry)
+		transition_texture.color = overlay_color
+		transition_texture.visible = overlay_color.a > 0.001
+	_apply_activation_alpha(cave_activation_texture, float(pose.get("cave_activation_alpha", 0.0)))
+	_apply_activation_alpha(company_activation_texture, float(pose.get("company_activation_alpha", 0.0)))
+	_apply_character_transition_pose(StringName(pose.get("character_pose", &"idle")))
+	if character_shadow_texture != null:
+		character_shadow_texture.modulate = Color(1, 1, 1, clampf(float(pose.get("shadow_alpha", 1.0)), 0.0, 1.0))
+
+
+func _apply_activation_alpha(texture_rect: TextureRect, alpha: float) -> void:
+	if texture_rect == null:
+		return
+	var safe_alpha := clampf(alpha, 0.0, 1.0)
+	texture_rect.visible = safe_alpha > 0.001
+	texture_rect.modulate = Color(1, 1, 1, safe_alpha)
+
+
+func _apply_character_transition_pose(pose_id: StringName) -> void:
+	if character_texture == null:
+		return
+	match pose_id:
+		&"focus_deploy":
+			if character_focus_frames.size() >= 2:
+				character_texture.texture = character_focus_frames[1]
+				character_texture.flip_h = true
+		&"focus_long_term":
+			if character_focus_frames.size() >= 3:
+				character_texture.texture = character_focus_frames[2]
+				character_texture.flip_h = false
+		_:
+			if not character_idle_frames.is_empty():
+				var frame_index := int(CHARACTER_IDLE_SEQUENCE[idle_frame_index % CHARACTER_IDLE_SEQUENCE.size()])
+				character_texture.texture = character_idle_frames[frame_index % character_idle_frames.size()]
+				character_texture.flip_h = false
+
+
+func _capture_transition_root_positions() -> void:
+	transition_root_base_positions.clear()
+	for root_name_variant in UILayerContractScript.PAGE_ROOT_ORDER:
+		var root_name := StringName(root_name_variant)
+		if root_name == &"OverlayRoot" or root_name == &"ModalRoot":
+			continue
+		var scene_root := get_node_or_null(String(root_name)) as Control
+		if scene_root != null:
+			transition_root_base_positions[root_name] = scene_root.position
+
+
+func _apply_transition_scene_offset(scene_offset: Vector2) -> void:
+	for raw_root_name in transition_root_base_positions.keys():
+		var root_name := StringName(raw_root_name)
+		var scene_root := get_node_or_null(String(root_name)) as Control
+		if scene_root != null:
+			var base_position := transition_root_base_positions[root_name] as Vector2
+			scene_root.position = (base_position + scene_offset).round()
+
+
+func _restore_transition_root_positions() -> void:
+	for raw_root_name in transition_root_base_positions.keys():
+		var root_name := StringName(raw_root_name)
+		var scene_root := get_node_or_null(String(root_name)) as Control
+		if scene_root != null:
+			scene_root.position = transition_root_base_positions[root_name] as Vector2
+	transition_root_base_positions.clear()
+
+
+func _reset_navigation_transition(restore_focus_owner: bool) -> void:
+	var focus_to_restore := transition_origin_focus if transition_token > 0 else current_focus
+	_restore_transition_root_positions()
+	if transition_texture != null:
+		transition_texture.color = Color(0.018, 0.024, 0.032, 0.0)
+		transition_texture.visible = false
+	if character_shadow_texture != null:
+		character_shadow_texture.modulate = Color.WHITE
+	if cave_activation_texture != null:
+		cave_activation_texture.modulate = Color(1, 1, 1, 0.30)
+	if company_activation_texture != null:
+		company_activation_texture.modulate = Color(1, 1, 1, 0.30)
+	transition_presenter.reset()
+	transition_active = false
+	transition_token = 0
+	transition_profile_id = &""
+	transition_entry_id = &""
+	transition_finished_emitted = false
+	if entry_nodes.has(focus_to_restore):
+		current_focus = focus_to_restore
+		_set_focus_state(focus_to_restore)
+		if restore_focus_owner and page_active and is_visible_in_tree():
+			var button := _dictionary_from(entry_nodes[focus_to_restore]).get("button") as Button
+			if button != null and is_instance_valid(button):
+				button.grab_focus()
+
+
+func _update_transition(delta: float) -> void:
+	var pose: Dictionary = transition_presenter.advance(delta)
+	if not bool(pose.get("ok", false)):
+		var failed_token := transition_token
+		_reset_navigation_transition(true)
+		if failed_token > 0:
+			navigation_transition_cancel_requested.emit(failed_token, &"presentation_failed")
+		return
+	_apply_transition_pose(pose)
+	transition_active = not bool(pose.get("complete", false))
+	if not transition_active:
+		_finish_navigation_transition()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not page_active or not is_visible_in_tree() or transition_active or not (event is InputEventKey):
+	if not page_active or not is_visible_in_tree():
+		return
+	if transition_active:
+		if event.is_action_pressed("ui_cancel"):
+			var active_token := transition_token
+			navigation_transition_cancel_requested.emit(active_token, &"user_cancel")
+			if transition_token == active_token:
+				cancel_navigation_transition(active_token, true)
+			get_viewport().set_input_as_handled()
+		return
+	if transition_token > 0 or not (event is InputEventKey):
 		return
 	var key_event := event as InputEventKey
 	if not key_event.pressed or key_event.echo:
@@ -693,6 +866,10 @@ func _emit_shortcut_index(index: int) -> bool:
 
 
 func _emit_entry(entry: Dictionary) -> void:
+	navigation_intent_requested.emit(_intent_from_entry(entry))
+
+
+func _intent_from_entry(entry: Dictionary) -> Dictionary:
 	var target := StringName(entry.get("target", NavigationIntentScript.TARGET_MAIN_MENU))
 	var payload: Dictionary = {}
 	var raw_payload: Variant = entry.get("payload", {})
@@ -704,7 +881,7 @@ func _emit_entry(entry: Dictionary) -> void:
 		payload,
 		bool(entry.get("requires_confirm", false))
 	)
-	navigation_intent_requested.emit(intent)
+	return intent
 
 
 func _register_animation(parent: Control, node_name: String, rect: Rect2, key_prefix: String, frame_count: int, local_z: int, profile: Dictionary = {}) -> TextureRect:
@@ -840,6 +1017,19 @@ func _apply_transparent_button_style(button: Button) -> void:
 	button.add_theme_color_override("font_hover_color", Color(1, 1, 1, 0))
 	button.add_theme_color_override("font_pressed_color", Color(1, 1, 1, 0))
 	button.add_theme_color_override("font_focus_color", Color(1, 1, 1, 0))
+
+
+func _layout_rect(element_id: StringName, active_focus: StringName = &"") -> Rect2:
+	return MainMenuLayoutContractScript.rect(element_id, LOGICAL_VIEWPORT_SIZE, active_focus)
+
+
+func _entry_component_rect(entry_id: StringName, component_id: StringName, state: StringName = &"normal") -> Rect2:
+	var active_focus := entry_id if state == &"focused" else &""
+	var element_id := StringName("entry.%s.%s" % [String(entry_id), String(component_id)])
+	var rect := _layout_rect(element_id, active_focus)
+	if state == &"pressed":
+		rect.position += Vector2(2, 2)
+	return rect
 
 
 func _set_rect(control: Control, rect: Rect2) -> void:

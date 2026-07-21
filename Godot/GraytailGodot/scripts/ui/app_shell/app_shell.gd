@@ -3,6 +3,7 @@ class_name AppShell
 
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const PageRouterScript := preload("res://scripts/ui/app_shell/page_router.gd")
+const NavigationTransitionCoordinatorScript := preload("res://scripts/ui/app_shell/navigation_transition_coordinator.gd")
 const MainMenuShellScript := preload("res://scripts/ui/main_menu/main_menu_shell.gd")
 const DeployPrepShellScript := preload("res://scripts/ui/deploy_prep/deploy_prep_shell.gd")
 const LongTermShellScript := preload("res://scripts/ui/long_term/long_term_shell.gd")
@@ -32,6 +33,7 @@ var _has_snapshot := false
 var _snapshot_revision := 0
 var _current_page_id: StringName = PageRouterScript.PAGE_MAIN_MENU
 var _shell_active := true
+var _navigation_transition_coordinator: RefCounted
 var _page_snapshot_revisions: Dictionary = {
 	PageRouterScript.PAGE_MAIN_MENU: -1,
 	PageRouterScript.PAGE_DEPLOY_PREP: -1,
@@ -45,6 +47,8 @@ var _snapshot_refresh_counts: Dictionary = {
 
 
 func build() -> void:
+	_cancel_active_navigation_transition(&"shell_rebuilt", false)
+	_navigation_transition_coordinator = NavigationTransitionCoordinatorScript.new()
 	_clear_children()
 	_reset_page_snapshot_revisions()
 	if not visibility_changed.is_connected(_on_shell_visibility_changed):
@@ -75,6 +79,12 @@ func get_snapshot_refresh_counts() -> Dictionary:
 
 
 func show_main() -> void:
+	if not _cancel_navigation_transition_for_external_page_change():
+		return
+	_show_main_internal()
+
+
+func _show_main_internal() -> void:
 	_current_page_id = PageRouterScript.PAGE_MAIN_MENU
 	_set_page_visible(main_menu_shell)
 	_hide_settings(false)
@@ -82,37 +92,57 @@ func show_main() -> void:
 
 
 func show_deploy(_tab_id: StringName = &"overview") -> void:
+	if not _cancel_navigation_transition_for_external_page_change():
+		return
+	_show_deploy_internal(_tab_id)
+
+
+func _show_deploy_internal(tab_id: StringName = &"overview") -> void:
 	_current_page_id = PageRouterScript.PAGE_DEPLOY_PREP
 	_set_page_visible(deploy_page)
 	_hide_settings(false)
 	_hide_exit_confirm(false)
 	if deploy_page != null and deploy_page.has_method("show_tab"):
-		deploy_page.call("show_tab", _tab_id)
+		deploy_page.call("show_tab", tab_id)
 
 
 func show_long_term(_entry_id: StringName = &"overview") -> void:
+	if not _cancel_navigation_transition_for_external_page_change():
+		return
+	_show_long_term_internal(_entry_id)
+
+
+func _show_long_term_internal(entry_id: StringName = &"overview") -> void:
 	_current_page_id = PageRouterScript.PAGE_LONG_TERM
 	_set_page_visible(long_term_page)
 	_hide_settings(false)
 	_hide_exit_confirm(false)
 	if long_term_page != null and long_term_page.has_method("show_module"):
-		long_term_page.call("show_module", _entry_id)
+		long_term_page.call("show_module", entry_id)
 
 
 func show_settings() -> bool:
+	if not _cancel_navigation_transition_for_external_page_change():
+		return false
+	return _show_settings_internal()
+
+
+func _show_settings_internal() -> bool:
 	_current_page_id = PageRouterScript.PAGE_SETTINGS_PLACEHOLDER
 	if settings_page != null:
 		settings_page.visible = true
 	_hide_exit_confirm(false)
 	_set_page_visible(main_menu_shell)
 	if settings_panel == null or not bool(settings_panel.call("open_panel")):
-		show_main()
+		_show_main_internal()
 		_restore_main_menu_focus()
 		return false
 	return true
 
 
 func set_shell_active(value: bool) -> void:
+	if not value:
+		_cancel_active_navigation_transition(&"shell_deactivated", false)
 	_shell_active = value and is_visible_in_tree()
 	_sync_page_lifecycle()
 
@@ -137,6 +167,12 @@ func get_deploy_page() -> Control:
 
 func get_long_term_page() -> Control:
 	return long_term_page
+
+
+func get_navigation_transition_snapshot() -> Dictionary:
+	if _navigation_transition_coordinator == null:
+		return {}
+	return _navigation_transition_coordinator.call("snapshot") as Dictionary
 
 
 func get_settings_panel() -> PanelContainer:
@@ -252,6 +288,9 @@ func _on_runtime_settings_reverted(runtime_settings: Dictionary, _reason: String
 
 func _apply_runtime_settings_to_pages(runtime_settings: Dictionary) -> void:
 	var reduce_motion := bool(runtime_settings.get("reduce_motion", false))
+	if _navigation_transition_coordinator != null and bool(_navigation_transition_coordinator.call("is_busy")):
+		var active_token := int(_navigation_transition_coordinator.call("active_token"))
+		_navigation_transition_coordinator.call("set_reduced_motion", active_token, reduce_motion)
 	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
 		if page != null and page.has_method("set_reduced_motion_enabled"):
 			page.call("set_reduced_motion_enabled", reduce_motion)
@@ -271,6 +310,12 @@ func _build_main_menu() -> void:
 	add_child(main_menu_shell)
 	main_menu_shell.call("build")
 	main_menu_shell.connect("navigation_intent_requested", _on_navigation_intent_requested)
+	if main_menu_shell.has_signal("navigation_transition_requested"):
+		main_menu_shell.connect("navigation_transition_requested", _on_main_menu_navigation_transition_requested)
+	if main_menu_shell.has_signal("navigation_transition_finished"):
+		main_menu_shell.connect("navigation_transition_finished", _on_main_menu_navigation_transition_finished)
+	if main_menu_shell.has_signal("navigation_transition_cancel_requested"):
+		main_menu_shell.connect("navigation_transition_cancel_requested", _on_main_menu_navigation_transition_cancel_requested)
 
 
 func _build_deploy_prep() -> void:
@@ -368,29 +413,234 @@ func _build_exit_confirm_layer() -> void:
 
 
 func _on_navigation_intent_requested(intent: Dictionary) -> void:
+	if _navigation_transition_coordinator != null and bool(_navigation_transition_coordinator.call("is_busy")):
+		return
+	var commit_result := _commit_navigation_intent(intent)
+	page_changed.emit(
+		StringName(commit_result.get("page_id", PageRouterScript.PAGE_MAIN_MENU)),
+		(commit_result.get("payload", {}) as Dictionary).duplicate(true)
+	)
+
+
+func _on_main_menu_navigation_transition_requested(intent: Dictionary, profile_id: StringName, entry_id: StringName) -> void:
+	if _navigation_transition_coordinator == null or main_menu_shell == null:
+		_restore_main_menu_entry_focus(entry_id)
+		return
+	var route := PageRouterScript.route_for_intent(intent)
+	var target_page := StringName(route.get("page", PageRouterScript.PAGE_MAIN_MENU))
+	if (
+		_current_page_id != PageRouterScript.PAGE_MAIN_MENU
+		or not _shell_active
+		or not main_menu_shell.visible
+		or _profile_for_page(target_page) != profile_id
+	):
+		_restore_main_menu_entry_focus(entry_id)
+		return
+	var reduced_motion := false
+	if main_menu_shell.has_method("is_reduced_motion_enabled"):
+		reduced_motion = bool(main_menu_shell.call("is_reduced_motion_enabled"))
+	var requested: Dictionary = _navigation_transition_coordinator.call(
+		"request_transition",
+		PageRouterScript.PAGE_MAIN_MENU,
+		target_page,
+		profile_id,
+		entry_id,
+		reduced_motion,
+		{"intent": intent.duplicate(true)}
+	)
+	if not bool(requested.get("ok", false)):
+		_restore_main_menu_entry_focus(entry_id)
+		return
+	var token := int(requested.get("token", 0))
+	if not _can_prepare_navigation_target(target_page):
+		var prepare_failure: Dictionary = _navigation_transition_coordinator.call(
+			"mark_prepared", token, false, &"target_prepare_failed"
+		)
+		_recover_main_menu_transition(prepare_failure, entry_id)
+		return
+	var prepared: Dictionary = _navigation_transition_coordinator.call("mark_prepared", token, true)
+	if not bool(prepared.get("ok", false)):
+		_recover_main_menu_transition(prepared, entry_id)
+		return
+	var playback_started := false
+	if main_menu_shell.has_method("play_navigation_transition"):
+		playback_started = bool(main_menu_shell.call(
+			"play_navigation_transition", token, profile_id, entry_id, reduced_motion
+		))
+	if not playback_started:
+		var playback_failure: Dictionary = _navigation_transition_coordinator.call(
+			"fail_transition", token, &"presenter_start_failed"
+		)
+		_recover_main_menu_transition(playback_failure, entry_id)
+
+
+func _on_main_menu_navigation_transition_finished(token: int) -> void:
+	if _navigation_transition_coordinator == null:
+		return
+	var playback_result: Dictionary = _navigation_transition_coordinator.call("mark_playback_finished", token)
+	if not bool(playback_result.get("ok", false)):
+		return
+	var commit_request_result: Dictionary = _navigation_transition_coordinator.call("take_commit", token)
+	if not bool(commit_request_result.get("ok", false)):
+		var take_failure: Dictionary = _navigation_transition_coordinator.call(
+			"fail_transition", token, &"commit_request_failed"
+		)
+		_recover_main_menu_transition(take_failure)
+		return
+	var commit_request := commit_request_result.get("commit_request", {}) as Dictionary
+	var request_payload := commit_request.get("payload", {}) as Dictionary
+	var raw_intent: Variant = request_payload.get("intent", {})
+	if not (raw_intent is Dictionary) or (raw_intent as Dictionary).is_empty():
+		var intent_failure: Dictionary = _navigation_transition_coordinator.call(
+			"resolve_commit", token, false, &"intent_missing"
+		)
+		_recover_main_menu_transition(intent_failure)
+		page_changed.emit(PageRouterScript.PAGE_MAIN_MENU, {})
+		return
+	var intent := (raw_intent as Dictionary).duplicate(true)
+	var commit_result := _commit_navigation_intent(intent)
+	var committed := bool(commit_result.get("ok", false))
+	var resolve_result: Dictionary = _navigation_transition_coordinator.call(
+		"resolve_commit", token, committed, &"route_commit_failed"
+	)
+	if not committed:
+		_recover_main_menu_transition(resolve_result)
+	page_changed.emit(
+		StringName(commit_result.get("page_id", PageRouterScript.PAGE_MAIN_MENU)),
+		(commit_result.get("payload", {}) as Dictionary).duplicate(true)
+	)
+
+
+func _on_main_menu_navigation_transition_cancel_requested(token: int, reason_code: StringName) -> void:
+	if _navigation_transition_coordinator == null:
+		return
+	var cancelled: Dictionary = _navigation_transition_coordinator.call("cancel", token, reason_code)
+	if not bool(cancelled.get("ok", false)):
+		return
+	if main_menu_shell != null and main_menu_shell.has_method("cancel_navigation_transition"):
+		main_menu_shell.call("cancel_navigation_transition", token, false)
+	_recover_main_menu_transition(cancelled)
+
+
+func _commit_navigation_intent(intent: Dictionary) -> Dictionary:
 	var route := PageRouterScript.route_for_intent(intent)
 	var page_id := StringName(route.get("page", PageRouterScript.PAGE_MAIN_MENU))
 	var committed_page_id := page_id
 	var page_payload := NavigationIntentScript.payload(intent)
+	var committed := true
 	match page_id:
 		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER:
-			var deploy_payload := page_payload
-			show_deploy(StringName(deploy_payload.get("tab", &"overview")))
-			if deploy_page != null and deploy_page.has_method("apply_route_payload"):
-				deploy_page.call("apply_route_payload", deploy_payload)
+			if deploy_page == null:
+				committed = false
+				committed_page_id = PageRouterScript.PAGE_MAIN_MENU
+				_show_main_internal()
+			else:
+				var deploy_payload := page_payload
+				_show_deploy_internal(StringName(deploy_payload.get("tab", &"overview")))
+				if deploy_page.has_method("apply_route_payload"):
+					deploy_page.call("apply_route_payload", deploy_payload)
 		PageRouterScript.PAGE_LONG_TERM:
-			var long_term_payload := page_payload
-			show_long_term(StringName(long_term_payload.get("module_id", long_term_payload.get("entry_id", &"goals"))))
+			if long_term_page == null:
+				committed = false
+				committed_page_id = PageRouterScript.PAGE_MAIN_MENU
+				_show_main_internal()
+			else:
+				var long_term_payload := page_payload
+				_show_long_term_internal(StringName(long_term_payload.get("module_id", long_term_payload.get("entry_id", &"goals"))))
 		PageRouterScript.PAGE_SETTINGS_PLACEHOLDER:
-			if not show_settings():
+			if not _show_settings_internal():
+				committed = false
 				committed_page_id = PageRouterScript.PAGE_MAIN_MENU
 		PageRouterScript.PAGE_EXIT_CONFIRM:
-			_show_exit_confirm()
+			if exit_confirm_panel == null:
+				committed = false
+				committed_page_id = PageRouterScript.PAGE_MAIN_MENU
+				_show_main_internal()
+			else:
+				_show_exit_confirm()
 		PageRouterScript.PAGE_RUN:
 			host_route_requested.emit(intent)
 		_:
-			show_main()
-	page_changed.emit(committed_page_id, page_payload)
+			_show_main_internal()
+	return {
+		"ok": committed,
+		"page_id": committed_page_id,
+		"payload": page_payload,
+	}
+
+
+func _profile_for_page(page_id: StringName) -> StringName:
+	match page_id:
+		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER:
+			return NavigationTransitionCoordinatorScript.PROFILE_ENTER_CAVE
+		PageRouterScript.PAGE_LONG_TERM:
+			return NavigationTransitionCoordinatorScript.PROFILE_DESCEND
+		PageRouterScript.PAGE_SETTINGS_PLACEHOLDER:
+			return NavigationTransitionCoordinatorScript.PROFILE_OPEN_OVERLAY
+		PageRouterScript.PAGE_EXIT_CONFIRM:
+			return NavigationTransitionCoordinatorScript.PROFILE_OPEN_CONFIRM
+		_:
+			return &""
+
+
+func _can_prepare_navigation_target(page_id: StringName) -> bool:
+	match page_id:
+		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER:
+			return deploy_page != null
+		PageRouterScript.PAGE_LONG_TERM:
+			return long_term_page != null
+		PageRouterScript.PAGE_SETTINGS_PLACEHOLDER:
+			return settings_page != null and settings_panel != null and settings_manager != null
+		PageRouterScript.PAGE_EXIT_CONFIRM:
+			return exit_confirm_panel != null
+		_:
+			return false
+
+
+func _recover_main_menu_transition(result: Dictionary, fallback_focus: StringName = &"") -> void:
+	var last_result := result.get("last_result", {}) as Dictionary
+	if last_result.is_empty():
+		var result_snapshot := result.get("snapshot", {}) as Dictionary
+		last_result = result_snapshot.get("last_result", {}) as Dictionary
+	var recovery := last_result.get("recovery", {}) as Dictionary
+	var focus_id := StringName(recovery.get("focus_id", fallback_focus))
+	var finished_token := int(last_result.get("token", 0))
+	if main_menu_shell != null and main_menu_shell.has_method("cancel_navigation_transition") and finished_token > 0:
+		main_menu_shell.call("cancel_navigation_transition", finished_token, false)
+	if _shell_active and is_visible_in_tree() and StringName(recovery.get("page", PageRouterScript.PAGE_MAIN_MENU)) == PageRouterScript.PAGE_MAIN_MENU:
+		show_main()
+		_restore_main_menu_entry_focus(focus_id)
+
+
+func _restore_main_menu_entry_focus(entry_id: StringName) -> void:
+	if not _shell_active or main_menu_shell == null or not main_menu_shell.visible:
+		return
+	var target_entry := entry_id if entry_id != &"" else &"deploy"
+	if main_menu_shell.has_method("_set_focus_state"):
+		main_menu_shell.call("_set_focus_state", target_entry)
+	var button := main_menu_shell.get_node_or_null("PrimaryActionRoot/MainMenuEntry_%s" % String(target_entry)) as Button
+	if button != null and is_instance_valid(button):
+		button.call_deferred("grab_focus")
+
+
+func _cancel_active_navigation_transition(reason_code: StringName, restore_focus: bool = true) -> bool:
+	if _navigation_transition_coordinator == null or not bool(_navigation_transition_coordinator.call("is_busy")):
+		return true
+	var token := int(_navigation_transition_coordinator.call("active_token"))
+	var cancelled: Dictionary = _navigation_transition_coordinator.call("cancel", token, reason_code)
+	if not bool(cancelled.get("ok", false)):
+		return false
+	if main_menu_shell != null and main_menu_shell.has_method("cancel_navigation_transition"):
+		main_menu_shell.call("cancel_navigation_transition", token, restore_focus)
+	if restore_focus:
+		_recover_main_menu_transition(cancelled)
+	return true
+
+
+func _cancel_navigation_transition_for_external_page_change() -> bool:
+	if _navigation_transition_coordinator == null or not bool(_navigation_transition_coordinator.call("is_busy")):
+		return true
+	return _cancel_active_navigation_transition(&"external_page_change", false)
 
 
 func _on_deploy_start_intent_requested(intent: Dictionary) -> void:
@@ -437,6 +687,8 @@ func _sync_page_lifecycle() -> void:
 
 
 func _on_shell_visibility_changed() -> void:
+	if not is_visible_in_tree():
+		_cancel_active_navigation_transition(&"shell_hidden", false)
 	_shell_active = is_visible_in_tree()
 	_sync_page_lifecycle()
 

@@ -43,6 +43,22 @@ func _capture() -> void:
 	match state:
 		&"long_term":
 			main_menu.call("_set_focus_state", &"long_term")
+		&"deploy_transition":
+			main_menu.call("_set_focus_state", &"deploy")
+			_press_entry(main_menu, &"deploy")
+			main_menu.call("_process", 0.36)
+		&"long_term_transition":
+			main_menu.call("_set_focus_state", &"long_term")
+			_press_entry(main_menu, &"long_term")
+			main_menu.call("_process", 0.39)
+		&"settings_transition":
+			main_menu.call("_set_focus_state", &"settings")
+			_press_entry(main_menu, &"settings")
+			main_menu.call("_process", 0.08)
+		&"exit_transition":
+			main_menu.call("_set_focus_state", &"exit_game")
+			_press_entry(main_menu, &"exit_game")
+			main_menu.call("_process", 0.09)
 		&"settings":
 			shell.show_settings()
 		&"exit":
@@ -63,6 +79,12 @@ func _capture() -> void:
 		return
 	print("ART21_CAPTURE=PASS state=%s size=%dx%d output=%s" % [String(state), image.get_width(), image.get_height(), output_path])
 	quit(0)
+
+
+func _press_entry(main_menu: Control, entry_id: StringName) -> void:
+	var button := main_menu.get_node_or_null("PrimaryActionRoot/MainMenuEntry_%s" % String(entry_id)) as Button
+	if button != null:
+		button.pressed.emit()
 
 
 func _parse_options(arguments: PackedStringArray) -> Dictionary:

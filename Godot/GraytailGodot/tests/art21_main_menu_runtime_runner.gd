@@ -2,6 +2,8 @@ extends SceneTree
 
 var failures: Array[String] = []
 var host_route_count := 0
+var page_change_count := 0
+var last_changed_page: StringName = &""
 
 
 func _initialize() -> void:
@@ -32,6 +34,7 @@ func _run() -> void:
 	canvas.add_child(shell)
 	shell.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shell.connect("host_route_requested", _on_host_route_requested)
+	shell.connect("page_changed", _on_page_changed)
 	shell.call("build")
 	for _index in range(8):
 		await process_frame
@@ -133,51 +136,108 @@ func _run() -> void:
 		_check(utility_focus.position == expected_focus_rect.position, "Utility focus position is misaligned for " + String(utility_id))
 		_check(utility_focus.size == expected_focus_rect.size, "Utility focus size is misaligned for " + String(utility_id))
 
+	main.call("_set_focus_state", &"deploy")
+	var deploy_button := main.get_node_or_null("PrimaryActionRoot/MainMenuEntry_deploy") as Button
+	var page_count_before := page_change_count
+	deploy_button.emit_signal("pressed")
+	var cancelled_token := int((shell.call("get_navigation_transition_snapshot") as Dictionary).get("active_token", 0))
+	var cancel_event := InputEventAction.new()
+	cancel_event.action = &"ui_cancel"
+	cancel_event.pressed = true
+	main.call("_unhandled_input", cancel_event)
+	await process_frame
+	var cancelled_snapshot: Dictionary = shell.call("get_navigation_transition_snapshot")
+	var cancelled_result := cancelled_snapshot.get("last_result", {}) as Dictionary
+	_check(cancelled_token > 0 and StringName(cancelled_snapshot.get("state", &"")) == &"idle", "Cancel did not settle the active transition")
+	_check(StringName(cancelled_result.get("outcome", &"")) == &"cancelled", "Cancel did not record a cancelled outcome")
+	_check(int(cancelled_result.get("commit_count", -1)) == 0, "Cancel committed a route")
+	_check(page_change_count == page_count_before and main.visible, "Cancel changed the visible route")
+	_check(StringName(main.get("current_focus")) == &"deploy", "Cancel did not restore the source focus")
+
 	var settings_button := main.get_node_or_null("PrimaryActionRoot/MainMenuEntry_settings") as Button
+	page_count_before = page_change_count
 	settings_button.emit_signal("pressed")
+	var transition_snapshot: Dictionary = shell.call("get_navigation_transition_snapshot")
+	_check(StringName(transition_snapshot.get("state", &"")) == &"playing", "Settings transition did not enter coordinator PLAYING")
+	_check(StringName(transition_snapshot.get("profile_id", &"")) == &"open_overlay", "Settings did not request open_overlay")
+	_check(_intent_profile_is_clean(transition_snapshot), "Settings transition profile leaked into NavigationIntent payload")
+	main.call("_process", 0.25)
 	await process_frame
 	var settings_overlay := shell.get_node_or_null("SettingsOverlay") as Control
 	_check(settings_overlay != null and settings_overlay.visible, "Settings route did not open the scene overlay")
 	_check(main.visible, "Settings route replaced the scene instead of overlaying it")
-	shell.call("_hide_settings")
+	_check(page_change_count == page_count_before + 1 and last_changed_page == &"settings_placeholder", "Settings route was not committed exactly once")
+	_check_committed_transition(shell, &"settings_placeholder", "Settings")
+	shell.call("_close_settings_to_main")
+	await process_frame
 
 	var exit_button := main.get_node_or_null("PrimaryActionRoot/MainMenuEntry_exit_game") as Button
+	page_count_before = page_change_count
 	exit_button.emit_signal("pressed")
+	transition_snapshot = shell.call("get_navigation_transition_snapshot")
+	_check(StringName(transition_snapshot.get("state", &"")) == &"playing", "Exit transition did not enter coordinator PLAYING")
+	_check(StringName(transition_snapshot.get("profile_id", &"")) == &"open_confirm", "Exit did not request open_confirm")
+	_check(_intent_profile_is_clean(transition_snapshot), "Exit transition profile leaked into NavigationIntent payload")
+	main.call("_process", 0.25)
 	await process_frame
 	var exit_dialog := shell.get_node_or_null("ExitConfirmDialog") as Control
 	_check(exit_dialog != null and exit_dialog.visible, "Exit route did not open the confirmation overlay")
 	_check(main.visible, "Exit route replaced the scene instead of overlaying it")
+	_check(page_change_count == page_count_before + 1 and last_changed_page == &"exit_confirm", "Exit route was not committed exactly once")
+	_check_committed_transition(shell, &"exit_confirm", "Exit")
 	shell.call("_hide_exit_confirm")
 
 	shell.call("show_main")
 	main.call("_set_focus_state", &"deploy")
-	var deploy_button := main.get_node_or_null("PrimaryActionRoot/MainMenuEntry_deploy") as Button
+	page_count_before = page_change_count
 	deploy_button.emit_signal("pressed")
 	_check(bool(main.get("transition_active")), "Deploy did not start its scene transition")
-	for _index in range(7):
-		main.call("_process", 0.1)
-		await process_frame
-	_check(bool(main.get("transition_active")), "Deploy transition is still too fast to read")
-	for _index in range(4):
-		main.call("_process", 0.1)
-		await process_frame
+	transition_snapshot = shell.call("get_navigation_transition_snapshot")
+	_check(StringName(transition_snapshot.get("state", &"")) == &"playing", "Deploy transition did not enter coordinator PLAYING")
+	_check(StringName(transition_snapshot.get("profile_id", &"")) == &"enter_cave", "Deploy did not request enter_cave")
+	_check(_intent_profile_is_clean(transition_snapshot), "Deploy transition profile leaked into NavigationIntent payload")
+	main.call("_process", 0.30)
+	_check(bool(main.get("transition_active")), "Deploy transition is too fast to read at the presentation checkpoint")
 	var deploy_page := shell.call("get_deploy_page") as Control
+	_check(deploy_page != null and not deploy_page.visible, "Deploy route committed before presentation completion")
+	main.call("_process", 0.50)
+	await process_frame
 	_check(deploy_page != null and deploy_page.visible, "Deploy transition did not preserve TARGET_DEPLOY routing")
+	_check(page_change_count == page_count_before + 1 and last_changed_page == &"deploy_prep", "Deploy route was not committed exactly once")
+	_check_committed_transition(shell, &"deploy_prep", "Deploy")
 
 	shell.call("show_main")
 	main.call("_set_focus_state", &"long_term")
 	var long_term_button := main.get_node_or_null("PrimaryActionRoot/MainMenuEntry_long_term") as Button
+	var descend_roots := ["BackgroundRoot", "DecorationRoot", "CharacterRoot", "MainContentRoot", "SideStatusRoot", "PrimaryActionRoot", "FloatingInfoRoot"]
+	var descend_bases: Dictionary = {}
+	for root_name in descend_roots:
+		descend_bases[root_name] = (main.get_node(root_name) as Control).position
+	page_count_before = page_change_count
 	long_term_button.emit_signal("pressed")
 	_check(bool(main.get("transition_active")), "Long-term did not start its scene transition")
-	for _index in range(7):
-		main.call("_process", 0.1)
-		await process_frame
-	_check(bool(main.get("transition_active")), "Long-term transition is still too fast to read")
-	for _index in range(4):
-		main.call("_process", 0.1)
-		await process_frame
+	transition_snapshot = shell.call("get_navigation_transition_snapshot")
+	_check(StringName(transition_snapshot.get("state", &"")) == &"playing", "Long-term transition did not enter coordinator PLAYING")
+	_check(StringName(transition_snapshot.get("profile_id", &"")) == &"descend", "Long-term did not request descend")
+	_check(_intent_profile_is_clean(transition_snapshot), "Long-term transition profile leaked into NavigationIntent payload")
+	main.call("_process", 0.30)
+	var observed_descend_offset: Variant = null
+	for root_name in descend_roots:
+		var offset := (main.get_node(root_name) as Control).position - (descend_bases[root_name] as Vector2)
+		if observed_descend_offset == null:
+			observed_descend_offset = offset
+		else:
+			_check(offset == (observed_descend_offset as Vector2), "Long-term descend split the non-overlay scene roots")
+	_check(observed_descend_offset != null and (observed_descend_offset as Vector2).y > 0.0, "Long-term descend did not move the scene")
 	var long_term_page := shell.call("get_long_term_page") as Control
+	_check(long_term_page != null and not long_term_page.visible, "Long-term route committed before presentation completion")
+	main.call("_process", 0.55)
+	await process_frame
 	_check(long_term_page != null and long_term_page.visible, "Long-term transition did not preserve TARGET_LONG_TERM routing")
+	_check(page_change_count == page_count_before + 1 and last_changed_page == &"long_term", "Long-term route was not committed exactly once")
+	_check_committed_transition(shell, &"long_term", "Long-term")
+	for root_name in descend_roots:
+		_check((main.get_node(root_name) as Control).position == (descend_bases[root_name] as Vector2), "Long-term descend did not restore root " + root_name)
 
 	shell.call("show_main")
 	var shortcut_ok := bool(main.call("_emit_shortcut_index", 0))
@@ -186,13 +246,14 @@ func _run() -> void:
 	_check(host_route_count == 1, "F1-compatible run shortcut did not reach the host route exactly once")
 
 	shell.call("show_main")
-	var long_shortcut_ok := bool(main.call("_emit_shortcut_index", 1))
+	var warehouse_shortcut_ok := bool(main.call("_emit_shortcut_index", 1))
 	await process_frame
-	_check(long_shortcut_ok, "F2-compatible shortcut index 1 was not preserved")
-	_check(long_term_page != null and long_term_page.visible, "F2-compatible shortcut no longer opens long-term")
+	_check(warehouse_shortcut_ok, "F2-compatible shortcut index 1 was not preserved")
+	_check(deploy_page != null and deploy_page.visible, "F2-compatible warehouse shortcut no longer opens Deploy")
+	_check(StringName(deploy_page.call("_active_tab")) == &"warehouse", "F2-compatible shortcut did not select warehouse")
 
 	shell.call("show_main")
-	main.set("reduced_motion", true)
+	main.call("set_reduced_motion_enabled", true)
 	main.call("_process", 0.1)
 	for raw_group in ambient_groups:
 		if raw_group is Dictionary:
@@ -204,16 +265,40 @@ func _run() -> void:
 			else:
 				_check(motion_node != null and not motion_node.visible, "Reduce-motion leaves an ambient event visible")
 	main.call("_set_focus_state", &"deploy")
+	page_count_before = page_change_count
 	deploy_button.emit_signal("pressed")
 	await process_frame
 	_check(not bool(main.get("transition_active")), "Reduce-motion still starts the animated transition")
 	_check(deploy_page != null and deploy_page.visible, "Reduce-motion did not preserve immediate deploy routing")
+	_check(page_change_count == page_count_before + 1, "Reduce-motion deploy did not commit exactly once")
+	_check_committed_transition(shell, &"deploy_prep", "Reduce-motion deploy")
 
 	_finish()
 
 
 func _on_host_route_requested(_intent: Dictionary) -> void:
 	host_route_count += 1
+
+
+func _on_page_changed(page_id: StringName, _payload: Dictionary) -> void:
+	page_change_count += 1
+	last_changed_page = page_id
+
+
+func _intent_profile_is_clean(snapshot: Dictionary) -> bool:
+	var coordinator_payload := snapshot.get("payload", {}) as Dictionary
+	var intent := coordinator_payload.get("intent", {}) as Dictionary
+	var payload := intent.get("payload", {}) as Dictionary
+	return not payload.has("profile_id") and not payload.has("transition_profile") and not payload.has("transition_profile_id")
+
+
+func _check_committed_transition(shell: Control, expected_page: StringName, context: String) -> void:
+	var snapshot: Dictionary = shell.call("get_navigation_transition_snapshot")
+	var last_result := snapshot.get("last_result", {}) as Dictionary
+	_check(StringName(snapshot.get("state", &"")) == &"idle", context + " coordinator did not settle to IDLE")
+	_check(StringName(last_result.get("outcome", &"")) == &"committed", context + " coordinator did not record committed")
+	_check(StringName(last_result.get("page", &"")) == expected_page, context + " coordinator recorded the wrong page")
+	_check(int(last_result.get("commit_count", 0)) == 1, context + " coordinator did not record exactly one commit")
 
 
 func _check_texture_size(parent: Node, node_path: String, expected: Vector2) -> void:
@@ -233,7 +318,7 @@ func _find_motion_group(groups: Array, node_name: String) -> Dictionary:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART21_MAIN_MENU_RUNTIME=PASS entries=4 overlays=2 transitions=2 shortcuts=2 motion_groups=10")
+		print("ART21_MAIN_MENU_RUNTIME=PASS entries=4 overlays=2 transitions=4 shortcuts=2 motion_groups=10")
 		quit(0)
 		return
 	for failure in failures:

@@ -9,8 +9,8 @@ static func build() -> Dictionary:
 	return {
 		"title": "灰尾回收",
 		"subtitle": "基地门厅 / 中控入口",
-		"scene_hint": "主菜单固定承担分流：出发探索、长期系统、设置、退出。M1 标准局作为当前可玩快捷入口保留，不替代正式出发页流程。",
-		"role_hint": "当前角色展示占位：外观和穿搭入口后续归入长期系统。",
+		"scene_hint": "从回收站门厅选择下一步行动。",
+		"role_hint": "当前出勤角色",
 		"art09_visuals": {
 			"background": PresentationMappingScript.main_menu_background_ref(),
 		},
@@ -18,7 +18,7 @@ static func build() -> Dictionary:
 			{
 				"id": &"deploy",
 				"label": "出发探索",
-				"description": "进入出发探索页查看本次出勤配置 preview；开始/继续探索的正式归属在该页，当前仍未接真实配置启动。",
+				"description": "规划地图、难度、出勤物资与本局委托，确认后开始探索。",
 				"target": NavigationIntentScript.TARGET_DEPLOY,
 				"requires_confirm": false,
 				"has_badge": false,
@@ -27,7 +27,7 @@ static func build() -> Dictionary:
 			{
 				"id": &"long_term",
 				"label": "长期系统",
-				"description": "进入任务、图鉴、研究、收藏等长期系统入口占位。",
+				"description": "查看任务档案、图鉴、研究、角色与收藏进度。",
 				"target": NavigationIntentScript.TARGET_LONG_TERM,
 				"requires_confirm": false,
 				"has_badge": false,
@@ -36,7 +36,7 @@ static func build() -> Dictionary:
 			{
 				"id": &"settings",
 				"label": "设置",
-				"description": "进入设置入口占位；完整设置系统后置。",
+				"description": "调整显示与动态表现；变更可以预览、确认或回退。",
 				"target": NavigationIntentScript.TARGET_SETTINGS,
 				"requires_confirm": false,
 				"has_badge": false,
@@ -52,17 +52,15 @@ static func build() -> Dictionary:
 				"art09_asset_ref": PresentationMappingScript.main_menu_entry_icon_ref(&"exit_game"),
 			},
 		],
-		"notices": [
-			"新区域已开放",
-			"新功能上线",
-			"优化与修复",
-			"祝您冒险愉快！",
-		],
+		"notice": {
+			"title": "回收站简报",
+			"body": "在探索页确认地图、难度、物资与委托后，再开始本次行动。",
+		},
 		"shortcuts": [
 			{
 				"id": &"shortcut_standard_10x10",
 				"label": "快捷：开始标准局",
-				"description": "M1 当前可玩入口；复用 AppShell / CommandBus / RunScene 标准局路径，不让主菜单实现 run 规则。",
+				"description": "沿用已确认配置快速开始标准探索。",
 				"target": NavigationIntentScript.TARGET_RUN,
 				"payload": {
 					"entry_id": &"standard_10x10",
@@ -76,15 +74,15 @@ static func build() -> Dictionary:
 			{
 				"id": &"shortcut_warehouse",
 				"label": "快捷：仓库",
-				"description": "跳转到长期系统占位；完整仓库后置。",
-				"target": NavigationIntentScript.TARGET_LONG_TERM,
-				"payload": {"entry_id": &"warehouse"},
+				"description": "前往出发探索页管理当前仓库。",
+				"target": NavigationIntentScript.TARGET_DEPLOY,
+				"payload": {"tab": &"warehouse"},
 				"has_badge": false,
 			},
 			{
 				"id": &"shortcut_codex",
 				"label": "快捷：图鉴",
-				"description": "跳转到长期系统占位；完整图鉴后置。",
+				"description": "前往长期系统查看已记录的图鉴。",
 				"target": NavigationIntentScript.TARGET_LONG_TERM,
 				"payload": {"entry_id": &"codex"},
 				"has_badge": false,

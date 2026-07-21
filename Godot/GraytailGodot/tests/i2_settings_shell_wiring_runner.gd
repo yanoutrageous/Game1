@@ -2,6 +2,7 @@ extends SceneTree
 
 const SettingsManagerScript := preload("res://scripts/core/settings/settings_manager.gd")
 const AppShellScript := preload("res://scripts/ui/app_shell/app_shell.gd")
+const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const DeployPrepLayoutContractScript := preload("res://scripts/ui/deploy_prep/deploy_prep_layout_contract.gd")
 const LongTermLayoutContractScript := preload("res://scripts/ui/long_term/long_term_layout_contract.gd")
 
@@ -118,6 +119,7 @@ func _run() -> void:
 		await _check_real_panel_timeout_rollback(shell, panel, manager, clock, main, deploy, long_term)
 	await _check_main_transition_snap(shell, manager, main, deploy, long_term)
 	await _check_deploy_tween_snap(manager, deploy)
+	await _check_navigation_transition_interruption_boundaries(shell, main, deploy, long_term)
 	await _check_long_term_tween_snap(shell, manager, deploy, long_term)
 	await _check_settings_open_failure_route(shell, main)
 
@@ -214,8 +216,17 @@ func _check_main_transition_snap(shell: AppShell, manager: Node, main: Control, 
 	var entry_by_id: Dictionary = main.get("entry_by_id")
 	var deploy_entry: Dictionary = entry_by_id.get(&"deploy", {})
 	_require(not deploy_entry.is_empty(), "main deploy entry fixture missing")
+	captured_page_changes.clear()
+	var callback := Callable(self, "_capture_page_changed")
+	if not shell.is_connected("page_changed", callback):
+		shell.connect("page_changed", callback)
 	main.call("_activate_entry", deploy_entry)
 	_require(bool(main.get("transition_active")), "main transition fixture did not start")
+	var before_snap: Dictionary = shell.get_navigation_transition_snapshot()
+	var active_token := int(before_snap.get("active_token", 0))
+	_require(StringName(before_snap.get("state", &"")) == &"playing", "main transition coordinator did not enter PLAYING")
+	_require(StringName(before_snap.get("profile_id", &"")) == &"enter_cave", "main transition did not use enter_cave")
+	_require(active_token > 0, "main transition coordinator did not issue a token")
 	_apply_manager_reduce_motion(manager, true)
 	await _frames(2)
 	_require_equal(manager.call("get_applied_settings").get("reduce_motion"), true, "main apply setting")
@@ -223,10 +234,19 @@ func _check_main_transition_snap(shell: AppShell, manager: Node, main: Control, 
 	var transition_texture := main.get("transition_texture") as ColorRect
 	_require(transition_texture == null or not transition_texture.visible, "main transition texture did not snap hidden")
 	_require(shell.get_visible_page_id() == &"deploy_prep", "main pending route did not complete immediately")
+	var after_snap: Dictionary = shell.get_navigation_transition_snapshot()
+	var last_result := after_snap.get("last_result", {}) as Dictionary
+	_require(StringName(after_snap.get("state", &"")) == &"idle", "reduce-motion transition did not settle coordinator IDLE")
+	_require(int(last_result.get("token", 0)) == active_token, "reduce-motion transition completed a different token")
+	_require(StringName(last_result.get("outcome", &"")) == &"committed", "reduce-motion transition did not commit")
+	_require(int(last_result.get("commit_count", 0)) == 1, "reduce-motion transition did not commit exactly once")
+	_require(captured_page_changes == [&"deploy_prep"], "reduce-motion transition emitted duplicate or false page changes")
 	_require(not bool(main.call("is_page_active")) and bool(deploy.call("is_page_active")), "main route lifecycle did not settle on deploy")
 	_require(not main.is_processing(), "hidden reduced-motion main kept processing")
 	_require(not deploy.is_processing(), "active reduced-motion deploy kept idle processing")
 	_require(not bool(long_term.call("is_page_active")) and not long_term.is_processing(), "hidden long-term was revived by apply")
+	if shell.is_connected("page_changed", callback):
+		shell.disconnect("page_changed", callback)
 
 
 func _check_deploy_tween_snap(manager: Node, deploy: Control) -> void:
@@ -249,6 +269,93 @@ func _check_deploy_tween_snap(manager: Node, deploy: Control) -> void:
 	_apply_manager_reduce_motion(manager, false)
 	await _frames(2)
 	_require(deploy.is_processing(), "deploy did not resume after its snap test")
+
+
+func _check_navigation_transition_interruption_boundaries(
+	shell: AppShell,
+	main: Control,
+	deploy: Control,
+	long_term: Control
+) -> void:
+	shell.show_main()
+	await _frames(2)
+	var entry_by_id: Dictionary = main.get("entry_by_id")
+	var deploy_entry: Dictionary = entry_by_id.get(&"deploy", {})
+	_require(not deploy_entry.is_empty(), "transition interruption deploy fixture missing")
+	captured_page_changes.clear()
+	var callback := Callable(self, "_capture_page_changed")
+	if not shell.is_connected("page_changed", callback):
+		shell.connect("page_changed", callback)
+
+	main.call("_activate_entry", deploy_entry)
+	var playing_before_direct: Dictionary = shell.get_navigation_transition_snapshot()
+	var direct_token := int(playing_before_direct.get("active_token", 0))
+	_require(StringName(playing_before_direct.get("state", &"")) == &"playing", "direct-intent race fixture did not enter PLAYING")
+	shell.call(
+		"_on_navigation_intent_requested",
+		NavigationIntentScript.make_long_term(&"i2_transition_race", &"codex")
+	)
+	var playing_after_direct: Dictionary = shell.get_navigation_transition_snapshot()
+	_require(StringName(playing_after_direct.get("state", &"")) == &"playing", "busy direct intent changed coordinator state")
+	_require(int(playing_after_direct.get("active_token", 0)) == direct_token, "busy direct intent replaced the active token")
+	_require(shell.get_visible_page_id() == &"main_menu", "busy direct intent changed the visible page")
+	_require(captured_page_changes.is_empty(), "busy direct intent emitted a false page change")
+	_require(bool(main.get("transition_active")), "busy direct intent cancelled the active presenter")
+	shell.call("_on_main_menu_navigation_transition_cancel_requested", direct_token, &"test_cancel")
+	await _frames(2)
+	var after_direct_cancel: Dictionary = shell.get_navigation_transition_snapshot()
+	_require(StringName(after_direct_cancel.get("state", &"")) == &"idle", "direct-intent fixture cancel left coordinator busy")
+	_require(shell.get_visible_page_id() == &"main_menu", "direct-intent fixture cancel did not preserve Main")
+
+	main.call("_activate_entry", deploy_entry)
+	var playing_before_show: Dictionary = shell.get_navigation_transition_snapshot()
+	var show_token := int(playing_before_show.get("active_token", 0))
+	_require(StringName(playing_before_show.get("state", &"")) == &"playing", "external show race fixture did not enter PLAYING")
+	shell.show_long_term(&"codex")
+	await _frames(2)
+	var after_show: Dictionary = shell.get_navigation_transition_snapshot()
+	var show_result := after_show.get("last_result", {}) as Dictionary
+	_require(StringName(after_show.get("state", &"")) == &"idle", "external show left coordinator busy")
+	_require(int(show_result.get("token", 0)) == show_token, "external show cancelled the wrong token")
+	_require(StringName(show_result.get("outcome", &"")) == &"cancelled", "external show did not record cancellation")
+	_require(StringName(show_result.get("reason_code", &"")) == &"external_page_change", "external show recorded the wrong cancellation reason")
+	_require(int(show_result.get("commit_count", -1)) == 0, "external show committed the cancelled route")
+	_require(shell.get_visible_page_id() == &"long_term", "external show did not expose its requested page")
+	_require(captured_page_changes.is_empty(), "external show emitted an authoritative route commit")
+	_require(not bool(main.get("transition_active")) and int(main.get("transition_token")) == 0, "external show left the Main presenter active")
+	_require((main.get("transition_root_base_positions") as Dictionary).is_empty(), "external show left Main scene roots displaced")
+	_require(not bool(main.call("is_page_active")) and not bool(deploy.call("is_page_active")) and bool(long_term.call("is_page_active")), "external show left page lifecycle inconsistent")
+
+	shell.show_main()
+	await _frames(2)
+	var coordinator := shell.get("_navigation_transition_coordinator") as RefCounted
+	_require(coordinator != null, "commit-in-flight fixture could not access the production coordinator")
+	if coordinator != null:
+		var commit_request: Dictionary = coordinator.call(
+			"request_transition",
+			&"main_menu",
+			&"deploy_prep",
+			&"enter_cave",
+			&"deploy",
+			false,
+			{}
+		)
+		var commit_token := int(commit_request.get("token", 0))
+		coordinator.call("mark_prepared", commit_token, true)
+		coordinator.call("mark_playback_finished", commit_token)
+		var issued := coordinator.call("take_commit", commit_token) as Dictionary
+		_require(bool(issued.get("ok", false)), "commit-in-flight fixture did not issue its commit")
+		var before_reentrant_show := shell.get_navigation_transition_snapshot()
+		shell.show_long_term(&"codex")
+		var after_reentrant_show := shell.get_navigation_transition_snapshot()
+		_require(StringName(before_reentrant_show.get("state", &"")) == &"committing", "commit-in-flight fixture did not enter COMMITTING")
+		_require(StringName(after_reentrant_show.get("state", &"")) == &"committing", "reentrant public show mutated COMMITTING state")
+		_require(int(after_reentrant_show.get("active_token", 0)) == commit_token, "reentrant public show replaced the committing token")
+		_require(shell.get_visible_page_id() == &"main_menu", "reentrant public show changed page after cancel was rejected")
+		_require(bool(main.call("is_page_active")) and not bool(long_term.call("is_page_active")), "reentrant public show changed lifecycle after cancel was rejected")
+		coordinator.call("resolve_commit", commit_token, false, &"test_cleanup")
+	if shell.is_connected("page_changed", callback):
+		shell.disconnect("page_changed", callback)
 
 
 func _check_long_term_tween_snap(shell: AppShell, manager: Node, deploy: Control, long_term: Control) -> void:
@@ -301,15 +408,30 @@ func _check_settings_open_failure_route(shell: AppShell, main: Control) -> void:
 	var callback := Callable(self, "_capture_page_changed")
 	if not shell.is_connected("page_changed", callback):
 		shell.connect("page_changed", callback)
-	shell.call("_on_navigation_intent_requested", {
-		"target": &"settings",
-		"source": &"i2_settings_failure_runner",
-		"payload": {},
-	})
+	main.call("_set_focus_state", &"settings")
+	var settings_button := main.get_node_or_null("PrimaryActionRoot/MainMenuEntry_settings") as Button
+	_require(settings_button != null, "settings failure route button missing")
+	if settings_button != null:
+		settings_button.pressed.emit()
+	var playing: Dictionary = shell.get_navigation_transition_snapshot()
+	_require(StringName(playing.get("state", &"")) == &"playing", "rejected settings route did not start production transition")
+	_require(StringName(playing.get("profile_id", &"")) == &"open_overlay", "rejected settings route did not use open_overlay")
+	main.call("_process", 0.25)
 	await _frames(3)
 	_require(shell.get_visible_page_id() == &"main_menu", "rejected settings open did not remain on main")
 	_require(bool(main.call("is_page_active")), "rejected settings open did not restore main lifecycle")
-	_require(not captured_page_changes.is_empty() and captured_page_changes.back() == &"main_menu", "rejected settings open emitted a false settings page commit")
+	_require(captured_page_changes == [&"main_menu"], "rejected settings open emitted a false or duplicate page commit")
+	var recovered: Dictionary = shell.get_navigation_transition_snapshot()
+	var last_result := recovered.get("last_result", {}) as Dictionary
+	var recovery := last_result.get("recovery", {}) as Dictionary
+	_require(StringName(recovered.get("state", &"")) == &"idle", "rejected settings route left coordinator busy")
+	_require(StringName(last_result.get("outcome", &"")) == &"failed", "rejected settings route did not record failure")
+	_require(StringName(last_result.get("reason_code", &"")) == &"route_commit_failed", "rejected settings route recorded the wrong reason")
+	_require(int(last_result.get("commit_count", 0)) == 1, "rejected settings route attempted an invalid number of commits")
+	_require(StringName(recovery.get("focus_id", &"")) == &"settings", "rejected settings route lost source focus recovery")
+	_require(StringName(main.get("current_focus")) == &"settings", "rejected settings route did not restore settings focus state")
+	var focus_owner := root.gui_get_focus_owner()
+	_require(focus_owner == settings_button, "rejected settings route did not restore the settings button focus owner")
 	if shell.is_connected("page_changed", callback):
 		shell.disconnect("page_changed", callback)
 	rejecting_manager.queue_free()
