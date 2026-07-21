@@ -21,7 +21,7 @@
 
 ```text
 I2 stage: ACTIVE
-I2 runtime implementation: AUTHORIZED_BY_SUBSLICE_GATE / NOT_STARTED / NOT_CLAIMED
+I2 runtime implementation: AUTHORIZED_BY_SUBSLICE_GATE / IN_PROGRESS / NOT_CLAIMED
 I2 capability promotion: NONE
 I2 final validation/handoff: NOT_CREATED
 entry HEAD: b77132b9de655b36f71c930a35a191c383b55522
@@ -31,12 +31,12 @@ entry full/head: 39/39 PASS
 | Slice | 范围 | 依赖 | 当前状态 | 当前证据/下一门 |
 | --- | --- | --- | --- | --- |
 | I2.0 | 启动审计、契约、评估、矩阵、架构、验证计划、门账、入口 | I1 closed + exact entry baseline | `ACCEPTED_WITH_NOTES` | 独立复核修正 I1/I2 报告字段后，16/16 allowed paths、43/43 IDs、refs/UTF-8/YAML basic/diff/static 与 quick 21/21 PASS；无 runtime claim |
-| I2.1 | 共享导航/转场、设置、focus/modal、character presentation、style/layer seam | I2.0；设置字段与动画技术决策 | `READY` | I2.1A 状态/生命周期与 I2.1B 设置/输入基础已冻结精确路径；跨文件集成仍需后续 gate |
+| I2.1 | 共享导航/转场、设置、focus/modal、character presentation、style/layer seam | I2.0；设置字段与动画技术决策 | `IN_PROGRESS` | I2.1A/B/C 的路由、真实设置、输入、focus 与生命周期基础已 `READY_FOR_REVIEW`；character/transition/style seam 随 I2.2 继续，不提前关闭 I2.1 |
 | I2.2 | 主菜单文字/场景/锚点/动效/空间转场 | I2.1 最小 seam | `NOT_STARTED` | 需四入口动态标准、素材复用清单、回退到现有 fade |
 | I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `NOT_STARTED` | 需八地图 ID no-regression、真实命令与批量售卖门 |
 | I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `NOT_STARTED` | 先证明任务/成就/红点/领取不丢失，再改 Goal 入口 |
-| I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `AUDIT_REQUIRED` | 仅独立的 I2.5A 既有结果框/协议色板/物品 binding 治理为 `READY`；其余局内职责未授权 |
-| I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `NOT_STARTED` | 需 deterministic、结算幂等、1/3/5 敌人 PERF 与失败路径 |
+| I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `AUDIT_REQUIRED` | 独立 I2.5A 结果框/协议色板/物品 binding 已 `READY_FOR_REVIEW`；其余局内职责仍待分项授权 |
+| I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `IN_PROGRESS` | I2.6A v2 工作负载与 I2.6B pre-authority combat asset admission 已 `READY_FOR_REVIEW`；特殊房、结算与 visible 验收仍待后续 gate |
 | I2.7 | 跨页面整合、操作说明、全量回归、综合验收 | I2.1–I2.6 accepted/deferred with owner | `NOT_STARTED` | full/worktree→commit→full/head；matrix 逐项；创建唯一 validation/handoff |
 
 ## 3. 全局进入门
@@ -185,7 +185,7 @@ Python 环境未安装 PyYAML，因此 YAML 自检使用严格的当前文件子
 ### 10.1 I2.1A 状态权威与页面生命周期
 
 ```text
-status: READY
+status: READY_FOR_REVIEW
 feedback: MAIN-04(partial), DEP-03(no-regression), DEP-07, DEP-10, LONG-01(partial), CROSS-01, CROSS-04, CROSS-05, CROSS-08
 rollback: 75f2168 (I2.0 accepted baseline)
 ```
@@ -212,7 +212,7 @@ Godot/GraytailGodot/tests/i2_route_authority_lifecycle_runner.gd
 ### 10.2 I2.1B 设置、运行时输入与焦点基础
 
 ```text
-status: READY (foundation only; AppShell/Run integration not yet authorized)
+status: READY_FOR_REVIEW (foundation accepted by production integration gate)
 feedback: MAIN-05, MAIN-02(partial), DEP-01(partial), LONG-01(partial), RUN-02(partial), RUN-10(partial), RUN-11(partial), CROSS-05, CROSS-07, CROSS-08
 rollback: 75f2168 (I2.0 accepted baseline)
 ```
@@ -235,10 +235,37 @@ Godot/GraytailGodot/tests/i2_accessibility_runtime_runner.gd                 # n
 
 保护/禁止：`project.godot`、AppShell/RunScene/页面 shell（待 I2.1A review 后另开 integration gate）、scene/resource/asset/import/translation、SaveAdapter/meta/run 存档、I1 manifest。SettingsManager 独占 committed/applied/draft/rollback，使用独立版本化 `user://settings.cfg`、原子临时文件/备份/未来 schema 保护；危险显示设置 15 秒确认，取消/超时/关闭恢复完整 rollback。`RuntimeInputProfile` 在运行时幂等补手柄事件，保留键盘且绝不保存 ProjectSettings。测试必须注入隔离路径/显示适配器，不污染玩家偏好或桌面窗口。
 
+### 10.2.1 I2.1C 设置生产接线与真实面板挂载
+
+```text
+status: READY_FOR_REVIEW (production integration)
+feedback: MAIN-05, MAIN-02(partial), DEP-01(partial), LONG-01(partial), CROSS-05, CROSS-07, CROSS-08
+rollback: ff66de2 (first runtime slice gates)
+```
+
+独立复核确认 foundation 的 `reduce_motion` 只在三张页面 `_ready()` 时读取一次，玩家应用或危险设置回滚后不会即时更新；AppShell 的设置弹层仍是无真实消费者的视觉占位。该切片授权 AppShell 成为唯一运行时 fan-out 与默认 SettingsManager/SettingsPanel 组合 owner：可注入 manager 供测试，也可在无 autoload 时创建单一 owned manager；`settings_applied/settings_reverted` 必须即时传播到 Main/Deploy/Long，隐藏页不得被恢复，进行中的 Tween/转场必须吸附到可理解终态。真实设置入口必须挂载 `SettingsPanel`，不得继续显示假按钮或用视觉状态冒充保存成功。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+docs/30_engineering/godot/I2_VALIDATION_PREVIEW_AND_MANUAL_REVIEW_PLAN.md
+Godot/GraytailGodot/scripts/core/settings/settings_manager.gd
+Godot/GraytailGodot/scripts/ui/settings/settings_panel.gd
+Godot/GraytailGodot/scripts/ui/app_shell/app_shell.gd
+Godot/GraytailGodot/scripts/ui/main_menu/main_menu_shell.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_shell.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_shell.gd
+Godot/GraytailGodot/tests/i2_settings_shell_wiring_runner.gd
+tools/i1/validation_manifest.json
+```
+
+保护/禁止：`project.godot`、RunScene/RunStateMachine、scene/resource/asset/import/translation、SaveAdapter/meta/run 存档及五个冻结字段以外的伪设置。动态门覆盖真实 SettingsPanel 提交、同步回刷竞态、Main 半途转场 snap、Deploy/Long Tween 与粒子、危险显示项超时完整 rollback、跨页隐藏时钟、manager 重绑、默认 production owner、打开/关闭/焦点，以及旧 ART21/22/23/route/accessibility/settings 回归。
+
 ### 10.3 I2.5A 既有视觉资产接线与物品绑定治理
 
 ```text
-status: READY (isolated presentation/asset-governance slice only)
+status: READY_FOR_REVIEW (isolated presentation/asset-governance slice only)
 feedback: RUN-05(partial), RUN-08(partial), RUN-10(partial), RUN-12(partial), CROSS-03, CROSS-04, CROSS-05, CROSS-07
 rollback: 75f2168 (I2.0 accepted baseline)
 ```
@@ -260,9 +287,85 @@ Godot/GraytailGodot/tests/i2_asset_binding_runner.gd                         # n
 
 只读来源：`assets/art24/ui/result/`、`assets/art24/ui/protocol/`、已登记 ART24/ART25 物品输出。保护/禁止：全部图片本体、scene/resource/`.uid`/import metadata、七个 `asset_manifest.*.translation`、`project.godot`、UE/外部目录、领域/结算权威、I1 manifest。定向 probe/runner 后跑 ui + quick；视觉 capture 仍标 `VISUAL_REVIEW_REQUIRED`，不能以纹理路径断言替代动态标题、压力变化和颜色冗余人工复核。
 
+### 10.4 I2.6A 真实战斗工作负载性能基线
+
+```text
+status: READY_FOR_REVIEW (measurement only; no GPU/visible claim)
+feedback: RUN-02(partial), RUN-10(partial), ROOM-01(performance baseline), CROSS-04, CROSS-05, CROSS-08
+rollback: ff66de2 (first runtime slice gates)
+```
+
+现有 `I1_COMBAT_REFRESH` 只测命令触发的 UI refresh，`G41_IN_RUN_CORE_GAMEPLAY_RUNTIME` 只证明固定步长调度确定性；二者均不得被表述为玩家可见 FPS。I2.6A 使用真实 Main/Run/G41/RoomRuntimeView/ActorView 路径，固定 seed、1280×720、GL compatibility，以 `workload_schema=v2` 运行 300 帧预热与 3600 帧采样，覆盖 1/3/5 敌人及持续补足 15 枚真实结构弹丸的峰值场景。v2 禁用 PlayerController/ActorView 自动 process，并在 presentation 计时内显式固定 60Hz 推进，阻止 headless 未限速 delta 低估动画与纹理应用成本；同时登记逐帧 visual-step 和自动 process 违规门。该 workload 在 production 容器内注入 roster/弹丸维护，不覆盖完整 encounter bootstrap；四场景同进程但逐场景重置 simulation/view/log，只用于场景内增长门。headless 只产出 CPU/模拟/快照/呈现/生命周期基线；GPU、显存与玩家可见 FPS 必须由同一 runner 的 visible 工作流另行验收。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+docs/30_engineering/godot/I2_VALIDATION_PREVIEW_AND_MANUAL_REVIEW_PLAN.md
+Godot/GraytailGodot/tests/i2_combat_frame_baseline_runner.gd             # new
+tools/i1/validation_manifest.json
+tools/i1/invoke_i1.ps1
+tools/i1/validate_static.ps1
+```
+
+基线切片不得修改任何 production 脚本、scene/resource/project/assets/import/translation。首次门只阻断工作负载漂移、资源加载失败、纹理加载无法在最后十秒进入平台、12-step 饱和、持续内存增长与节点/资源未回收；预热后仍发生的 late load 必须如实登记为后续 I2.6 优化债，I2.6 完成门再收紧为预热后 `loads_delta == 0`。不得在取得同机同 executable 五次结果前伪造相对性能阈值。runner 纳入独立 `performance` profile 与 full，不纳入 quick；严格登记 cleanup contract。visible 模式每场景至少运行 60 秒，且不能用 dummy renderer 的 `TIME_FPS` 代替可见验收。
+
+### 10.5 I2.6B combat actor 纹理生产预热
+
+```text
+status: READY_FOR_REVIEW (pre-authority admission with exact zero-late-load gate)
+feedback: RUN-02(partial), ROOM-01(performance), CROSS-04, CROSS-05
+rollback: ff66de2 (first runtime slice gates)
+```
+
+只读资产与 consumer 检查确认：当前生产可达的玩家动态帧为 36 张，slime/slimeling/bat/drone base 动态帧去重后为 35 张，合计 71 张；声明路径全部存在。源 PNG 合计约 1.681 MiB，按无 mipmap RGBA 解码约 6.393 MiB，允许在进入 Run 时一次性常驻预热；GPU/显存与启动体感仍由 visible 门复核。projectile 专用贴图、player interact、ironback 与 laser FX 不在本切片的生产 consumer 边界内，不得据此声称“整个 Run 零纹理加载”。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+docs/30_engineering/godot/I2_VALIDATION_PREVIEW_AND_MANUAL_REVIEW_PLAN.md
+Godot/GraytailGodot/scripts/presentation/runtime_texture_cache.gd
+Godot/GraytailGodot/scripts/presentation/art24/art24_runtime_animation_catalog.gd
+Godot/GraytailGodot/scripts/presentation/art24/art24_enemy_visual_catalog.gd
+Godot/GraytailGodot/scripts/core/run/run_scene.gd
+Godot/GraytailGodot/tests/i2_combat_frame_baseline_runner.gd
+```
+
+`RuntimeTextureCache` 只提供 load-idempotent、按实际 cache 状态核对的 `prewarm(paths)` 机制，已缓存路径不得重复增加 request 指标；两个 catalog 各自声明生产路径；`RunScene` 是唯一组合 owner。新局路径必须先由 `_run_start_asset_admission()` 完成 71 张资源准入，再允许 `RunSceneRouteController` dispatch 权威启动命令；准入失败必须零 dispatch、保持 `run_active=false/phase=idle`、登记 degraded 状态并留在来源页。命令成功后 `_show_run_screen()` 只做同一集合的幂等复核与玩法层启用；当前主场景初始化会先消费 2 张隐藏玩家 idle 纹理，因此本门不声称“应用启动后零纹理加载”。不得把准入放进 simulation、ActorView spawn 或测试桩，也不得用 fallback 掩盖缺图。动态门固定为 `ok=true`、declared/cached=71、missing/failure/rejected=0；show-time 复核必须 `already_cached=71/loaded=0`，四个正式场景的 cache `loads_delta/failures_delta/entries_delta` 必须全部为 0。production 集成门还必须证明真实 `_start_run_from_route()` 留下成功 admission 报告后才进入 running/Run；正式 teardown 首次至少释放 64 个 Resource，随后再执行一次 build→Run→teardown，第二次 Node/Resource/orphan 不得高于第一次稳定缓存平台容差（Resource +8）。
+
 ## 11. 首批并行写入规则
 
 - I2.1A、I2.1B foundation 与 I2.5A 的 allowed paths 互不重叠；任何代理发现需要越界必须停止并回报，不得自行扩大。
 - `tools/i1/validation_manifest.json` 由主审在合并三组 runner 后统一登记，避免并行冲突；未登记前新增 runner 只能定向执行，不能声称统一 profile 已覆盖。
 - 每组先交付 worktree diff、定向结果与未运行项；主审完成交叉 review、manifest 登记和 quick/ui/core/full 后才可把状态升级为 `READY_FOR_REVIEW`。
 - 运行时实现开始后 I2 仍保持 `ACTIVE`；不得创建 validation/handoff 或提升 capability。
+
+## 12. 首个运行时检查点复核记录（2026-07-22）
+
+本检查点只把 I2.1A/B/C、I2.5A 与 I2.6A/B 提交到 review 边界；不关闭 I2，不创建 validation/handoff，不宣称 I2.2–I2.7 已完成。独立复核先发现并随后验证关闭了三项问题：settings runner 精确 marker 与 manifest 错配；combat 资源准入晚于权威提交；teardown Resource 门允许不回落。最终 production 路径满足：准入失败零 dispatch；真实 `_start_run_from_route()` 先留存 71/71 admission 再进入 running；show-time 71 项全命中、0 新加载；Resource 405→160，重复生命周期仍为 160，orphan=0；设置打开失败回到 Main 且不误发 Settings page commit。复核后无未关闭 P0/P1，production callsite 与治理文字两项 P2 也已补门。
+
+```text
+manifest SHA-256: F2E8DEAEB6ADF8821EE1848C720302BCC32D5F9297777A46A9C7DAC01983F980
+
+quick/worktree: 28/28 PASS
+report: E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260721T223439295Z_f16a3375\report.json
+SHA-256: 0831418E9246DA870C0AE6FBB636ED76E2829995C76F644E8723B17850F66EBA
+
+ui/worktree: 29/29 PASS
+report: E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260721T223929897Z_3cfc50d5\report.json
+SHA-256: D77A21695292F8E2362F4DCC1F39ED9AD4E9611E12A4ADD406A6D4BA77332AC2
+
+core/worktree: 27/27 PASS
+report: E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260721T222341804Z_58dbd4b3\report.json
+SHA-256: 6231AA7D36430CFB80B5710EB1398C57F971D9CA4B5BC9EB9E363BA981139A09
+
+performance/worktree: 1/1 PASS; workload_schema=v2
+report: E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260721T222735091Z_3510c049\report.json
+SHA-256: B22687D496BFAC6BA9741A8CC45C33CFCC902DC77FA1A7D810F17DE71C688BE4
+
+git diff --check: PASS
+protected scene/resource/project/uid/translation/import dirty in I2 worktree: NONE
+full/worktree and exact full/head: NOT_RUN (reserved for I2.7 closeout)
+visible GPU/input-feel acceptance: NOT_RUN
+```

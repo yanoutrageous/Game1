@@ -79,6 +79,7 @@ var character_look_index := -1
 var next_character_look := CHARACTER_FIRST_LOOK_SECONDS
 var focus_before_modal: Control
 var collapse_tween: Tween
+var page_active := true
 
 
 func build(model: Dictionary = {}) -> void:
@@ -97,8 +98,7 @@ func build(model: Dictionary = {}) -> void:
 	_build_primary_actions()
 	_build_cancel_modal()
 	_refresh_all(true)
-	set_process(not reduced_motion)
-	set_process_unhandled_input(true)
+	set_page_active(true)
 	call_deferred("_grab_initial_focus")
 
 
@@ -112,6 +112,74 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	_refresh_all(true)
 
 
+func set_page_active(value: bool) -> void:
+	page_active = value
+	if page_active:
+		process_mode = Node.PROCESS_MODE_INHERIT
+		set_process(not reduced_motion)
+		set_process_input(true)
+		set_process_unhandled_input(true)
+		for particles in ambient_particles:
+			if particles != null:
+				particles.emitting = not reduced_motion
+		if reduced_motion:
+			_freeze_motion()
+		if is_visible_in_tree():
+			call_deferred("_grab_initial_focus")
+		return
+	set_process(false)
+	set_process_input(false)
+	set_process_unhandled_input(false)
+	if collapse_tween != null and collapse_tween.is_valid():
+		collapse_tween.kill()
+	if parchment_group != null:
+		parchment_group.position = DeployPrepLayoutContractScript.COLLAPSED_OFFSET if parchment_collapsed else Vector2.ZERO
+	for particles in ambient_particles:
+		if particles != null:
+			particles.emitting = false
+	if is_inside_tree():
+		var focus := get_viewport().gui_get_focus_owner()
+		if focus != null and (focus == self or is_ancestor_of(focus)):
+			get_viewport().gui_release_focus()
+	process_mode = Node.PROCESS_MODE_DISABLED
+
+
+func is_page_active() -> bool:
+	return page_active
+
+
+func set_reduced_motion_enabled(value: bool) -> void:
+	if reduced_motion == value:
+		if reduced_motion:
+			_freeze_motion()
+		if page_active:
+			set_process(not reduced_motion)
+		for particles in ambient_particles:
+			if particles != null:
+				particles.emitting = page_active and not reduced_motion
+		return
+	reduced_motion = value
+	if collapse_tween != null and collapse_tween.is_valid():
+		collapse_tween.kill()
+	if parchment_group != null:
+		parchment_group.position = DeployPrepLayoutContractScript.COLLAPSED_OFFSET if parchment_collapsed else Vector2.ZERO
+	if reduced_motion:
+		_freeze_motion()
+		if card_scroll != null:
+			card_scroll.modulate = Color.WHITE
+		if modal_layer != null:
+			modal_layer.modulate = Color.WHITE
+	if page_active:
+		set_process(not reduced_motion)
+	for particles in ambient_particles:
+		if particles != null:
+			particles.emitting = page_active and not reduced_motion
+
+
+func is_reduced_motion_enabled() -> bool:
+	return reduced_motion
+
+
 func show_tab(tab_id: StringName) -> void:
 	var normalized := _normalize_tab_id(tab_id)
 	if current_model.is_empty():
@@ -123,7 +191,7 @@ func show_tab(tab_id: StringName) -> void:
 	current_model = DeployPrepModelScript.model_with_tab(current_model, normalized)
 	_restore_model_state(normalized)
 	_refresh_all(true)
-	if not reduced_motion and card_scroll != null:
+	if page_active and not reduced_motion and card_scroll != null:
 		Art10UISkinKitScript.play_panel_open(card_scroll)
 
 
@@ -138,7 +206,7 @@ func set_parchment_collapsed(value: bool, animate: bool = true) -> void:
 	if collapse_tween != null and collapse_tween.is_valid():
 		collapse_tween.kill()
 	var target := DeployPrepLayoutContractScript.COLLAPSED_OFFSET if value else Vector2.ZERO
-	var duration := 0.0 if reduced_motion or not animate else 0.28
+	var duration := 0.0 if not page_active or reduced_motion or not animate else 0.28
 	if duration <= 0.0:
 		parchment_group.position = target
 	else:
@@ -575,8 +643,8 @@ func _on_filter_pressed(filter_id: StringName) -> void:
 func _on_card_pressed(card_id: StringName) -> void:
 	var scroll_value := card_scroll.scroll_vertical if card_scroll != null else 0
 	var active_tab := _active_tab()
-	if _has_active_run() and active_tab in [DeployTabModelScript.TAB_WAREHOUSE, DeployTabModelScript.TAB_CLAIM]:
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, "当前探索进行中，出勤实例已锁定；请继续本局或确认放弃。")
+	if _has_active_run() and active_tab in [DeployTabModelScript.TAB_MAP, DeployTabModelScript.TAB_OBJECTIVE, DeployTabModelScript.TAB_WAREHOUSE, DeployTabModelScript.TAB_CLAIM]:
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "当前探索进行中，地图、委托与出勤实例均以当局记录为准；请继续本局或确认放弃。")
 		_refresh_summary()
 		Art10UISkinKitScript.play_feedback_pulse(primary_action_button, &"warning", 0.5)
 		return
@@ -708,7 +776,7 @@ func _request_appearance() -> void:
 
 
 func _process(delta: float) -> void:
-	if not is_visible_in_tree():
+	if not page_active or not is_visible_in_tree():
 		return
 	if reduced_motion:
 		_freeze_motion()
@@ -848,10 +916,16 @@ func _freeze_motion() -> void:
 	var summary_root := _root(&"SideStatusRoot")
 	if summary_root != null:
 		summary_root.position = Vector2.ZERO
+	var decoration_root := _root(&"DecorationRoot")
+	if decoration_root != null:
+		for node_name in summary_chain_bases.keys():
+			var chain := decoration_root.get_node_or_null(String(node_name)) as TextureRect
+			if chain != null:
+				chain.position = summary_chain_bases[node_name] as Vector2
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not is_visible_in_tree() or not event.is_action_pressed("ui_cancel"):
+	if not page_active or not is_visible_in_tree() or not event.is_action_pressed("ui_cancel"):
 		return
 	if modal_layer != null and modal_layer.visible:
 		_hide_cancel_modal()
@@ -978,7 +1052,7 @@ func _link_vertical(top: Button, bottom: Button) -> void:
 
 
 func _grab_initial_focus() -> void:
-	if not is_visible_in_tree():
+	if not page_active or not is_visible_in_tree():
 		return
 	var active_button := tab_buttons.get(_active_tab()) as Button
 	if active_button != null:

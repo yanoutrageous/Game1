@@ -216,6 +216,49 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
 
 阈值在第一次同条件 baseline 后由性能切片 gate 冻结。没有前后同条件数据时，不声明“性能优化”；combat refresh p95 只能保留为分项历史指标。
 
+### 8.3 I2.6A 真实战斗工作负载 runner
+
+`Godot/GraytailGodot/tests/i2_combat_frame_baseline_runner.gd` 使用 production `main.tscn -> RunScene -> G41InRunRuntime -> G41CombatSimulation -> G41RoomRuntimeView -> G41RuntimeActorView` 路径。runner 不修改 production 脚本；为得到分项时间，它关闭 `RunScene._process`、`PlayerController._process` 与全部 `G41RuntimeActorView._process` 的自动外层调度，再按生产顺序显式以 60Hz 驱动 simulation、domain event、snapshot、player projection、room presentation、PlayerController 和 ActorView，随后等待真实 SceneTree process frame。这样动画换帧和纹理应用属于 `presentation_sync`，不会消费 headless 未限速产生的微小 SceneTree delta。
+
+默认冻结 `workload_schema=v2`：
+
+- 每个场景预热 300 帧，采样至少 3600 帧，即 5 秒预热和 60 秒固定步模拟；
+- `enemy_1`：1 slime；
+- `enemy_3`：slime + bat + drone；
+- `enemy_5`：slime + 2 bat + 2 drone；
+- `projectile_peak`：1 drone，并用生产弹丸结构持续维持 15 枚弹丸；15 来自 5 bat × 3-shot spread 的容量预算；
+- 固定 1280×720、60Hz combat 与 visual step、seed、输入轨迹和 1,000,000 durable HP；headless 设 `Engine.max_fps=0`，visible 设 `Engine.max_fps=60` 且启用 VSync，结束后恢复原值；每帧结束前断言所有受控 PlayerController/ActorView 均未保留自动 process。
+- 该 workload 在 production 容器内注入固定敌人 roster，并在峰值场景维护弹丸数量；其 JSON 明示 `fixture_injected=true`、`production_encounter_bootstrap_covered=false`。四个场景同进程但每场景重置 simulation、view、HP、domain events、run event log 与 transaction log，故只能用于场景内增长门，不能把四场景数据当作严格的跨场景相对内存基准。
+
+记录内容包括 frame total、同步工作总量、simulation、domain event、snapshot、presentation sync、engine process、process-frame interval、fixed steps/catch-up/12-step saturation、accumulator backlog，PlayerController/ActorView 固定推进次数与自动 process 违规数，敌人/弹丸/激光计数，RuntimeTextureCache 请求/加载/命中/失败，以及 Performance/OS static memory、peak、Node、Resource、orphan 数。ActorView 自身固定 `_process` 已计入 `presentation_sync`；`engine_process` 仍只代表其余 SceneTree 工作，二者都不能单独冒充完整呈现成本。
+
+headless 正式结构门为：四个场景和采样数准确；1/3/5 敌人数不漂移；弹幕场景每帧恰好 15 枚弹丸；steady schedule 每帧恰好 1 fixed step、无 catch-up、无 12-step saturation、无 accumulator backlog；PlayerController 每个固定帧恰好推进一次、每个活动 ActorView 每帧恰好推进一次且自动 process 违规为零；cache failure 为零且最后十秒加载数进入平台；前十秒与后十秒 static memory 中位数增长不超过 2 MiB；Node 中位数漂移容差 64、Resource 中位数增长容差 8、orphan 恒为零；首次销毁后 Node 回到启动基线 +4 内，并且从 runtime-loaded 平台至少释放 64 个 Resource。随后必须再执行一次 build→Run→teardown，第二次 Node/orphan 不高于第一次稳定平台，第二次 Resource 不得高于第一次 after +8；这证明重复生命周期不持续增长，不声称 Godot Resource 缓存回到进程启动计数。以上是结构/生命周期门，不是冻结后的性能改善门槛。
+
+I2.6B 将 combat actor cache 完成门收紧到生产资源准入后的绝对零迟加载：`Art24RuntimeAnimationCatalog` 声明 36 张玩家动态帧，`Art24EnemyVisualCatalog` 声明 35 张去重后的生产敌人动态帧；`RunScene._run_start_asset_admission()` 在权威启动命令 dispatch 前通过 `RuntimeTextureCache.prewarm()` 组合并核对 71 张，失败时不得提交 active run；命令成功后 `_show_run_screen()` 再做 load-idempotent 复核。正式 runner 实例化 `main.tscn` 前清理一次测试 cache，随后不得逐场景清理或私自加载。准入报告必须满足 `ok=true`、`declared=cached=71` 且 `missing=failures=rejected=0`，show-time 报告必须 `already_cached=71/loaded=0`；每个场景从 setup、warmup 到 sample 的 `loads_delta/failures_delta/entries_delta` 均必须为 0。生产 route 集成 runner 另行锁定 `_start_run_from_route()` 已传入 admission Callable，避免测试手工顺序掩盖真实接线遗漏。当前主场景初始化先消费 2 张隐藏玩家 idle 纹理，本结论因此只覆盖 Run 准入后的迟加载，不声称应用启动后零加载；也不覆盖程序绘制 projectile/laser、房间背景或物品 UI。
+
+在主审把 runner 登记到 I1 manifest 后，正式执行优先使用 harness 的 per-case `APPDATA`/`USERPROFILE` 隔离。登记前定向执行必须显式隔离 `user://`：
+
+```powershell
+$i2Repo = git rev-parse --show-toplevel
+$perfUser = Join-Path $i2Repo '.tmp\i2\perf-user'
+New-Item -ItemType Directory -Force -Path `
+  $perfUser, `
+  (Join-Path $perfUser 'AppData\Roaming'), `
+  (Join-Path $perfUser 'AppData\Local') | Out-Null
+$env:USERPROFILE = $perfUser
+$env:APPDATA = Join-Path $perfUser 'AppData\Roaming'
+$env:LOCALAPPDATA = Join-Path $perfUser 'AppData\Local'
+$godot = 'E:\Godot\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe'
+& $godot --headless `
+  --path (Join-Path $i2Repo 'Godot\GraytailGodot') `
+  --log-file (Join-Path $i2Repo '.tmp\i2\combat-frame-formal.log') `
+  --script (Join-Path $i2Repo 'Godot\GraytailGodot\tests\i2_combat_frame_baseline_runner.gd')
+```
+
+正式 headless 成功标记严格为 `I2_COMBAT_FRAME_BASELINE=PASS`。开发期可追加 `-- --i2-perf-smoke`，缩短为 30 + 120 帧；其标记是独立的 `I2_COMBAT_FRAME_BASELINE_SMOKE=PASS`，不能当正式基线。
+
+headless display driver 没有真实 GPU 输出，`TIME_FPS` 也不能代表玩家实际 FPS。同一 runner 仅在显式 `-- --i2-perf-visible` 且非 headless 时进入 visible 模式；此模式每场景同时满足至少 3600 帧和 60 个墙钟秒，只输出 `I2_COMBAT_FRAME_VISIBLE=MEASURED_NOT_ACCEPTED workload_schema=v2`。visible 数据仍需人工核对真实窗口、掉帧和交互手感，不能由 headless PASS 替代。
+
 ## 9. 切片证据记录模板
 
 ```text

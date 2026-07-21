@@ -12,6 +12,7 @@ const PlayerScene := preload("res://scenes/player/player.tscn")
 const G9ShellPanelScript := preload("res://scripts/ui/shell/g9_shell_panel.gd")
 const AppShellScript := preload("res://scripts/ui/app_shell/app_shell.gd")
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
+const PageRouterScript := preload("res://scripts/ui/app_shell/page_router.gd")
 const InventoryPanelScript := preload("res://scripts/ui/inventory/inventory_panel.gd")
 const GroundLootPanelScript := preload("res://scripts/ui/ground_loot/ground_loot_panel.gd")
 const LootResultPanelScript := preload("res://scripts/ui/loot_result/loot_result_panel.gd")
@@ -37,6 +38,9 @@ const RunSceneRefreshControllerScript := preload("res://scripts/core/run/run_sce
 const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
 const G41RoomRuntimeViewScript := preload("res://scripts/gameplay/runtime/g41_room_runtime_view.gd")
 const Art25GameplayBackdropScript := preload("res://scripts/presentation/art25_gameplay_backdrop.gd")
+const RuntimeTextureCacheScript := preload("res://scripts/presentation/runtime_texture_cache.gd")
+const Art24RuntimeAnimationCatalogScript := preload("res://scripts/presentation/art24/art24_runtime_animation_catalog.gd")
+const Art24EnemyVisualCatalogScript := preload("res://scripts/presentation/art24/art24_enemy_visual_catalog.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
@@ -121,6 +125,9 @@ var last_command_result: Dictionary = {}
 var m1_debug_panel_enabled: bool = false
 var pause_exit_confirm_pending: bool = false
 var refresh_controller
+var last_combat_texture_prewarm_report: Dictionary = {}
+var last_combat_texture_preflight_report: Dictionary = {}
+var combat_texture_prewarm_degraded: bool = false
 
 
 func _ready() -> void:
@@ -697,15 +704,21 @@ func _show_long_term_shell(entry_id: StringName = &"tasks") -> void:
 	_hide_runtime_popups()
 
 
-func _show_settings_shell() -> void:
-	screen_state = SCREEN_SETTINGS
+func _show_settings_shell() -> bool:
 	_set_gameplay_visible(false)
-	ui_shell.call("show_settings")
+	var opened := bool(ui_shell.call("show_settings"))
+	screen_state = SCREEN_SETTINGS if opened else SCREEN_MAIN_MENU
 	run_overlay_root.visible = false
 	_hide_runtime_popups()
+	return opened
 
 
-func _show_run_screen() -> void:
+func _show_run_screen() -> bool:
+	var prewarm_report := _prewarm_combat_actor_textures()
+	if not bool(prewarm_report.get("ok", false)):
+		_record_combat_texture_prewarm_failure(prewarm_report)
+		return false
+	combat_texture_prewarm_degraded = false
 	screen_state = SCREEN_RUN
 	_set_gameplay_visible(true)
 	ui_shell.visible = false
@@ -715,6 +728,46 @@ func _show_run_screen() -> void:
 	if debug_panel != null:
 		debug_panel.visible = false
 	_refresh_view_models()
+	return true
+
+
+func _prewarm_combat_actor_textures() -> Dictionary:
+	var paths: Array[String] = []
+	paths.append_array(Art24RuntimeAnimationCatalogScript.production_texture_paths())
+	paths.append_array(Art24EnemyVisualCatalogScript.production_texture_paths())
+	last_combat_texture_prewarm_report = RuntimeTextureCacheScript.prewarm(paths)
+	return last_combat_texture_prewarm_report.duplicate(true)
+
+
+func _run_start_asset_admission() -> Dictionary:
+	var report := _prewarm_combat_actor_textures()
+	report["status"] = &"combat_actor_assets_ready" if bool(report.get("ok", false)) else &"combat_texture_prewarm_failed"
+	if not bool(report.get("ok", false)):
+		report["reason_code"] = &"combat_actor_assets_unavailable"
+	last_combat_texture_preflight_report = report.duplicate(true)
+	combat_texture_prewarm_degraded = not bool(report.get("ok", false))
+	return report
+
+
+func _record_combat_texture_prewarm_failure(prewarm_report: Dictionary) -> void:
+	combat_texture_prewarm_degraded = true
+	last_command_result = {
+		"ok": false,
+		"status": &"combat_texture_prewarm_failed",
+		"reason": &"combat_actor_assets_unavailable",
+		"prewarm_report": prewarm_report.duplicate(true),
+	}
+	_show_command_feedback(last_command_result)
+	push_error(
+		"Combat actor texture prewarm failed: cached=%d/%d missing=%d failures=%d rejected=%d"
+		% [
+			int(prewarm_report.get("cached", 0)),
+			int(prewarm_report.get("declared", 0)),
+			int(prewarm_report.get("missing", 0)),
+			int(prewarm_report.get("failures", 0)),
+			int(prewarm_report.get("rejected", 0)),
+		]
+	)
 
 
 func _set_gameplay_visible(visible: bool) -> void:
@@ -728,6 +781,8 @@ func _set_gameplay_visible(visible: bool) -> void:
 		gameplay_backdrop.visible = visible
 	if ui_shell != null:
 		ui_shell.visible = not visible
+		if ui_shell.has_method("set_shell_active"):
+			ui_shell.call("set_shell_active", not visible)
 
 
 func _show_pause_panel() -> void:
@@ -838,17 +893,10 @@ func _on_app_shell_host_route_requested(intent: Dictionary) -> void:
 
 
 func _on_app_shell_page_changed(page_id: StringName, _payload: Dictionary) -> void:
-	match page_id:
-		&"deploy_prep":
-			screen_state = SCREEN_DEPLOY
-		&"long_term":
-			screen_state = SCREEN_LONG_TERM
-		&"settings_placeholder":
-			screen_state = SCREEN_SETTINGS
-		&"main_menu":
-			screen_state = SCREEN_MAIN_MENU
-		_:
-			return
+	var next_screen_state := PageRouterScript.screen_state_for_page(page_id)
+	if next_screen_state == &"":
+		return
+	screen_state = next_screen_state
 	_set_gameplay_visible(false)
 	if run_overlay_root != null:
 		run_overlay_root.visible = false
@@ -1829,22 +1877,17 @@ func _on_tutorial_popup_confirmed() -> void:
 
 
 func _start_tutorial_from_ui() -> void:
-	var result: Dictionary = command_bus.dispatch(&"start_tutorial_run")
-	last_command_result = result.duplicate(true)
-	_show_command_feedback(result)
-	if player_controller != null:
-		player_controller.reset_local_position()
-	_show_run_screen()
+	_start_run_from_route(NavigationIntentScript.make_run(
+		&"run_scene_debug",
+		{"route_mode": &"tutorial_run", "entry_id": &"debug_tutorial_run", "uses_existing_route": true}
+	))
 
 
 func _start_standard_from_ui() -> void:
-	var result: Dictionary = command_bus.dispatch(&"start_standard_run")
-	last_command_result = result.duplicate(true)
-	_show_command_feedback(result)
-	if player_controller != null:
-		player_controller.reset_local_position()
-	Art21R2RunSmokeSeederScript.seed_if_requested(result, command_bus, run_context)
-	_show_run_screen()
+	_start_run_from_route(NavigationIntentScript.make_run(
+		&"run_scene_debug",
+		{"route_mode": &"standard_run", "entry_id": &"debug_standard_run", "uses_existing_route": true}
+	))
 
 
 func _start_run_from_route(intent: Dictionary) -> void:
@@ -1862,13 +1905,24 @@ func _start_run_from_route(intent: Dictionary) -> void:
 		if not bool(abandon_result.get("ok", false)):
 			_show_deploy_shell(&"config")
 		return
-	var route_result := RunSceneRouteControllerScript.start_from_intent(intent, command_bus)
+	var route_result := RunSceneRouteControllerScript.start_from_intent(
+		intent,
+		command_bus,
+		Callable(self, "_run_start_asset_admission")
+	)
+	var admission_result: Dictionary = route_result.get("admission_result", {})
+	if not bool(route_result.get("ok", false)) and not admission_result.is_empty() and not bool(admission_result.get("ok", false)):
+		_record_combat_texture_prewarm_failure(admission_result)
+		return
 	var command_result: Dictionary = route_result.get("command_result", route_result)
-	last_command_result = command_result.duplicate(true)
-	_show_command_feedback(command_result)
+	var feedback_result := command_result
+	if bool(command_result.get("ok", false)) and not bool(route_result.get("ok", false)):
+		feedback_result = route_result
+	last_command_result = feedback_result.duplicate(true)
+	_show_command_feedback(feedback_result)
 	if bool(route_result.get("player_reset_requested", false)) and player_controller != null:
 		player_controller.reset_local_position()
-	if bool(command_result.get("ok", false)):
+	if bool(route_result.get("ok", false)):
 		Art21R2RunSmokeSeederScript.seed_if_requested(command_result, command_bus, run_context)
 	if bool(route_result.get("run_screen_requested", false)):
 		_show_run_screen()

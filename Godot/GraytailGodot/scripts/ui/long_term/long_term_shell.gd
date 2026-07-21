@@ -129,6 +129,9 @@ var archive_context_secondary_id: StringName = &"task"
 var reduced_motion := false
 var module_tween: Tween
 var collapse_tween: Tween
+var content_tween: Tween
+var page_active := true
+var lifecycle_generation := 0
 var character_elapsed := 0.0
 var character_frame_index := 0
 var character_look_index := -1
@@ -137,6 +140,7 @@ var ambient_elapsed := 0.0
 var last_cancel_press_msec := -CANCEL_DEBOUNCE_MSEC
 var warm_glow: ColorRect
 var blue_glow: ColorRect
+var ambient_particles: Array[CPUParticles2D] = []
 
 
 func build(model: Dictionary = {}) -> void:
@@ -157,8 +161,7 @@ func build(model: Dictionary = {}) -> void:
 	_build_archive_lever()
 	_apply_module_immediately(displayed_module_id)
 	_refresh_profile()
-	set_process(not reduced_motion)
-	set_process_input(true)
+	set_page_active(true)
 	call_deferred("_grab_long_term_initial_focus")
 
 
@@ -169,13 +172,109 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	_refresh_content()
 
 
+func set_page_active(value: bool) -> void:
+	var was_active := page_active
+	page_active = value
+	if page_active:
+		process_mode = Node.PROCESS_MODE_INHERIT
+		set_process(not reduced_motion)
+		set_process_input(true)
+		set_process_unhandled_input(true)
+		for particles in ambient_particles:
+			if particles != null:
+				particles.emitting = not reduced_motion
+		if reduced_motion:
+			_apply_reduced_motion_pose()
+		if is_visible_in_tree():
+			call_deferred("_grab_long_term_initial_focus")
+		return
+	set_process(false)
+	set_process_input(false)
+	set_process_unhandled_input(false)
+	if was_active:
+		lifecycle_generation += 1
+	if module_tween != null and module_tween.is_valid():
+		module_tween.kill()
+	if collapse_tween != null and collapse_tween.is_valid():
+		collapse_tween.kill()
+	if content_tween != null and content_tween.is_valid():
+		content_tween.kill()
+	if module_group != null:
+		_apply_module_immediately(requested_module_id)
+		module_group.position = LongTermLayoutContractScript.COLLAPSED_OFFSET if archive_collapsed else Vector2.ZERO
+	for particles in ambient_particles:
+		if particles != null:
+			particles.emitting = false
+	if is_inside_tree():
+		var focus := get_viewport().gui_get_focus_owner()
+		if focus != null and (focus == self or is_ancestor_of(focus)):
+			get_viewport().gui_release_focus()
+	process_mode = Node.PROCESS_MODE_DISABLED
+
+
+func is_page_active() -> bool:
+	return page_active
+
+
+func set_reduced_motion_enabled(value: bool) -> void:
+	if reduced_motion == value:
+		if reduced_motion:
+			_settle_motion_transitions()
+		if page_active:
+			set_process(not reduced_motion)
+		for particles in ambient_particles:
+			if particles != null:
+				particles.emitting = page_active and not reduced_motion
+		return
+	reduced_motion = value
+	if reduced_motion:
+		lifecycle_generation += 1
+		_settle_motion_transitions()
+		_apply_reduced_motion_pose()
+	if page_active:
+		set_process(not reduced_motion)
+	for particles in ambient_particles:
+		if particles != null:
+			particles.emitting = page_active and not reduced_motion
+
+
+func is_reduced_motion_enabled() -> bool:
+	return reduced_motion
+
+
+func _settle_motion_transitions() -> void:
+	if module_tween != null and module_tween.is_valid():
+		module_tween.kill()
+	if collapse_tween != null and collapse_tween.is_valid():
+		collapse_tween.kill()
+	if content_tween != null and content_tween.is_valid():
+		content_tween.kill()
+	if module_group != null:
+		_apply_module_immediately(requested_module_id)
+		module_group.position = LongTermLayoutContractScript.COLLAPSED_OFFSET if archive_collapsed else Vector2.ZERO
+	for node in _content_transition_nodes():
+		node.modulate = Color.WHITE
+
+
+func _apply_reduced_motion_pose() -> void:
+	if character_texture != null and not character_frames.is_empty():
+		character_texture.texture = character_frames[0]
+	if warm_glow != null:
+		warm_glow.modulate.a = 0.52
+	if blue_glow != null:
+		blue_glow.modulate.a = 0.42
+	for particles in ambient_particles:
+		if particles != null:
+			particles.emitting = false
+
+
 func show_module(module_id: StringName = &"goals") -> void:
 	var normalized := _normalize_module_id(module_id)
 	selected_module_id = normalized
 	requested_module_id = normalized
 	_refresh_module_buttons()
 	call_deferred("_mark_current_module_viewed", normalized)
-	if not is_inside_tree() or reduced_motion:
+	if not page_active or not is_inside_tree() or reduced_motion:
 		_apply_module_immediately(normalized)
 		return
 	if normalized == displayed_module_id and transition_state == STATE_OPEN:
@@ -190,12 +289,14 @@ func show_secondary(group_id: StringName) -> void:
 	selected_secondary_by_module[displayed_module_id] = normalized
 	_refresh_secondary_buttons()
 	_refresh_content()
-	if not reduced_motion and content_panel_texture != null:
-		var tween := create_tween()
-		tween.set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if page_active and not reduced_motion and content_panel_texture != null:
+		if content_tween != null and content_tween.is_valid():
+			content_tween.kill()
+		content_tween = create_tween()
+		content_tween.set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		for node in _content_transition_nodes():
 			node.modulate.a = 0.72
-			tween.tween_property(node, "modulate:a", 1.0, 0.16)
+			content_tween.tween_property(node, "modulate:a", 1.0, 0.16)
 
 
 func get_selected_module_id() -> StringName:
@@ -228,7 +329,7 @@ func set_archive_collapsed(value: bool, animate: bool = true) -> void:
 	if collapse_tween != null and collapse_tween.is_valid():
 		collapse_tween.kill()
 	var target := LongTermLayoutContractScript.COLLAPSED_OFFSET if value else Vector2.ZERO
-	var duration := 0.0 if reduced_motion or not animate else 0.30
+	var duration := 0.0 if not page_active or reduced_motion or not animate else 0.30
 	if duration <= 0.0:
 		module_group.position = target
 	else:
@@ -246,6 +347,8 @@ func set_archive_collapsed(value: bool, animate: bool = true) -> void:
 
 
 func _process(delta: float) -> void:
+	if not page_active or not is_visible_in_tree():
+		return
 	ambient_elapsed += delta
 	_update_character(delta)
 	if warm_glow != null:
@@ -255,7 +358,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not is_visible_in_tree() or not event.is_action_pressed("ui_cancel"):
+	if not page_active or not is_visible_in_tree() or not event.is_action_pressed("ui_cancel"):
 		return
 	# A single Windows Escape gesture can surface as multiple pressed events.
 	# Keep it to one staged navigation step: expand -> secondary -> primary -> main.
@@ -445,6 +548,10 @@ func _build_archive_lever() -> void:
 
 
 func _run_switch_sequence() -> void:
+	if not page_active:
+		_apply_module_immediately(requested_module_id)
+		return
+	var generation := lifecycle_generation
 	switch_running = true
 	while requested_module_id != displayed_module_id:
 		transition_state = STATE_CLOSING
@@ -454,9 +561,15 @@ func _run_switch_sequence() -> void:
 		module_tween.set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 		module_tween.tween_property(module_group, "modulate:a", 0.0, 0.24)
 		module_tween.tween_property(module_group, "scale", Vector2(0.96, 0.96), 0.24)
-		await module_tween.finished
+		await get_tree().create_timer(0.24).timeout
+		if not _switch_sequence_is_current(generation):
+			return
+		module_group.modulate.a = 0.0
+		module_group.scale = Vector2(0.96, 0.96)
 		transition_state = STATE_CLOSED
 		await get_tree().create_timer(0.10).timeout
+		if not _switch_sequence_is_current(generation):
+			return
 		transition_state = STATE_SWITCHING
 		_apply_module_content(requested_module_id)
 		module_group.modulate.a = 0.0
@@ -466,9 +579,18 @@ func _run_switch_sequence() -> void:
 		module_tween.set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		module_tween.tween_property(module_group, "modulate:a", 1.0, 0.34)
 		module_tween.tween_property(module_group, "scale", Vector2.ONE, 0.34)
-		await module_tween.finished
+		await get_tree().create_timer(0.34).timeout
+		if not _switch_sequence_is_current(generation):
+			return
+		module_group.modulate = Color.WHITE
+		module_group.scale = Vector2.ONE
 		transition_state = STATE_OPEN
-	switch_running = false
+	if _switch_sequence_is_current(generation):
+		switch_running = false
+
+
+func _switch_sequence_is_current(generation: int) -> bool:
+	return page_active and generation == lifecycle_generation
 
 
 func _apply_module_immediately(module_id: StringName) -> void:
@@ -956,6 +1078,8 @@ func _mark_current_module_viewed(module_id: StringName) -> void:
 
 
 func _grab_long_term_initial_focus() -> void:
+	if not page_active or not is_visible_in_tree():
+		return
 	var selected := tab_buttons.get(selected_module_id, null) as Button
 	if selected != null:
 		selected.grab_focus()
@@ -1118,8 +1242,9 @@ func _add_particles(node_name: String, position: Vector2, extents: Vector2, amou
 	particles.scale_amount_min = 0.6
 	particles.scale_amount_max = 1.5
 	particles.color = color
-	particles.emitting = true
+	particles.emitting = page_active and not reduced_motion
 	add_child(particles)
+	ambient_particles.append(particles)
 
 
 func _texture(visual_key: StringName) -> Texture2D:
@@ -1164,6 +1289,8 @@ func _clear_children() -> void:
 		module_tween.kill()
 	if collapse_tween != null and collapse_tween.is_valid():
 		collapse_tween.kill()
+	if content_tween != null and content_tween.is_valid():
+		content_tween.kill()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -1173,3 +1300,4 @@ func _clear_children() -> void:
 	secondary_button_order.clear()
 	long_term_card_buttons.clear()
 	texture_cache.clear()
+	ambient_particles.clear()

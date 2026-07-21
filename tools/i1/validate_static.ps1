@@ -386,7 +386,7 @@ try {
         Add-I1ExactCleanupContractChecks -IdPrefix ('PREVIEW_CLEANUP_' + $sceneId.ToUpperInvariant()) -Diagnostics $expected
     }
 
-    $expectedProfiles = @('preflight', 'quick', 'core', 'ui', 'full')
+    $expectedProfiles = @('preflight', 'quick', 'core', 'ui', 'performance', 'full')
     foreach ($profileName in $expectedProfiles) {
         $profileProperty = $manifest.profiles.PSObject.Properties[$profileName]
         if ($null -eq $profileProperty) {
@@ -403,6 +403,7 @@ try {
     }
     $preflightIds = @($manifest.profiles.preflight.runner_ids)
     Add-I1Check -Id 'PREFLIGHT_HAS_NO_RUNNERS' -Passed ($preflightIds.Count -eq 0) -Detail 'preflight only validates infrastructure and isolation'
+    Add-I1Check -Id 'PERFORMANCE_PROFILE_EXACT' -Passed (Test-I1SameSet -Left @($manifest.profiles.performance.runner_ids) -Right @('I2_COMBAT_FRAME_BASELINE')) -Detail 'performance profile must run the frozen I2 combat workload only'
     Add-I1Check -Id 'FULL_PROFILE_COMPLETE' -Passed (Test-I1SameSet -Left @($manifest.profiles.full.runner_ids) -Right $requiredRunnerIds) -Detail 'full profile must equal required_runner_ids as a set'
 
     $i0ManifestPath = Resolve-I1RelativePath -Root $repo -RelativePath ([string]$manifest.i0_manifest_relative_path)

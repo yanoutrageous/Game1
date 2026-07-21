@@ -10,6 +10,8 @@ const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_ro
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
+const SettingsManagerScript := preload("res://scripts/core/settings/settings_manager.gd")
+const SettingsPanelScript := preload("res://scripts/ui/settings/settings_panel.gd")
 
 signal host_route_requested(intent: Dictionary)
 signal page_changed(page_id: StringName, payload: Dictionary)
@@ -19,12 +21,17 @@ var main_menu_shell: Control
 var deploy_page: Control
 var long_term_page: Control
 var settings_page: Control
+var settings_panel: PanelContainer
 var settings_close_button: Button
 var exit_confirm_panel: Control
 var exit_confirm_body: Label
+var settings_manager: Node
+var _owned_settings_manager: Node
 var current_snapshot: Dictionary = {}
 var _has_snapshot := false
 var _snapshot_revision := 0
+var _current_page_id: StringName = PageRouterScript.PAGE_MAIN_MENU
+var _shell_active := true
 var _page_snapshot_revisions: Dictionary = {
 	PageRouterScript.PAGE_MAIN_MENU: -1,
 	PageRouterScript.PAGE_DEPLOY_PREP: -1,
@@ -40,12 +47,17 @@ var _snapshot_refresh_counts: Dictionary = {
 func build() -> void:
 	_clear_children()
 	_reset_page_snapshot_revisions()
+	if not visibility_changed.is_connected(_on_shell_visibility_changed):
+		visibility_changed.connect(_on_shell_visibility_changed)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_main_menu()
 	_build_deploy_prep()
 	_build_long_term()
 	_build_settings_overlay()
 	_build_exit_confirm_layer()
+	_ensure_settings_manager_bound()
+	_apply_bound_runtime_settings()
+	_shell_active = is_visible_in_tree()
 	show_main()
 
 
@@ -63,34 +75,56 @@ func get_snapshot_refresh_counts() -> Dictionary:
 
 
 func show_main() -> void:
+	_current_page_id = PageRouterScript.PAGE_MAIN_MENU
 	_set_page_visible(main_menu_shell)
-	_hide_settings()
-	_hide_exit_confirm()
+	_hide_settings(false)
+	_hide_exit_confirm(false)
 
 
 func show_deploy(_tab_id: StringName = &"overview") -> void:
+	_current_page_id = PageRouterScript.PAGE_DEPLOY_PREP
 	_set_page_visible(deploy_page)
+	_hide_settings(false)
+	_hide_exit_confirm(false)
 	if deploy_page != null and deploy_page.has_method("show_tab"):
 		deploy_page.call("show_tab", _tab_id)
-	_hide_settings()
-	_hide_exit_confirm()
 
 
 func show_long_term(_entry_id: StringName = &"overview") -> void:
+	_current_page_id = PageRouterScript.PAGE_LONG_TERM
 	_set_page_visible(long_term_page)
+	_hide_settings(false)
+	_hide_exit_confirm(false)
 	if long_term_page != null and long_term_page.has_method("show_module"):
 		long_term_page.call("show_module", _entry_id)
-	_hide_settings()
-	_hide_exit_confirm()
 
 
-func show_settings() -> void:
-	_set_page_visible(main_menu_shell)
-	_hide_exit_confirm()
+func show_settings() -> bool:
+	_current_page_id = PageRouterScript.PAGE_SETTINGS_PLACEHOLDER
 	if settings_page != null:
 		settings_page.visible = true
-		if settings_close_button != null:
-			settings_close_button.grab_focus()
+	_hide_exit_confirm(false)
+	_set_page_visible(main_menu_shell)
+	if settings_panel == null or not bool(settings_panel.call("open_panel")):
+		show_main()
+		_restore_main_menu_focus()
+		return false
+	return true
+
+
+func set_shell_active(value: bool) -> void:
+	_shell_active = value and is_visible_in_tree()
+	_sync_page_lifecycle()
+
+
+func get_visible_page_id() -> StringName:
+	if not _shell_active or not is_visible_in_tree():
+		return &""
+	if settings_page != null and settings_page.visible:
+		return PageRouterScript.PAGE_SETTINGS_PLACEHOLDER
+	if exit_confirm_panel != null and exit_confirm_panel.visible:
+		return PageRouterScript.PAGE_EXIT_CONFIRM
+	return _current_page_id
 
 
 func get_main_page() -> Control:
@@ -105,8 +139,128 @@ func get_long_term_page() -> Control:
 	return long_term_page
 
 
+func get_settings_panel() -> PanelContainer:
+	return settings_panel
+
+
+func bind_settings_manager(manager: Node) -> void:
+	if settings_manager == manager:
+		if settings_manager == null:
+			_ensure_settings_manager_bound()
+			return
+		_connect_settings_manager()
+		_bind_settings_panel_to_manager()
+		_apply_bound_runtime_settings()
+		return
+	var reopen_settings := (
+		settings_panel != null
+		and settings_page != null
+		and settings_page.visible
+		and settings_panel.visible
+	)
+	if settings_panel != null:
+		settings_panel.call("close_panel", false)
+		settings_panel.call("bind_settings_manager", null)
+	_disconnect_settings_manager()
+	settings_manager = manager
+	if _owned_settings_manager != null and _owned_settings_manager != manager:
+		var released_manager := _owned_settings_manager
+		_owned_settings_manager = null
+		if is_instance_valid(released_manager):
+			if released_manager.get_parent() == self:
+				remove_child(released_manager)
+			released_manager.queue_free()
+	_connect_settings_manager()
+	_bind_settings_panel_to_manager()
+	_apply_bound_runtime_settings()
+	if settings_manager == null:
+		_ensure_settings_manager_bound()
+	if reopen_settings and settings_panel != null:
+		settings_panel.call("open_panel")
+
+
+func get_bound_settings_manager() -> Node:
+	return settings_manager
+
+
+func get_owned_settings_manager() -> Node:
+	return _owned_settings_manager
+
+
+func owns_bound_settings_manager() -> bool:
+	return settings_manager != null and settings_manager == _owned_settings_manager
+
+
+func _ensure_settings_manager_bound() -> void:
+	if settings_manager != null and is_instance_valid(settings_manager) and not settings_manager.is_queued_for_deletion():
+		_connect_settings_manager()
+		_bind_settings_panel_to_manager()
+		return
+	settings_manager = null
+	var autoload_manager := get_node_or_null("/root/SettingsManager")
+	if autoload_manager != null:
+		bind_settings_manager(autoload_manager)
+		return
+	var owned_manager := SettingsManagerScript.new() as Node
+	owned_manager.name = "OwnedSettingsManager"
+	_owned_settings_manager = owned_manager
+	add_child(owned_manager)
+	bind_settings_manager(owned_manager)
+
+
+func _bind_settings_panel_to_manager() -> void:
+	if settings_panel != null:
+		settings_panel.call("bind_settings_manager", settings_manager)
+
+
+func _connect_settings_manager() -> void:
+	if settings_manager == null or not is_instance_valid(settings_manager):
+		return
+	var applied_callback := Callable(self, "_on_runtime_settings_applied")
+	if settings_manager.has_signal("settings_applied") and not settings_manager.is_connected("settings_applied", applied_callback):
+		settings_manager.connect("settings_applied", applied_callback)
+	var reverted_callback := Callable(self, "_on_runtime_settings_reverted")
+	if settings_manager.has_signal("settings_reverted") and not settings_manager.is_connected("settings_reverted", reverted_callback):
+		settings_manager.connect("settings_reverted", reverted_callback)
+
+
+func _disconnect_settings_manager() -> void:
+	if settings_manager == null or not is_instance_valid(settings_manager):
+		return
+	var applied_callback := Callable(self, "_on_runtime_settings_applied")
+	if settings_manager.has_signal("settings_applied") and settings_manager.is_connected("settings_applied", applied_callback):
+		settings_manager.disconnect("settings_applied", applied_callback)
+	var reverted_callback := Callable(self, "_on_runtime_settings_reverted")
+	if settings_manager.has_signal("settings_reverted") and settings_manager.is_connected("settings_reverted", reverted_callback):
+		settings_manager.disconnect("settings_reverted", reverted_callback)
+
+
+func _apply_bound_runtime_settings() -> void:
+	if settings_manager == null or not is_instance_valid(settings_manager) or not settings_manager.has_method("get_applied_settings"):
+		return
+	var runtime_settings: Dictionary = settings_manager.call("get_applied_settings")
+	_apply_runtime_settings_to_pages(runtime_settings)
+
+
+func _on_runtime_settings_applied(runtime_settings: Dictionary) -> void:
+	_apply_runtime_settings_to_pages(runtime_settings)
+
+
+func _on_runtime_settings_reverted(runtime_settings: Dictionary, _reason: StringName) -> void:
+	_apply_runtime_settings_to_pages(runtime_settings)
+
+
+func _apply_runtime_settings_to_pages(runtime_settings: Dictionary) -> void:
+	var reduce_motion := bool(runtime_settings.get("reduce_motion", false))
+	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+		if page != null and page.has_method("set_reduced_motion_enabled"):
+			page.call("set_reduced_motion_enabled", reduce_motion)
+
+
 func _clear_children() -> void:
 	for child in get_children():
+		if child == _owned_settings_manager:
+			continue
 		remove_child(child)
 		child.queue_free()
 
@@ -174,17 +328,23 @@ func _build_settings_overlay() -> void:
 	add_child(settings_page)
 	var dim := _add_color_rect(settings_page, "SettingsOverlayDim", Rect2(0, 0, 1280, 720), Color(0.015, 0.025, 0.03, 0.72))
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	_add_art21_texture(settings_page, "SettingsModalPanel", Rect2(232, 142, 816, 436), &"main_menu.scene.menu.modal.panel")
-	_add_overlay_label(settings_page, "SettingsModalTitle", Rect2(350, 180, 580, 52), "设置", 34, Color(0.97, 0.78, 0.39))
-	_add_overlay_label(settings_page, "SettingsVisualLabel", Rect2(354, 252, 190, 42), "画面模式", 21, Color(0.96, 0.90, 0.76))
-	_add_overlay_label(settings_page, "SettingsVisualValue", Rect2(560, 252, 250, 42), "16:9 自适应", 18, Color(0.75, 0.92, 0.86))
-	_add_art21_texture(settings_page, "SettingsVisualToggle", Rect2(830, 250, 104, 46), &"main_menu.scene.menu.settings_control.1.1")
-	_add_overlay_label(settings_page, "SettingsMusicLabel", Rect2(354, 326, 190, 42), "音乐音量", 21, Color(0.96, 0.90, 0.76))
-	_add_art21_texture(settings_page, "SettingsMusicSlider", Rect2(580, 326, 300, 42), &"main_menu.scene.menu.settings_control.2.2")
-	_add_overlay_label(settings_page, "SettingsEffectsLabel", Rect2(354, 390, 190, 42), "音效音量", 21, Color(0.96, 0.90, 0.76))
-	_add_art21_texture(settings_page, "SettingsEffectsSlider", Rect2(580, 390, 300, 42), &"main_menu.scene.menu.settings_control.2.1")
-	_add_overlay_label(settings_page, "SettingsBoundaryCopy", Rect2(350, 450, 420, 44), "当前设置为视觉预览，不写入持久化偏好。", 15, Color(0.66, 0.72, 0.70))
-	settings_close_button = _add_art21_modal_button(settings_page, "SettingsCloseButton", Rect2(796, 476, 190, 58), "关闭", func() -> void: _hide_settings())
+	_add_art21_texture(settings_page, "SettingsModalPanel", Rect2(232, 58, 816, 604), &"main_menu.scene.menu.modal.panel")
+	settings_panel = SettingsPanelScript.new() as PanelContainer
+	settings_panel.name = "SettingsPanel"
+	settings_panel.position = Vector2(340, 96)
+	settings_panel.size = Vector2(600, 462)
+	settings_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	settings_page.add_child(settings_panel)
+	settings_panel.connect("close_requested", _close_settings_to_main)
+	settings_close_button = settings_panel.get("close_button") as Button
+	if settings_close_button != null:
+		var actions := settings_close_button.get_parent()
+		actions.remove_child(settings_close_button)
+		settings_page.add_child(settings_close_button)
+		settings_close_button.name = "SettingsCloseButton"
+		_add_art21_texture(settings_page, "SettingsCloseButtonTexture", Rect2(796, 584, 190, 58), &"main_menu.scene.menu.modal.button")
+		settings_page.move_child(settings_close_button, settings_page.get_child_count() - 1)
+		_style_art21_modal_button(settings_close_button, Rect2(796, 584, 190, 58))
 
 
 func _build_exit_confirm_layer() -> void:
@@ -210,6 +370,7 @@ func _build_exit_confirm_layer() -> void:
 func _on_navigation_intent_requested(intent: Dictionary) -> void:
 	var route := PageRouterScript.route_for_intent(intent)
 	var page_id := StringName(route.get("page", PageRouterScript.PAGE_MAIN_MENU))
+	var committed_page_id := page_id
 	var page_payload := NavigationIntentScript.payload(intent)
 	match page_id:
 		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER:
@@ -221,14 +382,15 @@ func _on_navigation_intent_requested(intent: Dictionary) -> void:
 			var long_term_payload := page_payload
 			show_long_term(StringName(long_term_payload.get("module_id", long_term_payload.get("entry_id", &"goals"))))
 		PageRouterScript.PAGE_SETTINGS_PLACEHOLDER:
-			show_settings()
+			if not show_settings():
+				committed_page_id = PageRouterScript.PAGE_MAIN_MENU
 		PageRouterScript.PAGE_EXIT_CONFIRM:
 			_show_exit_confirm()
 		PageRouterScript.PAGE_RUN:
 			host_route_requested.emit(intent)
 		_:
 			show_main()
-	page_changed.emit(page_id, page_payload)
+	page_changed.emit(committed_page_id, page_payload)
 
 
 func _on_deploy_start_intent_requested(intent: Dictionary) -> void:
@@ -243,8 +405,40 @@ func _set_page_visible(active_page: Control) -> void:
 	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
 		if page != null:
 			page.visible = page == active_page
-	_hide_settings()
 	_refresh_snapshot_page(active_page)
+	_sync_page_lifecycle()
+
+
+func _sync_page_lifecycle() -> void:
+	var shell_visible := _shell_active and is_visible_in_tree()
+	var overlay_visible := (settings_page != null and settings_page.visible) or (exit_confirm_panel != null and exit_confirm_panel.visible)
+	var active_page: Control = null
+	if shell_visible and not overlay_visible:
+		for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+			if page != null and page.visible:
+				active_page = page
+				break
+	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+		if page == null:
+			continue
+		var page_active := page == active_page
+		if page.has_method("set_page_active"):
+			page.call("set_page_active", page_active)
+		else:
+			page.process_mode = Node.PROCESS_MODE_INHERIT if page_active else Node.PROCESS_MODE_DISABLED
+	if settings_page != null:
+		settings_page.process_mode = Node.PROCESS_MODE_INHERIT if shell_visible and settings_page.visible else Node.PROCESS_MODE_DISABLED
+	if exit_confirm_panel != null:
+		exit_confirm_panel.process_mode = Node.PROCESS_MODE_INHERIT if shell_visible and exit_confirm_panel.visible else Node.PROCESS_MODE_DISABLED
+	if not shell_visible and is_inside_tree():
+		var focus := get_viewport().gui_get_focus_owner()
+		if focus != null and (focus == self or is_ancestor_of(focus)):
+			get_viewport().gui_release_focus()
+
+
+func _on_shell_visibility_changed() -> void:
+	_shell_active = is_visible_in_tree()
+	_sync_page_lifecycle()
 
 
 func _refresh_visible_snapshot_page() -> void:
@@ -286,28 +480,41 @@ func _reset_page_snapshot_revisions() -> void:
 
 func _show_exit_confirm() -> void:
 	_refresh_exit_confirm_text()
-	_hide_settings()
+	_hide_settings(false)
 	if exit_confirm_panel != null:
 		exit_confirm_panel.visible = true
+		_sync_page_lifecycle()
 		var cancel_button := exit_confirm_panel.get_node_or_null("ExitConfirmCancel") as Button
-		if cancel_button != null:
+		if _shell_active and cancel_button != null:
 			cancel_button.grab_focus()
 
 
-func _hide_exit_confirm() -> void:
+func _hide_exit_confirm(restore_focus: bool = true) -> void:
 	if exit_confirm_panel != null:
 		exit_confirm_panel.visible = false
-	_restore_main_menu_focus()
+	_sync_page_lifecycle()
+	if restore_focus:
+		_restore_main_menu_focus()
 
 
-func _hide_settings() -> void:
+func _hide_settings(restore_focus: bool = true) -> void:
+	if settings_panel != null:
+		settings_panel.call("close_panel", false)
 	if settings_page != null:
 		settings_page.visible = false
+	_sync_page_lifecycle()
+	if restore_focus:
+		_restore_main_menu_focus()
+
+
+func _close_settings_to_main() -> void:
+	show_main()
 	_restore_main_menu_focus()
+	page_changed.emit(PageRouterScript.PAGE_MAIN_MENU, {"source_page": PageRouterScript.PAGE_SETTINGS_PLACEHOLDER})
 
 
 func _restore_main_menu_focus() -> void:
-	if main_menu_shell != null and main_menu_shell.visible and main_menu_shell.has_method("_grab_default_focus"):
+	if _shell_active and _current_page_id == PageRouterScript.PAGE_MAIN_MENU and main_menu_shell != null and main_menu_shell.visible and main_menu_shell.has_method("_grab_default_focus"):
 		main_menu_shell.call_deferred("_grab_default_focus")
 
 
@@ -382,6 +589,13 @@ func _add_art21_modal_button(parent: Control, node_name: String, rect: Rect2, te
 	var button := Button.new()
 	button.name = node_name
 	button.text = text
+	_style_art21_modal_button(button, rect)
+	button.pressed.connect(callback)
+	parent.add_child(button)
+	return button
+
+
+func _style_art21_modal_button(button: Button, rect: Rect2) -> void:
 	button.position = rect.position.round()
 	button.size = rect.size.round()
 	button.focus_mode = Control.FOCUS_ALL
@@ -396,9 +610,6 @@ func _add_art21_modal_button(parent: Control, node_name: String, rect: Rect2, te
 	button.add_theme_color_override("font_color", Color(0.96, 0.81, 0.48))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.68))
 	button.add_theme_color_override("font_pressed_color", Color(0.82, 0.64, 0.35))
-	button.pressed.connect(callback)
-	parent.add_child(button)
-	return button
 
 
 func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color) -> Label:

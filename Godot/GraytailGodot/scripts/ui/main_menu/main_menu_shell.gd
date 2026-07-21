@@ -114,6 +114,7 @@ var transition_elapsed := 0.0
 var transition_frame_index := 0
 var pending_transition_entry: Dictionary = {}
 var reduced_motion := false
+var page_active := true
 
 
 func build(model: Dictionary = {}) -> void:
@@ -133,12 +134,66 @@ func build(model: Dictionary = {}) -> void:
 	_index_entries()
 	_connect_focus_neighbors()
 	_set_focus_state(&"deploy")
-	set_process(true)
+	set_page_active(true)
 	call_deferred("_grab_default_focus")
 
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	current_snapshot = snapshot.duplicate(true)
+
+
+func set_page_active(value: bool) -> void:
+	page_active = value
+	if page_active:
+		process_mode = Node.PROCESS_MODE_INHERIT
+		set_process(not reduced_motion)
+		set_process_input(true)
+		set_process_unhandled_input(true)
+		if reduced_motion:
+			_apply_reduced_motion_pose()
+		if is_visible_in_tree():
+			call_deferred("_grab_default_focus")
+		return
+	set_process(false)
+	set_process_input(false)
+	set_process_unhandled_input(false)
+	transition_active = false
+	pending_transition_entry.clear()
+	if transition_texture != null:
+		transition_texture.visible = false
+	if is_inside_tree():
+		var focus := get_viewport().gui_get_focus_owner()
+		if focus != null and (focus == self or is_ancestor_of(focus)):
+			get_viewport().gui_release_focus()
+	process_mode = Node.PROCESS_MODE_DISABLED
+
+
+func is_page_active() -> bool:
+	return page_active
+
+
+func set_reduced_motion_enabled(value: bool) -> void:
+	var pending_entry: Dictionary = {}
+	if value and transition_active:
+		pending_entry = pending_transition_entry.duplicate(true)
+		transition_active = false
+		pending_transition_entry.clear()
+		if transition_texture != null:
+			transition_texture.visible = false
+	reduced_motion = value
+	if reduced_motion:
+		_apply_reduced_motion_pose()
+	elif page_active:
+		_update_cloud_drift()
+		_update_ambient_motion(0.0)
+	if page_active:
+		set_process(not reduced_motion)
+	if not pending_entry.is_empty():
+		_emit_entry(pending_entry)
+
+
+func is_reduced_motion_enabled() -> bool:
+	return reduced_motion
 
 
 func _clear_children() -> void:
@@ -363,7 +418,7 @@ func _connect_focus_neighbors() -> void:
 
 
 func _grab_default_focus() -> void:
-	if entry_nodes.has(&"deploy"):
+	if page_active and is_visible_in_tree() and entry_nodes.has(&"deploy"):
 		var button := _dictionary_from(entry_nodes[&"deploy"]).get("button") as Button
 		if button != null and is_instance_valid(button):
 			button.grab_focus()
@@ -444,7 +499,7 @@ func _update_character_focus_texture() -> void:
 
 
 func _activate_entry(entry: Dictionary) -> void:
-	if transition_active:
+	if not page_active or transition_active:
 		return
 	var entry_id := StringName(entry.get("id", &""))
 	if entry_id == &"deploy" or entry_id == &"long_term":
@@ -464,6 +519,8 @@ func _activate_entry(entry: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
+	if not page_active or not is_visible_in_tree():
+		return
 	scene_elapsed += delta
 	if not reduced_motion:
 		_update_cloud_drift()
@@ -569,6 +626,26 @@ func _update_cloud_drift() -> void:
 		node.position = base + Vector2(round(sin(scene_elapsed * speed) * amplitude), 0)
 
 
+func _apply_reduced_motion_pose() -> void:
+	for group in animated_groups:
+		var node := group.get("node") as TextureRect
+		if node == null:
+			continue
+		var reduce_behavior := StringName(group.get("reduce_motion_behavior", &"hide"))
+		node.visible = reduce_behavior == &"freeze"
+		if reduce_behavior == &"freeze":
+			var frames := group.get("frames", []) as Array
+			if not frames.is_empty():
+				node.texture = frames[0]
+		var kind := StringName(group.get("kind", &"frames"))
+		if kind in [&"drift_far", &"drift_near"]:
+			node.position = group.get("base", node.position)
+	if cave_activation_texture != null and cave_activation_texture.visible:
+		cave_activation_texture.modulate = Color(1, 1, 1, 0.30)
+	if company_activation_texture != null and company_activation_texture.visible:
+		company_activation_texture.modulate = Color(1, 1, 1, 0.30)
+
+
 func _update_transition(delta: float) -> void:
 	transition_elapsed += delta
 	var next_frame := 0
@@ -590,7 +667,7 @@ func _update_transition(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if transition_active or not (event is InputEventKey):
+	if not page_active or not is_visible_in_tree() or transition_active or not (event is InputEventKey):
 		return
 	var key_event := event as InputEventKey
 	if not key_event.pressed or key_event.echo:

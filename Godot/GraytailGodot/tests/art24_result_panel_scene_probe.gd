@@ -2,6 +2,11 @@ extends SceneTree
 
 const ResultPanelScene := preload("res://scenes/ui/result/result_panel.tscn")
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
+const RESULT_BANNER_PATH_BY_STATE := {
+	&"success": "res://assets/art24/ui/result_banner_success.png",
+	&"failure": "res://assets/art24/ui/result_banner_failure.png",
+	&"abandon": "res://assets/art24/ui/result_banner_abandoned.png",
+}
 
 const RESOLUTIONS := [
 	&"1280x720",
@@ -57,6 +62,14 @@ func _assert_state(panel: ResultPanel, state_id: StringName, viewport_size: Vect
 	if panel_rect.position.x < -0.5 or panel_rect.position.y < -0.5 or panel_rect.end.x > viewport_size.x + 0.5 or panel_rect.end.y > viewport_size.y + 0.5:
 		failures.append("%s panel=%s viewport=%s" % [state_id, panel_rect, viewport_size])
 	var pending := visual_state in [&"failure_empty", &"failure_pending", &"failure_selected", &"failure_capacity_blocked"]
+	var result_state := &"success" if visual_state == &"success" else (&"abandon" if visual_state == &"abandon" else &"failure")
+	var banner := panel.get_node("ResultTitlePlate") as TextureRect
+	var expected_banner_path := String(RESULT_BANNER_PATH_BY_STATE[result_state])
+	if banner.texture == null or banner.texture.resource_path != expected_banner_path:
+		failures.append("%s banner=%s expected=%s" % [state_id, "<null>" if banner.texture == null else banner.texture.resource_path, expected_banner_path])
+	var live_title := panel.get_node("ResultTitle") as Label
+	if not live_title.visible or live_title.text.strip_edges() == "":
+		failures.append("%s dynamic localized result title is not visible" % state_id)
 	var metrics := panel.get_node("ResultMetricsRow") as Control
 	var actions := panel.get_node("ResultActions") as Control
 	var action_art := panel.get_node("ResultActionStripArt") as Control
@@ -96,7 +109,6 @@ func _assert_state(panel: ResultPanel, state_id: StringName, viewport_size: Vect
 	else:
 		for path in ["ResultModalFrame", "ResultTitlePlate", "ResultSummary", "ResultActions"]:
 			_assert_inside(panel.get_node(path) as Control, panel_rect, state_id, failures)
-		var banner := panel.get_node("ResultTitlePlate") as Control
 		if banner.size.x < 298.0 or banner.size.y < 128.0:
 			failures.append("%s banner_size=%s" % [state_id, banner.size])
 		var summary := panel.get_node("ResultSummary") as Label

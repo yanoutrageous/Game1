@@ -18,6 +18,41 @@ const RUN_ORIGIN_PREVIEW := &"deploy_prep_m3r"
 const MAX_EQUIPPED_ITEMS := 2
 const MAX_CARRIED_CONSUMABLES := 3
 const EMERGENCY_CLAIM_ID := &"m6_emergency_ration"
+const ACTIVE_RUN_CANONICAL_FIELDS := [
+	"map_config_id",
+	"map_display_name",
+	"map_mode",
+	"map_mode_label",
+	"difficulty",
+	"difficulty_label",
+	"selected_difficulty",
+	"selected_map_summary",
+	"region_id",
+	"region_label",
+	"selected_objective_id",
+	"selected_objective_label",
+	"selected_objective_summary",
+	"commission_candidates",
+	"selected_equipment_items",
+	"selected_consumable_items",
+	"selected_equipment_ids",
+	"selected_consumable_ids",
+	"selected_loadout",
+	"carried_consumables",
+	"equipment_effects",
+	"bag_used",
+	"bag_limit",
+	"backpack_capacity",
+	"failure_salvage_capacity",
+	"mine_dmg_reduce",
+	"protocol_pressure_reduce",
+	"search_reward_bonus",
+	"scan_hint_bonus",
+	"loadout_preview",
+	"backpack_capacity_preview",
+	"config_validity_preview",
+	"initial_bag_summary",
+]
 
 
 static func default_config(sequence: int = 1, meta_summary: Dictionary = {}) -> Dictionary:
@@ -106,6 +141,7 @@ static func default_config(sequence: int = 1, meta_summary: Dictionary = {}) -> 
 static func with_active_run_preview(config: Dictionary, has_active_run: bool) -> Dictionary:
 	var result := config.duplicate(true)
 	result["active_run_preview"] = active_run_preview(has_active_run)
+	result["active_run_locked"] = has_active_run
 	result["right_summary_preview"] = right_summary_preview(result)
 	result["risk_summary"] = {"level": &"m3r", "label": "M3R risk summary", "lines": _array_copy(result["right_summary_preview"].get("risk", []))}
 	result["effect_summary"] = {"label": "M3R effect summary", "lines": _array_copy(result["right_summary_preview"].get("effect", []))}
@@ -117,6 +153,15 @@ static func with_active_run_config(config: Dictionary, run_start_config: Diction
 	var consumables := _array_copy(run_start_config.get("selected_consumable_items", []))
 	var recalculated := _recalculate_loadout(config, equipment, consumables)
 	var result: Dictionary = recalculated.get("config", config.duplicate(true))
+	for field in ACTIVE_RUN_CANONICAL_FIELDS:
+		if run_start_config.has(field):
+			var canonical_value: Variant = run_start_config[field]
+			if canonical_value is Dictionary:
+				result[field] = (canonical_value as Dictionary).duplicate(true)
+			elif canonical_value is Array:
+				result[field] = (canonical_value as Array).duplicate(true)
+			else:
+				result[field] = canonical_value
 	result["active_run_preview"] = active_run_preview(true)
 	result["active_run_locked"] = true
 	result["active_run_id"] = str(run_start_config.get("run_id", ""))
@@ -154,6 +199,13 @@ static func refresh_from_meta(config: Dictionary, meta_summary: Dictionary, has_
 
 
 static func apply_card_action(config: Dictionary, tab_id: StringName, card_id: StringName) -> Dictionary:
+	if bool(config.get("active_run_locked", false)) and _mutates_active_run_projection(tab_id, card_id):
+		return {
+			"config": config.duplicate(true),
+			"changed": false,
+			"reason_code": &"active_run_locked",
+			"message": "当前探索进行中，地图、委托与出勤配置均以当局记录为准。",
+		}
 	if tab_id == &"map" and String(card_id).begins_with("m7_map_"):
 		return _select_m7_map(config, String(card_id).trim_prefix("m7_map_"))
 	if tab_id == &"objective" and String(card_id).begins_with("m7_commission_"):
@@ -174,6 +226,18 @@ static func apply_card_action(config: Dictionary, tab_id: StringName, card_id: S
 		"changed": false,
 		"message": "该条目仅用于查看。",
 	}
+
+
+static func _mutates_active_run_projection(tab_id: StringName, card_id: StringName) -> bool:
+	if tab_id == &"map" and String(card_id).begins_with("m7_map_"):
+		return true
+	if tab_id == &"objective" and String(card_id).begins_with("m7_commission_"):
+		return true
+	if tab_id == &"warehouse" and String(card_id).begins_with("m3r_") and card_id != &"m3r_warehouse_status":
+		return true
+	if tab_id == &"claim" and (String(card_id).begins_with("m7_shop_") or card_id == &"claim_emergency_ration"):
+		return true
+	return false
 
 
 static func _select_m7_map(config: Dictionary, map_id: String) -> Dictionary:

@@ -278,7 +278,7 @@ func _validate_smoke_case() -> void:
 			if sparse_flag != context.get_current_pos() and sparse_flag != sparse_event:
 				_require(context.intel_map.is_flagged(sparse_flag), "sparse-map flag position was not flagged")
 			for scan_pos: Vector2i in [_clamped_pos(context, 3, 1), _clamped_pos(context, 3, 2), _clamped_pos(context, 4, 2)]:
-				if scan_pos != sparse_event and scan_pos != sparse_flag:
+				if scan_pos != context.get_current_pos() and scan_pos != sparse_event and scan_pos != sparse_flag:
 					_require(bool(context.intel_map.get_cell_info(scan_pos).get("scanned", false)), "sparse-map scan position missing: %s" % scan_pos)
 
 

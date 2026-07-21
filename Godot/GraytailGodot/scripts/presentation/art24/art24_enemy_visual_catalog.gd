@@ -72,6 +72,19 @@ static func minimum_visible_seconds(runtime_state: StringName) -> float:
 	return 0.12 if runtime_state == &"hurt" else 0.0
 
 
+static func production_texture_paths() -> Array[String]:
+	var unique_paths: Dictionary = {}
+	for subject in ENEMY_SUBJECTS:
+		for runtime_state: StringName in [&"idle", &"hurt", &"active", &"warning", &"defeated"]:
+			for frame_index in range(frame_count(subject, runtime_state, &"base")):
+				unique_paths[texture_path(subject, runtime_state, frame_index, &"base")] = true
+	var result: Array[String] = []
+	for raw_path in unique_paths.keys():
+		result.append(String(raw_path))
+	result.sort()
+	return result
+
+
 static func visual_scale(subject: StringName, visual_variant: StringName = &"base") -> float:
 	if visual_variant != &"base":
 		match subject:

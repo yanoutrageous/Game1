@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("preflight", "quick", "core", "ui", "full")]
+    [ValidateSet("preflight", "quick", "core", "ui", "performance", "full")]
     [string]$Profile = "quick",
 
     [ValidateSet("worktree", "head")]

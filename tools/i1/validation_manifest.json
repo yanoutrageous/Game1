@@ -106,7 +106,15 @@
     "ART24_CONTEXT_ANCHOR_INTEGRATION",
     "ART24_INVENTORY_PANEL_LAYOUT",
     "ART24_MAP_OVERLAY_SCENE",
-    "ART24_RESULT_PANEL_SCENE"
+    "ART24_RESULT_PANEL_SCENE",
+    "I2_ROUTE_AUTHORITY_LIFECYCLE",
+    "I2_SETTINGS_TRANSACTION",
+    "I2_SETTINGS_SHELL_WIRING",
+    "I2_RUNTIME_INPUT_PROFILE",
+    "I2_MODAL_FOCUS_LIFECYCLE",
+    "I2_ACCESSIBILITY_RUNTIME",
+    "I2_ASSET_BINDING",
+    "I2_COMBAT_FRAME_BASELINE"
   ],
   "profiles": {
     "preflight": {
@@ -136,7 +144,14 @@
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_MAIN_ROUTE",
         "ART24_IN_RUN_RUNTIME",
-        "ART24_CONTEXT_ANCHOR_INTEGRATION"
+        "ART24_CONTEXT_ANCHOR_INTEGRATION",
+        "I2_ROUTE_AUTHORITY_LIFECYCLE",
+        "I2_SETTINGS_TRANSACTION",
+        "I2_SETTINGS_SHELL_WIRING",
+        "I2_RUNTIME_INPUT_PROFILE",
+        "I2_MODAL_FOCUS_LIFECYCLE",
+        "I2_ACCESSIBILITY_RUNTIME",
+        "I2_ASSET_BINDING"
       ]
     },
     "core": {
@@ -165,7 +180,10 @@
         "I1_COMBAT_REFRESH",
         "I1_STATE_AUTHORITY",
         "I1_COMMAND_MODULE",
-        "I1_PROJECT_METADATA"
+        "I1_PROJECT_METADATA",
+        "I2_ROUTE_AUTHORITY_LIFECYCLE",
+        "I2_SETTINGS_TRANSACTION",
+        "I2_RUNTIME_INPUT_PROFILE"
       ]
     },
     "ui": {
@@ -193,7 +211,19 @@
         "ART24_CONTEXT_ANCHOR_INTEGRATION",
         "ART24_INVENTORY_PANEL_LAYOUT",
         "ART24_MAP_OVERLAY_SCENE",
-        "ART24_RESULT_PANEL_SCENE"
+        "ART24_RESULT_PANEL_SCENE",
+        "I2_ROUTE_AUTHORITY_LIFECYCLE",
+        "I2_SETTINGS_SHELL_WIRING",
+        "I2_RUNTIME_INPUT_PROFILE",
+        "I2_MODAL_FOCUS_LIFECYCLE",
+        "I2_ACCESSIBILITY_RUNTIME",
+        "I2_ASSET_BINDING"
+      ]
+    },
+    "performance": {
+      "description": "Frozen I2 real combat workload baseline; headless CPU evidence only, with visible acceptance run separately.",
+      "runner_ids": [
+        "I2_COMBAT_FRAME_BASELINE"
       ]
     },
     "full": {
@@ -237,7 +267,15 @@
         "ART24_CONTEXT_ANCHOR_INTEGRATION",
         "ART24_INVENTORY_PANEL_LAYOUT",
         "ART24_MAP_OVERLAY_SCENE",
-        "ART24_RESULT_PANEL_SCENE"
+        "ART24_RESULT_PANEL_SCENE",
+        "I2_ROUTE_AUTHORITY_LIFECYCLE",
+        "I2_SETTINGS_TRANSACTION",
+        "I2_SETTINGS_SHELL_WIRING",
+        "I2_RUNTIME_INPUT_PROFILE",
+        "I2_MODAL_FOCUS_LIFECYCLE",
+        "I2_ACCESSIBILITY_RUNTIME",
+        "I2_ASSET_BINDING",
+        "I2_COMBAT_FRAME_BASELINE"
       ]
     }
   },
@@ -338,7 +376,7 @@
       "relative_path": null,
       "category": "performance",
       "disposition": "EXCLUDED_NON_SLICE",
-      "reason": "I1_COMBAT_REFRESH is a registered blocking microbenchmark; broader production performance acceptance has no approved workload or threshold and cannot silently pass."
+      "reason": "The historical I1 refresh microbenchmark is not an FPS gate. I2_COMBAT_FRAME_BASELINE now covers the frozen headless CPU workload; GPU and player-visible frame acceptance remain a separate visible workflow."
     },
     {
       "id": "I1_VISIBLE_INTERACTION_ACCEPTANCE",
@@ -630,6 +668,63 @@
       "pass_marker": "ART24_RESULT_PANEL_SCENE=PASS resolutions=5 states=success,failure_empty,failure_pending,failure_selected,failure_capacity_blocked,failure_final,abandon",
       "fail_marker": "ART24_RESULT_PANEL_SCENE=FAIL",
       "coverage": ["layout", "result_panel", "state_matrix"]
+    },
+    {
+      "id": "I2_ROUTE_AUTHORITY_LIFECYCLE",
+      "relative_path": "Godot/GraytailGodot/tests/i2_route_authority_lifecycle_runner.gd",
+      "pass_marker": "I2_ROUTE_AUTHORITY_LIFECYCLE=PASS command_failure=no_route duplicate=deduplicated return=main hidden_pages=paused active_run=canonical_locked",
+      "fail_marker": "I2_ROUTE_AUTHORITY_LIFECYCLE=FAIL",
+      "coverage": ["route_authority", "command_failure", "runtime_lifecycle"]
+    },
+    {
+      "id": "I2_SETTINGS_TRANSACTION",
+      "relative_path": "Godot/GraytailGodot/tests/i2_settings_transaction_runner.gd",
+      "pass_marker": "I2_SETTINGS_TRANSACTION=PASS",
+      "fail_marker": "I2_SETTINGS_TRANSACTION=FAIL",
+      "coverage": ["settings", "transactions", "atomic_replace", "recovery", "schema"]
+    },
+    {
+      "id": "I2_SETTINGS_SHELL_WIRING",
+      "relative_path": "Godot/GraytailGodot/tests/i2_settings_shell_wiring_runner.gd",
+      "pass_marker": "I2_SETTINGS_SHELL_WIRING=PASS owner=default_then_injected panel=production rollback=complete user_files=clean",
+      "fail_marker": "I2_SETTINGS_SHELL_WIRING=FAIL",
+      "coverage": ["settings", "accessibility", "runtime_wiring", "rollback", "page_lifecycle"]
+    },
+    {
+      "id": "I2_RUNTIME_INPUT_PROFILE",
+      "relative_path": "Godot/GraytailGodot/tests/i2_runtime_input_profile_runner.gd",
+      "pass_marker": "I2_RUNTIME_INPUT_PROFILE=PASS",
+      "fail_marker": "I2_RUNTIME_INPUT_PROFILE=FAIL",
+      "coverage": ["input", "gamepad", "keyboard_preservation", "idempotence"]
+    },
+    {
+      "id": "I2_MODAL_FOCUS_LIFECYCLE",
+      "relative_path": "Godot/GraytailGodot/tests/i2_modal_focus_lifecycle_runner.gd",
+      "pass_marker": "I2_MODAL_FOCUS_LIFECYCLE=PASS",
+      "fail_marker": "I2_MODAL_FOCUS_LIFECYCLE=FAIL",
+      "coverage": ["ui", "modal", "focus", "cancel_lifecycle"]
+    },
+    {
+      "id": "I2_ACCESSIBILITY_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/i2_accessibility_runtime_runner.gd",
+      "pass_marker": "I2_ACCESSIBILITY_RUNTIME=PASS",
+      "fail_marker": "I2_ACCESSIBILITY_RUNTIME=FAIL",
+      "coverage": ["accessibility", "reduced_motion", "settings_panel", "rollback"]
+    },
+    {
+      "id": "I2_ASSET_BINDING",
+      "relative_path": "Godot/GraytailGodot/tests/i2_asset_binding_runner.gd",
+      "pass_marker": "I2_ASSET_BINDING=PASS result_states=3 protocol_levels=5 item_bindings=43 verified_hashes=56",
+      "fail_marker": "I2_ASSET_BINDING=FAIL",
+      "coverage": ["assets", "manifest", "item_binding", "result_panel", "protocol"]
+    },
+    {
+      "id": "I2_COMBAT_FRAME_BASELINE",
+      "relative_path": "Godot/GraytailGodot/tests/i2_combat_frame_baseline_runner.gd",
+      "pass_marker": "I2_COMBAT_FRAME_BASELINE=PASS",
+      "fail_marker": "I2_COMBAT_FRAME_BASELINE=FAIL",
+      "timeout_seconds": 900,
+      "coverage": ["combat", "performance", "fixed_step", "snapshot", "presentation", "memory", "resource_lifecycle"]
     }
   ],
   "diagnostics": {
@@ -742,7 +837,15 @@
       ],
       "ART24_INVENTORY_PANEL_LAYOUT": [],
       "ART24_MAP_OVERLAY_SCENE": [],
-      "ART24_RESULT_PANEL_SCENE": []
+      "ART24_RESULT_PANEL_SCENE": [],
+      "I2_ROUTE_AUTHORITY_LIFECYCLE": [],
+      "I2_SETTINGS_TRANSACTION": [],
+      "I2_SETTINGS_SHELL_WIRING": [],
+      "I2_RUNTIME_INPUT_PROFILE": [],
+      "I2_MODAL_FOCUS_LIFECYCLE": [],
+      "I2_ACCESSIBILITY_RUNTIME": [],
+      "I2_ASSET_BINDING": [],
+      "I2_COMBAT_FRAME_BASELINE": []
     },
     "preview_capture_expected_cleanup_diagnostics_by_scene": {
       "main_menu": [

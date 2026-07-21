@@ -2,6 +2,7 @@ extends RefCounted
 class_name Art24RuntimeAnimationCatalog
 
 const PLAYER_ROOT := "res://assets/art24/actors/player/"
+const PLAYER_FACINGS: Array[StringName] = [&"down", &"left", &"right", &"up"]
 const PLAYER_MOTIONS := {
 	&"idle": [&"idle_a", &"idle_b"],
 	&"move": [&"walk_a", &"walk_b"],
@@ -65,6 +66,19 @@ static func player_loops(runtime_state: StringName) -> bool:
 
 static func minimum_visible_seconds(runtime_state: StringName) -> float:
 	return 0.12 if runtime_state == &"hurt" else 0.0
+
+
+static func production_texture_paths() -> Array[String]:
+	var unique_motions: Dictionary = {}
+	for raw_frames in PLAYER_MOTIONS.values():
+		for raw_motion in raw_frames as Array:
+			unique_motions[StringName(raw_motion)] = true
+	var result: Array[String] = []
+	for facing in PLAYER_FACINGS:
+		for raw_motion in unique_motions.keys():
+			result.append("%s%s_%s.png" % [PLAYER_ROOT, String(facing), String(raw_motion)])
+	result.sort()
+	return result
 
 
 static func _effective_player_state(runtime_state: StringName, walking_override: bool) -> StringName:

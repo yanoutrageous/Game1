@@ -12,15 +12,23 @@ func _initialize() -> void:
 	modal.name = "RunInventoryModal"
 	var generic_overlay := Control.new()
 	generic_overlay.name = "RunMapOverlay"
+	var protocol_plate := TextureRect.new()
+	protocol_plate.name = "RunProtocolLevelPlate"
+	var protocol_pressure := ColorRect.new()
+	protocol_pressure.name = "RunProtocolPressureFill"
 	var failures: Array[String] = []
 	_assert_route(bottom_overlay, &"RunActionOverlayRoot", failures)
 	_assert_route(action_bar, &"RunActionOverlayRoot", failures)
 	_assert_route(modal, &"RunModalRoot", failures)
 	_assert_route(generic_overlay, &"RunOverlayRoot", failures)
+	_assert_route(protocol_plate, &"RunTopRightStatusRoot", failures)
+	_assert_route(protocol_pressure, &"RunTopRightStatusRoot", failures)
 	bottom_overlay.free()
 	action_bar.free()
 	modal.free()
 	generic_overlay.free()
+	protocol_plate.free()
+	protocol_pressure.free()
 	if failures.is_empty():
 		print("ART24_RUN_SURFACE_LAYER_ROUTING=PASS bottom_skin_and_buttons=action_root")
 		quit(0)

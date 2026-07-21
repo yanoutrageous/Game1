@@ -12,6 +12,9 @@ const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const Art24ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const BODY_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
+const PROTOCOL_LEVEL_ASSET_PREFIX := "ui.art24.ui.protocol.level_"
+const PROTOCOL_LEVEL_FALLBACK_ASSET := &"ui.art24.ui.protocol.level_5"
+const PROTOCOL_PRESSURE_MAX := 100.0
 
 signal interact_requested
 signal inventory_requested
@@ -54,6 +57,9 @@ var room_hint_softener: ColorRect
 var scanner_glow_layer: ColorRect
 var room_glow_layer: ColorRect
 var protocol_glow_layer: ColorRect
+var protocol_level_plate: TextureRect
+var protocol_pressure_track: ColorRect
+var protocol_pressure_fill: ColorRect
 var bottom_key_glow_layer: ColorRect
 var right_game_fill_layer: ColorRect
 var left_rail_art: NinePatchRect
@@ -88,6 +94,8 @@ var action_bar: HBoxContainer
 var action_buttons: Dictionary = {}
 var encounter_option_buttons: Array[Button] = []
 var last_backpack_signature := "__uninitialized__"
+var current_protocol_level := 5
+var current_protocol_pressure := 0.0
 var built := false
 
 const LAYER_ROOM_BACKGROUND := 0
@@ -128,6 +136,11 @@ func build() -> void:
 	Art10UISkinKitScript.apply_panel(right_backdrop, &"summary")
 	status_card_art = _add_nine_patch_from_ref("Art21RunStatusCard", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"top_right_status_card", &"ui.art19.panel.deploy_summary"), 0.94, 12)
 	_apply_art24_frame(status_card_art, "res://assets/art24/ui/ue/ui_panel_protocol.png", 24)
+	protocol_level_plate = _add_texture_rect_from_ref("RunProtocolLevelPlate", _protocol_level_ref(5), 0.48)
+	protocol_level_plate.stretch_mode = TextureRect.STRETCH_SCALE
+	protocol_level_plate.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	protocol_pressure_track = _add_color_layer("RunProtocolPressureTrack", Color(0.01, 0.02, 0.022, 0.92))
+	protocol_pressure_fill = _add_color_layer("RunProtocolPressureFill", _protocol_pressure_color(0.0))
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.70), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(bottom_backdrop, &"summary")
@@ -242,6 +255,7 @@ func build() -> void:
 	overlay_slot = _add_slot("RunOverlaySlot")
 	modal_slot = _add_slot("RunModalSlot")
 	_apply_layer_order()
+	_update_protocol_presentation(5, 0)
 
 
 func apply_surface_model(model: Dictionary) -> void:
@@ -264,6 +278,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	right_title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(danger_key, PresentationTheme.color_for_key(&"ui.warning")))
 	right_title_label.text = "协议 %s" % model.get("protocol_level", "--")
 	right_body_label.text = "压力 %s/100\n%s" % [model.get("pressure", "--"), _compact_line(String(model.get("danger_label", "状态稳定")), 12)]
+	_update_protocol_presentation(model.get("protocol_level", 5), model.get("pressure", 0))
 	event_label.text = ""
 	event_label.visible = false
 	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", "等待记录。")), 14)
@@ -313,6 +328,7 @@ func apply_combat_snapshot(snapshot: Dictionary) -> void:
 		alive_enemies,
 		snapshot.get("pressure", 0),
 	]
+	_update_protocol_presentation(snapshot.get("protocol_level", 5), snapshot.get("pressure", 0))
 	resource_label.text = "【战斗中】%s" % _compact_line(String(snapshot.get("last_message", "")), 18)
 
 
@@ -383,6 +399,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(left_rail_art, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(status_card_art, Rect2(right_left, margin, right_card_width, right_card_height))
+	_set_rect(protocol_level_plate, Rect2(right_content_left, margin + 30.0, right_content_width, right_card_height - 42.0))
+	var protocol_track_rect := Rect2(right_content_left + 8.0, margin + right_card_height - 16.0, right_content_width - 16.0, 6.0)
+	_set_rect(protocol_pressure_track, protocol_track_rect)
+	_set_rect(protocol_pressure_fill, Rect2(protocol_track_rect.position, Vector2(protocol_track_rect.size.x * current_protocol_pressure / PROTOCOL_PRESSURE_MAX, protocol_track_rect.size.y)))
 	_set_rect(center_backdrop, Rect2(0, 0, 0, 0))
 	_set_rect(room_background_layer, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_backdrop, Rect2(encounter_left, encounter_top, encounter_width, encounter_height))
@@ -406,6 +426,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	left_rail_art.visible = true
 	right_backdrop.visible = false
 	status_card_art.visible = true
+	protocol_level_plate.visible = true
+	protocol_pressure_track.visible = true
+	protocol_pressure_fill.visible = true
 	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.008, 0.024, 0.027, 0.98), Color(0.58, 0.39, 0.16, 0.96), 2))
 	bottom_backdrop.visible = true
 	bottom_overlay_art.visible = true
@@ -421,7 +444,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	room_text_mask.visible = false
 	room_hint_softener.visible = false
 	player_tag_mask.visible = false
-	protocol_glow_layer.visible = false
+	protocol_glow_layer.visible = true
 	bottom_key_glow_layer.visible = false
 	right_game_fill_layer.visible = false
 
@@ -458,7 +481,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(resource_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 56.0, rail_content_width - 20.0, 20.0))
 
 	_set_rect(right_title_label, Rect2(right_content_left, margin, right_content_width, 26))
-	_set_rect(right_body_label, Rect2(right_content_left + 8.0, margin + 34.0, right_content_width - 16.0, 58.0))
+	_set_rect(right_body_label, Rect2(right_content_left + 8.0, margin + 34.0, right_content_width - 16.0, maxf(42.0, right_card_height - 60.0)))
 	_set_rect(event_label, Rect2(0, 0, 0, 0))
 	event_label.visible = false
 	_set_rect(reward_label, Rect2(0, 0, 0, 0))
@@ -1217,6 +1240,47 @@ func _apply_ue_readability_tokens(profile: Dictionary = {}) -> void:
 		var button := button_value as Button
 		if button != null:
 			button.add_theme_font_size_override("font_size", 13)
+
+
+func _protocol_level_ref(level: int) -> Dictionary:
+	var safe_level := clampi(level, 1, 5)
+	var state := StringName("level_%d" % safe_level)
+	return Art09ManifestAssetMappingScript.asset_ref(
+		StringName("%s%d" % [PROTOCOL_LEVEL_ASSET_PREFIX, safe_level]),
+		PROTOCOL_LEVEL_FALLBACK_ASSET,
+		&"protocol_panel",
+		state
+	)
+
+
+func _update_protocol_presentation(level_value: Variant, pressure_value: Variant) -> void:
+	current_protocol_level = clampi(int(level_value), 1, 5)
+	current_protocol_pressure = clampf(float(pressure_value), 0.0, PROTOCOL_PRESSURE_MAX)
+	if protocol_level_plate != null:
+		_apply_texture_ref(protocol_level_plate, _protocol_level_ref(current_protocol_level), 0.48)
+	var pressure_color := _protocol_pressure_color(current_protocol_pressure)
+	if protocol_pressure_fill != null:
+		protocol_pressure_fill.color = pressure_color
+	if protocol_pressure_track != null and protocol_pressure_fill != null:
+		_set_rect(
+			protocol_pressure_fill,
+			Rect2(
+				protocol_pressure_track.position,
+				Vector2(protocol_pressure_track.size.x * current_protocol_pressure / PROTOCOL_PRESSURE_MAX, protocol_pressure_track.size.y)
+			)
+		)
+	if protocol_glow_layer != null:
+		var pressure_ratio := current_protocol_pressure / PROTOCOL_PRESSURE_MAX
+		protocol_glow_layer.color = Color(pressure_color.r, pressure_color.g, pressure_color.b, 0.06 + pressure_ratio * 0.12)
+		protocol_glow_layer.visible = true
+
+
+func _protocol_pressure_color(pressure: float) -> Color:
+	if pressure >= 80.0:
+		return Color(0.94, 0.22, 0.18, 0.96)
+	if pressure >= 50.0:
+		return Color(0.96, 0.68, 0.20, 0.96)
+	return Color(0.28, 0.82, 0.58, 0.96)
 
 
 func _apply_art24_frame(frame: NinePatchRect, texture_path: String, patch_margin: int) -> void:

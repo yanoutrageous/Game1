@@ -2,13 +2,20 @@ extends Control
 class_name ResultPanel
 
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
-const PresentationMappingScript := preload("res://scripts/presentation/presentation_mapping.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const ReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const LEGACY_RESULT_VALIDATION_MARKERS := ["Outcome:", "Mode:", "Moves:", "Mine Hits:", "Monsters Defeated:", "Failure Pending Lost:", "Failure Salvaged Items:", "Carried Items:", "Carried Value:", "Safe Gold:", "Final HP:", "Final Pressure:", "Black Coin:", "Gold Coin:", "Warehouse Lite Items:", "Room Floor Lost:", "Settlement Log Entries:"]
+const RESULT_BANNER_ASSET_BY_STATE := {
+	&"success": &"ui.art24.ui.result_banner.success",
+	&"failure": &"ui.art24.ui.result_banner.failure",
+	&"failed": &"ui.art24.ui.result_banner.failure",
+	&"abandon": &"ui.art24.ui.result_banner.abandoned",
+	&"abandoned": &"ui.art24.ui.result_banner.abandoned",
+}
+const RESULT_BANNER_FALLBACK_ASSET := &"ui.art21.shared.panel.card.normal"
 
 signal return_main_requested
 signal return_deploy_requested
@@ -477,16 +484,23 @@ func _main_game_modal_rect(profile: Dictionary, salvage_state: bool = false) -> 
 func _apply_result_title_plate(state: StringName) -> void:
 	if result_title_art == null:
 		_ensure_backdrop()
-	var texture := Art09ManifestAssetMappingScript.resolve_texture(PresentationMappingScript.result_title_ref(state))
-	var uses_state_title := texture != null
-	if texture == null:
-		texture = Art21UIPlacementContractScript.texture_for_visual_key(&"art21r2.modal.title_plate", &"ui.result.title.extraction_success")
+	var asset_id: StringName = RESULT_BANNER_ASSET_BY_STATE.get(state, &"")
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(
+		Art09ManifestAssetMappingScript.asset_ref(
+			asset_id,
+			RESULT_BANNER_FALLBACK_ASSET,
+			&"result_banner",
+			state
+		)
+	)
 	if texture != null and result_title_art != null:
 		result_title_art.texture = texture
 		result_title_art.visible = true
 	var title_node := get_node_or_null("ResultTitle") as Label
 	if title_node != null:
-		title_node.visible = not uses_state_title
+		# ART24 result banners are intentionally text-free. Keep the localized live
+		# title visible for every state instead of relying on legacy baked copy.
+		title_node.visible = true
 
 
 func _result_state_from_snapshot(snapshot: Dictionary) -> StringName:
