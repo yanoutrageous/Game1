@@ -547,7 +547,7 @@ I1_SAVE_RELIABILITY=PASS atomic_replace=PASS backup_recovery=PASS future_schema=
 quick/worktree: 33/33 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T015916488Z_9abf1c12\report.json; SHA-256=879914C4B1A777F7284BB6CDDB1F28343CE9D4FF244EC44AE7B0C5F818704939
 ui/worktree: 34/34 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T015916486Z_414e3e9e\report.json; SHA-256=8054E52DF7B54DEE4C04413BE936C87422BAAE8CF1D82976BB755B188B6BE129
 manifest SHA-256: 7CB171162F5862BE017520472B0224266904EE3DDC9A0976F50ED325E4633ACB; pollution_guard=PASS
-independent final review: P0=0, P1=0, P2=2 (non-blocking: 1280 Codex secondary-tab overflow lacks an explicit mouse hint; paired Research/Collection pages still share honest source records and differ mainly by page semantics)
+independent final review: P0=0, P1=0, P2=0
 full/worktree and exact full/head: NOT_RUN (reserved for I2.7 closeout)
 player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
 ```
@@ -704,9 +704,61 @@ static/worktree: PASS; required/full/runners=55; manifest SHA-256=296BB04D8D9A64
 quick/worktree: 36/36 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T033342881Z_d259a943\report.json; SHA-256=A23AFE11CCB2E662274F5A016704606067B23B4BD461144DBFEEC90AF841F082; pollution_guard=PASS
 ui/worktree: 37/37 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T033342904Z_b86a9ca4\report.json; SHA-256=1699A778A64D8735CC715D4C825E8E0ACEF8A1BAC499339A829440E8817B0CC5; pollution_guard=PASS
 visible captures: 24 pages x 1280x720,1600x900,1920x1080 = 72 PNG; output=.tmp/i2-4b-final-matrix; manual blocking layout findings=0
-independent final review: P0=0, P1=0, P2=0
+independent final review: P0=0, P1=0, P2=2 (non-blocking: 1280 Codex secondary-tab overflow lacks an explicit mouse hint; paired Research/Collection pages still share honest source records and differ mainly by page semantics)
 full/worktree and exact full/head: NOT_RUN (reserved for I2.7 closeout)
 player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
 ```
 
 接受边界：本记录关闭 I2.4 已授权的任务档案迁移、模块工作区与局外角色表现端口范围，不关闭 I2。1280 分辨率下图鉴八个二级页签虽可由焦点自动滚动到达，但鼠标侧尚无“左右仍有内容”的显式提示；研究的两个二级页与收藏的部分二级页继续复用同一组真实权威记录，差异主要体现在页面语义与摘要。这两项登记为非阻塞 P2，不以伪造新 schema 消除。天赋树仍缺少点数来源、成本、依赖、等级、重置/返还和节点效果权威，继续显式阻塞；外观持有/装备、多角色、抽奖和运行时骨骼也未进入本门。局内世界对象、HUD、弹窗、战斗房、特殊房型、终局结果与综合输入手感继续由 I2.5、I2.6、I2.7 处理。
+
+## 18. I2.5B 局内世界对象、交互权威与角色运动投影（2026-07-22）
+
+```text
+status: IN_PROGRESS
+feedback: RUN-01, RUN-02, RUN-03, RUN-04, RUN-10, CROSS-04, CROSS-05, CROSS-07, CROSS-08
+rollback: 6278a89 (I2.4B accepted checkpoint)
+```
+
+代码优先检查确认局内箱体当前同时由 Chest 房背景烘焙图、legacy `PropSprite` 与动态 `G41ChestInteractable` 表达，视觉、碰撞、交互半径和 popup 锚点又分别使用不同坐标；箱内奖励进入 `RunAssetLedger.room_floor` 后还会与地面实体重复投影。开箱现由动画倒计时结束后才发 `search_current_room`，使表现层反向掌握领域提交时机。地面物靠近自动展示已存在且必须保留，自动拾取则继续禁止。门只有背景与通用文本，`door_locked` 还由 `combat.active` 推测；角色移动视觉仅双帧并使用与步态无相位关系的 bob，构成用户所见错位、机械感与状态不符的直接原因。
+
+本门建立单一只读世界对象投影，统一输出 `projection_id / interaction_kind / local_pos / interaction_radius / body_rect / context_anchor_local / visual_state / visual_key / depth_key`。Chest 的视觉、碰撞、半径与 popup 必须全部读取同一描述符；生产 Chest 房使用现有中性房间背景与唯一动态箱体，不再合成烘焙箱和 legacy prop。同一 `RunAssetLedger` instance 在 Chest 房只投影为箱内剩余内容，不再同时生成地面实体；其他房型仍保持一实例一地面实体。该投影只读公开 room/combat/map snapshot，不得读取 TruthMap 或决定领域结果。
+
+开箱顺序改为“显式输入 -> 纯 interaction intent -> RunScene 同一输入处理内派发 `search_current_room` -> CommandBus/RoomResolver/RunAssetLedger 恰一次提交 -> 权威 result/snapshot -> opening/opened 表现与内容展示”。动画推进、FX 完成与 view 重建均不得派发命令或写 ledger。首次成功后立即显示箱内物品；以后靠近已开箱自动显示剩余内容，离开只隐藏 popup。地面物靠近自动显示范围内物品，但 pickup/replace 仍须显式动作，只有成功命令结果可改变世界投影。
+
+四方向门状态由公开 `position/width/height`、`move_requires_revealed`、KnownMap public cells 与 `combat_snapshot.door_locked` 生成 `available / blocked_out_of_bounds / blocked_flagged / blocked_hidden / combat_restricted` 描述符；视图只显示状态，不调用 transition/flee，也不成为通行授权。角色运动只调整已登记姿态的表现序列、帧节奏与同相 bob：不得改变逻辑速度、加速度、碰撞、门阈值、战斗 fixed tick 或领域位置；reduced-motion 固定可读姿态并保持零 bob。本门不引入运行时骨骼。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+Godot/GraytailGodot/scripts/core/run/run_scene.gd
+Godot/GraytailGodot/scripts/gameplay/runtime/g41_world_object_projection.gd
+Godot/GraytailGodot/scripts/gameplay/runtime/g41_room_runtime_view.gd
+Godot/GraytailGodot/scripts/gameplay/runtime/g41_runtime_visual_contract.gd
+Godot/GraytailGodot/scripts/gameplay/interaction/g41_interactable.gd
+Godot/GraytailGodot/scripts/gameplay/interaction/g41_world_context_popup.gd
+Godot/GraytailGodot/scripts/gameplay/interactables/g41_chest_interactable.gd
+Godot/GraytailGodot/scripts/gameplay/loot/g41_ground_loot_entity.gd
+Godot/GraytailGodot/scripts/gameplay/player/player_controller.gd
+Godot/GraytailGodot/scripts/presentation/presentation_mapping.gd
+Godot/GraytailGodot/scripts/presentation/art24/art24_runtime_animation_catalog.gd
+Godot/GraytailGodot/scripts/presentation/art24/art24_in_run_asset_contract.gd
+Godot/GraytailGodot/scripts/presentation/art25_gameplay_backdrop.gd
+Godot/GraytailGodot/tests/i2_world_interaction_runtime_runner.gd
+Godot/GraytailGodot/tests/i2_player_motion_projection_runner.gd
+Godot/GraytailGodot/tests/g41_in_run_core_gameplay_runtime_runner.gd
+Godot/GraytailGodot/tests/art24_in_run_runtime_runner.gd
+Godot/GraytailGodot/tests/art24_world_context_popup_layout_probe.gd
+Godot/GraytailGodot/tests/art24_context_anchor_integration_probe.gd
+Godot/GraytailGodot/tests/art25_production_visual_capture_runner.gd
+Godot/GraytailGodot/tests/i2_asset_binding_runner.gd
+tools/i1/validation_manifest.json
+```
+
+条件路径：`Godot/GraytailGodot/data/assets/asset_manifest.csv` 只允许在完成来源、许可、哈希和语义复核后修改 `prop.art07.00_baoxiang_kai` 一行；若不能证明，不得改 manifest，生产打开态须改绑已登记资产/状态表现。资产二进制本体仍禁止修改。
+
+保护边界：`project.godot`、scene/resource/`.uid`/`.translation`/import metadata、全部素材本体、ContentDB/content schema、CommandBus、RunContext、RunStateMachine、RunAssetLedger、RunAssetEffectHandler、RunInventory、RunRuleService/Content、RoomResolver、G41InRunRuntime、combat、settlement/result/save/meta authority 均禁止修改。RunScene 虽在白名单内，但 `_attempt_room_transition`、`_g41_transition_precheck`、combat/flee、extract/terminal/result、reward/economy 数值和 item location 规则仍受保护。
+
+完成证据必须覆盖：生产 Chest 房唯一动态箱/无 legacy prop/无同 ID 地面重复投影；统一 projection 的视觉、body、半径和 popup 锚点在重建后不漂移；显式输入不等待动画即产生一次 search，快速重复、动画 advance、重进与重建不二次提交；首次成功、已开重进、拾取后与空箱内容精确跟随 ledger；ground loot proximity 零命令零 ledger 变化，显式拾取才改变位置；四方向门投影与公开快照一致且零 transition/flee；move 至少四个真实姿态阶段，30/60/144 Hz 采样合法，reduced-motion 固定姿态/零 bob，位移、碰撞停止点和门阈值回归不变；production capture 不得调用 `mark_opened()` 作弊；static、定向、quick/ui、三分辨率可见检查与独立复核。full/worktree 与 exact full/head 仍由 I2.7 统一执行。
+
+停止条件：实现需要改 RunAssetLedger 位置模型、搜索奖励、经济数值或通行权威；动画/FX 回调发领域命令；proximity 自动 search/pickup/replace；同一 Chest instance 同时出现在箱内与地面；视觉/碰撞/popup 继续使用不同硬编码锚点；生产仍合成 `room_chest.png + dynamic chest` 或 legacy prop；未完成治理的打开箱素材继续作为生产打开态；门视图读取 TruthMap 或自己执行通行；运动调整改变逻辑位移、战斗 fixed tick、碰撞或门阈值；既有 G41、ART24、I1 quick/ui 回归失败。任一条件出现即回退到 `6278a89` 并将本门标记 `BLOCKED`。
