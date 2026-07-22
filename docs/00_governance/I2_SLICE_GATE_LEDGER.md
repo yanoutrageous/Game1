@@ -855,3 +855,18 @@ tools/i1/validation_manifest.json
 完成证据必须覆盖：T1–T6、unique、unknown 的统一非颜色品质表达与 43 个正式物品映射；部署、快捷背包、完整背包、世界悬浮窗和结果页无 raw `tier_N` 且 T6 不降级；0、1、4、5、8+ 件快捷背包全部可达，无假空位、无静默截断，hover/focus 零命令，负重居中；周围雷险已知 0–8 与未知状态；协议 1–5 标题、底板、压力色和房间危险主题相互独立；KnownMap 已知/未知格、相邻雷数、隐藏房型和边界的无泄露测试；小地图焦点、展开地图外部点击、Esc 与焦点归还；背包长详情、hover/focus、显式 action 恰好一次；暂停→设置→返回、暂停→放弃确认→取消/确认、嵌套地图/详情的栈顶 Esc 顺序与焦点恢复；1280×720、1600×900、1920×1080 可见矩阵及 reduced-motion 状态；static、定向、quick/ui 和独立复核。full/worktree 与 exact full/head 继续留到 I2.7。
 
 停止条件：视图读取 TruthMap 或未公开房型/雷数；hover/focus/proximity/open/close 产生领域命令；快捷背包隐藏真实物品或用假空位填版；品质仍仅靠颜色或把 T5/T6 降级；协议原因由 UI 猜测或更改阈值/效果；第二套设置状态与 `SettingsManager` 分叉；Esc 同时关闭两层、吞掉领域输入或不恢复焦点；放弃绕过二次确认或重复提交；实现要求改领域/schema/InputMap/素材/manifest；既有 layer、layout、action-result、input gateway、地图公开或保存回归失败。任一条件出现即回退到 `f98aecc` 并将本门标记 `BLOCKED`。
+
+### 19.1 品质权威往返缺陷与门禁修正（实现前登记）
+
+独立只读复核证明原门禁中的“领域禁止修改”与真实缺陷冲突：43 项正式目录以 `tier_1` 至 `tier_6` 为权威值，而 `RunAssetLedger._normalize_rarity()` 只接受 `common/good/rare/epic/legendary/mythic/unique`，因此正式 T2–T6 在真实 `create_item_instance()` 路径被静默压成 `common`。首轮品质 runner 直接把目录字典送入视图，绕过 ledger，属于假阳性，不得进入接受证据。另有两个越权：纯表现描述器按 rarity 自行生成 `ordinary_drop_allowed`，会把正式虚拟记录 `sp_trader_receipt` 错称为可普通掉落；世界悬浮窗又使用描述器的 `locked` 决定是否派发拾取/替换，令表现层覆盖内容与命令权威。
+
+为无损恢复既有正式内容，补充允许路径：
+
+```text
+Godot/GraytailGodot/scripts/core/run/run_asset_ledger.gd
+Godot/GraytailGodot/tests/i2_item_rarity_authority_roundtrip_runner.gd
+```
+
+该例外只允许把 `tier_1…tier_6` 与历史 `common/good/uncommon/rare/epic/legendary/mythic` 输入无损规范为同一套 `tier_1…tier_6` 输出；`unique` 保持 `unique`，未知值保持既有 fail-closed T1 兼容结果。不得改变正式目录值、唯一物规则、掉落表、可拾取/可售卖/可存储策略、重量、价值、位置或结算。代码侧品质描述器必须保持纯表现，不得输出或决定 `ordinary_drop_allowed`、pickup/replace enabled、can_sell、can_store 等领域能力；世界悬浮窗只能消费公开物品/动作投影已有的能力与 blocked reason，若没有该字段则不得按品质猜测，真实命令仍由既有领域权威接受或拒绝。
+
+替代完成证据必须从 `M3ItemCatalog` 的全部 43 项出发，经过真实 `RunAssetLedger.create_item_instance()`，再进入统一描述器及生产消费者，逐项证明 canonical rarity 与中文/徽记/边框保持一致；同时覆盖 `good/uncommon` 双历史别名、unknown fail-closed、unique 视觉锁定但不取得命令权威，以及 `sp_trader_receipt` 的内容政策不被描述器改写。若 round-trip 仍丢失 T2–T6、表现层仍输出领域能力或消费者仍以品质决定命令，则 Gate19 保持 `BLOCKED`。
