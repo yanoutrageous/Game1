@@ -12,7 +12,6 @@ const PlayerControllerScript := preload("res://scripts/gameplay/player/player_co
 var failures: Array[String] = []
 var integration_context
 var integration_bus
-var integration_chest_commit_count := 0
 
 
 func _initialize() -> void:
@@ -341,59 +340,69 @@ func _check_integrated_chest_and_ground_loot() -> void:
 	var debug_inventory_after: int = integration_context.asset_ledger.get_items_by_location(RunAssetLedger.LOCATION_INVENTORY).size()
 	_check(bool(debug_backpack_result.get("ok", false)), "Backpack QA seed command was rejected")
 	_check(debug_inventory_after == debug_inventory_before + 1, "Backpack QA seed command did not create an inventory item")
-	view.interaction_commit_requested.connect(_on_integration_interaction_commit)
 	view.configure_room(integration_context.get_status_snapshot())
 	var request: Dictionary = view.request_nearest_interaction(Vector2(0.68, 0.53))
-	_check(bool(request.get("accepted", false)) and bool(request.get("pending", false)), "Chest did not require the opening state before commit")
+	_check(bool(request.get("accepted", false)) and StringName(request.get("intent", &"")) == &"search_current_room", "Closed chest did not produce a pure search intent")
+	var command_sequence_before_open := int(integration_bus.command_sequence)
+	var search_result: Dictionary = integration_bus.dispatch(&"search_current_room", {"source": "g41_test_chest"})
+	view.apply_chest_search_result(search_result, integration_context.get_status_snapshot())
+	_check(integration_bus.command_sequence == command_sequence_before_open + 1, "Explicit chest input did not submit exactly one command")
+	_check(integration_context.searched_cells.has(integration_context.cell_key(Vector2i(1, 1))), "Chest input did not mark the room searched before animation advance")
 	view.advance(0.30, Vector2(0.68, 0.53), {})
-	_check(integration_chest_commit_count == 1, "Chest opening did not commit exactly once")
-	_check(integration_context.searched_cells.has(integration_context.cell_key(Vector2i(1, 1))), "Chest commit did not mark the room searched")
-	view.resolve_chest_commit(true)
+	_check(integration_bus.command_sequence == command_sequence_before_open + 1, "Chest animation advance submitted a second command")
 	var floor_after_open: Array[Dictionary] = integration_context.asset_ledger.get_room_floor_items(Vector2i(1, 1))
 	_check(not floor_after_open.is_empty(), "Chest reward did not enter room_floor")
 	view.configure_room(integration_context.get_status_snapshot())
 	_check(view.chest != null and view.chest.is_opened(), "Committed chest did not retain its opened state")
 	view.advance(0.0, Vector2(0.68, 0.53), {})
 	_check(view.context_popup != null and view.context_popup.visible, "Approaching the chest did not reveal its contextual popup")
-	var chest_anchor_ui: Vector2 = view.chest.get_global_transform().origin
+	_check(view.context_popup.context_items.size() == floor_after_open.size(), "Opened chest popup did not immediately reflect all remaining ledger contents")
+	var chest_anchor_local: Vector2 = view.chest.get_context_anchor_world()
+	var chest_anchor_ui: Vector2 = view.get_global_transform() * chest_anchor_local
 	var chest_popup_rect := Rect2(view.context_popup.position, view.context_popup.size * view.context_popup.scale)
 	_check(not chest_popup_rect.has_point(chest_anchor_ui), "Scaled room-to-UI mapping placed the contextual popup over the visible chest")
-	var reward_count_before_reopen := floor_after_open.size()
-	_check(view.chest.toggle_container(), "Opened chest could not be closed")
-	_check(not view.chest.is_container_open(), "Closing the opened chest did not update its container state")
-	_check(view.chest.toggle_container(), "Opened chest could not be reopened")
-	_check(view.chest.is_container_open(), "Reopening the chest did not restore its container state")
-	_check(integration_context.asset_ledger.get_room_floor_items(Vector2i(1, 1)).size() == reward_count_before_reopen, "Repeated chest open/close duplicated its contents")
-	_check(integration_chest_commit_count == 1, "Repeated chest open/close committed search more than once")
 	var view_snapshot: Dictionary = view.build_read_only_snapshot()
-	var ground_entity_count := 0
-	var target_ground_id := ""
-	var target_ground_pos := Vector2.ZERO
-	for interactable in (view_snapshot.get("interactables", []) as Array):
-		if StringName((interactable as Dictionary).get("interaction_kind", &"")) == &"ground_loot":
-			ground_entity_count += 1
-			target_ground_id = String((interactable as Dictionary).get("interaction_id", ""))
-			target_ground_pos = Vector2((interactable as Dictionary).get("local_pos", Vector2.ZERO))
-	_check(ground_entity_count == floor_after_open.size(), "Room-floor ledger instances were not projected one-to-one as world entities")
-	var first_projection := _ground_projection(view_snapshot)
+	_check(_ground_projection(view_snapshot).is_empty(), "Chest contents were duplicated as floor entities")
+	var first_chest_projection: Dictionary = (view_snapshot.get("world_projection", {}) as Dictionary).duplicate(true)
 	view.configure_room(integration_context.get_status_snapshot())
-	_check(_ground_projection(view.build_read_only_snapshot()) == first_projection, "Repeated room-view configuration duplicated or moved a ledger projection")
+	_check((view.build_read_only_snapshot().get("world_projection", {}) as Dictionary).get("world_objects", []) == first_chest_projection.get("world_objects", []), "Repeated room-view configuration moved the chest projection")
 	var rebuilt_view = RoomRuntimeViewScript.new()
 	rebuilt_view.name = "G41RebuiltRoomView"
 	root.add_child(rebuilt_view)
 	rebuilt_view.configure_room(integration_context.get_status_snapshot())
-	_check(_ground_projection(rebuilt_view.build_read_only_snapshot()) == first_projection, "Room-view rebuild failed to restore stable ground-loot positions")
+	_check(_ground_projection(rebuilt_view.build_read_only_snapshot()).is_empty(), "Rebuilt Chest view duplicated container contents as floor entities")
 	rebuilt_view.free()
+	var repeat_request: Dictionary = view.request_nearest_interaction(Vector2(0.68, 0.53))
+	_check(StringName(repeat_request.get("intent", &"")) == &"inspect_opened_chest", "Re-entered opened chest did not remain an inspection-only intent")
+	_check(integration_bus.command_sequence == command_sequence_before_open + 1, "Inspecting an opened chest submitted another command")
+
+	var ground_room := Vector2i(0, 0)
+	integration_context.truth_map.set_room_type(ground_room, &"Normal")
+	_enter_test_room(controller, ground_room)
+	var initial_ground_result: Dictionary = integration_context.asset_ledger.add_reward_items([ItemCatalogScript.debug_item()], RunAssetLedger.LOCATION_ROOM_FLOOR, ground_room, "g41_ground_projection_test")
+	var initial_ground_items: Array = initial_ground_result.get("ground_items", [])
+	_check(not initial_ground_items.is_empty(), "Ground-loot setup did not create a room-floor item")
+	view.configure_room(integration_context.get_status_snapshot())
+	var first_projection := _ground_projection(view.build_read_only_snapshot())
+	_check(first_projection.size() == initial_ground_items.size(), "Non-Chest room did not project ledger items one-to-one")
+	var target_ground_id := String(first_projection[0].get("instance_id", "")) if not first_projection.is_empty() else ""
+	var target_ground_pos := Vector2(first_projection[0].get("local_pos", Vector2.ZERO)) if not first_projection.is_empty() else Vector2.ZERO
+	var proximity_sequence_before := int(integration_bus.command_sequence)
+	var proximity_ledger_before: Dictionary = integration_context.asset_ledger.get_public_snapshot(ground_room)
+	view.advance(0.0, target_ground_pos, {})
+	_check(view.context_popup != null and view.context_popup.visible, "Ground-loot proximity did not reveal the contextual popup")
+	_check(integration_bus.command_sequence == proximity_sequence_before, "Ground-loot proximity submitted a command")
+	_check(integration_context.asset_ledger.get_public_snapshot(ground_room) == proximity_ledger_before, "Ground-loot proximity changed ledger state")
 	var pickup_request: Dictionary = view.request_nearest_interaction(target_ground_pos)
 	_check(StringName(pickup_request.get("interaction_kind", &"")) == &"ground_loot", "Nearby ground entity did not win interaction focus")
 	var pickup_result: Dictionary = integration_bus.dispatch(&"pickup_ground_item", {"instance_id": target_ground_id, "source": "g41_test"})
 	_check(bool(pickup_result.get("ok", false)), "Ground entity could not be picked up through CommandBus")
 	view.configure_room(integration_context.get_status_snapshot())
-	_check((view.build_read_only_snapshot().get("interactables", []) as Array).size() == 1, "Picked instance remained in the room world projection")
+	_check(_ground_projection(view.build_read_only_snapshot()).is_empty(), "Picked instance remained in the room world projection")
 
 	var used_before_full: int = int(integration_context.asset_ledger.get_backpack_used())
 	integration_context.asset_ledger.backpack_capacity = used_before_full
-	var full_ground_result: Dictionary = integration_context.asset_ledger.add_reward_items([ItemCatalogScript.debug_item()], RunAssetLedger.LOCATION_ROOM_FLOOR, Vector2i(1, 1), "g41_full_bag_test")
+	var full_ground_result: Dictionary = integration_context.asset_ledger.add_reward_items([ItemCatalogScript.debug_item()], RunAssetLedger.LOCATION_ROOM_FLOOR, ground_room, "g41_full_bag_test")
 	var full_ground_items: Array = full_ground_result.get("ground_items", [])
 	_check(not full_ground_items.is_empty(), "Full-bag setup did not create a floor item")
 	var full_ground_id := String((full_ground_items[0] as Dictionary).get("instance_id", ""))
@@ -412,6 +421,7 @@ func _check_integrated_chest_and_ground_loot() -> void:
 		var replacement_ids := _ground_projection_ids(view.build_read_only_snapshot())
 		_check(drop_id in replacement_ids and not (full_ground_id in replacement_ids), "Replacement result was not reflected by the world-floor projection")
 
+	_enter_test_room(controller, Vector2i(1, 1))
 	var floor_count_before_repeat: int = int(integration_context.asset_ledger.get_room_floor_items(Vector2i(1, 1)).size())
 	var black_before_repeat: int = int(integration_context.asset_ledger.get_currency(RunAssetLedger.CURRENCY_BLACK))
 	integration_bus.dispatch(&"search_current_room", {"source": "g41_test_repeat"})
@@ -553,13 +563,6 @@ func _check_lifecycle_cleanup() -> void:
 	var abandon_result: Dictionary = abandon_controller.abandon_run("g41_lifecycle_test")
 	_check(bool(abandon_result.get("ok", false)) and _runtime_is_clean(abandon_controller), "Abandon lifecycle left G41 runtime state alive")
 	_release_controller(abandon_controller)
-
-
-func _on_integration_interaction_commit(interaction_kind: StringName, _payload: Dictionary) -> void:
-	if interaction_kind != &"chest" or integration_bus == null:
-		return
-	integration_chest_commit_count += 1
-	integration_bus.dispatch(&"search_current_room", {"source": "g41_test_chest"})
 
 
 func _enter_test_room(controller, pos: Vector2i) -> void:

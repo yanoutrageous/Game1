@@ -20,7 +20,9 @@ const ROOM_BACKGROUND_ASSET := {
 	&"Spawn": &"room.background.normal",
 	&"Normal": &"room.background.normal",
 	&"Mine": &"room.background.mine",
-	&"Chest": &"room.background.chest",
+	# Chest rooms use the neutral plate plus one dynamic projected chest.  The
+	# legacy chest background already contains a baked prop and would duplicate it.
+	&"Chest": &"room.background.normal",
 	&"Event": &"room.background.event",
 	&"Monster": &"room.background.monster",
 	&"Exit": &"room.background.exit",
@@ -135,8 +137,6 @@ static func prop_asset_for_room(room_type: StringName) -> StringName:
 	match room_type:
 		&"Mine":
 			return &"prop.mine.trap"
-		&"Chest":
-			return &"prop.chest.closed"
 		_:
 			return &""
 

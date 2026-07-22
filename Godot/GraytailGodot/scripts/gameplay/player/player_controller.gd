@@ -340,10 +340,20 @@ func _apply_idle_motion(walking: bool) -> void:
 	var sprite := get_node_or_null("Sprite") as Sprite2D
 	if sprite == null:
 		return
+	var reduce_motion := Art24MotionSettingsScript.reduce_motion_enabled()
 	var action_visual := visual_state in [&"attack_windup", &"attack_active", &"attack_recovery", &"hurt", &"dead"]
-	var pulse := 0.0 if Art24MotionSettingsScript.reduce_motion_enabled() else sin(visual_clock * (11.0 if action_visual else (8.0 if walking else 2.4)))
-	sprite.position.y = -20.0 + pulse * (1.8 if walking else 0.8)
-	var scale_pulse := 1.0 + pulse * (0.012 if walking else 0.006)
+	var uses_walk_cycle := RuntimeAnimationCatalog.player_uses_walk_cycle(visual_state, walking)
+	var bob_offset := 0.0
+	var scale_pulse := 1.0
+	if uses_walk_cycle:
+		bob_offset = RuntimeAnimationCatalog.player_walk_bob_offset(animation_elapsed, reduce_motion)
+		var lift_ratio := -bob_offset / RuntimeAnimationCatalog.PLAYER_MOVE_BOB_AMPLITUDE
+		scale_pulse += lift_ratio * 0.008
+	elif not reduce_motion:
+		var pulse := sin(visual_clock * (11.0 if action_visual else 2.4))
+		bob_offset = pulse * 0.8
+		scale_pulse += pulse * 0.006
+	sprite.position.y = -20.0 + bob_offset
 	sprite.scale = Vector2.ONE * PLAYER_ART_SCALE * scale_pulse
 	sprite.modulate = Color(1.0, 0.62, 0.58, 1.0) if visual_state == &"hurt" else Color.WHITE
 	sprite.rotation = -0.18 if visual_state == &"dead" else 0.0

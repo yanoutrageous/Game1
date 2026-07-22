@@ -107,6 +107,8 @@
     "ART23_LONG_TERM_MAIN_ROUTE",
     "I2_LONG_TERM_TASK_ARCHIVE",
     "I2_LONG_TERM_MODULE_WORKSPACE",
+    "I2_WORLD_INTERACTION_RUNTIME",
+    "I2_PLAYER_MOTION_PROJECTION",
     "ART24_IN_RUN_RUNTIME",
     "ART24_RUN_SURFACE_LAYER_ROUTING",
     "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
@@ -159,6 +161,8 @@
         "ART23_LONG_TERM_MAIN_ROUTE",
         "I2_LONG_TERM_TASK_ARCHIVE",
         "I2_LONG_TERM_MODULE_WORKSPACE",
+        "I2_WORLD_INTERACTION_RUNTIME",
+        "I2_PLAYER_MOTION_PROJECTION",
         "ART24_IN_RUN_RUNTIME",
         "ART24_CONTEXT_ANCHOR_INTEGRATION",
         "I2_ROUTE_AUTHORITY_LIFECYCLE",
@@ -187,6 +191,8 @@
         "M5_ITEM_DROP_LOOP_FULL_CONTENT",
         "M6_REAL_ASSET_DEPLOY_SETTLEMENT_LOOP",
         "G41_IN_RUN_CORE_GAMEPLAY_RUNTIME",
+        "I2_WORLD_INTERACTION_RUNTIME",
+        "I2_PLAYER_MOTION_PROJECTION",
         "M7_CONTENT_RUNTIME",
         "M7_META_UI_RUNTIME",
         "I1_RUNTIME_SAFETY",
@@ -230,6 +236,8 @@
         "ART23_LONG_TERM_MAIN_ROUTE",
         "I2_LONG_TERM_TASK_ARCHIVE",
         "I2_LONG_TERM_MODULE_WORKSPACE",
+        "I2_WORLD_INTERACTION_RUNTIME",
+        "I2_PLAYER_MOTION_PROJECTION",
         "ART24_IN_RUN_RUNTIME",
         "ART24_RUN_SURFACE_LAYER_ROUTING",
         "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
@@ -294,6 +302,8 @@
         "ART23_LONG_TERM_MAIN_ROUTE",
         "I2_LONG_TERM_TASK_ARCHIVE",
         "I2_LONG_TERM_MODULE_WORKSPACE",
+        "I2_WORLD_INTERACTION_RUNTIME",
+        "I2_PLAYER_MOTION_PROJECTION",
         "ART24_IN_RUN_RUNTIME",
         "ART24_RUN_SURFACE_LAYER_ROUTING",
         "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
@@ -702,6 +712,20 @@
       "coverage": ["long_term", "module_workspace", "scroll", "record_reachability", "explicit_actions", "profile_history", "honest_empty_state"]
     },
     {
+      "id": "I2_WORLD_INTERACTION_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/i2_world_interaction_runtime_runner.gd",
+      "pass_marker": "I2_WORLD_INTERACTION_RUNTIME=PASS chest=single_projection command=before_animation proximity=display_only doors=public_snapshot asset=open_png_blocked",
+      "fail_marker": "I2_WORLD_INTERACTION_RUNTIME=FAIL",
+      "coverage": ["in_run", "world_projection", "chest", "ground_loot", "door_state", "command_authority", "asset_gate"]
+    },
+    {
+      "id": "I2_PLAYER_MOTION_PROJECTION",
+      "relative_path": "Godot/GraytailGodot/tests/i2_player_motion_projection_runner.gd",
+      "pass_marker": "I2_PLAYER_MOTION_PROJECTION=PASS phases=4 sample_hz=30,60,144 reduced_motion=fixed_pose_zero_bob authority=presentation_only displacement=unchanged",
+      "fail_marker": "I2_PLAYER_MOTION_PROJECTION=FAIL",
+      "coverage": ["in_run", "player_motion", "animation_phase", "frame_rate", "reduced_motion", "displacement_authority"]
+    },
+    {
       "id": "ART24_IN_RUN_RUNTIME",
       "relative_path": "Godot/GraytailGodot/tests/art24_in_run_runtime_runner.gd",
       "pass_marker": "ART24_IN_RUN_RUNTIME=PASS primary_modules=8 secondary_states=61 required_visual_keys=33",
@@ -925,6 +949,11 @@
       ],
       "I2_LONG_TERM_TASK_ARCHIVE": [],
       "I2_LONG_TERM_MODULE_WORKSPACE": [],
+      "I2_WORLD_INTERACTION_RUNTIME": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I2_PLAYER_MOTION_PROJECTION": [],
       "ART24_IN_RUN_RUNTIME": [],
       "ART24_RUN_SURFACE_LAYER_ROUTING": [],
       "ART24_WORLD_CONTEXT_POPUP_LAYOUT": [],

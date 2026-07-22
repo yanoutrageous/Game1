@@ -38,6 +38,8 @@ func apply_room_type(room_type: StringName) -> void:
 	if atmosphere == null:
 		return
 	var room_token := String(room_type).to_lower()
+	if room_token == "chest":
+		room_token = "normal"
 	if not Art24InRunAssetContractScript.ROOM_PATHS.has(room_token):
 		room_token = "normal"
 	atmosphere.texture = Art24InRunAssetContractScript.texture(StringName("visual.art24.room.%s" % room_token))

@@ -328,7 +328,6 @@ func _build_playfield_visuals() -> void:
 	room_layer.add_child(room_controller)
 	room_runtime_view = G41RoomRuntimeViewScript.new()
 	room_runtime_view.name = "G41RoomRuntimeView"
-	room_runtime_view.interaction_commit_requested.connect(_on_g41_interaction_commit_requested)
 	room_runtime_view.context_action_requested.connect(_on_world_context_action_requested)
 	room_layer.add_child(room_runtime_view)
 	player_controller = PlayerScene.instantiate() as PlayerController
@@ -961,11 +960,18 @@ func _handle_interact_pressed() -> void:
 					room_runtime_view.show_context_result(pickup_result)
 					return
 				&"chest":
-					if bool(world_request.get("container_toggled", false)):
-						var opened := bool(world_request.get("container_open", false))
-						room_runtime_view.show_context_result({"ok": true, "message": "箱子已打开。" if opened else "箱子已关闭。"})
-					else:
-						_show_command_feedback({"ok": true, "status": &"chest_opening", "message": "正在打开物资箱……"})
+					var intent := StringName(world_request.get("intent", &""))
+					if intent == &"search_current_room":
+						# The explicit input owns the command submission.  Animation and
+						# later view advances only observe the authoritative result.
+						var chest_result := _dispatch_command(&"search_current_room", {"source": "g41_world_interaction"})
+						var chest_snapshot := run_context.get_status_snapshot()
+						room_runtime_view.apply_chest_search_result(chest_result, chest_snapshot)
+						if not bool(chest_result.get("ok", false)):
+							room_runtime_view.show_context_result({
+								"ok": false,
+								"message": String(chest_result.get("message", chest_result.get("reason", "物资箱无法打开。"))),
+							})
 					return
 	var snapshot := run_context.get_status_snapshot()
 	var current_room: StringName = StringName(snapshot.get("current_room", &"Unknown"))
@@ -1012,29 +1018,12 @@ func _fight_and_show_result() -> void:
 		_show_world_reward_feedback(result, reward, &"combat")
 
 
-func _on_g41_interaction_commit_requested(interaction_kind: StringName, _payload: Dictionary) -> void:
-	if interaction_kind != &"chest" or run_context == null or command_bus == null:
-		return
-	var result := _dispatch_command(&"search_current_room", {"source": "g41_world_interaction"})
-	var snapshot := run_context.get_status_snapshot()
-	var reward: Dictionary = snapshot.get("last_reward", {})
-	if room_runtime_view != null:
-		room_runtime_view.resolve_chest_commit(bool(result.get("ok", false)))
-		room_runtime_view.configure_room(snapshot)
-		room_runtime_view.show_context_result({
-			"ok": bool(result.get("ok", false)),
-			"message": "物资箱已打开，内容只生成一次。" if bool(result.get("ok", false)) else String(result.get("reason", "物资箱无法打开。")),
-		})
-	elif not reward.is_empty():
-		_show_world_reward_feedback(result, reward, &"chest")
-
-
 func _pickup_floor_from_ui(instance_id: String = "") -> void:
 	var payload: Dictionary = {"source": "ui"}
 	if instance_id != "":
 		payload["instance_id"] = instance_id
 	var result := _dispatch_command(&"pickup_ground_item", payload)
-	if room_runtime_view != null:
+	if room_runtime_view != null and not bool(result.get("ok", false)):
 		room_runtime_view.show_context_result(result)
 	if ground_loot_panel != null:
 		ground_loot_panel.call("show_command_result", result)
@@ -1050,7 +1039,7 @@ func _replace_floor_from_ui(instance_id: String = "", drop_instance_id: String =
 	if drop_instance_id != "":
 		payload["drop_instance_id"] = drop_instance_id
 	var result := _dispatch_command(&"replace_ground_item", payload)
-	if room_runtime_view != null:
+	if room_runtime_view != null and not bool(result.get("ok", false)):
 		room_runtime_view.show_context_result(result)
 	if ground_loot_panel != null:
 		ground_loot_panel.call("show_command_result", result)
@@ -1106,7 +1095,7 @@ func _on_world_context_action_requested(action: StringName, payload: Dictionary)
 			_pickup_floor_from_ui(String(payload.get("instance_id", "")))
 		&"replace":
 			_replace_floor_from_ui(String(payload.get("instance_id", "")), String(payload.get("drop_instance_id", "")))
-		&"chest_toggle":
+		&"chest_open":
 			_handle_interact_pressed()
 
 

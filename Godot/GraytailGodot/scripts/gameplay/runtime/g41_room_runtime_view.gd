@@ -1,13 +1,13 @@
 extends Node2D
 class_name G41RoomRuntimeView
 
-signal interaction_commit_requested(interaction_kind: StringName, payload: Dictionary)
 signal context_action_requested(action: StringName, payload: Dictionary)
 
 const GroundLootEntityScript := preload("res://scripts/gameplay/loot/g41_ground_loot_entity.gd")
 const ChestInteractableScript := preload("res://scripts/gameplay/interactables/g41_chest_interactable.gd")
 const ActorViewScript := preload("res://scripts/gameplay/runtime/g41_runtime_actor_view.gd")
 const WorldContextPopupScript := preload("res://scripts/gameplay/interaction/g41_world_context_popup.gd")
+const WorldObjectProjectionScript := preload("res://scripts/gameplay/runtime/g41_world_object_projection.gd")
 var room_key: String = ""
 var room_type: StringName = &"Unknown"
 var chest
@@ -17,10 +17,14 @@ var projectile_views: Dictionary = {}
 var focused_interaction_id: String = ""
 var combat_snapshot: Dictionary = {}
 var latest_room_snapshot: Dictionary = {}
+var world_projection: Dictionary = {}
+var door_projections: Array[Dictionary] = []
 var logical_obstacles: Array[Rect2] = []
 var context_popup: G41WorldContextPopup
 var last_door_locked: bool = false
+var door_projection_revision: int = 0
 var context_ui_suppressed: bool = false
+var last_player_local_pos := Vector2(0.5, 0.5)
 
 
 func _ready() -> void:
@@ -32,14 +36,14 @@ func configure_room(snapshot: Dictionary) -> void:
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	room_key = "%d,%d" % [pos.x, pos.y]
 	room_type = StringName(snapshot.get("current_room", &"Unknown"))
-	logical_obstacles = _obstacles_for_room(room_type)
 	_ensure_layers()
-	_sync_chest(snapshot)
-	_sync_ground_loot(snapshot.get("room_floor_items", []))
+	_rebuild_world_projection()
+	_update_door_prompt()
 	queue_redraw()
 
 
 func advance(delta: float, player_local_pos: Vector2, next_combat_snapshot: Dictionary = {}) -> void:
+	last_player_local_pos = player_local_pos
 	if chest != null:
 		chest.advance(delta)
 	_update_focus(player_local_pos)
@@ -64,15 +68,7 @@ func request_nearest_interaction(player_local_pos: Vector2) -> Dictionary:
 	if StringName(request.get("interaction_kind", &"none")) == &"chest":
 		if chest == null:
 			return {"accepted": false, "reason": &"chest_unavailable", "interaction_kind": &"chest"}
-		if chest.is_opened():
-			chest.toggle_container()
-			request["container_toggled"] = true
-			request["container_open"] = chest.is_container_open()
-			return request
-		if not chest.begin_opening():
-			return {"accepted": false, "reason": &"chest_unavailable", "interaction_kind": &"chest"}
-		request["pending"] = true
-		request["visual_state"] = &"opening"
+		return chest.build_search_intent()
 	return request
 
 
@@ -91,16 +87,17 @@ func activate_context_primary() -> bool:
 	return context_popup != null and context_popup.activate_primary()
 
 
-func resolve_chest_commit(ok: bool) -> void:
+func apply_chest_search_result(result: Dictionary, snapshot: Dictionary) -> void:
+	configure_room(snapshot)
 	if chest == null:
 		return
-	if ok:
-		chest.mark_opened()
-	else:
-		chest.cancel_opening()
+	chest.apply_search_result(bool(result.get("ok", false)))
+	_refresh_context_popup(last_player_local_pos, chest if chest.can_interact_from(last_player_local_pos) else null)
 
 
 func apply_combat_snapshot(snapshot: Dictionary) -> void:
+	var next_door_locked := bool(snapshot.get("door_locked", false))
+	var door_state_changed := door_projections.is_empty() or next_door_locked != last_door_locked
 	combat_snapshot = snapshot
 	var active_ids: Dictionary = {}
 	for raw_enemy in (snapshot.get("enemies", []) as Array):
@@ -137,11 +134,12 @@ func apply_combat_snapshot(snapshot: Dictionary) -> void:
 			projectile_views[projectile_id] = view
 		view.configure(&"projectile", projectile)
 	_remove_missing_views(projectile_views, active_ids)
-	_update_door_prompt()
-	var door_locked := bool(combat_snapshot.get("active", false))
-	if door_locked != last_door_locked or not (combat_snapshot.get("lasers", []) as Array).is_empty():
+	if door_state_changed:
+		_rebuild_door_projection()
+		_update_door_prompt()
+	if door_state_changed or not (combat_snapshot.get("lasers", []) as Array).is_empty():
 		queue_redraw()
-	last_door_locked = door_locked
+	last_door_locked = next_door_locked
 
 
 func build_read_only_snapshot() -> Dictionary:
@@ -158,7 +156,10 @@ func build_read_only_snapshot() -> Dictionary:
 		"focused_interaction_id": focused_interaction_id,
 		"interactables": interactables,
 		"combat": combat_snapshot.duplicate(true),
-		"door_locked": bool(combat_snapshot.get("active", false)),
+		"door_locked": bool(combat_snapshot.get("door_locked", false)),
+		"world_projection": world_projection.duplicate(true),
+		"doors": door_projections.duplicate(true),
+		"door_projection_revision": door_projection_revision,
 		"logical_obstacles": logical_obstacles.duplicate(),
 		"visual_contract_id": &"g41.runtime_visual.v1",
 	}
@@ -181,6 +182,9 @@ func get_logical_obstacles() -> Array[Rect2]:
 func clear_runtime() -> void:
 	latest_room_snapshot.clear()
 	combat_snapshot.clear()
+	world_projection.clear()
+	door_projections.clear()
+	door_projection_revision = 0
 	room_key = ""
 	room_type = &"Unknown"
 	logical_obstacles.clear()
@@ -201,8 +205,31 @@ func clear_runtime() -> void:
 	queue_redraw()
 
 
-func _sync_chest(snapshot: Dictionary) -> void:
-	if room_type != &"Chest":
+func _rebuild_world_projection() -> void:
+	world_projection = WorldObjectProjectionScript.build(latest_room_snapshot, combat_snapshot)
+	door_projections = _dictionary_array(world_projection.get("doors", []))
+	door_projection_revision += 1
+	var objects := _dictionary_array(world_projection.get("world_objects", []))
+	_sync_chest(objects)
+	_sync_ground_loot(objects)
+	logical_obstacles = _obstacles_for_room(room_type)
+	if chest != null:
+		logical_obstacles.append(chest.body_rect)
+
+
+func _rebuild_door_projection() -> void:
+	if latest_room_snapshot.is_empty():
+		door_projections.clear()
+		return
+	var updated := WorldObjectProjectionScript.build(latest_room_snapshot, combat_snapshot)
+	door_projections = _dictionary_array(updated.get("doors", []))
+	world_projection["doors"] = door_projections.duplicate(true)
+	door_projection_revision += 1
+
+
+func _sync_chest(objects: Array[Dictionary]) -> void:
+	var chest_projection := _first_projection(objects, &"chest")
+	if chest_projection.is_empty():
 		if chest != null:
 			chest.queue_free()
 			chest = null
@@ -210,30 +237,26 @@ func _sync_chest(snapshot: Dictionary) -> void:
 	if chest == null:
 		chest = ChestInteractableScript.new()
 		chest.name = "ChestInteractable"
-		chest.open_commit_requested.connect(_on_chest_open_commit_requested)
 		get_node("WorldInteractables").add_child(chest)
-	var search_state: Dictionary = snapshot.get("search_state_data", {})
-	chest.configure_chest(room_key, bool(search_state.get("searched", false)))
+	chest.configure_chest(chest_projection)
 
 
-func _sync_ground_loot(raw_items: Variant) -> void:
+func _sync_ground_loot(objects: Array[Dictionary]) -> void:
 	var active_ids: Dictionary = {}
-	if raw_items is Array:
-		for raw_item in raw_items as Array:
-			if not (raw_item is Dictionary):
-				continue
-			var item := raw_item as Dictionary
-			var instance_id := String(item.get("instance_id", ""))
-			if instance_id.is_empty():
-				continue
-			active_ids[instance_id] = true
-			var entity = ground_loot_entities.get(instance_id)
-			if entity == null:
-				entity = GroundLootEntityScript.new()
-				entity.name = _safe_node_name("GroundLoot_" + instance_id)
-				get_node("WorldInteractables").add_child(entity)
-				ground_loot_entities[instance_id] = entity
-			entity.configure_item(item, _loot_position_for(instance_id))
+	for projection in objects:
+		if StringName(projection.get("interaction_kind", &"")) != &"ground_loot":
+			continue
+		var instance_id := String(projection.get("projection_id", ""))
+		if instance_id.is_empty():
+			continue
+		active_ids[instance_id] = true
+		var entity = ground_loot_entities.get(instance_id)
+		if entity == null:
+			entity = GroundLootEntityScript.new()
+			entity.name = _safe_node_name("GroundLoot_" + instance_id)
+			get_node("WorldInteractables").add_child(entity)
+			ground_loot_entities[instance_id] = entity
+		entity.configure_item(projection)
 	for existing_id in ground_loot_entities.keys():
 		if active_ids.has(existing_id):
 			continue
@@ -273,11 +296,12 @@ func _refresh_context_popup(player_local_pos: Vector2, nearest = null) -> void:
 			var entity = ground_loot_entities[instance_id]
 			if entity != null and entity.can_interact_from(player_local_pos):
 				items.append(entity.item.duplicate(true))
-	elif kind == &"chest" and chest != null and chest.is_container_open():
-		for raw_item in (latest_room_snapshot.get("room_floor_items", []) as Array):
+	elif kind == &"chest" and chest != null and chest.is_opened():
+		for raw_item in (world_projection.get("chest_contents", []) as Array):
 			if raw_item is Dictionary:
 				items.append((raw_item as Dictionary).duplicate(true))
-	var anchor_ui: Vector2 = nearest.position
+	var anchor_ui: Vector2 = nearest.get_context_anchor_world()
+	var player_ui: Vector2 = anchor_ui
 	var nearest_canvas := nearest as CanvasItem
 	var popup_parent := context_popup.get_parent() as CanvasItem
 	if nearest_canvas != null and popup_parent != null:
@@ -291,8 +315,14 @@ func _refresh_context_popup(player_local_pos: Vector2, nearest = null) -> void:
 		# positions are still authored in logical pixels, so including that stretch
 		# scales the anchor twice.  The regular global transforms put both branches
 		# in the same logical coordinate system.
+		var target_local_position: Vector2 = nearest.get_context_anchor_world()
+		var nearest_parent := nearest.get_parent() as CanvasItem
 		var target_logical_position := nearest_canvas.get_global_transform().origin
+		if nearest_parent != null:
+			target_logical_position = nearest_parent.get_global_transform() * target_local_position
 		anchor_ui = popup_parent.get_global_transform().affine_inverse() * target_logical_position
+		var player_logical_position := get_global_transform() * ActorViewScript.local_to_world(player_local_pos)
+		player_ui = popup_parent.get_global_transform().affine_inverse() * player_logical_position
 	var overlay_size := Vector2(1280, 720)
 	var popup_parent_control := context_popup.get_parent() as Control
 	if popup_parent_control != null and popup_parent_control.size.x > 0.0 and popup_parent_control.size.y > 0.0:
@@ -300,20 +330,19 @@ func _refresh_context_popup(player_local_pos: Vector2, nearest = null) -> void:
 	context_popup.apply_context({
 		"interaction_kind": kind,
 		"world_pos": anchor_ui,
+		"player_world_pos": player_ui,
 		"room_bounds": G41RuntimeLayout.context_ui_rect_for_viewport(overlay_size),
 		"items": items,
 		"opened_once": chest != null and chest.is_opened() if kind == &"chest" else false,
-		"container_open": chest != null and chest.is_container_open() if kind == &"chest" else false,
+		"container_open": chest != null and chest.is_opened() if kind == &"chest" else false,
 		"backpack_remaining": int(latest_room_snapshot.get("backpack_remaining", 0)),
 		"inventory_items": latest_room_snapshot.get("inventory_items", []),
 	})
 
 
 func _nearest_interactable(player_local_pos: Vector2):
-	# Keep the chest's reversible open/close interaction authoritative while the
-	# player remains in its radius.  Chest rewards may also have one-to-one world
-	# projections in the shared room-floor ledger, but those must not steal focus
-	# and strand an already-opened chest in the closed state.
+	# Chest rooms intentionally suppress floor entities for their container
+	# contents, so the single projected chest remains the only focus target.
 	if chest != null and chest.can_interact_from(player_local_pos):
 		return chest
 	var nearest = null
@@ -332,11 +361,6 @@ func _nearest_interactable(player_local_pos: Vector2):
 		nearest = candidate
 		nearest_distance = distance
 	return nearest
-
-
-func _on_chest_open_commit_requested(_interaction_id: String) -> void:
-	interaction_commit_requested.emit(&"chest", {"room_key": room_key})
-
 
 func _ensure_layers() -> void:
 	if get_node_or_null("WorldInteractables") == null:
@@ -361,8 +385,8 @@ func _ensure_layers() -> void:
 		context_popup.replace_requested.connect(func(ground_instance_id: String, drop_instance_id: String) -> void:
 			context_action_requested.emit(&"replace", {"instance_id": ground_instance_id, "drop_instance_id": drop_instance_id})
 		)
-		context_popup.chest_toggle_requested.connect(func() -> void:
-			context_action_requested.emit(&"chest_toggle", {"room_key": room_key})
+		context_popup.chest_open_requested.connect(func() -> void:
+			context_action_requested.emit(&"chest_open", {"room_key": room_key})
 		)
 		add_child(context_popup)
 	if get_node_or_null("DoorPrompt") == null:
@@ -379,9 +403,13 @@ func _update_door_prompt() -> void:
 	var prompt := get_node_or_null("DoorPrompt") as Label
 	if prompt == null:
 		return
-	var locked := bool(combat_snapshot.get("active", false))
-	prompt.visible = locked
-	prompt.text = "威胁未清除 · 靠近出口将尝试脱离战斗"
+	var restricted := false
+	for door in door_projections:
+		if StringName(door.get("visual_state", &"")) == &"combat_restricted":
+			restricted = true
+			break
+	prompt.visible = restricted
+	prompt.text = "战斗封锁中 · 靠近出口可尝试撤离"
 	prompt.add_theme_color_override("font_color", Color(1.0, 0.60, 0.28, 1.0))
 
 
@@ -395,22 +423,29 @@ func _remove_missing_views(views: Dictionary, active_ids: Dictionary) -> void:
 		views.erase(actor_id)
 
 
-func _loot_position_for(instance_id: String) -> Vector2:
-	var hash_value := absi(instance_id.hash())
-	var column := hash_value % 4
-	var row := (hash_value / 4) % 3
-	return Vector2(0.38 + float(column) * 0.085, 0.58 + float(row) * 0.075)
-
-
 func _obstacles_for_room(next_room_type: StringName) -> Array[Rect2]:
 	match next_room_type:
-		&"Chest":
-			return [Rect2(Vector2(0.25, 0.28), Vector2(0.13, 0.12))]
 		&"Event":
 			return [Rect2(Vector2(0.46, 0.32), Vector2(0.10, 0.18))]
 		&"Normal":
 			return [Rect2(Vector2(0.44, 0.38), Vector2(0.12, 0.12))]
 	return []
+
+
+func _first_projection(objects: Array[Dictionary], kind: StringName) -> Dictionary:
+	for projection in objects:
+		if StringName(projection.get("interaction_kind", &"")) == kind:
+			return projection
+	return {}
+
+
+func _dictionary_array(value: Variant) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if value is Array:
+		for raw_value in value as Array:
+			if raw_value is Dictionary:
+				result.append((raw_value as Dictionary).duplicate(true))
+	return result
 
 
 func _safe_node_name(value: String) -> String:
@@ -429,12 +464,8 @@ func _draw() -> void:
 			)
 			draw_rect(world_rect, Color(0.18, 0.22, 0.26, 0.58), true)
 			draw_rect(world_rect, Color(0.55, 0.62, 0.68, 0.75), false, 2.0)
-	if bool(combat_snapshot.get("active", false)):
-		var room_center := room_rect.get_center()
-		_draw_combat_seal_segment(Vector2(room_rect.position.x, room_center.y), Vector2(room_rect.position.x + 26.0, room_center.y))
-		_draw_combat_seal_segment(Vector2(room_rect.end.x - 26.0, room_center.y), Vector2(room_rect.end.x, room_center.y))
-		_draw_combat_seal_segment(Vector2(room_center.x, room_rect.position.y), Vector2(room_center.x, room_rect.position.y + 26.0))
-		_draw_combat_seal_segment(Vector2(room_center.x, room_rect.end.y - 26.0), Vector2(room_center.x, room_rect.end.y))
+	for door in door_projections:
+		_draw_door_projection(door)
 	for raw_laser in (combat_snapshot.get("lasers", []) as Array):
 		if not (raw_laser is Dictionary):
 			continue
@@ -450,6 +481,31 @@ func _draw() -> void:
 		draw_line(origin, endpoint, Color(1.0, 0.74, 0.42, 0.96), 1.0, true)
 		draw_circle(origin, 4.0, Color(1.0, 0.34, 0.12, 0.92))
 		draw_circle(endpoint, 4.5, Color(0.92, 0.08, 0.035, 0.75))
+
+
+func _draw_door_projection(door: Dictionary) -> void:
+	var body_rect: Rect2 = door.get("body_rect", Rect2())
+	var world_rect := Rect2(
+		ActorViewScript.local_to_world(body_rect.position),
+		G41RuntimeLayout.local_size_to_world(body_rect.size)
+	)
+	var state := StringName(door.get("visual_state", &"blocked_out_of_bounds"))
+	if state == &"combat_restricted":
+		var horizontal := world_rect.size.x >= world_rect.size.y
+		var from := Vector2(world_rect.position.x, world_rect.get_center().y) if horizontal else Vector2(world_rect.get_center().x, world_rect.position.y)
+		var to := Vector2(world_rect.end.x, world_rect.get_center().y) if horizontal else Vector2(world_rect.get_center().x, world_rect.end.y)
+		_draw_combat_seal_segment(from, to)
+		return
+	var color := Color(0.22, 0.70, 0.58, 0.72)
+	match state:
+		&"blocked_flagged":
+			color = Color(0.96, 0.42, 0.20, 0.86)
+		&"blocked_hidden":
+			color = Color(0.78, 0.63, 0.24, 0.72)
+		&"blocked_out_of_bounds":
+			color = Color(0.20, 0.23, 0.24, 0.62)
+	draw_rect(world_rect, Color(color.r, color.g, color.b, color.a * 0.24), true)
+	draw_rect(world_rect, color, false, 2.0)
 
 
 func _ray_endpoint_inside_room(origin: Vector2, direction: Vector2, room_rect: Rect2) -> Vector2:

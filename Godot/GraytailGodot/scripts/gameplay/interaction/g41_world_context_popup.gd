@@ -3,7 +3,7 @@ class_name G41WorldContextPopup
 
 signal pickup_requested(instance_id: String)
 signal replace_requested(ground_instance_id: String, drop_instance_id: String)
-signal chest_toggle_requested
+signal chest_open_requested
 
 const POPUP_WIDTH := 308.0
 const ROW_HEIGHT := 44.0
@@ -20,6 +20,8 @@ var context_kind: StringName = &"none"
 var context_items: Array[Dictionary] = []
 var inventory_items: Array[Dictionary] = []
 var anchor_world := Vector2.ZERO
+var player_world := Vector2.ZERO
+var has_player_world: bool = false
 var room_bounds := Rect2(Vector2.ZERO, Vector2(1280, 720))
 var last_signature := ""
 var current_context: Dictionary = {}
@@ -37,6 +39,8 @@ func apply_context(context: Dictionary) -> void:
 		return
 	context_kind = StringName(context.get("interaction_kind", &"none"))
 	anchor_world = Vector2(context.get("world_pos", Vector2.ZERO))
+	has_player_world = context.has("player_world_pos")
+	player_world = Vector2(context.get("player_world_pos", anchor_world))
 	room_bounds = Rect2(context.get("room_bounds", room_bounds))
 	context_items = _dictionary_array(context.get("items", []))
 	inventory_items = _dictionary_array(context.get("inventory_items", []))
@@ -57,6 +61,7 @@ func clear_context() -> void:
 	context_items.clear()
 	inventory_items.clear()
 	current_context.clear()
+	has_player_world = false
 	replacement_ground_id = ""
 	last_signature = ""
 	if status_label != null:
@@ -67,7 +72,16 @@ func activate_primary() -> bool:
 	if not visible:
 		return false
 	if context_kind == &"chest":
-		chest_toggle_requested.emit()
+		if not bool(current_context.get("opened_once", false)):
+			chest_open_requested.emit()
+			return true
+		if context_items.is_empty():
+			return false
+		var chest_item := context_items[0]
+		if int(chest_item.get("weight", 0)) > int(current_context.get("backpack_remaining", 0)):
+			_begin_replacement(String(chest_item.get("instance_id", "")))
+		else:
+			pickup_requested.emit(String(chest_item.get("instance_id", "")))
 		return true
 	if context_kind == &"ground_loot" and not context_items.is_empty():
 		if replacement_ground_id != "":
@@ -168,22 +182,24 @@ func _rebuild(context: Dictionary) -> void:
 	if context_kind == &"chest":
 		var opened_once := bool(context.get("opened_once", false))
 		var container_open := bool(context.get("container_open", false))
-		title_label.text = "已开封物资箱" if opened_once else "发现物资箱"
+		title_label.text = "物资箱 · %d 件" % context_items.size() if opened_once else "物资箱"
 		if container_open:
-			hint_label.text = "箱内剩余 %d 件。可逐件取出；离开范围自动收起。" % context_items.size()
-			primary_button.text = "关闭箱子"
-			primary_button.visible = true
+			hint_label.text = ""
+			hint_label.visible = false
+			primary_button.visible = false
 			_build_item_rows(context_items, backpack_remaining)
 		else:
-			hint_label.text = "内容只在首次开启时生成一次。" if not opened_once else "再次打开会保留上次剩余内容。"
-			primary_button.text = "打开箱子" if not opened_once else "查看箱内"
+			hint_label.text = "按 E 打开"
+			hint_label.visible = true
+			primary_button.text = "打开物资箱"
 			primary_button.visible = true
 	else:
 		title_label.text = "附近回收物"
-		hint_label.text = "靠近时显示，离开后自动收起。附近 %d 件。" % context_items.size()
+		hint_label.text = "附近 %d 件" % context_items.size()
+		hint_label.visible = true
 		primary_button.visible = false
 		_build_item_rows(context_items, backpack_remaining)
-	item_scroll.visible = not context_items.is_empty() and (context_kind != &"chest" or bool(context.get("container_open", false)))
+	item_scroll.visible = context_kind != &"chest" or bool(context.get("container_open", false))
 	item_scroll.custom_minimum_size.y = minf(ROW_HEIGHT * maxf(1.0, float(context_items.size())), ROW_HEIGHT * 3.0)
 	status_label.text = ""
 	status_label.visible = false
@@ -370,10 +386,24 @@ func _place_near_anchor() -> void:
 	var left_fits := left_x >= safe_left
 	var x := right_x
 	var y := anchor_world.y - effective_size.y * 0.55
+	var player_clearance := Rect2()
+	if has_player_world:
+		player_clearance = Rect2(
+			player_world - Vector2(44.0, 64.0) * scale,
+			Vector2(88.0, 128.0) * scale
+		)
 	if right_fits and left_fits:
-		var right_margin := safe_right - (right_x + effective_size.x)
-		var left_margin := left_x - safe_left
-		x = right_x if right_margin >= left_margin else left_x
+		var right_avoids_player := true
+		var left_avoids_player := true
+		if has_player_world:
+			right_avoids_player = not Rect2(Vector2(right_x, y), effective_size).intersects(player_clearance)
+			left_avoids_player = not Rect2(Vector2(left_x, y), effective_size).intersects(player_clearance)
+		if right_avoids_player != left_avoids_player:
+			x = right_x if right_avoids_player else left_x
+		else:
+			var right_margin := safe_right - (right_x + effective_size.x)
+			var left_margin := left_x - safe_left
+			x = right_x if right_margin >= left_margin else left_x
 	elif left_fits:
 		x = left_x
 	elif not right_fits and context_kind == &"ground_loot":
@@ -397,6 +427,26 @@ func _place_near_anchor() -> void:
 			y = above_y
 		else:
 			y = below_y
+	if has_player_world and Rect2(Vector2(x, y), effective_size).intersects(player_clearance):
+		# If the only horizontal side covers the nearby character, prefer a true
+		# above/below card. This keeps both the player and the projected object
+		# readable instead of treating screen-edge clamping as successful layout.
+		var vertical_gap := (46.0 if context_kind == &"chest" else 30.0) * scale.y
+		var vertical_x := clampf(anchor_world.x - effective_size.x * 0.5, safe_left, safe_right - effective_size.x)
+		var above_y := anchor_world.y - effective_size.y - vertical_gap
+		var below_y := anchor_world.y + vertical_gap
+		var top_safe := room_bounds.position.y + 8.0
+		var bottom_safe := room_bounds.end.y - 8.0
+		var above_rect := Rect2(Vector2(vertical_x, above_y), effective_size)
+		var below_rect := Rect2(Vector2(vertical_x, below_y), effective_size)
+		var above_clear := above_y >= top_safe and not above_rect.intersects(player_clearance)
+		var below_clear := below_y + effective_size.y <= bottom_safe and not below_rect.intersects(player_clearance)
+		if above_clear or below_clear:
+			x = vertical_x
+			if above_clear and below_clear:
+				y = above_y if above_y - top_safe >= bottom_safe - (below_y + effective_size.y) else below_y
+			else:
+				y = above_y if above_clear else below_y
 	x = clampf(x, safe_left, safe_right - effective_size.x)
 	y = clampf(y, room_bounds.position.y + 8.0, room_bounds.end.y - effective_size.y - 8.0)
 	position = Vector2(x, y)
@@ -427,8 +477,8 @@ func _context_signature(context: Dictionary) -> String:
 func _on_primary_pressed() -> void:
 	if replacement_ground_id != "":
 		_cancel_replacement()
-	elif context_kind == &"chest":
-		chest_toggle_requested.emit()
+	elif context_kind == &"chest" and not bool(current_context.get("opened_once", false)):
+		chest_open_requested.emit()
 
 
 func _begin_replacement(instance_id: String) -> void:

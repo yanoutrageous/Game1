@@ -6,7 +6,7 @@ const PREFIX := "visual.art24."
 const ROOM_PATHS := {
 	"normal": "res://assets/rooms/room_normal.png",
 	"mine": "res://assets/rooms/room_mine.png",
-	"chest": "res://assets/rooms/room_chest.png",
+	"chest": "res://assets/rooms/room_normal.png",
 	"event": "res://assets/rooms/room_event.png",
 	"monster": "res://assets/rooms/room_monster.png",
 	"exit": "res://assets/rooms/room_exit.png",
@@ -14,7 +14,8 @@ const ROOM_PATHS := {
 
 const PROP_PATHS := {
 	"chest_closed": "res://assets/props/chest_closed.png",
-	"chest_open": "res://assets/props/art07/00_baoxiang_kai.png",
+	"chest_open": "res://assets/props/chest_closed.png",
+	"chest_open_state": "res://assets/props/chest_closed.png",
 	"mine": "res://assets/props/mine_trap.png",
 	"event": "res://assets/props/art07/05_yichang_hexin.png",
 	"merchant": "res://assets/props/art07/04_shangren_tai.png",

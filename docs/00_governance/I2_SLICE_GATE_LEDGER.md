@@ -714,7 +714,7 @@ player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
 ## 18. I2.5B 局内世界对象、交互权威与角色运动投影（2026-07-22）
 
 ```text
-status: IN_PROGRESS
+status: ACCEPTED
 feedback: RUN-01, RUN-02, RUN-03, RUN-04, RUN-10, CROSS-04, CROSS-05, CROSS-07, CROSS-08
 rollback: 6278a89 (I2.4B accepted checkpoint)
 ```
@@ -741,6 +741,7 @@ Godot/GraytailGodot/scripts/gameplay/interactables/g41_chest_interactable.gd
 Godot/GraytailGodot/scripts/gameplay/loot/g41_ground_loot_entity.gd
 Godot/GraytailGodot/scripts/gameplay/player/player_controller.gd
 Godot/GraytailGodot/scripts/presentation/presentation_mapping.gd
+Godot/GraytailGodot/scripts/presentation/art24/art24_item_visual_catalog.gd
 Godot/GraytailGodot/scripts/presentation/art24/art24_runtime_animation_catalog.gd
 Godot/GraytailGodot/scripts/presentation/art24/art24_in_run_asset_contract.gd
 Godot/GraytailGodot/scripts/presentation/art25_gameplay_backdrop.gd
@@ -759,6 +760,33 @@ tools/i1/validation_manifest.json
 
 保护边界：`project.godot`、scene/resource/`.uid`/`.translation`/import metadata、全部素材本体、ContentDB/content schema、CommandBus、RunContext、RunStateMachine、RunAssetLedger、RunAssetEffectHandler、RunInventory、RunRuleService/Content、RoomResolver、G41InRunRuntime、combat、settlement/result/save/meta authority 均禁止修改。RunScene 虽在白名单内，但 `_attempt_room_transition`、`_g41_transition_precheck`、combat/flee、extract/terminal/result、reward/economy 数值和 item location 规则仍受保护。
 
-完成证据必须覆盖：生产 Chest 房唯一动态箱/无 legacy prop/无同 ID 地面重复投影；统一 projection 的视觉、body、半径和 popup 锚点在重建后不漂移；显式输入不等待动画即产生一次 search，快速重复、动画 advance、重进与重建不二次提交；首次成功、已开重进、拾取后与空箱内容精确跟随 ledger；ground loot proximity 零命令零 ledger 变化，显式拾取才改变位置；四方向门投影与公开快照一致且零 transition/flee；move 至少四个真实姿态阶段，30/60/144 Hz 采样合法，reduced-motion 固定姿态/零 bob，位移、碰撞停止点和门阈值回归不变；production capture 不得调用 `mark_opened()` 作弊；static、定向、quick/ui、三分辨率可见检查与独立复核。full/worktree 与 exact full/head 仍由 I2.7 统一执行。
+完成证据必须覆盖：生产 Chest 房唯一动态箱/无 legacy prop/无同 ID 地面重复投影；统一 projection 的视觉、body、半径和 popup 锚点在重建后不漂移；全部正式物品的地面 visual key 必须由同一资产目录解析为真实已登记路径并由 consumer 实际消费，不得拼接不存在的语义键；显式输入不等待动画即产生一次 search，快速重复、动画 advance、重进与重建不二次提交；首次成功、已开重进、拾取后与空箱内容精确跟随 ledger，成功开箱/拾取/替换不显示工程式状态句；ground loot proximity 零命令零 ledger 变化，显式拾取才改变位置；四方向门投影与公开快照一致且零 transition/flee，同一 `door_locked` 状态的逐帧 snapshot 不得重复重建门投影；move 至少四个真实姿态阶段，30/60/144 Hz 采样合法，reduced-motion 固定姿态/零 bob，位移、碰撞停止点和门阈值回归不变；production capture 不得调用 `mark_opened()` 作弊；static、定向、quick/ui、三分辨率可见检查与独立复核。full/worktree 与 exact full/head 仍由 I2.7 统一执行。
 
 停止条件：实现需要改 RunAssetLedger 位置模型、搜索奖励、经济数值或通行权威；动画/FX 回调发领域命令；proximity 自动 search/pickup/replace；同一 Chest instance 同时出现在箱内与地面；视觉/碰撞/popup 继续使用不同硬编码锚点；生产仍合成 `room_chest.png + dynamic chest` 或 legacy prop；未完成治理的打开箱素材继续作为生产打开态；门视图读取 TruthMap 或自己执行通行；运动调整改变逻辑位移、战斗 fixed tick、碰撞或门阈值；既有 G41、ART24、I1 quick/ui 回归失败。任一条件出现即回退到 `6278a89` 并将本门标记 `BLOCKED`。
+
+接受结果：生产 Chest 房现使用中性背景和一个动态箱体；同一 ledger instance 只出现在箱内或地面之一。开箱由显式输入立即提交一次，动画、快速重复、重建和回访均为只读表现；成功开箱、拾取和替换直接更新列表，不向世界悬浮窗回显工程句。悬浮窗消费统一锚点并按“左右优先、若遮挡玩家则上下回退”布局，三档捕获均未遮挡对象或角色。门只读公开 KnownMap 与 `door_locked`，相同锁定状态不再逐帧重建投影。43 个正式物品的地面 `visual_key` 均由单一目录解析为 manifest 已登记路径，实体实际消费该键。角色移动使用四阶段登记姿态和同相 bob，reduced-motion 固定接触姿态且零 bob，逻辑位移与碰撞未改变。
+
+`prop.art07.00_baoxiang_kai` 的来源文件、哈希与可读性虽然可确认，但许可仍为 `internal_staged`、`replacement_needed=true`、`staged_pending_review`，因此资产 manifest 未改、生产仍禁止接入该 PNG。打开态使用已审计 closed prop 的状态变换、已登记六帧 opening FX 和权威内容列表共同表达；FX 不拥有命令或状态权威。
+
+验证记录：
+
+```text
+I2_WORLD_INTERACTION_RUNTIME=PASS chest=single_projection command=before_animation proximity=display_only doors=public_snapshot asset=open_png_blocked
+I2_PLAYER_MOTION_PROJECTION=PASS phases=4 sample_hz=30,60,144 reduced_motion=fixed_pose_zero_bob authority=presentation_only displacement=unchanged
+G41_IN_RUN_CORE_GAMEPLAY_RUNTIME=PASS fixed_hz=60 outer_schedules=30,60,144,hitch monsters=slime,slimeling,bat,drone visual_contract=v1
+ART24_IN_RUN_RUNTIME=PASS primary_modules=8 secondary_states=61 required_visual_keys=33
+ART24_WORLD_CONTEXT_POPUP_LAYOUT=PASS
+ART24_CONTEXT_ANCHOR_INTEGRATION=PASS room=scaled overlay=unscaled target_clear
+I1_ANIMATION_RUNTIME=PASS
+I2_ASSET_BINDING=PASS result_states=3 protocol_levels=5 item_bindings=43 verified_hashes=56
+I2_COMBAT_FRAME_BASELINE=PASS workload_schema=v2 production_bootstrap=false stress_fixture=1,3,5 projectile_peak=15 textures=71
+static/worktree: PASS; required/full/runners=57; manifest SHA-256=D1E55836D2822862D861060DF69D5CAC128B2A7A4263279AD6A7082833E0F91A
+quick/worktree: 38/38 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T043833838Z_4774dbc2\report.json; SHA-256=B98F70F24C273770E3F901FEEA74A971D94C859B11074E678B769724A1DDF0B2; pollution_guard=PASS
+ui/worktree: 39/39 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T043833839Z_4d2c0ce4\report.json; SHA-256=94DD25E9636C1FCF8E406AA9A419CB4C2D196FC0097ECBA16DE6CC9D20324059; pollution_guard=PASS
+visible captures: chest,chest_open,ground_loot x 1280x720,1600x900,1920x1080 = 9 PNG; output=.tmp/i2-5b-final-matrix; manual blocking layout findings=0
+independent final review after fixes: P0=0, P1=0, P2=0
+full/worktree and exact full/head: NOT_RUN (reserved for I2.7 closeout)
+player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
+```
+
+接受边界：本门关闭世界对象投影、箱子/地面物交互时序、公开门状态与局内角色运动表现，不关闭 I2。捕获中仍可见的固定“空位”、原始 `common`、左侧“正常作业”、底部“操作完成”、地图信息密度、协议语义和背包 hover/focus 详情均不是本门遗漏结论，而是 I2.5C 的已证实输入；战斗逃离、特殊房、撤离点、雷房与结果解释继续由 I2.6C/D 处理。当前没有获批 opened-chest 静态素材，因此不得将状态变换表述为最终美术完成。

@@ -5,6 +5,10 @@ var interaction_id: String = ""
 var interaction_kind: StringName = &"unknown"
 var local_pos := Vector2(0.5, 0.5)
 var interaction_radius: float = 0.15
+var body_rect := Rect2(Vector2(0.46, 0.46), Vector2(0.08, 0.08))
+var context_anchor_local := Vector2(0.5, 0.42)
+var visual_key: StringName = &"runtime.missing"
+var depth_key: StringName = &"world.default"
 var enabled: bool = true
 var focused: bool = false
 var visual_state: StringName = &"idle"
@@ -13,15 +17,20 @@ var payload: Dictionary = {}
 
 
 func configure_interactable(data: Dictionary) -> void:
-	interaction_id = String(data.get("interaction_id", interaction_id))
+	interaction_id = String(data.get("projection_id", data.get("interaction_id", interaction_id)))
 	interaction_kind = StringName(data.get("interaction_kind", interaction_kind))
 	local_pos = Vector2(data.get("local_pos", local_pos))
-	interaction_radius = maxf(0.01, float(data.get("interaction_radius", interaction_radius)))
+	interaction_radius = maxf(0.0, float(data.get("interaction_radius", interaction_radius)))
+	body_rect = Rect2(data.get("body_rect", body_rect))
+	context_anchor_local = Vector2(data.get("context_anchor_local", local_pos))
+	visual_key = StringName(data.get("visual_key", visual_key))
+	depth_key = StringName(data.get("depth_key", depth_key))
 	enabled = bool(data.get("enabled", enabled))
 	visual_state = StringName(data.get("visual_state", visual_state))
 	prompt_text = String(data.get("prompt_text", prompt_text))
 	payload = (data.get("payload", {}) as Dictionary).duplicate(true)
 	position = local_to_world(local_pos)
+	z_index = _z_index_for_depth(depth_key)
 	_ensure_contract_nodes()
 	_apply_visual_state()
 
@@ -32,6 +41,10 @@ func distance_to_local(point: Vector2) -> float:
 
 func can_interact_from(point: Vector2) -> bool:
 	return enabled and distance_to_local(point) <= interaction_radius
+
+
+func get_context_anchor_world() -> Vector2:
+	return local_to_world(context_anchor_local)
 
 
 func set_focused(next_focused: bool) -> void:
@@ -51,10 +64,15 @@ func build_interaction_request() -> Dictionary:
 
 func build_snapshot() -> Dictionary:
 	return {
+		"projection_id": interaction_id,
 		"interaction_id": interaction_id,
 		"interaction_kind": interaction_kind,
 		"local_pos": local_pos,
 		"interaction_radius": interaction_radius,
+		"body_rect": body_rect,
+		"context_anchor_local": context_anchor_local,
+		"visual_key": visual_key,
+		"depth_key": depth_key,
 		"enabled": enabled,
 		"focused": focused,
 		"visual_state": visual_state,
@@ -117,3 +135,14 @@ func _placeholder_color() -> Color:
 
 static func local_to_world(value: Vector2) -> Vector2:
 	return G41RuntimeLayout.local_to_world(value)
+
+
+static func _z_index_for_depth(value: StringName) -> int:
+	match value:
+		&"world.interactable.loot":
+			return 32
+		&"world.interactable.chest":
+			return 24
+		&"world.door":
+			return 4
+	return 16

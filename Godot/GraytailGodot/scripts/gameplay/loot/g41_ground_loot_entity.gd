@@ -11,19 +11,12 @@ var beam_elapsed := 0.0
 var beam_frame := 0
 
 
-func configure_item(item_snapshot: Dictionary, spawn_local_pos: Vector2) -> void:
-	item = item_snapshot.duplicate(true)
-	var instance_id := String(item.get("instance_id", "missing_instance"))
-	configure_interactable({
-		"interaction_id": instance_id,
-		"interaction_kind": &"ground_loot",
-		"local_pos": spawn_local_pos,
-		"interaction_radius": 0.14,
-		"enabled": true,
-		"visual_state": &"focused" if focused else &"idle",
-		"prompt_text": "Pick up %s" % String(item.get("display_name", item.get("item_id", "item"))),
-		"payload": {"instance_id": instance_id},
-	})
+func configure_item(projection: Dictionary) -> void:
+	var projection_payload: Dictionary = projection.get("payload", {})
+	item = (projection_payload.get("item", {}) as Dictionary).duplicate(true)
+	var descriptor := projection.duplicate(true)
+	descriptor["visual_state"] = &"focused" if focused else &"idle"
+	configure_interactable(descriptor)
 	var placeholder := get_node_or_null("VisualRoot/ProgramPlaceholder") as Polygon2D
 	if placeholder != null:
 		placeholder.polygon = PackedVector2Array([Vector2(0, -9), Vector2(11, -2), Vector2(7, 9), Vector2(-7, 9), Vector2(-11, -2)])
@@ -102,7 +95,7 @@ func _ensure_art_visuals() -> void:
 func _apply_item_visual() -> void:
 	var art_visual := get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
 	if art_visual != null:
-		art_visual.texture = ItemVisualCatalog.texture_for(item)
+		art_visual.texture = ItemVisualCatalog.texture_for_visual_key(visual_key)
 	var beam := get_node_or_null("VisualRoot/PickupBeam") as Sprite2D
 	if beam != null:
 		beam.texture = load("%s0.png" % PICKUP_BEAM_ROOT) as Texture2D

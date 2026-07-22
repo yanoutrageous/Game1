@@ -9,6 +9,16 @@ const RuntimeTextureCacheScript := preload("res://scripts/presentation/runtime_t
 
 const ART24_WORLD_ROOT := "res://assets/art24/items/world/"
 const ART25_ITEM_ROOT := "res://assets/ui/art25/content/long_term/item/"
+const ART24_WORLD_IDS := [
+	"access_key",
+	"anomaly_shard",
+	"armor_plate",
+	"coin_cache",
+	"copper_coil",
+	"emergency_bandage",
+	"salvage_satchel",
+	"scanner_probe",
+]
 
 const ART25_ITEM_IDS := [
 	"eq_old_vest",
@@ -71,17 +81,42 @@ const TYPE_FALLBACKS := {
 
 
 static func texture_path(item: Dictionary) -> String:
+	return texture_path_for_visual_key(visual_key(item))
+
+
+static func visual_key(item: Dictionary) -> StringName:
 	var item_id := String(item.get("item_id", "")).to_lower()
 	if ITEM_TEXTURES.has(item_id):
-		return String(ITEM_TEXTURES[item_id])
+		var mapped_name := String(ITEM_TEXTURES[item_id]).get_file().get_basename()
+		return StringName("visual.art24.item.world_loot.%s" % mapped_name)
 	if ART25_ITEM_IDS.has(item_id):
-		return ART25_ITEM_ROOT + item_id + ".png"
+		return StringName("art25.long_term.item.%s" % item_id)
 	var item_type := String(item.get("item_type", item.get("main_type", "collectible"))).to_lower()
-	return String(TYPE_FALLBACKS.get(item_type, TYPE_FALLBACKS["collectible"]))
+	var fallback_name := String(TYPE_FALLBACKS.get(item_type, TYPE_FALLBACKS["collectible"])).get_file().get_basename()
+	return StringName("visual.art24.item.world_loot.%s" % fallback_name)
+
+
+static func texture_path_for_visual_key(key: StringName) -> String:
+	var token := String(key)
+	var art24_prefix := "visual.art24.item.world_loot."
+	if token.begins_with(art24_prefix):
+		var art24_id := token.trim_prefix(art24_prefix)
+		if ART24_WORLD_IDS.has(art24_id):
+			return ART24_WORLD_ROOT + art24_id + ".png"
+	var art25_prefix := "art25.long_term.item."
+	if token.begins_with(art25_prefix):
+		var art25_id := token.trim_prefix(art25_prefix)
+		if ART25_ITEM_IDS.has(art25_id):
+			return ART25_ITEM_ROOT + art25_id + ".png"
+	return String(TYPE_FALLBACKS["collectible"])
 
 
 static func texture_for(item: Dictionary) -> Texture2D:
 	return RuntimeTextureCacheScript.texture(texture_path(item))
+
+
+static func texture_for_visual_key(key: StringName) -> Texture2D:
+	return RuntimeTextureCacheScript.texture(texture_path_for_visual_key(key))
 
 
 static func has_explicit_mapping(item_id: String) -> bool:

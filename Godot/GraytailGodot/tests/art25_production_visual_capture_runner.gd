@@ -45,8 +45,9 @@ func _capture() -> void:
 			await _frames(10)
 			var chest_view = run_scene.get("room_runtime_view")
 			var chest_player = run_scene.get("player_controller")
-			if state == &"chest_open" and chest_view != null and chest_view.chest != null:
-				chest_view.chest.mark_opened()
+			if state == &"chest_open":
+				run_scene.call("_handle_interact_pressed")
+				await _frames(4)
 			if chest_view != null and chest_player != null:
 				chest_view.advance(0.0, chest_player.get_local_position(), {})
 		&"ground_loot":
