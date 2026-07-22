@@ -134,7 +134,15 @@
     "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
     "I2_TERMINAL_RESULT_AUTHORITY",
     "I2_TERMINAL_COMMIT_RECOVERY",
-    "I2_COMBAT_FRAME_BASELINE"
+    "I2_COMBAT_FRAME_BASELINE",
+    "I3_MAP_LOCAL_CONTEXT_INTERACTION",
+    "I3_HUD_ITEM_INPUT_CHARACTER",
+    "I3_LONG_TERM_PLAYER_CONTRACT",
+    "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
+    "I3_RUNTIME_MODAL_LAYOUT_MODEL",
+    "I3_PRODUCTION_INPUT_JOURNEY",
+    "I3_PRODUCTION_FULL_BAG_REPLACEMENT",
+    "I3_PRODUCTION_TERMINAL_BRANCHES"
   ],
   "profiles": {
     "preflight": {
@@ -191,7 +199,12 @@
         "I2_COMBAT_ROOM_EXPERIENCE",
         "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
         "I2_TERMINAL_RESULT_AUTHORITY",
-        "I2_TERMINAL_COMMIT_RECOVERY"
+        "I2_TERMINAL_COMMIT_RECOVERY",
+        "I3_MAP_LOCAL_CONTEXT_INTERACTION",
+        "I3_HUD_ITEM_INPUT_CHARACTER",
+        "I3_LONG_TERM_PLAYER_CONTRACT",
+        "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
+        "I3_RUNTIME_MODAL_LAYOUT_MODEL"
       ]
     },
     "core": {
@@ -232,7 +245,8 @@
         "I2_COMBAT_ROOM_EXPERIENCE",
         "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
         "I2_TERMINAL_RESULT_AUTHORITY",
-        "I2_TERMINAL_COMMIT_RECOVERY"
+        "I2_TERMINAL_COMMIT_RECOVERY",
+        "I3_COMBAT_SPECIAL_RESULT_RUNTIME"
       ]
     },
     "ui": {
@@ -286,7 +300,12 @@
         "I2_COMBAT_ROOM_EXPERIENCE",
         "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
         "I2_TERMINAL_RESULT_AUTHORITY",
-        "I2_TERMINAL_COMMIT_RECOVERY"
+        "I2_TERMINAL_COMMIT_RECOVERY",
+        "I3_MAP_LOCAL_CONTEXT_INTERACTION",
+        "I3_HUD_ITEM_INPUT_CHARACTER",
+        "I3_LONG_TERM_PLAYER_CONTRACT",
+        "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
+        "I3_RUNTIME_MODAL_LAYOUT_MODEL"
       ]
     },
     "performance": {
@@ -364,7 +383,15 @@
         "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
         "I2_TERMINAL_RESULT_AUTHORITY",
         "I2_TERMINAL_COMMIT_RECOVERY",
-        "I2_COMBAT_FRAME_BASELINE"
+        "I2_COMBAT_FRAME_BASELINE",
+        "I3_MAP_LOCAL_CONTEXT_INTERACTION",
+        "I3_HUD_ITEM_INPUT_CHARACTER",
+        "I3_LONG_TERM_PLAYER_CONTRACT",
+        "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
+        "I3_RUNTIME_MODAL_LAYOUT_MODEL",
+        "I3_PRODUCTION_INPUT_JOURNEY",
+        "I3_PRODUCTION_FULL_BAG_REPLACEMENT",
+        "I3_PRODUCTION_TERMINAL_BRANCHES"
       ]
     }
   },
@@ -759,7 +786,7 @@
     {
       "id": "I2_WORLD_INTERACTION_RUNTIME",
       "relative_path": "Godot/GraytailGodot/tests/i2_world_interaction_runtime_runner.gd",
-      "pass_marker": "I2_WORLD_INTERACTION_RUNTIME=PASS chest=single_projection command=before_animation proximity=display_only doors=public_snapshot asset=open_png_blocked",
+      "pass_marker": "I2_WORLD_INTERACTION_RUNTIME=PASS chest=single_projection command=before_animation proximity=display_only doors=public_snapshot asset=open_png_revalidated",
       "fail_marker": "I2_WORLD_INTERACTION_RUNTIME=FAIL",
       "coverage": ["in_run", "world_projection", "chest", "ground_loot", "door_state", "command_authority", "asset_gate"]
     },
@@ -859,7 +886,7 @@
     {
       "id": "ART24_MAP_OVERLAY_SCENE",
       "relative_path": "Godot/GraytailGodot/tests/art24_map_overlay_scene_probe.gd",
-      "pass_marker": "ART24_MAP_OVERLAY_SCENE=PASS resolutions=5 states=overview,selected controls=inside_panel toggle=m_close",
+      "pass_marker": "ART24_MAP_OVERLAY_SCENE=PASS resolutions=5 states=overview,selected detail=visible controls=inside_panel toggle=m_close",
       "fail_marker": "ART24_MAP_OVERLAY_SCENE=FAIL",
       "coverage": ["layout", "map_overlay", "interaction"]
     },
@@ -954,6 +981,68 @@
       "fail_marker": "I2_COMBAT_FRAME_BASELINE=FAIL",
       "timeout_seconds": 900,
       "coverage": ["combat", "performance", "fixed_step", "snapshot", "presentation", "memory", "resource_lifecycle"]
+    },
+    {
+      "id": "I3_MAP_LOCAL_CONTEXT_INTERACTION",
+      "relative_path": "Godot/GraytailGodot/tests/i3_map_local_context_interaction_runner.gd",
+      "pass_marker": "I3_MAP_LOCAL_CONTEXT_INTERACTION=PASS sizes=7,10,13 minimap=5x5 semantics=monster,mine selection=separate confirmation=explicit known_map=sealed input=focus,accept,outside_click",
+      "fail_marker": "I3_MAP_LOCAL_CONTEXT_INTERACTION=FAIL",
+      "coverage": ["in_run", "minimap", "map_overlay", "known_map", "public_information", "selection_confirmation", "input", "focus_restoration"]
+    },
+    {
+      "id": "I3_HUD_ITEM_INPUT_CHARACTER",
+      "relative_path": "Godot/GraytailGodot/tests/i3_hud_item_input_character_runner.gd",
+      "pass_marker": "I3_HUD_ITEM_INPUT_CHARACTER=PASS hud=primary_action,mine_risk actions=7,context_order items=shared_descriptor,scroll input=single_path,gamepad_propagated character=appearance,animation_set reduced_motion=preserved",
+      "fail_marker": "I3_HUD_ITEM_INPUT_CHARACTER=FAIL",
+      "coverage": ["in_run", "hud", "context_actions", "item_presentation", "inventory", "ground_loot", "input", "gamepad", "character_presentation", "reduced_motion"]
+    },
+    {
+      "id": "I3_LONG_TERM_PLAYER_CONTRACT",
+      "relative_path": "Godot/GraytailGodot/tests/i3_long_term_player_contract_runner.gd",
+      "pass_marker": "I3_LONG_TERM_PLAYER_CONTRACT=PASS source=m7_research_prerequisite talent_rules=0 tree_nodes=3 player_copy=clean",
+      "fail_marker": "I3_LONG_TERM_PLAYER_CONTRACT=FAIL",
+      "coverage": ["long_term", "research_unlock_tree", "m7_prerequisites", "player_copy", "task_archive", "transaction_boundary"]
+    },
+    {
+      "id": "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
+      "relative_path": "Godot/GraytailGodot/tests/i3_combat_special_result_runtime_runner.gd",
+      "pass_marker": "I3_COMBAT_SPECIAL_RESULT_RUNTIME=PASS phases=arrival,anticipation,impact,recovery,hit,death special=public_only exit=benefit,left_behind,objective flee=single_charge result=reason,consequence,persistence save_retry=idempotent reduced_motion=static",
+      "fail_marker": "I3_COMBAT_SPECIAL_RESULT_RUNTIME=FAIL",
+      "coverage": ["in_run", "combat_presentation", "special_rooms", "exit_summary", "flee_charge", "result_panel", "persistence_retry", "reduced_motion"]
+    },
+    {
+      "id": "I3_RUNTIME_MODAL_LAYOUT_MODEL",
+      "relative_path": "Godot/GraytailGodot/tests/i3_runtime_modal_layout_model_runner.gd",
+      "pass_marker": "I3_RUNTIME_MODAL_LAYOUT_MODEL=PASS cases=5 owner=RuntimeModalLayoutModel run_scene_helpers_removed=2",
+      "fail_marker": "I3_RUNTIME_MODAL_LAYOUT_MODEL=FAIL",
+      "coverage": ["in_run", "modal_layout", "safe_area", "responsive_layout", "run_scene_responsibility"]
+    },
+    {
+      "id": "I3_PRODUCTION_INPUT_JOURNEY",
+      "relative_path": "Godot/GraytailGodot/tests/i3_production_input_journey_runner.gd",
+      "pass_marker": "I3_PRODUCTION_INPUT_JOURNEY=PASS",
+      "pass_line_regex": "^I3_PRODUCTION_INPUT_JOURNEY=PASS seed=13 checkpoints=19 screenshots=[0-9]+ inputs=[0-9]+ result=Extracted save_retry=real return=main evidence=.+ csv=.+$",
+      "fail_marker": "I3_PRODUCTION_INPUT_JOURNEY=FAIL",
+      "timeout_seconds": 600,
+      "coverage": ["production_main_scene", "real_input", "main_menu_transition", "deploy", "movement", "map", "search", "chest", "ground_loot", "event", "mine", "combat_flee", "exit", "success", "save_retry", "return_main", "evidence_capture"]
+    },
+    {
+      "id": "I3_PRODUCTION_FULL_BAG_REPLACEMENT",
+      "relative_path": "Godot/GraytailGodot/tests/i3_production_full_bag_replacement_runner.gd",
+      "pass_marker": "I3_PRODUCTION_FULL_BAG_REPLACEMENT=PASS",
+      "pass_line_regex": "^I3_PRODUCTION_FULL_BAG_REPLACEMENT=PASS seed=13 searched_rooms=[0-9]+ capacity=[0-9]+ replacement=real_input screenshots=[0-9]+ inputs=[0-9]+ evidence=.+ csv=.+$",
+      "fail_marker": "I3_PRODUCTION_FULL_BAG_REPLACEMENT=FAIL",
+      "timeout_seconds": 600,
+      "coverage": ["production_main_scene", "real_input", "fixed_seed", "chest", "search", "ground_loot", "full_bag", "item_replacement", "evidence_capture"]
+    },
+    {
+      "id": "I3_PRODUCTION_TERMINAL_BRANCHES",
+      "relative_path": "Godot/GraytailGodot/tests/i3_production_terminal_branches_runner.gd",
+      "pass_marker": "I3_PRODUCTION_TERMINAL_BRANCHES=PASS",
+      "pass_line_regex": "^I3_PRODUCTION_TERMINAL_BRANCHES=PASS seed=13 outcomes=Abandoned,Failed confirmations=cancel_then_confirm,salvage return=main screenshots=[0-9]+ inputs=[0-9]+ evidence=.+ csv=.+$",
+      "fail_marker": "I3_PRODUCTION_TERMINAL_BRANCHES=FAIL",
+      "timeout_seconds": 600,
+      "coverage": ["production_main_scene", "real_input", "long_term_transition", "pause", "abandon", "failure", "salvage", "result_panel", "return_main", "evidence_capture"]
     }
   ],
   "diagnostics": {
@@ -1112,7 +1201,30 @@
         "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
         "ERROR: 18 resources still in use at exit (run with --verbose for details)."
       ],
-      "I2_COMBAT_FRAME_BASELINE": []
+      "I2_COMBAT_FRAME_BASELINE": [],
+      "I3_MAP_LOCAL_CONTEXT_INTERACTION": [],
+      "I3_HUD_ITEM_INPUT_CHARACTER": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3_LONG_TERM_PLAYER_CONTRACT": [],
+      "I3_COMBAT_SPECIAL_RESULT_RUNTIME": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3_RUNTIME_MODAL_LAYOUT_MODEL": [],
+      "I3_PRODUCTION_INPUT_JOURNEY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3_PRODUCTION_FULL_BAG_REPLACEMENT": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3_PRODUCTION_TERMINAL_BRANCHES": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ]
     },
     "preview_capture_expected_cleanup_diagnostics_by_scene": {
       "main_menu": [

@@ -121,10 +121,8 @@ func _apply_visual_state() -> void:
 	var art_visual := get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
 	var opening_fx := get_node_or_null("VisualRoot/OpeningFx") as Sprite2D
 	if art_visual != null:
-		# The former open PNG remains staged_pending_review.  Both stable states
-		# therefore use the audited closed texture, while pose, tone and the
-		# registered opening FX communicate the opened state.
-		art_visual.texture = AssetContract.texture(visual_key)
+		var stable_visual_key := &"visual.art24.prop.chest_open_state" if authority_opened else &"visual.art24.prop.chest_closed"
+		art_visual.texture = AssetContract.texture(stable_visual_key)
 		if art_visual.texture == null:
 			art_visual.texture = AssetContract.texture(&"visual.art24.prop.chest_closed")
 		art_visual.modulate = Color(1.08, 0.94, 0.70, 1.0) if focused else Color.WHITE
@@ -132,10 +130,7 @@ func _apply_visual_state() -> void:
 		art_visual.scale = Vector2.ONE * 0.22
 		art_visual.rotation = 0.0
 		if authority_opened:
-			art_visual.modulate = Color(1.08, 0.90, 0.54, 1.0)
-			art_visual.position.y = -10.0
-			art_visual.scale = Vector2(0.24, 0.20)
-			art_visual.rotation = -0.035
+			art_visual.modulate = Color(1.06, 0.96, 0.76, 1.0) if focused else Color.WHITE
 	if opening_fx != null:
 		opening_fx.visible = visual_state == &"opening"
 		if opening_fx.visible:

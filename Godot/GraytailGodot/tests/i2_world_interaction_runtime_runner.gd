@@ -92,7 +92,11 @@ func _check_item_visual_contract() -> void:
 		entity.configure_item(projection)
 		var sprite := entity.get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
 		_check(sprite != null and sprite.texture != null and sprite.texture.resource_path == expected_path, "Ground consumer ignored the projected visual key for %s" % String(item.get("item_id", "")))
+		_check(entity.reveal_remaining > 0.0, "New ground entity skipped its reveal feedback for %s" % String(item.get("item_id", "")))
 		entity.free()
+	var ground_source := FileAccess.get_file_as_string("res://scripts/gameplay/loot/g41_ground_loot_entity.gd")
+	_check(ground_source.contains("PICKUP_BEAM_TEXTURES"), "Ground feedback frames are not preloaded")
+	_check(not ground_source.contains("beam.texture = load("), "Ground feedback still performs repeated runtime loads")
 
 
 func _check_projection_consumers_and_proximity() -> void:
@@ -127,8 +131,10 @@ func _check_projection_consumers_and_proximity() -> void:
 	_check(view.ground_loot_entities.is_empty(), "Chest contents created duplicate ground entity nodes")
 	_check(view.context_popup != null and view.context_popup.visible, "Opened Chest proximity did not automatically show contents")
 	_check(view.context_popup.context_items.size() == 2, "Opened Chest proximity popup did not show exact remaining contents")
-	view.advance(0.0, Vector2(0.05, 0.05), {"door_locked": false})
-	_check(not view.context_popup.visible, "Leaving Chest proximity did not hide the popup")
+	view.advance(0.04, Vector2(0.05, 0.05), {"door_locked": false})
+	_check(view.context_popup.visible, "Chest popup ignored the short lost-focus grace window")
+	view.advance(0.08, Vector2(0.05, 0.05), {"door_locked": false})
+	_check(not view.context_popup.visible, "Leaving Chest proximity did not hide the popup after the grace window")
 	view.advance(0.0, ProjectionScript.CHEST_LOCAL_POS, {"door_locked": false})
 	_check(view.context_popup.visible and view.context_popup.context_items.size() == 2, "Re-entering Chest proximity did not restore remaining contents")
 	var empty_snapshot := opened_snapshot.duplicate(true)
@@ -147,6 +153,44 @@ func _check_projection_consumers_and_proximity() -> void:
 		view.advance(0.0, entity.local_pos, {"door_locked": false})
 		_check(view.context_popup.visible and view.context_popup.context_items.size() == 1, "Ground-loot proximity did not show the nearby item")
 		_check(normal_snapshot == before_snapshot, "Ground-loot proximity mutated its source snapshot")
+
+	var focus_snapshot := _public_snapshot(&"Normal", Vector2i(1, 1), false)
+	focus_snapshot["room_floor_items"] = [_item("focus-a"), _item("focus-b")]
+	view.configure_room(focus_snapshot)
+	var focus_a = view.ground_loot_entities.get("focus-a")
+	var focus_b = view.ground_loot_entities.get("focus-b")
+	_check(focus_a != null and focus_b != null, "Focus-residency fixture did not create both ground entities")
+	if focus_a != null and focus_b != null:
+		focus_a.local_pos = Vector2(0.45, 0.50)
+		focus_b.local_pos = Vector2(0.55, 0.50)
+		focus_a.interaction_radius = 0.14
+		focus_b.interaction_radius = 0.14
+		view.advance(0.01, Vector2(0.47, 0.50), {"door_locked": false})
+		_check(view.focused_interaction_id == "focus-a", "Nearest ground entity did not acquire focus")
+		view.advance(0.14, Vector2(0.47, 0.50), {"door_locked": false})
+		view.advance(0.01, Vector2(0.505, 0.50), {"door_locked": false})
+		_check(view.focused_interaction_id == "focus-a", "Focus switched on midpoint jitter without a clear distance advantage")
+		var locked_request: Dictionary = view.request_nearest_interaction(Vector2(0.505, 0.50))
+		_check(String(locked_request.get("interaction_id", "")) == "focus-a", "Explicit pickup input diverged from the stable focused target")
+		view.advance(0.01, Vector2(0.54, 0.50), {"door_locked": false})
+		_check(view.focused_interaction_id == "focus-b", "Focus did not switch after residence and a clear distance advantage")
+		view.advance(0.04, Vector2(0.90, 0.90), {"door_locked": false})
+		_check(view.focused_interaction_id == "focus-b" and view.context_popup.visible, "Ground focus did not survive a brief boundary excursion")
+		view.advance(0.08, Vector2(0.90, 0.90), {"door_locked": false})
+		_check(view.focused_interaction_id.is_empty() and not view.context_popup.visible, "Ground focus survived beyond its lost-target grace window")
+
+	var after_pickup_snapshot := focus_snapshot.duplicate(true)
+	after_pickup_snapshot["room_floor_items"] = [_item("focus-b")]
+	view.configure_room(after_pickup_snapshot)
+	_check(not view.ground_loot_entities.has("focus-a"), "Removed ledger item remained actionable")
+	_check(view.departing_ground_loot_entities.has("focus-a"), "Pickup feedback was destroyed with the authoritative entity refresh")
+	var departing = view.departing_ground_loot_entities.get("focus-a")
+	if departing != null:
+		_check(departing.is_retiring() and not departing.enabled, "Departing pickup visual remained interactable")
+		view.show_pickup_result("focus-a", true)
+		departing.call("_process", GroundLootEntity.PICKUP_FEEDBACK_SECONDS + 0.01)
+		await _frames(2)
+		_check(not view.departing_ground_loot_entities.has("focus-a"), "Completed pickup feedback retained a stale departure entity")
 	view.free()
 	overlay.free()
 
@@ -220,11 +264,19 @@ func _check_production_run_scene() -> void:
 
 	var chest_source := FileAccess.get_file_as_string("res://scripts/gameplay/interactables/g41_chest_interactable.gd")
 	var contract_source := FileAccess.get_file_as_string("res://scripts/presentation/art24/art24_in_run_asset_contract.gd")
+	var manifest_source := FileAccess.get_file_as_string("res://data/assets/asset_manifest.csv")
 	var run_source := FileAccess.get_file_as_string("res://scripts/core/run/run_scene.gd")
 	var capture_source := FileAccess.get_file_as_string("res://tests/art25_production_visual_capture_runner.gd")
-	_check(not chest_source.contains("00_baoxiang_kai.png") and not contract_source.contains("00_baoxiang_kai.png"), "Production scripts still reference the unapproved open-Chest PNG")
+	var open_chest_path := AssetContract.path_for(&"visual.art24.prop.chest_open_state")
+	var closed_chest_path := AssetContract.path_for(&"visual.art24.prop.chest_closed")
+	_check(open_chest_path.ends_with("/art07/00_baoxiang_kai.png"), "Opened Chest state is not bound to the revalidated open texture")
+	_check(open_chest_path != closed_chest_path and ResourceLoader.exists(open_chest_path, "Texture2D"), "Opened Chest texture is missing or aliases the closed texture")
+	_check(contract_source.contains("00_baoxiang_kai.png"), "Open-Chest contract lost its governed runtime path")
+	_check(manifest_source.contains("sources.zip!/sources/draw/30_game_ready/props/00_baoxiang_kai.png"), "Open-Chest source-pack member is absent from the asset gate")
+	_check(manifest_source.contains("A1035F69C412680016E6FB1C4FB181E77E75A517FDB252D6EBBC76D7F7957E71"), "Open-Chest source-pack hash is absent from the asset gate")
+	_check(manifest_source.contains("3A4D3445312B5611B7F9FA9066FBE7FB666C48A074579BE7D303003CC9C0180A"), "Open-Chest member/runtime hash is absent from the asset gate")
+	_check(manifest_source.contains("scripts/gameplay/interactables/g41_chest_interactable.gd") and manifest_source.contains("i3_source_pack_revalidated"), "Open-Chest consumer or review status is absent from the asset gate")
 	_check(chest_source.contains("AssetContract.texture(StringName(\"visual.art24.fx.chest_opening.%d\" % frame))"), "Chest opening FX bypasses the registered runtime key")
-	_check(AssetContract.path_for(&"visual.art24.prop.chest_open_state").ends_with("/chest_closed.png"), "Opened Chest state is not bound to the audited closed texture")
 	_check(not run_source.contains("interaction_commit_requested") and not run_source.contains("_on_g41_interaction_commit_requested"), "RunScene still accepts an animation-driven Chest commit")
 	_check(not capture_source.contains("chest_view.chest.mark_opened()"), "Production capture still cheats the opened Chest state")
 	main.free()
@@ -295,7 +347,8 @@ func _frames(count: int) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("I2_WORLD_INTERACTION_RUNTIME=PASS chest=single_projection command=before_animation proximity=display_only doors=public_snapshot asset=open_png_blocked")
+		print("I2_WORLD_INTERACTION_RUNTIME=PASS chest=single_projection command=before_animation proximity=display_only doors=public_snapshot asset=open_png_revalidated")
+		print("I3_SEARCH_WORLD_FEEDBACK=PASS sequence=search,reveal,stable,pickup chest=open_asset proximity=automatic focus=hysteresis,lock loads=preloaded authority=preserved")
 		quit(0)
 		return
 	for failure in failures:

@@ -58,6 +58,18 @@ const CATALOG := {
 							"flip_h": false,
 							"fallback_visual_key": &"main_menu.scene.character.idle.00",
 						},
+						&"walk_dungeon": {
+							"visual_keys": [
+								&"main_menu.scene.character.walk_dungeon.00",
+								&"main_menu.scene.character.walk_dungeon.01",
+								&"main_menu.scene.character.walk_dungeon.02",
+								&"main_menu.scene.character.walk_dungeon.03",
+							],
+							"sequence": [0, 1, 2, 3],
+							"frame_seconds": 0.12,
+							"flip_h": false,
+							"fallback_visual_key": &"main_menu.scene.character.walk_dungeon.00",
+						},
 					},
 				},
 			},

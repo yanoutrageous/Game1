@@ -7,6 +7,7 @@ const FIELD_NAMES := [
 	"resolution_id",
 	"vsync_mode",
 	"frame_limit",
+	"master_volume",
 	"reduce_motion",
 ]
 const WINDOW_MODE_VALUES := ["windowed", "borderless", "exclusive"]
@@ -19,6 +20,8 @@ var window_mode_option: OptionButton
 var resolution_option: OptionButton
 var vsync_option: OptionButton
 var frame_limit_option: OptionButton
+var master_volume_slider: HSlider
+var master_volume_value_label: Label
 var reduce_motion_check: CheckButton
 var status_label: Label
 var confirmation_box: VBoxContainer
@@ -139,6 +142,23 @@ func _build_once() -> void:
 	_add_field_row("垂直同步", vsync_option)
 	frame_limit_option = _make_option("FrameLimit", ["不限制", "60", "120", "144"])
 	_add_field_row("帧率上限", frame_limit_option)
+	var master_volume_control := HBoxContainer.new()
+	master_volume_control.name = "MasterVolumeControl"
+	master_volume_control.add_theme_constant_override("separation", 10)
+	master_volume_slider = HSlider.new()
+	master_volume_slider.name = "MasterVolume"
+	master_volume_slider.min_value = 0.0
+	master_volume_slider.max_value = 100.0
+	master_volume_slider.step = 5.0
+	master_volume_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	master_volume_slider.value_changed.connect(_on_master_volume_changed)
+	master_volume_control.add_child(master_volume_slider)
+	master_volume_value_label = Label.new()
+	master_volume_value_label.name = "MasterVolumeValue"
+	master_volume_value_label.custom_minimum_size.x = 52.0
+	master_volume_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	master_volume_control.add_child(master_volume_value_label)
+	_add_field_row("主音量", master_volume_control)
 	reduce_motion_check = CheckButton.new()
 	reduce_motion_check.name = "ReduceMotion"
 	reduce_motion_check.text = "减少循环动画与位移动效"
@@ -212,6 +232,7 @@ func _on_apply_pressed() -> void:
 	var resolution_value: String = RESOLUTION_VALUES[resolution_option.selected]
 	var vsync_value: String = VSYNC_VALUES[vsync_option.selected]
 	var frame_limit_value: int = FRAME_LIMIT_VALUES[frame_limit_option.selected]
+	var master_volume_value := int(round(master_volume_slider.value))
 	var reduce_motion_value := reduce_motion_check.button_pressed
 	_committing_controls = true
 	var accepted := true
@@ -219,6 +240,7 @@ func _on_apply_pressed() -> void:
 	accepted = bool(settings_manager.call("set_draft_value", &"resolution_id", resolution_value)) and accepted
 	accepted = bool(settings_manager.call("set_draft_value", &"vsync_mode", vsync_value)) and accepted
 	accepted = bool(settings_manager.call("set_draft_value", &"frame_limit", frame_limit_value)) and accepted
+	accepted = bool(settings_manager.call("set_draft_value", &"master_volume", master_volume_value)) and accepted
 	accepted = bool(settings_manager.call("set_draft_value", &"reduce_motion", reduce_motion_value)) and accepted
 	if accepted:
 		accepted = bool(settings_manager.call("apply_draft"))
@@ -261,6 +283,8 @@ func _refresh_from_manager() -> void:
 	_select_string(resolution_option, RESOLUTION_VALUES, String(draft_settings.get("resolution_id", "auto")))
 	_select_string(vsync_option, VSYNC_VALUES, String(draft_settings.get("vsync_mode", "enabled")))
 	_select_int(frame_limit_option, FRAME_LIMIT_VALUES, int(draft_settings.get("frame_limit", 0)))
+	master_volume_slider.set_value_no_signal(float(draft_settings.get("master_volume", 80)))
+	_update_master_volume_label()
 	reduce_motion_check.button_pressed = bool(draft_settings.get("reduce_motion", false))
 	var pending := StringName(snapshot.get("state", &"")) == &"awaiting_confirmation"
 	var read_only := bool(snapshot.get("read_only", false))
@@ -271,7 +295,7 @@ func _refresh_from_manager() -> void:
 	elif read_only:
 		status_label.text = "设置文件来自更高版本；本版本仅可读取，不会覆盖。"
 	else:
-		status_label.text = "显示设置采用固定 16:9 档位。"
+		status_label.text = "画面、声音与动态效果会按当前值应用；显示模式与分辨率变更需确认。"
 	apply_button.disabled = pending or read_only
 	reset_button.disabled = pending or read_only
 	set_process(pending)
@@ -285,6 +309,15 @@ func _select_string(option: OptionButton, values: Array, value: String) -> void:
 func _select_int(option: OptionButton, values: Array, value: int) -> void:
 	var index := values.find(value)
 	option.select(maxi(0, index))
+
+
+func _on_master_volume_changed(_value: float) -> void:
+	_update_master_volume_label()
+
+
+func _update_master_volume_label() -> void:
+	if master_volume_value_label != null and master_volume_slider != null:
+		master_volume_value_label.text = "%d%%" % int(round(master_volume_slider.value))
 
 
 func _process(_delta: float) -> void:

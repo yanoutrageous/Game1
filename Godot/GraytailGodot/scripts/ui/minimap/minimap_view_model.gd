@@ -155,6 +155,12 @@ static func build_cell_view_model(raw_marker: Dictionary, player_pos: Vector2i =
 	marker["action_enabled"] = bool(action.get("enabled", false))
 	marker["disabled_reason"] = String(action.get("reason", ""))
 	marker["detail_text"] = _detail_text(marker, action)
+	# Rebuild all semantic presentation fields after the public-state sanitation
+	# above. This prevents a malformed source marker from retaining a hidden room
+	# icon even though room_type itself was reduced to Unknown.
+	marker["asset_id"] = PresentationMapping.asset_id_for_minimap_cell(marker, is_current)
+	marker["label"] = PresentationMapping.label_for_minimap_cell(marker, is_current)
+	marker["theme_key"] = PresentationMapping.theme_key_for_minimap_cell(marker, is_current)
 	marker["tooltip"] = String(marker.get("detail_text", ""))
 	return marker
 

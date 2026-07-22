@@ -21,6 +21,9 @@ const TextureCache := preload("res://scripts/presentation/runtime_texture_cache.
 
 var input_enabled := true
 var facing_asset_id: StringName = &"sprite.player.default"
+var appearance_id: StringName = RuntimeAnimationCatalog.DEFAULT_PLAYER_APPEARANCE_ID
+var animation_set_id: StringName = RuntimeAnimationCatalog.DEFAULT_PLAYER_ANIMATION_SET_ID
+var animation_set: Dictionary = {}
 var local_pos := Vector2(0.30, 0.5)
 var local_velocity := Vector2.ZERO
 var facing_vector := Vector2.RIGHT
@@ -35,20 +38,26 @@ var step_preview_remaining := 0.0
 var last_texture_path := ""
 var pending_visual_state: StringName = &""
 var transient_state_remaining := 0.0
+var suppress_next_preview_move := false
+var preview_move_direction := Vector2.ZERO
 
 
 func set_input_enabled(enabled: bool) -> void:
 	input_enabled = enabled
+	if not enabled:
+		suppress_next_preview_move = false
+		preview_move_direction = Vector2.ZERO
 
 
 func get_move_vector() -> Vector2:
 	if not input_enabled:
 		return Vector2.ZERO
-
-	var left_pressed := Input.is_action_pressed("move_left") or Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT)
-	var right_pressed := Input.is_action_pressed("move_right") or Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT)
-	var up_pressed := Input.is_action_pressed("move_up") or Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP)
-	var down_pressed := Input.is_action_pressed("move_down") or Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN)
+	if InputMap.has_action("move_left") and InputMap.has_action("move_right") and InputMap.has_action("move_up") and InputMap.has_action("move_down"):
+		return Input.get_vector("move_left", "move_right", "move_up", "move_down", 0.18)
+	var left_pressed := Input.is_physical_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT)
+	var right_pressed := Input.is_physical_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT)
+	var up_pressed := Input.is_physical_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP)
+	var down_pressed := Input.is_physical_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN)
 	var x_axis := float(int(right_pressed) - int(left_pressed))
 	var y_axis := float(int(down_pressed) - int(up_pressed))
 	var movement := Vector2(x_axis, y_axis)
@@ -59,6 +68,8 @@ func get_move_vector() -> Vector2:
 
 func reset_local_position() -> void:
 	local_velocity = Vector2.ZERO
+	suppress_next_preview_move = false
+	preview_move_direction = Vector2.ZERO
 	# The normal-room center is a program-owned obstacle in G41. Spawn on the
 	# left safe floor so production input is live from the first frame.
 	set_local_position(Vector2(0.30, 0.5))
@@ -140,8 +151,10 @@ func play_step(direction: Vector2) -> void:
 	if direction.length() <= 0.01:
 		return
 	_set_facing_from_vector(direction)
+	suppress_next_preview_move = true
+	preview_move_direction = direction.normalized()
 	step_preview_remaining = STEP_PREVIEW_SECONDS
-	animation_elapsed = RuntimeAnimationCatalog.player_frame_duration(&"move")
+	animation_elapsed = RuntimeAnimationCatalog.player_frame_duration(&"move", false, _animation_set_descriptor())
 
 
 func place_from_entry(direction: Vector2i) -> void:
@@ -173,6 +186,12 @@ func move_local(move_vector: Vector2, delta: float) -> Dictionary:
 		local_velocity = Vector2.ZERO
 		return {"status": &"idle"}
 	var direction := move_vector.limit_length(1.0)
+	if suppress_next_preview_move:
+		var matches_preview := direction.length_squared() > 0.0001 and direction.normalized().dot(preview_move_direction) > 0.999
+		suppress_next_preview_move = false
+		preview_move_direction = Vector2.ZERO
+		if matches_preview:
+			return {"status": &"input_preview", "facing": facing_vector}
 	if direction.length_squared() > 0.0001:
 		_set_facing_from_vector(direction)
 	var target_velocity := direction * LOCAL_MOVE_SPEED
@@ -199,7 +218,27 @@ func move_local(move_vector: Vector2, delta: float) -> Dictionary:
 
 func set_visual_asset(asset_id: StringName) -> void:
 	facing_asset_id = asset_id
+	set_presentation_profile(asset_id, animation_set_id, {animation_set_id: _animation_set_descriptor()})
+
+
+func set_presentation_profile(next_appearance_id: StringName, next_animation_set_id: StringName, registered_sets: Dictionary = {}) -> void:
+	animation_set = RuntimeAnimationCatalog.resolve_player_animation_set(next_animation_set_id, registered_sets)
+	animation_set_id = StringName(animation_set.get("id", RuntimeAnimationCatalog.DEFAULT_PLAYER_ANIMATION_SET_ID))
+	appearance_id = next_appearance_id if next_appearance_id != &"" else StringName(animation_set.get("appearance_id", RuntimeAnimationCatalog.DEFAULT_PLAYER_APPEARANCE_ID))
+	last_texture_path = ""
 	_apply_visual()
+
+
+func presentation_snapshot() -> Dictionary:
+	var descriptor := _animation_set_descriptor()
+	return {
+		"appearance_id": appearance_id,
+		"animation_set_id": animation_set_id,
+		"animation_root": String(descriptor.get("root", RuntimeAnimationCatalog.PLAYER_ROOT)),
+		"source_status": StringName(descriptor.get("source_status", &"audited_runtime")),
+		"used_fallback": bool(descriptor.get("used_fallback", false)),
+		"read_only": true,
+	}
 
 
 func set_grid_position(pos: Vector2i) -> void:
@@ -207,6 +246,8 @@ func set_grid_position(pos: Vector2i) -> void:
 
 
 func _ready() -> void:
+	if animation_set.is_empty():
+		animation_set = RuntimeAnimationCatalog.resolve_player_animation_set(animation_set_id)
 	_ensure_runtime_contract_nodes()
 	_apply_visual()
 	_apply_local_position()
@@ -232,10 +273,10 @@ func _process(delta: float) -> void:
 		animation_frame = 0
 	else:
 		animation_elapsed += delta
-		var frame_duration := RuntimeAnimationCatalog.player_frame_duration(visual_state, show_walk)
-		var frame_count := maxi(1, RuntimeAnimationCatalog.player_frame_count(visual_state, show_walk))
+		var frame_duration := RuntimeAnimationCatalog.player_frame_duration(visual_state, show_walk, _animation_set_descriptor())
+		var frame_count := maxi(1, RuntimeAnimationCatalog.player_frame_count(visual_state, show_walk, _animation_set_descriptor()))
 		var next_frame := int(animation_elapsed / frame_duration)
-		if RuntimeAnimationCatalog.player_loops(&"move" if show_walk and visual_state == &"idle" else visual_state):
+		if RuntimeAnimationCatalog.player_loops(&"move" if show_walk and visual_state == &"idle" else visual_state, _animation_set_descriptor()):
 			next_frame %= frame_count
 		else:
 			next_frame = mini(next_frame, frame_count - 1)
@@ -322,7 +363,8 @@ func _apply_art24_frame(walking: bool) -> void:
 		visual_state,
 		animation_frame,
 		Art24MotionSettingsScript.reduce_motion_enabled(),
-		walking
+		walking,
+		_animation_set_descriptor()
 	)
 	if texture_path == last_texture_path:
 		return
@@ -342,11 +384,11 @@ func _apply_idle_motion(walking: bool) -> void:
 		return
 	var reduce_motion := Art24MotionSettingsScript.reduce_motion_enabled()
 	var action_visual := visual_state in [&"attack_windup", &"attack_active", &"attack_recovery", &"hurt", &"dead"]
-	var uses_walk_cycle := RuntimeAnimationCatalog.player_uses_walk_cycle(visual_state, walking)
+	var uses_walk_cycle := RuntimeAnimationCatalog.player_uses_walk_cycle(visual_state, walking, _animation_set_descriptor())
 	var bob_offset := 0.0
 	var scale_pulse := 1.0
 	if uses_walk_cycle:
-		bob_offset = RuntimeAnimationCatalog.player_walk_bob_offset(animation_elapsed, reduce_motion)
+		bob_offset = RuntimeAnimationCatalog.player_walk_bob_offset(animation_elapsed, reduce_motion, _animation_set_descriptor())
 		var lift_ratio := -bob_offset / RuntimeAnimationCatalog.PLAYER_MOVE_BOB_AMPLITUDE
 		scale_pulse += lift_ratio * 0.008
 	elif not reduce_motion:
@@ -357,6 +399,12 @@ func _apply_idle_motion(walking: bool) -> void:
 	sprite.scale = Vector2.ONE * PLAYER_ART_SCALE * scale_pulse
 	sprite.modulate = Color(1.0, 0.62, 0.58, 1.0) if visual_state == &"hurt" else Color.WHITE
 	sprite.rotation = -0.18 if visual_state == &"dead" else 0.0
+
+
+func _animation_set_descriptor() -> Dictionary:
+	if animation_set.is_empty():
+		animation_set = RuntimeAnimationCatalog.resolve_player_animation_set(animation_set_id)
+	return animation_set
 
 
 func _ensure_runtime_contract_nodes() -> void:

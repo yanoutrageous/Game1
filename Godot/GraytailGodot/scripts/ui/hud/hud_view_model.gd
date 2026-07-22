@@ -38,8 +38,7 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 	var pos: Vector2i = snapshot.get("position", Vector2i.ZERO)
 	var inventory_items: Array = snapshot.get("inventory_items", [])
 	var equipped_items: Array = snapshot.get("equipped_items", [])
-	var status_effects: Array = snapshot.get("status_effects", [])
-	model.run_label = "%s / %s" % [String(snapshot.get("run_id", &"")), String(snapshot.get("mode", &""))]
+	model.run_label = "探索中"
 	model.status_text = "生命：%s/%s | 强度：%s\n背包：%s/%s | 装备：%s | 地面：%s\n位置：(%d,%d) | %s\n雷险：%s | 搜索：%s" % [
 		snapshot.get("hp", 0),
 		snapshot.get("max_hp", 0),
@@ -54,13 +53,11 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 		snapshot.get("adjacent_mines", 0),
 		_search_state_label(String(snapshot.get("search_state", "blocked"))),
 	]
-	model.protocol_text = "压力：%s / 100\n协议：%s | 阶段：%s\n结果：%s | 遭遇：%s\n状态效果：%s" % [
+	model.protocol_text = "压力：%s / 100\n协议：%s\n周围雷险：%s\n当前行动：%s" % [
 		snapshot.get("pressure", 0),
 		snapshot.get("protocol_level", 5),
-		_phase_label(StringName(snapshot.get("phase", &"idle"))),
-		_outcome_label(String(snapshot.get("outcome", "Running"))),
-		_encounter_label(StringName(snapshot.get("encounter_type", &"none"))),
-		status_effects.size(),
+		snapshot.get("adjacent_mines", "未知"),
+		_primary_action_hint(snapshot),
 	]
 	var popup: Dictionary = snapshot.get("tutorial_popup", {})
 	var event_state: Dictionary = snapshot.get("event_state", {})
@@ -78,13 +75,12 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 		for raw_enemy in (combat_runtime.get("enemies", []) as Array):
 			if raw_enemy is Dictionary and int((raw_enemy as Dictionary).get("hp", 0)) > 0:
 				alive_enemies += 1
-		var combat_player: Dictionary = combat_runtime.get("player", {})
-		enemy_text = "Combat: %d hostiles | %s" % [alive_enemies, String(combat_player.get("state", &"idle"))]
+		enemy_text = "异常体：仍有 %d 个目标" % alive_enemies
 	elif not enemy_state.is_empty():
 		enemy_text = "异常体：%s / 我方：%s" % [enemy_state.get("enemy_power", 0), enemy_state.get("player_power", 0)]
 	var blocked_text := ""
 	if String(snapshot.get("blocked_reason", "")) != "":
-		blocked_text = "受阻：%s" % _short_text(String(snapshot.get("blocked_reason", "")), 18)
+		blocked_text = "暂不可用：%s" % _short_text(RunUIViewModelScript.reason_label(String(snapshot.get("blocked_reason", ""))), 18)
 	model.room_hint = PresentationMapping.hint_for_snapshot(snapshot)
 	model.risk_key = PresentationTheme.risk_key(int(snapshot.get("adjacent_mines", 0)), StringName(snapshot.get("current_room", &"Unknown")))
 	var hint_lines: Array[String] = [
@@ -96,6 +92,23 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 			hint_lines.append(String(extra))
 	model.hint_text = _join_limited(hint_lines, 4)
 	return model
+
+
+static func _primary_action_hint(snapshot: Dictionary) -> String:
+	var combat_runtime: Dictionary = snapshot.get("combat_runtime", {})
+	if bool(combat_runtime.get("active", false)):
+		return "清理威胁"
+	var event_state: Dictionary = snapshot.get("event_state", {})
+	if not event_state.is_empty():
+		return "处理事件"
+	var search_data: Dictionary = snapshot.get("search_state_data", {})
+	if bool(search_data.get("can_search", false)):
+		return "搜索当前房间"
+	if StringName(snapshot.get("current_room", &"Unknown")) == &"Exit":
+		return "确认撤离"
+	if int(snapshot.get("room_floor_item_count", 0)) > 0:
+		return "查看附近物资"
+	return "继续探索"
 
 
 static func _room_type_label(room_type: StringName) -> String:

@@ -101,6 +101,7 @@ var transition_entry_id: StringName = &""
 var transition_origin_focus: StringName = &"deploy"
 var transition_finished_emitted := false
 var transition_root_base_positions: Dictionary = {}
+var transition_character_base_state: Dictionary = {}
 var transition_presenter = MainMenuTransitionPresenterScript.new()
 var reduced_motion := false
 var page_active := true
@@ -248,6 +249,7 @@ func _clear_children() -> void:
 	transition_entry_id = &""
 	transition_finished_emitted = false
 	transition_root_base_positions.clear()
+	transition_character_base_state.clear()
 
 
 func _create_layer_roots() -> void:
@@ -340,6 +342,7 @@ func _build_character_scene() -> void:
 	_load_character_clip(&"idle")
 	_load_character_clip(&"focus_deploy")
 	_load_character_clip(&"focus_long_term")
+	_load_character_clip(&"walk_dungeon")
 	character_idle_frames.assign(character_clip_frames.get(&"idle", []) as Array)
 	for focus_clip_id in [&"focus_deploy", &"focus_long_term"]:
 		for frame in character_clip_frames.get(focus_clip_id, []) as Array:
@@ -746,7 +749,11 @@ func _apply_transition_pose(pose: Dictionary) -> void:
 		transition_texture.visible = overlay_color.a > 0.001
 	_apply_activation_alpha(cave_activation_texture, float(pose.get("cave_activation_alpha", 0.0)))
 	_apply_activation_alpha(company_activation_texture, float(pose.get("company_activation_alpha", 0.0)))
-	_apply_character_transition_pose(StringName(pose.get("character_pose", &"idle")))
+	_apply_character_transition_pose(
+		StringName(pose.get("character_pose", &"idle")),
+		int(pose.get("character_clip_step", 0))
+	)
+	_apply_character_transition_transform(pose)
 	if character_shadow_texture != null:
 		character_shadow_texture.modulate = Color(1, 1, 1, clampf(float(pose.get("shadow_alpha", 1.0)), 0.0, 1.0))
 
@@ -759,12 +766,36 @@ func _apply_activation_alpha(texture_rect: TextureRect, alpha: float) -> void:
 	texture_rect.modulate = Color(1, 1, 1, safe_alpha)
 
 
-func _apply_character_transition_pose(pose_id: StringName) -> void:
+func _apply_character_transition_pose(pose_id: StringName, step: int = 0) -> void:
 	if character_texture == null:
 		return
-	if pose_id in [&"focus_deploy", &"focus_long_term"] and _apply_character_clip_pose(pose_id):
+	if pose_id in [&"focus_deploy", &"focus_long_term", &"walk_dungeon"] and _apply_character_clip_pose(pose_id, step):
 		return
 	_apply_character_clip_pose(&"idle", idle_frame_index)
+
+
+func _apply_character_transition_transform(pose: Dictionary) -> void:
+	if character_texture == null or transition_character_base_state.is_empty():
+		return
+	var base_position := transition_character_base_state.get("position", character_texture.position) as Vector2
+	var base_scale := transition_character_base_state.get("scale", character_texture.scale) as Vector2
+	var base_modulate := transition_character_base_state.get("modulate", character_texture.modulate) as Color
+	var base_pivot := transition_character_base_state.get("pivot_offset", character_texture.pivot_offset) as Vector2
+	if not bool(pose.get("character_transition_active", false)):
+		character_texture.position = base_position
+		character_texture.scale = base_scale
+		character_texture.modulate = base_modulate
+		character_texture.pivot_offset = base_pivot
+		return
+
+	var travel_progress := clampf(float(pose.get("character_travel_progress", 0.0)), 0.0, 1.0)
+	var target_position := MainMenuLayoutContractScript.logical_anchor(&"character_cave_inside")
+	var scale_factor := clampf(float(pose.get("character_scale_factor", 1.0)), 0.1, 1.0)
+	var alpha := clampf(float(pose.get("character_alpha", 1.0)), 0.0, 1.0)
+	character_texture.pivot_offset = character_texture.size * 0.5
+	character_texture.position = base_position.lerp(target_position, travel_progress).round()
+	character_texture.scale = Vector2(base_scale.x * scale_factor, base_scale.y * scale_factor)
+	character_texture.modulate = Color(base_modulate.r, base_modulate.g, base_modulate.b, base_modulate.a * alpha)
 
 
 func _load_character_clip(clip_id: StringName) -> void:
@@ -799,6 +830,21 @@ func _capture_transition_root_positions() -> void:
 		var scene_root := get_node_or_null(String(root_name)) as Control
 		if scene_root != null:
 			transition_root_base_positions[root_name] = scene_root.position
+	_capture_transition_character_state()
+
+
+func _capture_transition_character_state() -> void:
+	transition_character_base_state.clear()
+	if character_texture == null:
+		return
+	transition_character_base_state = {
+		"position": character_texture.position,
+		"scale": character_texture.scale,
+		"modulate": character_texture.modulate,
+		"pivot_offset": character_texture.pivot_offset,
+		"texture": character_texture.texture,
+		"flip_h": character_texture.flip_h,
+	}
 
 
 func _apply_transition_scene_offset(scene_offset: Vector2) -> void:
@@ -819,9 +865,21 @@ func _restore_transition_root_positions() -> void:
 	transition_root_base_positions.clear()
 
 
+func _restore_transition_character_state() -> void:
+	if character_texture != null and not transition_character_base_state.is_empty():
+		character_texture.position = transition_character_base_state.get("position", character_texture.position) as Vector2
+		character_texture.scale = transition_character_base_state.get("scale", character_texture.scale) as Vector2
+		character_texture.modulate = transition_character_base_state.get("modulate", character_texture.modulate) as Color
+		character_texture.pivot_offset = transition_character_base_state.get("pivot_offset", character_texture.pivot_offset) as Vector2
+		character_texture.texture = transition_character_base_state.get("texture", character_texture.texture) as Texture2D
+		character_texture.flip_h = bool(transition_character_base_state.get("flip_h", character_texture.flip_h))
+	transition_character_base_state.clear()
+
+
 func _reset_navigation_transition(restore_focus_owner: bool) -> void:
 	var focus_to_restore := transition_origin_focus if transition_token > 0 else current_focus
 	_restore_transition_root_positions()
+	_restore_transition_character_state()
 	if transition_texture != null:
 		transition_texture.color = Color(0.018, 0.024, 0.032, 0.0)
 		transition_texture.visible = false

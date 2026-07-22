@@ -8,8 +8,8 @@ const PresentationMappingScript := preload("res://scripts/presentation/presentat
 static func build() -> Dictionary:
 	return {
 		"title": "灰尾回收",
-		"subtitle": "基地门厅 / 中控入口",
-		"scene_hint": "从回收站门厅选择下一步行动。",
+		"subtitle": "灰尾基地 · 门厅",
+		"scene_hint": "洞口通往本次探索，基地下层保存长期成长。",
 		"role_hint": "当前出勤角色",
 		"art09_visuals": {
 			"background": PresentationMappingScript.main_menu_background_ref(),
@@ -18,7 +18,7 @@ static func build() -> Dictionary:
 			{
 				"id": &"deploy",
 				"label": "出发探索",
-				"description": "规划地图、难度、出勤物资与本局委托，确认后开始探索。",
+				"description": "进入洞口前往整备区，确认地图、携带物与本局委托。",
 				"target": NavigationIntentScript.TARGET_DEPLOY,
 				"requires_confirm": false,
 				"has_badge": false,
@@ -27,7 +27,7 @@ static func build() -> Dictionary:
 			{
 				"id": &"long_term",
 				"label": "长期系统",
-				"description": "查看任务档案、图鉴、研究、角色与收藏进度。",
+				"description": "前往基地下层，查看天赋树、档案与长期记录。",
 				"target": NavigationIntentScript.TARGET_LONG_TERM,
 				"requires_confirm": false,
 				"has_badge": false,
@@ -36,7 +36,7 @@ static func build() -> Dictionary:
 			{
 				"id": &"settings",
 				"label": "设置",
-				"description": "调整显示与动态表现；变更可以预览、确认或回退。",
+				"description": "调整画面、主音量与动态表现；变更可以确认或恢复。",
 				"target": NavigationIntentScript.TARGET_SETTINGS,
 				"requires_confirm": false,
 				"has_badge": false,
@@ -53,8 +53,8 @@ static func build() -> Dictionary:
 			},
 		],
 		"notice": {
-			"title": "回收站简报",
-			"body": "在探索页确认地图、难度、物资与委托后，再开始本次行动。",
+			"title": "基地公告",
+			"body": "今日回收区域已开放；完成整备后从洞口出发，长期记录可在基地下层查看。",
 		},
 		"shortcuts": [
 			{

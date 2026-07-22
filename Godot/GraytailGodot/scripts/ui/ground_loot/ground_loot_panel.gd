@@ -329,38 +329,13 @@ func _show_item_detail(item: Dictionary) -> void:
 
 
 func _item_summary_text(item: Dictionary) -> String:
-	var descriptor: Dictionary = ItemRarityDescriptorScript.describe_item(item)
-	return "%s  %s  ×%d  重%s" % [
-		_safe_item_name(item),
-		String(descriptor.get("display_text", "[?] 未鉴定")),
-		_item_quantity(item),
-		item.get("weight", 0),
-	]
+	return String(RunUIViewModel.item_presentation(item).get("summary_text", "暂无物资"))
 
 
 func _item_detail_text(item: Dictionary) -> String:
-	var descriptor: Dictionary = ItemRarityDescriptorScript.describe_item(item)
-	var lines: Array[String] = [
-		_safe_item_name(item),
-		"品质：%s" % String(descriptor.get("display_text", "[?] 未鉴定")),
-		"重量：%s　数量：%d" % [item.get("weight", 0), _item_quantity(item)],
-	]
-	var description := String(item.get("short_description", "")).strip_edges()
-	if description != "":
-		lines.append(Art10UISkinKitScript.sanitize_player_copy(description))
-	return "\n".join(lines)
-
-
-func _safe_item_name(item: Dictionary) -> String:
-	var display_name := String(item.get("display_name", "")).strip_edges()
-	return display_name if display_name != "" else "未命名物资"
-
-
-func _item_quantity(item: Dictionary) -> int:
-	for key: String in ["quantity", "stack_count", "count"]:
-		if item.has(key):
-			return maxi(1, int(item.get(key, 1)))
-	return 1
+	return Art10UISkinKitScript.sanitize_player_copy(
+		String(RunUIViewModel.item_presentation(item).get("detail_text", "尚未选择物品。"))
+	)
 
 
 func _command_result_text(result: Dictionary) -> String:

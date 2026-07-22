@@ -22,6 +22,7 @@ const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract
 const G10ArtSmokeRegistry := preload("res://scripts/presentation/g10_art_smoke_registry.gd")
 const RunSurfaceScript := preload("res://scripts/ui/run_surface/run_surface.gd")
 const RunSurfaceModel := preload("res://scripts/ui/run_surface/run_surface_model.gd")
+const RuntimeModalLayoutModelScript := preload("res://scripts/ui/run_surface/runtime_modal_layout_model.gd")
 const MetaProgressAdapterScript := preload("res://scripts/core/save/meta_progress_adapter.gd")
 const SaveManagerScript := preload("res://scripts/core/save/save_manager.gd")
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
@@ -704,52 +705,17 @@ func _new_modal_panel(node_name: String, rect: Rect2) -> PanelContainer:
 
 
 func _apply_runtime_modal_layout(profile: Dictionary) -> void:
-	var supported_size: Vector2 = profile.get("supported_size", Vector2(1366, 768))
-	var actual_size: Vector2i = profile.get("actual_viewport_size", Vector2i(int(supported_size.x), int(supported_size.y)))
-	var width: float = float(max(1, actual_size.x))
-	var height: float = float(max(1, actual_size.y))
-	var margin: float = 24.0
-	var left_width: float = clamp(width * 0.29, 360.0, 420.0)
-	var right_width: float = clamp(width * 0.20, 268.0, 330.0)
-	var modal_width: float = min(max(300.0, right_width - 16.0), max(260.0, width - left_width - margin * 3.0))
-	var modal_left: float = width - modal_width - margin
-	var modal_top: float = margin + 80.0
-	var available_height: float = max(220.0, height - modal_top - margin)
-	_set_control_rect(event_panel, Rect2(modal_left, modal_top, modal_width, min(360.0, available_height)))
+	var layout: Dictionary = RuntimeModalLayoutModelScript.build(profile)
+	_set_control_rect(event_panel, layout.get("event", Rect2()) as Rect2)
 	if loot_panel != null:
 		loot_panel.call("apply_layout_profile", profile)
-	_set_control_rect(extract_panel, Rect2(modal_left, modal_top, modal_width, min(260.0, available_height)))
-	var pause_size := Vector2(clampf(width * 0.38, 440.0, 560.0), clampf(height * 0.56, 390.0, 500.0))
-	_set_control_rect(pause_panel, _centered_runtime_modal_rect(width, height, pause_size, margin))
-	var settings_size := Vector2(clampf(width * 0.56, 600.0, 780.0), clampf(height * 0.76, 510.0, 670.0))
-	_set_control_rect(runtime_settings_panel, _centered_runtime_modal_rect(width, height, settings_size, margin))
-	var abandon_size := Vector2(clampf(width * 0.42, 480.0, 560.0), clampf(height * 0.34, 230.0, 290.0))
-	_set_control_rect(abandon_confirm_panel, _centered_runtime_modal_rect(width, height, abandon_size, margin))
-	_apply_debug_panel_layout(profile)
-
-
-func _centered_runtime_modal_rect(width: float, height: float, requested_size: Vector2, margin: float) -> Rect2:
-	var safe_size := Vector2(
-		minf(requested_size.x, maxf(260.0, width - margin * 2.0)),
-		minf(requested_size.y, maxf(220.0, height - margin * 2.0))
-	)
-	return Rect2(Vector2((width - safe_size.x) * 0.5, (height - safe_size.y) * 0.5), safe_size)
-
-
-func _apply_debug_panel_layout(profile: Dictionary) -> void:
-	if debug_panel == null:
-		return
-	var supported_size: Vector2 = profile.get("supported_size", Vector2(1366, 768))
-	var actual_size: Vector2i = profile.get("actual_viewport_size", Vector2i(int(supported_size.x), int(supported_size.y)))
-	var width: float = float(max(1, actual_size.x))
-	var height: float = float(max(1, actual_size.y))
-	var margin: float = 24.0
-	var panel_width: float = clamp(width * 0.24, 300.0, 380.0)
-	var top: float = margin + 70.0
-	var panel_height: float = max(380.0, height - top - margin)
-	_set_control_rect(debug_panel, Rect2(width - panel_width - margin, top, panel_width, panel_height))
+	_set_control_rect(extract_panel, layout.get("extract", Rect2()) as Rect2)
+	_set_control_rect(pause_panel, layout.get("pause", Rect2()) as Rect2)
+	_set_control_rect(runtime_settings_panel, layout.get("settings", Rect2()) as Rect2)
+	_set_control_rect(abandon_confirm_panel, layout.get("abandon", Rect2()) as Rect2)
+	_set_control_rect(debug_panel, layout.get("debug", Rect2()) as Rect2)
 	if debug_scroll != null:
-		debug_scroll.custom_minimum_size = Vector2(panel_width - 32.0, max(240.0, panel_height - 170.0))
+		debug_scroll.custom_minimum_size = layout.get("debug_scroll_minimum", Vector2.ZERO) as Vector2
 
 
 func _shell_snapshot() -> Dictionary:

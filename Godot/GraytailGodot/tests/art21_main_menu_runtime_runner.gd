@@ -1,5 +1,9 @@
 extends SceneTree
 
+const CharacterPresentationCatalogScript := preload("res://scripts/presentation/character/character_presentation_catalog.gd")
+const MainMenuLayoutContractScript := preload("res://scripts/ui/main_menu/main_menu_layout_contract.gd")
+const DESCEND_CHECKPOINT_MIN_OFFSET := 48.0
+
 var failures: Array[String] = []
 var host_route_count := 0
 var page_change_count := 0
@@ -138,9 +142,30 @@ func _run() -> void:
 
 	main.call("_set_focus_state", &"deploy")
 	var deploy_button := main.get_node_or_null("PrimaryActionRoot/MainMenuEntry_deploy") as Button
+	var walk_descriptor := CharacterPresentationCatalogScript.resolve_descriptor(
+		CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID,
+		CharacterPresentationCatalogScript.DEFAULT_APPEARANCE_ID,
+		&"walk_dungeon"
+	)
+	_check(not walk_descriptor.is_empty() and not bool(walk_descriptor.get("fallback_used", true)), "walk_dungeon did not resolve to its audited semantic clip")
+	_check((walk_descriptor.get("visual_keys", []) as Array).size() == 4, "walk_dungeon does not expose all four audited runtime frames")
+	var cancelled_character_position := character.position
+	var cancelled_character_scale := character.scale
+	var cancelled_character_modulate := character.modulate
+	var cancelled_character_pivot := character.pivot_offset
+	var cancelled_character_texture := character.texture
+	var cancelled_character_flip := character.flip_h
 	var page_count_before := page_change_count
 	deploy_button.emit_signal("pressed")
 	var cancelled_token := int((shell.call("get_navigation_transition_snapshot") as Dictionary).get("active_token", 0))
+	main.call("_process", 0.30)
+	var cave_inside := MainMenuLayoutContractScript.logical_anchor(&"character_cave_inside")
+	_check(character.position != cancelled_character_position, "enter_cave did not move the character")
+	_check(character.position.distance_to(cave_inside) < cancelled_character_position.distance_to(cave_inside), "enter_cave moved the character away from the cave interior")
+	_check(character.scale.x < cancelled_character_scale.x and character.scale.y < cancelled_character_scale.y, "enter_cave did not scale the character into the cave")
+	_check(character.modulate.a < cancelled_character_modulate.a, "enter_cave did not fade the character while crossing the gate")
+	_check(character.texture != null and character.texture.resource_path.contains("/walk_dungeon_"), "enter_cave did not consume an audited walk_dungeon runtime frame")
+	_check(page_change_count == page_count_before, "enter_cave committed its route before presentation completion")
 	var cancel_event := InputEventAction.new()
 	cancel_event.action = &"ui_cancel"
 	cancel_event.pressed = true
@@ -153,6 +178,12 @@ func _run() -> void:
 	_check(int(cancelled_result.get("commit_count", -1)) == 0, "Cancel committed a route")
 	_check(page_change_count == page_count_before and main.visible, "Cancel changed the visible route")
 	_check(StringName(main.get("current_focus")) == &"deploy", "Cancel did not restore the source focus")
+	_check(character.position == cancelled_character_position, "Cancel did not restore the character position exactly")
+	_check(character.scale == cancelled_character_scale, "Cancel did not restore the character scale exactly")
+	_check(character.modulate == cancelled_character_modulate, "Cancel did not restore the character alpha/modulate exactly")
+	_check(character.pivot_offset == cancelled_character_pivot, "Cancel did not restore the character pivot exactly")
+	_check(character.texture == cancelled_character_texture, "Cancel did not restore the character texture exactly")
+	_check(character.flip_h == cancelled_character_flip, "Cancel did not restore the character facing exactly")
 
 	var settings_button := main.get_node_or_null("PrimaryActionRoot/MainMenuEntry_settings") as Button
 	page_count_before = page_change_count
@@ -228,7 +259,7 @@ func _run() -> void:
 			observed_descend_offset = offset
 		else:
 			_check(offset == (observed_descend_offset as Vector2), "Long-term descend split the non-overlay scene roots")
-	_check(observed_descend_offset != null and (observed_descend_offset as Vector2).y > 0.0, "Long-term descend did not move the scene")
+	_check(observed_descend_offset != null and (observed_descend_offset as Vector2).y >= DESCEND_CHECKPOINT_MIN_OFFSET, "Long-term descend did not reach the minimum readable scene displacement")
 	var long_term_page := shell.call("get_long_term_page") as Control
 	_check(long_term_page != null and not long_term_page.visible, "Long-term route committed before presentation completion")
 	main.call("_process", 0.55)

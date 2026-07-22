@@ -1,7 +1,7 @@
 extends Control
 class_name ResultPanel
 
-const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const ResultPresentationModelScript := preload("res://scripts/ui/result/result_presentation_model.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
@@ -81,7 +81,7 @@ func set_result_summary(title: String, summary: String) -> void:
 func show_summary(snapshot: Dictionary) -> void:
 	# G9 final consumes event_log, transaction_log, failure_salvage,
 	# salvaged_item_count, settlement_log, and currency/item movement data.
-	var model: Dictionary = RunUIViewModel.result_summary(snapshot)
+	var model: Dictionary = ResultPresentationModelScript.build(snapshot)
 	current_result_model = model.duplicate(true)
 	set_result_summary(String(model.get("title", "结算")), String(model.get("summary", "")))
 	_apply_result_title_plate(_result_state_from_snapshot(snapshot))
@@ -586,10 +586,7 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 	if salvage_reason_label != null:
 		salvage_reason_label.text = String(current_result_model.get("reason_text", "本次探索未能完成。"))
 	if salvage_consequence_label != null:
-		salvage_consequence_label.text = "黑资损失 %d；已锁定收益保留 %d。" % [
-			int(settlement.get("black_coin_lost", 0)),
-			int(settlement.get("safe_yield_retained", settlement.get("safe_yield", 0))),
-		]
+		salvage_consequence_label.text = String(current_result_model.get("consequence_text", "确认后，未选择的物资将无法带回。"))
 	for child in salvage_candidates_box.get_children():
 		child.queue_free()
 	salvage_candidate_buttons.clear()

@@ -16,6 +16,7 @@ const EXPECTED_FIELDS := [
 	"resolution_id",
 	"vsync_mode",
 	"frame_limit",
+	"master_volume",
 	"reduce_motion",
 ]
 
@@ -185,11 +186,13 @@ func _check_real_panel_timeout_rollback(
 	await _frames(3)
 	_require(root.gui_get_focus_owner() == panel.get("window_mode_option"), "injected SettingsPanel did not restore first-field focus")
 	panel.get("reduce_motion_check").button_pressed = true
+	panel.get("master_volume_slider").value = 55.0
 	panel.get("resolution_option").select(3)
 	panel.call("_on_apply_pressed")
 	await _frames(2)
 	_require(bool(manager.call("is_confirmation_pending")), "real SettingsPanel skipped dangerous display confirmation")
 	_require_equal(manager.call("get_applied_settings").get("resolution_id"), "1600x900", "dangerous preview resolution")
+	_require_equal(manager.call("get_applied_settings").get("master_volume"), 55, "dangerous preview master volume")
 	_require_equal(manager.call("get_applied_settings").get("reduce_motion"), true, "dangerous preview reduce-motion")
 	_require(panel.get("confirmation_box").visible, "real SettingsPanel did not expose the dangerous confirmation controls")
 	_require(not bool(main.call("is_page_active")) and not bool(deploy.call("is_page_active")) and not bool(long_term.call("is_page_active")), "dangerous preview revived a page behind the overlay")
@@ -198,6 +201,7 @@ func _check_real_panel_timeout_rollback(
 	await _frames(2)
 	_require(not bool(manager.call("is_confirmation_pending")), "dangerous preview did not time out")
 	_require_equal(manager.call("get_applied_settings").get("resolution_id"), "auto", "timeout resolution rollback")
+	_require_equal(manager.call("get_applied_settings").get("master_volume"), 80, "timeout master-volume rollback")
 	_require_equal(manager.call("get_applied_settings").get("reduce_motion"), false, "timeout reduce-motion rollback")
 	_require(not panel.get("confirmation_box").visible, "real SettingsPanel kept stale confirmation controls after rollback")
 	_require(not bool(main.call("is_page_active")) and not bool(deploy.call("is_page_active")) and not bool(long_term.call("is_page_active")), "timeout rollback activated a page behind the overlay")

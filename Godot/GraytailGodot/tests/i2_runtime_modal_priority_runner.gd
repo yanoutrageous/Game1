@@ -131,6 +131,12 @@ func _run() -> void:
 		_require(not bool(toggle_marker.get("revealed", true)), "toggle_flag fixture was not an unknown public KnownMap cell")
 		toggle_button.grab_focus()
 		toggle_button.pressed.emit()
+		await process_frame
+		_require(int(bus.get("command_sequence")) == sequence_before_toggle, "toggle_flag selection dispatched before explicit confirmation")
+		var toggle_confirm := map_panel.get_node_or_null("Panel/Content/SelectedAction") as Button
+		_require(toggle_confirm != null and not toggle_confirm.disabled, "selected toggle_flag action has no enabled confirmation")
+		if toggle_confirm != null and not toggle_confirm.disabled:
+			toggle_confirm.pressed.emit()
 		await _frames(4)
 		_require(int(bus.get("command_sequence")) == sequence_before_toggle + 1, "explicit toggle_flag action did not dispatch exactly one command")
 		_require(_map_open_count(run_scene) == map_count_before_toggle, "toggle_flag action incremented map_open_count")
@@ -168,6 +174,12 @@ func _run() -> void:
 		var map_count_before_fast_return := _map_open_count(run_scene)
 		fast_return_button.grab_focus()
 		fast_return_button.pressed.emit()
+		await process_frame
+		_require(int(bus.get("command_sequence")) == sequence_before_fast_return, "fast_return selection dispatched before explicit confirmation")
+		var return_confirm := map_panel.get_node_or_null("Panel/Content/SelectedAction") as Button
+		_require(return_confirm != null and not return_confirm.disabled, "selected fast_return action has no enabled confirmation")
+		if return_confirm != null and not return_confirm.disabled:
+			return_confirm.pressed.emit()
 		await _frames(5)
 		_require(int(bus.get("command_sequence")) == sequence_before_fast_return + 1, "fast_return action did not dispatch exactly one command")
 		_require(_map_open_count(run_scene) == map_count_before_fast_return, "fast_return action incremented map_open_count")

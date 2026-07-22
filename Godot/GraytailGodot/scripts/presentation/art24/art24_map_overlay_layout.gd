@@ -30,10 +30,11 @@ static func calculate(profile: Dictionary, grid_size: Vector2i = Vector2i(10, 10
 	# UE lets the grid consume the fill region. The former 56 px detail band and
 	# 40 px footer turned selection feedback into two competing toolbars.
 	var title_height := 30.0 if is_low else 36.0
-	# UE keeps selection/action feedback below the fill grid; it does not reserve
-	# a second toolbar above it.  Keep the legacy Detail node collapsed so older
-	# scene references remain compatible while the grid reclaims the space.
-	var detail_height := 0.0
+	# Selection is intentionally separate from execution. Reserve one readable
+	# summary band and one explicit action control instead of overloading a cell
+	# click with both responsibilities.
+	var detail_height := 56.0 if is_low else 64.0
+	var action_height := 34.0 if is_low else 40.0
 	# Standard/high profiles need two readable lines when feedback is appended.
 	# Reserving the real minimum prevents the VBox from expanding past the
 	# fullscreen safe area after a cell action.
@@ -43,7 +44,7 @@ static func calculate(profile: Dictionary, grid_size: Vector2i = Vector2i(10, 10
 	var footer_height := 42.0 if is_low else 48.0
 	var frame_vertical_padding := 12.0 if is_low else 18.0
 	var frame_horizontal_padding := 32.0
-	var fixed_vertical := frame_vertical_padding + title_height + detail_height + footer_height + content_gap * 3.0 + grid_gap * float(maxi(0, rows - 1))
+	var fixed_vertical := frame_vertical_padding + title_height + detail_height + action_height + footer_height + content_gap * 4.0 + grid_gap * float(maxi(0, rows - 1))
 	var cell_width := floorf((panel_width - frame_horizontal_padding - grid_gap * float(maxi(0, columns - 1))) / float(columns))
 	var cell_height := floorf((panel_height - fixed_vertical) / float(rows))
 	var max_cell_size := 56.0 if is_low else (88.0 if is_high else 84.0)
@@ -58,6 +59,7 @@ static func calculate(profile: Dictionary, grid_size: Vector2i = Vector2i(10, 10
 		"grid_gap": grid_gap,
 		"title_height": title_height,
 		"detail_height": detail_height,
+		"action_height": action_height,
 		"footer_height": footer_height,
 		"label_padding": label_padding,
 		"top_reserve": top_reserve,

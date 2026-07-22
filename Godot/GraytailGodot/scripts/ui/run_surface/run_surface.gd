@@ -309,7 +309,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	var protocol_level := clampi(int(model.get("protocol_level", 5)), 1, 5)
 	var protocol_title := String(model.get("protocol_title", RunSurfaceModelScript.protocol_title_for_level(protocol_level)))
 	right_title_label.text = "协议 %s · %s" % [protocol_level, protocol_title]
-	right_body_label.text = "压力 %s/100\n等级 %s / 5" % [model.get("pressure", "--"), protocol_level]
+	right_body_label.text = "压力 %s/100" % model.get("pressure", "--")
 	_update_protocol_presentation(model.get("protocol_level", 5), model.get("pressure", 0))
 	event_label.text = ""
 	event_label.visible = false
@@ -321,13 +321,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	command_feedback_label.visible = feedback_copy != ""
 
 	var status_text := _lines_text(model.get("status_lines", []), "", 3, 18)
-	right_body_label.tooltip_text = "%s\n%s\n%s\n%s\n%s" % [
-		status_text,
-		String(model.get("room_state_detail", "")),
-		String(model.get("room_common_rule_summary", "")),
-		String(model.get("encounter_preview_summary", "")),
-		String(model.get("return_eligibility_summary", "")),
-	]
+	right_body_label.tooltip_text = status_text
 	event_label.text = ""
 	event_label.visible = false
 	event_label.tooltip_text = String(model.get("event_panel_summary", ""))
@@ -415,7 +409,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var backpack_panel_height: float = maxf(192.0, height - backpack_top - 28.0)
 	# The quick bag is a true scroll surface. Reserve stable detail and burden
 	# bands, then let every real item remain reachable inside the remaining rail.
-	var backpack_scroll_height: float = minf(276.0, maxf(56.0, backpack_panel_height - 128.0))
+	var backpack_scroll_height: float = maxf(56.0, backpack_panel_height - 128.0)
 	var bottom_key_width: float = minf(720.0 * ue_reference_scale, gameplay_width - margin * 3.0)
 	bottom_key_width = maxf(456.0 if is_low else 520.0, bottom_key_width)
 	var bottom_key_left: float = gameplay_left + (gameplay_width - bottom_key_width) * 0.5
@@ -585,12 +579,14 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 	for item_variant in items:
 		if item_variant is Dictionary:
 			var item: Dictionary = item_variant
-			signature_parts.append("%s:%s:%s:%s:%s" % [
+			var presentation := RunUIViewModel.item_presentation(item)
+			signature_parts.append("%s:%s:%s:%s:%s:%s" % [
 				item.get("instance_id", ""),
-				item.get("item_id", ""),
-				item.get("quantity", 1),
-				item.get("weight", 0),
-				item.get("rarity", &"unknown"),
+				presentation.get("display_name", "未命名物资"),
+				presentation.get("quantity", 1),
+				presentation.get("weight", 0),
+				presentation.get("rarity_text", "[?] 未鉴定"),
+				presentation.get("short_description", ""),
 			])
 	var signature := ",".join(signature_parts)
 	if signature == last_backpack_signature and backpack_strip.get_child_count() > 0:
@@ -611,10 +607,10 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		var item: Dictionary = (items[index] as Dictionary).duplicate(true)
 		if first_item.is_empty():
 			first_item = item.duplicate(true)
-		var rarity := ItemRarityDescriptor.describe_item(item)
+		var presentation := RunUIViewModel.item_presentation(item)
+		var rarity: Dictionary = presentation.get("rarity", {})
 		var rarity_color: Color = rarity.get("color", PresentationTheme.color_for_key(&"ui.muted"))
 		var border_width := 2 if int(rarity.get("tier", 0)) >= 4 or bool(rarity.get("locked", false)) else 1
-		var quantity := int(item.get("quantity", 1))
 		var slot := Button.new()
 		slot.name = "BackpackItem%d" % index
 		slot.custom_minimum_size = Vector2(0, 50)
@@ -622,12 +618,12 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		slot.focus_mode = Control.FOCUS_ALL
 		slot.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		slot.text = "%s ×%d\n%s · %s重" % [
-			_compact_line(RunUIViewModel.item_display_name(item), 8),
-			quantity,
-			String(rarity.get("display_text", "[?] 未鉴定")),
-			item.get("weight", 0),
+			_compact_line(String(presentation.get("display_name", "未命名物资")), 8),
+			int(presentation.get("quantity", 1)),
+			String(presentation.get("rarity_text", "[?] 未鉴定")),
+			presentation.get("weight", 0),
 		]
-		slot.tooltip_text = RunUIViewModel.item_tooltip(item)
+		slot.tooltip_text = String(presentation.get("detail_text", "尚未选择物品。"))
 		slot.icon = Art24ItemVisualCatalog.texture_for(item)
 		slot.expand_icon = true
 		slot.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -652,17 +648,9 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 func _show_backpack_item_detail(item: Dictionary) -> void:
 	if backpack_detail_label == null:
 		return
-	var rarity := ItemRarityDescriptor.describe_item(item)
-	var quantity := int(item.get("quantity", 1))
-	var description := String(item.get("short_description", item.get("description", ""))).strip_edges()
-	backpack_detail_label.text = "%s · %s\n数量 %d · 重量 %s%s" % [
-		RunUIViewModel.item_display_name(item),
-		String(rarity.get("display_text", "[?] 未鉴定")),
-		quantity,
-		item.get("weight", 0),
-		"\n%s" % _compact_line(description, 28) if description != "" else "",
-	]
-	backpack_detail_label.tooltip_text = RunUIViewModel.item_tooltip(item)
+	var presentation := RunUIViewModel.item_presentation(item)
+	backpack_detail_label.text = String(presentation.get("detail_text", "尚未选择物品。"))
+	backpack_detail_label.tooltip_text = backpack_detail_label.text
 
 
 func get_hud() -> Hud:
@@ -956,6 +944,7 @@ func _apply_actions(actions: Variant) -> void:
 	if not (actions is Array):
 		_restore_default_action_guidance()
 		return
+	var ordered_index := 0
 	for action in actions:
 		if not (action is Dictionary):
 			continue
@@ -971,11 +960,24 @@ func _apply_actions(actions: Variant) -> void:
 			action_copy.text = display_text
 			action_copy.visible = false
 		var enabled := bool(action_data.get("enabled", true))
+		var is_primary := bool(action_data.get("is_primary", false)) and enabled
 		action_guidance_data[action_id] = action_data.duplicate(true)
 		button.disabled = not enabled
+		button.set_meta("context_rank", int(action_data.get("context_rank", ordered_index)))
+		button.set_meta("context_primary", is_primary)
 		button.tooltip_text = _action_guidance_text(action_data)
-		_apply_action_button_style(button, StringName(action_data.get("tone", &"secondary")), enabled)
+		var tone := StringName(action_data.get("tone", &"secondary"))
+		button.set_meta("context_tone", tone)
+		var visual_tone := &"danger" if is_primary and tone == &"danger" else (&"primary" if is_primary else tone)
+		_apply_action_button_style(button, visual_tone, enabled)
+		button.focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
 		_apply_key_prompt_icon(button, action_id)
+		action_bar.move_child(button, ordered_index)
+		ordered_index += 1
+	if active_guidance_action != "":
+		var active_button := action_buttons.get(active_guidance_action) as Button
+		if active_button == null or active_button.disabled:
+			active_guidance_action = &""
 	_refresh_active_action_guidance()
 
 
@@ -1212,7 +1214,11 @@ func _apply_art10_text_refresh() -> void:
 	for action_id in action_buttons.keys():
 		var action_button := action_buttons[action_id] as Button
 		action_button.custom_minimum_size = Vector2(86, 36)
-		_apply_action_button_style(action_button, &"secondary", not action_button.disabled)
+		var tone := StringName(action_button.get_meta("context_tone", &"secondary"))
+		var is_primary := bool(action_button.get_meta("context_primary", false)) and not action_button.disabled
+		var visual_tone := &"danger" if is_primary and tone == &"danger" else (&"primary" if is_primary else tone)
+		_apply_action_button_style(action_button, visual_tone, not action_button.disabled)
+		action_button.focus_mode = Control.FOCUS_NONE if action_button.disabled else Control.FOCUS_ALL
 		_apply_key_prompt_icon(action_button, StringName(action_id))
 	for button in encounter_option_buttons:
 		Art10UISkinKitScript.apply_transparent_button(button, &"primary" if button != null and not button.disabled else &"secondary", 13, &"key", 0)
@@ -1369,21 +1375,9 @@ func _player_action_hint(raw_hint: String, actions_variant: Variant) -> String:
 			if not (raw_action is Dictionary):
 				continue
 			var action := raw_action as Dictionary
-			if bool(action.get("enabled", true)):
+			if not bool(action.get("enabled", false)):
 				continue
-			match StringName(action.get("id", &"")):
-				&"interact":
-					return "E 搜索/交互：当前没有可搜索或交互的目标；靠近有效目标后再操作。"
-				&"ground_loot":
-					return "G 拾取：当前房间没有可拾取物；靠近掉落物后会自动显示详情。"
-				&"combat":
-					return "Space/J 清理：当前房间没有需要清理的威胁。"
-				&"extract":
-					return "T 撤离：需到达撤离信标；战斗中可在有效门边确认撤离。"
-			var label := String(action.get("label", "行动")).strip_edges()
-			var reason := String(action.get("disabled_reason", "")).strip_edges()
-			if reason != "":
-				return "%s：%s" % [label, reason]
+			return Art10UISkinKitScript.sanitize_player_copy(_action_guidance_text(action)).strip_edges()
 	return Art10UISkinKitScript.sanitize_player_copy(raw_hint).strip_edges()
 
 

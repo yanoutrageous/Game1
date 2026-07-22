@@ -57,20 +57,20 @@ static func build_modules() -> Array:
 		),
 		_module(
 			&"research",
-			"研究",
-			"研究模块展示现有课题链、前置、资源消耗、效果和可提交状态。",
+			"研究解锁",
+			"沿现有课题前置关系展示解锁路径、资源消耗、效果和可研究状态。",
 			STATE_AVAILABLE,
 			[
-				_group(&"unlock_interface", "研究方向", ["研究课题", "所需条件", "研究效果"], "long_term.research.unlock.group_icon"),
-				_group(&"research_entry", "研究课题", ["课题状态", "资源需求", "完成效果"], "long_term.research.entry.group_icon"),
+				_group(&"unlock_interface", "解锁树", ["研究节点", "前置关系", "完成效果"], "long_term.research.unlock.group_icon"),
+				_group(&"research_entry", "课题档案", ["课题状态", "资源需求", "完成效果"], "long_term.research.entry.group_icon"),
 			],
 			[
-				_card("research_node_card", "研究节点 preview card", "只展示研究节点外壳，不解锁、不消耗。", "研究", LongTermContentSlotModelScript.SLOT_RESEARCH_UNLOCK),
-				_card("research_effect_card", "研究效果 preview card", "只展示效果文本位，不应用效果。", "研究", LongTermContentSlotModelScript.SLOT_RESEARCH_UNLOCK),
+				_card("research_node_card", "研究节点", "选择节点查看真实前置条件、资源消耗与开放内容。", "研究解锁", LongTermContentSlotModelScript.SLOT_RESEARCH_UNLOCK),
+				_card("research_effect_card", "完成效果", "效果来自现有研究课题定义，完成研究后生效。", "研究解锁", LongTermContentSlotModelScript.SLOT_RESEARCH_UNLOCK),
 			],
 			[
-				_link("图鉴", "研究未来可依赖图鉴发现；当前只显示关系。"),
-				_link("出发探索", "研究未来可影响出发配置；当前不改出发配置。"),
+				_link("图鉴", "部分研究完成后会开放对应图鉴内容。"),
+				_link("出发探索", "部分研究完成后会开放对应探索内容。"),
 			]
 		),
 		_module(

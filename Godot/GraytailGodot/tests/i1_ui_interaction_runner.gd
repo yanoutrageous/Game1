@@ -106,7 +106,7 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 	run_surface.call("apply_layout_profile", profile)
 	var action_fixture: Array[Dictionary] = [
 		{"id": &"interact", "label": "E 搜索/交互", "enabled": false, "description": "当前没有可搜索或交互的目标。", "disabled_reason": "当前没有可搜索或交互的目标。", "tone": &"primary"},
-		{"id": &"inventory", "label": "背包", "enabled": true, "description": "查看背包、装备与负重详情。", "disabled_reason": "", "tone": &"secondary"},
+		{"id": &"inventory", "label": "背包", "enabled": true, "description": "查看背包、装备与负重详情。", "disabled_reason": "", "tone": &"secondary", "is_primary": true},
 		{"id": &"ground_loot", "label": "地面物品", "enabled": false, "description": "当前房间没有可拾取物。", "disabled_reason": "当前房间没有可拾取物。", "tone": &"warning"},
 		{"id": &"map", "label": "M/Tab 扫描图", "enabled": true, "description": "打开完整区域扫描图。", "disabled_reason": "", "tone": &"secondary"},
 		{"id": &"combat", "label": "Space/J 清理", "enabled": false, "description": "当前房间没有需要清理的威胁。", "disabled_reason": "当前房间没有需要清理的威胁。", "tone": &"danger"},
@@ -139,7 +139,7 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 	var encounter_grid := run_surface.get("encounter_options_box") as GridContainer
 	var encounter_buttons: Array = run_surface.get("encounter_option_buttons")
 	_require(feedback != null and feedback.visible and feedback.text.strip_edges() != "", "%s non-empty command feedback is hidden" % resolution_id)
-	_require(hint != null and hint.visible and hint.text.contains("当前没有可搜索或交互的目标") and hint.text.contains("靠近有效目标"), "%s default disabled-action condition is not visible in the run surface" % resolution_id)
+	_require(hint != null and hint.visible and hint.text.contains("查看背包、装备与负重详情"), "%s default guidance did not select the first executable action" % resolution_id)
 	if feedback != null:
 		_assert_inside_viewport(feedback, viewport_size, "%s RunCommandFeedback" % resolution_id)
 		_assert_font(feedback, "%s RunCommandFeedback" % resolution_id)
@@ -205,7 +205,8 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 		var button := action_buttons[action_id] as Button
 		if button == null:
 			continue
-		_require(button.focus_mode == Control.FOCUS_ALL, "%s run action %s is not focusable" % [resolution_id, action_id])
+		var expected_focus := Control.FOCUS_NONE if button.disabled else Control.FOCUS_ALL
+		_require(button.focus_mode == expected_focus, "%s run action %s has incorrect context focus mode" % [resolution_id, action_id])
 		_assert_font(button, "%s run action %s" % [resolution_id, action_id])
 		_assert_inside_viewport(button, viewport_size, "%s run action %s" % [resolution_id, action_id])
 	run_surface.call("show_command_feedback", {"ok": true, "accepted": true})

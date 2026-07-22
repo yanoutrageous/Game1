@@ -43,22 +43,72 @@ static func format_long_term_summary(snapshot: Dictionary) -> String:
 	return _join_lines(lines)
 
 
-static func item_display_line(item: Dictionary) -> String:
+static func item_presentation(item: Dictionary) -> Dictionary:
+	if item.is_empty():
+		return {
+			"display_name": "未命名物资",
+			"rarity": ItemRarityDescriptorScript.describe(&"unknown"),
+			"rarity_text": "[?] 未鉴定",
+			"quantity": 0,
+			"weight": 0,
+			"base_value": 0,
+			"type_label": "物资",
+			"short_description": "",
+			"summary_text": "暂无物资",
+			"display_line": "暂无物资",
+			"detail_text": "尚未选择物品。",
+			"read_only": true,
+		}
 	var display_name := item_display_name(item)
-	var item_type: String = String(item.get("item_type", item.get("main_type", "item")))
+	var item_type := String(item.get("item_type", item.get("main_type", "item")))
+	var type_label := _item_type_label(item_type)
 	var rarity: Dictionary = ItemRarityDescriptorScript.describe_item(item)
+	var rarity_text := String(rarity.get("display_text", "[?] 未鉴定"))
+	var quantity := item_quantity(item)
 	var weight: Variant = item.get("weight", 1)
-	var value: Variant = item.get("base_value", 0)
-	var quantity := maxi(1, int(item.get("quantity", item.get("stack_count", item.get("count", 1)))))
+	var base_value: Variant = item.get("base_value", 0)
+	var short_description := String(item.get("short_description", item.get("description", ""))).strip_edges()
+	var summary_text := "%s  %s  ×%d  重%s" % [display_name, rarity_text, quantity, weight]
 	var quantity_text := "  ×%d" % quantity if quantity > 1 else ""
-	return "%s  %s  %s%s  重%s  值%s" % [
+	var display_line := "%s  %s  %s%s  重%s  值%s" % [
 		display_name,
-		_item_type_label(item_type),
-		String(rarity.get("display_text", "[?] 未鉴定")),
+		type_label,
+		rarity_text,
 		quantity_text,
 		weight,
-		value,
+		base_value,
 	]
+	var detail_lines: Array[String] = [
+		display_name,
+		"品质：%s" % rarity_text,
+		"重量：%s　数量：%d" % [weight, quantity],
+	]
+	if short_description != "":
+		detail_lines.append(short_description)
+	if int(item.get("collectible_level", 0)) > 0:
+		detail_lines.append("收藏等级：%s" % item.get("collectible_level", 0))
+	if bool(item.get("can_consume", false)):
+		detail_lines.append("可使用：%s %s" % [_effect_kind_label(String(item.get("effect_kind", ""))), item.get("effect_amount", 0)])
+	if bool(item.get("can_equip", false)):
+		detail_lines.append("可装备：%s" % _equipment_slot_label(String(item.get("equipment_slot", ""))))
+	return {
+		"display_name": display_name,
+		"rarity": rarity.duplicate(true),
+		"rarity_text": rarity_text,
+		"quantity": quantity,
+		"weight": weight,
+		"base_value": base_value,
+		"type_label": type_label,
+		"short_description": short_description,
+		"summary_text": summary_text,
+		"display_line": display_line,
+		"detail_text": _join_lines(detail_lines),
+		"read_only": true,
+	}
+
+
+static func item_display_line(item: Dictionary) -> String:
+	return String(item_presentation(item).get("display_line", "暂无物资"))
 
 
 static func item_display_name(item: Dictionary, fallback: String = "未命名物资") -> String:
@@ -70,23 +120,18 @@ static func item_display_name(item: Dictionary, fallback: String = "未命名物
 
 
 static func item_tooltip(item: Dictionary) -> String:
-	if item.is_empty():
-		return "尚未选择物品。"
-	var lines: Array[String] = []
-	lines.append(item_display_line(item))
-	if String(item.get("short_description", "")) != "":
-		lines.append(String(item.get("short_description", "")))
-	if int(item.get("collectible_level", 0)) > 0:
-		lines.append("收藏等级：%s" % item.get("collectible_level", 0))
-	if bool(item.get("can_consume", false)):
-		lines.append("可使用：%s %s" % [_effect_kind_label(String(item.get("effect_kind", ""))), item.get("effect_amount", 0)])
-	if bool(item.get("can_equip", false)):
-		lines.append("可装备：%s" % _equipment_slot_label(String(item.get("equipment_slot", ""))))
 	# `tags` drive rules, drop tables and codex grouping.  They are not localized
 	# player copy and must not leak strings such as `collectible / level_4` into
 	# the in-run art surface. Type, rarity, description and explicit effects
 	# already carry the useful information.
-	return _join_lines(lines)
+	return String(item_presentation(item).get("detail_text", "尚未选择物品。"))
+
+
+static func item_quantity(item: Dictionary) -> int:
+	for key: String in ["quantity", "stack_count", "count"]:
+		if item.has(key):
+			return maxi(1, int(item.get(key, 1)))
+	return 1
 
 
 static func _item_type_label(item_type: String) -> String:
@@ -139,10 +184,15 @@ static func command_result_text(result: Dictionary) -> String:
 	if result.is_empty():
 		return ""
 	var accepted: bool = bool(result.get("accepted", result.get("ok", false)))
-	var reason: String = String(result.get("reason_code", result.get("blocked_reason", result.get("reason", ""))))
+	var action_result: Dictionary = result.get("action_result", {}) as Dictionary
+	var detail := action_result if not action_result.is_empty() else result
+	var reason: String = String(detail.get(
+		"reason_code",
+		detail.get("blocked_reason", detail.get("reason", result.get("reason_code", result.get("reason", ""))))
+	))
 	if accepted:
-		var status := StringName(result.get("status", result.get("rule_result", &"")))
-		var item: Dictionary = _dict_from(result, "item")
+		var status := StringName(detail.get("status", detail.get("rule_result", result.get("status", &""))))
+		var item: Dictionary = _dict_from(detail, "item")
 		var item_name := item_display_name(item)
 		match status:
 			&"picked_up":
@@ -150,7 +200,7 @@ static func command_result_text(result: Dictionary) -> String:
 			&"dropped":
 				return "已放下：%s。" % item_name
 			&"replaced":
-				var dropped: Dictionary = _dict_from(result, "dropped_item")
+				var dropped: Dictionary = _dict_from(detail, "dropped_item")
 				return "已收起%s，放下%s。" % [
 					item_name,
 					item_display_name(dropped),
@@ -161,7 +211,7 @@ static func command_result_text(result: Dictionary) -> String:
 				return "已装备：%s。" % item_name
 			&"unequipped":
 				return "已卸下：%s。" % item_name
-		var message := String(result.get("message", ""))
+		var message := String(detail.get("message", result.get("message", "")))
 		if message != "":
 			return _player_message(message)
 		if not item.is_empty():
@@ -318,13 +368,13 @@ static func result_item_models(items: Array) -> Array[Dictionary]:
 
 
 static func result_item_model(item: Dictionary) -> Dictionary:
-	var rarity := ItemRarityDescriptorScript.describe_item(item)
+	var presentation := item_presentation(item)
 	return {
 		"instance_id": String(item.get("instance_id", "")),
-		"display_name": item_display_name(item),
-		"short_description": String(item.get("short_description", "")),
-		"weight": maxi(0, int(item.get("weight", 1))),
-		"rarity": rarity,
+		"display_name": String(presentation.get("display_name", "未命名物资")),
+		"short_description": String(presentation.get("short_description", "")),
+		"weight": maxi(0, int(presentation.get("weight", 1))),
+		"rarity": (presentation.get("rarity", {}) as Dictionary).duplicate(true),
 		"source_item": item.duplicate(true),
 	}
 

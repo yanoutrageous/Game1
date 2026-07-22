@@ -19,8 +19,8 @@ const MODULE_WORKSPACE := {
 	},
 	&"research": {
 		"kind": &"research_chain",
-		"list_label": "研究课题",
-		"detail_label": "条件与效果",
+		"list_label": "研究解锁树",
+		"detail_label": "节点条件与效果",
 		"empty_title": "暂无研究课题",
 		"empty_description": "当前研究分类没有已定义的课题。",
 	},
@@ -84,6 +84,11 @@ static func build(
 		"read_only_selection": true,
 		"explicit_action_only": true,
 	}, true)
+	if group_key == "research/unlock_interface":
+		workspace["kind"] = &"research_unlock_tree"
+		workspace["list_label"] = "研究解锁树"
+		workspace["detail_label"] = "节点条件与效果"
+		workspace["tree_contract"] = (model.get("research_tree_contract", {}) as Dictionary).duplicate(true)
 	return workspace
 
 

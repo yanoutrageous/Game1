@@ -19,6 +19,7 @@ const KEY_WINDOW_MODE := "window_mode"
 const KEY_RESOLUTION_ID := "resolution_id"
 const KEY_VSYNC_MODE := "vsync_mode"
 const KEY_FRAME_LIMIT := "frame_limit"
+const KEY_MASTER_VOLUME := "master_volume"
 const KEY_REDUCE_MOTION := "reduce_motion"
 const DISPLAY_RESOLUTION_KEY := &"display.resolution_id"
 const DISPLAY_RESOLUTION_SOURCE_KEY := &"display.resolution_source"
@@ -66,6 +67,7 @@ class RuntimeDisplayAdapter:
 
 	func apply_settings(settings: Dictionary, resolution_size: Vector2i) -> Dictionary:
 		Engine.max_fps = int(settings.get(KEY_FRAME_LIMIT, 0))
+		_apply_master_volume(int(settings.get(KEY_MASTER_VOLUME, 80)))
 		if not DisplayServer.window_can_draw():
 			return {"ok": true}
 		var vsync_mode := DisplayServer.VSYNC_ENABLED
@@ -90,6 +92,13 @@ class RuntimeDisplayAdapter:
 				_center_window(resolution_size)
 				DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_RESIZE_DISABLED, true)
 		return {"ok": true}
+
+	func _apply_master_volume(percent: int) -> void:
+		if AudioServer.get_bus_count() <= 0:
+			return
+		var linear := clampf(float(percent) / 100.0, 0.0, 1.0)
+		AudioServer.set_bus_mute(0, linear <= 0.0)
+		AudioServer.set_bus_volume_db(0, linear_to_db(maxf(linear, 0.0001)))
 
 	func _largest_resolution() -> Vector2i:
 		var entry: Dictionary = SUPPORTED_RESOLUTIONS[SUPPORTED_RESOLUTIONS.size() - 1]
@@ -198,7 +207,7 @@ func apply_draft() -> bool:
 		return true
 	rollback = applied.duplicate(true)
 	if not _apply_runtime_settings(candidate):
-		last_persistence_error = "display adapter rejected settings"
+		last_persistence_error = "runtime settings adapter rejected settings"
 		_refresh_resolution_state(applied)
 		rollback.clear()
 		persistence_failed.emit(last_persistence_error)
@@ -543,6 +552,8 @@ func _field_name_for_legacy_key(key: StringName) -> String:
 			return KEY_VSYNC_MODE
 		"frame_limit", "display.frame_limit":
 			return KEY_FRAME_LIMIT
+		"master_volume", "audio.master_volume":
+			return KEY_MASTER_VOLUME
 		"reduce_motion", "accessibility.reduce_motion":
 			return KEY_REDUCE_MOTION
 	return ""

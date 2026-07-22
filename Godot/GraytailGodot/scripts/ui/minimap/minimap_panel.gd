@@ -11,8 +11,10 @@ var view_model: MiniMapViewModel
 var layout_profile: Dictionary = {}
 var marker_size: Vector2 = Vector2(28, 28)
 var marker_font_size: int = 13
+var visible_map_rect: Rect2i = Rect2i()
 const LEGACY_MINIMAP_VALIDATION_MARKER := "MiniMap: icons fallback to text"
 const G10_MINIMAP_CLICK_VALIDATION_MARKER := "MiniMapPanel click opens MapOverlay"
+const LOCAL_WINDOW_SIZE := 5
 const UNKNOWN_CELL_ASSET_ID := &"ui.art21.map.cell.unknown"
 const EXPLORED_CELL_ASSET_ID := &"ui.art21r2.minimap.hud.explored"
 const SCANNED_CELL_ASSET_ID := &"ui.art21r2.minimap.hud.scanned"
@@ -20,6 +22,7 @@ const FLAGGED_CELL_ASSET_ID := &"icon.minimap.flag"
 const PLAYER_MARKER_ASSET_ID := &"ui.art21r2.minimap.hud.player"
 const EXIT_MARKER_ASSET_ID := &"ui.art21r2.minimap.hud.exit"
 const MINE_MARKER_ASSET_ID := &"ui.art21r2.minimap.hud.mine"
+const MONSTER_MARKER_ASSET_ID := &"icon.room.monster"
 const CHEST_MARKER_ASSET_ID := &"ui.art21r2.minimap.hud.chest"
 const EVENT_MARKER_ASSET_ID := &"ui.art21.map.marker.event"
 
@@ -81,6 +84,7 @@ func _rebuild_grid() -> void:
 		child.queue_free()
 
 	if view_model == null:
+		visible_map_rect = Rect2i()
 		if placeholder != null:
 			placeholder.visible = true
 			placeholder.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
@@ -90,10 +94,11 @@ func _rebuild_grid() -> void:
 
 	if view_model.room_markers.is_empty():
 		if view_model.width > 0 and view_model.height > 0:
-			_apply_marker_scale_for_view_model()
-			grid.columns = max(1, view_model.width)
-			for y in range(view_model.height):
-				for x in range(view_model.width):
+			visible_map_rect = _local_window_rect()
+			_apply_marker_scale_for_view_model(visible_map_rect.size)
+			grid.columns = max(1, visible_map_rect.size.x)
+			for y in range(visible_map_rect.position.y, visible_map_rect.end.y):
+				for x in range(visible_map_rect.position.x, visible_map_rect.end.x):
 					_add_marker_node(grid, {
 						"pos": Vector2i(x, y),
 						"label": "?",
@@ -112,12 +117,13 @@ func _rebuild_grid() -> void:
 			placeholder.text = "地图未公开"
 		return
 
-	_apply_marker_scale_for_view_model()
-	grid.columns = max(1, view_model.width)
+	visible_map_rect = _local_window_rect()
+	_apply_marker_scale_for_view_model(visible_map_rect.size)
+	grid.columns = max(1, visible_map_rect.size.x)
 	if view_model.width > 0 and view_model.height > 0:
 		var markers_by_pos := _markers_by_position(view_model.room_markers)
-		for y in range(view_model.height):
-			for x in range(view_model.width):
+		for y in range(visible_map_rect.position.y, visible_map_rect.end.y):
+			for x in range(visible_map_rect.position.x, visible_map_rect.end.x):
 				var pos := Vector2i(x, y)
 				var marker := _public_marker_or_unknown(markers_by_pos, pos)
 				_add_marker_node(grid, marker, marker_size)
@@ -132,7 +138,7 @@ func _rebuild_grid() -> void:
 		placeholder.text = ""
 
 
-func _apply_marker_scale_for_view_model() -> void:
+func _apply_marker_scale_for_view_model(grid_size: Vector2i) -> void:
 	if view_model == null:
 		return
 	var panel_size := size
@@ -140,8 +146,8 @@ func _apply_marker_scale_for_view_model() -> void:
 		panel_size.x = 260.0
 	if panel_size.y <= 0.0:
 		panel_size.y = 220.0
-	var columns: float = float(max(1, view_model.width))
-	var rows: float = float(max(1, view_model.height))
+	var columns: float = float(max(1, grid_size.x))
+	var rows: float = float(max(1, grid_size.y))
 	var grid_gap: float = 2.0
 	var cell_width: float = floor((panel_size.x - 16.0 - grid_gap * maxf(0.0, columns - 1.0)) / columns)
 	var cell_height: float = floor((panel_size.y - 16.0 - grid_gap * maxf(0.0, rows - 1.0)) / rows)
@@ -158,6 +164,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var cell := Control.new()
 	cell.name = "MiniMapCell_%d_%d" % [pos.x, pos.y]
+	cell.set_meta("map_marker_state", PresentationMapping.map_marker_state(marker))
 	cell.custom_minimum_size = size
 	cell.mouse_filter = Control.MOUSE_FILTER_STOP
 	cell.tooltip_text = String(marker.get("detail_text", marker.get("tooltip", "")))
@@ -175,6 +182,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 			var overlay_ref := ContentDBAccessScript.get_asset_ref(overlay_id)
 			if overlay_ref is Texture2D:
 				var overlay_icon := TextureRect.new()
+				overlay_icon.name = "SemanticMarker"
 				overlay_icon.texture = overlay_ref
 				overlay_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
 				overlay_icon.offset_left = -4.0
@@ -251,31 +259,33 @@ func _public_marker_or_unknown(markers_by_pos: Dictionary, pos: Vector2i) -> Dic
 
 
 func _base_asset_id_for_marker(marker: Dictionary) -> StringName:
-	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
-	if bool(marker.get("scanned", false)) or known_state == &"scanned":
-		return SCANNED_CELL_ASSET_ID
-	if bool(marker.get("is_current", false)) or bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]:
-		return EXPLORED_CELL_ASSET_ID
-	return UNKNOWN_CELL_ASSET_ID
+	match PresentationMapping.map_marker_state(marker):
+		&"unknown":
+			return UNKNOWN_CELL_ASSET_ID
+		&"scanned":
+			return SCANNED_CELL_ASSET_ID
+		_:
+			return EXPLORED_CELL_ASSET_ID
 
 
 func _overlay_asset_id_for_marker(marker: Dictionary) -> StringName:
-	if bool(marker.get("is_current", false)):
-		return PLAYER_MARKER_ASSET_ID
-	if bool(marker.get("flagged", false)):
-		return FLAGGED_CELL_ASSET_ID
-	if not _publicly_reveals_room_type(marker):
-		return &""
-	var room_type := StringName(marker.get("room_type", &"Unknown"))
-	if room_type == &"Exit":
-		return EXIT_MARKER_ASSET_ID
-	if room_type == &"Mine":
-		return MINE_MARKER_ASSET_ID
-	if room_type == &"Chest":
-		return CHEST_MARKER_ASSET_ID
-	if room_type == &"Event":
-		return EVENT_MARKER_ASSET_ID
-	return &""
+	match PresentationMapping.map_marker_state(marker):
+		&"player":
+			return PLAYER_MARKER_ASSET_ID
+		&"flagged":
+			return FLAGGED_CELL_ASSET_ID
+		&"exit":
+			return EXIT_MARKER_ASSET_ID
+		&"mine":
+			return MINE_MARKER_ASSET_ID
+		&"monster":
+			return MONSTER_MARKER_ASSET_ID
+		&"chest":
+			return CHEST_MARKER_ASSET_ID
+		&"event":
+			return EVENT_MARKER_ASSET_ID
+		_:
+			return &""
 
 
 func _pos_key(pos: Vector2i) -> String:
@@ -300,20 +310,37 @@ func _emit_open_map_from_mouse_event(event: InputEvent) -> void:
 			accept_event()
 
 
-func _publicly_reveals_room_type(marker: Dictionary) -> bool:
-	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
-	if StringName(marker.get("room_type", &"Unknown")) == &"Exit":
-		return true
-	return bool(marker.get("revealed", false)) or bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]
-
-
 func _public_adjacent_mines(marker: Dictionary) -> int:
-	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
-	var publicly_known := bool(marker.get("revealed", false)) or bool(marker.get("scanned", false)) or known_state in [&"scanned", &"explored", &"cleared"]
-	var adjacent := int(marker.get("adjacent_mines", -1))
-	if not publicly_known or adjacent < 0 or adjacent > 8:
-		return -1
-	return adjacent
+	return PresentationMapping.public_adjacent_mines(marker)
+
+
+func _local_window_rect() -> Rect2i:
+	if view_model == null or view_model.width <= 0 or view_model.height <= 0:
+		return Rect2i()
+	var window_size := Vector2i(
+		mini(LOCAL_WINDOW_SIZE, view_model.width),
+		mini(LOCAL_WINDOW_SIZE, view_model.height)
+	)
+	var center := _current_map_position()
+	if center.x < 0 or center.y < 0:
+		center = Vector2i(window_size.x / 2, window_size.y / 2)
+	center.x = clampi(center.x, 0, view_model.width - 1)
+	center.y = clampi(center.y, 0, view_model.height - 1)
+	var start := Vector2i(
+		clampi(center.x - window_size.x / 2, 0, view_model.width - window_size.x),
+		clampi(center.y - window_size.y / 2, 0, view_model.height - window_size.y)
+	)
+	return Rect2i(start, window_size)
+
+
+func _current_map_position() -> Vector2i:
+	if view_model == null:
+		return Vector2i(-1, -1)
+	for marker in view_model.room_markers:
+		if bool(marker.get("is_current", false)):
+			return Vector2i(marker.get("pos", Vector2i(-1, -1)))
+	var known_map: Dictionary = view_model.map_snapshot.get("KnownMap", {})
+	return Vector2i(known_map.get("player_pos", Vector2i(-1, -1)))
 
 
 func _apply_child_layout() -> void:

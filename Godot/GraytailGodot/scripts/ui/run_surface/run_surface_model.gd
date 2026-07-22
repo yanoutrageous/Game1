@@ -72,6 +72,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"extract_summary": extract_modal_text(snapshot),
 		"action_hint": _action_hint(action_data),
 		"action_buttons": action_data,
+		"primary_action": action_data[0].duplicate(true) if not action_data.is_empty() and bool(action_data[0].get("enabled", false)) else {},
 		"layout_profile": layout_profile.duplicate(true),
 	}
 
@@ -531,7 +532,7 @@ static func _action_buttons(snapshot: Dictionary, search_data: Dictionary, event
 	var has_event := not event_state.is_empty()
 	var can_search := bool(search_data.get("can_search", false))
 	var floor_count := int(snapshot.get("room_floor_item_count", 0))
-	return [
+	var actions: Array[Dictionary] = [
 		_action(&"interact", "E 搜索/交互", run_active and (can_search or has_event or room_type == &"Exit"), _interact_hint(room_type, search_data, has_event)),
 		_action(&"inventory", "背包", run_active, "查看背包和装备摘要。"),
 		_action(&"ground_loot", "地面物品", run_active and floor_count > 0, "查看当前房间地面物品。"),
@@ -540,6 +541,35 @@ static func _action_buttons(snapshot: Dictionary, search_data: Dictionary, event
 		_action(&"extract", "撤离", run_active and (room_type == &"Exit" or phase == &"confirm_extract" or combat_flee_available), "靠近可通行的门后按 T 或点击此处，确认逃离战斗。" if combat_flee_available else "在撤离点请求或确认撤离；也可按 E 通过搜索/交互进入确认。"),
 		_action(&"pause", "Esc 暂停", run_active, "打开暂停和设置入口。"),
 	]
+	return _context_order_actions(actions)
+
+
+static func _context_order_actions(actions: Array[Dictionary]) -> Array[Dictionary]:
+	var by_id: Dictionary = {}
+	for action in actions:
+		by_id[StringName(action.get("id", &""))] = action
+	var context_priority: Array[StringName] = [
+		&"combat",
+		&"interact",
+		&"ground_loot",
+		&"extract",
+		&"inventory",
+		&"map",
+		&"pause",
+	]
+	var ordered: Array[Dictionary] = []
+	for action_id in context_priority:
+		var enabled_action: Dictionary = by_id.get(action_id, {})
+		if not enabled_action.is_empty() and bool(enabled_action.get("enabled", false)):
+			ordered.append(enabled_action)
+	for action_id in context_priority:
+		var disabled_action: Dictionary = by_id.get(action_id, {})
+		if not disabled_action.is_empty() and not bool(disabled_action.get("enabled", false)):
+			ordered.append(disabled_action)
+	for index in range(ordered.size()):
+		ordered[index]["is_primary"] = index == 0 and bool(ordered[index].get("enabled", false))
+		ordered[index]["context_rank"] = index
+	return ordered
 
 
 static func _action(action_id: StringName, label: String, enabled: bool, description: String) -> Dictionary:
@@ -632,15 +662,37 @@ static func loot_modal_text(reward: Dictionary, last_message: String = "") -> St
 static func extract_modal_text(snapshot: Dictionary) -> String:
 	var lines: Array[String] = []
 	var risky := int(snapshot.get("protocol_level", 5)) <= 1
-	lines.append("警告：当前协议已进入极端危险区间。" if risky else "当前协议稳定，可安全确认带出。")
-	lines.append("离开后将结算本次探索收益。")
-	lines.append("本局黑币：%s" % snapshot.get("black_coin", snapshot.get("pending_gold", 0)))
-	lines.append("安全金币：%s" % snapshot.get("gold_coin", snapshot.get("safe_gold", 0)))
-	lines.append("背包负重：%s/%s" % [snapshot.get("backpack_used", 0), snapshot.get("backpack_capacity", 0)])
+	lines.append("当前状态 · 极端危险，确认前请核对带回内容。" if risky else "当前状态 · 可撤离")
+	lines.append("预计带回 · 黑资 %s · 已锁定收益 %s" % [
+		snapshot.get("black_coin", snapshot.get("pending_gold", 0)),
+		snapshot.get("safe_yield", snapshot.get("gold_coin", snapshot.get("safe_gold", 0))),
+	])
+	lines.append("随身物资 · 负重 %s/%s" % [snapshot.get("backpack_used", 0), snapshot.get("backpack_capacity", 0)])
 	var floor_count := int(snapshot.get("room_floor_item_count", 0))
-	lines.append("当前房间仍有 %s 件物资未回收。" % floor_count if floor_count > 0 else "当前房间没有遗留物资。")
+	lines.append("现场遗留 · %s 件" % floor_count)
+	lines.append("目标 · %s" % _extract_objective_summary(snapshot))
 	lines.append("确认撤离将结束本局；取消可继续探索。")
 	return _join_lines(lines)
+
+
+static func _extract_objective_summary(snapshot: Dictionary) -> String:
+	for raw_summary in [
+		snapshot.get("selected_objective_summary", ""),
+		snapshot.get("objective_summary", ""),
+		(_dict_variant(snapshot.get("objective_context_preview", {}))).get("selected_objective_summary", ""),
+	]:
+		var summary := String(raw_summary).strip_edges()
+		if not summary.is_empty():
+			return summary
+	var run_start := _dict_variant(snapshot.get("run_start_config", {}))
+	for raw_summary in [
+		run_start.get("selected_objective_summary", ""),
+		run_start.get("selected_objective_label", ""),
+	]:
+		var summary := String(raw_summary).strip_edges()
+		if not summary.is_empty():
+			return summary
+	return "本次探索未设置额外委托。"
 
 
 static func protocol_title_for_level(level_value: Variant) -> String:
@@ -691,9 +743,9 @@ static func mine_risk_descriptor(adjacent_value: Variant) -> Dictionary:
 
 static func _room_summary(snapshot: Dictionary, room_type: StringName, adjacent_mines: int) -> String:
 	var lines: Array[String] = []
-	lines.append("模式：%s | 阶段：%s" % [String(snapshot.get("mode", &"")), String(snapshot.get("phase", &""))])
-	lines.append("房间：%s | 周边雷险：%s" % [_room_label(room_type), str(adjacent_mines) if adjacent_mines >= 0 else "未知"])
-	lines.append("状态：%s | 地面物品：%s" % [String(snapshot.get("outcome", "Running")), snapshot.get("room_floor_item_count", 0)])
+	lines.append("房间：%s" % _room_label(room_type))
+	lines.append(String(mine_risk_descriptor(adjacent_mines).get("display_text", "周围雷险 ? · 未知")))
+	lines.append("地面物资：%s" % int(snapshot.get("room_floor_item_count", 0)))
 	return _join_lines(lines)
 
 
@@ -804,14 +856,10 @@ static func _monster_summary_text(monster_summary: Dictionary) -> String:
 
 
 static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary, room_detail: Dictionary = {}, return_eligibility: Dictionary = {}, run_flow_snapshot: Dictionary = {}, rule_effect_summary: Dictionary = {}, content_delivery_summary: Dictionary = {}) -> Array[String]:
-	var lifecycle: Dictionary = _dict_variant(run_flow_snapshot.get("RunLifecycle", {}))
-	var state_label := _run_state_label(String(lifecycle.get("state", snapshot.get("phase", "running"))))
-	var return_label := "可快速返回" if bool(return_eligibility.get("eligible", false)) else "暂不可快速返回"
 	return [
-		"协议 %s · %s | 压力 %s/100 | %s" % [snapshot.get("protocol_level", 5), protocol_title_for_level(snapshot.get("protocol_level", 5)), snapshot.get("pressure", 0), state_label],
+		"协议 %s · %s | 压力 %s/100" % [snapshot.get("protocol_level", 5), protocol_title_for_level(snapshot.get("protocol_level", 5)), snapshot.get("pressure", 0)],
 		"房间 %s | %s" % [_room_label(room_type), String(mine_risk_descriptor(adjacent_mines).get("display_text", "周围雷险 ? · 未知"))],
 		_search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
-		"区域 %s | %s" % [_known_state_label(String(room_detail.get("known_state", "unknown"))), return_label],
 	]
 
 
@@ -857,11 +905,10 @@ static func _scanner_detail(minimap_view_model: MiniMapViewModel, run_map_snapsh
 static func _action_hint(actions: Array[Dictionary]) -> String:
 	var keyboard_hint := "键盘：WASD/方向键移动；E搜索/交互；Space/J清理；M/Tab地图；F标记；Esc暂停。"
 	for action in actions:
-		if bool(action.get("enabled", true)):
+		if not bool(action.get("enabled", false)):
 			continue
-		var reason := String(action.get("disabled_reason", ""))
-		if reason != "":
-			return "%s 暂不可用：%s" % [String(action.get("label", "行动")), reason]
+		var description := String(action.get("description", "")).strip_edges()
+		return "%s：%s" % [String(action.get("label", "行动")), description] if description != "" else String(action.get("label", keyboard_hint))
 	return keyboard_hint
 
 

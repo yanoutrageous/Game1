@@ -24,9 +24,9 @@ signal navigation_intent_requested(intent: Dictionary)
 signal meta_action_requested(action: Dictionary)
 
 const SUMMARY_PAGES := [
-	{"id": &"overview", "label": "概览"},
-	{"id": &"config", "label": "配置"},
-	{"id": &"effect", "label": "效果"},
+	{"id": &"overview", "label": "速览"},
+	{"id": &"config", "label": "携带"},
+	{"id": &"effect", "label": "本局"},
 	{"id": &"objective", "label": "目标"},
 ]
 const CHARACTER_FIRST_LOOK_SECONDS := 5.0

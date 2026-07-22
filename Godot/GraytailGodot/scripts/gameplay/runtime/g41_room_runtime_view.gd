@@ -40,16 +40,24 @@ const MINE_FEEDBACK_DURATION := 0.27
 const MINE_BURST_FRAME_DURATION := 0.045
 const EXIT_PULSE_FRAME_DURATION := 0.085
 const AVAILABLE_DOOR_CUE_MARGIN := 0.075
+const FOCUS_EXIT_MARGIN := 0.025
+const FOCUS_SWITCH_MARGIN := 0.025
+const FOCUS_MIN_RESIDENCE_SECONDS := 0.12
+const FOCUS_LOST_GRACE_SECONDS := 0.10
 const EXIT_PULSE_FRAME_COUNT := 8
 const MINE_BURST_FRAME_COUNT := 6
 var room_key: String = ""
+var projection_room_key: String = ""
 var room_type: StringName = &"Unknown"
 var chest
 var ground_loot_entities: Dictionary = {}
+var departing_ground_loot_entities: Dictionary = {}
 var enemy_views: Dictionary = {}
 var projectile_views: Dictionary = {}
 var special_entities: Dictionary = {}
 var focused_interaction_id: String = ""
+var focus_residence_elapsed := 0.0
+var focus_lost_elapsed := 0.0
 var combat_snapshot: Dictionary = {}
 var latest_room_snapshot: Dictionary = {}
 var world_projection: Dictionary = {}
@@ -104,7 +112,7 @@ func advance(delta: float, player_local_pos: Vector2, next_combat_snapshot: Dict
 	if chest != null:
 		chest.advance(delta)
 	_advance_special_visuals(delta)
-	_update_focus(player_local_pos)
+	_update_focus(player_local_pos, delta)
 	apply_combat_snapshot(next_combat_snapshot)
 	_update_available_door_cue(player_local_pos)
 
@@ -145,6 +153,8 @@ func apply_room_entry_result(entry_result: Dictionary) -> void:
 
 func show_pickup_result(instance_id: String, ok: bool) -> void:
 	var entity = ground_loot_entities.get(instance_id)
+	if entity == null:
+		entity = departing_ground_loot_entities.get(instance_id)
 	if entity != null:
 		entity.set_pickup_result(ok)
 
@@ -203,7 +213,7 @@ func apply_combat_snapshot(snapshot: Dictionary) -> void:
 			view.name = _safe_node_name("Projectile_" + projectile_id)
 			get_node("CombatVisuals/Projectiles").add_child(view)
 			projectile_views[projectile_id] = view
-		view.configure(&"projectile", projectile)
+		view.configure_projectile(projectile)
 	_remove_missing_views(projectile_views, active_ids)
 	if door_state_changed:
 		_rebuild_door_projection()
@@ -230,6 +240,7 @@ func build_read_only_snapshot() -> Dictionary:
 		"room_key": room_key,
 		"room_type": room_type,
 		"focused_interaction_id": focused_interaction_id,
+		"departing_ground_loot_ids": departing_ground_loot_entities.keys(),
 		"interactables": interactables,
 		"combat": combat_snapshot.duplicate(true),
 		"door_locked": bool(combat_snapshot.get("door_locked", false)),
@@ -265,9 +276,12 @@ func clear_runtime() -> void:
 	door_projections.clear()
 	door_projection_revision = 0
 	room_key = ""
+	projection_room_key = ""
 	room_type = &"Unknown"
 	logical_obstacles.clear()
 	focused_interaction_id = ""
+	focus_residence_elapsed = 0.0
+	focus_lost_elapsed = 0.0
 	last_door_locked = false
 	nearby_available_door = Vector2i.ZERO
 	last_room_entry_result.clear()
@@ -280,7 +294,7 @@ func clear_runtime() -> void:
 	if chest != null:
 		chest.queue_free()
 		chest = null
-	for dictionary in [ground_loot_entities, special_entities, enemy_views, projectile_views]:
+	for dictionary in [ground_loot_entities, departing_ground_loot_entities, special_entities, enemy_views, projectile_views]:
 		for key in dictionary.keys():
 			var node := dictionary[key] as Node
 			if node != null:
@@ -293,14 +307,20 @@ func clear_runtime() -> void:
 
 
 func _rebuild_world_projection() -> void:
+	var same_room := not projection_room_key.is_empty() and projection_room_key == room_key
+	if not same_room:
+		focused_interaction_id = ""
+		focus_residence_elapsed = 0.0
+		focus_lost_elapsed = 0.0
 	world_projection = WorldObjectProjectionScript.build(latest_room_snapshot, combat_snapshot)
 	_merge_room_entry_result_into_projection()
 	door_projections = _dictionary_array(world_projection.get("doors", []))
 	door_projection_revision += 1
 	var objects := _dictionary_array(world_projection.get("world_objects", []))
 	_sync_chest(objects)
-	_sync_ground_loot(objects)
+	_sync_ground_loot(objects, same_room)
 	_sync_special_objects(objects)
+	projection_room_key = room_key
 	logical_obstacles = _obstacles_for_room(room_type)
 	if chest != null:
 		logical_obstacles.append(chest.body_rect)
@@ -330,7 +350,13 @@ func _sync_chest(objects: Array[Dictionary]) -> void:
 	chest.configure_chest(chest_projection)
 
 
-func _sync_ground_loot(objects: Array[Dictionary]) -> void:
+func _sync_ground_loot(objects: Array[Dictionary], same_room: bool) -> void:
+	if not same_room:
+		for departing_id in departing_ground_loot_entities.keys():
+			var departing_entity := departing_ground_loot_entities[departing_id] as Node
+			if departing_entity != null:
+				departing_entity.queue_free()
+		departing_ground_loot_entities.clear()
 	var active_ids: Dictionary = {}
 	for projection in objects:
 		if StringName(projection.get("interaction_kind", &"")) != &"ground_loot":
@@ -341,18 +367,34 @@ func _sync_ground_loot(objects: Array[Dictionary]) -> void:
 		active_ids[instance_id] = true
 		var entity = ground_loot_entities.get(instance_id)
 		if entity == null:
+			var stale_departing := departing_ground_loot_entities.get(instance_id) as Node
+			if stale_departing != null:
+				stale_departing.queue_free()
+				departing_ground_loot_entities.erase(instance_id)
 			entity = GroundLootEntityScript.new()
 			entity.name = _safe_node_name("GroundLoot_" + instance_id)
 			get_node("WorldInteractables").add_child(entity)
+			entity.feedback_finished.connect(_on_ground_loot_feedback_finished)
 			ground_loot_entities[instance_id] = entity
 		entity.configure_item(projection)
 	for existing_id in ground_loot_entities.keys():
 		if active_ids.has(existing_id):
 			continue
-		var entity := ground_loot_entities[existing_id] as Node
-		if entity != null:
-			entity.queue_free()
+		var entity = ground_loot_entities[existing_id]
 		ground_loot_entities.erase(existing_id)
+		if entity != null:
+			if same_room:
+				departing_ground_loot_entities[existing_id] = entity
+				entity.begin_pickup_feedback()
+			else:
+				entity.queue_free()
+
+
+func _on_ground_loot_feedback_finished(instance_id: String) -> void:
+	var active_entity = ground_loot_entities.get(instance_id)
+	if active_entity != null and active_entity.is_retiring():
+		ground_loot_entities.erase(instance_id)
+	departing_ground_loot_entities.erase(instance_id)
 
 
 func _sync_special_objects(objects: Array[Dictionary]) -> void:
@@ -453,9 +495,31 @@ func _refresh_special_prompt_visibility() -> void:
 		_apply_special_focus_visual(special)
 
 
-func _update_focus(player_local_pos: Vector2) -> void:
+func _update_focus(player_local_pos: Vector2, delta: float = 0.0) -> void:
+	var safe_delta := maxf(delta, 0.0)
 	var nearest = _nearest_interactable(player_local_pos)
-	focused_interaction_id = "" if nearest == null else nearest.interaction_id
+	var locked = _interactable_by_id(focused_interaction_id)
+	if locked != null and _can_hold_focus(locked, player_local_pos):
+		focus_lost_elapsed = 0.0
+		focus_residence_elapsed += safe_delta
+		if nearest == null:
+			nearest = locked
+		elif nearest != locked:
+			var challenger_is_clearer := (
+				float(nearest.distance_to_local(player_local_pos)) + FOCUS_SWITCH_MARGIN
+				< float(locked.distance_to_local(player_local_pos))
+			)
+			if focus_residence_elapsed < FOCUS_MIN_RESIDENCE_SECONDS or not challenger_is_clearer:
+				nearest = locked
+	elif locked != null:
+		focus_lost_elapsed += safe_delta
+		if focus_lost_elapsed < FOCUS_LOST_GRACE_SECONDS:
+			nearest = locked
+	var next_focus_id := "" if nearest == null else String(nearest.interaction_id)
+	if next_focus_id != focused_interaction_id:
+		focus_residence_elapsed = 0.0
+		focus_lost_elapsed = 0.0
+	focused_interaction_id = next_focus_id
 	if chest != null:
 		chest.set_focused(chest == nearest)
 	for instance_id in ground_loot_entities:
@@ -506,7 +570,7 @@ func _refresh_context_popup(player_local_pos: Vector2, nearest = null) -> void:
 	if kind == &"ground_loot":
 		for instance_id in ground_loot_entities:
 			var entity = ground_loot_entities[instance_id]
-			if entity != null and entity.can_interact_from(player_local_pos):
+			if entity != null and (entity == nearest or entity.can_interact_from(player_local_pos)):
 				items.append(entity.item.duplicate(true))
 	elif kind == &"chest" and chest != null and chest.is_opened():
 		for raw_item in (world_projection.get("chest_contents", []) as Array):
@@ -587,6 +651,9 @@ func _nearest_interactable(player_local_pos: Vector2):
 func _nearest_actionable_interactable(player_local_pos: Vector2):
 	# The proximity surface may focus read-only hazards, but an explicit input
 	# must never turn that observation into an implicit room command.
+	var locked = _interactable_by_id(focused_interaction_id)
+	if _is_actionable_interactable(locked) and locked.can_interact_from(player_local_pos):
+		return locked
 	var nearest = null
 	var nearest_distance := INF
 	var candidates: Array = []
@@ -607,6 +674,36 @@ func _nearest_actionable_interactable(player_local_pos: Vector2):
 		nearest = candidate
 		nearest_distance = distance
 	return nearest
+
+
+func _interactable_by_id(interaction_id: String):
+	if interaction_id.is_empty():
+		return null
+	if chest != null and chest.interaction_id == interaction_id:
+		return chest
+	var ground = ground_loot_entities.get(interaction_id)
+	if ground != null:
+		return ground
+	for special in special_entities.values():
+		if special != null and special.interaction_id == interaction_id:
+			return special
+	return null
+
+
+func _can_hold_focus(candidate, player_local_pos: Vector2) -> bool:
+	return (
+		candidate != null
+		and bool(candidate.enabled)
+		and float(candidate.distance_to_local(player_local_pos)) <= float(candidate.interaction_radius) + FOCUS_EXIT_MARGIN
+	)
+
+
+func _is_actionable_interactable(candidate) -> bool:
+	return (
+		candidate != null
+		and bool(candidate.enabled)
+		and not bool(candidate.payload.get("display_only", false))
+	)
 
 
 func _present_room_entry_result(entry_result: Dictionary) -> void:

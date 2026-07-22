@@ -1,21 +1,25 @@
 extends RefCounted
 
-const CURRENT_SCHEMA_VERSION := 1
+const CURRENT_SCHEMA_VERSION := 2
 const DEFAULT_PATH := "user://settings.cfg"
 
 const KEY_WINDOW_MODE := "window_mode"
 const KEY_RESOLUTION_ID := "resolution_id"
 const KEY_VSYNC_MODE := "vsync_mode"
 const KEY_FRAME_LIMIT := "frame_limit"
+const KEY_MASTER_VOLUME := "master_volume"
 const KEY_REDUCE_MOTION := "reduce_motion"
 
 const WINDOW_MODES := ["windowed", "borderless", "exclusive"]
 const RESOLUTION_IDS := ["auto", "1280x720", "1366x768", "1600x900", "1920x1080", "2560x1440"]
 const VSYNC_MODES := ["enabled", "disabled", "adaptive"]
 const FRAME_LIMITS := [0, 60, 120, 144]
+const MASTER_VOLUME_MIN := 0
+const MASTER_VOLUME_MAX := 100
 
 const META_SECTION := "meta"
 const DISPLAY_SECTION := "display"
+const AUDIO_SECTION := "audio"
 const ACCESSIBILITY_SECTION := "accessibility"
 const SCHEMA_KEY := "schema_version"
 
@@ -32,6 +36,7 @@ static func default_settings() -> Dictionary:
 		KEY_RESOLUTION_ID: "auto",
 		KEY_VSYNC_MODE: "enabled",
 		KEY_FRAME_LIMIT: 0,
+		KEY_MASTER_VOLUME: 80,
 		KEY_REDUCE_MOTION: false,
 	}
 
@@ -42,6 +47,7 @@ static func field_names() -> PackedStringArray:
 		KEY_RESOLUTION_ID,
 		KEY_VSYNC_MODE,
 		KEY_FRAME_LIMIT,
+		KEY_MASTER_VOLUME,
 		KEY_REDUCE_MOTION,
 	])
 
@@ -60,6 +66,8 @@ static func is_valid_field_value(field_name: String, value: Variant) -> bool:
 			return typeof(value) in [TYPE_STRING, TYPE_STRING_NAME] and VSYNC_MODES.has(String(value))
 		KEY_FRAME_LIMIT:
 			return typeof(value) == TYPE_INT and FRAME_LIMITS.has(int(value))
+		KEY_MASTER_VOLUME:
+			return typeof(value) == TYPE_INT and int(value) >= MASTER_VOLUME_MIN and int(value) <= MASTER_VOLUME_MAX
 		KEY_REDUCE_MOTION:
 			return typeof(value) == TYPE_BOOL
 	return false
@@ -86,7 +94,7 @@ static func _canonical_value(field_name: String, value: Variant) -> Variant:
 	match field_name:
 		KEY_WINDOW_MODE, KEY_RESOLUTION_ID, KEY_VSYNC_MODE:
 			return String(value)
-		KEY_FRAME_LIMIT:
+		KEY_FRAME_LIMIT, KEY_MASTER_VOLUME:
 			return int(value)
 		KEY_REDUCE_MOTION:
 			return bool(value)
@@ -124,13 +132,14 @@ func load_settings() -> Dictionary:
 	if bool(primary_result.get("future_schema", false)):
 		return _future_schema_result(primary_result, primary_path, defaults)
 	if bool(primary_result.get("ok", false)):
+		var primary_schema := int(primary_result.get("schema_version", CURRENT_SCHEMA_VERSION))
 		return {
 			"ok": true,
-			"status": &"loaded",
+			"status": &"migrated" if primary_schema < CURRENT_SCHEMA_VERSION else &"loaded",
 			"settings": primary_result["settings"],
-			"schema_version": int(primary_result["schema_version"]),
+			"schema_version": primary_schema,
 			"read_only": false,
-			"recovery_required": false,
+			"recovery_required": primary_schema < CURRENT_SCHEMA_VERSION,
 			"source_path": primary_path,
 		}
 
@@ -250,6 +259,11 @@ func _read_file(path: String) -> Dictionary:
 		KEY_RESOLUTION_ID: config.get_value(DISPLAY_SECTION, KEY_RESOLUTION_ID, null),
 		KEY_VSYNC_MODE: config.get_value(DISPLAY_SECTION, KEY_VSYNC_MODE, null),
 		KEY_FRAME_LIMIT: config.get_value(DISPLAY_SECTION, KEY_FRAME_LIMIT, null),
+		KEY_MASTER_VOLUME: (
+			config.get_value(AUDIO_SECTION, KEY_MASTER_VOLUME, null)
+			if schema_version >= 2
+			else default_settings()[KEY_MASTER_VOLUME]
+		),
 		KEY_REDUCE_MOTION: config.get_value(ACCESSIBILITY_SECTION, KEY_REDUCE_MOTION, null),
 	}
 	if not settings_are_valid(decoded):
@@ -270,6 +284,7 @@ func _encode_config(settings: Dictionary) -> ConfigFile:
 	config.set_value(DISPLAY_SECTION, KEY_RESOLUTION_ID, String(settings[KEY_RESOLUTION_ID]))
 	config.set_value(DISPLAY_SECTION, KEY_VSYNC_MODE, String(settings[KEY_VSYNC_MODE]))
 	config.set_value(DISPLAY_SECTION, KEY_FRAME_LIMIT, int(settings[KEY_FRAME_LIMIT]))
+	config.set_value(AUDIO_SECTION, KEY_MASTER_VOLUME, int(settings[KEY_MASTER_VOLUME]))
 	config.set_value(ACCESSIBILITY_SECTION, KEY_REDUCE_MOTION, bool(settings[KEY_REDUCE_MOTION]))
 	return config
 

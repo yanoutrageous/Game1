@@ -14,8 +14,8 @@ const ROOM_PATHS := {
 
 const PROP_PATHS := {
 	"chest_closed": "res://assets/props/chest_closed.png",
-	"chest_open": "res://assets/props/chest_closed.png",
-	"chest_open_state": "res://assets/props/chest_closed.png",
+	"chest_open": "res://assets/props/art07/00_baoxiang_kai.png",
+	"chest_open_state": "res://assets/props/art07/00_baoxiang_kai.png",
 	"mine": "res://assets/props/mine_trap.png",
 	"event": "res://assets/props/art07/05_yichang_hexin.png",
 	"merchant": "res://assets/props/art07/04_shangren_tai.png",

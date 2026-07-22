@@ -52,12 +52,12 @@ func _run() -> void:
 		_assert_controls_inside_panel(overlay, StringName("%s-selected" % resolution_id), viewport_size, failures)
 		_assert_player_facing_labels(resolution_id, failures)
 		var detail := overlay.get_node("Panel/Content/Detail") as Label
-		if detail.visible:
-			failures.append("%s legacy_detail_band_not_collapsed" % resolution_id)
+		if not detail.visible or detail.text == "" or detail.get_theme_font_size("font_size") < 18:
+			failures.append("%s selected_detail_not_readable" % resolution_id)
 		canvas.queue_free()
 		await _frames(2)
 	if failures.is_empty():
-		print("ART24_MAP_OVERLAY_SCENE=PASS resolutions=5 states=overview,selected controls=inside_panel toggle=m_close")
+		print("ART24_MAP_OVERLAY_SCENE=PASS resolutions=5 states=overview,selected detail=visible controls=inside_panel toggle=m_close")
 		quit(0)
 	else:
 		for failure in failures:
@@ -71,7 +71,7 @@ func _assert_controls_inside_panel(overlay: MapOverlayPanel, state_id: StringNam
 	var panel_rect := panel.get_global_rect()
 	var requested_panel_rect: Rect2 = overlay.layout_metrics.get("panel_rect", Rect2())
 	var control_heights: Array[String] = []
-	for debug_path in ["Panel/Content/Title", "Panel/Content/Detail", "Panel/Content/Grid", "Panel/Content/Footer"]:
+	for debug_path in ["Panel/Content/Title", "Panel/Content/Detail", "Panel/Content/SelectedAction", "Panel/Content/Grid", "Panel/Content/Footer"]:
 		var debug_control := overlay.get_node(debug_path) as Control
 		control_heights.append("%s=%.1f/min%.1f" % [debug_control.name, debug_control.size.y, debug_control.get_combined_minimum_size().y])
 	var bottom_reserve := float(overlay.layout_metrics.get("bottom_reserve", 0.0))
@@ -79,7 +79,7 @@ func _assert_controls_inside_panel(overlay: MapOverlayPanel, state_id: StringNam
 		failures.append("%s panel_top=%s requested=%s marker=%s children=%s" % [state_id, panel_rect.position.y, requested_panel_rect, overlay.marker_size.y, ",".join(control_heights)])
 	if panel_rect.end.y > float(viewport_size.y) - bottom_reserve + 0.5:
 		failures.append("%s panel_bottom=%s safe_bottom=%s requested=%s marker=%s children=%s" % [state_id, panel_rect.end.y, float(viewport_size.y) - bottom_reserve, requested_panel_rect, overlay.marker_size.y, ",".join(control_heights)])
-	for path in ["Panel/Content/Title", "Panel/Content/Detail", "Panel/Content/Grid", "Panel/Content/Footer"]:
+	for path in ["Panel/Content/Title", "Panel/Content/Detail", "Panel/Content/SelectedAction", "Panel/Content/Grid", "Panel/Content/Footer"]:
 		var control := overlay.get_node(path) as Control
 		var rect := control.get_global_rect()
 		if rect.position.y < panel_rect.position.y - 0.5 or rect.end.y > panel_rect.end.y + 0.5:

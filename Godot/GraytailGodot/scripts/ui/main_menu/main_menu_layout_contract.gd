@@ -18,6 +18,10 @@ const FOCUSED_OFFSET := Vector2(-4, 0)
 const CHARACTER_ANCHORS := {
 	&"character_home": Vector2(286, 408),
 	&"character_cave": Vector2(230, 408),
+	# Top-left endpoint for the scaled character once it has crossed the gate.
+	# Keeping this beside the authored scene anchors avoids transition-only magic
+	# coordinates drifting away from the cave composition.
+	&"character_cave_inside": Vector2(226, 314),
 	&"character_company": Vector2(706, 408),
 }
 

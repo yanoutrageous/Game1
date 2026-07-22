@@ -5,6 +5,7 @@ const STAGE_ID := "G38"
 const ROLE := "scene_lifecycle_node_wiring_signal_coordination"
 const RUNTIME_OWNER := "RunRuntimeController"
 const LIFECYCLE_OWNER := "RunStateMachine"
+const MODAL_LAYOUT_OWNER := "RuntimeModalLayoutModel"
 
 
 static func describe() -> Dictionary:
@@ -13,6 +14,7 @@ static func describe() -> Dictionary:
 		"run_scene_role": ROLE,
 		"runtime_owner": RUNTIME_OWNER,
 		"lifecycle_owner": LIFECYCLE_OWNER,
+		"modal_layout_owner": MODAL_LAYOUT_OWNER,
 		"run_scene_may": [
 			"instantiate scenes and UI nodes",
 			"wire signals",

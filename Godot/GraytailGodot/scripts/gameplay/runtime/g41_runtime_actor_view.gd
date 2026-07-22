@@ -6,7 +6,9 @@ const ENEMY_SHADOW_TEXTURE := preload("res://assets/ui/art21/main_menu/scene/cha
 const Art24MotionSettingsScript := preload("res://scripts/presentation/art24/art24_motion_settings.gd")
 const APPEARANCE_DURATION := 0.18
 const APPEARANCE_FIRST_FRAME_ALPHA := 0.72
-const APPEARANCE_FIRST_FRAME_SCALE := 0.86
+const APPEARANCE_FIRST_FRAME_SCALE := 0.72
+const APPEARANCE_LIFT_PIXELS := 9.0
+const ENTRY_CUE_COLOR := Color(1.0, 0.68, 0.26, 0.42)
 
 var actor_id: String = ""
 var subject: StringName = &"unknown"
@@ -19,38 +21,74 @@ var placeholder_color := Color(0.78, 0.30, 0.30, 1.0)
 var contract_nodes_ready: bool = false
 var last_visual_signature := ""
 var last_texture_path := ""
+var last_texture_subject: StringName = &""
+var last_texture_state: StringName = &""
+var last_texture_variant: StringName = &""
+var last_texture_frame := -1
 var animation_elapsed := 0.0
 var animation_frame := 0
 var pending_visual_state: StringName = &""
 var transient_state_remaining := 0.0
 var appearance_remaining := 0.0
+var art_sprite: Sprite2D
+var ground_shadow: Sprite2D
+var entry_cue: Polygon2D
+var placeholder_polygon: Polygon2D
+var state_label: Label
+var health_fill: ColorRect
+var health_background: ColorRect
+var cached_visual_scale := 1.0
+var cached_visual_offset := Vector2.ZERO
+var cached_shadow_scale := Vector2.ONE
+var cached_shadow_position := Vector2.ZERO
+var enemy_visual_enabled := false
 
 
 func configure(next_subject: StringName, snapshot: Dictionary) -> void:
 	var previous_subject := subject
 	var previous_variant := visual_variant
 	var previous_actor_id := actor_id
+	var previous_visual_state := visual_state
 	var next_actor_id := String(snapshot.get("enemy_id", snapshot.get("projectile_id", snapshot.get("actor_id", actor_id))))
-	var starts_enemy_appearance := EnemyVisualCatalog.supports(next_subject) and (previous_actor_id == "" or previous_actor_id != next_actor_id or not EnemyVisualCatalog.supports(previous_subject))
+	var next_is_enemy := EnemyVisualCatalog.supports(next_subject)
+	enemy_visual_enabled = next_is_enemy
 	var next_visual_state := StringName(snapshot.get("state", &"idle"))
 	subject = next_subject
 	actor_id = next_actor_id
 	visual_key = G41RuntimeVisualContract.visual_key_for(subject)
 	visual_variant = StringName(snapshot.get("visual_variant", &"base"))
-	if subject != previous_subject or visual_variant != previous_variant:
-		pending_visual_state = &""
-		visual_state = next_visual_state
-		transient_state_remaining = EnemyVisualCatalog.minimum_visible_seconds(visual_state)
-		animation_elapsed = 0.0
-		animation_frame = 0
-		last_texture_path = ""
-	else:
-		_request_visual_state(next_visual_state)
 	max_hp = maxi(1, int(snapshot.get("max_hp", max_hp)))
 	hp = clampi(int(snapshot.get("hp", hp)), 0, max_hp)
 	position = local_to_world(Vector2(snapshot.get("pos", Vector2(0.5, 0.5))))
 	if not contract_nodes_ready:
 		_ensure_contract_nodes()
+	# Projectiles use a fixed presentation-only polygon. Keep their moving world
+	# position and public state current without paying the enemy animation,
+	# texture-selection, and formatted-signature path for every projectile on
+	# every frame.
+	if not next_is_enemy:
+		visual_state = next_visual_state
+		if subject != previous_subject or visual_variant != previous_variant:
+			pending_visual_state = &""
+			transient_state_remaining = 0.0
+			animation_elapsed = 0.0
+			animation_frame = 0
+			_apply_placeholder()
+		elif visual_state != previous_visual_state and state_label != null:
+			state_label.text = String(visual_state)
+			state_label.visible = false
+		return
+	var starts_enemy_appearance := previous_actor_id == "" or previous_actor_id != next_actor_id or not EnemyVisualCatalog.supports(previous_subject)
+	if subject != previous_subject or visual_variant != previous_variant:
+		_refresh_cached_geometry()
+		pending_visual_state = &""
+		visual_state = next_visual_state
+		transient_state_remaining = EnemyVisualCatalog.minimum_visible_seconds(visual_state)
+		animation_elapsed = 0.0
+		animation_frame = 0
+		_invalidate_texture_selection()
+	else:
+		_request_visual_state(next_visual_state)
 	_ensure_enemy_visual()
 	if starts_enemy_appearance:
 		_start_appearance_envelope()
@@ -61,6 +99,29 @@ func configure(next_subject: StringName, snapshot: Dictionary) -> void:
 		_apply_enemy_visual()
 
 
+func configure_projectile(snapshot: Dictionary) -> void:
+	var previous_subject := subject
+	var previous_state := visual_state
+	subject = &"projectile"
+	enemy_visual_enabled = false
+	actor_id = String(snapshot.get("projectile_id", actor_id))
+	visual_state = StringName(snapshot.get("state", &"active"))
+	position = local_to_world(Vector2(snapshot.get("pos", Vector2(0.5, 0.5))))
+	if not contract_nodes_ready:
+		_ensure_contract_nodes()
+	if previous_subject != subject:
+		visual_key = G41RuntimeVisualContract.visual_key_for(subject)
+		visual_variant = &"base"
+		pending_visual_state = &""
+		transient_state_remaining = 0.0
+		animation_elapsed = 0.0
+		animation_frame = 0
+		_apply_placeholder()
+	elif visual_state != previous_state and state_label != null:
+		state_label.text = String(visual_state)
+		state_label.visible = false
+
+
 func _ready() -> void:
 	_ensure_contract_nodes()
 	_apply_placeholder()
@@ -69,7 +130,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not EnemyVisualCatalog.supports(subject):
+	if not enemy_visual_enabled:
 		return
 	_advance_transient_state(delta)
 	var frame_count := EnemyVisualCatalog.frame_count(subject, visual_state, visual_variant)
@@ -94,7 +155,10 @@ func _process(delta: float) -> void:
 	# but animate its transform so it does not freeze while multi-frame bat and
 	# drone sets continue to use their real frames. No texture is reloaded while
 	# the path is unchanged.
-	_apply_enemy_visual()
+	var motion_phase := 0.0 if reduce_motion else sin(animation_elapsed / frame_duration * TAU)
+	_apply_enemy_visual_frame(reduce_motion, motion_phase)
+	if appearance_remaining <= 0.0 and entry_cue != null and entry_cue.visible:
+		entry_cue.visible = false
 
 
 func appearance_snapshot() -> Dictionary:
@@ -103,6 +167,21 @@ func appearance_snapshot() -> Dictionary:
 		"duration": APPEARANCE_DURATION,
 		"remaining": appearance_remaining,
 		"progress": _appearance_progress(reduce_motion),
+		"phase": &"arrival" if appearance_remaining > 0.0 and not reduce_motion else EnemyVisualCatalog.presentation_phase(visual_state),
+		"cue_visible": entry_cue != null and entry_cue.visible,
+		"reduced_motion": reduce_motion,
+		"presentation_only": true,
+	}
+
+
+func presentation_snapshot() -> Dictionary:
+	var reduce_motion := Art24MotionSettingsScript.reduce_motion_enabled()
+	return {
+		"actor_id": actor_id,
+		"authority_state": visual_state,
+		"phase": &"arrival" if appearance_remaining > 0.0 and not reduce_motion else EnemyVisualCatalog.presentation_phase(visual_state),
+		"queued_authority_state": pending_visual_state,
+		"minimum_visible_remaining": transient_state_remaining,
 		"reduced_motion": reduce_motion,
 		"presentation_only": true,
 	}
@@ -113,7 +192,11 @@ func _start_appearance_envelope() -> void:
 
 
 func _request_visual_state(next_state: StringName) -> void:
-	if visual_state == &"hurt" and transient_state_remaining > 0.0 and next_state not in [&"hurt", &"dead", &"defeated"]:
+	if next_state in [&"dead", &"defeated"] or (next_state == &"hurt" and visual_state != &"hurt"):
+		pending_visual_state = &""
+		_set_visual_state_now(next_state)
+		return
+	if transient_state_remaining > 0.0 and next_state != visual_state:
 		pending_visual_state = next_state
 		return
 	pending_visual_state = &""
@@ -126,7 +209,7 @@ func _set_visual_state_now(next_state: StringName) -> void:
 	visual_state = next_state
 	animation_elapsed = 0.0
 	animation_frame = 0
-	last_texture_path = ""
+	_invalidate_texture_selection()
 	transient_state_remaining = EnemyVisualCatalog.minimum_visible_seconds(visual_state)
 
 
@@ -182,23 +265,23 @@ func _ensure_contract_nodes() -> void:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 10)
 		get_node("PromptAnchor").add_child(label)
+	placeholder_polygon = visual_root.get_node_or_null("ProgramPlaceholder") as Polygon2D
+	state_label = get_node_or_null("PromptAnchor/StateLabel") as Label
+	health_fill = get_node_or_null("HealthBarAnchor/HealthFill") as ColorRect
+	health_background = get_node_or_null("HealthBarAnchor/HealthBackground") as ColorRect
 	contract_nodes_ready = true
 
 
 func _apply_placeholder() -> void:
-	var polygon := get_node_or_null("VisualRoot/ProgramPlaceholder") as Polygon2D
-	if polygon != null:
-		polygon.color = _color_for_subject()
-		polygon.polygon = _shape_for_subject()
-		polygon.visible = get_node_or_null("VisualRoot/ArtVisual") == null
-	var state_label := get_node_or_null("PromptAnchor/StateLabel") as Label
+	if placeholder_polygon != null:
+		placeholder_polygon.color = _color_for_subject()
+		placeholder_polygon.polygon = _shape_for_subject()
+		placeholder_polygon.visible = art_sprite == null
 	if state_label != null:
 		state_label.text = String(visual_state)
 		# Runtime state remains available to tests and accessibility hooks, but
 		# production art communicates it through poses instead of debug copy.
 		state_label.visible = false
-	var health_fill := get_node_or_null("HealthBarAnchor/HealthFill") as ColorRect
-	var health_background := get_node_or_null("HealthBarAnchor/HealthBackground") as ColorRect
 	var show_health := subject in [&"slime", &"slimeling", &"bat", &"drone"] and hp > 0
 	if health_background != null:
 		health_background.visible = show_health
@@ -224,55 +307,81 @@ func _ensure_enemy_visual() -> void:
 		shadow.z_index = -1
 		visual_root.add_child(shadow)
 		visual_root.move_child(shadow, 0)
+	ground_shadow = visual_root.get_node_or_null("GroundShadow") as Sprite2D
+	if visual_root.get_node_or_null("EntryCue") == null:
+		var cue := Polygon2D.new()
+		cue.name = "EntryCue"
+		cue.polygon = _ellipse_points(25.0, 9.0, 28)
+		cue.color = ENTRY_CUE_COLOR
+		cue.z_index = -2
+		cue.visible = false
+		visual_root.add_child(cue)
+		visual_root.move_child(cue, 0)
+	entry_cue = visual_root.get_node_or_null("EntryCue") as Polygon2D
 	if visual_root.get_node_or_null("ArtVisual") == null:
 		var sprite := Sprite2D.new()
 		sprite.name = "ArtVisual"
 		visual_root.add_child(sprite)
-	var polygon := visual_root.get_node_or_null("ProgramPlaceholder") as Polygon2D
-	if polygon != null:
-		polygon.visible = false
+	art_sprite = visual_root.get_node_or_null("ArtVisual") as Sprite2D
+	if placeholder_polygon != null:
+		placeholder_polygon.visible = false
 
 
 func _apply_enemy_visual() -> void:
 	if not EnemyVisualCatalog.supports(subject):
 		return
-	var sprite := get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
-	if sprite == null:
+	if art_sprite == null:
 		return
 	var reduce_motion := Art24MotionSettingsScript.reduce_motion_enabled()
+	var motion_phase := 0.0 if reduce_motion else sin(animation_elapsed / EnemyVisualCatalog.frame_duration(visual_state) * TAU)
+	_apply_enemy_visual_frame(reduce_motion, motion_phase)
+
+
+func _apply_enemy_visual_frame(reduce_motion: bool, motion_phase: float) -> void:
 	var texture_frame := EnemyVisualCatalog.reduced_motion_frame(subject, visual_state, visual_variant) if reduce_motion else animation_frame
-	var texture_path := EnemyVisualCatalog.texture_path(subject, visual_state, texture_frame, visual_variant)
-	if texture_path != last_texture_path:
+	if (
+		last_texture_subject != subject
+		or last_texture_state != visual_state
+		or last_texture_variant != visual_variant
+		or last_texture_frame != texture_frame
+	):
+		var texture_path := EnemyVisualCatalog.texture_path(subject, visual_state, texture_frame, visual_variant)
 		var texture := EnemyVisualCatalog.texture_for(subject, visual_state, texture_frame, visual_variant)
 		if texture != null:
-			sprite.texture = texture
+			art_sprite.texture = texture
 			last_texture_path = texture_path
-	var base_scale := EnemyVisualCatalog.visual_scale(subject, visual_variant)
-	var motion_phase := 0.0 if reduce_motion else sin(animation_elapsed / EnemyVisualCatalog.frame_duration(visual_state) * TAU)
-	var active_scale := base_scale * (1.04 if visual_state in [&"warning", &"aim", &"active", &"fire"] else 1.0)
+			last_texture_subject = subject
+			last_texture_state = visual_state
+			last_texture_variant = visual_variant
+			last_texture_frame = texture_frame
+	var active_scale := cached_visual_scale * (1.04 if visual_state in [&"warning", &"aim", &"active", &"fire"] else 1.0)
 	if subject in [&"slime", &"slimeling"] and visual_state not in [&"dead", &"defeated"]:
-		sprite.scale = Vector2(
+		art_sprite.scale = Vector2(
 			active_scale * (1.0 + motion_phase * 0.045),
 			active_scale * (1.0 - motion_phase * 0.030)
 		)
 	else:
-		sprite.scale = Vector2.ONE * active_scale
+		art_sprite.scale = Vector2.ONE * active_scale
 	var bob_amount := 1.6 if subject in [&"bat", &"drone"] else 0.8
 	if visual_state in [&"dead", &"defeated"]:
 		bob_amount = 0.0
-	sprite.position = EnemyVisualCatalog.visual_offset(subject) + Vector2(0, motion_phase * bob_amount)
+	art_sprite.position = cached_visual_offset + Vector2(0, motion_phase * bob_amount)
 	if visual_state == &"hurt":
-		sprite.modulate = Color(1.0, 0.58, 0.50, 1.0)
+		art_sprite.modulate = Color(1.0, 0.58, 0.50, 1.0)
 	elif visual_state in [&"warning", &"aim"]:
 		var pulse := (motion_phase + 1.0) * 0.5
-		sprite.modulate = Color.WHITE.lerp(Color(1.0, 0.72, 0.42, 1.0), pulse * 0.42)
+		art_sprite.modulate = Color.WHITE.lerp(Color(1.0, 0.72, 0.42, 1.0), pulse * 0.42)
+	elif visual_state == &"cooldown":
+		art_sprite.modulate = Color(0.84, 0.88, 0.82, 1.0)
+	elif visual_state in [&"dead", &"defeated"]:
+		art_sprite.modulate = Color(0.76, 0.72, 0.68, 0.92)
 	else:
-		sprite.modulate = Color.WHITE
+		art_sprite.modulate = Color.WHITE
 	_apply_enemy_shadow(motion_phase, bob_amount)
 	# The entry envelope is finished during the 300-frame formal warmup. Avoid
 	# paying its transform/node lookup cost for every enemy on every later frame.
 	if appearance_remaining > 0.0:
-		_apply_appearance_envelope(sprite, reduce_motion)
+		_apply_appearance_envelope(art_sprite, reduce_motion)
 
 
 func _apply_appearance_envelope(sprite: Sprite2D, reduce_motion: bool) -> void:
@@ -281,11 +390,15 @@ func _apply_appearance_envelope(sprite: Sprite2D, reduce_motion: bool) -> void:
 	var scale_factor := lerpf(APPEARANCE_FIRST_FRAME_SCALE, 1.0, eased)
 	var alpha_factor := lerpf(APPEARANCE_FIRST_FRAME_ALPHA, 1.0, eased)
 	sprite.scale *= scale_factor
+	sprite.position.y -= lerpf(APPEARANCE_LIFT_PIXELS, 0.0, eased)
 	sprite.modulate.a *= alpha_factor
-	var shadow := get_node_or_null("VisualRoot/GroundShadow") as Sprite2D
-	if shadow != null:
-		shadow.scale *= lerpf(0.90, 1.0, eased)
-		shadow.modulate.a *= alpha_factor
+	if ground_shadow != null:
+		ground_shadow.scale *= lerpf(0.82, 1.0, eased)
+		ground_shadow.modulate.a *= alpha_factor
+	if entry_cue != null:
+		entry_cue.visible = not reduce_motion and progress < 1.0
+		entry_cue.scale = Vector2.ONE * lerpf(0.64, 1.28, eased)
+		entry_cue.modulate = Color(1.0, 1.0, 1.0, 1.0 - eased)
 
 
 func _appearance_progress(reduce_motion: bool) -> float:
@@ -295,19 +408,18 @@ func _appearance_progress(reduce_motion: bool) -> float:
 
 
 func _apply_enemy_shadow(motion_phase: float, bob_amount: float) -> void:
-	var shadow := get_node_or_null("VisualRoot/GroundShadow") as Sprite2D
-	if shadow == null:
+	if ground_shadow == null:
 		return
-	var base_shadow_scale := _shadow_scale()
+	var base_shadow_scale := cached_shadow_scale
 	var hover_factor := 1.0 - absf(motion_phase) * (0.08 if bob_amount > 1.0 else 0.025)
 	if subject in [&"slime", &"slimeling"] and visual_state not in [&"dead", &"defeated"]:
 		hover_factor = 1.0 - motion_phase * 0.025
-	shadow.scale = base_shadow_scale * hover_factor
-	shadow.position = _shadow_position()
+	ground_shadow.scale = base_shadow_scale * hover_factor
+	ground_shadow.position = cached_shadow_position
 	var shadow_alpha := 0.43 if subject in [&"bat", &"drone"] else 0.56
 	if visual_state in [&"dead", &"defeated"]:
 		shadow_alpha *= 0.72
-	shadow.modulate = Color(0.10, 0.07, 0.055, shadow_alpha)
+	ground_shadow.modulate = Color(0.10, 0.07, 0.055, shadow_alpha)
 
 
 func _shadow_scale() -> Vector2:
@@ -329,16 +441,37 @@ func _shadow_position() -> Vector2:
 	return Vector2(0, 12)
 
 
+func _refresh_cached_geometry() -> void:
+	cached_visual_scale = EnemyVisualCatalog.visual_scale(subject, visual_variant)
+	cached_visual_offset = EnemyVisualCatalog.visual_offset(subject)
+	cached_shadow_scale = _shadow_scale()
+	cached_shadow_position = _shadow_position()
+
+
+func _invalidate_texture_selection() -> void:
+	last_texture_path = ""
+	last_texture_subject = &""
+	last_texture_state = &""
+	last_texture_variant = &""
+	last_texture_frame = -1
+
+
 func _apply_enemy_health_position() -> void:
 	if not EnemyVisualCatalog.supports(subject):
 		return
 	var health_y := EnemyVisualCatalog.health_bar_y(subject)
-	var background := get_node_or_null("HealthBarAnchor/HealthBackground") as ColorRect
-	var fill := get_node_or_null("HealthBarAnchor/HealthFill") as ColorRect
-	if background != null:
-		background.position.y = health_y
-	if fill != null:
-		fill.position.y = health_y + 1.0
+	if health_background != null:
+		health_background.position.y = health_y
+	if health_fill != null:
+		health_fill.position.y = health_y + 1.0
+
+
+func _ellipse_points(radius_x: float, radius_y: float, point_count: int) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for index in range(maxi(point_count, 3)):
+		var angle := TAU * float(index) / float(maxi(point_count, 3))
+		points.append(Vector2(cos(angle) * radius_x, sin(angle) * radius_y))
+	return points
 
 
 func _shape_for_subject() -> PackedVector2Array:

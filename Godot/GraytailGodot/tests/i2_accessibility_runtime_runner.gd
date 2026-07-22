@@ -48,26 +48,55 @@ func _run() -> void:
 	root.add_child(panel)
 	panel.bind_settings_manager(manager)
 	_require(panel.open_panel(), "settings panel did not open a transaction")
-	var expected_fields := ["frame_limit", "reduce_motion", "resolution_id", "vsync_mode", "window_mode"]
+	var expected_fields := ["frame_limit", "master_volume", "reduce_motion", "resolution_id", "vsync_mode", "window_mode"]
 	var actual_fields := Array(panel.field_control_names())
 	actual_fields.sort()
 	_require_equal(actual_fields, expected_fields, "settings panel field contract")
+	var master_volume_slider := panel.get("master_volume_slider") as HSlider
+	var master_volume_value_label := panel.get("master_volume_value_label") as Label
+	_require(master_volume_slider != null, "supported master-volume slider was not exposed")
+	_require(master_volume_value_label != null, "supported master-volume value was not exposed")
+	if master_volume_slider != null:
+		_require_equal(master_volume_slider.min_value, 0.0, "master-volume minimum")
+		_require_equal(master_volume_slider.max_value, 100.0, "master-volume maximum")
+		_require_equal(master_volume_slider.step, 5.0, "master-volume step")
+		_require_equal(int(round(master_volume_slider.value)), 80, "master-volume initial value")
+	if master_volume_value_label != null:
+		_require_equal(master_volume_value_label.text, "80%", "master-volume player value")
 	var visible_copy := _collect_control_copy(panel).to_lower()
-	for forbidden_text in ["audio", "volume", "音量", "ui scale", "震屏", "高对比"]:
+	_require(visible_copy.contains("主音量"), "supported master-volume copy was not exposed")
+	for forbidden_text in [
+		"music volume",
+		"sound effect volume",
+		"ui scale",
+		"screen shake",
+		"high contrast",
+		"音乐音量",
+		"音效音量",
+		"界面缩放",
+		"屏幕震动",
+		"高对比",
+		"色盲",
+	]:
 		_require(not visible_copy.contains(forbidden_text), "unsupported setting was exposed: %s" % forbidden_text)
 
 	_require(manager.set_draft_value(&"reduce_motion", false), "dirty close fixture")
+	_require(manager.set_draft_value(&"master_volume", 35), "dirty master-volume close fixture")
 	panel.close_panel()
 	_require_equal(manager.get_applied_settings()["reduce_motion"], true, "closing panel committed an unapplied draft")
+	_require_equal(manager.get_applied_settings()["master_volume"], 80, "closing panel committed unapplied master volume")
 	_require_equal(ProjectSettings.get_setting(REDUCE_MOTION_KEY, false), true, "closing panel changed applied accessibility")
 
 	_require(panel.open_panel(), "settings panel did not reopen")
 	_require(manager.set_draft_value(&"resolution_id", "1600x900"), "dangerous close fixture")
+	_require(manager.set_draft_value(&"master_volume", 55), "combined master-volume close fixture")
 	_require(manager.set_draft_value(&"reduce_motion", false), "combined close fixture")
 	_require(manager.apply_draft(), "dangerous close preview")
 	_require(manager.is_confirmation_pending(), "dangerous panel change skipped confirmation")
+	_require_equal(manager.get_applied_settings()["master_volume"], 55, "dangerous preview master volume")
 	panel.close_panel()
 	_require_equal(manager.get_applied_settings()["resolution_id"], "auto", "panel close did not restore resolution")
+	_require_equal(manager.get_applied_settings()["master_volume"], 80, "panel close did not restore master volume")
 	_require_equal(manager.get_applied_settings()["reduce_motion"], true, "panel close did not restore complete rollback")
 	_require_equal(ProjectSettings.get_setting(REDUCE_MOTION_KEY, false), true, "runtime accessibility rollback")
 	_require(adapter.calls.size() >= 4, "display adapter did not observe apply/rollback lifecycle")

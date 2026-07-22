@@ -38,7 +38,7 @@ func _run() -> void:
 			failures.append("%s drawer width outside budget: %.1f" % [resolution_id, rect.size.x])
 		if rect.size.x > (float(viewport_size.x) - left_width - margin * 2.0) * 0.72:
 			failures.append("%s drawer still dominates gameplay lane: %.1f" % [resolution_id, rect.size.x])
-	var tooltip := RunUIViewModelScript.item_tooltip({
+	var item := {
 		"display_name": "温热条款",
 		"item_type": &"collectible",
 		"rarity": &"tier_4",
@@ -46,11 +46,15 @@ func _run() -> void:
 		"base_value": 34,
 		"collectible_level": 4,
 		"tags": ["collectible", "level_4"],
-	})
+	}
+	var presentation: Dictionary = RunUIViewModelScript.item_presentation(item)
+	var tooltip := RunUIViewModelScript.item_tooltip(item)
 	if tooltip.contains("collectible") or tooltip.contains("level_4") or tooltip.contains("标签："):
 		failures.append("raw item tags leaked into tooltip: %s" % tooltip)
-	if not tooltip.contains("藏品") or not tooltip.contains("珍贵") or not tooltip.contains("收藏等级：4"):
-		failures.append("player-facing item classification missing: %s" % tooltip)
+	if String(presentation.get("type_label", "")) != "藏品":
+		failures.append("player-facing item classification missing from shared descriptor: %s" % presentation)
+	if not tooltip.contains("珍贵") or not tooltip.contains("收藏等级：4"):
+		failures.append("player-facing rarity or collection level missing: %s" % tooltip)
 	panel.free()
 	if failures.is_empty():
 		print("ART24_INVENTORY_PANEL_LAYOUT=PASS resolutions=5 rail=preserved hotbar=reserved")

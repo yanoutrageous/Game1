@@ -69,7 +69,32 @@ static func reduced_motion_frame(subject: StringName, runtime_state: StringName,
 
 
 static func minimum_visible_seconds(runtime_state: StringName) -> float:
-	return 0.12 if runtime_state == &"hurt" else 0.0
+	# The combat authority may expose a one-tick fire/active state (the bat is
+	# the most visible case).  Presentation holds those authored poses long
+	# enough to be read without changing simulation timing or damage windows.
+	match runtime_state:
+		&"active", &"fire":
+			return 0.10
+		&"hurt":
+			return 0.12
+	return 0.0
+
+
+static func presentation_phase(runtime_state: StringName) -> StringName:
+	match runtime_state:
+		&"warning", &"aim":
+			return &"anticipation"
+		&"active", &"fire":
+			return &"impact"
+		&"cooldown":
+			return &"recovery"
+		&"hurt":
+			return &"hit"
+		&"dead", &"defeated":
+			return &"death"
+		&"move":
+			return &"locomotion"
+	return &"idle"
 
 
 static func production_texture_paths() -> Array[String]:

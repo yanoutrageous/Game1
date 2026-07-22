@@ -10,8 +10,8 @@ signal exit_requested(payload: Dictionary)
 const POPUP_WIDTH := 308.0
 const ROW_HEIGHT := 44.0
 const ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
-const ItemRarityDescriptor := preload("res://scripts/presentation/item_rarity_descriptor.gd")
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+const SpecialRoomPresentationModelScript := preload("res://scripts/gameplay/interaction/i3_special_room_presentation_model.gd")
 const ReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 
 var title_label: Label
@@ -232,54 +232,22 @@ func _rebuild(context: Dictionary) -> void:
 func _rebuild_special_context(context: Dictionary) -> void:
 	var payload: Dictionary = context.get("payload", {})
 	item_scroll.visible = false
-	primary_button.visible = false
 	hint_label.visible = true
-	match context_kind:
-		&"event":
-			var completed := bool(payload.get("completed", false))
-			title_label.text = "%s · 已处理" % String(payload.get("display_title", "异常事件")) if completed else String(payload.get("display_title", "异常事件"))
-			hint_label.text = String(payload.get("summary", "已经处理，不会重复结算。" if completed else "靠近后可查看处理方式。"))
-			if not completed and not bool(payload.get("display_only", false)):
-				primary_button.text = "查看处理方式"
-				primary_button.visible = true
-		&"mine":
-			var triggered := bool(payload.get("triggered", false))
-			title_label.text = "雷区机关 · 已失效" if triggered else "雷区机关 · 警戒"
-			var result: Dictionary = payload.get("entry_result", {})
-			if not result.is_empty() and bool(result.get("first_trigger", false)):
-				var hp_loss := absi(int(result.get("hp_delta", 0)))
-				var pressure_gain := maxi(0, int(result.get("pressure_delta", 0)))
-				hint_label.text = "生命 -%d · 压力 +%d%s" % [hp_loss, pressure_gain, " · 本次伤害致命" if bool(result.get("fatal", false)) else ""]
-			elif triggered:
-				hint_label.text = "已触发，不会再次造成伤害。"
-			else:
-				hint_label.text = String(payload.get("summary", "保持距离，留意地面机关。"))
-		&"exit":
-			title_label.text = String(payload.get("display_title", "撤离信标"))
-			var objective := String(payload.get("objective_summary", "")).strip_edges()
-			var lines: Array[String] = [
-				"黑币 %d · 安全收益 %d" % [int(payload.get("black_coin", 0)), int(payload.get("safe_yield", 0))],
-				"背包 %d/%d · 携带 %d 件" % [int(payload.get("backpack_used", 0)), int(payload.get("backpack_capacity", 0)), int(payload.get("inventory_count", 0))],
-				"当前房间遗留 %d 件" % int(payload.get("room_floor_item_count", 0)),
-			]
-			if objective != "":
-				lines.append("目标 · %s" % objective)
-			hint_label.text = "\n".join(lines)
-			primary_button.text = "请求撤离"
-			primary_button.visible = true
-		_:
-			title_label.text = "附近目标"
-			hint_label.text = "靠近后查看。"
+	var presentation := SpecialRoomPresentationModelScript.build(context_kind, payload)
+	title_label.text = String(presentation.get("title", "附近目标"))
+	hint_label.text = String(presentation.get("body", "靠近后查看。"))
+	primary_button.text = String(presentation.get("primary_text", ""))
+	primary_button.visible = bool(presentation.get("primary_visible", false))
 
 
 func _build_replacement_view(context: Dictionary, backpack_remaining: int) -> void:
 	var incoming := _item_by_instance(context_items, replacement_ground_id)
-	var incoming_rarity := ItemRarityDescriptor.describe_item(incoming)
+	var incoming_presentation := RunUIViewModel.item_presentation(incoming)
 	title_label.text = "选择要放下的物品"
 	hint_label.text = "换入：%s　%s　重量 %d。只有释放后容量足够的物品可选。" % [
-		RunUIViewModel.item_display_name(incoming),
-		String(incoming_rarity.get("display_text", "[?] 未鉴定")),
-		int(incoming.get("weight", 0)),
+		String(incoming_presentation.get("display_name", "未命名物资")),
+		String(incoming_presentation.get("rarity_text", "[?] 未鉴定")),
+		int(incoming_presentation.get("weight", 0)),
 	]
 	primary_button.text = "取消替换"
 	primary_button.visible = true
@@ -317,9 +285,10 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		empty.add_theme_color_override("font_color", Color(0.88, 0.48, 0.34, 1.0))
 		item_list.add_child(empty)
 		return
-	var incoming_weight := int(incoming.get("weight", 0))
+	var incoming_weight := int(RunUIViewModel.item_presentation(incoming).get("weight", 0))
 	for item in inventory_items:
-		var rarity := ItemRarityDescriptor.describe_item(item)
+		var presentation := RunUIViewModel.item_presentation(item)
+		var rarity: Dictionary = presentation.get("rarity", {})
 		var row := HBoxContainer.new()
 		row.name = "ReplacementCandidateRow"
 		row.add_theme_constant_override("separation", 4)
@@ -330,19 +299,15 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		item_button.custom_minimum_size = Vector2(156, ROW_HEIGHT)
 		item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		item_button.clip_text = true
-		item_button.text = "%s  ·  %s  ·  重%d" % [
-			RunUIViewModel.item_display_name(item),
-			String(rarity.get("display_text", "[?] 未鉴定")),
-			int(item.get("weight", 0)),
-		]
-		item_button.tooltip_text = String(item.get("short_description", ""))
+		item_button.text = String(presentation.get("summary_text", "暂无物资"))
+		item_button.tooltip_text = String(presentation.get("detail_text", "尚未选择物品。"))
 		_apply_item_icon(item_button, item)
 		_style_button(item_button, &"secondary", 13)
 		_apply_rarity_style(item_button, rarity)
 		item_button.add_theme_font_override("font", ReadableFont)
 		row.add_child(item_button)
 		var candidate_id := String(item.get("instance_id", ""))
-		var candidate_weight := int(item.get("weight", 0))
+		var candidate_weight := int(presentation.get("weight", 0))
 		var eligible := backpack_remaining + candidate_weight >= incoming_weight
 		var choose := Button.new()
 		choose.name = "ReplacementCandidateButton"
@@ -367,7 +332,8 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		item_list.add_child(empty)
 		return
 	for item in items:
-		var rarity := ItemRarityDescriptor.describe_item(item)
+		var presentation := RunUIViewModel.item_presentation(item)
+		var rarity: Dictionary = presentation.get("rarity", {})
 		var row := HBoxContainer.new()
 		row.name = "ContextItemRow"
 		row.add_theme_constant_override("separation", 4)
@@ -378,12 +344,8 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		item_button.custom_minimum_size = Vector2(156, ROW_HEIGHT)
 		item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		item_button.clip_text = true
-		item_button.text = "%s  ·  %s  ·  重%d" % [
-			RunUIViewModel.item_display_name(item),
-			String(rarity.get("display_text", "[?] 未鉴定")),
-			int(item.get("weight", 0)),
-		]
-		item_button.tooltip_text = String(item.get("short_description", ""))
+		item_button.text = String(presentation.get("summary_text", "暂无物资"))
+		item_button.tooltip_text = String(presentation.get("detail_text", "尚未选择物品。"))
 		_apply_item_icon(item_button, item)
 		_style_button(item_button, &"secondary", 13)
 		_apply_rarity_style(item_button, rarity)
@@ -391,7 +353,7 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		row.add_child(item_button)
 		var instance_id := String(item.get("instance_id", ""))
 		var action_allowed := _pickup_allowed(item)
-		var blocked := int(item.get("weight", 0)) > backpack_remaining
+		var blocked := int(presentation.get("weight", 0)) > backpack_remaining
 		var action := Button.new()
 		action.name = "ContextBlockedButton" if not action_allowed else ("ContextReplaceButton" if blocked else "ContextPickupButton")
 		action.text = "不可拾取" if not action_allowed else ("替换" if blocked else "拾取")
@@ -564,19 +526,27 @@ func _place_near_anchor() -> void:
 func _context_signature(context: Dictionary) -> String:
 	var ids: Array[String] = []
 	for item in context_items:
-		ids.append("%s:%s:%s:%s:%s" % [
+		var presentation := RunUIViewModel.item_presentation(item)
+		ids.append("%s:%s:%s:%s:%s:%s:%s:%s" % [
 			String(item.get("instance_id", "")),
-			int(item.get("weight", 0)),
-			String(ItemRarityDescriptor.normalize(item.get("rarity", &"unknown"))),
+			String(presentation.get("display_name", "未命名物资")),
+			int(presentation.get("weight", 0)),
+			int(presentation.get("quantity", 1)),
+			String(presentation.get("rarity_text", "[?] 未鉴定")),
+			String(presentation.get("short_description", "")),
 			str(item.get("pickup_allowed", context.get("pickup_allowed", true))),
 			String(item.get("pickup_blocked_reason", context.get("pickup_blocked_reason", ""))),
 		])
 	var inventory_ids: Array[String] = []
 	for item in inventory_items:
-		inventory_ids.append("%s:%s:%s" % [
+		var presentation := RunUIViewModel.item_presentation(item)
+		inventory_ids.append("%s:%s:%s:%s:%s:%s" % [
 			String(item.get("instance_id", "")),
-			int(item.get("weight", 0)),
-			String(ItemRarityDescriptor.normalize(item.get("rarity", &"unknown"))),
+			String(presentation.get("display_name", "未命名物资")),
+			int(presentation.get("weight", 0)),
+			int(presentation.get("quantity", 1)),
+			String(presentation.get("rarity_text", "[?] 未鉴定")),
+			String(presentation.get("short_description", "")),
 		])
 	var payload: Dictionary = context.get("payload", {})
 	var parts: Array[String] = [

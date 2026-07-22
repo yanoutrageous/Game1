@@ -29,7 +29,7 @@ const MODULE_IDS: Array[StringName] = [
 const MODULE_LABELS := {
 	&"task_archive": "任务档案",
 	&"codex": "图鉴",
-	&"research": "研究",
+	&"research": "研究解锁",
 	&"profile": "角色",
 	&"collection_appearance": "收藏外观",
 }
@@ -50,8 +50,8 @@ const PAGE_COPY := {
 	"codex/event": "归档已经完成的旅商、骰子局、祭坛和机关遭遇。",
 	"codex/rule": "显示已公开或通过研究解读的真实游戏规则。",
 	"codex/lore": "保存世界背景与文本线索；未知条目维持未发现状态。",
-	"research/unlock_interface": "研究会消耗金币与一件指定仓库材料；完成后开放对应内容。",
-	"research/research_entry": "选择课题后使用确认按钮提交；材料若正在出勤配置中则不会被消耗。",
+	"research/unlock_interface": "沿前置关系逐项研究；节点使用现有课题条件和完成效果。",
+	"research/research_entry": "查看课题条件后明确确认；材料若正在出勤配置中则不会被消耗。",
 	"profile/qualification_level": "展示真实资历等级与绝对经验值；没有阈值时不伪造百分比。",
 	"profile/history": "回看已经完成的探索记录；浏览不会改变历史。",
 	"profile/statistics": "汇总探索、撤离、失败和长期金币等已存在统计。",
@@ -179,7 +179,7 @@ func build(model: Dictionary = {}) -> void:
 
 func apply_snapshot(snapshot: Dictionary) -> void:
 	current_app_snapshot = snapshot.duplicate(true)
-	current_model = LongTermModelScript.build_from_snapshot(selected_module_id, current_app_snapshot, &"app_shell_snapshot_preview")
+	current_model = LongTermModelScript.build_from_snapshot(selected_module_id, current_app_snapshot, &"app_shell_snapshot")
 	_refresh_profile()
 	_refresh_content()
 	_refresh_module_buttons()
@@ -556,7 +556,7 @@ func _build_module_group() -> void:
 	card_grid_container = VBoxContainer.new()
 	card_grid_container.name = "LongTermCardGrid"
 	card_grid_container.custom_minimum_size = Vector2(LongTermLayoutContractScript.CONTENT_CARDS.size.x - 18.0, 0)
-	card_grid_container.add_theme_constant_override("separation", 6)
+	card_grid_container.add_theme_constant_override("separation", 4)
 	content_list_scroll.add_child(card_grid_container)
 	content_action_button = Button.new()
 	content_action_button.name = "LongTermContentAction"
@@ -687,7 +687,7 @@ func _apply_module_immediately(module_id: StringName) -> void:
 func _apply_module_content(module_id: StringName) -> void:
 	displayed_module_id = _normalize_module_id(module_id)
 	selected_module_id = displayed_module_id
-	current_model = LongTermModelScript.build_from_snapshot(displayed_module_id, current_app_snapshot, &"app_shell_snapshot_preview")
+	current_model = LongTermModelScript.build_from_snapshot(displayed_module_id, current_app_snapshot, &"app_shell_snapshot")
 	furniture_texture.position = LongTermLayoutContractScript.furniture_rect(displayed_module_id).position
 	furniture_texture.size = LongTermLayoutContractScript.furniture_rect(displayed_module_id).size
 	furniture_texture.texture = Art23LongTermAssetContractScript.texture(StringName("long_term.furniture.%s" % String(displayed_module_id)))
@@ -735,7 +735,14 @@ func _refresh_content() -> void:
 	content_detail_title_label.text = "%s · %s" % [module_label, String(group.get("title", "档案"))]
 	content_detail_body_label.text = str(current_workspace.get("summary", "当前档案只读展示。"))
 	current_record_count = int(current_workspace.get("record_count", 0))
-	content_detail_meta_label.text = "记录 %d" % current_record_count
+	if StringName(current_workspace.get("kind", &"")) == &"research_unlock_tree":
+		var completed_count := 0
+		for raw_card in current_workspace.get("records", []):
+			if raw_card is Dictionary and str((raw_card as Dictionary).get("state", "")) == "已完成":
+				completed_count += 1
+		content_detail_meta_label.text = "节点 %d · 已完成 %d" % [current_record_count, completed_count]
+	else:
+		content_detail_meta_label.text = "记录 %d" % current_record_count
 	content_list_header_label.text = str(current_workspace.get("list_label", "档案条目"))
 	content_detail_header_label.text = str(current_workspace.get("detail_label", "档案详情"))
 	_rebuild_content_cards(group)
@@ -796,6 +803,7 @@ func _attach_content_visual_keys(cards: Array[Dictionary], group_key: String) ->
 	for raw_card in cards:
 		var card := raw_card.duplicate(true)
 		card["visual_key"] = &"art25.long_term.unknown" if card.get("known", true) == false else Art25ContentAssetContractScript.long_term_visual_key(group_key, card)
+		card["tree_view"] = group_key == "research/unlock_interface" and StringName(card.get("presentation_kind", &"")) == &"research_unlock_node"
 		result.append(card)
 	return result
 

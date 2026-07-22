@@ -168,6 +168,11 @@ func _request_user_close() -> void:
 func preferred_focus_control() -> Control:
 	var grid := get_node_or_null("Panel/Content/Grid") as GridContainer
 	if grid != null:
+		var preferred_pos := Vector2i(selected_marker.get("pos", Vector2i(-1, -1)))
+		if preferred_pos.x >= 0 and preferred_pos.y >= 0:
+			var preferred := grid.get_node_or_null("MapCell_%d_%d" % [preferred_pos.x, preferred_pos.y]) as Button
+			if preferred != null and not preferred.is_queued_for_deletion():
+				return preferred
 		for child in grid.get_children():
 			if child is Button and not child.is_queued_for_deletion():
 				return child as Button
@@ -186,6 +191,7 @@ func _rebuild_grid() -> void:
 	var grid := get_node_or_null("Panel/Content/Grid") as GridContainer
 	var title := get_node_or_null("Panel/Content/Title") as Label
 	var detail := _ensure_detail_label()
+	var action_button := _ensure_action_button()
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
@@ -205,7 +211,8 @@ func _rebuild_grid() -> void:
 		grid.remove_child(child)
 		child.queue_free()
 
-	_apply_overlay_text_hierarchy(title, detail, footer)
+	_synchronize_selected_marker()
+	_apply_overlay_text_hierarchy(title, detail, action_button, footer)
 	if title != null:
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		title.add_theme_font_size_override("font_size", title_font_size)
@@ -213,9 +220,14 @@ func _rebuild_grid() -> void:
 		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title.text = "区域地图"
 	if detail != null:
-		detail.visible = false
-		detail.custom_minimum_size = Vector2.ZERO
-		detail.text = ""
+		detail.visible = true
+		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
+		detail.add_theme_font_size_override("font_size", maxi(18, title_font_size))
+		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail.max_lines_visible = 2
+		detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		detail.text = _selected_detail_text()
 	if footer != null:
 		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		footer.add_theme_font_size_override("font_size", maxi(13, footer_font_size))
@@ -228,8 +240,16 @@ func _rebuild_grid() -> void:
 		return
 
 	grid.columns = max(1, view_model.width)
-	for marker in view_model.room_markers:
-		_add_marker_node(grid, marker)
+	if view_model.width > 0 and view_model.height > 0:
+		var markers_by_pos := _markers_by_position(view_model.room_markers)
+		for y in range(view_model.height):
+			for x in range(view_model.width):
+				_add_marker_node(grid, _public_marker_or_unknown(markers_by_pos, Vector2i(x, y)))
+	else:
+		for marker in view_model.room_markers:
+			_add_marker_node(grid, marker)
+	_wire_action_focus_neighbors(grid, action_button)
+	_refresh_selection_presentation()
 	if visible and focus_pos != Vector2i(-1, -1):
 		call_deferred("_focus_marker_position", focus_pos)
 
@@ -241,6 +261,8 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	var marker_pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	button.name = "MapCell_%d_%d" % [marker_pos.x, marker_pos.y]
 	button.set_meta("map_pos", marker_pos)
+	button.set_meta("map_marker", marker.duplicate(true))
+	button.set_meta("map_marker_state", PresentationMapping.map_marker_state(marker))
 	button.custom_minimum_size = marker_size
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -252,7 +274,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 		marker_color = Color(0.58, 0.72, 0.68, 0.74)
 	button.add_theme_color_override("font_color", marker_color)
 	button.add_theme_font_size_override("font_size", maxi(13, int(min(marker_size.x, marker_size.y) * 0.52)))
-	var state := _art21_marker_state(marker)
+	var state := PresentationMapping.map_marker_state(marker)
 	var selected := _is_selected_marker(marker)
 	_apply_marker_button_style(button, theme_key, state, selected)
 	var texture := Art09ManifestAssetMappingScript.resolve_texture(_map_overlay_asset_ref_for_marker(marker))
@@ -268,6 +290,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 		button.text = "" if label_text != "P" else "P"
 	button.modulate = _modulate_for_marker_state(state, selected)
 	button.pressed.connect(func() -> void: _select_marker(marker))
+	button.focus_entered.connect(func() -> void: _select_marker(marker))
 	_add_adjacent_mine_count(button, marker)
 	grid.add_child(button)
 
@@ -316,7 +339,7 @@ func _apply_overlay_panel_style(control: Control) -> void:
 	panel.add_theme_stylebox_override("panel", style)
 
 
-func _apply_overlay_text_hierarchy(title: Label, detail: Label, footer: Label) -> void:
+func _apply_overlay_text_hierarchy(title: Label, detail: Label, action_button: Button, footer: Label) -> void:
 	var label_padding := int(layout_metrics.get("label_padding", 8))
 	if title != null:
 		title.custom_minimum_size = Vector2(620, float(layout_metrics.get("title_height", 32)))
@@ -326,6 +349,10 @@ func _apply_overlay_text_hierarchy(title: Label, detail: Label, footer: Label) -
 		detail.custom_minimum_size = Vector2(620, float(layout_metrics.get("detail_height", 72)))
 		detail.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		detail.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_DETAIL_PANEL_VISUAL_KEY, label_padding, 18))
+	if action_button != null:
+		action_button.custom_minimum_size = Vector2(360, float(layout_metrics.get("action_height", 38)))
+		action_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		action_button.add_theme_font_size_override("font_size", maxi(14, footer_font_size + 1))
 	if footer != null:
 		footer.custom_minimum_size = Vector2(620, float(layout_metrics.get("footer_height", 48)))
 		footer.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -385,7 +412,7 @@ func _art24_map_tile_style(state: StringName, selected: bool) -> StyleBox:
 	# Selection may brighten neutral/unknown cells, but it must never replace a
 	# semantic marker (flag, player, hazard, chest, exit or event) with the cyan
 	# generic selected tile.
-	var semantic_state := state in [&"flagged", &"event", &"player", &"mine", &"chest", &"exit"]
+	var semantic_state := state in [&"flagged", &"event", &"player", &"mine", &"monster", &"chest", &"exit"]
 	var token := "selected" if selected and not semantic_state else "explored"
 	if not selected or semantic_state:
 		match state:
@@ -398,6 +425,8 @@ func _art24_map_tile_style(state: StringName, selected: bool) -> StyleBox:
 			&"player":
 				token = "player"
 			&"mine":
+				token = "danger"
+			&"monster":
 				token = "danger"
 	var texture := load("res://assets/art24/ui/map_tile_%s.png" % token) as Texture2D
 	if texture == null:
@@ -422,7 +451,7 @@ func _icon_width_for_marker_state(state: StringName, size: Vector2) -> int:
 	match state:
 		&"flagged", &"event":
 			return int(base * 0.92)
-		&"player", &"exit", &"mine", &"chest":
+		&"player", &"exit", &"mine", &"monster", &"chest":
 			return int(base * 0.82)
 		&"scanned":
 			return int(base * 0.72)
@@ -448,46 +477,17 @@ func _modulate_for_marker_state(state: StringName, selected: bool) -> Color:
 			return Color(0.96, 1.0, 0.96, 0.92)
 
 
-func _art21_marker_state(marker: Dictionary) -> StringName:
-	var asset_id := String(marker.get("asset_id", "")).to_lower()
-	var room_type := String(marker.get("room_type", "")).to_lower()
-	if bool(marker.get("is_current", false)) or asset_id.find("player") >= 0:
-		return &"player"
-	if bool(marker.get("flagged", false)) or asset_id.find("flag") >= 0:
-		return &"flagged"
-	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
-	var publicly_revealed := bool(marker.get("revealed", false)) or bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]
-	if not publicly_revealed and room_type != "exit" and (known_state == &"unknown" or String(marker.get("label", "")) == "?"):
-		return &"unknown"
-	if room_type == "event" or asset_id.find("event") >= 0:
-		return &"event"
-	if room_type == "mine" or room_type == "monster" or asset_id.find("mine") >= 0 or asset_id.find("monster") >= 0:
-		return &"mine"
-	if room_type == "chest" or asset_id.find("chest") >= 0:
-		return &"chest"
-	if room_type == "exit" or asset_id.find("exit") >= 0 or asset_id.find("extract") >= 0:
-		return &"exit"
-	if bool(marker.get("scanned", false)) or int(marker.get("adjacent_mines", -1)) > 0:
-		return &"scanned"
-	if not bool(marker.get("revealed", true)) or String(marker.get("label", "")) == "?":
-		return &"unknown"
-	return &"explored"
-
-
 func _public_adjacent_mines(marker: Dictionary) -> int:
-	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
-	var publicly_known := bool(marker.get("revealed", false)) or bool(marker.get("scanned", false)) or known_state in [&"scanned", &"explored", &"cleared"]
-	var adjacent := int(marker.get("adjacent_mines", -1))
-	if not publicly_known or adjacent < 0 or adjacent > 8:
-		return -1
-	return adjacent
+	return PresentationMapping.public_adjacent_mines(marker)
 
 
 func _map_overlay_asset_ref_for_marker(marker: Dictionary) -> Dictionary:
-	var state := _art21_marker_state(marker)
+	var state := PresentationMapping.map_marker_state(marker)
 	match state:
 		&"flagged", &"event":
 			return Art21UIPlacementContractScript.map_ref(state)
+		&"monster":
+			return Art09ManifestAssetMappingScript.asset_ref(&"icon.room.monster", &"icon.minimap.explored", &"map_overlay_marker", state)
 		_:
 			return Art09ManifestAssetMappingScript.art19_map64_ref(state)
 
@@ -532,15 +532,16 @@ func _event_matches_key(event: InputEvent, keycodes: Array) -> bool:
 
 
 func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
-	selected_marker = marker.duplicate(true)
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
+	var refreshed_marker := _marker_at_position(pos)
+	selected_marker = refreshed_marker if not refreshed_marker.is_empty() else marker.duplicate(true)
 	var accepted: bool = bool(result.get("accepted", result.get("ok", false)))
 	var reason: String = String(result.get("reason_code", result.get("reason", "")))
 	if accepted:
 		selected_feedback_text = "已更新格子 (%d,%d)。" % [pos.x, pos.y]
 	else:
 		selected_feedback_text = "格子 (%d,%d)：%s" % [pos.x, pos.y, RunUIViewModel.reason_label(reason)]
-	_refresh_footer_text()
+	_refresh_selection_presentation()
 	call_deferred("_focus_marker_position", pos)
 
 
@@ -549,20 +550,26 @@ func show_open_feedback(_source: StringName) -> void:
 	# the map is already visually explicit; repeating it added an unnecessary
 	# second footer line and competed with the control hint.
 	selected_feedback_text = ""
-	_refresh_footer_text()
+	_refresh_selection_presentation()
 
 
 func _select_marker(marker: Dictionary) -> void:
 	selected_marker = marker.duplicate(true)
 	selected_feedback_text = ""
-	cell_action_requested.emit(marker.duplicate(true))
+	_refresh_selection_presentation()
+
+
+func _execute_selected_marker() -> void:
+	if selected_marker.is_empty() or not bool(selected_marker.get("action_enabled", false)):
+		return
+	cell_action_requested.emit(selected_marker.duplicate(true))
 
 
 func _refresh_footer_text() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if footer == null:
 		return
-	footer.text = "左键格子：查看、标记或回传\nM / Esc / 右键 / 点击面板外：关闭"
+	footer.text = "选择格子查看详情 · 使用确认按钮执行选中操作\nM / Esc / 右键 / 点击面板外：关闭"
 	if selected_feedback_text != "":
 		footer.text = "%s\nM / Esc / 右键 / 点击面板外：关闭" % selected_feedback_text
 
@@ -597,9 +604,126 @@ func _ensure_detail_label() -> Label:
 	return detail
 
 
+func _ensure_action_button() -> Button:
+	var content := get_node_or_null("Panel/Content") as VBoxContainer
+	if content == null:
+		return null
+	var action_button := get_node_or_null("Panel/Content/SelectedAction") as Button
+	if action_button != null:
+		return action_button
+	action_button = Button.new()
+	action_button.name = "SelectedAction"
+	action_button.focus_mode = Control.FOCUS_ALL
+	action_button.pressed.connect(_execute_selected_marker)
+	content.add_child(action_button)
+	var grid := get_node_or_null("Panel/Content/Grid")
+	if grid != null:
+		content.move_child(action_button, grid.get_index())
+	return action_button
+
+
 func _selected_detail_text() -> String:
 	if selected_marker.is_empty():
 		return "点击格子查看状态。"
 	# Keep the scan grid dominant. Technical models may provide four diagnostic
 	# lines, but the UE overlay presents selection status as one compact band.
 	return String(selected_marker.get("detail_text", "选中格详情不可用。")).replace("\n", " · ")
+
+
+func _synchronize_selected_marker() -> void:
+	if view_model == null or view_model.room_markers.is_empty():
+		selected_marker = {}
+		return
+	if not selected_marker.is_empty():
+		var refreshed := _marker_at_position(Vector2i(selected_marker.get("pos", Vector2i(-1, -1))))
+		if not refreshed.is_empty():
+			selected_marker = refreshed
+			return
+	for marker in view_model.room_markers:
+		if bool(marker.get("is_current", false)):
+			selected_marker = marker.duplicate(true)
+			return
+	selected_marker = view_model.room_markers[0].duplicate(true)
+
+
+func _refresh_selection_presentation() -> void:
+	var detail := get_node_or_null("Panel/Content/Detail") as Label
+	if detail != null:
+		detail.text = _selected_detail_text()
+	var action_button := get_node_or_null("Panel/Content/SelectedAction") as Button
+	if action_button != null:
+		var action_label := String(selected_marker.get("action_label", "不可执行"))
+		var action_enabled := not selected_marker.is_empty() and bool(selected_marker.get("action_enabled", false))
+		action_button.disabled = not action_enabled
+		action_button.text = "确认：%s" % action_label if action_enabled else action_label
+		action_button.tooltip_text = "" if action_enabled else RunUIViewModel.reason_label(String(selected_marker.get("disabled_reason", "")))
+	var grid := get_node_or_null("Panel/Content/Grid") as GridContainer
+	if grid != null:
+		for child in grid.get_children():
+			if not (child is Button):
+				continue
+			var button := child as Button
+			var marker: Dictionary = button.get_meta("map_marker", {})
+			var state := PresentationMapping.map_marker_state(marker)
+			var selected := _is_selected_marker(marker)
+			_apply_marker_button_style(button, StringName(marker.get("theme_key", &"mini.normal")), state, selected)
+			button.modulate = _modulate_for_marker_state(state, selected)
+		if action_button != null and not selected_marker.is_empty():
+			var selected_pos: Vector2i = selected_marker.get("pos", Vector2i(-1, -1))
+			var selected_button := grid.get_node_or_null("MapCell_%d_%d" % [selected_pos.x, selected_pos.y]) as Button
+			if selected_button != null:
+				action_button.focus_neighbor_top = action_button.get_path_to(selected_button)
+	_refresh_footer_text()
+
+
+func _wire_action_focus_neighbors(grid: GridContainer, action_button: Button) -> void:
+	if grid == null or action_button == null:
+		return
+	var buttons: Array[Button] = []
+	for child in grid.get_children():
+		if child is Button:
+			buttons.append(child as Button)
+	var columns := maxi(1, grid.columns)
+	var bottom_start := maxi(0, buttons.size() - columns)
+	for index in range(bottom_start, buttons.size()):
+		buttons[index].focus_neighbor_bottom = buttons[index].get_path_to(action_button)
+
+
+func _markers_by_position(markers: Array[Dictionary]) -> Dictionary:
+	var result: Dictionary = {}
+	for marker in markers:
+		var pos: Vector2i = marker.get("pos", Vector2i(-1, -1))
+		if pos.x >= 0 and pos.y >= 0:
+			result[_pos_key(pos)] = marker.duplicate(true)
+	return result
+
+
+func _public_marker_or_unknown(markers_by_pos: Dictionary, pos: Vector2i) -> Dictionary:
+	var marker: Variant = markers_by_pos.get(_pos_key(pos), null)
+	if marker is Dictionary:
+		return (marker as Dictionary).duplicate(true)
+	return {
+		"pos": pos,
+		"label": "?",
+		"known_state": &"unknown",
+		"room_type": &"Unknown",
+		"detail_text": "格子 (%d,%d) · 未知区域" % [pos.x, pos.y],
+		"action_id": &"toggle_flag",
+		"action_label": "标记风险",
+		"action_enabled": true,
+		"display_only": true,
+		"read_only": true,
+	}
+
+
+func _marker_at_position(pos: Vector2i) -> Dictionary:
+	if view_model == null:
+		return {}
+	for marker in view_model.room_markers:
+		if Vector2i(marker.get("pos", Vector2i(-1, -1))) == pos:
+			return marker.duplicate(true)
+	return {}
+
+
+func _pos_key(pos: Vector2i) -> String:
+	return "%d,%d" % [pos.x, pos.y]

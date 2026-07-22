@@ -67,7 +67,9 @@ static func build_from_snapshot(selected_module_id: StringName, app_snapshot: Di
 	model["codex_lite_model"] = codex_lite_model.duplicate(true)
 	model["latest_run_result_summary"] = _latest_run_result_summary(latest_result)
 	model["profile_runtime_panel"] = profile_runtime_panel
-	model["m7_cards_by_group"] = _m7_cards_by_group(meta_summary)
+	var cards_by_group := _m7_cards_by_group(meta_summary)
+	model["m7_cards_by_group"] = cards_by_group
+	model["research_tree_contract"] = _research_tree_contract(cards_by_group.get("research/unlock_interface", []))
 	model["m7_red_dot_state"] = (meta_summary.get("red_dot_state", {}) as Dictionary).duplicate(true)
 	model["m7_real_module"] = _contains_module(model.get("modules", []), requested_module_id)
 	var panel: Dictionary = model.get("placeholder_panel", {})
@@ -182,12 +184,13 @@ static func _profile_runtime_panel(meta_summary: Dictionary = {}, latest_result:
 
 
 static func _m7_cards_by_group(meta: Dictionary) -> Dictionary:
+	var research_cards := _research_cards(meta)
 	var result := {
 		"task_archive/task": _goal_cards(meta, "task", meta.get("task_definitions", []), meta.get("task_states", {})),
 		"task_archive/achievement": _goal_cards(meta, "achievement", meta.get("achievement_definitions", []), meta.get("achievement_states", {})),
 		"task_archive/commission_record": _commission_cards(meta),
-		"research/unlock_interface": _research_cards(meta),
-		"research/research_entry": _research_cards(meta),
+		"research/unlock_interface": research_cards.duplicate(true),
+		"research/research_entry": research_cards.duplicate(true),
 		"profile/qualification_level": _qualification_cards(meta),
 		"profile/history": _history_cards(meta.get("history_records", [])),
 		"profile/statistics": _statistics_cards(meta),
@@ -270,45 +273,112 @@ static func _research_cards(meta: Dictionary) -> Array[Dictionary]:
 	var completed: Array = meta.get("research_completed_ids", [])
 	var gold := int(meta.get("gold", 0))
 	var cards: Array[Dictionary] = []
-	for definition in M7ContentCatalogScript.research_definitions():
+	var definitions := _research_catalog(meta)
+	var definitions_by_id: Dictionary = {}
+	for definition in definitions:
+		definitions_by_id[str(definition.get("id", ""))] = definition
+	for index in range(definitions.size()):
+		var definition: Dictionary = definitions[index]
 		var research_id := str(definition.get("id", ""))
 		var prerequisite := str(definition.get("prerequisite", ""))
-		var is_completed := completed.has(research_id)
-		var prerequisite_met := prerequisite == "" or completed.has(prerequisite)
+		var is_completed := bool(definition.get("completed", completed.has(research_id)))
+		var prerequisite_met := bool(definition.get("prerequisite_met", prerequisite == "" or completed.has(prerequisite)))
 		var material_name := str(definition.get("material_item_id", ""))
-		var has_material := false
-		for raw_item in meta.get("warehouse_items", []):
-			var warehouse_item: Dictionary = raw_item if raw_item is Dictionary else {}
-			if str(warehouse_item.get("item_id", "")) == material_name:
-				has_material = true
-				break
+		var has_material := bool(definition.get("has_material", false))
+		if not definition.has("has_material"):
+			for raw_item in meta.get("warehouse_items", []):
+				var warehouse_item: Dictionary = raw_item if raw_item is Dictionary else {}
+				if str(warehouse_item.get("item_id", "")) == material_name:
+					has_material = true
+					break
 		var material_definition := M7ContentCatalogScript.item_definition(material_name)
 		if not material_definition.is_empty():
-			material_name = str(material_definition.get("display_name", material_name))
-		var can_complete := prerequisite_met and gold >= int(definition.get("gold_cost", 0)) and has_material
-		var state := "已完成" if is_completed else ("可研究" if can_complete else ("前置未完成" if not prerequisite_met else ("材料不足" if not has_material else "金币不足")))
-		var prerequisite_label := "无"
+			material_name = str(material_definition.get("display_name", "未知材料"))
+		elif material_name.is_empty():
+			material_name = "未知材料"
+		var affordable := bool(definition.get("affordable", gold >= int(definition.get("gold_cost", 0))))
+		var can_complete := bool(definition.get("can_complete", not is_completed and prerequisite_met and affordable and has_material))
+		var state := "已完成" if is_completed else ("可研究" if can_complete else ("前置未完成" if not prerequisite_met else ("材料不足" if not has_material else ("金币不足" if not affordable else "暂不可研究"))))
+		var prerequisite_label := "研究起点"
 		if prerequisite != "":
-			var prerequisite_definition := M7ContentCatalogScript.research_definition(prerequisite)
-			prerequisite_label = str(prerequisite_definition.get("display_name", prerequisite))
+			var prerequisite_definition: Dictionary = definitions_by_id.get(prerequisite, M7ContentCatalogScript.research_definition(prerequisite))
+			prerequisite_label = str(prerequisite_definition.get("display_name", "未知前置研究"))
 		var gold_fact := "研究费用：%d 金币（已投入）" % int(definition.get("gold_cost", 0)) if is_completed else "消耗：%d 金币（当前 %d）" % [int(definition.get("gold_cost", 0)), gold]
-		var material_fact := "研究材料：%s ×1（已投入）" % material_name if is_completed else "材料：%s ×1（%s）" % [material_name, "已备齐" if has_material else "缺少"]
+		var material_count := maxi(1, int(definition.get("material_count", 1)))
+		var material_fact := "研究材料：%s ×%d（已投入）" % [material_name, material_count] if is_completed else "材料：%s ×%d（%s）" % [material_name, material_count, "已备齐" if has_material else "缺少"]
+		var tree_depth := _research_tree_depth(research_id, definitions_by_id)
 		var card := {
 			"id": research_id,
-			"title": str(definition.get("display_name", research_id)),
+			"title": str(definition.get("display_name", "未命名研究")),
 			"state": state,
 			"description": str(definition.get("effect", "")),
 			"facts": [
-				"前置：%s" % prerequisite_label,
+				"解锁路径：%s" % prerequisite_label,
 				gold_fact,
 				material_fact,
 			],
+			"presentation_kind": &"research_unlock_node",
+			"tree_source": &"m7_research_prerequisite",
+			"adds_talent_rules": false,
+			"prerequisite_id": prerequisite,
+			"prerequisite_title": prerequisite_label,
+			"tree_depth": tree_depth,
+			"tree_index": index,
+			"tree_total": definitions.size(),
 		}
 		if not is_completed and can_complete:
 			card["action"] = {"action": &"complete_research", "research_id": research_id}
 			card["action_label"] = "确认消耗并研究"
 		cards.append(card)
 	return cards
+
+
+static func _research_catalog(meta: Dictionary) -> Array[Dictionary]:
+	var source: Array = meta.get("research_catalog", [])
+	if source.is_empty():
+		source = M7ContentCatalogScript.research_definitions()
+	var result: Array[Dictionary] = []
+	for raw_definition in source:
+		if raw_definition is Dictionary:
+			result.append((raw_definition as Dictionary).duplicate(true))
+	return result
+
+
+static func _research_tree_depth(research_id: String, definitions_by_id: Dictionary) -> int:
+	var depth := 0
+	var current_id := research_id
+	var visited: Dictionary = {}
+	while definitions_by_id.has(current_id) and not visited.has(current_id):
+		visited[current_id] = true
+		var definition: Dictionary = definitions_by_id[current_id]
+		var prerequisite := str(definition.get("prerequisite", ""))
+		if prerequisite.is_empty() or not definitions_by_id.has(prerequisite):
+			break
+		depth += 1
+		current_id = prerequisite
+	return depth
+
+
+static func _research_tree_contract(cards_value: Variant) -> Dictionary:
+	var cards: Array = cards_value if cards_value is Array else []
+	var root_ids: Array[String] = []
+	var edge_count := 0
+	for raw_card in cards:
+		if not raw_card is Dictionary:
+			continue
+		var card: Dictionary = raw_card
+		if str(card.get("prerequisite_id", "")).is_empty():
+			root_ids.append(str(card.get("id", "")))
+		else:
+			edge_count += 1
+	return {
+		"source": &"m7_research_prerequisite",
+		"presentation": &"research_unlock_tree",
+		"adds_talent_rules": false,
+		"node_count": cards.size(),
+		"edge_count": edge_count,
+		"root_ids": root_ids,
+	}
 
 
 static func _codex_group_cards(meta: Dictionary, group_id: StringName) -> Array[Dictionary]:

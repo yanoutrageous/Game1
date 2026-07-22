@@ -6,6 +6,7 @@ const SettingsStoreScript := preload("res://scripts/core/settings/settings_store
 const PASS_MARKER := "I2_SETTINGS_TRANSACTION=PASS"
 const FAIL_MARKER := "I2_SETTINGS_TRANSACTION=FAIL"
 const TEST_PATH := "user://i2_tests/settings_transaction.cfg"
+const MIGRATION_PATH := "user://i2_tests/settings_schema_one.cfg"
 const FUTURE_PATH := "user://i2_tests/settings_future.cfg"
 const BLOCKED_PARENT_PATH := "user://i2_tests/settings_blocked_parent"
 const REDUCE_MOTION_KEY := "accessibility/reduce_motion"
@@ -42,9 +43,11 @@ func _run() -> void:
 	had_reduce_motion_setting = ProjectSettings.has_setting(REDUCE_MOTION_KEY)
 	previous_reduce_motion_value = ProjectSettings.get_setting(REDUCE_MOTION_KEY, false)
 	_cleanup_test_files(TEST_PATH)
+	_cleanup_test_files(MIGRATION_PATH)
 	_cleanup_test_files(FUTURE_PATH)
 	_cleanup_test_files(BLOCKED_PARENT_PATH)
 	_check_transaction_and_atomic_store()
+	_check_schema_one_migration()
 	_check_persistence_failure_rolls_back()
 	_check_future_schema_protection()
 	ProjectSettings.set_setting(
@@ -52,6 +55,7 @@ func _run() -> void:
 		previous_reduce_motion_value if had_reduce_motion_setting else null
 	)
 	_cleanup_test_files(TEST_PATH)
+	_cleanup_test_files(MIGRATION_PATH)
 	_cleanup_test_files(FUTURE_PATH)
 	_cleanup_test_files(BLOCKED_PARENT_PATH)
 	_finish()
@@ -79,9 +83,11 @@ func _check_transaction_and_atomic_store() -> void:
 
 	_require(manager.begin_transaction(), "non-dangerous transaction did not begin")
 	_require(manager.set_draft_value(&"frame_limit", 120), "frame limit draft was rejected")
+	_require(manager.set_draft_value(&"master_volume", 65), "master-volume draft was rejected")
 	_require(manager.set_draft_value(&"reduce_motion", true), "reduce-motion draft was rejected")
 	_require(manager.apply_draft(), "non-dangerous apply failed")
 	_require_equal(manager.get_persisted_settings()["frame_limit"], 120, "non-dangerous persistence")
+	_require_equal(manager.get_persisted_settings()["master_volume"], 65, "master-volume persistence")
 	_require_equal(manager.get_persisted_settings()["reduce_motion"], true, "reduce-motion persistence")
 	_require(FileAccess.file_exists(TEST_PATH), "settings file was not created")
 	_require(not FileAccess.file_exists(TEST_PATH + ".tmp"), "temporary file remained after save")
@@ -123,6 +129,7 @@ func _check_transaction_and_atomic_store() -> void:
 	corrupt_config.set_value("display", "resolution_id", "auto")
 	corrupt_config.set_value("display", "vsync_mode", "enabled")
 	corrupt_config.set_value("display", "frame_limit", "not-an-integer")
+	corrupt_config.set_value("audio", "master_volume", 80)
 	corrupt_config.set_value("accessibility", "reduce_motion", false)
 	_require_equal(corrupt_config.save(TEST_PATH), OK, "could not create invalid-primary fixture")
 	var recovered_adapter := FakeDisplayAdapter.new()
@@ -139,6 +146,29 @@ func _check_transaction_and_atomic_store() -> void:
 		"repaired schema version"
 	)
 	recovered.free()
+
+
+func _check_schema_one_migration() -> void:
+	var legacy := ConfigFile.new()
+	legacy.set_value("meta", "schema_version", 1)
+	legacy.set_value("display", "window_mode", "windowed")
+	legacy.set_value("display", "resolution_id", "1366x768")
+	legacy.set_value("display", "vsync_mode", "adaptive")
+	legacy.set_value("display", "frame_limit", 60)
+	legacy.set_value("accessibility", "reduce_motion", true)
+	_require_equal(legacy.save(MIGRATION_PATH), OK, "schema-one fixture save")
+	var migrated = SettingsManagerScript.new(MIGRATION_PATH, FakeDisplayAdapter.new())
+	root.add_child(migrated)
+	var migrated_settings: Dictionary = migrated.get_persisted_settings()
+	_require_equal(migrated_settings.get("resolution_id"), "1366x768", "schema-one resolution preserved")
+	_require_equal(migrated_settings.get("frame_limit"), 60, "schema-one frame limit preserved")
+	_require_equal(migrated_settings.get("reduce_motion"), true, "schema-one accessibility preserved")
+	_require_equal(migrated_settings.get("master_volume"), 80, "schema-one master volume default")
+	var repaired := ConfigFile.new()
+	_require_equal(repaired.load(MIGRATION_PATH), OK, "schema-one migrated reload")
+	_require_equal(int(repaired.get_value("meta", "schema_version", -1)), SettingsStoreScript.CURRENT_SCHEMA_VERSION, "schema-one migrated version")
+	_require_equal(int(repaired.get_value("audio", "master_volume", -1)), 80, "schema-one migrated audio value")
+	migrated.free()
 
 
 func _check_persistence_failure_rolls_back() -> void:

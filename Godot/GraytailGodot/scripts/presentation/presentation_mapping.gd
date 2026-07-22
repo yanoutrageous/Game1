@@ -53,62 +53,109 @@ static func minimap_marker_from_cell(cell: Dictionary, player_pos: Vector2i) -> 
 	return marker
 
 
+static func map_marker_state(marker: Dictionary) -> StringName:
+	# Both the HUD minimap and expanded map consume this public semantic state.
+	# Keep the visibility gate here so a renderer cannot accidentally distinguish
+	# a hidden Mine from a hidden Monster by inspecting room_type directly.
+	if bool(marker.get("is_current", false)):
+		return &"player"
+	if bool(marker.get("flagged", false)):
+		return &"flagged"
+	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
+	var room_type := StringName(marker.get("room_type", &"Unknown"))
+	var publicly_revealed := bool(marker.get("revealed", false)) or bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]
+	var publicly_scanned := bool(marker.get("scanned", false)) or known_state == &"scanned"
+	if not publicly_revealed and room_type != &"Exit":
+		return &"scanned" if publicly_scanned else &"unknown"
+	match room_type:
+		&"Mine":
+			return &"mine"
+		&"Monster":
+			return &"monster"
+		&"Chest":
+			return &"chest"
+		&"Event":
+			return &"event"
+		&"Exit":
+			return &"exit"
+	return &"scanned" if publicly_scanned and not publicly_revealed else &"explored"
+
+
+static func public_adjacent_mines(marker: Dictionary) -> int:
+	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
+	var publicly_known := bool(marker.get("revealed", false)) or bool(marker.get("scanned", false)) or known_state in [&"scanned", &"explored", &"cleared"]
+	var adjacent := int(marker.get("adjacent_mines", -1))
+	if not publicly_known or adjacent < 0 or adjacent > 8:
+		return -1
+	return adjacent
+
+
 static func asset_id_for_minimap_cell(cell: Dictionary, is_player: bool) -> StringName:
-	if is_player:
-		return &"icon.minimap.player"
-	if bool(cell.get("flagged", false)):
-		return &"icon.minimap.flag"
-	if not bool(cell.get("revealed", false)):
-		return &"icon.minimap.unknown"
-	if bool(cell.get("cleared", false)):
-		return &"icon.room.cleared"
-
-	var adjacent := int(cell.get("adjacent_mines", -1))
-	if adjacent >= 1 and adjacent <= 3:
-		return StringName("icon.minimap.number.%d" % adjacent)
-
-	var room_type := StringName(cell.get("room_type", &"Unknown"))
-	return ROOM_MINIMAP_ASSET.get(room_type, &"icon.room.normal")
+	var marker := cell.duplicate(true)
+	marker["is_current"] = is_player
+	match map_marker_state(marker):
+		&"player":
+			return &"icon.minimap.player"
+		&"flagged":
+			return &"icon.minimap.flag"
+		&"unknown":
+			return &"icon.minimap.unknown"
+		&"scanned":
+			return &"icon.minimap.scanned"
+		&"mine":
+			return ROOM_MINIMAP_ASSET[&"Mine"]
+		&"monster":
+			return ROOM_MINIMAP_ASSET[&"Monster"]
+		&"chest":
+			return ROOM_MINIMAP_ASSET[&"Chest"]
+		&"event":
+			return ROOM_MINIMAP_ASSET[&"Event"]
+		&"exit":
+			return ROOM_MINIMAP_ASSET[&"Exit"]
+		_:
+			return &"icon.minimap.explored"
 
 
 static func label_for_minimap_cell(cell: Dictionary, is_player: bool) -> String:
-	if is_player:
-		return "P"
-	if bool(cell.get("flagged", false)):
-		return "F"
-	if not bool(cell.get("revealed", false)):
-		return "?"
-	if bool(cell.get("cleared", false)):
-		return "C"
-
-	match StringName(cell.get("room_type", &"Unknown")):
-		&"Spawn":
-			return "G"
-		&"Mine":
+	var marker := cell.duplicate(true)
+	marker["is_current"] = is_player
+	match map_marker_state(marker):
+		&"player":
+			return "P"
+		&"flagged":
+			return "F"
+		&"unknown":
+			return "?"
+		&"scanned":
+			var adjacent := public_adjacent_mines(marker)
+			return str(adjacent) if adjacent >= 0 else "S"
+		&"mine":
 			return "M"
-		&"Chest":
-			return "C"
-		&"Event":
-			return "E"
-		&"Monster":
+		&"monster":
 			return "!"
-		&"Exit":
+		&"chest":
+			return "C"
+		&"event":
+			return "E"
+		&"exit":
 			return "X"
 		_:
-			var adjacent := int(cell.get("adjacent_mines", -1))
-			return str(adjacent) if adjacent >= 0 else "."
+			return "C" if bool(marker.get("cleared", false)) else "."
 
 
 static func theme_key_for_minimap_cell(cell: Dictionary, is_player: bool) -> StringName:
-	if is_player:
-		return &"mini.player"
-	if bool(cell.get("flagged", false)):
-		return &"mini.flag"
-	if not bool(cell.get("revealed", false)):
-		return &"mini.hidden"
-	if int(cell.get("adjacent_mines", -1)) > 0:
-		return &"mini.scanned"
-	return ROOM_THEME_KEY.get(StringName(cell.get("room_type", &"Unknown")), &"mini.normal")
+	var marker := cell.duplicate(true)
+	marker["is_current"] = is_player
+	match map_marker_state(marker):
+		&"player":
+			return &"mini.player"
+		&"flagged":
+			return &"mini.flag"
+		&"unknown":
+			return &"mini.hidden"
+		&"scanned":
+			return &"mini.scanned"
+	return ROOM_THEME_KEY.get(StringName(marker.get("room_type", &"Unknown")), &"mini.normal")
 
 
 static func tooltip_for_cell(room_type: StringName, adjacent_mines: int, flagged: bool, revealed: bool) -> String:
