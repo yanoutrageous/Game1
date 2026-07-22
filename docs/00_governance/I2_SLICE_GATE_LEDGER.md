@@ -870,3 +870,11 @@ Godot/GraytailGodot/tests/i2_item_rarity_authority_roundtrip_runner.gd
 该例外只允许把 `tier_1…tier_6` 与历史 `common/good/uncommon/rare/epic/legendary/mythic` 输入无损规范为同一套 `tier_1…tier_6` 输出；`unique` 保持 `unique`，未知值保持既有 fail-closed T1 兼容结果。既有普通奖励的 unique 拒绝门必须消费同一规范结果，使仅带历史 `rarity=unique` 而缺少冗余 `is_unique` 的输入仍按原有 `unique_drop_allowed` 规则拒绝；这只修复别名绕过，不新增唯一物规则。不得改变正式目录值、唯一物规则、掉落表、可拾取/可售卖/可存储策略、重量、价值、位置或结算。代码侧品质描述器必须保持纯表现，不得输出或决定 `ordinary_drop_allowed`、pickup/replace enabled、can_sell、can_store 等领域能力；世界悬浮窗只能消费公开物品/动作投影已有的能力与 blocked reason，若没有该字段则不得按品质猜测，真实命令仍由既有领域权威接受或拒绝。
 
 替代完成证据必须从 `M3ItemCatalog` 的全部 43 项出发，经过真实 `RunAssetLedger.create_item_instance()`，再进入统一描述器及生产消费者，逐项证明 canonical rarity 与中文/徽记/边框保持一致；同时覆盖 `good/uncommon` 双历史别名、unknown fail-closed、unique 视觉锁定但不取得命令权威，以及 `sp_trader_receipt` 的内容政策不被描述器改写。若 round-trip 仍丢失 T2–T6、表现层仍输出领域能力或消费者仍以品质决定命令，则 Gate19 保持 `BLOCKED`。
+
+### 19.2 地图进度、跨容器输入屏蔽与动作后焦点修正（实现前登记）
+
+生产信号链复核证明“地图打开全程零命令”的原断言会破坏既有真实进度：`M7ProgressionService` 的“打开地图并探索三间房”读取 `run_stats.map_open_count`，该字段只由既有 `open_map` 命令递增。修正为：地图从隐藏到可见的显式打开恰好派发一次既有 `open_map`，只记录既有进度；已经打开时的重复请求、焦点、hover、选择、关闭与焦点归还不得重复派发。插旗和快速返回继续是玩家显式地图动作，各走既有命令恰好一次，不归入“阅览零命令”。不得修改成就定义、门槛、奖励或统计 schema。
+
+同时确认 modal shield 与 inventory/map 所在 overlay slot 不同父节点时会被隐藏；RunSurface 的 ground-loot、combat、extract、pause、encounter option 直连信号以及 inventory drop/use、map cell 和 world popup 回调可绕过栈顶。实现必须让 shield 跟随当前 top root 的父容器并置于其正下方，同时所有领域动作入口显式验证当前 top modal：inventory 动作只在 inventory 为栈顶时接受，map cell 只在 map 为栈顶时接受，world action 只在无 modal 时接受，底层 RunSurface 动作在任意 modal 打开时全部拒绝；允许的 inventory→map 嵌套打开仍保留。仅依赖 z-index 或视觉遮罩而没有 handler guard 不得接受。
+
+最后，`_dispatch_command()` 的无条件 focus release 与 inventory/map 重建会令键盘/手柄在 use/drop/flag/fast-return 后失焦，地图选择路径还存在重复重建。显式动作必须按稳定 item instance 或 map position 恢复到仍存在的动作/格子；目标消失时回退到首个可操作项或关闭按钮。地图结果只允许一次必要重建。完成测试须覆盖 map_open_count 恰好 +1、关闭/hover 不变、显式 flag/fast-return 各一次；inventory/map 打开时逐一模拟所有底层直连 signal 并证明 command/stack 不变；use/drop/flag 成功与失败后的焦点继续可达。表现描述器的非生产 `unique_locked/locked_unique` 别名应删除而不是扩张领域输入域。
