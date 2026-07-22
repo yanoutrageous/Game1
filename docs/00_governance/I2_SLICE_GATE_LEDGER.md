@@ -867,6 +867,6 @@ Godot/GraytailGodot/scripts/core/run/run_asset_ledger.gd
 Godot/GraytailGodot/tests/i2_item_rarity_authority_roundtrip_runner.gd
 ```
 
-该例外只允许把 `tier_1…tier_6` 与历史 `common/good/uncommon/rare/epic/legendary/mythic` 输入无损规范为同一套 `tier_1…tier_6` 输出；`unique` 保持 `unique`，未知值保持既有 fail-closed T1 兼容结果。不得改变正式目录值、唯一物规则、掉落表、可拾取/可售卖/可存储策略、重量、价值、位置或结算。代码侧品质描述器必须保持纯表现，不得输出或决定 `ordinary_drop_allowed`、pickup/replace enabled、can_sell、can_store 等领域能力；世界悬浮窗只能消费公开物品/动作投影已有的能力与 blocked reason，若没有该字段则不得按品质猜测，真实命令仍由既有领域权威接受或拒绝。
+该例外只允许把 `tier_1…tier_6` 与历史 `common/good/uncommon/rare/epic/legendary/mythic` 输入无损规范为同一套 `tier_1…tier_6` 输出；`unique` 保持 `unique`，未知值保持既有 fail-closed T1 兼容结果。既有普通奖励的 unique 拒绝门必须消费同一规范结果，使仅带历史 `rarity=unique` 而缺少冗余 `is_unique` 的输入仍按原有 `unique_drop_allowed` 规则拒绝；这只修复别名绕过，不新增唯一物规则。不得改变正式目录值、唯一物规则、掉落表、可拾取/可售卖/可存储策略、重量、价值、位置或结算。代码侧品质描述器必须保持纯表现，不得输出或决定 `ordinary_drop_allowed`、pickup/replace enabled、can_sell、can_store 等领域能力；世界悬浮窗只能消费公开物品/动作投影已有的能力与 blocked reason，若没有该字段则不得按品质猜测，真实命令仍由既有领域权威接受或拒绝。
 
 替代完成证据必须从 `M3ItemCatalog` 的全部 43 项出发，经过真实 `RunAssetLedger.create_item_instance()`，再进入统一描述器及生产消费者，逐项证明 canonical rarity 与中文/徽记/边框保持一致；同时覆盖 `good/uncommon` 双历史别名、unknown fail-closed、unique 视觉锁定但不取得命令权威，以及 `sp_trader_receipt` 的内容政策不被描述器改写。若 round-trip 仍丢失 T2–T6、表现层仍输出领域能力或消费者仍以品质决定命令，则 Gate19 保持 `BLOCKED`。
