@@ -58,8 +58,8 @@ const ACTIVE_RUN_CANONICAL_FIELDS := [
 static func default_config(sequence: int = 1, meta_summary: Dictionary = {}) -> Dictionary:
 	var m3r_fields: Dictionary = M3RItemUsabilityModelScript.build_run_start_fields(meta_summary)
 	var unlocked_maps: Array = _array_copy(meta_summary.get("unlocked_map_ids", M7ContentCatalogScript.DEFAULT_UNLOCKED_MAPS))
-	var default_map_id := "classic_7x7_simple" if unlocked_maps.has("classic_7x7_simple") else str(unlocked_maps[0] if not unlocked_maps.is_empty() else "classic_10x10_standard")
-	var map_definition := M7ContentCatalogScript.map_definition(default_map_id)
+	var default_map_id := _default_map_id(unlocked_maps)
+	var map_definition := M7ContentCatalogScript.map_definition_exact(default_map_id)
 	var candidate_seed := maxi(1, sequence * 1009 + int(meta_summary.get("run_count", 0)) * 97 + int(meta_summary.get("gold", 0)) * 13)
 	var commission_candidates := M7ContentCatalogScript.commission_candidates(default_map_id, candidate_seed)
 	var selected_commission: Dictionary = commission_candidates[0] if not commission_candidates.is_empty() else M7ContentCatalogScript.commission_definition("commission_recover_supply")
@@ -124,6 +124,7 @@ static func default_config(sequence: int = 1, meta_summary: Dictionary = {}) -> 
 	}
 	for key in m3r_fields.keys():
 		config[key] = m3r_fields[key]
+	config["config_validity_preview"] = _config_validity_for(config)
 	config["initial_bag_summary"] = {
 		"used": int(config.get("bag_used", 0)),
 		"limit": int(config.get("bag_limit", 10)),
@@ -175,7 +176,7 @@ static func refresh_from_meta(config: Dictionary, meta_summary: Dictionary, has_
 	refreshed["commission_candidate_seed"] = int(config.get("commission_candidate_seed", refreshed.get("commission_candidate_seed", 1)))
 	var previous_map_id := str(config.get("map_config_id", "classic_7x7_simple"))
 	if (refreshed.get("unlocked_map_ids", []) as Array).has(previous_map_id):
-		refreshed = _dictionary_copy(_select_m7_map(refreshed, previous_map_id).get("config", refreshed))
+		refreshed = _dictionary_copy(select_map(refreshed, previous_map_id).get("config", refreshed))
 	var previous_commission_id := str(config.get("selected_objective_id", ""))
 	var commission_result := _select_m7_commission(refreshed, previous_commission_id)
 	if bool(commission_result.get("changed", false)):
@@ -199,6 +200,8 @@ static func refresh_from_meta(config: Dictionary, meta_summary: Dictionary, has_
 
 
 static func apply_card_action(config: Dictionary, tab_id: StringName, card_id: StringName) -> Dictionary:
+	if tab_id == &"map" and String(card_id).begins_with("m7_map_"):
+		return select_map(config, String(card_id).trim_prefix("m7_map_"))
 	if bool(config.get("active_run_locked", false)) and _mutates_active_run_projection(tab_id, card_id):
 		return {
 			"config": config.duplicate(true),
@@ -206,8 +209,6 @@ static func apply_card_action(config: Dictionary, tab_id: StringName, card_id: S
 			"reason_code": &"active_run_locked",
 			"message": "当前探索进行中，地图、委托与出勤配置均以当局记录为准。",
 		}
-	if tab_id == &"map" and String(card_id).begins_with("m7_map_"):
-		return _select_m7_map(config, String(card_id).trim_prefix("m7_map_"))
 	if tab_id == &"objective" and String(card_id).begins_with("m7_commission_"):
 		return _select_m7_commission(config, String(card_id).trim_prefix("m7_commission_"))
 	if tab_id == &"claim" and String(card_id).begins_with("m7_shop_"):
@@ -240,12 +241,22 @@ static func _mutates_active_run_projection(tab_id: StringName, card_id: StringNa
 	return false
 
 
-static func _select_m7_map(config: Dictionary, map_id: String) -> Dictionary:
+static func select_map(config: Dictionary, map_id: String) -> Dictionary:
+	if bool(config.get("active_run_locked", false)):
+		return _map_selection_rejected(config, &"active_run_locked", "当前探索进行中，地图以当局记录为准。")
+	var definition := M7ContentCatalogScript.map_definition_exact(map_id)
+	if definition.is_empty():
+		return _map_selection_rejected(config, &"unknown_map_id", "该地图不存在或已从内容目录移除。")
 	var unlocked: Array = _array_copy(config.get("unlocked_map_ids", []))
+	var known_unlocked_count := 0
+	for raw_unlocked_id in unlocked:
+		if not M7ContentCatalogScript.map_definition_exact(str(raw_unlocked_id)).is_empty():
+			known_unlocked_count += 1
+	if known_unlocked_count == 0:
+		return _map_selection_rejected(config, &"no_maps_available", "当前没有可选择的已解锁地图。")
 	if not unlocked.has(map_id):
-		return {"config": config.duplicate(true), "changed": false, "message": "该地图尚未解锁。"}
+		return _map_selection_rejected(config, &"map_locked", "该地图尚未解锁。")
 	var result := config.duplicate(true)
-	var definition := M7ContentCatalogScript.map_definition(map_id)
 	result["map_config_id"] = map_id
 	result["map_display_name"] = str(definition.get("display_name", map_id))
 	result["difficulty"] = definition.get("difficulty", &"normal")
@@ -260,8 +271,19 @@ static func _select_m7_map(config: Dictionary, map_id: String) -> Dictionary:
 		result["selected_objective_id"] = StringName(selected.get("id", "commission_recover_supply"))
 		result["selected_objective_label"] = str(selected.get("display_name", "回收补给箱"))
 		result["selected_objective_summary"] = "%s：%s" % [str(selected.get("display_name", "")), str(selected.get("description", ""))]
+	result["config_validity_preview"] = _config_validity_for(result)
 	result["right_summary_preview"] = right_summary_preview(result)
-	return {"config": result, "changed": true, "message": "已选择 %s。" % str(definition.get("display_name", map_id))}
+	return {
+		"ok": true,
+		"config": result,
+		"changed": true,
+		"reason_code": &"ok",
+		"message": "已选择 %s。" % str(definition.get("display_name", map_id)),
+	}
+
+
+static func _select_m7_map(config: Dictionary, map_id: String) -> Dictionary:
+	return select_map(config, map_id)
 
 
 static func _select_m7_commission(config: Dictionary, commission_id: String) -> Dictionary:
@@ -779,24 +801,69 @@ static func _backpack_capacity_preview() -> Dictionary:
 
 
 static func _config_validity_preview() -> Dictionary:
-	return _config_validity_for({"bag_used": 0, "bag_limit": 10})
+	return _config_validity_for({
+		"map_config_id": "classic_7x7_simple",
+		"difficulty": &"simple",
+		"selected_difficulty": &"simple",
+		"unlocked_map_ids": M7ContentCatalogScript.DEFAULT_UNLOCKED_MAPS,
+		"bag_used": 0,
+		"bag_limit": 10,
+	})
+
+
+static func config_validity(config: Dictionary) -> Dictionary:
+	return _config_validity_for(config)
 
 
 static func _config_validity_for(config: Dictionary) -> Dictionary:
 	var used := int(config.get("bag_used", 0))
 	var limit := int(config.get("bag_limit", 10))
-	var valid := used <= limit
+	var map_id := str(config.get("map_config_id", ""))
+	var definition := M7ContentCatalogScript.map_definition_exact(map_id)
+	var exact := not definition.is_empty()
+	var unlocked_map_ids := _array_copy(config.get("unlocked_map_ids", []))
+	var known_unlocked_count := 0
+	for raw_unlocked_id in unlocked_map_ids:
+		if not M7ContentCatalogScript.map_definition_exact(str(raw_unlocked_id)).is_empty():
+			known_unlocked_count += 1
+	var unlocked := exact and unlocked_map_ids.has(map_id)
+	var expected_difficulty := StringName(definition.get("difficulty", &""))
+	var difficulty_matches := (
+		exact
+		and expected_difficulty != &""
+		and StringName(config.get("difficulty", &"")) == expected_difficulty
+		and StringName(config.get("selected_difficulty", config.get("difficulty", &""))) == expected_difficulty
+	)
+	var within_capacity := used <= limit
+	var valid := within_capacity and exact and unlocked and difficulty_matches
+	var reason_code := &"ok"
+	if not exact:
+		reason_code = &"unknown_map_id"
+	elif known_unlocked_count == 0:
+		reason_code = &"no_maps_available"
+	elif not unlocked:
+		reason_code = &"map_locked"
+	elif not difficulty_matches:
+		reason_code = &"difficulty_mismatch"
+	elif not within_capacity:
+		reason_code = &"backpack_overweight"
 	return {
-		"label": "M6 出勤配置合法" if valid else "背包超重，不能出发",
+		"label": "M6 出勤配置合法" if valid else "出勤配置需要调整",
 		"checks": [
-			"map selected",
-			"difficulty selected",
+			"map id exact: %s" % exact,
+			"map unlocked: %s" % unlocked,
+			"difficulty matches catalog: %s" % difficulty_matches,
 			"warehouse instances selected by player",
 			"equipment slots and carried supplies validated",
 			"carry weight %d / %d" % [used, limit],
 			"RunStartConfig can be handed to the existing route adapter",
 		],
 		"can_start": valid,
+		"reason_code": reason_code,
+		"map_exact": exact,
+		"map_unlocked": unlocked,
+		"difficulty_matches": difficulty_matches,
+		"within_capacity": within_capacity,
 		"blocked_real_actions": ["complete_deploy_economy", "insurance", "shipping"],
 		"display_only": false,
 		"read_only": true,
@@ -840,6 +907,28 @@ static func _deploy_prep_asset_refs() -> Dictionary:
 		"codex": "ui.deploy_prep.codex_lite",
 		"loadout": "ui.deploy_prep.loadout",
 		"start": "ui.deploy_prep.start_standard_10x10",
+	}
+
+
+static func _default_map_id(unlocked_map_ids: Array) -> String:
+	if unlocked_map_ids.has("classic_7x7_simple"):
+		return "classic_7x7_simple"
+	for raw_map_id in unlocked_map_ids:
+		var map_id := str(raw_map_id)
+		if not M7ContentCatalogScript.map_definition_exact(map_id).is_empty():
+			return map_id
+	# Keep a known display anchor while legality remains fail-closed when no map
+	# is actually unlocked.
+	return "classic_10x10_standard"
+
+
+static func _map_selection_rejected(config: Dictionary, reason_code: StringName, message: String) -> Dictionary:
+	return {
+		"ok": false,
+		"config": config.duplicate(true),
+		"changed": false,
+		"reason_code": reason_code,
+		"message": message,
 	}
 
 

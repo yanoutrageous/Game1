@@ -98,6 +98,7 @@
     "I2_MAIN_MENU_ANCHOR_TEXT",
     "I2_MAIN_MENU_TRANSITION_COORDINATOR",
     "I2_MAIN_MENU_TRANSITION_FALLBACK",
+    "I2_DEPLOY_MAP_PROJECTION",
     "ART22_DEPLOY_PREP_RUNTIME",
     "ART22_DEPLOY_PREP_MAIN_ROUTE",
     "ART23_LONG_TERM_RUNTIME",
@@ -147,6 +148,7 @@
         "I2_MAIN_MENU_ANCHOR_TEXT",
         "I2_MAIN_MENU_TRANSITION_COORDINATOR",
         "I2_MAIN_MENU_TRANSITION_FALLBACK",
+        "I2_DEPLOY_MAP_PROJECTION",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_MAIN_ROUTE",
         "ART24_IN_RUN_RUNTIME",
@@ -209,6 +211,7 @@
         "I2_MAIN_MENU_ANCHOR_TEXT",
         "I2_MAIN_MENU_TRANSITION_COORDINATOR",
         "I2_MAIN_MENU_TRANSITION_FALLBACK",
+        "I2_DEPLOY_MAP_PROJECTION",
         "ART22_DEPLOY_PREP_RUNTIME",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_RUNTIME",
@@ -268,6 +271,7 @@
         "I2_MAIN_MENU_ANCHOR_TEXT",
         "I2_MAIN_MENU_TRANSITION_COORDINATOR",
         "I2_MAIN_MENU_TRANSITION_FALLBACK",
+        "I2_DEPLOY_MAP_PROJECTION",
         "ART22_DEPLOY_PREP_RUNTIME",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_RUNTIME",
@@ -617,16 +621,23 @@
       "coverage": ["main_menu", "assets", "exact_fallback", "transition", "builder_parity"]
     },
     {
+      "id": "I2_DEPLOY_MAP_PROJECTION",
+      "relative_path": "Godot/GraytailGodot/tests/i2_deploy_map_projection_runner.gd",
+      "pass_marker": "I2_DEPLOY_MAP_PROJECTION=PASS maps=8 scales=3 round_trip=8 route_pages=1 fallback=fail_closed",
+      "fail_marker": "I2_DEPLOY_MAP_PROJECTION=FAIL",
+      "coverage": ["deploy_prep", "map_projection", "exact_lookup", "route_round_trip", "fail_closed"]
+    },
+    {
       "id": "ART22_DEPLOY_PREP_RUNTIME",
       "relative_path": "Godot/GraytailGodot/tests/art22_deploy_prep_runtime_runner.gd",
-      "pass_marker": "ART22_DEPLOY_PREP_RUNTIME=PASS tabs=5 secondary_states=34 summary_pages=4 states=expanded,collapsed,active_run,cancel_modal character_frames=8 ambient_tracks=10",
+      "pass_marker": "ART22_DEPLOY_PREP_RUNTIME=PASS tabs=5 map_page=single map_scales=3 map_difficulties=2,3,3 exact_maps=8 split=selection_detail explicit_actions=local,meta summary=overview,config,effect,objective card_height=76 active_run=locked input=focus,escape,reduced_motion",
       "fail_marker": "ART22_DEPLOY_PREP_RUNTIME=FAIL",
-      "coverage": ["deploy_prep", "layout", "state"]
+      "coverage": ["deploy_prep", "single_page_map", "selection_detail", "explicit_actions", "summary", "focus", "reduced_motion"]
     },
     {
       "id": "ART22_DEPLOY_PREP_MAIN_ROUTE",
       "relative_path": "Godot/GraytailGodot/tests/art22_deploy_prep_main_route_runner.gd",
-      "pass_marker": "ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy shell=DeployPrepShell",
+      "pass_marker": "ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=3",
       "fail_marker": "ART22_DEPLOY_PREP_MAIN_ROUTE=FAIL",
       "coverage": ["main_route", "deploy_prep"]
     },
@@ -853,6 +864,7 @@
       "I2_MAIN_MENU_ANCHOR_TEXT": [],
       "I2_MAIN_MENU_TRANSITION_COORDINATOR": [],
       "I2_MAIN_MENU_TRANSITION_FALLBACK": [],
+      "I2_DEPLOY_MAP_PROJECTION": [],
       "ART22_DEPLOY_PREP_RUNTIME": [],
       "ART22_DEPLOY_PREP_MAIN_ROUTE": [
         "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",

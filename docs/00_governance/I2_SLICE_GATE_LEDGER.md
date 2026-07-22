@@ -1,6 +1,6 @@
 # I2 Slice Gate Ledger
 
-文档状态：I2 当前门账；阶段 `ACTIVE`，所有运行时切片均未开始。
+文档状态：I2 当前门账；阶段 `ACTIVE`，已产生若干受门控运行时检查点，但尚未综合关闭。
 最后更新：2026-07-22
 
 ## 1. 状态定义
@@ -33,7 +33,7 @@ entry full/head: 39/39 PASS
 | I2.0 | 启动审计、契约、评估、矩阵、架构、验证计划、门账、入口 | I1 closed + exact entry baseline | `ACCEPTED_WITH_NOTES` | 独立复核修正 I1/I2 报告字段后，16/16 allowed paths、43/43 IDs、refs/UTF-8/YAML basic/diff/static 与 quick 21/21 PASS；无 runtime claim |
 | I2.1 | 共享导航/转场、设置、focus/modal、character presentation、style/layer seam | I2.0；设置字段与动画技术决策 | `IN_PROGRESS` | I2.1A/B/C 的路由、真实设置、输入、focus 与生命周期基础已 `READY_FOR_REVIEW`；character/transition/style seam 随 I2.2 继续，不提前关闭 I2.1 |
 | I2.2 | 主菜单文字/场景/锚点/动效/空间转场 | I2.1 最小 seam | `IN_PROGRESS` | I2.2A 主菜单安全回退切片已 `ACCEPTED_WITH_NOTES`；完整洞口步行动画、下层连续背景与玩家手感复核仍待后续切片，不关闭 I2.2 |
-| I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `NOT_STARTED` | 需八地图 ID no-regression、真实命令与批量售卖门 |
+| I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `IN_PROGRESS` | I2.3A 同页双栏、八地图精确投影与显式详情动作已 `ACCEPTED_WITH_NOTES`；批量售卖仍禁止，真实经济结果关联另设同阶段 gate |
 | I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `NOT_STARTED` | 先证明任务/成就/红点/领取不丢失，再改 Goal 入口 |
 | I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `AUDIT_REQUIRED` | 独立 I2.5A 结果框/协议色板/物品 binding 已 `READY_FOR_REVIEW`；其余局内职责仍待分项授权 |
 | I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `IN_PROGRESS` | I2.6A v2 工作负载与 I2.6B pre-authority combat asset admission 已 `READY_FOR_REVIEW`；特殊房、结算与 visible 验收仍待后续 gate |
@@ -437,3 +437,63 @@ player input-feel acceptance: NOT_RUN
 ```
 
 I2.2A 已通过定向、兼容、统一 quick/ui、独立复核与三分辨率截图检查点，因此只以安全回退范围 `ACCEPTED_WITH_NOTES`。full/head 仍保留到 I2.7；完整洞口步行动画、连续下层空间与玩家手感复核继续留在 I2.2 后续 gate，不能据此关闭整个 I2.2。
+
+## 14. I2.3A Deploy 同页双栏与精确投影门（2026-07-22）
+
+```text
+status: ACCEPTED_WITH_NOTES (engineering checkpoint inside I2.3; not a separate product stage)
+feedback: DEPLOY-01..DEPLOY-10, MAIN-04(route continuity), CROSS-01, CROSS-04, CROSS-05, CROSS-07, CROSS-08
+rollback: 152873d (I2.2A accepted-with-notes checkpoint)
+```
+
+代码优先核查确认当前 Deploy 已接通真实金币、八地图、仓库实例、申领、委托、携带配置、开始/继续/放弃流程，缺口是工程配置器式信息架构，而不是缺少第二套 schema。本门授权把中央区重排为同页“左侧选择 + 右侧详情/显式动作”，右上金币常驻；一级页签玩家文案为地图、仓库、申领、本局委托、携带清单。选择行只改变查看焦点，地图/委托/携带等 draft 修改必须走显式动作；购买/出售只产生已有 meta action，不在 UI 预扣金币或推断成功。
+
+地图硬约束：八个既有 `map_config_id` 保持精确往返，三种显示规模为 7×7、10×10、13×13，右侧显示该规模真实难度与详情。`region_id` 仅为上下文，禁止新增 region 页面、region→difficulty 步骤、route、存档层级或 `RunStartConfig` 权威字段。未知 ID 必须 fail closed，不得再借 catalog 的历史默认回退伪装成 10×10 标准；active run 使用 canonical config 并锁定修改。
+
+摘要固定为概览、配置、效果、目标：删除“当前选择”“路线 / 难度”“运行状态”等工程说明；配置列具体物品名，效果只列真实附加效果，目标列所选本局委托。`risk_summary` 可保留为兼容字段，但不再作为玩家顶层页签。金币缺失显示“—”，不得伪装为 0。品质必须使用文字 + 色/边框冗余表达，不能只依赖颜色。
+
+本门不授权批量/快捷售卖、UI 层循环出售、未知许可素材导入、生成新素材、运行时骨骼系统、成就/等级任务迁入 Deploy 或经济/存档权威改写。现有审计资产足以完成该门；UE 仅参考信息层级、金币常驻、品质与显式动作，不复制旧分页或 `.uasset`。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+Godot/GraytailGodot/scripts/core/content/m7_content_catalog.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_config.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_map_projection.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_map_split_view.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_card_view.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_layout_contract.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_model.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_shell.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_tab_model.gd
+Godot/GraytailGodot/tests/art22_deploy_prep_capture_runner.gd
+Godot/GraytailGodot/tests/art22_deploy_prep_main_route_runner.gd
+Godot/GraytailGodot/tests/art22_deploy_prep_matrix_capture_runner.gd
+Godot/GraytailGodot/tests/art22_deploy_prep_runtime_runner.gd
+Godot/GraytailGodot/tests/i2_deploy_map_projection_runner.gd
+Godot/GraytailGodot/tests/i2_route_authority_lifecycle_runner.gd
+Godot/GraytailGodot/tests/m7_meta_ui_runtime_runner.gd
+tools/i1/validation_manifest.json
+```
+
+保护边界：`project.godot`、scene/resource/`.uid`/`.translation`/import、全部素材本体与 asset manifest、MetaProgressAdapter、SaveAdapter、RunStateMachine、RunAssetLedger、terminal settlement、八地图 ID/schema 和 active-run canonical authority 均禁止修改。本门完成要求包括八地图/三规模 exact runner、单页/无 region route 断言、选择与破坏性动作分离、摘要禁词与具体内容、焦点/ESC/reduced-motion、三分辨率截图检查点、quick/ui；full/head 仍留到 I2.7。
+
+### 14.1 I2.3A 复核与接受记录
+
+I2.3A 已把地图保留在同一 Deploy 页：左侧只显示常规扫雷的 7×7、10×10、13×13 三种规模，右侧分别投影 2/3/3 个真实难度并以 exact `map_config_id` 提交。catalog 新增 exact 查询而保留历史 fallback；选择、合法性、active-run 锁和 route round-trip 均 fail closed。非地图页使用左侧选择、右侧详情/明确动作；行点击不再改变配置或发出 meta action。仓库重复物品按 exact `instance_id` 显示和操作；本地动作后左右投影同步重建。单件出售采用可见“确认出售”，切行、筛选或页签会取消待确认态，确认提交仍只携带单一实例。申领、本局委托、携带清单、金币缺失态、品质文字+颜色边及概览/配置/效果/目标摘要均已接入，未新增素材或运行时权威。Deploy 放弃确认接入共享 modal focus lifecycle，ESC echo、焦点环与 reduced-motion 稳定态均 fail closed。
+
+验证记录：
+
+```text
+I2_DEPLOY_MAP_PROJECTION=PASS maps=8 scales=3 round_trip=8 route_pages=1 fallback=fail_closed
+ART22_DEPLOY_PREP_RUNTIME=PASS tabs=5 map_page=single map_scales=3 map_difficulties=2,3,3 exact_maps=8 split=selection_detail explicit_actions=local,meta summary=overview,config,effect,objective card_height=76 active_run=locked input=focus,escape,reduced_motion
+ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=3
+static/worktree: PASS; manifest sha256 5B68E79B65976CCC9F331A19D137F0B5E6724523FB1359F02EF525630A070A9A
+quick/worktree: 32/32 PASS; registration complete; pollution PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T011703418Z_8292ac71\report.json; report sha256 8B6A44EAAC8C4F4D2E8F9B26A8357C28AEA03D7DA9F35FEB9362072EB536201F
+ui/worktree: 33/33 PASS; registration complete; pollution PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T011114418Z_5b5467b3\report.json; report sha256 A965A4D1ED691262E4A77581EDB4DF25C18AB4CA31B3FC9F78F2AD919CE015F6
+visible checkpoint: final-code map + claim at 1280x720, 1600x900, 1920x1080 in .tmp/i2-deploy-captures/final; manually reviewed for clipping, overlap and light-surface text contrast
+independent reviews: exact/domain, split-view, duplicate-instance, left/right projection, explicit confirmation, focus/ESC/reduced-motion findings resolved; final P0/P1/P2 none
+```
+
+接受边界：本记录只接受 I2.3A，不关闭 I2.3 或 I2。真实 purchase/sell 结果关联、失败回执与刷新证明进入 I2.3B；无原子命令、幂等、确认和回滚前继续禁止批量售卖。截图仅为人工布局检查点，不构成自动玩家手感 PASS；full/worktree、commit 后 full/head 与最终 capability promotion 仍留到 I2.7。

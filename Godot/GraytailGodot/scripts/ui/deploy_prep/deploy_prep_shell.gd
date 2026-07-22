@@ -7,23 +7,26 @@ const DeployPrepModelScript := preload("res://scripts/ui/deploy_prep/deploy_prep
 const DeployTabModelScript := preload("res://scripts/ui/deploy_prep/deploy_tab_model.gd")
 const DeployPrepCardViewScript := preload("res://scripts/ui/deploy_prep/deploy_prep_card_view.gd")
 const DeployPrepLayoutContractScript := preload("res://scripts/ui/deploy_prep/deploy_prep_layout_contract.gd")
+const DeployMapSplitViewScript := preload("res://scripts/ui/deploy_prep/deploy_map_split_view.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
+const ModalFocusStackScript := preload("res://scripts/ui/shell/modal_focus_stack.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21MainMenuAssetContractScript := preload("res://scripts/presentation/art21_main_menu_asset_contract.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const Art22DeployPrepAssetContractScript := preload("res://scripts/presentation/art22_deploy_prep_asset_contract.gd")
+const Art25ContentAssetContractScript := preload("res://scripts/presentation/art25_content_asset_contract.gd")
 
 signal deploy_start_intent_requested(intent: Dictionary)
 signal navigation_intent_requested(intent: Dictionary)
 signal meta_action_requested(action: Dictionary)
 
 const SUMMARY_PAGES := [
-	{"id": &"summary", "label": "摘要"},
+	{"id": &"overview", "label": "概览"},
 	{"id": &"config", "label": "配置"},
 	{"id": &"effect", "label": "效果"},
-	{"id": &"risk", "label": "风险"},
+	{"id": &"objective", "label": "目标"},
 ]
 const CHARACTER_IDLE_SEQUENCE := [0, 0, 1, 1, 2, 1, 0, 0, 3, 3, 0, 4, 5, 4, 0, 0]
 const CHARACTER_LOOK_SEQUENCE := [0, 6, 6, 7, 7, 6, 0]
@@ -52,6 +55,21 @@ var filter_previous_button: Button
 var filter_next_button: Button
 var card_scroll: ScrollContainer
 var card_list: VBoxContainer
+var map_split_view: Control
+var detail_panel: Panel
+var detail_gold_panel: Panel
+var detail_gold_icon: TextureRect
+var detail_gold_label: Label
+var detail_artwork: TextureRect
+var detail_title_label: Label
+var detail_badge_label: Label
+var detail_description_label: Label
+var detail_fact_labels: Array[Label] = []
+var detail_feedback_panel: Panel
+var detail_feedback_label: Label
+var detail_primary_action_button: Button
+var detail_secondary_action_button: Button
+var detail_actions: Array[Dictionary] = []
 var result_hint_panel: Panel
 var result_hint_label: Label
 var collapse_button: Button
@@ -68,8 +86,9 @@ var character_frames: Array[Texture2D] = []
 var ambient_animations: Array[Dictionary] = []
 var ambient_particles: Array[CPUParticles2D] = []
 var summary_chain_bases: Dictionary = {}
+var modal_focus_stack = ModalFocusStackScript.new()
 
-var active_summary_page: StringName = &"summary"
+var active_summary_page: StringName = &"overview"
 var parchment_collapsed := false
 var reduced_motion := false
 var scene_elapsed := 0.0
@@ -77,12 +96,12 @@ var character_elapsed := 0.0
 var character_frame_index := 0
 var character_look_index := -1
 var next_character_look := CHARACTER_FIRST_LOOK_SECONDS
-var focus_before_modal: Control
 var collapse_tween: Tween
 var page_active := true
 
 
 func build(model: Dictionary = {}) -> void:
+	modal_focus_stack.clear(false)
 	_clear_children()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	current_model = model.duplicate(true) if not model.is_empty() else DeployPrepModelScript.build(current_snapshot)
@@ -122,14 +141,21 @@ func set_page_active(value: bool) -> void:
 		for particles in ambient_particles:
 			if particles != null:
 				particles.emitting = not reduced_motion
+		if map_split_view != null:
+			map_split_view.call("set_active", _active_tab() == DeployTabModelScript.TAB_MAP)
 		if reduced_motion:
 			_freeze_motion()
 		if is_visible_in_tree():
 			call_deferred("_grab_initial_focus")
 		return
+	modal_focus_stack.clear(false)
+	if modal_layer != null:
+		modal_layer.hide()
 	set_process(false)
 	set_process_input(false)
 	set_process_unhandled_input(false)
+	if map_split_view != null:
+		map_split_view.call("set_active", false)
 	if collapse_tween != null and collapse_tween.is_valid():
 		collapse_tween.kill()
 	if parchment_group != null:
@@ -159,6 +185,8 @@ func set_reduced_motion_enabled(value: bool) -> void:
 				particles.emitting = page_active and not reduced_motion
 		return
 	reduced_motion = value
+	if map_split_view != null:
+		map_split_view.call("set_reduced_motion_enabled", value)
 	if collapse_tween != null and collapse_tween.is_valid():
 		collapse_tween.kill()
 	if parchment_group != null:
@@ -240,6 +268,21 @@ func _clear_children() -> void:
 	filter_next_button = null
 	card_scroll = null
 	card_list = null
+	map_split_view = null
+	detail_panel = null
+	detail_gold_panel = null
+	detail_gold_icon = null
+	detail_gold_label = null
+	detail_artwork = null
+	detail_title_label = null
+	detail_badge_label = null
+	detail_description_label = null
+	detail_fact_labels.clear()
+	detail_feedback_panel = null
+	detail_feedback_label = null
+	detail_primary_action_button = null
+	detail_secondary_action_button = null
+	detail_actions.clear()
 	result_hint_panel = null
 	result_hint_label = null
 	collapse_button = null
@@ -252,7 +295,6 @@ func _clear_children() -> void:
 	modal_cancel_button = null
 	modal_confirm_button = null
 	character_texture = null
-	focus_before_modal = null
 	scene_elapsed = 0.0
 	character_elapsed = 0.0
 	character_frame_index = 0
@@ -337,6 +379,8 @@ func _build_parchment_content() -> void:
 	_build_primary_tabs()
 	_build_filter_row()
 	_build_card_list()
+	_build_map_split_view()
+	_build_detail_panel()
 	collapse_button = _add_image_button(root, "DeployCollapseHandle", DeployPrepLayoutContractScript.COLLAPSE_HANDLE, "收起内容", &"handle", _toggle_parchment, 15)
 
 
@@ -379,6 +423,7 @@ func _build_filter_row() -> void:
 
 
 func _build_card_list() -> void:
+	_add_image_panel(parchment_group, "DeploySelectionPane", DeployPrepLayoutContractScript.SELECTION_PANE, &"slot", &"normal", 0)
 	var well := Panel.new()
 	well.name = "DeployCardWell"
 	well.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -399,7 +444,7 @@ func _build_card_list() -> void:
 	parchment_group.add_child(card_scroll)
 	card_list = VBoxContainer.new()
 	card_list.name = "DeployCardList"
-	card_list.custom_minimum_size.x = 612
+	card_list.custom_minimum_size.x = 232
 	card_list.add_theme_constant_override("separation", DeployPrepLayoutContractScript.CARD_GAP)
 	card_scroll.add_child(card_list)
 	result_hint_panel = Panel.new()
@@ -417,6 +462,50 @@ func _build_card_list() -> void:
 	result_hint_label = _add_label(parchment_group, "DeployResultHint", DeployPrepLayoutContractScript.RESULT_HINT, "", 13, Color(0.78, 0.72, 0.58), HORIZONTAL_ALIGNMENT_CENTER, VERTICAL_ALIGNMENT_CENTER, 3)
 
 
+func _build_map_split_view() -> void:
+	map_split_view = DeployMapSplitViewScript.new() as Control
+	map_split_view.name = "DeployMapSplitView"
+	map_split_view.call("build", _dictionary_from(current_model.get("map_projection", {})))
+	map_split_view.connect("scale_requested", _on_map_scale_requested)
+	map_split_view.connect("map_requested", _on_map_requested)
+	map_split_view.call("set_reduced_motion_enabled", reduced_motion)
+	parchment_group.add_child(map_split_view)
+
+
+func _build_detail_panel() -> void:
+	detail_panel = _add_image_panel(parchment_group, "DeployDetailPane", DeployPrepLayoutContractScript.DETAIL_PANE, &"slot", &"normal", 1)
+	_add_image_panel(parchment_group, "DeployDetailArtFrame", DeployPrepLayoutContractScript.DETAIL_ART_FRAME, &"slot", &"normal", 2)
+	detail_artwork = TextureRect.new()
+	detail_artwork.name = "DeployDetailArtwork"
+	detail_artwork.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	detail_artwork.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	detail_artwork.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	detail_artwork.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	detail_artwork.z_index = 3
+	_set_rect(detail_artwork, DeployPrepLayoutContractScript.DETAIL_ART)
+	parchment_group.add_child(detail_artwork)
+	detail_title_label = _add_label(parchment_group, "DeployDetailTitle", DeployPrepLayoutContractScript.DETAIL_TITLE, "", 20, Color(0.96, 0.83, 0.56), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_CENTER, 3)
+	detail_badge_label = _add_label(parchment_group, "DeployDetailBadges", DeployPrepLayoutContractScript.DETAIL_BADGE, "", 13, Color(0.70, 0.83, 0.78), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_TOP, 3)
+	detail_badge_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_add_image_panel(parchment_group, "DeployDetailBodyPanel", DeployPrepLayoutContractScript.DETAIL_BODY_PANEL, &"slot", &"normal", 2)
+	detail_description_label = _add_label(parchment_group, "DeployDetailDescription", DeployPrepLayoutContractScript.DETAIL_DESCRIPTION, "", 14, Color(0.91, 0.86, 0.75), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_TOP, 3)
+	detail_description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	for index in range(DeployPrepLayoutContractScript.DETAIL_FACT_RECTS.size()):
+		var rect := DeployPrepLayoutContractScript.DETAIL_FACT_RECTS[index] as Rect2
+		var label := _add_label(parchment_group, "DeployDetailFact%d" % index, rect, "", 13, Color(0.74, 0.72, 0.64), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_CENTER, 3)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		detail_fact_labels.append(label)
+	detail_feedback_panel = _add_image_panel(parchment_group, "DeployDetailFeedbackPanel", DeployPrepLayoutContractScript.DETAIL_FEEDBACK, &"slot", &"normal", 2)
+	detail_feedback_label = _add_label(parchment_group, "DeployDetailFeedback", DeployPrepLayoutContractScript.DETAIL_FEEDBACK, "", 12, Color(0.58, 0.86, 0.80), HORIZONTAL_ALIGNMENT_CENTER, VERTICAL_ALIGNMENT_CENTER, 3)
+	detail_primary_action_button = _add_image_button(parchment_group, "DeployDetailPrimaryAction", DeployPrepLayoutContractScript.DETAIL_PRIMARY_ACTION, "", &"action", func() -> void: _on_detail_action_pressed(0), 16)
+	detail_secondary_action_button = _add_image_button(parchment_group, "DeployDetailSecondaryAction", DeployPrepLayoutContractScript.DETAIL_SECONDARY_ACTION, "", &"nav", func() -> void: _on_detail_action_pressed(1), 14)
+
+	detail_gold_panel = _add_image_panel(parchment_group, "DeployGoldPanel", DeployPrepLayoutContractScript.DETAIL_GOLD_PANEL, &"slot", &"normal", 5)
+	var gold_ref := Art09ManifestAssetMappingScript.asset_ref(&"ui.common.gold_icon", &"icon.minimap.explored", &"currency", &"gold")
+	detail_gold_icon = _add_texture_from_texture(parchment_group, "DeployGoldIcon", DeployPrepLayoutContractScript.DETAIL_GOLD_ICON, Art09ManifestAssetMappingScript.resolve_texture(gold_ref), 6, true)
+	detail_gold_label = _add_label(parchment_group, "DeployGoldValue", DeployPrepLayoutContractScript.DETAIL_GOLD_VALUE, "—", 17, Color(0.96, 0.76, 0.36), HORIZONTAL_ALIGNMENT_RIGHT, VERTICAL_ALIGNMENT_CENTER, 6)
+
+
 func _build_summary_board() -> void:
 	var root := _root(&"SideStatusRoot")
 	summary_button_group.allow_unpress = false
@@ -426,7 +515,7 @@ func _build_summary_board() -> void:
 	var width := tab_rect.size.x / float(SUMMARY_PAGES.size())
 	for index in range(SUMMARY_PAGES.size()):
 		var page := SUMMARY_PAGES[index] as Dictionary
-		var page_id := StringName(page.get("id", &"summary"))
+		var page_id := StringName(page.get("id", &"overview"))
 		var rect := Rect2(tab_rect.position + Vector2(index * width, 0), Vector2(width, tab_rect.size.y))
 		var captured := page_id
 		var button := _add_image_button(root, "DeploySummaryTab_%s" % String(page_id), rect, String(page.get("label", page_id)), &"filter", func() -> void: _show_summary_page(captured), 13)
@@ -476,16 +565,238 @@ func _refresh_all(rebuild_lists: bool) -> void:
 	if current_model.is_empty() or parchment_group == null:
 		return
 	_refresh_tab_buttons()
-	if rebuild_lists:
+	var map_active := _active_tab() == DeployTabModelScript.TAB_MAP
+	if map_active:
+		_clear_generic_selection()
+	elif rebuild_lists:
 		_rebuild_filters()
 		_rebuild_cards()
 	else:
 		_refresh_filter_buttons()
 		_refresh_card_selection()
+	_refresh_map_workspace()
+	_refresh_wallet()
+	_refresh_detail_projection()
+	_refresh_workspace_visibility(map_active)
 	_refresh_summary()
 	_refresh_actions()
 	_refresh_modal_state()
 	_wire_focus_neighbors()
+
+
+func _clear_generic_selection() -> void:
+	_clear_container(filter_row)
+	filter_buttons.clear()
+	_clear_container(card_list)
+	card_views.clear()
+	if result_hint_panel != null:
+		result_hint_panel.visible = false
+	if result_hint_label != null:
+		result_hint_label.visible = false
+
+
+func _refresh_workspace_visibility(map_active: bool) -> void:
+	for node in [
+		filter_scroll,
+		card_scroll,
+		get_node_or_null("MainContentRoot/DeployParchmentGroup/DeploySelectionPane"),
+		get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployCardWell"),
+	]:
+		if node is CanvasItem:
+			(node as CanvasItem).visible = not map_active
+	if map_active:
+		for node in [filter_previous_button, filter_next_button, result_hint_panel, result_hint_label]:
+			if node is CanvasItem:
+				(node as CanvasItem).visible = false
+	else:
+		_update_filter_navigation()
+	if map_split_view != null:
+		map_split_view.call("set_active", map_active and page_active)
+	if map_active:
+		for node in _generic_detail_nodes():
+			if node != null:
+				node.visible = false
+	else:
+		for node in [
+			detail_panel,
+			get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployDetailBodyPanel"),
+			get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployDetailArtFrame"),
+			detail_artwork,
+			detail_title_label,
+			detail_badge_label,
+			detail_description_label,
+		]:
+			if node is CanvasItem:
+				(node as CanvasItem).visible = true
+		for label in detail_fact_labels:
+			if label != null:
+				label.visible = true
+	# Gold is global Deploy context, including the map tab.
+	if detail_gold_panel != null:
+		detail_gold_panel.visible = true
+	if detail_gold_icon != null:
+		detail_gold_icon.visible = true
+	if detail_gold_label != null:
+		detail_gold_label.visible = true
+
+
+func _generic_detail_nodes() -> Array[CanvasItem]:
+	var result: Array[CanvasItem] = []
+	for node in [
+		detail_panel,
+		get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployDetailBodyPanel"),
+		get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployDetailArtFrame"),
+		detail_artwork,
+		detail_title_label,
+		detail_badge_label,
+		detail_description_label,
+		detail_feedback_panel,
+		detail_feedback_label,
+		detail_primary_action_button,
+		detail_secondary_action_button,
+	]:
+		if node is CanvasItem:
+			result.append(node as CanvasItem)
+	for label in detail_fact_labels:
+		if label != null:
+			result.append(label)
+	return result
+
+
+func _refresh_map_workspace() -> void:
+	if map_split_view == null:
+		return
+	map_split_view.call("set_reduced_motion_enabled", reduced_motion)
+	map_split_view.call("apply_projection", _dictionary_from(current_model.get("map_projection", {})))
+
+
+func _refresh_wallet() -> void:
+	if detail_gold_label == null:
+		return
+	var wallet := _dictionary_from(current_model.get("wallet_projection", {}))
+	var available := bool(wallet.get("available", false))
+	var display := str(wallet.get("display", "—")) if available else "—"
+	detail_gold_label.text = "%s  金币" % display
+	detail_gold_label.tooltip_text = str(wallet.get("display_text", "金币 —"))
+
+
+func _refresh_detail_projection() -> void:
+	if detail_title_label == null:
+		return
+	var detail := _dictionary_from(current_model.get("detail_projection", {}))
+	var empty := bool(detail.get("empty", detail.is_empty()))
+	_refresh_detail_artwork(empty)
+	detail_title_label.text = str(detail.get("title", "暂无可查看内容"))
+	var badges := PackedStringArray()
+	for value in [detail.get("rarity_label", ""), detail.get("subtitle", ""), _player_detail_state(StringName(detail.get("state", &"")))]:
+		var text_value := Art10UISkinKitScript.sanitize_player_copy(str(value)).strip_edges()
+		if not text_value.is_empty() and not badges.has(text_value):
+			badges.append(text_value)
+	detail_badge_label.text = " · ".join(badges)
+	detail_description_label.text = Art10UISkinKitScript.sanitize_player_copy(str(detail.get("description", "")))
+	var facts := _array_from(detail, "facts")
+	for index in range(detail_fact_labels.size()):
+		var fact_label := detail_fact_labels[index]
+		if index >= facts.size():
+			fact_label.text = ""
+			continue
+		var fact := _dictionary_from(facts[index])
+		var fact_name := Art10UISkinKitScript.sanitize_player_copy(str(fact.get("label", ""))).strip_edges()
+		var fact_value := Art10UISkinKitScript.sanitize_player_copy(str(fact.get("value", ""))).strip_edges()
+		fact_label.text = "%s  %s" % [fact_name, fact_value] if not fact_name.is_empty() else fact_value
+	var projected_actions: Array[Dictionary] = []
+	for raw_action in _array_from(detail, "actions"):
+		var action := _dictionary_from(raw_action)
+		if not action.is_empty():
+			projected_actions.append(action)
+	detail_actions = _detail_actions_for_display(projected_actions)
+	_refresh_detail_action_button(detail_primary_action_button, 0, &"action")
+	_refresh_detail_action_button(detail_secondary_action_button, 1, &"nav")
+	var message := Art10UISkinKitScript.short_summary(str(current_model.get("action_message", "")), 34)
+	var show_feedback := not message.is_empty()
+	detail_feedback_panel.visible = show_feedback and _active_tab() != DeployTabModelScript.TAB_MAP
+	detail_feedback_label.visible = show_feedback and _active_tab() != DeployTabModelScript.TAB_MAP
+	detail_feedback_label.text = message
+	if empty:
+		detail_description_label.text = ""
+
+
+func _refresh_detail_artwork(empty: bool) -> void:
+	if detail_artwork == null:
+		return
+	if empty:
+		detail_artwork.texture = null
+		return
+	var row := _dictionary_from(current_model.get("selected_card_detail", {}))
+	var card_id := StringName(row.get("id", current_model.get("selected_card", &"")))
+	var art_ref: Dictionary
+	if row.has("item_id"):
+		art_ref = Art09ManifestAssetMappingScript.inventory_item_icon_ref(row)
+	elif Art25ContentAssetContractScript.handles_deploy_card(card_id):
+		art_ref = Art25ContentAssetContractScript.deploy_card_ref(card_id)
+	else:
+		art_ref = Art22DeployPrepAssetContractScript.card_art_ref(_active_tab(), card_id, StringName(row.get("art_filter_id", row.get("filter_id", &""))))
+	detail_artwork.texture = Art09ManifestAssetMappingScript.resolve_texture(art_ref)
+
+
+func _player_detail_state(state: StringName) -> String:
+	var value := String(state).to_lower()
+	if value in ["selected", "configured"]: return "已选择"
+	if value == "owned": return "已拥有"
+	if value in ["ready", "minimal_real", "valid"]: return "可用"
+	if value.find("lock") >= 0: return "未解锁"
+	if value.find("unaffordable") >= 0: return "金币不足"
+	if value.find("over") >= 0: return "已超限"
+	return ""
+
+
+func _detail_actions_for_display(projected_actions: Array[Dictionary]) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for action in projected_actions:
+		if bool(action.get("enabled", false)) and not bool(action.get("destructive", false)):
+			result.append(action)
+			break
+	for action in projected_actions:
+		if bool(action.get("destructive", false)):
+			result.append(action)
+			break
+	for action in projected_actions:
+		if result.size() >= 2:
+			break
+		if not result.has(action):
+			result.append(action)
+	return result
+
+
+func _refresh_detail_action_button(button: Button, index: int, control_id: StringName) -> void:
+	if button == null:
+		return
+	if index >= detail_actions.size():
+		button.visible = false
+		button.disabled = true
+		return
+	var action := detail_actions[index]
+	var enabled := bool(action.get("enabled", false))
+	button.visible = true
+	button.disabled = not enabled
+	button.text = str(action.get("label", "查看"))
+	button.tooltip_text = _detail_action_reason(action)
+	_apply_image_button_surface(button, &"danger" if bool(action.get("destructive", false)) else control_id, &"normal" if enabled else &"disabled")
+
+
+func _detail_action_reason(action: Dictionary) -> String:
+	if bool(action.get("enabled", false)):
+		return "需要确认" if bool(action.get("requires_confirm", false)) else ""
+	match StringName(action.get("reason_code", &"")):
+		&"active_run_locked": return "探索进行中，本局配置不可更改"
+		&"already_selected": return "当前已采用"
+		&"map_locked", &"claim_locked": return "尚未解锁"
+		&"insufficient_gold": return "金币不足"
+		&"balance_unavailable": return "金币余额暂不可用"
+		&"remove_from_attendance_first": return "请先移出出勤"
+		&"only_available_in_run": return "只能在探索中使用"
+		&"supply_slots_full": return "携带栏已满"
+	return "当前不可操作"
 
 
 func _refresh_tab_buttons() -> void:
@@ -502,22 +813,24 @@ func _refresh_tab_buttons() -> void:
 
 func _rebuild_filters() -> void:
 	var previous_scroll := filter_scroll.scroll_horizontal if filter_scroll != null else 0
+	if filter_scroll != null:
+		_set_rect(filter_scroll, DeployPrepLayoutContractScript.FILTER_SCROLL)
 	_clear_container(filter_row)
 	filter_buttons.clear()
 	filter_button_group = ButtonGroup.new()
 	filter_button_group.allow_unpress = false
 	var tab := _dictionary_from(current_model.get("active_tab_data", {}))
 	var filters := _array_from(tab, "secondary_filters")
-	var filter_width := DeployPrepLayoutContractScript.FILTER_WIDTH
-	if filters.size() <= 6 and not filters.is_empty():
-		filter_width = floor((DeployPrepLayoutContractScript.FILTER_SCROLL.size.x - float((filters.size() - 1) * DeployPrepLayoutContractScript.FILTER_GAP)) / float(filters.size()))
+	var fitted_width := 0.0
+	if not filters.is_empty() and filters.size() <= 5:
+		fitted_width = floor((DeployPrepLayoutContractScript.FILTER_SCROLL.size.x - float((filters.size() - 1) * DeployPrepLayoutContractScript.FILTER_GAP)) / float(filters.size()))
 	for raw_filter in filters:
 		var filter := _dictionary_from(raw_filter)
 		var filter_id := StringName(filter.get("id", DeployTabModelScript.FILTER_ALL))
 		var filter_label := String(filter.get("label", filter_id))
 		var captured := filter_id
-		var resolved_width := filter_width if filters.size() <= 6 else _long_filter_width(filter_label)
-		var button := _add_container_image_button(filter_row, "DeployFilter_%s" % String(filter_id), Vector2(resolved_width, 34), filter_label, &"filter", func() -> void: _on_filter_pressed(captured), 13 if filters.size() > 6 else 14)
+		var resolved_width := fitted_width if fitted_width > 0.0 else _long_filter_width(filter_label)
+		var button := _add_container_image_button(filter_row, "DeployFilter_%s" % String(filter_id), Vector2(resolved_width, 34), filter_label, &"filter", func() -> void: _on_filter_pressed(captured), 12)
 		button.toggle_mode = true
 		button.button_group = filter_button_group
 		button.focus_entered.connect(func() -> void: _ensure_filter_visible(button))
@@ -545,7 +858,7 @@ func _rebuild_cards() -> void:
 	var target_scroll := _stored_scroll_for(active)
 	_clear_container(card_list)
 	card_views.clear()
-	for raw_card in _array_from(current_model, "visible_cards"):
+	for raw_card in _array_from(current_model, "selection_rows"):
 		var card := _dictionary_from(raw_card)
 		var card_id := StringName(card.get("id", &""))
 		var view := DeployPrepCardViewScript.new() as Control
@@ -555,10 +868,10 @@ func _rebuild_cards() -> void:
 		view.connect("card_pressed", _on_card_pressed)
 		card_views.append(view)
 	if result_hint_panel != null and result_hint_label != null:
-		var show_hint := card_views.size() <= 1
+		var show_hint := card_views.is_empty()
 		result_hint_panel.visible = show_hint
 		result_hint_label.visible = show_hint
-		result_hint_label.text = "当前筛选显示 %d 项 · 可切换上方分类" % card_views.size()
+		result_hint_label.text = str(_dictionary_from(current_model.get("active_tab_data", {})).get("empty_state", "暂无内容"))
 	call_deferred("_restore_card_scroll", target_scroll)
 
 
@@ -582,9 +895,11 @@ func _refresh_summary() -> void:
 		summary_row_labels[index].text = String(blocks[index]) if index < blocks.size() else ""
 	if summary_message_label != null:
 		var message := Art10UISkinKitScript.short_summary(String(current_model.get("action_message", "")), 24)
-		if message.is_empty():
-			message = "运行状态\n%s" % ("探索进行中" if _has_active_run() else "可确认出发")
 		summary_message_label.text = message
+		summary_message_label.visible = not message.is_empty()
+		var message_panel := get_node_or_null("SideStatusRoot/DeploySummaryMessagePanel") as CanvasItem
+		if message_panel != null:
+			message_panel.visible = not message.is_empty()
 
 
 func _refresh_actions() -> void:
@@ -613,7 +928,7 @@ func _show_summary_page(page_id: StringName) -> void:
 	active_summary_page = page_id
 	_refresh_summary()
 	var button := summary_buttons.get(page_id) as Button
-	if button != null:
+	if button != null and not reduced_motion:
 		Art10UISkinKitScript.play_feedback_pulse(button, &"success", 0.30)
 
 
@@ -642,30 +957,7 @@ func _on_filter_pressed(filter_id: StringName) -> void:
 
 func _on_card_pressed(card_id: StringName) -> void:
 	var scroll_value := card_scroll.scroll_vertical if card_scroll != null else 0
-	var active_tab := _active_tab()
-	if _has_active_run() and active_tab in [DeployTabModelScript.TAB_MAP, DeployTabModelScript.TAB_OBJECTIVE, DeployTabModelScript.TAB_WAREHOUSE, DeployTabModelScript.TAB_CLAIM]:
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, "当前探索进行中，地图、委托与出勤实例均以当局记录为准；请继续本局或确认放弃。")
-		_refresh_summary()
-		Art10UISkinKitScript.play_feedback_pulse(primary_action_button, &"warning", 0.5)
-		return
-	var card_action := DeployConfigScript.apply_card_action(_config(), active_tab, card_id)
-	var meta_action := _dictionary_from(card_action.get("meta_action", {}))
-	if not meta_action.is_empty():
-		meta_action["selected_equipment_ids"] = _array_from(_config().get("selected_equipment_ids", []))
-		meta_action["selected_consumable_ids"] = _array_from(_config().get("selected_consumable_ids", []))
-		meta_action_requested.emit(meta_action)
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, str(card_action.get("message", "正在提交操作。")))
-		_refresh_summary()
-		return
-	if bool(card_action.get("changed", false)) or active_tab in [DeployTabModelScript.TAB_WAREHOUSE, DeployTabModelScript.TAB_CLAIM]:
-		current_model = DeployPrepModelScript.model_with_config(
-			current_model,
-			_dictionary_from(card_action.get("config", _config())),
-			card_id,
-			str(card_action.get("message", ""))
-		)
-	else:
-		current_model = DeployPrepModelScript.model_with_card(current_model, card_id)
+	current_model = DeployPrepModelScript.model_with_card(current_model, card_id)
 	var state := _state_for_tab(_active_tab())
 	state["card"] = card_id
 	state["scroll"] = scroll_value
@@ -673,10 +965,70 @@ func _on_card_pressed(card_id: StringName) -> void:
 	_refresh_all(false)
 	for view in card_views:
 		if view != null and is_instance_valid(view) and StringName(view.get("card_id")) == card_id:
-			Art10UISkinKitScript.play_feedback_pulse(view, &"success", 0.22)
+			if not reduced_motion:
+				Art10UISkinKitScript.play_feedback_pulse(view, &"success", 0.22)
 			break
 	if card_scroll != null:
 		card_scroll.scroll_vertical = scroll_value
+
+
+func _on_map_scale_requested(_scale_id: StringName) -> void:
+	# Scale selection is a view-only preview inside the single Deploy page.
+	pass
+
+
+func _on_map_requested(map_id: StringName) -> void:
+	var result := DeployConfigScript.select_map(_config(), String(map_id))
+	current_model = DeployPrepModelScript.model_with_config(
+		current_model,
+		_dictionary_from(result.get("config", _config())),
+		StringName("m7_map_%s" % String(map_id)),
+		str(result.get("message", ""))
+	)
+	_refresh_all(false)
+	if not bool(result.get("changed", false)) and not reduced_motion:
+		Art10UISkinKitScript.play_feedback_pulse(primary_action_button, &"warning", 0.45)
+
+
+func _on_detail_action_pressed(index: int) -> void:
+	if index < 0 or index >= detail_actions.size():
+		return
+	var action := detail_actions[index]
+	if not bool(action.get("enabled", false)):
+		return
+	var action_id := StringName(action.get("id", action.get("action", &"")))
+	var payload := _dictionary_from(action.get("payload", {}))
+	match action_id:
+		&"select_map":
+			_on_map_requested(StringName(payload.get("map_config_id", &"")))
+		&"open_map":
+			show_tab(DeployTabModelScript.TAB_MAP)
+		&"open_objective":
+			show_tab(DeployTabModelScript.TAB_OBJECTIVE)
+		&"remove_from_loadout":
+			var instance_id := String(payload.get("instance_id", ""))
+			_submit_explicit_card_action(DeployTabModelScript.TAB_WAREHOUSE, StringName("m3r_%s" % instance_id), StringName(current_model.get("selected_card", &"")))
+		&"toggle_attendance", &"toggle_carry", &"sell", &"toggle_claim", &"purchase", &"select_objective":
+			_submit_explicit_card_action(_active_tab(), StringName(current_model.get("selected_card", &"")), StringName(current_model.get("selected_card", &"")))
+
+
+func _submit_explicit_card_action(domain_tab: StringName, domain_card_id: StringName, selected_card_id: StringName) -> void:
+	var result := DeployConfigScript.apply_card_action(_config(), domain_tab, domain_card_id)
+	var meta_action := _dictionary_from(result.get("meta_action", {}))
+	if not meta_action.is_empty():
+		meta_action["selected_equipment_ids"] = _array_from(_config().get("selected_equipment_ids", []))
+		meta_action["selected_consumable_ids"] = _array_from(_config().get("selected_consumable_ids", []))
+		meta_action_requested.emit(meta_action)
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, str(result.get("message", "正在提交操作。")))
+		_refresh_all(false)
+		return
+	current_model = DeployPrepModelScript.model_with_config(
+		current_model,
+		_dictionary_from(result.get("config", _config())),
+		selected_card_id,
+		str(result.get("message", ""))
+	)
+	_refresh_all(bool(result.get("changed", false)))
 
 
 func _on_primary_action_pressed() -> void:
@@ -689,7 +1041,8 @@ func _on_primary_action_pressed() -> void:
 	if not bool(validity.get("can_start", true)):
 		current_model = DeployPrepModelScript.model_with_action_message(current_model, "当前配置不合法，无法出发。")
 		_refresh_summary()
-		Art10UISkinKitScript.play_feedback_pulse(primary_action_button, &"warning", 0.7)
+		if not reduced_motion:
+			Art10UISkinKitScript.play_feedback_pulse(primary_action_button, &"warning", 0.7)
 		return
 	current_model["run_start_config"] = DeployConfigScript.build_run_start_config(config)
 	current_model["preview_lines"] = DeployConfigScript.build_preview_lines(config)
@@ -730,21 +1083,25 @@ func _confirm_cancel_active_run() -> void:
 func _show_cancel_modal_visual() -> void:
 	if modal_layer == null:
 		return
-	focus_before_modal = get_viewport().gui_get_focus_owner()
-	modal_layer.visible = true
-	Art10UISkinKitScript.play_panel_open(modal_layer)
-	if modal_cancel_button != null:
-		modal_cancel_button.grab_focus()
+	if modal_focus_stack.contains(&"deploy_abandon"):
+		return
+	if not modal_focus_stack.push(&"deploy_abandon", modal_layer, modal_cancel_button, _on_cancel_modal_requested):
+		return
+	if reduced_motion:
+		modal_layer.modulate = Color.WHITE
+	else:
+		Art10UISkinKitScript.play_panel_open(modal_layer)
 
 
 func _hide_cancel_modal_visual() -> void:
 	if modal_layer == null:
 		return
-	modal_layer.visible = false
-	if focus_before_modal != null and is_instance_valid(focus_before_modal) and focus_before_modal.is_visible_in_tree():
-		focus_before_modal.grab_focus()
-	elif cancel_action_button != null and cancel_action_button.visible:
-		cancel_action_button.grab_focus()
+	if not modal_focus_stack.pop(&"deploy_abandon"):
+		modal_layer.visible = false
+
+
+func _on_cancel_modal_requested(_reason: StringName) -> void:
+	_hide_cancel_modal()
 
 
 func _toggle_parchment() -> void:
@@ -925,83 +1282,63 @@ func _freeze_motion() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not page_active or not is_visible_in_tree() or not event.is_action_pressed("ui_cancel"):
+	if event == null or event.is_echo() or not page_active or not is_visible_in_tree():
 		return
-	if modal_layer != null and modal_layer.visible:
-		_hide_cancel_modal()
-	else:
-		_request_back_to_main()
+	if modal_focus_stack.handle_cancel_event(event):
+		get_viewport().set_input_as_handled()
+		return
+	if not event.is_action_pressed("ui_cancel"):
+		return
+	_request_back_to_main()
 	get_viewport().set_input_as_handled()
 
 
 func _summary_page_blocks(page_id: StringName) -> Array[String]:
-	var preview := _dictionary_from(current_model.get("preview_lines", {}))
-	var config := _config()
-	match page_id:
-		&"summary":
-			return [
-				"当前选择\n%s" % Art10UISkinKitScript.short_summary(String(_dictionary_from(current_model.get("selected_card_detail", {})).get("title", "当前选择")), 16),
-				"路线 / 难度\n%s · %s" % [_localized_route(String(config.get("map_mode_label", ""))), _localized_difficulty(String(config.get("difficulty_label", "")))],
-				"区域 / 目标\n%s · %s" % [_localized_region(String(config.get("region_label", ""))), _localized_objective(String(config.get("selected_objective_label", "")))],
-				"携带状态\n背包 %d / %d" % [int(config.get("bag_used", 0)), int(config.get("bag_limit", 0))],
-			]
-		&"config":
-			var warehouse := _dictionary_from(config.get("warehouse_attendance_preview", {}))
-			return [
-				"装备\n%d 件已配置" % _array_from(config.get("selected_equipment_items", [])).size(),
-				"消耗品\n%d 件已携带" % _array_from(config.get("selected_consumable_items", [])).size(),
-				"背包 / 仓库\n%d / %d · 仓库 %d 件" % [int(config.get("bag_used", 0)), int(config.get("bag_limit", 0)), int(warehouse.get("item_count", 0))],
-				"档案接口\n许可 %d · 协议 %d" % [int(config.get("permit_level", 1)), int(config.get("protocol_difficulty", 0))],
-			]
-		&"effect":
-			return _summary_blocks_from_preview("本局效果", _array_from(preview, "effect"))
-		&"risk":
-			return _summary_blocks_from_preview("风险确认", _array_from(preview, "risk"))
-	return ["暂无信息", "", "", ""]
-
-
-func _summary_blocks_from_preview(heading: String, source: Array) -> Array[String]:
-	var lines := _compact_preview_lines(source)
+	var summary := _dictionary_from(current_model.get("summary_projection", {}))
+	var pages := _dictionary_from(summary.get("pages", {}))
+	var lines := _array_from(pages, String(page_id))
 	var result: Array[String] = []
 	for index in range(4):
-		var label := heading if index == 0 else "第 %d 项" % (index + 1)
-		var value := lines[index].trim_prefix("· ") if index < lines.size() else "暂无"
-		result.append("%s\n%s" % [label, value])
+		if index >= lines.size():
+			result.append("")
+			continue
+		var line := Art10UISkinKitScript.sanitize_player_copy(str(lines[index])).strip_edges()
+		result.append(Art10UISkinKitScript.short_summary(line, 28))
 	return result
-
-
-func _compact_preview_lines(source: Array) -> Array[String]:
-	var result: Array[String] = []
-	for raw_line in source.slice(0, 5):
-		var line := Art10UISkinKitScript.sanitize_player_copy(String(raw_line)).strip_edges()
-		if not line.is_empty():
-			result.append("· %s" % Art10UISkinKitScript.short_summary(line, 22))
-	return result
-
-
-func _localized_route(value: String) -> String:
-	return "常规扫雷" if value.to_lower().find("classic") >= 0 else Art10UISkinKitScript.short_summary(value, 12)
-
-
-func _localized_difficulty(value: String) -> String:
-	return "普通" if value.to_lower() == "normal" else Art10UISkinKitScript.short_summary(value, 8)
-
-
-func _localized_region(value: String) -> String:
-	return "灰尾外围" if value.to_lower().find("graytail") >= 0 else Art10UISkinKitScript.short_summary(value, 10)
-
-
-func _localized_objective(value: String) -> String:
-	return "回收补给箱" if value.to_lower().find("recover") >= 0 else Art10UISkinKitScript.short_summary(value, 10)
 
 
 func _wire_focus_neighbors() -> void:
 	_wire_linear(_buttons_from_dictionary(tab_buttons), false)
-	_wire_linear(_buttons_from_dictionary(filter_buttons), false)
-	_wire_linear(_card_focus_buttons(), true)
+	var active_tab_button := tab_buttons.get(_active_tab()) as Button
+	if _active_tab() == DeployTabModelScript.TAB_MAP and map_split_view != null:
+		var map_buttons: Array = map_split_view.call("focus_buttons")
+		if active_tab_button != null and not map_buttons.is_empty():
+			var first_map_button := map_buttons[0] as Button
+			_set_neighbor(active_tab_button, "bottom", first_map_button)
+			_set_neighbor(first_map_button, "top", active_tab_button)
+	else:
+		var filters := _buttons_from_dictionary(filter_buttons)
+		var cards := _card_focus_buttons()
+		_wire_linear(filters, false)
+		_wire_linear(cards, true)
+		if active_tab_button != null:
+			if not filters.is_empty():
+				_set_neighbor(active_tab_button, "bottom", filters[0] as Button)
+			elif not cards.is_empty():
+				_set_neighbor(active_tab_button, "bottom", cards[0] as Button)
+		if not filters.is_empty() and not cards.is_empty():
+			for filter_button in filters:
+				_set_neighbor(filter_button as Button, "bottom", cards[0] as Button)
+		var detail_focus := _first_detail_action_button()
+		if detail_focus != null and not cards.is_empty():
+			for card_button in cards:
+				_set_neighbor(card_button as Button, "right", detail_focus)
+			_set_neighbor(detail_focus, "left", cards[0] as Button)
+		if detail_primary_action_button != null and detail_secondary_action_button != null and detail_primary_action_button.visible and detail_secondary_action_button.visible:
+			_link_horizontal(detail_primary_action_button, detail_secondary_action_button)
 	_wire_linear(_buttons_from_dictionary(summary_buttons), false)
 	if modal_confirm_button != null and modal_cancel_button != null:
-		_link_horizontal(modal_confirm_button, modal_cancel_button)
+		_trap_modal_focus(modal_confirm_button, modal_cancel_button)
 	var nav_main := get_node_or_null("PrimaryActionRoot/DeployNavMain") as Button
 	var nav_long := get_node_or_null("PrimaryActionRoot/DeployNavLongTerm") as Button
 	var appearance := get_node_or_null("PrimaryActionRoot/DeployAppearanceButton") as Button
@@ -1013,6 +1350,13 @@ func _wire_focus_neighbors() -> void:
 	if primary_action_button != null and cancel_action_button != null:
 		_set_neighbor(primary_action_button, "bottom", cancel_action_button)
 		_set_neighbor(cancel_action_button, "top", primary_action_button)
+
+
+func _first_detail_action_button() -> Button:
+	for button in [detail_primary_action_button, detail_secondary_action_button]:
+		if button != null and button.visible and not button.disabled:
+			return button
+	return null
 
 
 func _wire_linear(buttons: Array, vertical: bool) -> void:
@@ -1049,6 +1393,18 @@ func _link_horizontal(left: Button, right: Button) -> void:
 func _link_vertical(top: Button, bottom: Button) -> void:
 	_set_neighbor(top, "bottom", bottom)
 	_set_neighbor(bottom, "top", top)
+
+
+func _trap_modal_focus(first: Button, second: Button) -> void:
+	if first == null or second == null:
+		return
+	for direction in ["top", "bottom", "left", "right"]:
+		_set_neighbor(first, direction, second)
+		_set_neighbor(second, direction, first)
+	first.focus_next = first.get_path_to(second)
+	first.focus_previous = first.get_path_to(second)
+	second.focus_next = second.get_path_to(first)
+	second.focus_previous = second.get_path_to(first)
 
 
 func _grab_initial_focus() -> void:
@@ -1102,7 +1458,7 @@ func _restore_card_scroll(value: int) -> void:
 
 
 func _visible_cards_contain(card_id: StringName) -> bool:
-	for raw_card in _array_from(current_model, "visible_cards"):
+	for raw_card in _array_from(current_model, "selection_rows"):
 		if StringName(_dictionary_from(raw_card).get("id", &"")) == card_id:
 			return true
 	return false
@@ -1188,17 +1544,19 @@ func _apply_image_button_surface(button: Button, control_id: StringName, normal_
 	if button.disabled:
 		normal = &"disabled"
 	button.add_theme_stylebox_override("normal", _button_style(control_id, normal))
-	button.add_theme_stylebox_override("hover", _button_style(control_id, &"focused"))
-	button.add_theme_stylebox_override("focus", _button_style(control_id, &"focused"))
+	var focused_state := &"selected" if normal_state == &"selected" else &"focused"
+	button.add_theme_stylebox_override("hover", _button_style(control_id, focused_state))
+	button.add_theme_stylebox_override("focus", _button_style(control_id, focused_state))
 	var pressed_state := &"selected" if normal_state == &"selected" else &"pressed"
 	button.add_theme_stylebox_override("pressed", _button_style(control_id, pressed_state))
 	button.add_theme_stylebox_override("hover_pressed", _button_style(control_id, pressed_state))
 	button.add_theme_stylebox_override("disabled", _button_style(control_id, &"disabled"))
 	var dark_text := control_id in [&"tab", &"filter", &"handle"] and normal_state != &"selected"
 	var color := Color(0.20, 0.12, 0.07) if dark_text else Color(0.98, 0.86, 0.58)
+	var light_surface_text := Color(0.20, 0.12, 0.07) if control_id in [&"tab", &"filter", &"handle"] and normal_state != &"selected" else color.lightened(0.12)
 	button.add_theme_color_override("font_color", color)
-	button.add_theme_color_override("font_hover_color", color.lightened(0.12))
-	button.add_theme_color_override("font_focus_color", color.lightened(0.12))
+	button.add_theme_color_override("font_hover_color", light_surface_text)
+	button.add_theme_color_override("font_focus_color", light_surface_text)
 	button.add_theme_color_override("font_pressed_color", color if normal_state == &"selected" else color.darkened(0.12))
 	button.add_theme_color_override("font_disabled_color", Color(color.r, color.g, color.b, 0.46))
 
@@ -1368,13 +1726,20 @@ func _scroll_filters(direction: int) -> void:
 func _update_filter_navigation() -> void:
 	if filter_previous_button == null or filter_next_button == null or filter_scroll == null:
 		return
-	var show_navigation := filter_buttons.size() > 6
+	# The content minimum is independent of the current scroll value. Basing the
+	# decision on it avoids both sticky arrows after a page switch and clamping
+	# the last part of an overflowing row whenever value_changed fires.
+	var content_width := filter_row.get_combined_minimum_size().x if filter_row != null else 0.0
+	var show_navigation := content_width > DeployPrepLayoutContractScript.FILTER_SCROLL.size.x
+	var target_rect := DeployPrepLayoutContractScript.FILTER_SCROLL_WITH_NAV if show_navigation else DeployPrepLayoutContractScript.FILTER_SCROLL
+	if filter_scroll.position != target_rect.position or filter_scroll.size != target_rect.size:
+		_set_rect(filter_scroll, target_rect)
+	var bar := filter_scroll.get_h_scroll_bar()
+	var max_scroll := maxi(0, int(bar.max_value - bar.page)) if bar != null else 0
 	filter_previous_button.visible = show_navigation
 	filter_next_button.visible = show_navigation
 	if not show_navigation:
 		return
-	var bar := filter_scroll.get_h_scroll_bar()
-	var max_scroll := maxi(0, int(bar.max_value - bar.page)) if bar != null else 0
 	filter_previous_button.disabled = filter_scroll.scroll_horizontal <= 0
 	filter_next_button.disabled = filter_scroll.scroll_horizontal >= max_scroll
 	_apply_image_button_surface(filter_previous_button, &"filter", &"normal")

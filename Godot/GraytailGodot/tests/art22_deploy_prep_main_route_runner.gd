@@ -61,7 +61,6 @@ func _run() -> void:
 	_check(StringName(playing.get("profile_id", &"")) == &"enter_cave", "Deploy route did not use enter_cave")
 	_check(StringName(run_scene.get("screen_state")) == &"main_menu", "Deploy route changed screen before presentation completion")
 	_check(not deploy_page.visible and page_change_count == 0, "Deploy route committed before presentation completion")
-	# AppShell owns the route commit; MainMenuShell only advances presentation.
 	main_menu.call("_process", 1.2)
 	await _frames(8)
 
@@ -73,13 +72,49 @@ func _run() -> void:
 	_check(StringName(settled.get("state", &"")) == &"idle", "Deploy coordinator did not settle IDLE")
 	_check(StringName(last_result.get("outcome", &"")) == &"committed" and int(last_result.get("commit_count", 0)) == 1, "Deploy route did not commit exactly once")
 	_check(page_change_count == 1 and last_page == &"deploy_prep", "Deploy route emitted duplicate or false page changes")
+
 	_check(deploy_page.get_node_or_null("BackgroundRoot/DeployPrepSceneCleanPlate") is TextureRect, "Actual deploy route is missing the ART22 clean plate")
 	_check(deploy_page.get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployParchment") is TextureRect, "Actual deploy route is missing the ART22 parchment")
 	_check(deploy_page.get_node_or_null("SideStatusRoot/DeploySummaryBoard") is TextureRect, "Actual deploy route is missing the ART22 hanging summary")
-	_check((deploy_page.get("tab_buttons") as Dictionary).size() == 5, "Actual deploy route does not expose five ART22 primary tabs")
-	_check((deploy_page.get("filter_buttons") as Dictionary).size() == 6, "Actual default map route does not expose six map filters")
+	_check(deploy_page.get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployMapSplitView") is Control, "Actual deploy route is missing the same-page map split")
+	_check((deploy_page.get("filter_buttons") as Dictionary).is_empty(), "Actual map route regressed to region/filter staging")
+	_check((deploy_page.get("card_views") as Array).is_empty(), "Actual map route regressed to generic map cards")
+	_check_player_tab_labels(deploy_page)
 
+	var model := deploy_page.get("current_model") as Dictionary
+	var projection := model.get("map_projection", {}) as Dictionary
+	_check(StringName(model.get("active_tab", &"")) == &"map", "Actual Deploy route does not land on the map tab")
+	_check(StringName(projection.get("page_id", &"")) == &"deploy_prep" and StringName(projection.get("route_page_id", &"")) == &"deploy_prep", "Actual map route introduced an intermediate page")
+	_check((projection.get("scale_options", []) as Array).size() == 3, "Actual Deploy route does not expose three map scales")
+	var map_view := deploy_page.get("map_split_view") as Control
+	_check(map_view != null and int((map_view.call("projection_snapshot") as Dictionary).get("difficulty_count", 0)) == 2, "Actual default scale does not expose its two difficulties")
+	if map_view != null:
+		var scale_13 := (map_view.get("scale_buttons") as Dictionary).get(&"13x13") as Button
+		_check(scale_13 != null, "Actual route is missing the 13x13 scale")
+		if scale_13 != null:
+			scale_13.emit_signal("pressed")
+			await _frames(2)
+			_check((map_view.get("difficulty_buttons") as Dictionary).size() == 3, "Actual 13x13 scale does not expose three difficulties")
+			_check(page_change_count == 1 and StringName(run_scene.get("screen_state")) == &"deploy_shell", "Map scale preview navigated away from the single Deploy page")
+
+	main.queue_free()
+	await _frames(4)
 	_finish()
+
+
+func _check_player_tab_labels(deploy_page: Control) -> void:
+	var expected := {
+		&"map": "地图",
+		&"warehouse": "仓库",
+		&"claim": "申领",
+		&"objective": "本局委托",
+		&"loadout": "携带清单",
+	}
+	var buttons := deploy_page.get("tab_buttons") as Dictionary
+	_check(buttons.size() == 5, "Actual deploy route does not expose five primary tabs")
+	for tab_id in expected:
+		var button := buttons.get(tab_id) as Button
+		_check(button != null and button.text == str(expected[tab_id]), "Actual deploy route has the wrong player tab label: " + String(tab_id))
 
 
 func _frames(count: int) -> void:
@@ -94,7 +129,7 @@ func _on_page_changed(page_id: StringName, _payload: Dictionary) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy shell=DeployPrepShell")
+		print("ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=3")
 		quit(0)
 		return
 	for failure in failures:

@@ -25,10 +25,20 @@ static func map_definitions() -> Array[Dictionary]:
 
 
 static func map_definition(map_id: String) -> Dictionary:
+	var exact := map_definition_exact(map_id)
+	if not exact.is_empty():
+		return exact
+	# Historical callers rely on the 10x10 standard fallback. New selection and
+	# projection paths must use map_definition_exact() so an unknown id cannot be
+	# presented as another playable map.
+	return map_definitions()[3].duplicate(true)
+
+
+static func map_definition_exact(map_id: String) -> Dictionary:
 	for definition in map_definitions():
 		if str(definition.get("id", "")) == map_id:
 			return definition.duplicate(true)
-	return map_definitions()[3].duplicate(true)
+	return {}
 
 
 static func map_runtime_config(map_id: String, seed_value: int, run_start_config: Dictionary = {}) -> Dictionary:
