@@ -17,7 +17,7 @@ const CURRENCY_BLACK := &"black_coin"
 const CURRENCY_GOLD := &"gold_coin"
 const CURRENCY_SAFE_YIELD := &"gold_coin"
 const CURRENCY_LONG_TERM_GOLD := &"long_term_gold"
-const RARITY_TIERS := [&"common", &"good", &"rare", &"epic", &"legendary", &"mythic", &"unique"]
+const RARITY_TIERS := [&"tier_1", &"tier_2", &"tier_3", &"tier_4", &"tier_5", &"tier_6", &"unique"]
 
 var currency_definitions: Dictionary = {}
 var currency_balances: Dictionary = {}
@@ -166,7 +166,9 @@ func add_reward_items(item_defs: Array, preferred_location: StringName, room_pos
 			item_def["acquired_in_run"] = true
 			item_def["equip_allowed_now"] = false
 		var target_location := StringName(item_def.get("reward_location", preferred_location))
-		if bool(item_def.get("is_unique", false)) and not bool(item_def.get("unique_drop_allowed", false)):
+		var normalized_rarity := _normalize_rarity(StringName(item_def.get("rarity", &"tier_1")))
+		var unique_item := normalized_rarity == &"unique" or bool(item_def.get("is_unique", false))
+		if unique_item and not bool(item_def.get("unique_drop_allowed", false)):
 			blocked_reasons.append("unique_not_allowed_in_ordinary_drop")
 			continue
 		if target_location == LOCATION_ROOM_FLOOR:
@@ -850,6 +852,19 @@ func _replacement_drop_candidate_id(ground_item: Dictionary) -> String:
 
 
 func _normalize_rarity(rarity: StringName) -> StringName:
-	if RARITY_TIERS.has(rarity):
-		return rarity
-	return &"common"
+	match String(rarity).strip_edges().to_lower():
+		"tier_1", "common":
+			return &"tier_1"
+		"tier_2", "uncommon", "good":
+			return &"tier_2"
+		"tier_3", "rare":
+			return &"tier_3"
+		"tier_4", "epic":
+			return &"tier_4"
+		"tier_5", "legendary":
+			return &"tier_5"
+		"tier_6", "mythic":
+			return &"tier_6"
+		"unique":
+			return &"unique"
+	return &"tier_1"

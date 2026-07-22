@@ -9,6 +9,7 @@ const Art21UIPlacementContractScript := preload("res://scripts/presentation/art2
 const Art24MapOverlayLayoutScript := preload("res://scripts/presentation/art24/art24_map_overlay_layout.gd")
 
 signal cell_action_requested(marker: Dictionary)
+signal close_requested
 
 var view_model: MiniMapViewModel
 var selected_feedback_text: String = ""
@@ -18,6 +19,7 @@ var layout_metrics: Dictionary = {}
 var marker_size: Vector2 = Vector2(42, 42)
 var title_font_size: int = 20
 var footer_font_size: int = 13
+var previous_focus_owner: Control
 const LEGACY_MAP_OVERLAY_VALIDATION_MARKER := "Click hidden cells to flag"
 const ART21R2_MAP_PANEL_FRAME_VISUAL_KEY := &"art21r2.modal.inventory.frame"
 const ART21R2_MAP_TITLE_PLATE_VISUAL_KEY := &"art21r2.modal.title_plate"
@@ -69,17 +71,38 @@ func apply_layout_profile(profile: Dictionary) -> void:
 
 
 func show_overlay() -> void:
+	var focus_owner := get_viewport().gui_get_focus_owner()
+	if focus_owner != null and focus_owner != self and not is_ancestor_of(focus_owner):
+		previous_focus_owner = focus_owner
 	visible = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	if get_parent() != null:
 		get_parent().move_child(self, get_parent().get_child_count() - 1)
 	_rebuild_grid()
+	call_deferred("_focus_preferred_control")
 
 
 func hide_overlay() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	get_viewport().gui_release_focus()
+	var focus_target := previous_focus_owner
+	previous_focus_owner = null
+	if is_instance_valid(focus_target):
+		call_deferred("_restore_focus_reference_if_valid", weakref(focus_target))
+
+
+func _restore_focus_reference_if_valid(reference: WeakRef) -> void:
+	var focus_target: Variant = reference.get_ref() if reference != null else null
+	if (
+		focus_target is Control
+		and is_instance_valid(focus_target)
+		and not (focus_target as Control).is_queued_for_deletion()
+		and (focus_target as Control).is_inside_tree()
+		and (focus_target as Control).is_visible_in_tree()
+		and (focus_target as Control).focus_mode != Control.FOCUS_NONE
+	):
+		(focus_target as Control).grab_focus()
 
 
 func toggle_overlay() -> void:
@@ -92,6 +115,7 @@ func toggle_overlay() -> void:
 func _ready() -> void:
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	focus_mode = Control.FOCUS_ALL
 	_apply_layer_order()
 	_rebuild_grid()
 
@@ -117,8 +141,45 @@ func _input(event: InputEvent) -> void:
 	var right_click := event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT and (event as InputEventMouseButton).pressed
 	var toggle_map := event.is_action_pressed("open_map") or _event_matches_key(event, [KEY_M])
 	if event.is_action_pressed("cancel") or _event_matches_key(event, [KEY_ESCAPE]) or toggle_map or right_click:
-		hide_overlay()
+		_request_user_close()
 		get_viewport().set_input_as_handled()
+
+
+func _gui_input(event: InputEvent) -> void:
+	if not visible or not (event is InputEventMouseButton):
+		return
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
+		return
+	var panel := get_node_or_null("Panel") as Control
+	if panel != null and panel.get_rect().has_point(mouse_event.position):
+		return
+	_request_user_close()
+	accept_event()
+
+
+func _request_user_close() -> void:
+	if not visible:
+		return
+	hide_overlay()
+	close_requested.emit()
+
+
+func preferred_focus_control() -> Control:
+	var grid := get_node_or_null("Panel/Content/Grid") as GridContainer
+	if grid != null:
+		for child in grid.get_children():
+			if child is Button and not child.is_queued_for_deletion():
+				return child as Button
+	return self
+
+
+func _focus_preferred_control() -> void:
+	if not visible:
+		return
+	var control := preferred_focus_control()
+	if control != null and control.is_inside_tree():
+		control.grab_focus()
 
 
 func _rebuild_grid() -> void:
@@ -128,6 +189,12 @@ func _rebuild_grid() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if grid == null:
 		return
+	var focus_pos := Vector2i(-1, -1)
+	var focus_owner := get_viewport().gui_get_focus_owner()
+	if focus_owner != null and grid.is_ancestor_of(focus_owner) and focus_owner.has_meta("map_pos"):
+		focus_pos = Vector2i(focus_owner.get_meta("map_pos", focus_pos))
+	elif not selected_marker.is_empty():
+		focus_pos = Vector2i(selected_marker.get("pos", focus_pos))
 	var grid_gap := int(layout_metrics.get("grid_gap", 3 if marker_size.x <= 38.0 else 5))
 	grid.add_theme_constant_override("h_separation", grid_gap)
 	grid.add_theme_constant_override("v_separation", grid_gap)
@@ -135,6 +202,7 @@ func _rebuild_grid() -> void:
 	grid.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 
 	for child in grid.get_children():
+		grid.remove_child(child)
 		child.queue_free()
 
 	_apply_overlay_text_hierarchy(title, detail, footer)
@@ -143,7 +211,7 @@ func _rebuild_grid() -> void:
 		title.add_theme_font_size_override("font_size", title_font_size)
 		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		title.text = "区域扫描图（点击格子标记雷险 / 回传）"
+		title.text = "区域地图"
 	if detail != null:
 		detail.visible = false
 		detail.custom_minimum_size = Vector2.ZERO
@@ -154,10 +222,7 @@ func _rebuild_grid() -> void:
 		footer.add_theme_constant_override("line_spacing", 2)
 		footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		footer.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		footer.text = "左键：未知格标记雷险 / 取消 · 已探索格回传 · M / Esc / 右键关闭"
-
-	if footer != null and selected_feedback_text != "":
-		footer.text += "\n" + selected_feedback_text
+		_refresh_footer_text()
 
 	if view_model == null:
 		return
@@ -165,18 +230,23 @@ func _rebuild_grid() -> void:
 	grid.columns = max(1, view_model.width)
 	for marker in view_model.room_markers:
 		_add_marker_node(grid, marker)
+	if visible and focus_pos != Vector2i(-1, -1):
+		call_deferred("_focus_marker_position", focus_pos)
 
 
 func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
 	var label_text := String(marker.get("label", "?"))
 	var button := Button.new()
+	var marker_pos: Vector2i = marker.get("pos", Vector2i.ZERO)
+	button.name = "MapCell_%d_%d" % [marker_pos.x, marker_pos.y]
+	button.set_meta("map_pos", marker_pos)
 	button.custom_minimum_size = marker_size
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.focus_mode = Control.FOCUS_ALL
 	button.text = label_text
-	button.tooltip_text = ""
+	button.tooltip_text = String(marker.get("detail_text", marker.get("tooltip", "")))
 	var marker_color := PresentationTheme.color_for_key(theme_key)
 	if label_text == "?":
 		marker_color = Color(0.58, 0.72, 0.68, 0.74)
@@ -198,7 +268,30 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 		button.text = "" if label_text != "P" else "P"
 	button.modulate = _modulate_for_marker_state(state, selected)
 	button.pressed.connect(func() -> void: _select_marker(marker))
+	_add_adjacent_mine_count(button, marker)
 	grid.add_child(button)
+
+
+func _add_adjacent_mine_count(button: Button, marker: Dictionary) -> void:
+	var adjacent := _public_adjacent_mines(marker)
+	if adjacent < 0:
+		return
+	var count_label := Label.new()
+	count_label.name = "AdjacentMineCount"
+	count_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	count_label.offset_left = 3.0
+	count_label.offset_top = 3.0
+	count_label.offset_right = -4.0
+	count_label.offset_bottom = -2.0
+	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	count_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	count_label.text = str(adjacent)
+	count_label.add_theme_font_size_override("font_size", clampi(int(marker_size.y * 0.28), 11, 15))
+	count_label.add_theme_color_override("font_color", Color(0.98, 0.94, 0.78, 1.0))
+	count_label.add_theme_color_override("font_outline_color", Color(0.02, 0.03, 0.03, 1.0))
+	count_label.add_theme_constant_override("outline_size", 2)
+	button.add_child(count_label)
 
 
 func _set_rect(control: Control, rect: Rect2) -> void:
@@ -362,6 +455,10 @@ func _art21_marker_state(marker: Dictionary) -> StringName:
 		return &"player"
 	if bool(marker.get("flagged", false)) or asset_id.find("flag") >= 0:
 		return &"flagged"
+	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
+	var publicly_revealed := bool(marker.get("revealed", false)) or bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]
+	if not publicly_revealed and room_type != "exit" and (known_state == &"unknown" or String(marker.get("label", "")) == "?"):
+		return &"unknown"
 	if room_type == "event" or asset_id.find("event") >= 0:
 		return &"event"
 	if room_type == "mine" or room_type == "monster" or asset_id.find("mine") >= 0 or asset_id.find("monster") >= 0:
@@ -375,6 +472,15 @@ func _art21_marker_state(marker: Dictionary) -> StringName:
 	if not bool(marker.get("revealed", true)) or String(marker.get("label", "")) == "?":
 		return &"unknown"
 	return &"explored"
+
+
+func _public_adjacent_mines(marker: Dictionary) -> int:
+	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
+	var publicly_known := bool(marker.get("revealed", false)) or bool(marker.get("scanned", false)) or known_state in [&"scanned", &"explored", &"cleared"]
+	var adjacent := int(marker.get("adjacent_mines", -1))
+	if not publicly_known or adjacent < 0 or adjacent > 8:
+		return -1
+	return adjacent
 
 
 func _map_overlay_asset_ref_for_marker(marker: Dictionary) -> Dictionary:
@@ -431,10 +537,11 @@ func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 	var accepted: bool = bool(result.get("accepted", result.get("ok", false)))
 	var reason: String = String(result.get("reason_code", result.get("reason", "")))
 	if accepted:
-		selected_feedback_text = "地图记录：已选择 (%d,%d)，操作已确认。" % [pos.x, pos.y]
+		selected_feedback_text = "已更新格子 (%d,%d)。" % [pos.x, pos.y]
 	else:
-		selected_feedback_text = "地图记录：已选择 (%d,%d)，%s" % [pos.x, pos.y, RunUIViewModel.reason_label(reason)]
-	_rebuild_grid()
+		selected_feedback_text = "格子 (%d,%d)：%s" % [pos.x, pos.y, RunUIViewModel.reason_label(reason)]
+	_refresh_footer_text()
+	call_deferred("_focus_marker_position", pos)
 
 
 func show_open_feedback(_source: StringName) -> void:
@@ -442,14 +549,34 @@ func show_open_feedback(_source: StringName) -> void:
 	# the map is already visually explicit; repeating it added an unnecessary
 	# second footer line and competed with the control hint.
 	selected_feedback_text = ""
-	_rebuild_grid()
+	_refresh_footer_text()
 
 
 func _select_marker(marker: Dictionary) -> void:
 	selected_marker = marker.duplicate(true)
 	selected_feedback_text = ""
 	cell_action_requested.emit(marker.duplicate(true))
-	_rebuild_grid()
+
+
+func _refresh_footer_text() -> void:
+	var footer := get_node_or_null("Panel/Content/Footer") as Label
+	if footer == null:
+		return
+	footer.text = "左键格子：查看、标记或回传\nM / Esc / 右键 / 点击面板外：关闭"
+	if selected_feedback_text != "":
+		footer.text = "%s\nM / Esc / 右键 / 点击面板外：关闭" % selected_feedback_text
+
+
+func _focus_marker_position(pos: Vector2i) -> void:
+	if not visible:
+		return
+	var button := get_node_or_null("Panel/Content/Grid/MapCell_%d_%d" % [pos.x, pos.y]) as Button
+	if button != null and button.is_visible_in_tree() and not button.disabled:
+		button.grab_focus()
+		return
+	var fallback := preferred_focus_control()
+	if fallback != null:
+		fallback.grab_focus()
 
 
 func _ensure_detail_label() -> Label:

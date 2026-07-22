@@ -5,6 +5,7 @@ const PresentationTheme := preload("res://scripts/presentation/presentation_them
 const PresentationMapping := preload("res://scripts/presentation/presentation_mapping.gd")
 const Art24ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const Art09ManifestAssetMapping := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const ItemRarityDescriptor := preload("res://scripts/presentation/item_rarity_descriptor.gd")
 
 signal close_requested
 
@@ -187,19 +188,28 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _add_item_card(item: Dictionary) -> void:
-	var rarity := StringName(item.get("rarity", &"common"))
+	var rarity := ItemRarityDescriptor.describe_item(item)
 	var row_texture := "res://assets/art24/ui/item_row_normal.png"
-	if rarity in [&"rare", &"tier_3", &"epic", &"tier_4", &"legendary", &"tier_5"]:
+	if int(rarity.get("tier", 0)) >= 3 or bool(rarity.get("locked", false)):
 		row_texture = "res://assets/art24/ui/item_row_selected.png"
 	var card := PanelContainer.new()
 	card.name = "LootResultItemCard"
 	card.custom_minimum_size = Vector2(0, 88)
+	card.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
 	card.add_theme_stylebox_override("panel", _textured_style(row_texture, 15, 12))
 	item_list.add_child(card)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	card.add_child(row)
+
+	var rarity_edge := ColorRect.new()
+	rarity_edge.name = "LootResultRarityEdge"
+	rarity_edge.custom_minimum_size = Vector2(4, 62)
+	rarity_edge.color = Color(rarity.get("color", Color("a9b0ad")))
+	rarity_edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rarity_edge.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+	row.add_child(rarity_edge)
 
 	var icon := TextureRect.new()
 	icon.name = "LootResultItemIcon"
@@ -216,11 +226,12 @@ func _add_item_card(item: Dictionary) -> void:
 	var name_label := Label.new()
 	name_label.text = "%s  ×%d" % [String(item.get("display_name", item.get("item_id", "未知物资"))), maxi(1, int(item.get("count", 1)))]
 	name_label.add_theme_font_size_override("font_size", 18)
-	name_label.add_theme_color_override("font_color", _rarity_color(rarity))
+	name_label.add_theme_color_override("font_color", Color(rarity.get("color", Color("a9b0ad"))))
 	copy.add_child(name_label)
 
 	var meta_label := Label.new()
-	meta_label.text = "%s  ·  %s%s" % [_item_type_label(String(item.get("item_type", item.get("main_type", "collectible")))), _rarity_label(rarity), _effect_copy(item)]
+	meta_label.name = "LootResultRarityMeta"
+	meta_label.text = "%s  ·  %s%s" % [_item_type_label(String(item.get("item_type", item.get("main_type", "collectible")))), String(rarity.get("display_text", "[?] 未鉴定")), _effect_copy(item)]
 	meta_label.add_theme_font_size_override("font_size", 13)
 	meta_label.add_theme_color_override("font_color", Color("b7c4c0"))
 	copy.add_child(meta_label)
@@ -313,26 +324,6 @@ func _item_type_label(value: String) -> String:
 		"recovered", "treasure", "collectible": return "回收物"
 		"currency": return "货币"
 		_: return "物资"
-
-
-func _rarity_label(value: StringName) -> String:
-	match value:
-		&"common", &"tier_1": return "普通"
-		&"uncommon", &"tier_2": return "优良"
-		&"rare", &"tier_3": return "稀有"
-		&"epic", &"tier_4": return "珍贵"
-		&"legendary", &"tier_5": return "传奇"
-		&"unique": return "唯一"
-		_: return "未鉴定"
-
-
-func _rarity_color(value: StringName) -> Color:
-	match value:
-		&"uncommon", &"tier_2": return Color("9fdc9b")
-		&"rare", &"tier_3": return Color("83c9ff")
-		&"epic", &"tier_4": return Color("c9a2ff")
-		&"legendary", &"tier_5", &"unique": return Color("f2c66d")
-		_: return Color("e6e1cf")
 
 
 func _array_from(source: Dictionary, key: String) -> Array:

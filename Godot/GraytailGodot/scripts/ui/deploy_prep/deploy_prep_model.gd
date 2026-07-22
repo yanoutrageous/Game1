@@ -5,6 +5,7 @@ const DeployConfigScript := preload("res://scripts/ui/deploy_prep/deploy_config.
 const DeployMapProjectionScript := preload("res://scripts/ui/deploy_prep/deploy_map_projection.gd")
 const DeployTabModelScript := preload("res://scripts/ui/deploy_prep/deploy_tab_model.gd")
 const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
+const ItemRarityDescriptorScript := preload("res://scripts/presentation/item_rarity_descriptor.gd")
 
 const EMERGENCY_CLAIM_ID := &"m6_emergency_ration"
 const EMERGENCY_CLAIM_CARD_ID := &"claim_emergency_ration"
@@ -299,7 +300,8 @@ static func _warehouse_item_row(
 	var item_type := StringName(item.get("item_type", &"special"))
 	var owned_count := _count_item_id(all_items, item_id)
 	var deployed_count := _count_selected_item(config, item_id)
-	var rarity := StringName(item.get("rarity", &"tier_1"))
+	var rarity_descriptor := ItemRarityDescriptorScript.describe_item(item)
+	var rarity := StringName(rarity_descriptor.get("normalized_key", &"unknown"))
 	var active_locked := bool(config.get("active_run_locked", false))
 	var actions := []
 	if bool(item.get("can_equip", false)) or bool(item.get("can_consume", false)):
@@ -324,14 +326,19 @@ static func _warehouse_item_row(
 		"title": str(item.get("display_name", item_id)),
 		"category": group_label,
 		"state": "selected" if selected else "owned",
-		"summary": "%s · 拥有 %d · 出勤 %d" % [_rarity_label(rarity), owned_count, deployed_count],
+		"summary": "%s · 拥有 %d · 出勤 %d" % [String(rarity_descriptor.get("display_text", "[?] 未鉴定")), owned_count, deployed_count],
 		"detail": str(item.get("short_description", "")),
 		"detail_kind": &"warehouse_item",
 		"instance_id": instance_id,
 		"item_id": item_id,
 		"item_type": item_type,
 		"rarity": rarity,
-		"rarity_label": _rarity_label(rarity),
+		"rarity_label": String(rarity_descriptor.get("label", "未鉴定")),
+		"rarity_badge": String(rarity_descriptor.get("badge", "?")),
+		"rarity_display_text": String(rarity_descriptor.get("display_text", "[?] 未鉴定")),
+		"rarity_border_token": StringName(rarity_descriptor.get("border_token", &"rarity.border.unknown")),
+		"rarity_color": Color(rarity_descriptor.get("color", Color.WHITE)),
+		"rarity_locked": bool(rarity_descriptor.get("locked", false)),
 		"owned_count": owned_count,
 		"deployed_count": deployed_count,
 		"selected": selected,
@@ -340,7 +347,7 @@ static func _warehouse_item_row(
 		"description": str(item.get("short_description", "")),
 		"source_label": str(item.get("source_label", item.get("source", "仓库"))),
 		"facts": [
-			_fact("品质", _rarity_label(rarity), _rarity_tone(rarity)),
+			_fact("品质", String(rarity_descriptor.get("display_text", "[?] 未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
 			_fact("拥有 / 出勤", "%d / %d" % [owned_count, deployed_count]),
 			_fact("重量", str(int(item.get("weight", 0)))),
 			_fact("价值", "%d 金币" % int(item.get("base_value", 0))),
@@ -576,24 +583,30 @@ static func _loadout_rows(config: Dictionary, map_projection: Dictionary) -> Arr
 
 static func _loadout_item_row(item: Dictionary, category: String, prefix: StringName, active_locked: bool) -> Dictionary:
 	var instance_id := str(item.get("instance_id", item.get("item_id", "item")))
-	var rarity := StringName(item.get("rarity", &"tier_1"))
+	var rarity_descriptor := ItemRarityDescriptorScript.describe_item(item)
+	var rarity := StringName(rarity_descriptor.get("normalized_key", &"unknown"))
 	return {
 		"id": StringName("%s:%s" % [String(prefix), instance_id]),
 		"filter_id": DeployTabModelScript.FILTER_ALL,
 		"title": str(item.get("display_name", item.get("item_id", "物品"))),
 		"category": category,
 		"state": "selected",
-		"summary": "%s · 重量 %d" % [_rarity_label(rarity), int(item.get("weight", 0))],
+		"summary": "%s · 重量 %d" % [String(rarity_descriptor.get("display_text", "[?] 未鉴定")), int(item.get("weight", 0))],
 		"detail": str(item.get("short_description", "")),
 		"detail_kind": &"loadout_item",
 		"item_id": str(item.get("item_id", "")),
 		"instance_id": instance_id,
 		"rarity": rarity,
-		"rarity_label": _rarity_label(rarity),
+		"rarity_label": String(rarity_descriptor.get("label", "未鉴定")),
+		"rarity_badge": String(rarity_descriptor.get("badge", "?")),
+		"rarity_display_text": String(rarity_descriptor.get("display_text", "[?] 未鉴定")),
+		"rarity_border_token": StringName(rarity_descriptor.get("border_token", &"rarity.border.unknown")),
+		"rarity_color": Color(rarity_descriptor.get("color", Color.WHITE)),
+		"rarity_locked": bool(rarity_descriptor.get("locked", false)),
 		"weight": int(item.get("weight", 0)),
 		"facts": [
 			_fact("类型", category),
-			_fact("品质", _rarity_label(rarity), _rarity_tone(rarity)),
+			_fact("品质", String(rarity_descriptor.get("display_text", "[?] 未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
 			_fact("重量", str(int(item.get("weight", 0)))),
 		],
 		"actions": [_action(&"remove_from_loadout", "移出携带", not active_locked, false, false, &"active_run_locked" if active_locked else &"ok", {"instance_id": instance_id})],
@@ -628,7 +641,8 @@ static func _detail_projection(active_tab: StringName, selected_row: Dictionary)
 	}
 	for key in [
 		"map_config_id", "scale_id", "scale_label", "difficulty", "difficulty_label", "unlocked",
-		"instance_id", "item_id", "item_type", "rarity", "rarity_label", "owned_count", "deployed_count", "weight", "value",
+		"instance_id", "item_id", "item_type", "rarity", "rarity_label", "rarity_badge", "rarity_display_text",
+		"rarity_border_token", "rarity_color", "rarity_locked", "owned_count", "deployed_count", "weight", "value",
 		"price", "balance", "balance_display", "affordable", "unlock_text", "claimed",
 		"commission_id", "condition", "metric", "target", "reward", "reward_text", "used", "limit"
 	]:
@@ -881,25 +895,6 @@ static func _claim_unlock_text(shop: Dictionary, unlocked: bool) -> String:
 		"profile":
 			return "档案等级达到 %s" % str(shop.get("unlock_value", ""))
 	return "尚未解锁"
-
-
-static func _rarity_label(rarity: StringName) -> String:
-	match rarity:
-		&"tier_1": return "普通"
-		&"tier_2": return "优良"
-		&"tier_3": return "稀有"
-		&"tier_4": return "珍贵"
-		&"unique": return "唯一"
-	return "未知"
-
-
-static func _rarity_tone(rarity: StringName) -> StringName:
-	match rarity:
-		&"tier_2": return &"uncommon"
-		&"tier_3": return &"rare"
-		&"tier_4": return &"epic"
-		&"unique": return &"unique"
-	return &"common"
 
 
 static func _reward_text(reward: Dictionary) -> String:

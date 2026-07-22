@@ -11,10 +11,19 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const Art24ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
+const ItemRarityDescriptor := preload("res://scripts/presentation/item_rarity_descriptor.gd")
+const RunSurfaceModelScript := preload("res://scripts/ui/run_surface/run_surface_model.gd")
 const BODY_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const PROTOCOL_LEVEL_ASSET_PREFIX := "ui.art24.ui.protocol.level_"
 const PROTOCOL_LEVEL_FALLBACK_ASSET := &"ui.art24.ui.protocol.level_5"
 const PROTOCOL_PRESSURE_MAX := 100.0
+const PROTOCOL_LEVEL_COLORS := {
+	1: Color(0.94, 0.22, 0.18, 0.96),
+	2: Color(0.96, 0.44, 0.18, 0.96),
+	3: Color(0.96, 0.68, 0.20, 0.96),
+	4: Color(0.48, 0.78, 0.54, 0.96),
+	5: Color(0.28, 0.82, 0.58, 0.96),
+}
 
 signal interact_requested
 signal inventory_requested
@@ -70,8 +79,10 @@ var scanner_title_label: Label
 var scanner_summary_label: Label
 var scanner_legend_label: Label
 var scanner_detail_label: Label
+var backpack_scroll: ScrollContainer
 var backpack_strip: GridContainer
 var backpack_empty_watermark: TextureRect
+var backpack_detail_label: Label
 var backpack_capacity_label: Label
 var room_title_label: Label
 var room_body_label: Label
@@ -140,7 +151,7 @@ func build() -> void:
 	protocol_level_plate.stretch_mode = TextureRect.STRETCH_SCALE
 	protocol_level_plate.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	protocol_pressure_track = _add_color_layer("RunProtocolPressureTrack", Color(0.01, 0.02, 0.022, 0.92))
-	protocol_pressure_fill = _add_color_layer("RunProtocolPressureFill", _protocol_pressure_color(0.0))
+	protocol_pressure_fill = _add_color_layer("RunProtocolPressureFill", _protocol_level_color(5))
 	bottom_backdrop = _add_panel("RunActionBarSurface", PresentationTheme.panel_color(), PresentationTheme.color_for_key(&"ui.accent"))
 	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.70), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(bottom_backdrop, &"summary")
@@ -171,15 +182,22 @@ func build() -> void:
 	scanner_legend_label = _add_label("RunScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 13, PresentationTheme.color_for_key(&"ui.muted"))
 
 	scanner_detail_label = _add_label("RunScannerDetail", "已知 / 危险 / 撤离", 13, PresentationTheme.color_for_key(&"ui.muted"))
+	backpack_scroll = ScrollContainer.new()
+	backpack_scroll.name = "RunBackpackScroll"
+	backpack_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	backpack_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	backpack_scroll.follow_focus = true
+	backpack_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(backpack_scroll)
 	backpack_strip = GridContainer.new()
 	backpack_strip.name = "RunBackpackStrip"
-	# UE shows four compact bag rows. A 2x2 card grid made the left rail read as
-	# a separate inventory window and, when empty, left a large unexplained void.
 	backpack_strip.columns = 1
 	backpack_strip.add_theme_constant_override("h_separation", 0)
 	backpack_strip.add_theme_constant_override("v_separation", 4)
-	backpack_strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(backpack_strip)
+	backpack_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	backpack_strip.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	backpack_strip.mouse_filter = Control.MOUSE_FILTER_PASS
+	backpack_scroll.add_child(backpack_strip)
 	backpack_empty_watermark = TextureRect.new()
 	backpack_empty_watermark.name = "RunBackpackEmptyWatermark"
 	backpack_empty_watermark.texture = load("res://assets/art24/ui/ue/ui_icon_backpack.png") as Texture2D
@@ -189,7 +207,12 @@ func build() -> void:
 	backpack_empty_watermark.modulate = Color(0.58, 0.72, 0.64, 0.16)
 	backpack_empty_watermark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backpack_empty_watermark)
+	backpack_detail_label = _add_label("RunBackpackDetail", "暂无物资", 13, PresentationTheme.color_for_key(&"ui.muted"))
+	backpack_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	backpack_detail_label.max_lines_visible = 3
+	backpack_detail_label.clip_text = true
 	backpack_capacity_label = _add_label("RunBackpackCapacity", "0 / 0", 13, PresentationTheme.color_for_key(&"ui.muted"))
+	backpack_capacity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 	minimap_panel = MiniMapScene.instantiate() as MiniMapPanel
 	minimap_panel.name = "RunScannerMiniMap"
@@ -273,11 +296,12 @@ func apply_surface_model(model: Dictionary) -> void:
 	objective_label.visible = false
 	room_background_layer.visible = false
 	player_sprite_layer.visible = false
-	resource_label.text = "【正常作业】 %s" % _compact_line(String(model.get("current_objective", "探索当前区域")), 18)
-	var danger_key := StringName(model.get("danger_theme_key", &"ui.warning"))
-	right_title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(danger_key, PresentationTheme.color_for_key(&"ui.warning")))
-	right_title_label.text = "协议 %s" % model.get("protocol_level", "--")
-	right_body_label.text = "压力 %s/100\n%s" % [model.get("pressure", "--"), _compact_line(String(model.get("danger_label", "状态稳定")), 12)]
+	var mine_risk := _dict_variant(model.get("mine_risk", {}))
+	resource_label.text = String(mine_risk.get("display_text", "周围雷险 ? · 未知"))
+	var protocol_level := clampi(int(model.get("protocol_level", 5)), 1, 5)
+	var protocol_title := String(model.get("protocol_title", RunSurfaceModelScript.protocol_title_for_level(protocol_level)))
+	right_title_label.text = "协议 %s · %s" % [protocol_level, protocol_title]
+	right_body_label.text = "压力 %s/100\n等级 %s / 5" % [model.get("pressure", "--"), protocol_level]
 	_update_protocol_presentation(model.get("protocol_level", 5), model.get("pressure", 0))
 	event_label.text = ""
 	event_label.visible = false
@@ -311,6 +335,10 @@ func apply_surface_model(model: Dictionary) -> void:
 	_apply_encounter_section(model.get("encounter_section", {}))
 	_apply_art10_text_refresh()
 	_apply_ue_readability_tokens(profile)
+	# Shared typography tokens intentionally reset title accents. Re-apply the
+	# protocol's authoritative level color after those generic tokens so room
+	# danger styling cannot replace it.
+	_update_protocol_presentation(model.get("protocol_level", 5), model.get("pressure", 0))
 
 
 func apply_combat_snapshot(snapshot: Dictionary) -> void:
@@ -321,7 +349,8 @@ func apply_combat_snapshot(snapshot: Dictionary) -> void:
 	for raw_enemy in (combat_runtime.get("enemies", []) as Array):
 		if raw_enemy is Dictionary and int((raw_enemy as Dictionary).get("hp", 0)) > 0:
 			alive_enemies += 1
-	right_title_label.text = "协议 %s" % snapshot.get("protocol_level", "--")
+	var protocol_level := clampi(int(snapshot.get("protocol_level", 5)), 1, 5)
+	right_title_label.text = "协议 %s · %s" % [protocol_level, RunSurfaceModelScript.protocol_title_for_level(protocol_level)]
 	right_body_label.text = "生命 %s/%s\n威胁 %d | 压力 %s/100" % [
 		snapshot.get("hp", 0),
 		snapshot.get("max_hp", 0),
@@ -329,7 +358,8 @@ func apply_combat_snapshot(snapshot: Dictionary) -> void:
 		snapshot.get("pressure", 0),
 	]
 	_update_protocol_presentation(snapshot.get("protocol_level", 5), snapshot.get("pressure", 0))
-	resource_label.text = "【战斗中】%s" % _compact_line(String(snapshot.get("last_message", "")), 18)
+	var adjacent := int(snapshot.get("adjacent_mines", -1)) if snapshot.has("adjacent_mines") else -1
+	resource_label.text = String(RunSurfaceModelScript.mine_risk_descriptor(adjacent).get("display_text", "周围雷险 ? · 未知"))
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
@@ -370,10 +400,9 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var stats_height: float = 84.0 if is_low else 94.0
 	var backpack_top: float = scanner_stats_top + stats_height + 10.0
 	var backpack_panel_height: float = maxf(192.0, height - backpack_top - 28.0)
-	# UE's bag summary is four compact 48 px rows at the 1920x1080 reference.
-	# Keep a 160 px readability floor at the 1280x720 target, but do not let
-	# the empty rows consume the whole lower rail and overpower the room view.
-	var backpack_grid_height: float = minf(backpack_panel_height - 64.0, maxf(160.0, 204.0 * ue_reference_scale))
+	# The quick bag is a true scroll surface. Reserve stable detail and burden
+	# bands, then let every real item remain reachable inside the remaining rail.
+	var backpack_scroll_height: float = minf(276.0, maxf(56.0, backpack_panel_height - 128.0))
 	var bottom_key_width: float = minf(720.0 * ue_reference_scale, gameplay_width - margin * 3.0)
 	bottom_key_width = maxf(456.0 if is_low else 520.0, bottom_key_width)
 	var bottom_key_left: float = gameplay_left + (gameplay_width - bottom_key_width) * 0.5
@@ -454,10 +483,11 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	minimap_panel.apply_layout_profile(profile)
 	_set_rect(scanner_legend_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 8.0, rail_content_width - 20.0, 42.0))
 	_set_rect(scanner_detail_label, Rect2(rail_content_left + 10.0, backpack_top + 10.0, rail_content_width - 20.0, 20.0))
-	_set_rect(backpack_strip, Rect2(rail_content_left + 10.0, backpack_top + 40.0, rail_content_width - 20.0, backpack_grid_height))
-	var backpack_empty_top: float = backpack_top + 40.0 + backpack_grid_height + 8.0
-	var backpack_empty_height: float = maxf(0.0, backpack_top + backpack_panel_height - 34.0 - backpack_empty_top)
-	_set_rect(backpack_empty_watermark, Rect2(rail_content_left + 20.0, backpack_empty_top, rail_content_width - 40.0, backpack_empty_height))
+	var backpack_scroll_rect := Rect2(rail_content_left + 10.0, backpack_top + 40.0, rail_content_width - 20.0, backpack_scroll_height)
+	_set_rect(backpack_scroll, backpack_scroll_rect)
+	backpack_strip.custom_minimum_size = Vector2(maxf(80.0, backpack_scroll_rect.size.x - 12.0), 0.0)
+	_set_rect(backpack_empty_watermark, Rect2(backpack_scroll_rect.position + Vector2(10.0, 4.0), backpack_scroll_rect.size - Vector2(20.0, 8.0)))
+	_set_rect(backpack_detail_label, Rect2(rail_content_left + 10.0, backpack_scroll_rect.end.y + 6.0, rail_content_width - 20.0, 52.0))
 	_set_rect(backpack_capacity_label, Rect2(rail_content_left + 10.0, backpack_top + backpack_panel_height - 24.0, rail_content_width - 20.0, 20.0))
 
 	_set_rect(room_title_label, Rect2(gameplay_square_left + 26.0, gameplay_square_top + 22.0, room_info_width - 28.0, 24.0))
@@ -509,7 +539,7 @@ func show_command_feedback(result: Dictionary) -> void:
 	command_feedback_label.visible = true
 	var text := RunUIViewModel.command_result_text(result)
 	if text == "":
-		text = "操作完成。" if accepted else "操作受阻。"
+		text = "已确认。" if accepted else "当前不可用。"
 	command_feedback_label.text = _feedback_copy(text)
 	var feedback_state := &"neutral"
 	if not accepted:
@@ -527,61 +557,90 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		return
 	var items: Array = items_variant if items_variant is Array else []
 	if backpack_empty_watermark != null:
-		# This is the lower-rail material watermark, not a fake inventory item.
-		# Keep it faintly present for partially populated bags so the remaining
-		# rail reads as intentional bag space instead of an unexplained void.
-		backpack_empty_watermark.visible = true
-		backpack_empty_watermark.modulate.a = 0.16 if items.is_empty() else 0.10
+		backpack_empty_watermark.visible = items.is_empty()
+		backpack_empty_watermark.modulate.a = 0.14
 	var signature_parts: Array[String] = []
 	for item_variant in items:
 		if item_variant is Dictionary:
 			var item: Dictionary = item_variant
-			signature_parts.append("%s:%s" % [item.get("instance_id", ""), item.get("item_id", "")])
+			signature_parts.append("%s:%s:%s:%s:%s" % [
+				item.get("instance_id", ""),
+				item.get("item_id", ""),
+				item.get("quantity", 1),
+				item.get("weight", 0),
+				item.get("rarity", &"unknown"),
+			])
 	var signature := ",".join(signature_parts)
 	if signature == last_backpack_signature and backpack_strip.get_child_count() > 0:
 		return
 	last_backpack_signature = signature
 	for child in backpack_strip.get_children():
+		backpack_strip.remove_child(child)
 		child.queue_free()
-	var visible_count := mini(4, items.size())
-	for index in range(4):
-		var slot := PanelContainer.new()
-		slot.name = "BackpackSlot%d" % index
-		slot.custom_minimum_size = Vector2(0, 38)
-		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		slot.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		slot.add_theme_stylebox_override("panel", _panel_style(Color(0.012, 0.022, 0.026, 0.94), Color(0.34, 0.28, 0.18, 0.92), 1))
-		backpack_strip.add_child(slot)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 4)
-		slot.add_child(row)
-		if index >= visible_count or not (items[index] is Dictionary):
-			var empty := Label.new()
-			empty.text = "空位"
-			empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			empty.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			empty.add_theme_font_size_override("font_size", 13)
-			empty.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-			row.add_child(empty)
+	if items.is_empty():
+		if backpack_detail_label != null:
+			backpack_detail_label.text = "暂无物资"
+			backpack_detail_label.tooltip_text = ""
+		return
+	var first_item: Dictionary = {}
+	for index in range(items.size()):
+		if not (items[index] is Dictionary):
 			continue
-		var item: Dictionary = items[index]
-		var icon := TextureRect.new()
-		icon.name = "BackpackItemIcon"
-		icon.custom_minimum_size = Vector2(32, 32)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		icon.texture = Art24ItemVisualCatalog.texture_for(item)
+		var item: Dictionary = (items[index] as Dictionary).duplicate(true)
+		if first_item.is_empty():
+			first_item = item.duplicate(true)
+		var rarity := ItemRarityDescriptor.describe_item(item)
+		var rarity_color: Color = rarity.get("color", PresentationTheme.color_for_key(&"ui.muted"))
+		var border_width := 2 if int(rarity.get("tier", 0)) >= 4 or bool(rarity.get("locked", false)) else 1
+		var quantity := int(item.get("quantity", 1))
+		var slot := Button.new()
+		slot.name = "BackpackItem%d" % index
+		slot.custom_minimum_size = Vector2(0, 50)
+		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		slot.focus_mode = Control.FOCUS_ALL
+		slot.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		slot.text = "%s ×%d\n%s · %s重" % [
+			_compact_line(String(item.get("display_name", item.get("item_id", "物资"))), 8),
+			quantity,
+			String(rarity.get("display_text", "[?] 未鉴定")),
+			item.get("weight", 0),
+		]
 		slot.tooltip_text = RunUIViewModel.item_tooltip(item)
-		row.add_child(icon)
-		var item_copy := Label.new()
-		item_copy.text = _compact_line(String(item.get("display_name", item.get("item_id", "物资"))), 5)
-		item_copy.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		item_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		item_copy.add_theme_font_size_override("font_size", 13)
-		item_copy.add_theme_color_override("font_color", PresentationTheme.text_color())
-		row.add_child(item_copy)
+		slot.icon = Art24ItemVisualCatalog.texture_for(item)
+		slot.expand_icon = true
+		slot.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		slot.add_theme_constant_override("icon_max_width", 34)
+		slot.add_theme_font_size_override("font_size", 13)
+		slot.add_theme_color_override("font_color", PresentationTheme.text_color())
+		slot.add_theme_color_override("font_hover_color", PresentationTheme.text_color())
+		slot.add_theme_color_override("font_focus_color", PresentationTheme.text_color())
+		slot.add_theme_stylebox_override("normal", _panel_style(Color(0.012, 0.022, 0.026, 0.94), rarity_color, border_width))
+		slot.add_theme_stylebox_override("hover", _panel_style(Color(0.024, 0.044, 0.048, 0.98), rarity_color.lightened(0.12), maxi(2, border_width)))
+		slot.add_theme_stylebox_override("focus", _panel_style(Color(0.024, 0.044, 0.048, 0.98), rarity_color.lightened(0.18), maxi(2, border_width)))
+		slot.add_theme_stylebox_override("pressed", _panel_style(Color(0.018, 0.034, 0.038, 0.98), rarity_color, maxi(2, border_width)))
+		slot.set_meta("item_instance_id", String(item.get("instance_id", "")))
+		slot.set_meta("rarity_border_token", StringName(rarity.get("border_token", &"rarity.border.unknown")))
+		slot.mouse_entered.connect(_show_backpack_item_detail.bind(item))
+		slot.focus_entered.connect(_show_backpack_item_detail.bind(item))
+		backpack_strip.add_child(slot)
+	if not first_item.is_empty():
+		_show_backpack_item_detail(first_item)
+
+
+func _show_backpack_item_detail(item: Dictionary) -> void:
+	if backpack_detail_label == null:
+		return
+	var rarity := ItemRarityDescriptor.describe_item(item)
+	var quantity := int(item.get("quantity", 1))
+	var description := String(item.get("short_description", item.get("description", ""))).strip_edges()
+	backpack_detail_label.text = "%s · %s\n数量 %d · 重量 %s%s" % [
+		String(item.get("display_name", item.get("item_id", "物资"))),
+		String(rarity.get("display_text", "[?] 未鉴定")),
+		quantity,
+		item.get("weight", 0),
+		"\n%s" % _compact_line(description, 28) if description != "" else "",
+	]
+	backpack_detail_label.tooltip_text = RunUIViewModel.item_tooltip(item)
 
 
 func get_hud() -> Hud:
@@ -999,6 +1058,8 @@ func _apply_art10_text_refresh() -> void:
 		scanner_summary_label,
 		scanner_legend_label,
 		scanner_detail_label,
+		backpack_detail_label,
+		backpack_capacity_label,
 		room_title_label,
 		room_body_label,
 		objective_label,
@@ -1034,6 +1095,10 @@ func _apply_art10_text_refresh() -> void:
 		action_hint_label.clip_text = true
 		action_hint_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		action_hint_label.size = Vector2(action_hint_label.size.x, maxf(22.0, action_hint_label.get_combined_minimum_size().y))
+	if backpack_detail_label is Label:
+		backpack_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		backpack_detail_label.max_lines_visible = 3
+		backpack_detail_label.clip_text = true
 	for left_label in [scanner_summary_label, scanner_legend_label, scanner_detail_label, resource_label]:
 		if left_label is Label:
 			left_label.clip_text = true
@@ -1258,9 +1323,11 @@ func _update_protocol_presentation(level_value: Variant, pressure_value: Variant
 	current_protocol_pressure = clampf(float(pressure_value), 0.0, PROTOCOL_PRESSURE_MAX)
 	if protocol_level_plate != null:
 		_apply_texture_ref(protocol_level_plate, _protocol_level_ref(current_protocol_level), 0.48)
-	var pressure_color := _protocol_pressure_color(current_protocol_pressure)
+	var pressure_color := _protocol_level_color(current_protocol_level)
 	if protocol_pressure_fill != null:
 		protocol_pressure_fill.color = pressure_color
+	if right_title_label != null:
+		right_title_label.add_theme_color_override("font_color", pressure_color)
 	if protocol_pressure_track != null and protocol_pressure_fill != null:
 		_set_rect(
 			protocol_pressure_fill,
@@ -1275,12 +1342,9 @@ func _update_protocol_presentation(level_value: Variant, pressure_value: Variant
 		protocol_glow_layer.visible = true
 
 
-func _protocol_pressure_color(pressure: float) -> Color:
-	if pressure >= 80.0:
-		return Color(0.94, 0.22, 0.18, 0.96)
-	if pressure >= 50.0:
-		return Color(0.96, 0.68, 0.20, 0.96)
-	return Color(0.28, 0.82, 0.58, 0.96)
+func _protocol_level_color(level_value: Variant) -> Color:
+	var level := clampi(int(level_value), 1, 5)
+	return Color(PROTOCOL_LEVEL_COLORS.get(level, PROTOCOL_LEVEL_COLORS[5]))
 
 
 func _apply_art24_frame(frame: NinePatchRect, texture_path: String, patch_margin: int) -> void:

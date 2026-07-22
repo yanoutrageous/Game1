@@ -7,6 +7,7 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const Art24ItemVisualCatalogScript := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
+const ItemRarityDescriptorScript := preload("res://scripts/presentation/item_rarity_descriptor.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 
 signal drop_item_requested(instance_id: String)
@@ -18,8 +19,12 @@ var summary_label: Label
 var item_list: VBoxContainer
 var item_scroll: ScrollContainer
 var item_backdrop: TextureRect
+var detail_scroll: ScrollContainer
 var tooltip_label: Label
 var last_result_label: Label
+var close_button: Button
+var first_item_button: Button
+var item_focus_targets: Dictionary = {}
 var item_button_minimum_size: Vector2 = Vector2(360, 52)
 
 
@@ -59,7 +64,7 @@ func build() -> void:
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	Art10UISkinKitScript.apply_label(title_label, 20, PresentationTheme.color_for_key(&"ui.accent"))
 	header.add_child(title_label)
-	var close_button := Button.new()
+	close_button = Button.new()
 	close_button.name = "InventoryCloseButton"
 	close_button.focus_mode = Control.FOCUS_ALL
 	close_button.text = "关闭"
@@ -112,15 +117,21 @@ func build() -> void:
 	tooltip_panel.name = "InventoryTooltipPanel"
 	_apply_art21r2_modal_panel(tooltip_panel, &"art21r2.modal.section.panel", 8, 32)
 	root.add_child(tooltip_panel)
+	detail_scroll = ScrollContainer.new()
+	detail_scroll.name = "InventoryItemDetailScroll"
+	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	detail_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tooltip_panel.add_child(detail_scroll)
 	tooltip_label = Label.new()
 	tooltip_label.name = "InventoryItemTooltip"
-	tooltip_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
-	tooltip_label.clip_text = true
+	tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tooltip_label.clip_text = false
 	tooltip_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tooltip_label.custom_minimum_size = Vector2(500, 54)
 	tooltip_label.add_theme_font_size_override("font_size", 15)
 	tooltip_label.add_theme_constant_override("line_spacing", 2)
-	tooltip_panel.add_child(tooltip_label)
+	detail_scroll.add_child(tooltip_label)
 
 	var result_panel := PanelContainer.new()
 	result_panel.name = "InventoryCommandResultPanel"
@@ -139,6 +150,12 @@ func build() -> void:
 func apply_snapshot(snapshot: Dictionary) -> void:
 	if summary_label == null:
 		build()
+	var focused_instance_id := ""
+	var focused_item_action := &""
+	var focus_owner := get_viewport().gui_get_focus_owner()
+	if focus_owner != null and is_ancestor_of(focus_owner):
+		focused_instance_id = String(focus_owner.get_meta("item_instance_id", ""))
+		focused_item_action = StringName(focus_owner.get_meta("item_action", &""))
 	var inventory_items: Array = _array_from(snapshot, "inventory_items")
 	var equipped_items: Array = _array_from(snapshot, "equipped_items")
 	if item_backdrop != null:
@@ -157,6 +174,8 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	Art10UISkinKitScript.apply_label(summary_label, 15, PresentationTheme.text_color())
 	for child in item_list.get_children():
 		child.queue_free()
+	first_item_button = null
+	item_focus_targets.clear()
 	if inventory_items.is_empty() and equipped_items.is_empty():
 		var empty_label := Label.new()
 		empty_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
@@ -166,7 +185,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty_label.add_theme_constant_override("line_spacing", 2)
-		empty_label.text = "背包为空。\n搜索、物资箱或事件可能获得物品。\n空间不足时物品会留在地面。"
+		empty_label.text = "背包为空。\n探索中发现的物资会显示在这里。"
 		Art10UISkinKitScript.apply_label(empty_label, 15, PresentationTheme.text_color())
 		item_list.add_child(empty_label)
 	else:
@@ -175,14 +194,16 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		for item: Dictionary in equipped_items:
 			_add_item_row(item, false)
 	if tooltip_label != null:
-		tooltip_label.text = "选择物品查看效果。\n背包物品可丢弃；消耗品可直接使用。"
+		tooltip_label.text = "聚焦任一物品即可查看名称、品质、重量、数量与说明。"
 		Art10UISkinKitScript.apply_label(tooltip_label, 15, Color(0.75, 0.82, 0.78, 1.0))
+	if visible and focused_instance_id != "" and focused_item_action != &"":
+		call_deferred("_restore_item_focus", focused_instance_id, focused_item_action)
 
 
 func show_command_result(result: Dictionary) -> void:
 	if last_result_label == null:
 		return
-	last_result_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.command_result_text(result))
+	last_result_label.text = _command_result_text(result)
 	Art10UISkinKitScript.apply_label(last_result_label, 14, PresentationTheme.color_for_key(&"ui.accent"))
 	var pulse_state := &"ready"
 	if not bool(result.get("accepted", result.get("ok", false))):
@@ -193,11 +214,18 @@ func show_command_result(result: Dictionary) -> void:
 func show_panel() -> void:
 	visible = true
 	Art10UISkinKitScript.play_panel_open(self)
+	call_deferred("_grab_preferred_focus_if_valid")
 
 
 func hide_panel() -> void:
 	visible = false
 	get_viewport().gui_release_focus()
+
+
+func preferred_focus_control() -> Control:
+	if first_item_button != null and is_instance_valid(first_item_button) and not first_item_button.is_queued_for_deletion():
+		return first_item_button
+	return close_button
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
@@ -217,6 +245,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		item_scroll.custom_minimum_size = Vector2(content_width, 132.0 if is_low else (224.0 if is_high else 184.0))
 	if tooltip_label != null:
 		tooltip_label.custom_minimum_size = Vector2(content_width, 48.0 if is_low else (64.0 if is_high else 54.0))
+	if detail_scroll != null:
+		detail_scroll.custom_minimum_size = Vector2(content_width, 54.0 if is_low else (82.0 if is_high else 68.0))
 	_apply_art21_panel_frame()
 
 
@@ -276,17 +306,23 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	var item_button := Button.new()
 	item_button.name = "InventoryItemButton"
 	item_button.focus_mode = Control.FOCUS_ALL
-	item_button.text = RunUIViewModel.item_display_line(item)
+	item_button.text = _item_summary_text(item)
 	item_button.custom_minimum_size = item_button_minimum_size
 	item_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	item_button.clip_text = true
 	item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_apply_art09_item_icon(item_button, item)
 	_apply_art21r2_modal_button(item_button, &"art21r2.modal.item_row.normal", &"secondary", 15, 10, 18)
-	item_button.pressed.connect(func() -> void:
-		tooltip_label.text = Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.item_tooltip(item))
-		Art10UISkinKitScript.apply_label(tooltip_label, 15, Color(0.75, 0.82, 0.78, 1.0))
-	)
+	_apply_rarity_row_style(item_button, item)
+	var instance_id: String = String(item.get("instance_id", ""))
+	_register_item_focus_target(item_button, instance_id, &"info")
+	var show_detail := func() -> void: _show_item_detail(item)
+	item_button.pressed.connect(show_detail)
+	item_button.mouse_entered.connect(show_detail)
+	item_button.focus_entered.connect(show_detail)
+	item_button.tooltip_text = _item_detail_text(item)
+	if first_item_button == null:
+		first_item_button = item_button
 	row.add_child(item_button)
 	var drop_button := Button.new()
 	drop_button.name = "InventoryDropButton"
@@ -296,7 +332,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	drop_button.disabled = not can_drop
 	drop_button.tooltip_text = "丢弃到当前房间地面，稍后可从地面物品重新拾取。" if can_drop else "已装备物品暂不可从此面板丢弃。"
 	_apply_art21r2_modal_button(drop_button, &"art21r2.modal.button.danger" if can_drop else &"art21r2.modal.button.secondary", &"danger" if can_drop else &"secondary", 14)
-	var instance_id: String = String(item.get("instance_id", ""))
+	_register_item_focus_target(drop_button, instance_id, &"drop")
 	var use_button := Button.new()
 	use_button.name = "InventoryUseButton"
 	use_button.focus_mode = Control.FOCUS_ALL
@@ -306,10 +342,127 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	use_button.disabled = not can_use
 	use_button.tooltip_text = "使用当前消耗品。" if can_use else "只有背包中的消耗品可使用。"
 	_apply_art21r2_modal_button(use_button, &"art21r2.modal.button.primary" if can_use else &"art21r2.modal.button.secondary", &"primary" if can_use else &"secondary", 14)
+	_register_item_focus_target(use_button, instance_id, &"use")
 	use_button.pressed.connect(func() -> void: use_item_requested.emit(instance_id))
+	use_button.mouse_entered.connect(show_detail)
+	use_button.focus_entered.connect(show_detail)
 	row.add_child(use_button)
 	drop_button.pressed.connect(func() -> void: drop_item_requested.emit(instance_id))
+	drop_button.mouse_entered.connect(show_detail)
+	drop_button.focus_entered.connect(show_detail)
 	row.add_child(drop_button)
+
+
+func _register_item_focus_target(control: Control, instance_id: String, item_action: StringName) -> void:
+	control.set_meta("item_instance_id", instance_id)
+	control.set_meta("item_action", item_action)
+	if instance_id != "":
+		item_focus_targets[_item_focus_key(instance_id, item_action)] = control
+
+
+func _restore_item_focus(instance_id: String, item_action: StringName) -> void:
+	if not visible:
+		return
+	var target := item_focus_targets.get(_item_focus_key(instance_id, item_action)) as Control
+	if _can_restore_focus(target):
+		target.grab_focus()
+		return
+	var fallback := preferred_focus_control()
+	if _can_restore_focus(fallback):
+		fallback.grab_focus()
+
+
+func _item_focus_key(instance_id: String, item_action: StringName) -> String:
+	return "%s:%s" % [instance_id, String(item_action)]
+
+
+func _can_restore_focus(control: Control) -> bool:
+	if control == null or not is_instance_valid(control) or control.is_queued_for_deletion():
+		return false
+	if not control.is_inside_tree() or not control.is_visible_in_tree():
+		return false
+	if control.focus_mode == Control.FOCUS_NONE:
+		return false
+	return not (control is BaseButton and (control as BaseButton).disabled)
+
+
+func _grab_preferred_focus_if_valid() -> void:
+	if not visible:
+		return
+	var target := preferred_focus_control()
+	if _can_restore_focus(target):
+		target.grab_focus()
+
+
+func _show_item_detail(item: Dictionary) -> void:
+	if tooltip_label == null:
+		return
+	tooltip_label.text = _item_detail_text(item)
+	Art10UISkinKitScript.apply_label(tooltip_label, 15, Color(0.86, 0.90, 0.84, 1.0))
+	if detail_scroll != null:
+		detail_scroll.scroll_vertical = 0
+
+
+func _item_summary_text(item: Dictionary) -> String:
+	var descriptor: Dictionary = ItemRarityDescriptorScript.describe_item(item)
+	return "%s  %s  ×%d  重%s" % [
+		_safe_item_name(item),
+		String(descriptor.get("display_text", "[?] 未鉴定")),
+		_item_quantity(item),
+		item.get("weight", 0),
+	]
+
+
+func _item_detail_text(item: Dictionary) -> String:
+	var descriptor: Dictionary = ItemRarityDescriptorScript.describe_item(item)
+	var lines: Array[String] = [
+		_safe_item_name(item),
+		"品质：%s" % String(descriptor.get("display_text", "[?] 未鉴定")),
+		"重量：%s　数量：%d" % [item.get("weight", 0), _item_quantity(item)],
+	]
+	var description := String(item.get("short_description", "")).strip_edges()
+	if description != "":
+		lines.append(Art10UISkinKitScript.sanitize_player_copy(description))
+	return "\n".join(lines)
+
+
+func _safe_item_name(item: Dictionary) -> String:
+	var display_name := String(item.get("display_name", "")).strip_edges()
+	return display_name if display_name != "" else "未命名物资"
+
+
+func _item_quantity(item: Dictionary) -> int:
+	for key: String in ["quantity", "stack_count", "count"]:
+		if item.has(key):
+			return maxi(1, int(item.get(key, 1)))
+	return 1
+
+
+func _command_result_text(result: Dictionary) -> String:
+	if result.is_empty():
+		return ""
+	var accepted := bool(result.get("accepted", result.get("ok", false)))
+	if not accepted:
+		var blocked := RunUIViewModel.command_result_text(result).replace("操作受阻：", "无法执行：")
+		return Art10UISkinKitScript.sanitize_player_copy(blocked)
+	var message := String(result.get("message", "")).strip_edges()
+	if message != "":
+		return Art10UISkinKitScript.sanitize_player_copy(RunUIViewModel.player_message(message))
+	return "背包内容已更新。"
+
+
+func _apply_rarity_row_style(button: Button, item: Dictionary) -> void:
+	var descriptor: Dictionary = ItemRarityDescriptorScript.describe_item(item)
+	var rarity_color: Color = descriptor.get("color", Color(0.64, 0.72, 0.68, 1.0))
+	button.set_meta("rarity_border_token", StringName(descriptor.get("border_token", &"rarity.unknown")))
+	button.set_meta("rarity_display_text", String(descriptor.get("display_text", "[?] 未鉴定")))
+	for state: StringName in [&"normal", &"hover", &"pressed", &"focus"]:
+		var source := button.get_theme_stylebox(state)
+		if source is StyleBoxFlat:
+			var style := (source as StyleBoxFlat).duplicate() as StyleBoxFlat
+			style.border_color = rarity_color
+			style.border_width_left = 3
+			button.add_theme_stylebox_override(state, style)
 
 
 func _array_from(source: Dictionary, key: String) -> Array:

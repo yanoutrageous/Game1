@@ -1,7 +1,9 @@
 extends RefCounted
 class_name MiniMapViewModel
 
-# MiniMapViewModel is built from IntelMap public cells only.
+# MiniMapViewModel is built from KnownMap/IntelMap public cells only. It keeps a
+# deliberately reduced copy of that public projection so UI consumers cannot
+# accidentally retain or inspect internal map layers.
 
 var room_markers: Array[Dictionary] = []
 var width: int = 0
@@ -45,16 +47,18 @@ static func build_from_intel(intel_map: IntelMap, player_pos: Vector2i = Vector2
 
 static func build_from_run_map_snapshot(snapshot: Dictionary) -> MiniMapViewModel:
 	var model := MiniMapViewModel.new()
-	model.map_snapshot = snapshot.duplicate(true)
-	var run_map: Dictionary = snapshot.get("RunMap", {})
-	model.width = int(run_map.get("width", 0))
-	model.height = int(run_map.get("height", 0))
-	var player_pos: Vector2i = run_map.get("player_pos", Vector2i(-1, -1))
-	model.map_summary_preview = snapshot.get("map_summary_preview", {}).duplicate(true)
-	var run_map_state: Dictionary = snapshot.get("RunMapState", {})
-	model.return_eligibility_preview = run_map_state.get("return_eligibility", {}).duplicate(true)
 	var known_map: Dictionary = snapshot.get("KnownMap", {})
 	var public_cells: Array = known_map.get("public_cells", [])
+	model.width = int(known_map.get("width", _public_extent(public_cells, true)))
+	model.height = int(known_map.get("height", _public_extent(public_cells, false)))
+	var player_pos: Vector2i = known_map.get("player_pos", Vector2i(-1, -1))
+	model.map_summary_preview = {
+		"width": model.width,
+		"height": model.height,
+		"public_cell_count": public_cells.size(),
+		"read_only": true,
+	}
+	var sanitized_public_cells: Array[Dictionary] = []
 	for cell_variant in public_cells:
 		if not (cell_variant is Dictionary):
 			continue
@@ -69,6 +73,12 @@ static func build_from_run_map_snapshot(snapshot: Dictionary) -> MiniMapViewMode
 			"known_state": cell.get("known_state", &"unknown"),
 			"visibility": cell.get("visibility", &"unknown"),
 			"flagged": bool(cell.get("flagged", false)),
+			"scanned": bool(cell.get("scanned", false)),
+			"revealed": bool(cell.get("revealed", false)),
+			"explored": bool(cell.get("explored", false)),
+			"cleared": bool(cell.get("cleared", false)),
+			"is_current": bool(cell.get("is_current", false)),
+			"adjacent_mines": int(cell.get("adjacent_mines", -1)),
 			"return_eligibility": cell.get("return_eligibility", {}),
 			"display_only": true,
 			"read_only": true,
@@ -76,6 +86,34 @@ static func build_from_run_map_snapshot(snapshot: Dictionary) -> MiniMapViewMode
 		}
 		marker = build_cell_view_model(marker, player_pos)
 		model.room_markers.append(marker)
+		sanitized_public_cells.append({
+			"pos": marker.get("pos", Vector2i.ZERO),
+			"is_current": bool(marker.get("is_current", false)),
+			"known_state": marker.get("known_state", &"unknown"),
+			"visibility": marker.get("visibility", &"unknown"),
+			"room_type": marker.get("room_type", &"Unknown"),
+			"adjacent_mines": int(marker.get("adjacent_mines", -1)),
+			"flagged": bool(marker.get("flagged", false)),
+			"scanned": bool(marker.get("scanned", false)),
+			"revealed": bool(marker.get("revealed", false)),
+			"explored": bool(marker.get("explored", false)),
+			"cleared": bool(marker.get("cleared", false)),
+			"return_eligibility": (marker.get("return_eligibility", {}) as Dictionary).duplicate(true),
+			"read_only": true,
+			"display_only": true,
+		})
+		if bool(marker.get("is_current", false)):
+			model.return_eligibility_preview = (marker.get("return_eligibility", {}) as Dictionary).duplicate(true)
+	model.map_snapshot = {
+		"KnownMap": {
+			"width": model.width,
+			"height": model.height,
+			"player_pos": player_pos,
+			"public_cells": sanitized_public_cells,
+			"read_only": true,
+			"display_only": true,
+		}
+	}
 	return model
 
 
@@ -83,16 +121,28 @@ static func build_cell_view_model(raw_marker: Dictionary, player_pos: Vector2i =
 	var marker := raw_marker.duplicate(true)
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
+	var explicitly_revealed := bool(marker.get("revealed", false)) or bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]
+	var publicly_scanned := bool(marker.get("scanned", false)) or known_state == &"scanned"
+	var room_type := StringName(marker.get("room_type", &"Unknown"))
+	# A visible exit is the one public room-type exception for an otherwise
+	# unknown cell. Every other unrevealed type is reduced to Unknown here even
+	# if a malformed fixture accidentally forwards an internal value.
+	if not explicitly_revealed and room_type != &"Exit":
+		room_type = &"Unknown"
+	var adjacent := int(marker.get("adjacent_mines", -1))
+	if known_state == &"unknown" or (not publicly_scanned and not explicitly_revealed) or adjacent < 0 or adjacent > 8:
+		adjacent = -1
+	marker["room_type"] = room_type
+	marker["adjacent_mines"] = adjacent
 	var return_eligibility: Dictionary = marker.get("return_eligibility", {})
 	var eligible_return := bool(return_eligibility.get("eligible", return_eligibility.get("fast_return", false)))
 	var revealed := bool(marker.get("revealed", false)) or eligible_return or known_state in [&"explored", &"cleared"]
 	var explored := bool(marker.get("explored", false)) or eligible_return or known_state in [&"explored", &"cleared"]
 	var cleared := bool(marker.get("cleared", false)) or known_state == &"cleared"
-	var scanned := bool(marker.get("scanned", false)) or known_state == &"scanned"
+	var scanned := publicly_scanned
 	var flagged := bool(marker.get("flagged", false))
 	var is_current := bool(marker.get("is_current", false)) or (player_pos.x >= 0 and pos == player_pos)
 	var distance: int = abs(pos.x - player_pos.x) + abs(pos.y - player_pos.y) if player_pos.x >= 0 else -1
-	var room_type := StringName(marker.get("room_type", &"Unknown"))
 	var action := _action_for_cell(is_current, flagged, revealed, explored, cleared, scanned, room_type, distance, return_eligibility)
 	marker["is_current"] = is_current
 	marker["distance_to_player"] = distance
@@ -105,7 +155,7 @@ static func build_cell_view_model(raw_marker: Dictionary, player_pos: Vector2i =
 	marker["action_enabled"] = bool(action.get("enabled", false))
 	marker["disabled_reason"] = String(action.get("reason", ""))
 	marker["detail_text"] = _detail_text(marker, action)
-	marker["tooltip"] = "%s\n%s" % [String(marker.get("tooltip", "")), String(marker.get("detail_text", ""))]
+	marker["tooltip"] = String(marker.get("detail_text", ""))
 	return marker
 
 
@@ -158,8 +208,10 @@ static func _detail_text(marker: Dictionary, action: Dictionary) -> String:
 		lines[1] += " · 未知格需移动探索"
 	elif bool(marker.get("scanned", false)) and not bool(marker.get("explored", false)):
 		lines[1] += " · 尚不可回传"
+	elif bool(marker.get("explored", false)) and StringName(action.get("id", &"inspect")) == &"fast_return":
+		lines[1] += " · 可回传"
 	elif bool(marker.get("explored", false)):
-		lines[1] += " · 安全公开房间可回传"
+		lines[1] += " · 已公开，当前仅查看"
 	return _join_lines(lines)
 
 
@@ -254,10 +306,25 @@ static func _theme_for_known_state(state: StringName) -> StringName:
 
 static func _tooltip_for_public_cell(cell: Dictionary) -> String:
 	var pos: Vector2i = cell.get("pos", Vector2i.ZERO)
-	var return_eligibility: Dictionary = cell.get("return_eligibility", {})
-	return "RoomState %s at (%d,%d), return_eligibility=%s" % [
-		String(cell.get("known_state", "unknown")),
+	var known_state := String(cell.get("known_state", "unknown"))
+	var adjacent := int(cell.get("adjacent_mines", -1))
+	if known_state == "unknown" or adjacent < 0 or adjacent > 8:
+		adjacent = -1
+	return "格子 (%d,%d) · %s\n周围雷险 %s" % [
 		pos.x,
 		pos.y,
-		String(return_eligibility.get("reason_code", "unknown")),
+		_known_state_label(known_state),
+		str(adjacent) if adjacent >= 0 else "未知",
 	]
+
+
+static func _public_extent(public_cells: Array, horizontal: bool) -> int:
+	var extent := 0
+	for cell_variant in public_cells:
+		if not (cell_variant is Dictionary):
+			continue
+		var pos: Vector2i = (cell_variant as Dictionary).get("pos", Vector2i(-1, -1))
+		var coordinate := pos.x if horizontal else pos.y
+		if coordinate >= 0:
+			extent = maxi(extent, coordinate + 1)
+	return extent

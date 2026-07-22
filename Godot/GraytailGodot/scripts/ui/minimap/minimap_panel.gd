@@ -49,7 +49,10 @@ func clear() -> void:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
-	tooltip_text = ""
+	focus_mode = Control.FOCUS_ALL
+	tooltip_text = "区域地图 · Enter / 点击展开"
+	focus_entered.connect(queue_redraw)
+	focus_exited.connect(queue_redraw)
 	var placeholder := get_node_or_null("PlaceholderLabel") as Label
 	if placeholder != null:
 		placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -58,6 +61,11 @@ func _ready() -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	_emit_open_map_from_mouse_event(event)
+
+
+func _draw() -> void:
+	if has_focus():
+		draw_rect(Rect2(Vector2(1.0, 1.0), size - Vector2(2.0, 2.0)), Color(0.88, 0.64, 0.24, 0.95), false, 2.0)
 
 
 func _rebuild_grid() -> void:
@@ -69,6 +77,7 @@ func _rebuild_grid() -> void:
 	grid.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	for child in grid.get_children():
+		grid.remove_child(child)
 		child.queue_free()
 
 	if view_model == null:
@@ -146,13 +155,14 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
 	if asset_id != &"":
 		asset_ref = ContentDBAccessScript.get_asset_ref(asset_id)
-
+	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
+	var cell := Control.new()
+	cell.name = "MiniMapCell_%d_%d" % [pos.x, pos.y]
+	cell.custom_minimum_size = size
+	cell.mouse_filter = Control.MOUSE_FILTER_STOP
+	cell.tooltip_text = String(marker.get("detail_text", marker.get("tooltip", "")))
+	cell.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
 	if asset_ref is Texture2D:
-		var cell := Control.new()
-		cell.custom_minimum_size = size
-		cell.mouse_filter = Control.MOUSE_FILTER_STOP
-		cell.tooltip_text = ""
-		cell.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
 		var base_icon := TextureRect.new()
 		base_icon.texture = asset_ref
 		base_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -175,23 +185,44 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 				overlay_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 				overlay_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				cell.add_child(overlay_icon)
-		grid.add_child(cell)
 	else:
 		var label := Label.new()
 		var label_text := String(marker.get("label", "?"))
-		label.custom_minimum_size = size
+		label.set_anchors_preset(Control.PRESET_FULL_RECT)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.mouse_filter = Control.MOUSE_FILTER_STOP
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var marker_color := PresentationTheme.color_for_key(theme_key)
 		if label_text == "?":
 			marker_color = Color(0.72, 0.94, 0.82, 0.92)
 		label.add_theme_color_override("font_color", marker_color)
 		label.add_theme_font_size_override("font_size", marker_font_size)
 		label.text = label_text
-		label.tooltip_text = ""
-		label.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
-		grid.add_child(label)
+		cell.add_child(label)
+	_add_adjacent_mine_count(cell, marker)
+	grid.add_child(cell)
+
+
+func _add_adjacent_mine_count(cell: Control, marker: Dictionary) -> void:
+	var adjacent := _public_adjacent_mines(marker)
+	if adjacent < 0:
+		return
+	var count_label := Label.new()
+	count_label.name = "AdjacentMineCount"
+	count_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	count_label.offset_left = 2.0
+	count_label.offset_top = 2.0
+	count_label.offset_right = -3.0
+	count_label.offset_bottom = -1.0
+	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	count_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	count_label.text = str(adjacent)
+	count_label.add_theme_font_size_override("font_size", clampi(marker_font_size - 2, 9, 15))
+	count_label.add_theme_color_override("font_color", Color(0.98, 0.94, 0.78, 1.0))
+	count_label.add_theme_color_override("font_outline_color", Color(0.02, 0.03, 0.03, 1.0))
+	count_label.add_theme_constant_override("outline_size", 2)
+	cell.add_child(count_label)
 
 
 func _markers_by_position(markers: Array[Dictionary]) -> Dictionary:
@@ -233,6 +264,8 @@ func _overlay_asset_id_for_marker(marker: Dictionary) -> StringName:
 		return PLAYER_MARKER_ASSET_ID
 	if bool(marker.get("flagged", false)):
 		return FLAGGED_CELL_ASSET_ID
+	if not _publicly_reveals_room_type(marker):
+		return &""
 	var room_type := StringName(marker.get("room_type", &"Unknown"))
 	if room_type == &"Exit":
 		return EXIT_MARKER_ASSET_ID
@@ -255,6 +288,32 @@ func _emit_open_map_from_mouse_event(event: InputEvent) -> void:
 		if mouse_button.button_index == MOUSE_BUTTON_LEFT and mouse_button.pressed:
 			open_map_requested.emit()
 			accept_event()
+		return
+	if event.is_action_pressed("ui_accept"):
+		open_map_requested.emit()
+		accept_event()
+		return
+	if event is InputEventKey:
+		var key_event := event as InputEventKey
+		if key_event.pressed and not key_event.echo and key_event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
+			open_map_requested.emit()
+			accept_event()
+
+
+func _publicly_reveals_room_type(marker: Dictionary) -> bool:
+	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
+	if StringName(marker.get("room_type", &"Unknown")) == &"Exit":
+		return true
+	return bool(marker.get("revealed", false)) or bool(marker.get("explored", false)) or known_state in [&"explored", &"cleared"]
+
+
+func _public_adjacent_mines(marker: Dictionary) -> int:
+	var known_state := StringName(marker.get("known_state", marker.get("state", &"unknown")))
+	var publicly_known := bool(marker.get("revealed", false)) or bool(marker.get("scanned", false)) or known_state in [&"scanned", &"explored", &"cleared"]
+	var adjacent := int(marker.get("adjacent_mines", -1))
+	if not publicly_known or adjacent < 0 or adjacent > 8:
+		return -1
+	return adjacent
 
 
 func _apply_child_layout() -> void:

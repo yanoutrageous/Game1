@@ -5,6 +5,7 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art22DeployPrepAssetContractScript := preload("res://scripts/presentation/art22_deploy_prep_asset_contract.gd")
 const Art25ContentAssetContractScript := preload("res://scripts/presentation/art25_content_asset_contract.gd")
+const ItemRarityDescriptorScript := preload("res://scripts/presentation/item_rarity_descriptor.gd")
 
 signal card_pressed(card_id: StringName)
 
@@ -70,7 +71,8 @@ func _build_nodes(tab_id: StringName) -> void:
 	button.pressed.connect(func() -> void: card_pressed.emit(card_id))
 	add_child(button)
 
-	_add_color_rect("CardRarityEdge", Rect2(2, 5, 3, 66), _rarity_color())
+	var rarity_edge := _add_color_rect("CardRarityEdge", Rect2(2, 5, 3, 66), _rarity_color())
+	rarity_edge.set_meta("rarity_border_token", _rarity_descriptor().get("border_token", &"rarity.border.unknown"))
 	_add_color_rect("CardContentMatte", Rect2(68, 7, 156, 62), Color(0.015, 0.055, 0.060, 0.38))
 	_add_asset_panel("CardArtworkFrame", Rect2(7, 8, 56, 60), &"slot", &"normal")
 	var art_filter_id := StringName(card_data.get("art_filter_id", card_data.get("filter_id", &"")))
@@ -126,9 +128,11 @@ func _summary_text() -> String:
 
 
 func _mode_chip_text() -> String:
-	var rarity := String(card_data.get("rarity_label", card_data.get("rarity", ""))).strip_edges()
-	if not rarity.is_empty():
-		return Art10UISkinKitScript.short_summary(rarity, 6)
+	if card_data.has("rarity"):
+		var rarity := _rarity_descriptor()
+		var badge := String(rarity.get("badge", "?"))
+		var label := "锁定" if bool(rarity.get("locked", false)) else String(rarity.get("label", "未鉴定"))
+		return Art10UISkinKitScript.short_summary("%s %s" % [badge, label], 7)
 	var locked := String(card_data.get("state", "")).to_lower().find("lock") >= 0
 	if locked:
 		return "未解锁"
@@ -176,12 +180,13 @@ func _display_state(state: StringName) -> String:
 
 
 func _rarity_color() -> Color:
-	match StringName(card_data.get("rarity", &"")):
-		&"tier_2": return Color(0.38, 0.82, 0.54, 0.96)
-		&"tier_3": return Color(0.35, 0.62, 0.96, 0.96)
-		&"tier_4": return Color(0.72, 0.42, 0.96, 0.96)
-		&"unique": return Color(0.98, 0.72, 0.24, 1.0)
-	return Color(0.58, 0.62, 0.58, 0.86)
+	if not card_data.has("rarity"):
+		return Color(0.58, 0.62, 0.58, 0.86)
+	return Color(_rarity_descriptor().get("color", Color(0.58, 0.62, 0.58, 0.86)))
+
+
+func _rarity_descriptor() -> Dictionary:
+	return ItemRarityDescriptorScript.describe(card_data.get("rarity", &"unknown"))
 
 
 func _card_surface_state(state: StringName) -> StringName:

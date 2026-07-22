@@ -36,6 +36,8 @@ const RunSceneResultControllerScript := preload("res://scripts/core/run/run_scen
 const RunSceneResponsibilityBudgetScript := preload("res://scripts/core/run/run_scene_responsibility_budget.gd")
 const RunSceneRefreshControllerScript := preload("res://scripts/core/run/run_scene_refresh_controller.gd")
 const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
+const ModalFocusStackScript := preload("res://scripts/ui/shell/modal_focus_stack.gd")
+const SettingsPanelScript := preload("res://scripts/ui/settings/settings_panel.gd")
 const G41RoomRuntimeViewScript := preload("res://scripts/gameplay/runtime/g41_room_runtime_view.gd")
 const Art25GameplayBackdropScript := preload("res://scripts/presentation/art25_gameplay_backdrop.gd")
 const RuntimeTextureCacheScript := preload("res://scripts/presentation/runtime_texture_cache.gd")
@@ -97,6 +99,14 @@ var debug_log: Label
 var layout_profile_label: Label
 var pause_panel: PanelContainer
 var pause_status_label: Label
+var runtime_modal_input_shield: ColorRect
+var pause_continue_button: Button
+var pause_settings_button: Button
+var pause_abandon_button: Button
+var runtime_settings_panel: Control
+var abandon_confirm_panel: PanelContainer
+var abandon_confirm_cancel_button: Button
+var abandon_confirm_button: Button
 var dev_diagnostics_panel: Control
 var event_panel: PanelContainer
 var event_title_label: Label
@@ -124,6 +134,8 @@ var current_layout_profile_id: StringName = &"desktop"
 var last_command_result: Dictionary = {}
 var m1_debug_panel_enabled: bool = false
 var pause_exit_confirm_pending: bool = false
+var modal_focus_stack: RefCounted
+var abandon_dispatch_in_flight: bool = false
 var refresh_controller
 var last_combat_texture_prewarm_report: Dictionary = {}
 var last_combat_texture_preflight_report: Dictionary = {}
@@ -132,6 +144,8 @@ var combat_texture_prewarm_degraded: bool = false
 
 func _ready() -> void:
 	m1_debug_panel_enabled = DebugGateScript.is_debug_tools_enabled()
+	modal_focus_stack = ModalFocusStackScript.new()
+	modal_focus_stack.stack_changed.connect(_on_runtime_modal_stack_changed)
 	refresh_controller = RunSceneRefreshControllerScript.new()
 	save_manager = SaveManagerScript.new()
 	save_manager.load_manifest()
@@ -234,7 +248,13 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 	# generic modal guard, otherwise the open panel consumes the state that would
 	# allow the same shortcut to close it again.
 	if inventory_panel != null and inventory_panel.visible and run_action == RunSceneInputRouterScript.ACTION_OPEN_INVENTORY:
-		inventory_panel.call("hide_panel")
+		_close_inventory_modal()
+		return true
+	# The expanded map is the one deliberate read-only child of the inventory
+	# drawer. Keep the real M shortcut reachable while the drawer owns focus;
+	# every other run action remains blocked by the modal guard below.
+	if _runtime_modal_is_top(&"inventory") and run_action == RunSceneInputRouterScript.ACTION_OPEN_MAP:
+		_open_map_from_ui(&"keyboard")
 		return true
 	if _is_runtime_modal_open():
 		return false
@@ -492,7 +512,7 @@ func _build_run_overlay() -> void:
 	inventory_panel.name = "InventoryPanel"
 	inventory_panel.connect("drop_item_requested", _on_inventory_drop_requested)
 	inventory_panel.connect("use_item_requested", _on_inventory_use_requested)
-	inventory_panel.connect("close_requested", func() -> void: inventory_panel.call("hide_panel"))
+	inventory_panel.connect("close_requested", _close_inventory_modal)
 	surface_overlay_slot.add_child(inventory_panel)
 
 	result_panel = ResultPanelScene.instantiate() as ResultPanel
@@ -511,6 +531,7 @@ func _build_run_overlay() -> void:
 	map_overlay_panel = MapOverlayScene.instantiate() as MapOverlayPanel
 	map_overlay_panel.name = "MapOverlayPanel"
 	map_overlay_panel.cell_action_requested.connect(_on_map_overlay_cell_action_requested)
+	map_overlay_panel.visibility_changed.connect(_on_map_overlay_visibility_changed)
 	surface_overlay_slot.add_child(map_overlay_panel)
 
 	tutorial_popup_panel = TutorialPopupScene.instantiate() as TutorialPopupPanel
@@ -520,6 +541,17 @@ func _build_run_overlay() -> void:
 
 
 func _build_runtime_modals() -> void:
+	runtime_modal_input_shield = ColorRect.new()
+	runtime_modal_input_shield.name = "RuntimeModalInputShield"
+	runtime_modal_input_shield.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	runtime_modal_input_shield.color = Color(0.0, 0.0, 0.0, 0.52)
+	runtime_modal_input_shield.mouse_filter = Control.MOUSE_FILTER_STOP
+	runtime_modal_input_shield.hide()
+	var runtime_modal_parent: Control = run_overlay_root
+	if run_surface != null:
+		runtime_modal_parent = run_surface.get_modal_slot()
+	runtime_modal_parent.add_child(runtime_modal_input_shield)
+
 	event_panel = _new_modal_panel("EventOptionPanel", Rect2(420, 140, 450, 360))
 	var event_content := VBoxContainer.new()
 	event_content.name = "EventOptionContent"
@@ -536,14 +568,14 @@ func _build_runtime_modals() -> void:
 	event_options_box = VBoxContainer.new()
 	event_options_box.name = "EventOptionButtons"
 	event_content.add_child(event_options_box)
-	_add_menu_button(event_content, "关闭", func() -> void: event_panel.visible = false)
+	_add_menu_button(event_content, "关闭", func() -> void: _cancel_event_modal(&"button_cancel"))
 
 	if run_surface != null:
 		run_surface.apply_legacy_modal_style(event_panel, &"mini.event")
 
 	loot_panel = LootResultPanelScript.new() as Control
 	loot_panel.name = "LootResultPanel"
-	loot_panel.connect("close_requested", func() -> void: loot_panel.call("hide_panel"))
+	loot_panel.connect("close_requested", func() -> void: _cancel_loot_modal(&"button_cancel"))
 	var modal_parent: Control = run_overlay_root
 	if run_surface != null:
 		modal_parent = run_surface.get_modal_slot()
@@ -578,33 +610,75 @@ func _build_runtime_modals() -> void:
 	pause_content.add_theme_constant_override("separation", 8)
 	pause_panel.add_child(pause_content)
 	var pause_title := Label.new()
-	pause_title.text = "暂停 / 设置"
+	pause_title.text = "探索已暂停"
 	pause_title.add_theme_font_size_override("font_size", 20)
 	pause_content.add_child(pause_title)
 	pause_status_label = Label.new()
 	pause_status_label.name = "PauseSettingsOverlayStatus"
 	pause_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	pause_status_label.text = "本面板只暂停 UI 并提供设置入口；继续会返回当前局，不写本地持久化偏好。"
+	pause_status_label.text = "当前探索会停留在此处。"
 	pause_content.add_child(pause_status_label)
 	var diagnostics_button: Button
 	if m1_debug_panel_enabled:
 		diagnostics_button = _add_menu_button(pause_content, "诊断面板", func() -> void: _open_debug_panel_from_pause())
-	var continue_button := _add_menu_button(pause_content, "继续", func() -> void: _continue_from_pause())
-	var settings_button := _add_menu_button(pause_content, "设置说明", func() -> void: _open_settings_from_pause())
+	pause_continue_button = _add_menu_button(pause_content, "继续探索", func() -> void: _continue_from_pause())
+	pause_settings_button = _add_menu_button(pause_content, "设置", func() -> void: _open_settings_from_pause())
 	var deploy_button := _add_menu_button(pause_content, "返回出发", func() -> void: _return_from_pause_to_deploy())
 	var main_button := _add_menu_button(pause_content, "返回主菜单", func() -> void: _return_from_pause_to_main())
-	var abandon_button := _add_menu_button(pause_content, "退出当前局", func() -> void: _request_abandon_from_pause())
+	pause_abandon_button = _add_menu_button(pause_content, "放弃本次探索", func() -> void: _request_abandon_from_pause())
 	if run_surface != null:
 		run_surface.apply_legacy_modal_style(pause_panel, &"ui.accent")
 		if diagnostics_button != null:
 			run_surface.apply_legacy_button_style(diagnostics_button, &"secondary")
-		run_surface.apply_legacy_button_style(continue_button, &"primary")
-		run_surface.apply_legacy_button_style(settings_button, &"secondary")
+		run_surface.apply_legacy_button_style(pause_continue_button, &"primary")
+		run_surface.apply_legacy_button_style(pause_settings_button, &"secondary")
 		run_surface.apply_legacy_button_style(deploy_button, &"secondary")
 		run_surface.apply_legacy_button_style(main_button, &"secondary")
-		run_surface.apply_legacy_button_style(abandon_button, &"danger")
+		run_surface.apply_legacy_button_style(pause_abandon_button, &"danger")
 	pause_title.add_theme_color_override("font_color", Color(0.98, 0.81, 0.42, 1.0))
 	pause_status_label.add_theme_color_override("font_color", Color(0.72, 0.76, 0.70, 1.0))
+
+	runtime_settings_panel = SettingsPanelScript.new() as Control
+	runtime_settings_panel.name = "RuntimeSettingsPanel"
+	var settings_parent: Control = run_overlay_root
+	if run_surface != null:
+		settings_parent = run_surface.get_modal_slot()
+	settings_parent.add_child(runtime_settings_panel)
+	runtime_settings_panel.call("set_external_cancel_authority", true)
+	runtime_settings_panel.call("bind_settings_manager", ui_shell.call("get_bound_settings_manager"))
+	runtime_settings_panel.connect("close_requested", _on_runtime_settings_close_requested)
+	if run_surface != null:
+		run_surface.apply_legacy_modal_style(runtime_settings_panel, &"ui.accent")
+
+	abandon_confirm_panel = _new_modal_panel("PauseAbandonConfirmPanel", Rect2(420, 210, 520, 250))
+	var abandon_content := VBoxContainer.new()
+	abandon_content.name = "PauseAbandonConfirmContent"
+	abandon_content.add_theme_constant_override("separation", 12)
+	abandon_confirm_panel.add_child(abandon_content)
+	var abandon_title := Label.new()
+	abandon_title.name = "PauseAbandonConfirmTitle"
+	abandon_title.text = "确认放弃本次探索？"
+	abandon_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	abandon_title.add_theme_font_size_override("font_size", 20)
+	abandon_content.add_child(abandon_title)
+	var abandon_body := Label.new()
+	abandon_body.name = "PauseAbandonConfirmBody"
+	abandon_body.text = "本局尚未保全的物资与收益会按放弃规则结算。"
+	abandon_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	abandon_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	abandon_body.custom_minimum_size = Vector2(360, 76)
+	abandon_content.add_child(abandon_body)
+	var abandon_actions := HBoxContainer.new()
+	abandon_actions.name = "PauseAbandonConfirmActions"
+	abandon_actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	abandon_actions.add_theme_constant_override("separation", 12)
+	abandon_content.add_child(abandon_actions)
+	abandon_confirm_cancel_button = _add_menu_button(abandon_actions, "取消", func() -> void: _cancel_abandon_from_pause())
+	abandon_confirm_button = _add_menu_button(abandon_actions, "确认放弃", func() -> void: _confirm_abandon_from_pause())
+	if run_surface != null:
+		run_surface.apply_legacy_modal_style(abandon_confirm_panel, &"ui.danger")
+		run_surface.apply_legacy_button_style(abandon_confirm_cancel_button, &"secondary")
+		run_surface.apply_legacy_button_style(abandon_confirm_button, &"danger")
 	_apply_runtime_modal_layout(_current_layout_profile())
 
 
@@ -639,8 +713,21 @@ func _apply_runtime_modal_layout(profile: Dictionary) -> void:
 	if loot_panel != null:
 		loot_panel.call("apply_layout_profile", profile)
 	_set_control_rect(extract_panel, Rect2(modal_left, modal_top, modal_width, min(260.0, available_height)))
-	_set_control_rect(pause_panel, Rect2(modal_left, modal_top, modal_width, min(400.0, available_height)))
+	var pause_size := Vector2(clampf(width * 0.38, 440.0, 560.0), clampf(height * 0.56, 390.0, 500.0))
+	_set_control_rect(pause_panel, _centered_runtime_modal_rect(width, height, pause_size, margin))
+	var settings_size := Vector2(clampf(width * 0.56, 600.0, 780.0), clampf(height * 0.76, 510.0, 670.0))
+	_set_control_rect(runtime_settings_panel, _centered_runtime_modal_rect(width, height, settings_size, margin))
+	var abandon_size := Vector2(clampf(width * 0.42, 480.0, 560.0), clampf(height * 0.34, 230.0, 290.0))
+	_set_control_rect(abandon_confirm_panel, _centered_runtime_modal_rect(width, height, abandon_size, margin))
 	_apply_debug_panel_layout(profile)
+
+
+func _centered_runtime_modal_rect(width: float, height: float, requested_size: Vector2, margin: float) -> Rect2:
+	var safe_size := Vector2(
+		minf(requested_size.x, maxf(260.0, width - margin * 2.0)),
+		minf(requested_size.y, maxf(220.0, height - margin * 2.0))
+	)
+	return Rect2(Vector2((width - safe_size.x) * 0.5, (height - safe_size.y) * 0.5), safe_size)
 
 
 func _apply_debug_panel_layout(profile: Dictionary) -> void:
@@ -787,44 +874,62 @@ func _set_gameplay_visible(visible: bool) -> void:
 func _show_pause_panel() -> void:
 	if pause_panel == null:
 		return
+	if _is_runtime_modal_open():
+		return
 	pause_exit_confirm_pending = false
 	if pause_status_label != null and run_context != null:
 		var snapshot: Dictionary = run_context.get_status_snapshot()
-		pause_status_label.text = "探索已暂停。当前位于%s，点击继续即可返回；设置入口暂不保存偏好。" % [
+		pause_status_label.text = "探索已暂停\n当前位置：%s" % [
 			_run_room_label(StringName(snapshot.get("current_room", &"Unknown"))),
 		]
 	_apply_runtime_modal_layout(_current_layout_profile())
-	pause_panel.visible = true
+	if not _push_runtime_modal(&"pause", pause_panel, pause_continue_button, Callable(self, "_cancel_pause_modal")):
+		pause_panel.hide()
 
 
 func _open_settings_from_pause() -> void:
 	pause_exit_confirm_pending = false
-	if pause_status_label != null:
-		pause_status_label.text = "设置说明：后续可接入音量、可访问性和 UI 减法；本阶段不写本地持久化偏好。"
+	if runtime_settings_panel == null or modal_focus_stack == null or modal_focus_stack.top_modal_id() != &"pause":
+		return
+	runtime_settings_panel.call("bind_settings_manager", ui_shell.call("get_bound_settings_manager"))
+	if not bool(runtime_settings_panel.call("open_panel")):
+		if pause_status_label != null:
+			pause_status_label.text = "设置暂时无法打开，当前探索仍保持暂停。"
+		return
+	var pushed := _push_runtime_modal(
+		&"settings",
+		runtime_settings_panel,
+		runtime_settings_panel.call("preferred_focus_control") as Control,
+		Callable(self, "_cancel_runtime_settings")
+	)
+	if not pushed:
+		runtime_settings_panel.call("close_panel", false)
 
 
 func _continue_from_pause() -> void:
+	if not _runtime_modal_is_top(&"pause"):
+		return
 	pause_exit_confirm_pending = false
-	if pause_panel != null:
-		pause_panel.visible = false
-	get_viewport().gui_release_focus()
+	_pop_runtime_modal(&"pause")
 
 
 func _return_from_pause_to_deploy() -> void:
+	if not _runtime_modal_is_top(&"pause"):
+		return
 	pause_exit_confirm_pending = false
-	if pause_panel != null:
-		pause_panel.visible = false
+	_clear_runtime_modal_stack(false)
 	_show_deploy_shell(&"config")
 
 
 func _return_from_pause_to_main() -> void:
+	if not _runtime_modal_is_top(&"pause"):
+		return
 	if _has_active_run_for_pause_exit():
 		pause_exit_confirm_pending = false
 		if pause_status_label != null:
-			pause_status_label.text = "当前探索仍在进行。请先选择“退出当前局”完成放弃结算，再返回主菜单。"
+			pause_status_label.text = "当前探索仍在进行。请先选择“放弃本次探索”完成结算，再返回主菜单。"
 		return
-	if pause_panel != null:
-		pause_panel.visible = false
+	_clear_runtime_modal_stack(false)
 	_show_main_menu()
 
 
@@ -834,18 +939,45 @@ func _request_abandon_from_pause() -> void:
 		if pause_status_label != null:
 			pause_status_label.text = "当前没有可放弃的探索，可直接返回出发页或主菜单。"
 		return
-	if not pause_exit_confirm_pending:
-		pause_exit_confirm_pending = true
-		if pause_status_label != null:
-			pause_status_label.text = "再次点击“退出当前局”将立即中止探索。本局未保全物资与未结算收益会按放弃规则处理。"
+	if modal_focus_stack == null or modal_focus_stack.top_modal_id() != &"pause":
 		return
+	pause_exit_confirm_pending = true
+	var pushed := _push_runtime_modal(
+		&"abandon_confirm",
+		abandon_confirm_panel,
+		abandon_confirm_cancel_button,
+		Callable(self, "_cancel_abandon_modal")
+	)
+	if not pushed:
+		pause_exit_confirm_pending = false
+		abandon_confirm_panel.hide()
+
+
+func _cancel_abandon_from_pause() -> void:
+	_cancel_abandon_modal(&"button_cancel")
+
+
+func _cancel_abandon_modal(_reason: StringName = &"cancel") -> void:
 	pause_exit_confirm_pending = false
-	if pause_panel != null:
-		pause_panel.visible = false
+	_pop_runtime_modal(&"abandon_confirm")
+
+
+func _confirm_abandon_from_pause() -> void:
+	if abandon_dispatch_in_flight or modal_focus_stack == null or modal_focus_stack.top_modal_id() != &"abandon_confirm":
+		return
+	abandon_dispatch_in_flight = true
+	pause_exit_confirm_pending = false
+	_pop_runtime_modal(&"abandon_confirm", false)
+	_pop_runtime_modal(&"pause", false)
 	var result := _dispatch_command(&"abandon_run", {"reason": "player_pause_exit_current_run", "source": "pause_panel"})
+	abandon_dispatch_in_flight = false
 	if bool(result.get("ok", false)) and result_panel != null and not result_panel.visible and run_context != null:
 		if not run_context.result_snapshot.is_empty():
 			_on_result_available(run_context.result_snapshot)
+	elif not bool(result.get("ok", false)):
+		_show_pause_panel()
+		if pause_status_label != null:
+			pause_status_label.text = "未能放弃本次探索，请稍后重试。"
 
 
 func _has_active_run_for_pause_exit() -> bool:
@@ -858,16 +990,159 @@ func _has_active_run_for_pause_exit() -> bool:
 	return phase in [&"running", &"event", &"combat", &"extract_pending"]
 
 
+func _push_runtime_modal(
+	modal_id: StringName,
+	modal_root: Control,
+	preferred_focus: Control = null,
+	cancel_handler: Callable = Callable()
+) -> bool:
+	if modal_focus_stack == null or modal_root == null:
+		return false
+	return bool(modal_focus_stack.push(modal_id, modal_root, preferred_focus, cancel_handler))
+
+
+func _runtime_modal_is_top(modal_id: StringName) -> bool:
+	return modal_focus_stack != null and modal_focus_stack.top_modal_id() == modal_id
+
+
+func _on_runtime_modal_stack_changed(_depth: int, top_modal_id: StringName) -> void:
+	if runtime_modal_input_shield == null:
+		return
+	var top_root := _runtime_modal_root(top_modal_id)
+	if top_root == null or top_root.get_parent() == null:
+		runtime_modal_input_shield.hide()
+		return
+	var desired_parent := top_root.get_parent() as Control
+	if desired_parent == null:
+		runtime_modal_input_shield.hide()
+		return
+	if runtime_modal_input_shield.get_parent() != desired_parent:
+		runtime_modal_input_shield.reparent(desired_parent, false)
+		runtime_modal_input_shield.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var parent := runtime_modal_input_shield.get_parent()
+	var target_index := top_root.get_index()
+	if runtime_modal_input_shield.get_index() < target_index:
+		target_index -= 1
+	parent.move_child(runtime_modal_input_shield, target_index)
+	runtime_modal_input_shield.show()
+
+
+func _runtime_modal_root(modal_id: StringName) -> Control:
+	match modal_id:
+		&"event":
+			return event_panel
+		&"loot_result":
+			return loot_panel
+		&"extract_confirm":
+			return extract_panel
+		&"result":
+			return result_panel
+		&"pause":
+			return pause_panel
+		&"settings":
+			return runtime_settings_panel
+		&"abandon_confirm":
+			return abandon_confirm_panel
+		&"inventory":
+			return inventory_panel
+		&"map":
+			return map_overlay_panel
+		_:
+			return null
+
+
+func _pop_runtime_modal(modal_id: StringName, restore_focus: bool = true, hide_modal: bool = true) -> bool:
+	if modal_focus_stack == null:
+		return false
+	return bool(modal_focus_stack.pop(modal_id, restore_focus, hide_modal))
+
+
+func _clear_runtime_modal_stack(restore_focus: bool = true) -> void:
+	if modal_focus_stack != null:
+		modal_focus_stack.clear(restore_focus)
+
+
+func _cancel_pause_modal(_reason: StringName = &"cancel") -> void:
+	pause_exit_confirm_pending = false
+	_pop_runtime_modal(&"pause")
+
+
+func _cancel_runtime_settings(_reason: StringName = &"cancel") -> void:
+	if runtime_settings_panel != null:
+		runtime_settings_panel.call("close_panel", false)
+	_pop_runtime_modal(&"settings")
+
+
+func _on_runtime_settings_close_requested() -> void:
+	_pop_runtime_modal(&"settings", true, false)
+
+
+func _close_inventory_modal() -> void:
+	if modal_focus_stack != null:
+		if modal_focus_stack.top_modal_id() == &"inventory":
+			_pop_runtime_modal(&"inventory")
+		return
+	if inventory_panel != null:
+		inventory_panel.call("hide_panel")
+
+
+func _cancel_inventory_modal(_reason: StringName = &"cancel") -> void:
+	_close_inventory_modal()
+
+
+func _cancel_map_modal(_reason: StringName = &"cancel") -> void:
+	if map_overlay_panel != null and map_overlay_panel.visible:
+		map_overlay_panel.hide_overlay()
+	if modal_focus_stack != null and modal_focus_stack.top_modal_id() == &"map":
+		_pop_runtime_modal(&"map", true, false)
+
+
+func _on_map_overlay_visibility_changed() -> void:
+	if map_overlay_panel == null or map_overlay_panel.visible or modal_focus_stack == null:
+		return
+	if modal_focus_stack.top_modal_id() == &"map":
+		_pop_runtime_modal(&"map", true, false)
+
+
+func _preferred_modal_focus(modal_root: Control) -> Control:
+	if modal_root == null:
+		return null
+	if modal_root.has_method("preferred_focus_control"):
+		return modal_root.call("preferred_focus_control") as Control
+	return _first_focusable_descendant(modal_root)
+
+
+func _first_focusable_descendant(root_control: Control) -> Control:
+	for child in root_control.get_children():
+		var control := child as Control
+		if control == null:
+			continue
+		var disabled_button := control is BaseButton and (control as BaseButton).disabled
+		if (
+			control.focus_mode != Control.FOCUS_NONE
+			and control.visible
+			and not disabled_button
+			and not control.is_queued_for_deletion()
+		):
+			return control
+		var nested := _first_focusable_descendant(control)
+		if nested != null:
+			return nested
+	return null
+
+
 func _return_from_result_to_main() -> void:
-	if result_panel != null:
-		result_panel.hide_result()
+	if not _runtime_modal_is_top(&"result"):
+		return
+	_pop_runtime_modal(&"result", false)
 	get_viewport().gui_release_focus()
 	_show_main_menu()
 
 
 func _return_from_result_to_deploy() -> void:
-	if result_panel != null:
-		result_panel.hide_result()
+	if not _runtime_modal_is_top(&"result"):
+		return
+	_pop_runtime_modal(&"result", false)
 	get_viewport().gui_release_focus()
 	_show_deploy_shell(&"config")
 
@@ -957,7 +1232,8 @@ func _handle_interact_pressed() -> void:
 					var instance_id := String(payload.get("instance_id", ""))
 					var pickup_result := _dispatch_command(&"pickup_ground_item", {"source": "g41_world_interaction", "instance_id": instance_id})
 					room_runtime_view.show_pickup_result(instance_id, bool(pickup_result.get("ok", false)))
-					room_runtime_view.show_context_result(pickup_result)
+					if not bool(pickup_result.get("ok", false)):
+						room_runtime_view.show_context_result(pickup_result)
 					return
 				&"chest":
 					var intent := StringName(world_request.get("intent", &""))
@@ -1006,6 +1282,8 @@ func _search_and_show_loot() -> void:
 
 
 func _fight_and_show_result() -> void:
+	if _is_runtime_modal_open():
+		return
 	if in_run_runtime != null and in_run_runtime.has_active_combat():
 		var attack_result: Dictionary = in_run_runtime.request_attack()
 		last_command_result = attack_result.duplicate(true)
@@ -1022,7 +1300,7 @@ func _pickup_floor_from_ui(instance_id: String = "") -> void:
 	var payload: Dictionary = {"source": "ui"}
 	if instance_id != "":
 		payload["instance_id"] = instance_id
-	var result := _dispatch_command(&"pickup_ground_item", payload)
+	var result := _dispatch_command(&"pickup_ground_item", payload, false)
 	if room_runtime_view != null and not bool(result.get("ok", false)):
 		room_runtime_view.show_context_result(result)
 	if ground_loot_panel != null:
@@ -1038,7 +1316,7 @@ func _replace_floor_from_ui(instance_id: String = "", drop_instance_id: String =
 		payload["ground_instance_id"] = instance_id
 	if drop_instance_id != "":
 		payload["drop_instance_id"] = drop_instance_id
-	var result := _dispatch_command(&"replace_ground_item", payload)
+	var result := _dispatch_command(&"replace_ground_item", payload, false)
 	if room_runtime_view != null and not bool(result.get("ok", false)):
 		room_runtime_view.show_context_result(result)
 	if ground_loot_panel != null:
@@ -1052,7 +1330,7 @@ func _drop_inventory_from_ui(instance_id: String = "") -> void:
 	var payload: Dictionary = {"source": "ui"}
 	if instance_id != "":
 		payload["instance_id"] = instance_id
-	var result := _dispatch_command(&"drop_inventory_item", payload)
+	var result := _dispatch_command(&"drop_inventory_item", payload, false)
 	if inventory_panel != null:
 		inventory_panel.call("show_command_result", result)
 	if ground_loot_panel != null:
@@ -1064,7 +1342,7 @@ func _use_inventory_item_from_ui(instance_id: String = "") -> void:
 	var payload: Dictionary = {"source": "ui"}
 	if instance_id != "":
 		payload["instance_id"] = instance_id
-	var result := _dispatch_command(&"use_item", payload)
+	var result := _dispatch_command(&"use_item", payload, false)
 	if inventory_panel != null:
 		inventory_panel.call("show_command_result", result)
 	if ground_loot_panel != null:
@@ -1075,11 +1353,23 @@ func _use_inventory_item_from_ui(instance_id: String = "") -> void:
 func _show_inventory_panel() -> void:
 	if inventory_panel == null:
 		return
+	if _is_runtime_modal_open():
+		return
 	inventory_panel.call("apply_snapshot", run_context.get_status_snapshot())
 	inventory_panel.call("show_panel")
+	var pushed := _push_runtime_modal(
+		&"inventory",
+		inventory_panel,
+		_preferred_modal_focus(inventory_panel),
+		Callable(self, "_cancel_inventory_modal")
+	)
+	if not pushed:
+		inventory_panel.call("hide_panel")
 
 
 func _activate_world_context_primary() -> void:
+	if _is_runtime_modal_open():
+		return
 	if room_runtime_view != null and room_runtime_view.activate_context_primary():
 		return
 	_show_command_feedback({"ok": false, "reason": &"world_context_out_of_range", "message": "靠近地面物品或物资箱后再操作。"})
@@ -1090,6 +1380,8 @@ func _show_ground_loot_panel() -> void:
 
 
 func _on_world_context_action_requested(action: StringName, payload: Dictionary) -> void:
+	if _is_runtime_modal_open():
+		return
 	match action:
 		&"pickup":
 			_pickup_floor_from_ui(String(payload.get("instance_id", "")))
@@ -1100,23 +1392,31 @@ func _on_world_context_action_requested(action: StringName, payload: Dictionary)
 
 
 func _on_inventory_drop_requested(instance_id: String) -> void:
+	if not _runtime_modal_is_top(&"inventory"):
+		return
 	_drop_inventory_from_ui(instance_id)
 
 
 func _on_inventory_use_requested(instance_id: String) -> void:
+	if not _runtime_modal_is_top(&"inventory"):
+		return
 	_use_inventory_item_from_ui(instance_id)
 
 
 func _on_ground_loot_pickup_requested(instance_id: String) -> void:
+	if _is_runtime_modal_open():
+		return
 	_pickup_floor_from_ui(instance_id)
 
 
 func _on_ground_loot_replace_requested(instance_id: String) -> void:
+	if _is_runtime_modal_open():
+		return
 	_replace_floor_from_ui(instance_id)
 
 
 func _show_event_panel(event_state: Dictionary) -> void:
-	if event_panel == null:
+	if event_panel == null or _is_runtime_modal_open():
 		return
 	event_title_label.text = "事件：%s" % _event_type_label(StringName(event_state.get("event_type", &"event")))
 	event_body_label.text = "选择处理方式。事件完成后不会重复结算奖励。"
@@ -1133,11 +1433,25 @@ func _show_event_panel(event_state: Dictionary) -> void:
 		if run_surface != null:
 			run_surface.apply_legacy_button_style(button, &"primary" if not button.disabled else &"secondary")
 	_apply_runtime_modal_layout(_current_layout_profile())
-	event_panel.visible = true
+	var pushed := _push_runtime_modal(
+		&"event",
+		event_panel,
+		_preferred_modal_focus(event_panel),
+		Callable(self, "_cancel_event_modal")
+	)
+	if not pushed:
+		event_panel.hide()
+
+
+func _cancel_event_modal(_reason: StringName = &"cancel") -> void:
+	if _runtime_modal_is_top(&"event"):
+		_pop_runtime_modal(&"event")
 
 
 func _select_event_option(option_id: StringName) -> void:
-	event_panel.visible = false
+	if not _runtime_modal_is_top(&"event"):
+		return
+	_pop_runtime_modal(&"event")
 	var result := _dispatch_command(&"select_event_option", {"option_id": option_id, "source": "ui"})
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
@@ -1146,6 +1460,8 @@ func _select_event_option(option_id: StringName) -> void:
 
 
 func _on_encounter_option_selected(_option_id: StringName, command_payload: Dictionary) -> void:
+	if _is_runtime_modal_open():
+		return
 	if in_run_runtime != null and in_run_runtime.has_active_combat():
 		_fight_and_show_result()
 		return
@@ -1171,6 +1487,8 @@ func _on_encounter_option_selected(_option_id: StringName, command_payload: Dict
 
 
 func _request_extract_from_ui() -> void:
+	if _is_runtime_modal_open():
+		return
 	var result := _dispatch_command(&"request_extract")
 	if bool(result.get("ok", false)):
 		_show_extract_panel(run_context.get_status_snapshot())
@@ -1179,7 +1497,7 @@ func _request_extract_from_ui() -> void:
 
 
 func _show_extract_panel(snapshot: Dictionary) -> void:
-	if StringName(snapshot.get("phase", &"running")) != &"confirm_extract":
+	if StringName(snapshot.get("phase", &"running")) != &"confirm_extract" or _is_runtime_modal_open():
 		return
 	var risky := int(snapshot.get("protocol_level", 5)) <= 1
 	extract_title_label.text = "高危撤离确认" if risky else "确认撤离"
@@ -1193,25 +1511,53 @@ func _show_extract_panel(snapshot: Dictionary) -> void:
 		PresentationTheme.color_for_key(&"ui.danger") if risky else PresentationTheme.text_color()
 	)
 	_apply_runtime_modal_layout(_current_layout_profile())
-	extract_panel.visible = true
+	var pushed := _push_runtime_modal(
+		&"extract_confirm",
+		extract_panel,
+		extract_cancel_button,
+		Callable(self, "_cancel_extract_modal")
+	)
+	if not pushed:
+		extract_panel.hide()
 
 
 func _confirm_extract_from_ui() -> void:
-	extract_panel.visible = false
+	if not _runtime_modal_is_top(&"extract_confirm"):
+		return
+	_pop_runtime_modal(&"extract_confirm")
 	_dispatch_command(&"confirm_extract")
 
 
 func _cancel_extract_from_ui() -> void:
-	extract_panel.visible = false
+	_cancel_extract_modal(&"button_cancel")
+
+
+func _cancel_extract_modal(_reason: StringName = &"cancel") -> void:
+	if not _runtime_modal_is_top(&"extract_confirm"):
+		return
+	_pop_runtime_modal(&"extract_confirm")
 	_dispatch_command(&"cancel_extract")
 
 
 func _show_loot_panel(title: String, reward: Dictionary) -> void:
-	if loot_panel == null:
+	if loot_panel == null or _is_runtime_modal_open():
 		return
 	_apply_runtime_modal_layout(_current_layout_profile())
+	var pushed := _push_runtime_modal(
+		&"loot_result",
+		loot_panel,
+		_preferred_modal_focus(loot_panel),
+		Callable(self, "_cancel_loot_modal")
+	)
+	if not pushed:
+		return
 	loot_panel.call("show_result", title, reward, String(run_context.last_message))
 	_refresh_view_models()
+
+
+func _cancel_loot_modal(_reason: StringName = &"cancel") -> void:
+	if _runtime_modal_is_top(&"loot_result"):
+		_pop_runtime_modal(&"loot_result")
 
 
 func _show_world_reward_feedback(result: Dictionary, reward: Dictionary, source: StringName) -> void:
@@ -1277,52 +1623,25 @@ func _run_room_label(room_type: StringName) -> String:
 
 func _is_runtime_modal_open() -> bool:
 	return (
-		(event_panel != null and event_panel.visible)
+		(modal_focus_stack != null and modal_focus_stack.depth() > 0)
+		or (event_panel != null and event_panel.visible)
 		or (loot_panel != null and loot_panel.visible)
 		or (extract_panel != null and extract_panel.visible)
-		or (map_overlay_panel != null and map_overlay_panel.visible)
-		or (inventory_panel != null and inventory_panel.visible)
 		or (ground_loot_panel != null and ground_loot_panel.visible)
 		or (result_panel != null and result_panel.visible)
-		or (pause_panel != null and pause_panel.visible)
 		or (dev_diagnostics_panel != null and dev_diagnostics_panel.visible)
 		or (debug_panel != null and debug_panel.visible)
 	)
 
 
 func _close_top_runtime_modal() -> bool:
+	if modal_focus_stack != null and modal_focus_stack.depth() > 0:
+		return bool(modal_focus_stack.request_cancel_top(&"input_cancel"))
 	if debug_panel != null and debug_panel.visible:
 		_close_debug_panel()
 		return true
-	if map_overlay_panel != null and map_overlay_panel.visible:
-		map_overlay_panel.hide_overlay()
-		get_viewport().gui_release_focus()
-		return true
-	if inventory_panel != null and inventory_panel.visible:
-		inventory_panel.call("hide_panel")
-		get_viewport().gui_release_focus()
-		return true
 	if ground_loot_panel != null and ground_loot_panel.visible:
 		ground_loot_panel.call("hide_panel")
-		get_viewport().gui_release_focus()
-		return true
-	if event_panel != null and event_panel.visible:
-		event_panel.visible = false
-		return true
-	if loot_panel != null and loot_panel.visible:
-		loot_panel.call("hide_panel")
-		return true
-	if extract_panel != null and extract_panel.visible:
-		_cancel_extract_from_ui()
-		return true
-	if result_panel != null and result_panel.visible:
-		if result_panel.requires_salvage_confirmation():
-			return true
-		_return_from_result_to_deploy()
-		return true
-	if pause_panel != null and pause_panel.visible:
-		pause_exit_confirm_pending = false
-		pause_panel.visible = false
 		get_viewport().gui_release_focus()
 		return true
 	if dev_diagnostics_panel != null and dev_diagnostics_panel.visible:
@@ -1332,6 +1651,7 @@ func _close_top_runtime_modal() -> bool:
 
 
 func _hide_runtime_popups() -> void:
+	_clear_runtime_modal_stack(false)
 	if event_panel != null:
 		event_panel.visible = false
 	if loot_panel != null:
@@ -1364,9 +1684,27 @@ func _on_result_available(snapshot: Dictionary) -> void:
 	_hide_runtime_popups()
 	if result_panel != null:
 		result_panel.show_summary(display_snapshot)
+		var pushed := _push_runtime_modal(
+			&"result",
+			result_panel,
+			_preferred_modal_focus(result_panel),
+			Callable(self, "_cancel_result_modal")
+		)
+		if not pushed:
+			result_panel.hide_result()
+
+
+func _cancel_result_modal(_reason: StringName = &"cancel") -> void:
+	if not _runtime_modal_is_top(&"result"):
+		return
+	if result_panel != null and result_panel.requires_salvage_confirmation():
+		return
+	_return_from_result_to_deploy()
 
 
 func _confirm_failure_salvage_from_result(selected_instance_ids: Array) -> void:
+	if not _runtime_modal_is_top(&"result"):
+		return
 	var result := _dispatch_command(&"confirm_failure_salvage", {"selected_instance_ids": selected_instance_ids})
 	if not bool(result.get("ok", false)) and result_panel != null:
 		result_panel.show_summary(_build_result_display_snapshot(run_context.result_snapshot))
@@ -1571,13 +1909,20 @@ func _apply_dev_diagnostics(snapshot: Dictionary) -> void:
 	dev_diagnostics_panel.call("apply_diagnostics", snapshot, last_command_result, ui_state, art_report)
 
 
-func _dispatch_command(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
+func _dispatch_command(
+	command_name: StringName,
+	payload: Dictionary = {},
+	release_focus: bool = true,
+	show_feedback: bool = true
+) -> Dictionary:
 	if command_bus == null:
 		return {}
 	var result: Dictionary = command_bus.dispatch(command_name, payload)
 	last_command_result = result.duplicate(true)
-	_show_command_feedback(result)
-	get_viewport().gui_release_focus()
+	if show_feedback:
+		_show_command_feedback(result)
+	if release_focus:
+		get_viewport().gui_release_focus()
 	return result
 
 
@@ -1601,11 +1946,33 @@ func _flash_blocked_reason() -> void:
 
 
 func _open_map_from_ui(source: StringName = &"button") -> void:
-	_dispatch_command(&"open_map")
-	if map_overlay_panel != null:
-		map_overlay_panel.toggle_overlay()
-		if map_overlay_panel.visible:
-			map_overlay_panel.show_open_feedback(source)
+	if map_overlay_panel == null:
+		return
+	if map_overlay_panel.visible:
+		# Closing belongs to the overlay's own close/outside-click/Esc paths.
+		# A shielded RunSurface signal must not be able to dismiss the top modal.
+		return
+	var top_modal: StringName = modal_focus_stack.top_modal_id() if modal_focus_stack != null else &""
+	if top_modal not in [&"", &"inventory"]:
+		return
+	# A shielded RunSurface cannot legitimately click through the inventory.
+	# Only the audited run-action shortcut may open the read-only child map.
+	if top_modal == &"inventory" and source != &"keyboard":
+		return
+	if _is_runtime_modal_open() and top_modal != &"inventory":
+		return
+	map_overlay_panel.show_overlay()
+	var pushed := _push_runtime_modal(
+		&"map",
+		map_overlay_panel,
+		_preferred_modal_focus(map_overlay_panel),
+		Callable(self, "_cancel_map_modal")
+	)
+	if not pushed:
+		map_overlay_panel.hide_overlay()
+		return
+	_dispatch_command(&"open_map", {"source": source}, false, false)
+	map_overlay_panel.show_open_feedback(source)
 
 
 func _toggle_debug_panel() -> void:
@@ -1621,8 +1988,9 @@ func _toggle_debug_panel() -> void:
 
 
 func _open_debug_panel_from_pause() -> void:
-	if pause_panel != null:
-		pause_panel.visible = false
+	if not _runtime_modal_is_top(&"pause"):
+		return
+	_pop_runtime_modal(&"pause", false)
 	_open_debug_panel()
 
 
@@ -1717,6 +2085,7 @@ func _debug_search_and_show_loot() -> void:
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
+		_close_debug_panel()
 		_show_loot_panel("Debug Search Result", reward)
 	else:
 		_show_command_feedback(result)
@@ -1945,12 +2314,12 @@ func _g41_transition_precheck(direction: Vector2i) -> Dictionary:
 
 
 func _on_map_overlay_cell_action_requested(marker: Dictionary) -> void:
-	if command_bus == null or run_context == null:
+	if command_bus == null or run_context == null or not _runtime_modal_is_top(&"map"):
 		return
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var action_id := StringName(marker.get("action_id", &"inspect"))
 	if action_id == &"toggle_flag":
-		var flag_result: Dictionary = _dispatch_command(&"toggle_flag_cell", {"pos": pos})
+		var flag_result: Dictionary = _dispatch_command(&"toggle_flag_cell", {"pos": pos}, false)
 		if map_overlay_panel != null:
 			map_overlay_panel.show_action_feedback(marker, flag_result)
 		return
@@ -1961,7 +2330,7 @@ func _on_map_overlay_cell_action_requested(marker: Dictionary) -> void:
 			if map_overlay_panel != null:
 				map_overlay_panel.show_action_feedback(marker, blocked_fast_return)
 			return
-		var result: Dictionary = _dispatch_command(&"teleport_to_explored", {"pos": pos})
+		var result: Dictionary = _dispatch_command(&"teleport_to_explored", {"pos": pos}, false)
 		if map_overlay_panel != null:
 			map_overlay_panel.show_action_feedback(marker, result)
 		if bool(result.get("ok", false)):

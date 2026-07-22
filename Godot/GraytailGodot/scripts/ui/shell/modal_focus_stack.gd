@@ -34,7 +34,7 @@ func push(
 	return true
 
 
-func pop(modal_id: StringName = &"", restore_focus: bool = true) -> bool:
+func pop(modal_id: StringName = &"", restore_focus: bool = true, hide_modal: bool = true) -> bool:
 	_prune_invalid_entries()
 	if _entries.is_empty():
 		return false
@@ -43,7 +43,7 @@ func pop(modal_id: StringName = &"", restore_focus: bool = true) -> bool:
 		return false
 	_entries.pop_back()
 	var modal_root := _control_from_weak_ref(entry.get("modal"))
-	if modal_root != null:
+	if hide_modal and modal_root != null:
 		modal_root.hide()
 	if restore_focus:
 		_restore_focus(entry)
@@ -112,8 +112,15 @@ func _restore_focus(entry: Dictionary) -> void:
 
 
 func _grab_focus_deferred(control: Control) -> void:
+	if control == null or not is_instance_valid(control):
+		return
+	Callable(self, "_grab_focus_reference_if_valid").bind(weakref(control)).call_deferred()
+
+
+func _grab_focus_reference_if_valid(reference: WeakRef) -> void:
+	var control := _control_from_weak_ref(reference)
 	if _can_receive_focus(control):
-		control.call_deferred("grab_focus")
+		control.grab_focus()
 
 
 func _can_receive_focus(control: Control) -> bool:
@@ -123,6 +130,7 @@ func _can_receive_focus(control: Control) -> bool:
 		and control.is_inside_tree()
 		and control.is_visible_in_tree()
 		and control.focus_mode != Control.FOCUS_NONE
+		and not (control is BaseButton and (control as BaseButton).disabled)
 	)
 
 

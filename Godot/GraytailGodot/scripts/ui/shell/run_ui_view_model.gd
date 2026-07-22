@@ -1,6 +1,8 @@
 extends RefCounted
 class_name RunUIViewModel
 
+const ItemRarityDescriptorScript := preload("res://scripts/presentation/item_rarity_descriptor.gd")
+
 
 static func format_expedition_summary(snapshot: Dictionary) -> String:
 	var lines: Array[String] = []
@@ -44,10 +46,19 @@ static func format_long_term_summary(snapshot: Dictionary) -> String:
 static func item_display_line(item: Dictionary) -> String:
 	var display_name: String = String(item.get("display_name", item.get("item_id", "item")))
 	var item_type: String = String(item.get("item_type", item.get("main_type", "item")))
-	var rarity: String = String(item.get("rarity", "tier_1"))
+	var rarity: Dictionary = ItemRarityDescriptorScript.describe_item(item)
 	var weight: Variant = item.get("weight", 1)
 	var value: Variant = item.get("base_value", 0)
-	return "%s  %s  %s  重%s  值%s" % [display_name, _item_type_label(item_type), _rarity_label(rarity), weight, value]
+	var quantity := maxi(1, int(item.get("quantity", item.get("stack_count", item.get("count", 1)))))
+	var quantity_text := "  ×%d" % quantity if quantity > 1 else ""
+	return "%s  %s  %s%s  重%s  值%s" % [
+		display_name,
+		_item_type_label(item_type),
+		String(rarity.get("display_text", "[?] 未鉴定")),
+		quantity_text,
+		weight,
+		value,
+	]
 
 
 static func item_tooltip(item: Dictionary) -> String:
@@ -89,23 +100,7 @@ static func _item_type_label(item_type: String) -> String:
 
 
 static func _rarity_label(rarity: String) -> String:
-	match rarity:
-		"tier_1", "common":
-			return "普通"
-		"tier_2", "uncommon":
-			return "优良"
-		"tier_3", "rare":
-			return "稀有"
-		"tier_4", "epic":
-			return "珍贵"
-		"tier_5", "legendary":
-			return "传奇"
-		"tier_6", "mythic":
-			return "秘藏"
-		"unique":
-			return "唯一物"
-		_:
-			return "未鉴定"
+	return String(ItemRarityDescriptorScript.describe(rarity).get("label", "未鉴定"))
 
 
 static func _effect_kind_label(effect_kind: String) -> String:
@@ -138,13 +133,32 @@ static func command_result_text(result: Dictionary) -> String:
 	var accepted: bool = bool(result.get("accepted", result.get("ok", false)))
 	var reason: String = String(result.get("reason_code", result.get("blocked_reason", result.get("reason", ""))))
 	if accepted:
+		var status := StringName(result.get("status", result.get("rule_result", &"")))
+		var item: Dictionary = _dict_from(result, "item")
+		var item_name := String(item.get("display_name", item.get("item_id", "物品")))
+		match status:
+			&"picked_up":
+				return "已拾取：%s。" % item_name
+			&"dropped":
+				return "已放下：%s。" % item_name
+			&"replaced":
+				var dropped: Dictionary = _dict_from(result, "dropped_item")
+				return "已收起%s，放下%s。" % [
+					item_name,
+					String(dropped.get("display_name", dropped.get("item_id", "原物品"))),
+				]
+			&"consumed":
+				return "已使用：%s。" % item_name
+			&"equipped":
+				return "已装备：%s。" % item_name
+			&"unequipped":
+				return "已卸下：%s。" % item_name
 		var message := String(result.get("message", ""))
 		if message != "":
 			return _player_message(message)
-		if result.has("item"):
-			var item: Dictionary = _dict_from(result, "item")
-			return "操作完成：%s。" % String(item.get("display_name", item.get("item_id", "item")))
-		return "操作完成。"
+		if not item.is_empty():
+			return "已更新：%s。" % item_name
+		return ""
 	return "操作受阻：%s" % reason_label(reason)
 
 
@@ -373,12 +387,20 @@ static func _player_message(message: String) -> String:
 	if text == "":
 		return ""
 	if text.find("Map overlay") >= 0 and text.find("opened") >= 0:
-		return "已打开大地图。"
+		# `open_map` is retained only for existing progression accounting. The
+		# visible overlay and focus transfer are already the complete feedback;
+		# surfacing the legacy placeholder creates a redundant engineering toast.
+		return ""
 	text = text.replace("black coin", "本局黑币")
 	text = text.replace("gold_coin", "安全收益")
 	text = text.replace("gold coin", "安全收益")
 	text = text.replace("on room floor", "留在地面")
 	text = text.replace("Search complete:", "搜索完成：")
+	text = text.replace("Picked up floor item:", "已拾取：")
+	text = text.replace("Dropped inventory item:", "已放下：")
+	text = text.replace("Replaced floor item: picked", "已收起")
+	text = text.replace(", dropped", "，放下")
+	text = text.replace("Consumable used.", "物品已使用。")
 	text = text.replace("Monster cleared:", "威胁已清理：")
 	text = text.replace("Mine triggered:", "触发陷阱：")
 	text = text.replace("Extraction requires an exit room.", "只有撤离点可以撤离。")

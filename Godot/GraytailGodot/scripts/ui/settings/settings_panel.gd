@@ -33,6 +33,7 @@ var _content: VBoxContainer
 var _built := false
 var _opened := false
 var _committing_controls := false
+var _external_cancel_authority := false
 
 
 func _ready() -> void:
@@ -59,7 +60,7 @@ func open_panel() -> bool:
 	if _opened:
 		show()
 		_refresh_from_manager()
-		window_mode_option.call_deferred("grab_focus")
+		call_deferred("_focus_window_mode_option_if_valid")
 		return true
 	var transaction_began := bool(settings_manager.call("begin_transaction"))
 	var read_only := (
@@ -71,8 +72,21 @@ func open_panel() -> bool:
 	_opened = true
 	show()
 	_refresh_from_manager()
-	window_mode_option.call_deferred("grab_focus")
+	call_deferred("_focus_window_mode_option_if_valid")
 	return true
+
+
+func _focus_window_mode_option_if_valid() -> void:
+	if (
+		_opened
+		and visible
+		and window_mode_option != null
+		and is_instance_valid(window_mode_option)
+		and not window_mode_option.is_queued_for_deletion()
+		and window_mode_option.is_inside_tree()
+		and window_mode_option.is_visible_in_tree()
+	):
+		window_mode_option.grab_focus()
 
 
 func close_panel(emit_request: bool = true) -> void:
@@ -86,6 +100,19 @@ func close_panel(emit_request: bool = true) -> void:
 
 func field_control_names() -> PackedStringArray:
 	return PackedStringArray(FIELD_NAMES)
+
+
+func preferred_focus_control() -> Control:
+	_build_once()
+	return window_mode_option
+
+
+func set_external_cancel_authority(enabled: bool) -> void:
+	_external_cancel_authority = enabled
+
+
+func is_panel_open() -> bool:
+	return _opened
 
 
 func _build_once() -> void:
@@ -265,7 +292,7 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not _opened or event.is_echo():
+	if _external_cancel_authority or not _opened or event.is_echo():
 		return
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("cancel"):
 		get_viewport().set_input_as_handled()

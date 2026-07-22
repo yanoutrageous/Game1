@@ -8,6 +8,8 @@ signal chest_open_requested
 const POPUP_WIDTH := 308.0
 const ROW_HEIGHT := 44.0
 const ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
+const ItemRarityDescriptor := preload("res://scripts/presentation/item_rarity_descriptor.gd")
+const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const ReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 
 var title_label: Label
@@ -78,6 +80,8 @@ func activate_primary() -> bool:
 		if context_items.is_empty():
 			return false
 		var chest_item := context_items[0]
+		if not _pickup_allowed(chest_item):
+			return false
 		if int(chest_item.get("weight", 0)) > int(current_context.get("backpack_remaining", 0)):
 			_begin_replacement(String(chest_item.get("instance_id", "")))
 		else:
@@ -88,6 +92,8 @@ func activate_primary() -> bool:
 			_cancel_replacement()
 			return true
 		var item := context_items[0]
+		if not _pickup_allowed(item):
+			return false
 		if int(item.get("weight", 0)) > int(current_context.get("backpack_remaining", 0)):
 			_begin_replacement(String(item.get("instance_id", "")))
 		else:
@@ -100,8 +106,11 @@ func show_command_result(result: Dictionary) -> void:
 	if status_label == null:
 		return
 	var ok := bool(result.get("accepted", result.get("ok", false)))
-	var message := String(result.get("message", result.get("reason", "操作完成。" if ok else "当前无法操作。")))
-	status_label.text = message.replace("\n", " ").replace("\r", " ")
+	if ok:
+		status_label.text = ""
+	else:
+		var reason := String(result.get("reason_code", result.get("blocked_reason", result.get("reason", ""))))
+		status_label.text = RunUIViewModel.reason_label(reason)
 	status_label.visible = not status_label.text.is_empty()
 	status_label.add_theme_color_override("font_color", Color(0.55, 0.92, 0.72, 1.0) if ok else Color(1.0, 0.52, 0.34, 1.0))
 	_request_content_fit()
@@ -208,9 +217,11 @@ func _rebuild(context: Dictionary) -> void:
 
 func _build_replacement_view(context: Dictionary, backpack_remaining: int) -> void:
 	var incoming := _item_by_instance(context_items, replacement_ground_id)
+	var incoming_rarity := ItemRarityDescriptor.describe_item(incoming)
 	title_label.text = "选择要放下的物品"
-	hint_label.text = "换入：%s　重量 %d。只有释放后容量足够的物品可选。" % [
+	hint_label.text = "换入：%s　%s　重量 %d。只有释放后容量足够的物品可选。" % [
 		String(incoming.get("display_name", incoming.get("item_id", "回收物"))),
+		String(incoming_rarity.get("display_text", "[?] 未鉴定")),
 		int(incoming.get("weight", 0)),
 	]
 	primary_button.text = "取消替换"
@@ -251,6 +262,7 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		return
 	var incoming_weight := int(incoming.get("weight", 0))
 	for item in inventory_items:
+		var rarity := ItemRarityDescriptor.describe_item(item)
 		var row := HBoxContainer.new()
 		row.name = "ReplacementCandidateRow"
 		row.add_theme_constant_override("separation", 4)
@@ -261,10 +273,15 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		item_button.custom_minimum_size = Vector2(156, ROW_HEIGHT)
 		item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		item_button.clip_text = true
-		item_button.text = "%s　重量 %d" % [String(item.get("display_name", item.get("item_id", "物品"))), int(item.get("weight", 0))]
+		item_button.text = "%s  ·  %s  ·  重%d" % [
+			String(item.get("display_name", item.get("item_id", "物品"))),
+			String(rarity.get("display_text", "[?] 未鉴定")),
+			int(item.get("weight", 0)),
+		]
 		item_button.tooltip_text = String(item.get("short_description", ""))
 		_apply_item_icon(item_button, item)
 		_style_button(item_button, &"secondary", 13)
+		_apply_rarity_style(item_button, rarity)
 		item_button.add_theme_font_override("font", ReadableFont)
 		row.add_child(item_button)
 		var candidate_id := String(item.get("instance_id", ""))
@@ -293,6 +310,7 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		item_list.add_child(empty)
 		return
 	for item in items:
+		var rarity := ItemRarityDescriptor.describe_item(item)
 		var row := HBoxContainer.new()
 		row.name = "ContextItemRow"
 		row.add_theme_constant_override("separation", 4)
@@ -305,27 +323,43 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		item_button.clip_text = true
 		item_button.text = "%s  ·  %s  ·  重%d" % [
 			String(item.get("display_name", item.get("item_id", "回收物"))),
-			String(item.get("rarity", "普通")),
+			String(rarity.get("display_text", "[?] 未鉴定")),
 			int(item.get("weight", 0)),
 		]
 		item_button.tooltip_text = String(item.get("short_description", ""))
 		_apply_item_icon(item_button, item)
 		_style_button(item_button, &"secondary", 13)
+		_apply_rarity_style(item_button, rarity)
 		item_button.add_theme_font_override("font", ReadableFont)
 		row.add_child(item_button)
 		var instance_id := String(item.get("instance_id", ""))
+		var action_allowed := _pickup_allowed(item)
 		var blocked := int(item.get("weight", 0)) > backpack_remaining
 		var action := Button.new()
-		action.name = "ContextReplaceButton" if blocked else "ContextPickupButton"
-		action.text = "替换" if blocked else "拾取"
+		action.name = "ContextBlockedButton" if not action_allowed else ("ContextReplaceButton" if blocked else "ContextPickupButton")
+		action.text = "不可拾取" if not action_allowed else ("替换" if blocked else "拾取")
 		action.custom_minimum_size = Vector2(58, ROW_HEIGHT)
-		action.tooltip_text = "背包空间不足，选择一件背包物品进行替换。" if blocked else "拾取当前物品。"
+		action.tooltip_text = _pickup_blocked_text(item) if not action_allowed else ("背包空间不足，选择一件背包物品进行替换。" if blocked else "拾取当前物品。")
+		action.disabled = not action_allowed
 		_style_button(action, &"warning" if blocked else &"primary", 13)
-		if blocked:
+		if not action_allowed:
+			pass
+		elif blocked:
 			action.pressed.connect(func() -> void: _begin_replacement(instance_id))
 		else:
 			action.pressed.connect(func() -> void: pickup_requested.emit(instance_id))
 		row.add_child(action)
+
+
+func _pickup_allowed(item: Dictionary) -> bool:
+	if item.has("pickup_allowed"):
+		return bool(item.get("pickup_allowed", false))
+	return bool(current_context.get("pickup_allowed", true))
+
+
+func _pickup_blocked_text(item: Dictionary) -> String:
+	var reason := String(item.get("pickup_blocked_reason", current_context.get("pickup_blocked_reason", ""))).strip_edges()
+	return reason if reason != "" else "当前物品不可拾取。"
 
 
 func _apply_item_icon(button: Button, item: Dictionary) -> void:
@@ -359,6 +393,20 @@ func _style_button(button: Button, tone: StringName, font_size: int) -> void:
 	button.add_theme_stylebox_override("focus", hover)
 	button.add_theme_font_size_override("font_size", font_size)
 	button.add_theme_color_override("font_color", Color(0.92, 0.94, 0.86, 1.0))
+
+
+func _apply_rarity_style(button: Button, rarity: Dictionary) -> void:
+	var rarity_color := Color(rarity.get("color", Color(0.66, 0.70, 0.68, 1.0)))
+	button.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+	button.add_theme_color_override("font_color", rarity_color)
+	for state in [&"normal", &"hover", &"pressed", &"focus"]:
+		var base := button.get_theme_stylebox(StringName(state))
+		if not (base is StyleBoxFlat):
+			continue
+		var styled := (base as StyleBoxFlat).duplicate() as StyleBoxFlat
+		styled.border_color = rarity_color
+		styled.border_width_left = 3
+		button.add_theme_stylebox_override(StringName(state), styled)
 
 
 func _place_near_anchor() -> void:
@@ -459,10 +507,20 @@ func _place_near_anchor() -> void:
 func _context_signature(context: Dictionary) -> String:
 	var ids: Array[String] = []
 	for item in context_items:
-		ids.append("%s:%s" % [String(item.get("instance_id", "")), int(item.get("weight", 0))])
+		ids.append("%s:%s:%s:%s:%s" % [
+			String(item.get("instance_id", "")),
+			int(item.get("weight", 0)),
+			String(ItemRarityDescriptor.normalize(item.get("rarity", &"unknown"))),
+			str(item.get("pickup_allowed", context.get("pickup_allowed", true))),
+			String(item.get("pickup_blocked_reason", context.get("pickup_blocked_reason", ""))),
+		])
 	var inventory_ids: Array[String] = []
 	for item in inventory_items:
-		inventory_ids.append("%s:%s" % [String(item.get("instance_id", "")), int(item.get("weight", 0))])
+		inventory_ids.append("%s:%s:%s" % [
+			String(item.get("instance_id", "")),
+			int(item.get("weight", 0)),
+			String(ItemRarityDescriptor.normalize(item.get("rarity", &"unknown"))),
+		])
 	return "%s|%s|%s|%s|%s|%s|%s" % [
 		String(context_kind),
 		bool(context.get("opened_once", false)),

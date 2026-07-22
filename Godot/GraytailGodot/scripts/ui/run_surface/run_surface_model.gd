@@ -8,7 +8,7 @@ const PresentationTheme := preload("res://scripts/presentation/presentation_them
 static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, layout_profile: Dictionary, last_command_result: Dictionary) -> Dictionary:
 	var position: Vector2i = snapshot.get("position", snapshot.get("player_pos", Vector2i.ZERO))
 	var room_type := StringName(snapshot.get("current_room", &"Unknown"))
-	var adjacent_mines := int(snapshot.get("adjacent_mines", 0))
+	var adjacent_mines := int(snapshot.get("adjacent_mines", -1)) if snapshot.has("adjacent_mines") else -1
 	var event_state: Dictionary = _dict_from(snapshot, "event_state")
 	var search_data: Dictionary = _dict_from(snapshot, "search_state_data")
 	var reward: Dictionary = _dict_from(snapshot, "last_reward")
@@ -37,6 +37,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"room_summary": _room_summary(snapshot, room_type, adjacent_mines),
 		"current_objective": _objective_for_room(room_type, search_data, event_state),
 		"protocol_level": snapshot.get("protocol_level", 5),
+		"protocol_title": protocol_title_for_level(snapshot.get("protocol_level", 5)),
 		"pressure": snapshot.get("pressure", 0),
 		"danger_label": _danger_label(room_type, adjacent_mines),
 		"danger_theme_key": PresentationTheme.risk_key(adjacent_mines, room_type),
@@ -48,6 +49,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"backpack_used": snapshot.get("backpack_used", 0),
 		"backpack_capacity": snapshot.get("backpack_capacity", 0),
 		"resource_summary": _resource_summary(snapshot),
+		"mine_risk": mine_risk_descriptor(adjacent_mines),
 		"command_feedback": command_feedback,
 		"encounter_section": encounter_section,
 		"scanner_summary": _scanner_summary(minimap_view_model, position),
@@ -567,10 +569,56 @@ static func extract_modal_text(snapshot: Dictionary) -> String:
 	return _join_lines(lines)
 
 
+static func protocol_title_for_level(level_value: Variant) -> String:
+	match clampi(int(level_value), 1, 5):
+		1:
+			return "最终建议"
+		2:
+			return "返程建议"
+		3:
+			return "风险作业"
+		4:
+			return "轻度警戒"
+		_:
+			return "正常作业"
+
+
+static func mine_risk_descriptor(adjacent_value: Variant) -> Dictionary:
+	var adjacent := int(adjacent_value)
+	if adjacent < 0 or adjacent > 8:
+		return {
+			"known": false,
+			"count": -1,
+			"badge": "?",
+			"label": "未知",
+			"display_text": "周围雷险 ? · 未知",
+			"read_only": true,
+		}
+	var badge := "○"
+	var label := "无雷险"
+	if adjacent >= 6:
+		badge = "◆"
+		label = "高危"
+	elif adjacent >= 3:
+		badge = "▲"
+		label = "警戒"
+	elif adjacent >= 1:
+		badge = "△"
+		label = "留意"
+	return {
+		"known": true,
+		"count": adjacent,
+		"badge": badge,
+		"label": label,
+		"display_text": "周围雷险 %s %d · %s" % [badge, adjacent, label],
+		"read_only": true,
+	}
+
+
 static func _room_summary(snapshot: Dictionary, room_type: StringName, adjacent_mines: int) -> String:
 	var lines: Array[String] = []
 	lines.append("模式：%s | 阶段：%s" % [String(snapshot.get("mode", &"")), String(snapshot.get("phase", &""))])
-	lines.append("房间：%s | 周边危险：%s" % [_room_label(room_type), adjacent_mines])
+	lines.append("房间：%s | 周边雷险：%s" % [_room_label(room_type), str(adjacent_mines) if adjacent_mines >= 0 else "未知"])
 	lines.append("状态：%s | 地面物品：%s" % [String(snapshot.get("outcome", "Running")), snapshot.get("room_floor_item_count", 0)])
 	return _join_lines(lines)
 
@@ -598,6 +646,8 @@ static func _danger_label(room_type: StringName, adjacent_mines: int) -> String:
 		return "雷险确认"
 	if room_type == &"Monster":
 		return "威胁接触"
+	if adjacent_mines < 0:
+		return "雷险未知"
 	if adjacent_mines >= 3:
 		return "高危邻近"
 	if adjacent_mines >= 1:
@@ -695,8 +745,8 @@ static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_
 	var state_label := _run_state_label(String(lifecycle.get("state", snapshot.get("phase", "running"))))
 	var return_label := "可回传" if bool(return_eligibility.get("eligible", false)) else "不可回传"
 	return [
-		"协议 %s | 压力 %s/100 | %s" % [snapshot.get("protocol_level", 5), snapshot.get("pressure", 0), state_label],
-		"房间 %s | 周边雷险 %s | %s" % [_room_label(room_type), adjacent_mines, _danger_label(room_type, adjacent_mines)],
+		"协议 %s · %s | 压力 %s/100 | %s" % [snapshot.get("protocol_level", 5), protocol_title_for_level(snapshot.get("protocol_level", 5)), snapshot.get("pressure", 0), state_label],
+		"房间 %s | %s" % [_room_label(room_type), String(mine_risk_descriptor(adjacent_mines).get("display_text", "周围雷险 ? · 未知"))],
 		_search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
 		"地图 %s | %s" % [_known_state_label(String(room_detail.get("known_state", "unknown"))), return_label],
 	]
@@ -773,12 +823,14 @@ static func _scanner_markers(minimap_view_model: MiniMapViewModel) -> Array:
 static func _map_domain_summary(run_map_snapshot: Dictionary) -> String:
 	if run_map_snapshot.is_empty():
 		return "地图：暂无公开摘要。"
-	var run_map: Dictionary = _dict_variant(run_map_snapshot.get("RunMap", {}))
-	var summary: Dictionary = _dict_variant(run_map_snapshot.get("map_summary_preview", {}))
-	return "地图：%sx%s | %s" % [
-		run_map.get("width", 0),
-		run_map.get("height", 0),
-		_map_kind_label(String(summary.get("map_kind", "classic_rect_minesweeper"))),
+	var known_map: Dictionary = _dict_variant(run_map_snapshot.get("KnownMap", {}))
+	var public_cells: Array = _array_variant(known_map.get("public_cells", []))
+	if known_map.is_empty():
+		return "地图：暂无公开摘要。"
+	return "地图：%sx%s | 公开格 %s" % [
+		known_map.get("width", 0),
+		known_map.get("height", 0),
+		public_cells.size(),
 	]
 
 
@@ -952,14 +1004,6 @@ static func _visibility_label(state: String) -> String:
 			return "已扫描"
 		_:
 			return "待确认"
-
-
-static func _map_kind_label(kind: String) -> String:
-	match kind:
-		"classic_rect_minesweeper":
-			return "矩形雷险区"
-		_:
-			return "探索地图"
 
 
 static func _settlement_state_label(state: String) -> String:

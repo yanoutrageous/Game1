@@ -34,8 +34,8 @@ entry full/head: 39/39 PASS
 | I2.1 | 共享导航/转场、设置、focus/modal、character presentation、style/layer seam | I2.0；设置字段与动画技术决策 | `IN_PROGRESS` | I2.1A/B/C 的路由、真实设置、输入、focus 与生命周期基础已 `READY_FOR_REVIEW`；character/transition/style seam 随 I2.2 继续，不提前关闭 I2.1 |
 | I2.2 | 主菜单文字/场景/锚点/动效/空间转场 | I2.1 最小 seam | `IN_PROGRESS` | I2.2A 主菜单安全回退切片已 `ACCEPTED_WITH_NOTES`；完整洞口步行动画、下层连续背景与玩家手感复核仍待后续切片，不关闭 I2.2 |
 | I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `ACCEPTED_WITH_NOTES` | I2.3A 同页双栏与八地图精确投影、I2.3B 单件购买/出售真实事务闭环均已接受；批量售卖继续禁止，玩家动态手感并入 I2.7 综合复核 |
-| I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `IN_PROGRESS` | I2.4A 任务档案责任迁移与红点可靠性门已进入实施；天赋仍受产品权威决策门阻塞，不伪造可玩能力 |
-| I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `AUDIT_REQUIRED` | 独立 I2.5A 结果框/协议色板/物品 binding 已 `READY_FOR_REVIEW`；其余局内职责仍待分项授权 |
+| I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `ACCEPTED_WITH_NOTES` | I2.4A/B 已关闭获授权的任务档案、模块工作区与角色表现端口；天赋规则缺少产品权威，作为显式阻塞项保留，不用假数据冒充完成 |
+| I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `ACCEPTED_WITH_NOTES` | I2.5A/B/C 均已接受；世界对象、公开信息、品质、地图、背包与统一模态已闭环，战斗逃离/特殊房/结算解释转入 I2.6，最终玩家手感复核留 I2.7 |
 | I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `IN_PROGRESS` | I2.6A v2 工作负载与 I2.6B pre-authority combat asset admission 已 `READY_FOR_REVIEW`；特殊房、结算与 visible 验收仍待后续 gate |
 | I2.7 | 跨页面整合、操作说明、全量回归、综合验收 | I2.1–I2.6 accepted/deferred with owner | `NOT_STARTED` | full/worktree→commit→full/head；matrix 逐项；创建唯一 validation/handoff |
 
@@ -794,7 +794,7 @@ player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
 ## 19. I2.5C 局内信息表面、地图公开信息、背包详情与运行时模态（2026-07-22）
 
 ```text
-status: AUTHORIZED (I2 internal risk gate; implementation not yet accepted; I2 remains active)
+status: ACCEPTED_WITH_NOTES (I2 internal risk gate; I2 remains active)
 feedback: RUN-05, RUN-06, RUN-07, RUN-08, RUN-09, RUN-10, RUN-11, CROSS-01, CROSS-04, CROSS-05, CROSS-07, CROSS-08
 rollback: f98aecc (I2.5B accepted checkpoint)
 ```
@@ -878,3 +878,40 @@ Godot/GraytailGodot/tests/i2_item_rarity_authority_roundtrip_runner.gd
 同时确认 modal shield 与 inventory/map 所在 overlay slot 不同父节点时会被隐藏；RunSurface 的 ground-loot、combat、extract、pause、encounter option 直连信号以及 inventory drop/use、map cell 和 world popup 回调可绕过栈顶。实现必须让 shield 跟随当前 top root 的父容器并置于其正下方，同时所有领域动作入口显式验证当前 top modal：inventory 动作只在 inventory 为栈顶时接受，map cell 只在 map 为栈顶时接受，world action 只在无 modal 时接受，底层 RunSurface 动作在任意 modal 打开时全部拒绝；允许的 inventory→map 嵌套打开仍保留。仅依赖 z-index 或视觉遮罩而没有 handler guard 不得接受。
 
 最后，`_dispatch_command()` 的无条件 focus release 与 inventory/map 重建会令键盘/手柄在 use/drop/flag/fast-return 后失焦，地图选择路径还存在重复重建。显式动作必须按稳定 item instance 或 map position 恢复到仍存在的动作/格子；目标消失时回退到首个可操作项或关闭按钮。地图结果只允许一次必要重建。完成测试须覆盖 map_open_count 恰好 +1、关闭/hover 不变、显式 flag/fast-return 各一次；inventory/map 打开时逐一模拟所有底层直连 signal 并证明 command/stack 不变；use/drop/flag 成功与失败后的焦点继续可达。表现描述器的非生产 `unique_locked/locked_unique` 别名应删除而不是扩张领域输入域。
+
+### 19.3 实现、复核与接受记录
+
+最终实现把快捷背包改为按真实内容完整滚动，不再补假空位或静默截断；负重居中，周围雷险只消费公开 KnownMap 的未知/0–8，协议区按既有五级阈值统一标题与强调色。T1–T6、`unique` 与 unknown 由单一只读品质描述器映射，43 项正式目录经过真实 `RunAssetLedger.create_item_instance()` 往返后保持 canonical rarity；历史 `good/uncommon` 别名兼容且 `unique` 拒绝门继续由领域权威决定。部署、局内快捷/完整背包、世界悬浮窗与结果预览均不再泄露 raw `tier_N`。
+
+小地图和展开地图只读取 KnownMap/public cell，公开相邻雷数进入格子右下角；地图外左键与 Esc 关闭后恢复原焦点。隐藏→显示的地图打开恰好一次记录既有 `open_map` 进度，重复打开、hover、focus 与关闭零重复提交；插旗和快速返回各自只在显式动作时提交一次。背包 hover/focus 只更新详情；use/drop/flag 成功和失败均按稳定 item/action 或 map position 恢复焦点。
+
+运行时生产模态统一进入 `ModalFocusStack`：inventory→map、pause→settings、pause→abandon confirmation 是仅有的获准嵌套；event、extract、loot result 与终局 result 也使用同一栈、遮罩和栈顶回调守卫。任一模态打开时，RunSurface、world popup、inventory 与 map 的下层直连信号均在 handler 侧 fail closed。独立复核曾发现旧 event/extract/result “可见但 stack=0”可穿透背包/世界动作的 P1，修复后扩展真实生产 runner 覆盖下层信号、陈旧回调、Esc 单层关闭、extract cancel 恰好一次、结果路由和焦点恢复；最终复核为 P0=0、P1=0。
+
+接受证据：
+
+```text
+Godot 4.6.3 editor parse: PASS
+static/worktree: PASS; manifest SHA-256=7B5544F88A2BAF8A789E34B2D2B503B2B59838E368983AB2C4D71821D06FFC1F
+I2_ITEM_RARITY_AUTHORITY_ROUNDTRIP: PASS; formal_items=43; canonical=tier_1..tier_6; settlement=preserved; flee_candidates=t1_only
+I2_ITEM_RARITY_PRESENTATION: PASS; formal_items=43; tiers=6; consumers=deploy,result,world
+I2_INVENTORY_HOVER_FOCUS: PASS; hover_commands=0; focus_commands=0; actions=4
+I2_RUN_INFORMATION_SURFACE: PASS; quick_bag=0,1,4,5,8; mine_risk=unknown,0-8; protocol=levels_1-5
+I2_MAP_PUBLIC_INFORMATION_INPUT: PASS; source=KnownMap; adjacent=known_only; outside_click,esc; focus_restore=PASS
+I2_RUNTIME_MODAL_PRIORITY: PASS; stack=top_only; lower_layers=blocked; stale_callbacks=blocked; abandon_commands=1
+quick/worktree: 44/44 runner PASS; registration_complete=true; pollution_guard=PASS
+report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T063254280Z_986db915\report.json
+report SHA-256=62AD0D1083B38473ED7F6103EA060F21FECEB4BDC96A157A480362821AB9EDAE
+ui/worktree: 45/45 runner PASS; registration_complete=true; pollution_guard=PASS
+report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T064148373Z_e6d77d67\report.json
+report SHA-256=FFF89DC7F0319D5487B1113A035E5C4B3405E6DE81DAD6D7A446EF7E2DD367B8
+production preview: 9/9 PNG generated; run/inventory/map × 1280x720/1600x900/1920x1080
+status=PASS_WITH_VISUAL_REVIEW_REQUIRED; pollution_guard=PASS
+report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T064844850Z_4f170444\preview_report.json
+report SHA-256=D291B7481631E01C37032F48343584F8FC43D46D67545A83EE8AF6F5BA1119F5
+allowed-path audit: PASS; 25 final paths including this ledger; no scene/resource/project/assets/import/translation changes
+independent post-fix review: P0=0; P1=0
+```
+
+人工检查 1280 与 1920 代表图确认 run/inventory/map 无阻塞性裁切，背包和地图居中、遮罩与说明可读；但局内底部操作反馈在 1280 下仍拥挤并出现截断，空背包捕获也不能替代富物品品质的可见检查。它们与 push 失败故障注入、debug-only loot 动态覆盖、reduced-motion 玩家可见动画手感一起登记为非阻塞 P2，进入 I2.7 综合可见/输入复核。特殊房型仍可能泄露工程枚举、战斗触边逃离、撤离点/雷房反馈和成功/失败结算解释继续属于 I2.6C/D，不以本门结果冒充完成。
+
+接受边界：I2.5A/B/C 的获授权工程范围已关闭，I2.5 记为 `ACCEPTED_WITH_NOTES`，不关闭 I2。未新增二进制素材，全部 UI/物品/协议图形复用已治理资产；没有改动 scene/resource/project、素材清单或设置/InputMap schema。full/worktree 与 exact full/head 仍保留给 I2.7 最终综合门。
