@@ -5,6 +5,7 @@ const LongTermContentFrameworkScript := preload("res://scripts/ui/long_term/long
 
 const STATE_PREVIEW := &"preview"
 const STATE_DISABLED := &"disabled"
+const STATE_AVAILABLE := &"available"
 
 
 static func build_modules() -> Array:
@@ -56,12 +57,12 @@ static func build_modules() -> Array:
 			&"research",
 			"研究",
 			"研究课题、解锁线和长期增益入口",
-			STATE_DISABLED,
-			"研究系统未接入；G19 只显示禁用原因和后续方向。",
+			STATE_AVAILABLE,
+			"读取现有研究链、前置、消耗、效果与完成状态；只有条件满足的课题可显式确认。",
 			{
 				"module": "research",
-				"state": "disabled",
-				"message": "研究解锁、消耗和效果均后置。",
+				"state": "available",
+				"message": "研究选择只更新详情；确认按钮提交既有原子事务。",
 			},
 			[
 				_group("研究课题", ["课题列表位置", "条件说明位置", "后续效果说明位置"]),
@@ -70,7 +71,7 @@ static func build_modules() -> Array:
 				"label": "研究链接",
 				"message": "只展示未来入口，不执行研究解锁。",
 			},
-			"后续阶段再定义研究数据、条件和效果。"
+			"研究规则继续由 M7 权威服务负责，本页不重算条件或效果。"
 		),
 		_module(
 			&"profile",

@@ -6,6 +6,7 @@ const LongTermContentSlotModelScript := preload("res://scripts/ui/long_term/long
 
 const STATE_PREVIEW := &"preview"
 const STATE_DISABLED := &"disabled"
+const STATE_AVAILABLE := &"available"
 
 
 static func build_modules() -> Array:
@@ -57,11 +58,11 @@ static func build_modules() -> Array:
 		_module(
 			&"research",
 			"研究",
-			"研究模块保留功能解锁接口和研究入口 preview。",
-			STATE_DISABLED,
+			"研究模块展示现有课题链、前置、资源消耗、效果和可提交状态。",
+			STATE_AVAILABLE,
 			[
-				_group(&"unlock_interface", "功能解锁接口", ["研究节点", "条件字段", "效果摘要"], "long_term.research.unlock.group_icon"),
-				_group(&"research_entry", "研究入口", ["入口状态", "资源提示", "后续数据表"], "long_term.research.entry.group_icon"),
+				_group(&"unlock_interface", "研究方向", ["研究课题", "所需条件", "研究效果"], "long_term.research.unlock.group_icon"),
+				_group(&"research_entry", "研究课题", ["课题状态", "资源需求", "完成效果"], "long_term.research.entry.group_icon"),
 			],
 			[
 				_card("research_node_card", "研究节点 preview card", "只展示研究节点外壳，不解锁、不消耗。", "研究", LongTermContentSlotModelScript.SLOT_RESEARCH_UNLOCK),
@@ -86,12 +87,12 @@ static func build_modules() -> Array:
 				_group(&"badge", "徽章", ["徽章墙", "徽章状态"], "long_term.profile.badge.group_icon"),
 			],
 			[
-				_card("profile_history_card", "历史战绩", "读取 M6 已提交的最近结算快照，不重算也不写历史记录。", "个人资历", LongTermContentSlotModelScript.SLOT_HISTORY_RECORD),
+				_card("profile_history_card", "历史战绩", "回看已经完成的探索；浏览不会改变历史记录。", "个人资历", LongTermContentSlotModelScript.SLOT_HISTORY_RECORD),
 				_card("profile_qualification_card", "资历变化 preview card", "只展示资历变化接口，不升级资历。", "个人资历", LongTermContentSlotModelScript.SLOT_QUALIFICATION),
 				_card("profile_badge_card", "徽章称号 preview card", "只展示称号和徽章位置，不发放奖励。", "个人资历", LongTermContentSlotModelScript.SLOT_REWARD_EVENT),
 			],
 			[
-				_link("结算历史", "历史战绩读取 MetaProgress 中最多 50 条 M6 结算快照。"),
+				_link("探索历史", "历史战绩保留最近五十次探索记录。"),
 				_link("目标", "目标达成未来可影响资历；当前不写目标或资历。"),
 			]
 		),
@@ -102,7 +103,7 @@ static func build_modules() -> Array:
 			STATE_PREVIEW,
 			[
 				_group(&"unique_display", "唯一展示", ["唯一藏品卡", "特殊展示位"], "long_term.collection.unique.group_icon"),
-				_group(&"appearance_config", "外观配置", ["外观库", "装备状态"], "long_term.collection.cosmetic.group_icon"),
+				_group(&"appearance_config", "外观档案", ["收藏来源", "当前能力边界"], "long_term.collection.cosmetic.group_icon"),
 				_group(&"display_content", "展示内容", ["展示墙", "展示排序"], "long_term.collection.display.group_icon"),
 				_group(&"badge_title", "徽章称号", ["徽章称号展示", "来源说明"], "long_term.collection.badge_title.group_icon"),
 				_group(&"settlement_display", "结算展示", ["结算卡面", "历史引用"], "long_term.collection.settlement.group_icon"),
@@ -434,7 +435,7 @@ static func _current_landable_scope(module_id: StringName) -> Array:
 		&"codex":
 			return ["display codex categories", "display asset/codex relation preview"]
 		&"research":
-			return ["display disabled research lines", "display unlock interface preview"]
+			return ["display authoritative research chain", "submit existing research transaction explicitly"]
 		&"profile":
 			return ["display profile/history preview", "display milestone/title/badge preview"]
 		&"collection_appearance":

@@ -6,11 +6,12 @@ const LongTermModelScript := preload("res://scripts/ui/long_term/long_term_model
 const LongTermTabModelScript := preload("res://scripts/ui/long_term/long_term_tab_model.gd")
 const LongTermContentFrameworkScript := preload("res://scripts/ui/long_term/long_term_content_framework.gd")
 const LongTermLayoutContractScript := preload("res://scripts/ui/long_term/long_term_layout_contract.gd")
+const LongTermModuleProjectionScript := preload("res://scripts/ui/long_term/long_term_module_projection.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
-const Art21MainMenuAssetContractScript := preload("res://scripts/presentation/art21_main_menu_asset_contract.gd")
 const Art23LongTermAssetContractScript := preload("res://scripts/presentation/art23_long_term_asset_contract.gd")
 const Art25ContentAssetContractScript := preload("res://scripts/presentation/art25_content_asset_contract.gd")
 const LongTermContentCardViewScript := preload("res://scripts/ui/long_term/long_term_content_card_view.gd")
+const CharacterPresentationCatalogScript := preload("res://scripts/presentation/character/character_presentation_catalog.gd")
 const LongTermReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 
 signal navigation_intent_requested(intent: Dictionary)
@@ -33,10 +34,6 @@ const MODULE_LABELS := {
 	&"collection_appearance": "收藏外观",
 }
 const LOCKED_MODULES: Dictionary = {}
-const CHARACTER_IDLE_SEQUENCE := [0, 0, 1, 1, 2, 1, 0, 0, 3, 3, 0, 4, 5, 4, 0, 0]
-const CHARACTER_LOOK_SEQUENCE := [0, 6, 6, 7, 7, 6, 0]
-const CHARACTER_IDLE_FRAME_SECONDS := 0.34
-const CHARACTER_LOOK_FRAME_SECONDS := 0.42
 const CHARACTER_FIRST_LOOK_SECONDS := 5.0
 const CHARACTER_LOOK_INTERVAL_SECONDS := 10.0
 const CANCEL_DEBOUNCE_MSEC := 600
@@ -53,19 +50,19 @@ const PAGE_COPY := {
 	"codex/event": "归档已经完成的旅商、骰子局、祭坛和机关遭遇。",
 	"codex/rule": "显示已公开或通过研究解读的真实游戏规则。",
 	"codex/lore": "保存世界背景与文本线索；未知条目维持未发现状态。",
-	"research/unlock_interface": "研究会原子地消耗金币与一件指定仓库材料，并立即开放对应内容。",
+	"research/unlock_interface": "研究会消耗金币与一件指定仓库材料；完成后开放对应内容。",
 	"research/research_entry": "选择课题后使用确认按钮提交；材料若正在出勤配置中则不会被消耗。",
 	"profile/qualification_level": "展示真实资历等级与绝对经验值；没有阈值时不伪造百分比。",
-	"profile/history": "读取最近结算与历史快照，不写入或重算历史记录。",
+	"profile/history": "回看已经完成的探索记录；浏览不会改变历史。",
 	"profile/statistics": "汇总探索、撤离、失败和长期金币等已存在统计。",
 	"profile/milestone": "展示真实资历阈值及距离下一阶段所需经验。",
 	"profile/title": "展示已经由资历等级永久授予的称号。",
 	"profile/badge": "展示已经由资历等级永久授予的徽章。",
 	"collection_appearance/unique_display": "展示三组真实藏品收集进度；出售物品不降低历史收集。",
-	"collection_appearance/appearance_config": "外观配置入口已落位；真实换装保存未接入时保持只读。",
+	"collection_appearance/appearance_config": "当前没有外观拥有或装备数据；本页只说明收藏档案边界。",
 	"collection_appearance/display_content": "展示三组各 8 件藏品的永久收集进度。",
 	"collection_appearance/badge_title": "组合展示已经获得的徽章与称号。",
-	"collection_appearance/settlement_display": "预览结算卡面和历史引用，不修改结算快照。",
+	"collection_appearance/settlement_display": "回看已经完成的探索结果与带回内容。",
 }
 
 var current_model: Dictionary = {}
@@ -99,19 +96,38 @@ var snapshot_label: Label
 var interface_preview_label: Label
 var history_preview_label: Label
 var next_stage_label: Label
-var card_grid_container: HBoxContainer
+var content_list_header_label: Label
+var content_detail_header_label: Label
+var content_record_title_label: Label
+var content_record_state_label: Label
+var content_record_body_label: Label
+var content_record_facts_label: Label
+var content_list_scroll: ScrollContainer
+var card_grid_container: VBoxContainer
 var content_action_button: Button
 var content_previous_button: Button
 var content_next_button: Button
 var current_content_cards: Array[Dictionary] = []
+var current_workspace: Dictionary = {}
+var current_record_count := 0
 var selected_content_card_index := 0
+var selected_content_card_id_by_group: Dictionary = {}
 var content_card_page_by_group: Dictionary = {}
+var pending_meta_action: Dictionary = {}
+var pending_background_meta_actions: Dictionary = {}
+var last_meta_action_result: Dictionary = {}
+var meta_request_sequence := 0
 
 var profile_level_label: Label
+var profile_role_label: Label
 var profile_exp_value_label: Label
 var profile_stat_labels: Array[Label] = []
 var character_texture: TextureRect
 var character_frames: Array[Texture2D] = []
+var character_actor_id: StringName = CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID
+var character_appearance_id: StringName = CharacterPresentationCatalogScript.DEFAULT_APPEARANCE_ID
+var character_clip_descriptors: Dictionary = {}
+var character_clip_frames: Dictionary = {}
 var lever_texture: TextureRect
 var lever_button: Button
 var lever_label: Label
@@ -166,6 +182,35 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	current_model = LongTermModelScript.build_from_snapshot(selected_module_id, current_app_snapshot, &"app_shell_snapshot_preview")
 	_refresh_profile()
 	_refresh_content()
+	_refresh_module_buttons()
+
+
+func apply_meta_action_result(envelope: Dictionary) -> bool:
+	if _meta_envelope_matches(envelope, pending_meta_action):
+		pending_meta_action.clear()
+		last_meta_action_result = envelope.duplicate(true)
+		_refresh_content()
+		if content_record_state_label != null:
+			content_record_state_label.text = _meta_result_player_message(envelope)
+		return true
+	var request_id := str(envelope.get("request_id", ""))
+	var background_value: Variant = pending_background_meta_actions.get(request_id, {})
+	var background_request: Dictionary = background_value as Dictionary if background_value is Dictionary else {}
+	if not _meta_envelope_matches(envelope, background_request):
+		return false
+	pending_background_meta_actions.erase(request_id)
+	last_meta_action_result = envelope.duplicate(true)
+	return true
+
+
+func get_meta_transaction_snapshot() -> Dictionary:
+	return {
+		"pending": not pending_meta_action.is_empty(),
+		"pending_request": pending_meta_action.duplicate(true),
+		"pending_background_count": pending_background_meta_actions.size(),
+		"last_result": last_meta_action_result.duplicate(true),
+		"request_sequence": meta_request_sequence,
+	}
 
 
 func set_page_active(value: bool) -> void:
@@ -254,7 +299,7 @@ func _settle_motion_transitions() -> void:
 
 func _apply_reduced_motion_pose() -> void:
 	if character_texture != null and not character_frames.is_empty():
-		character_texture.texture = character_frames[0]
+		_apply_character_clip_pose(&"idle", 0)
 	if warm_glow != null:
 		warm_glow.modulate.a = 0.52
 	if blue_glow != null:
@@ -383,6 +428,9 @@ func _handle_cancel_focus_step() -> StringName:
 		if secondary_button != null:
 			secondary_button.grab_focus()
 		return &"secondary"
+	if focus == content_action_button and not long_term_card_buttons.is_empty():
+		long_term_card_buttons[clampi(selected_content_card_index, 0, long_term_card_buttons.size() - 1)].grab_focus()
+		return &"record"
 	if focus in secondary_button_order:
 		var module_button := tab_buttons.get(selected_module_id, null) as Button
 		if module_button != null:
@@ -459,14 +507,33 @@ func _build_module_group() -> void:
 	secondary_scroll.add_child(secondary_row)
 
 	content_panel_texture = _add_texture(module_group, "LongTermContentDetailBlock", LongTermLayoutContractScript.CONTENT_PANEL, _texture(&"long_term.panel.content"), false)
+	# The audited parchment is the workspace surface here, not a thumbnail. Fill
+	# the expanded contract rect so its readable region covers both list/detail.
+	content_panel_texture.stretch_mode = TextureRect.STRETCH_SCALE
 	content_detail_title_label = _add_label(module_group, "LongTermContentDetailTitle", LongTermLayoutContractScript.CONTENT_TITLE, "", 21, Color(0.26, 0.12, 0.05), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
 	content_detail_body_label = _add_label(module_group, "LongTermContentDetailBody", LongTermLayoutContractScript.CONTENT_SUMMARY, "", 16, Color(0.23, 0.14, 0.08), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
 	content_detail_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content_detail_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	content_detail_meta_label = _add_label(module_group, "LongTermContentDetailMeta", LongTermLayoutContractScript.CONTENT_META, "", 12, Color(0.35, 0.22, 0.12), HORIZONTAL_ALIGNMENT_RIGHT, &"readable")
+	content_list_header_label = _add_label(module_group, "LongTermContentListHeader", LongTermLayoutContractScript.CONTENT_LIST_HEADER, "档案条目", 14, Color(0.42, 0.24, 0.10), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
+	content_detail_header_label = _add_label(module_group, "LongTermContentRecordHeader", LongTermLayoutContractScript.CONTENT_DETAIL_HEADER, "档案详情", 14, Color(0.42, 0.24, 0.10), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
+	content_record_title_label = _add_label(module_group, "LongTermContentRecordTitle", LongTermLayoutContractScript.CONTENT_RECORD_TITLE, "", 19, Color(0.22, 0.12, 0.05), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
+	content_record_state_label = _add_label(module_group, "LongTermContentRecordState", LongTermLayoutContractScript.CONTENT_RECORD_STATE, "", 12, Color(0.34, 0.20, 0.10), HORIZONTAL_ALIGNMENT_RIGHT, &"readable")
+	content_record_body_label = _add_label(module_group, "LongTermContentRecordBody", LongTermLayoutContractScript.CONTENT_RECORD_BODY, "", 14, Color(0.24, 0.15, 0.08), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
+	content_record_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content_record_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	content_record_facts_label = _add_label(module_group, "LongTermContentRecordFacts", LongTermLayoutContractScript.CONTENT_RECORD_FACTS, "", 13, Color(0.31, 0.20, 0.11), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
+	content_record_facts_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content_record_facts_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_clear_label_shadow(content_detail_title_label)
 	_clear_label_shadow(content_detail_body_label)
 	_clear_label_shadow(content_detail_meta_label)
+	_clear_label_shadow(content_list_header_label)
+	_clear_label_shadow(content_detail_header_label)
+	_clear_label_shadow(content_record_title_label)
+	_clear_label_shadow(content_record_state_label)
+	_clear_label_shadow(content_record_body_label)
+	_clear_label_shadow(content_record_facts_label)
 	module_title_label = content_detail_title_label
 	module_body_label = content_detail_body_label
 	module_state_label = content_detail_meta_label
@@ -478,12 +545,19 @@ func _build_module_group() -> void:
 	history_preview_label = content_detail_meta_label
 	next_stage_label = content_detail_meta_label
 
-	card_grid_container = HBoxContainer.new()
+	content_list_scroll = ScrollContainer.new()
+	content_list_scroll.name = "LongTermContentListScroll"
+	content_list_scroll.position = LongTermLayoutContractScript.CONTENT_CARDS.position
+	content_list_scroll.size = LongTermLayoutContractScript.CONTENT_CARDS.size
+	content_list_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	content_list_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	content_list_scroll.follow_focus = true
+	module_group.add_child(content_list_scroll)
+	card_grid_container = VBoxContainer.new()
 	card_grid_container.name = "LongTermCardGrid"
-	card_grid_container.position = LongTermLayoutContractScript.CONTENT_CARDS.position
-	card_grid_container.size = LongTermLayoutContractScript.CONTENT_CARDS.size
-	card_grid_container.add_theme_constant_override("separation", 8)
-	module_group.add_child(card_grid_container)
+	card_grid_container.custom_minimum_size = Vector2(LongTermLayoutContractScript.CONTENT_CARDS.size.x - 18.0, 0)
+	card_grid_container.add_theme_constant_override("separation", 6)
+	content_list_scroll.add_child(card_grid_container)
 	content_action_button = Button.new()
 	content_action_button.name = "LongTermContentAction"
 	content_action_button.position = LongTermLayoutContractScript.CONTENT_ACTION.position
@@ -495,19 +569,30 @@ func _build_module_group() -> void:
 	_apply_generic_button_surface(content_action_button, &"secondary", &"normal", 12)
 	content_previous_button = _add_content_page_button("LongTermContentPrevious", LongTermLayoutContractScript.CONTENT_PREVIOUS, "上一页", -1)
 	content_next_button = _add_content_page_button("LongTermContentNext", LongTermLayoutContractScript.CONTENT_NEXT, "下一页", 1)
+	content_previous_button.visible = false
+	content_next_button.visible = false
 
 
 func _build_profile_column() -> void:
 	_add_texture(self, "LongTermProfileFrame", LongTermLayoutContractScript.PROFILE_FRAME, _texture(&"long_term.panel.profile"), false)
 	_add_label(self, "LongTermProfileHeading", LongTermLayoutContractScript.PROFILE_HEADER, "角色档案", 23, Color(0.96, 0.75, 0.34), HORIZONTAL_ALIGNMENT_CENTER)
 	character_frames.clear()
-	for index in range(8):
-		var frame := Art21MainMenuAssetContractScript.texture(StringName("main_menu.scene.character.idle.%02d" % index))
-		if frame != null:
-			character_frames.append(frame)
-	var initial: Texture2D = character_frames[0] if not character_frames.is_empty() else null
+	character_clip_descriptors.clear()
+	character_clip_frames.clear()
+	var presentation_value: Variant = current_model.get("character_presentation", {})
+	var presentation: Dictionary = (presentation_value as Dictionary).duplicate(true) if presentation_value is Dictionary else {}
+	character_actor_id = StringName(presentation.get("actor_id", CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID))
+	character_appearance_id = StringName(presentation.get("appearance_id", CharacterPresentationCatalogScript.DEFAULT_APPEARANCE_ID))
+	_load_character_clip(&"idle")
+	_load_character_clip(&"look")
+	character_frames.assign(character_clip_frames.get(&"idle", []) as Array)
+	var initial := CharacterPresentationCatalogScript.frame_at(
+		character_frames,
+		character_clip_descriptors.get(&"idle", {}) as Dictionary,
+		0
+	)
 	character_texture = _add_texture(self, "LongTermPlayerSprite", LongTermLayoutContractScript.PROFILE_CHARACTER, initial, true)
-	_add_label(self, "LongTermProfileRole", LongTermLayoutContractScript.PROFILE_ROLE, "回收员", 18, Color(0.95, 0.83, 0.57), HORIZONTAL_ALIGNMENT_CENTER)
+	profile_role_label = _add_label(self, "LongTermProfileRole", LongTermLayoutContractScript.PROFILE_ROLE, "回收员", 18, Color(0.95, 0.83, 0.57), HORIZONTAL_ALIGNMENT_CENTER)
 	profile_level_label = _add_label(self, "LongTermProfileLevel", LongTermLayoutContractScript.PROFILE_LEVEL, "等级 --", 23, Color(0.97, 0.74, 0.30), HORIZONTAL_ALIGNMENT_CENTER, &"readable")
 	_add_label(self, "LongTermProfileExpLabel", LongTermLayoutContractScript.PROFILE_EXP_LABEL, "经验", 14, Color(0.78, 0.68, 0.51), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
 	profile_exp_value_label = _add_label(self, "LongTermProfileExpValue", LongTermLayoutContractScript.PROFILE_EXP_VALUE, "0", 14, Color(0.88, 0.81, 0.66), HORIZONTAL_ALIGNMENT_RIGHT, &"readable")
@@ -519,7 +604,7 @@ func _build_profile_column() -> void:
 			LongTermLayoutContractScript.PROFILE_STAT_SIZE
 		)
 		profile_stat_labels.append(_add_label(self, "LongTermProfileStat_%d" % index, rect, "%s  0" % stat_names[index], 15, Color(0.91, 0.80, 0.58), HORIZONTAL_ALIGNMENT_LEFT, &"readable"))
-	_add_image_button(self, "LongTermAppearanceButton", LongTermLayoutContractScript.PROFILE_APPEARANCE, "设置外观", &"nav", _request_appearance_settings, 17)
+	_add_image_button(self, "LongTermAppearanceButton", LongTermLayoutContractScript.PROFILE_APPEARANCE, "查看收藏档案", &"nav", _request_appearance_settings, 16)
 
 
 func _build_archive_lever() -> void:
@@ -640,9 +725,19 @@ func _refresh_content() -> void:
 	var group := _selected_group()
 	var group_id := StringName(group.get("group_id", group.get("id", &"")))
 	var module_label := String(MODULE_LABELS.get(displayed_module_id, displayed_module_id))
+	var group_key := "%s/%s" % [String(displayed_module_id), String(group_id)]
+	current_workspace = LongTermModuleProjectionScript.build(
+		displayed_module_id,
+		group,
+		current_model,
+		String(PAGE_COPY.get(group_key, "当前档案只读展示。"))
+	)
 	content_detail_title_label.text = "%s · %s" % [module_label, String(group.get("title", "档案"))]
-	content_detail_body_label.text = String(PAGE_COPY.get("%s/%s" % [String(displayed_module_id), String(group_id)], "当前档案只读展示。"))
-	content_detail_meta_label.text = "真实进度" if not LOCKED_MODULES.has(displayed_module_id) else "系统封存 · 仅展示接口预览"
+	content_detail_body_label.text = str(current_workspace.get("summary", "当前档案只读展示。"))
+	current_record_count = int(current_workspace.get("record_count", 0))
+	content_detail_meta_label.text = "记录 %d" % current_record_count
+	content_list_header_label.text = str(current_workspace.get("list_label", "档案条目"))
+	content_detail_header_label.text = str(current_workspace.get("detail_label", "档案详情"))
 	_rebuild_content_cards(group)
 	_refresh_secondary_buttons()
 
@@ -653,75 +748,46 @@ func _rebuild_content_cards(group: Dictionary) -> void:
 		card_grid_container.remove_child(child)
 		child.queue_free()
 	current_content_cards = _cards_for_group(group)
-	var cards := current_content_cards
 	var group_key := "%s/%s" % [String(displayed_module_id), String(get_selected_secondary_id())]
-	var page_count := maxi(1, ceili(float(cards.size()) / 3.0))
-	var page := clampi(int(content_card_page_by_group.get(group_key, 0)), 0, page_count - 1)
-	content_card_page_by_group[group_key] = page
-	var page_start := page * 3
-	selected_content_card_index = page_start
-	for index in range(page_start, mini(page_start + 3, cards.size())):
-		var card: Dictionary = cards[index]
+	var selected_card_id := str(selected_content_card_id_by_group.get(group_key, ""))
+	selected_content_card_index = 0
+	for index in range(current_content_cards.size()):
+		if selected_card_id != "" and str(current_content_cards[index].get("id", "")) == selected_card_id:
+			selected_content_card_index = index
+			break
+	for index in range(current_content_cards.size()):
+		var card: Dictionary = current_content_cards[index]
 		var button := LongTermContentCardViewScript.new() as Button
-		button.name = "LongTermCard_%s_%d" % [String(get_selected_secondary_id()), index - page_start]
-		button.call("setup", card, LOCKED_MODULES.has(displayed_module_id), index == page_start)
+		button.name = "LongTermCard_%s_%d" % [String(get_selected_secondary_id()), index]
+		button.call("setup", card, LOCKED_MODULES.has(displayed_module_id), index == selected_content_card_index)
 		button.set_meta("card_index", index)
 		button.pressed.connect(Callable(self, "_set_long_term_card_selected").bind(index))
-		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if index == page_start else &"normal"))
+		button.focus_entered.connect(Callable(self, "_preview_long_term_card").bind(index))
+		button.mouse_entered.connect(Callable(self, "_preview_long_term_card").bind(index))
+		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if index == selected_content_card_index else &"normal"))
 		card_grid_container.add_child(button)
 		long_term_card_buttons.append(button)
+	if not current_content_cards.is_empty():
+		selected_content_card_id_by_group[group_key] = str(current_content_cards[selected_content_card_index].get("id", ""))
 	_refresh_selected_content_card(false)
-	_refresh_content_page_buttons(page, page_count)
+	_refresh_content_page_buttons(0, 1)
 	_wire_long_term_card_focus()
 
 
 func _cards_for_group(group: Dictionary) -> Array[Dictionary]:
-	var cards: Array[Dictionary] = []
 	var group_id := StringName(group.get("group_id", group.get("id", &"")))
-	var cards_by_group: Dictionary = current_model.get("m7_cards_by_group", {})
 	var real_key := "%s/%s" % [String(displayed_module_id), String(group_id)]
-	if cards_by_group.has(real_key):
-		for raw_card in cards_by_group.get(real_key, []):
-			if raw_card is Dictionary:
-				cards.append((raw_card as Dictionary).duplicate(true))
-		if not cards.is_empty():
-			while cards.size() < 3:
-				cards.append({"title": "暂无更多记录", "state": "未登记", "description": "该分类当前没有更多真实记录。"})
-			return _attach_content_visual_keys(cards, real_key)
-	if displayed_module_id == &"codex" and group_id in [&"monster", &"collectible"]:
-		var expected_kind := group_id
-		var matching_cards: Array = (current_model.get("content_cards", []) as Array).filter(
-			func(entry: Variant) -> bool:
-				return entry is Dictionary and StringName((entry as Dictionary).get("codex_kind", &"collectible")) == expected_kind
+	if current_workspace.is_empty() or str(current_workspace.get("group_key", "")) != real_key:
+		current_workspace = LongTermModuleProjectionScript.build(
+			displayed_module_id,
+			group,
+			current_model,
+			String(PAGE_COPY.get(real_key, "当前档案只读展示。"))
 		)
-		for card_index in range(mini(3, matching_cards.size())):
-			var card_variant: Variant = matching_cards[card_index]
-			if card_variant is Dictionary:
-				var card: Dictionary = card_variant
-				var state_name := StringName(card.get("state", &"undiscovered"))
-				var card_title := String(card.get("title", "未知条目"))
-				if state_name != &"discovered":
-					card_title = "%s %02d" % ["未发现怪物样本" if group_id == &"monster" else "未发现藏品", card_index + 1]
-				cards.append({
-					"title": card_title,
-					"state": _state_label(state_name),
-				})
-		while cards.size() < 3:
-			cards.append({
-				"title": "%s %02d" % ["未发现怪物样本" if group_id == &"monster" else "未发现藏品", cards.size() + 1],
-				"state": "未发现",
-			})
-	if displayed_module_id == &"profile":
-		cards = _profile_cards(group_id)
-	if cards.is_empty():
-		for item_variant in (group.get("items", []) as Array).slice(0, 3):
-			var item: Dictionary = item_variant if item_variant is Dictionary else {}
-			cards.append({
-				"title": String(item.get("title", "档案条目")),
-				"state": "封存" if LOCKED_MODULES.has(displayed_module_id) else "已登记",
-			})
-	while cards.size() < 3:
-		cards.append({"title": "预留档案位", "state": "封存" if LOCKED_MODULES.has(displayed_module_id) else "未发现"})
+	var cards: Array[Dictionary] = []
+	for raw_card in current_workspace.get("display_cards", []):
+		if raw_card is Dictionary:
+			cards.append((raw_card as Dictionary).duplicate(true))
 	return _attach_content_visual_keys(cards, real_key)
 
 
@@ -729,39 +795,18 @@ func _attach_content_visual_keys(cards: Array[Dictionary], group_key: String) ->
 	var result: Array[Dictionary] = []
 	for raw_card in cards:
 		var card := raw_card.duplicate(true)
-		card["visual_key"] = Art25ContentAssetContractScript.long_term_visual_key(group_key, card)
+		card["visual_key"] = &"art25.long_term.unknown" if card.get("known", true) == false else Art25ContentAssetContractScript.long_term_visual_key(group_key, card)
 		result.append(card)
 	return result
 
 
 func _profile_cards(group_id: StringName) -> Array[Dictionary]:
-	var runtime: Dictionary = current_model.get("profile_runtime_panel", {})
-	match group_id:
-		&"qualification_level":
-			return [
-				{"title": "资历等级", "state": "Lv.%02d" % int(runtime.get("profile_level", 1))},
-				{"title": "累计经验", "state": str(int(runtime.get("profile_exp", 0)))},
-			]
-		&"history":
-			var records: Array = current_model.get("history_records", [])
-			var cards: Array[Dictionary] = []
-			for reverse_index in range(records.size() - 1, maxi(-1, records.size() - 4), -1):
-				var record: Dictionary = records[reverse_index] if records[reverse_index] is Dictionary else {}
-				cards.append({
-					"title": String(record.get("outcome", "未知结局")),
-					"state": String(record.get("result_id", record.get("history_id", "未登记"))),
-				})
-			if cards.is_empty():
-				cards.append({"title": "暂无探索记录", "state": "完成一局后登记"})
-			return cards
-		&"statistics":
-			return [
-				{"title": "探索", "state": str(int(runtime.get("run_count", 0)))},
-				{"title": "撤离", "state": str(int(runtime.get("extract_count", 0)))},
-				{"title": "失败", "state": str(int(runtime.get("fail_count", 0)))},
-			]
-		_:
-			return []
+	var cards_by_group: Dictionary = current_model.get("m7_cards_by_group", {})
+	var result: Array[Dictionary] = []
+	for raw_card in cards_by_group.get("profile/%s" % String(group_id), []):
+		if raw_card is Dictionary:
+			result.append((raw_card as Dictionary).duplicate(true))
+	return result
 
 
 func _refresh_profile() -> void:
@@ -769,6 +814,8 @@ func _refresh_profile() -> void:
 		return
 	var runtime: Dictionary = current_model.get("profile_runtime_panel", {})
 	profile_level_label.text = "等级 %02d" % maxi(1, int(runtime.get("profile_level", 1)))
+	var titles := runtime.get("titles", []) as Array
+	profile_role_label.text = str(titles[titles.size() - 1]) if not titles.is_empty() else "回收员"
 	profile_exp_value_label.text = str(maxi(0, int(runtime.get("profile_exp", 0))))
 	var values := [
 		int(runtime.get("run_count", 0)),
@@ -837,7 +884,10 @@ func _request_deploy() -> void:
 
 
 func _request_appearance_settings() -> void:
-	selected_secondary_by_module[&"collection_appearance"] = &"appearance_config"
+	# Compatibility method name retained for existing routes. The project has no
+	# appearance ownership/equip authority, so the fixed rail opens the honest
+	# collection archive instead of pretending to configure a skin.
+	selected_secondary_by_module[&"collection_appearance"] = &"unique_display"
 	show_module(&"collection_appearance")
 
 
@@ -862,7 +912,13 @@ func _content_transition_nodes() -> Array[CanvasItem]:
 		content_detail_title_label,
 		content_detail_body_label,
 		content_detail_meta_label,
-		card_grid_container,
+		content_list_header_label,
+		content_detail_header_label,
+		content_record_title_label,
+		content_record_state_label,
+		content_record_body_label,
+		content_record_facts_label,
+		content_list_scroll,
 	]:
 		if node != null:
 			nodes.append(node)
@@ -870,31 +926,62 @@ func _content_transition_nodes() -> Array[CanvasItem]:
 
 
 func _update_character(delta: float) -> void:
-	if character_texture == null or character_frames.size() < 8:
+	if character_texture == null or character_frames.is_empty():
 		return
 	character_elapsed += delta
+	var active_clip_id := &"look" if character_look_index >= 0 else &"idle"
+	var descriptor_value: Variant = character_clip_descriptors.get(active_clip_id, {})
+	var active_descriptor: Dictionary = descriptor_value as Dictionary if descriptor_value is Dictionary else {}
+	var frame_seconds := maxf(0.01, float(active_descriptor.get("frame_seconds", 0.32)))
 	if character_look_index >= 0:
-		if character_elapsed < CHARACTER_LOOK_FRAME_SECONDS:
+		if character_elapsed < frame_seconds:
 			return
-		character_elapsed = 0.0
+		character_elapsed = fmod(character_elapsed, frame_seconds)
+		_apply_character_clip_pose(&"look", character_look_index)
 		character_look_index += 1
-		if character_look_index >= CHARACTER_LOOK_SEQUENCE.size():
+		var look_sequence := active_descriptor.get("sequence", []) as Array
+		if look_sequence.is_empty() or character_look_index >= look_sequence.size():
 			character_look_index = -1
+			character_frame_index = 0
 			next_character_look = ambient_elapsed + CHARACTER_LOOK_INTERVAL_SECONDS
-			character_texture.texture = character_frames[0]
-			return
-		character_texture.texture = character_frames[int(CHARACTER_LOOK_SEQUENCE[character_look_index])]
 		return
 	if ambient_elapsed >= next_character_look:
 		character_look_index = 0
 		character_elapsed = 0.0
-		character_texture.texture = character_frames[int(CHARACTER_LOOK_SEQUENCE[0])]
+		_apply_character_clip_pose(&"look", 0)
 		return
-	if character_elapsed < CHARACTER_IDLE_FRAME_SECONDS:
+	if character_elapsed < frame_seconds:
 		return
-	character_elapsed = 0.0
-	character_frame_index = (character_frame_index + 1) % CHARACTER_IDLE_SEQUENCE.size()
-	character_texture.texture = character_frames[int(CHARACTER_IDLE_SEQUENCE[character_frame_index])]
+	character_elapsed = fmod(character_elapsed, frame_seconds)
+	var idle_sequence := active_descriptor.get("sequence", []) as Array
+	if idle_sequence.is_empty():
+		return
+	character_frame_index = (character_frame_index + 1) % idle_sequence.size()
+	_apply_character_clip_pose(&"idle", character_frame_index)
+
+
+func _load_character_clip(clip_id: StringName) -> void:
+	var descriptor := CharacterPresentationCatalogScript.resolve_descriptor(
+		character_actor_id,
+		character_appearance_id,
+		clip_id
+	)
+	character_clip_descriptors[clip_id] = descriptor
+	character_clip_frames[clip_id] = CharacterPresentationCatalogScript.load_frames(descriptor)
+
+
+func _apply_character_clip_pose(clip_id: StringName, step: int = 0) -> bool:
+	if character_texture == null:
+		return false
+	var descriptor_value: Variant = character_clip_descriptors.get(clip_id, {})
+	var descriptor: Dictionary = descriptor_value as Dictionary if descriptor_value is Dictionary else {}
+	var frames := character_clip_frames.get(clip_id, []) as Array
+	var frame := CharacterPresentationCatalogScript.frame_at(frames, descriptor, step)
+	if frame == null:
+		return false
+	character_texture.texture = frame
+	character_texture.flip_h = bool(descriptor.get("flip_h", false))
+	return true
 
 
 func _seed_secondary_selection() -> void:
@@ -966,23 +1053,47 @@ func _wire_long_term_card_focus() -> void:
 	var count := long_term_card_buttons.size()
 	if count <= 0:
 		return
+	var selected_secondary := secondary_buttons.get(get_selected_secondary_id(), null) as Button
 	for index in range(count):
 		var button := long_term_card_buttons[index]
-		button.focus_neighbor_left = button.get_path_to(long_term_card_buttons[(index - 1 + count) % count])
-		button.focus_neighbor_right = button.get_path_to(long_term_card_buttons[(index + 1) % count])
-		if not secondary_button_order.is_empty():
-			button.focus_neighbor_top = button.get_path_to(secondary_button_order[index % secondary_button_order.size()])
+		var card: Dictionary = current_content_cards[index] if index < current_content_cards.size() else {}
+		var action_value: Variant = card.get("action", {})
+		var action: Dictionary = action_value as Dictionary if action_value is Dictionary else {}
+		var action_reachable := index == selected_content_card_index and not action.is_empty() and content_action_button.visible and not content_action_button.disabled
+		button.focus_neighbor_left = button.get_path_to(button)
+		button.focus_neighbor_right = button.get_path_to(content_action_button if action_reachable else button)
+		button.focus_neighbor_top = button.get_path_to(long_term_card_buttons[index - 1]) if index > 0 else (button.get_path_to(selected_secondary) if selected_secondary != null else NodePath())
+		button.focus_neighbor_bottom = button.get_path_to(long_term_card_buttons[index + 1]) if index + 1 < count else button.get_path_to(button)
+	if content_action_button != null:
+		var selected_button := long_term_card_buttons[clampi(selected_content_card_index, 0, count - 1)]
+		content_action_button.focus_neighbor_left = content_action_button.get_path_to(selected_button)
+		content_action_button.focus_neighbor_top = content_action_button.get_path_to(selected_button)
+		content_action_button.focus_neighbor_bottom = content_action_button.get_path_to(selected_button)
 	_wire_long_term_secondary_focus()
 
 
 func _set_long_term_card_selected(card_index: int) -> void:
+	_select_long_term_card(card_index, true)
+
+
+func _preview_long_term_card(card_index: int) -> void:
+	_select_long_term_card(card_index, false)
+
+
+func _select_long_term_card(card_index: int, grab_focus: bool) -> void:
+	if current_content_cards.is_empty():
+		return
 	selected_content_card_index = clampi(card_index, 0, maxi(0, current_content_cards.size() - 1))
 	for button in long_term_card_buttons:
-		var selected := int(button.get_meta("card_index", -1)) == card_index
+		var selected := int(button.get_meta("card_index", -1)) == selected_content_card_index
 		button.button_pressed = selected
 		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if selected else &"normal"))
-		if selected:
+		if selected and grab_focus:
 			button.grab_focus()
+		if selected and content_list_scroll != null:
+			content_list_scroll.ensure_control_visible(button)
+	var group_key := "%s/%s" % [String(displayed_module_id), String(get_selected_secondary_id())]
+	selected_content_card_id_by_group[group_key] = str(current_content_cards[selected_content_card_index].get("id", ""))
 	_refresh_selected_content_card(true)
 
 
@@ -990,28 +1101,102 @@ func _refresh_selected_content_card(_from_input: bool) -> void:
 	if current_content_cards.is_empty():
 		if content_action_button != null:
 			content_action_button.visible = false
+		content_record_title_label.text = ""
+		content_record_state_label.text = ""
+		content_record_body_label.text = ""
+		content_record_facts_label.text = ""
 		return
 	var card: Dictionary = current_content_cards[clampi(selected_content_card_index, 0, current_content_cards.size() - 1)]
-	var description := str(card.get("description", ""))
-	if description != "":
-		content_detail_body_label.text = description
-	content_detail_meta_label.text = str(card.get("state", "真实进度"))
+	content_record_title_label.text = str(card.get("title", "档案条目"))
+	content_record_state_label.text = str(card.get("state", "已登记"))
+	content_record_body_label.text = str(card.get("description", "当前条目没有补充说明。"))
+	var fact_lines: Array[String] = []
+	for fact in card.get("facts", []):
+		var text_value := str(fact).strip_edges()
+		if text_value != "":
+			fact_lines.append("• %s" % text_value)
+	content_record_facts_label.text = "\n".join(fact_lines)
 	var action: Dictionary = card.get("action", {})
-	content_action_button.visible = not action.is_empty() and not LOCKED_MODULES.has(displayed_module_id)
-	content_action_button.disabled = action.is_empty()
-	content_action_button.text = str(card.get("action_label", "确认"))
+	content_action_button.visible = not bool(card.get("empty_state", false)) and not action.is_empty() and not LOCKED_MODULES.has(displayed_module_id)
+	content_action_button.disabled = action.is_empty() or not pending_meta_action.is_empty()
+	content_action_button.text = "正在确认…" if not action.is_empty() and not pending_meta_action.is_empty() else str(card.get("action_label", "确认"))
+	_wire_long_term_card_focus()
 
 
 func _on_content_action_pressed() -> void:
-	if current_content_cards.is_empty():
+	if current_content_cards.is_empty() or content_action_button.disabled or not pending_meta_action.is_empty():
 		return
 	var card: Dictionary = current_content_cards[clampi(selected_content_card_index, 0, current_content_cards.size() - 1)]
 	var action: Dictionary = card.get("action", {})
 	if action.is_empty():
 		return
-	content_detail_meta_label.text = "正在提交……"
+	var request := _prepare_meta_action(action)
+	pending_meta_action = _meta_request_identity(request)
+	content_record_state_label.text = "正在确认…"
 	content_action_button.disabled = true
-	meta_action_requested.emit(action.duplicate(true))
+	content_action_button.text = "正在确认…"
+	_wire_long_term_card_focus()
+	meta_action_requested.emit(request)
+
+
+func _prepare_meta_action(action: Dictionary) -> Dictionary:
+	var request := action.duplicate(true)
+	meta_request_sequence += 1
+	request["request_id"] = "long_term:%d:%d" % [get_instance_id(), meta_request_sequence]
+	request["source_page"] = &"long_term"
+	return request
+
+
+func _meta_request_identity(request: Dictionary) -> Dictionary:
+	return {
+		"request_id": str(request.get("request_id", "")),
+		"source_page": StringName(request.get("source_page", &"")),
+		"action": StringName(request.get("action", &"")),
+		"target_id": _meta_action_target_id(request),
+	}
+
+
+func _meta_action_target_id(action: Dictionary) -> String:
+	match StringName(action.get("action", &"")):
+		&"complete_research": return str(action.get("research_id", ""))
+		&"claim_goal": return "%s:%s" % [str(action.get("goal_kind", "")), str(action.get("goal_id", ""))]
+		&"mark_viewed": return str(action.get("view_kind", ""))
+	return ""
+
+
+func _meta_envelope_matches(envelope: Dictionary, expected: Dictionary) -> bool:
+	if expected.is_empty():
+		return false
+	return (
+		str(envelope.get("request_id", "")) == str(expected.get("request_id", ""))
+		and StringName(envelope.get("source_page", &"")) == StringName(expected.get("source_page", &""))
+		and StringName(envelope.get("action", &"")) == StringName(expected.get("action", &""))
+		and str(envelope.get("target_id", "")) == str(expected.get("target_id", ""))
+	)
+
+
+func _meta_result_player_message(envelope: Dictionary) -> String:
+	var result_value: Variant = envelope.get("result", {})
+	var result: Dictionary = result_value as Dictionary if result_value is Dictionary else {}
+	var status := StringName(envelope.get("status", result.get("status", &"unknown")))
+	if bool(envelope.get("ok", result.get("ok", false))):
+		match status:
+			&"claimed": return "奖励已领取并存入基地档案。"
+			&"completed": return "研究完成，相关内容已经开放。"
+			&"duplicate_ignored": return "该项操作已经完成，无需重复提交。"
+		return "档案操作已完成。"
+	match status:
+		&"not_claimable": return "当前尚未满足领取条件。"
+		&"unknown_goal": return "该任务档案暂不可用。"
+		&"unknown_research": return "该研究课题暂不可用。"
+		&"prerequisite_missing": return "请先完成前置研究。"
+		&"insufficient_gold": return "金币不足，研究未开始。"
+		&"material_missing_or_configured": return "所需材料不足，或正在出勤配置中。"
+		&"write_blocked": return "当前档案不可写，本次操作未发生。"
+		&"save_failed": return "保存失败，本次变更已撤回。"
+		&"request_id_conflict": return "操作校验未通过，本次变更未发生。"
+		&"meta_progress_adapter_missing": return "基地档案暂不可用。"
+	return "本次操作未完成，请稍后重试。"
 
 
 func _add_content_page_button(node_name: String, rect: Rect2, text: String, page_delta: int) -> Button:
@@ -1029,26 +1214,16 @@ func _add_content_page_button(node_name: String, rect: Rect2, text: String, page
 
 
 func _change_content_page(page_delta: int) -> void:
-	if current_content_cards.size() <= 3:
+	if content_list_scroll == null:
 		return
-	var group_key := "%s/%s" % [String(displayed_module_id), String(get_selected_secondary_id())]
-	var page_count := maxi(1, ceili(float(current_content_cards.size()) / 3.0))
-	content_card_page_by_group[group_key] = clampi(int(content_card_page_by_group.get(group_key, 0)) + page_delta, 0, page_count - 1)
-	_rebuild_content_cards(_selected_group())
-	if not long_term_card_buttons.is_empty():
-		long_term_card_buttons[0].grab_focus()
+	content_list_scroll.scroll_vertical += int(page_delta * maxi(1.0, content_list_scroll.size.y - 24.0))
 
 
-func _refresh_content_page_buttons(page: int, page_count: int) -> void:
+func _refresh_content_page_buttons(_page: int, _page_count: int) -> void:
 	if content_previous_button == null or content_next_button == null:
 		return
-	var paged := page_count > 1
-	content_previous_button.visible = paged
-	content_next_button.visible = paged
-	content_previous_button.disabled = page <= 0
-	content_next_button.disabled = page >= page_count - 1
-	content_previous_button.text = "上一页"
-	content_next_button.text = "下一页 %d/%d" % [page + 1, page_count]
+	content_previous_button.visible = false
+	content_next_button.visible = false
 
 
 func _module_has_red_dot(module_id: StringName, red_dots: Dictionary) -> bool:
@@ -1080,7 +1255,9 @@ func _mark_current_module_viewed(module_id: StringName) -> void:
 			view_kind = "collection"
 			count = int(red_dots.get("collection_completed", 0))
 	if view_kind != "" and count > 0:
-		meta_action_requested.emit({"action": &"mark_viewed", "view_kind": view_kind})
+		var request := _prepare_meta_action({"action": &"mark_viewed", "view_kind": view_kind})
+		pending_background_meta_actions[str(request.get("request_id", ""))] = _meta_request_identity(request)
+		meta_action_requested.emit(request)
 
 
 func _grab_long_term_initial_focus() -> void:

@@ -8,6 +8,7 @@ const MainMenuTransitionPresenterScript := preload("res://scripts/ui/main_menu/m
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
+const CharacterPresentationCatalogScript := preload("res://scripts/presentation/character/character_presentation_catalog.gd")
 
 signal navigation_intent_requested(intent: Dictionary)
 signal navigation_transition_requested(intent: Dictionary, profile_id: StringName, entry_id: StringName)
@@ -29,8 +30,6 @@ const ENTRY_TRANSITION_PROFILES := {
 	&"exit_game": &"open_confirm",
 }
 
-const CHARACTER_IDLE_FRAME_SECONDS := 0.32
-const CHARACTER_IDLE_SEQUENCE := [0, 0, 1, 1, 2, 1, 0, 0, 0, 3, 3, 0, 0, 4, 5, 4, 0, 0]
 const AMBIENT_PROFILES := {
 	&"smoke": {
 		"kind": &"loop",
@@ -77,6 +76,10 @@ var character_texture: TextureRect
 var character_shadow_texture: TextureRect
 var character_idle_frames: Array[Texture2D] = []
 var character_focus_frames: Array[Texture2D] = []
+var character_actor_id: StringName = CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID
+var character_appearance_id: StringName = CharacterPresentationCatalogScript.DEFAULT_APPEARANCE_ID
+var character_clip_descriptors: Dictionary = {}
+var character_clip_frames: Dictionary = {}
 var cave_interior_texture: TextureRect
 var dungeon_gate_texture: TextureRect
 var company_door_texture: TextureRect
@@ -231,6 +234,10 @@ func _clear_children() -> void:
 	company_window_nodes.clear()
 	character_idle_frames.clear()
 	character_focus_frames.clear()
+	character_clip_descriptors.clear()
+	character_clip_frames.clear()
+	character_actor_id = CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID
+	character_appearance_id = CharacterPresentationCatalogScript.DEFAULT_APPEARANCE_ID
 	character_texture = null
 	character_shadow_texture = null
 	transition_texture = null
@@ -327,9 +334,23 @@ func _build_brand_sign() -> void:
 func _build_character_scene() -> void:
 	var character_root := _root(&"CharacterRoot")
 	character_shadow_texture = _add_texture(character_root, "MainMenuCharacterShadow", Rect2(286, 594, 196, 24), &"main_menu.scene.character.shadow", 0)
-	character_idle_frames = _texture_sequence("main_menu.scene.character.idle", 8)
-	character_focus_frames = _texture_sequence("main_menu.scene.character.focus", 4)
-	character_texture = _add_texture(character_root, "MainMenuCharacter", Rect2(286, 408, 190, 216), &"main_menu.scene.character.idle.00", 1)
+	var presentation := _dictionary_from(current_model.get("character_presentation", {}))
+	character_actor_id = StringName(presentation.get("actor_id", CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID))
+	character_appearance_id = StringName(presentation.get("appearance_id", CharacterPresentationCatalogScript.DEFAULT_APPEARANCE_ID))
+	_load_character_clip(&"idle")
+	_load_character_clip(&"focus_deploy")
+	_load_character_clip(&"focus_long_term")
+	character_idle_frames.assign(character_clip_frames.get(&"idle", []) as Array)
+	for focus_clip_id in [&"focus_deploy", &"focus_long_term"]:
+		for frame in character_clip_frames.get(focus_clip_id, []) as Array:
+			if frame is Texture2D:
+				character_focus_frames.append(frame as Texture2D)
+	var initial := CharacterPresentationCatalogScript.frame_at(
+		character_idle_frames,
+		_dictionary_from(character_clip_descriptors.get(&"idle", {})),
+		0
+	)
+	character_texture = _add_texture_from_texture(character_root, "MainMenuCharacter", Rect2(286, 408, 190, 216), initial, 1)
 
 
 func _build_notice_board() -> void:
@@ -551,16 +572,11 @@ func _set_entry_visual_state(entry_id: StringName, state: StringName) -> void:
 func _update_character_focus_texture() -> void:
 	if character_texture == null or transition_token > 0:
 		return
-	if current_focus == &"deploy" and character_focus_frames.size() >= 2:
-		character_texture.texture = character_focus_frames[1]
-		character_texture.flip_h = true
-	elif current_focus == &"long_term" and character_focus_frames.size() >= 3:
-		character_texture.texture = character_focus_frames[2]
-		character_texture.flip_h = false
-	elif not character_idle_frames.is_empty():
-		var frame_index := int(CHARACTER_IDLE_SEQUENCE[idle_frame_index % CHARACTER_IDLE_SEQUENCE.size()])
-		character_texture.texture = character_idle_frames[frame_index % character_idle_frames.size()]
-		character_texture.flip_h = false
+	if current_focus == &"deploy" and _apply_character_clip_pose(&"focus_deploy"):
+		return
+	if current_focus == &"long_term" and _apply_character_clip_pose(&"focus_long_term"):
+		return
+	_apply_character_clip_pose(&"idle", idle_frame_index)
 
 
 func _activate_entry(entry: Dictionary) -> void:
@@ -588,9 +604,12 @@ func _process(delta: float) -> void:
 		return
 	if not reduced_motion:
 		idle_elapsed += delta
-		if idle_elapsed >= CHARACTER_IDLE_FRAME_SECONDS:
-			idle_elapsed -= CHARACTER_IDLE_FRAME_SECONDS
-			idle_frame_index = (idle_frame_index + 1) % CHARACTER_IDLE_SEQUENCE.size()
+		var idle_descriptor := _dictionary_from(character_clip_descriptors.get(&"idle", {}))
+		var idle_sequence := idle_descriptor.get("sequence", []) as Array
+		var idle_frame_seconds := maxf(0.01, float(idle_descriptor.get("frame_seconds", 0.32)))
+		if not idle_sequence.is_empty() and idle_elapsed >= idle_frame_seconds:
+			idle_elapsed = fmod(idle_elapsed, idle_frame_seconds)
+			idle_frame_index = (idle_frame_index + 1) % idle_sequence.size()
 			if current_focus != &"deploy" and current_focus != &"long_term":
 				_update_character_focus_texture()
 		_update_ambient_motion(delta)
@@ -743,20 +762,32 @@ func _apply_activation_alpha(texture_rect: TextureRect, alpha: float) -> void:
 func _apply_character_transition_pose(pose_id: StringName) -> void:
 	if character_texture == null:
 		return
-	match pose_id:
-		&"focus_deploy":
-			if character_focus_frames.size() >= 2:
-				character_texture.texture = character_focus_frames[1]
-				character_texture.flip_h = true
-		&"focus_long_term":
-			if character_focus_frames.size() >= 3:
-				character_texture.texture = character_focus_frames[2]
-				character_texture.flip_h = false
-		_:
-			if not character_idle_frames.is_empty():
-				var frame_index := int(CHARACTER_IDLE_SEQUENCE[idle_frame_index % CHARACTER_IDLE_SEQUENCE.size()])
-				character_texture.texture = character_idle_frames[frame_index % character_idle_frames.size()]
-				character_texture.flip_h = false
+	if pose_id in [&"focus_deploy", &"focus_long_term"] and _apply_character_clip_pose(pose_id):
+		return
+	_apply_character_clip_pose(&"idle", idle_frame_index)
+
+
+func _load_character_clip(clip_id: StringName) -> void:
+	var descriptor := CharacterPresentationCatalogScript.resolve_descriptor(
+		character_actor_id,
+		character_appearance_id,
+		clip_id
+	)
+	character_clip_descriptors[clip_id] = descriptor
+	character_clip_frames[clip_id] = CharacterPresentationCatalogScript.load_frames(descriptor)
+
+
+func _apply_character_clip_pose(clip_id: StringName, step: int = 0) -> bool:
+	if character_texture == null:
+		return false
+	var descriptor := _dictionary_from(character_clip_descriptors.get(clip_id, {}))
+	var frames := character_clip_frames.get(clip_id, []) as Array
+	var frame := CharacterPresentationCatalogScript.frame_at(frames, descriptor, step)
+	if frame == null:
+		return false
+	character_texture.texture = frame
+	character_texture.flip_h = bool(descriptor.get("flip_h", false))
+	return true
 
 
 func _capture_transition_root_positions() -> void:

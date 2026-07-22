@@ -18,7 +18,7 @@ func setup(card: Dictionary, locked: bool, selected: bool) -> void:
 	# Keep the localized semantic text on the actual Button for accessibility,
 	# focus diagnostics and compatibility tests. Child labels own the rendering.
 	text = "%s\n%s" % [String(card_data.get("title", "档案条目")), String(card_data.get("state", "已登记"))]
-	custom_minimum_size = Vector2(164, 86)
+	custom_minimum_size = Vector2(272, 68)
 	size = custom_minimum_size
 	toggle_mode = true
 	button_pressed = selected
@@ -61,8 +61,8 @@ func _build_content() -> void:
 	# The artwork remains a strong semantic cue, but no longer consumes a third
 	# of the card. The former 54 px well left only a one-pixel visual gutter
 	# before the title and made every page feel like a row of oversized icons.
-	art_frame.position = Vector2(7, 12)
-	art_frame.size = Vector2(45, 52)
+	art_frame.position = Vector2(7, 8)
+	art_frame.size = Vector2(46, 48)
 	# Map thumbnails are wider than the square semantic icons. Keep every asset
 	# inside the same reserved well so wide sources cannot cover card copy.
 	art_frame.clip_contents = true
@@ -73,7 +73,7 @@ func _build_content() -> void:
 	artwork.name = "ContentArtwork"
 	artwork.texture = Art25ContentAssetContractScript.texture_for_long_term_card(card_data)
 	artwork.position = Vector2(3, 4)
-	artwork.size = Vector2(39, 44)
+	artwork.size = Vector2(40, 40)
 	artwork.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	artwork.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	artwork.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -88,16 +88,18 @@ func _build_content() -> void:
 	artwork.offset_right = -3.0
 	artwork.offset_bottom = -4.0
 
-	title_label = _label("ContentTitle", Rect2(59, 8, 99, 36), String(card_data.get("title", "档案条目")), 12)
+	title_label = _label("ContentTitle", Rect2(60, 7, 132, 48), String(card_data.get("title", "档案条目")), 13)
 	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	state_label = _label("ContentState", Rect2(59, 45, 99, 22), String(card_data.get("state", "已登记")), 11)
-	state_label.clip_text = true
+	state_label = _label("ContentState", Rect2(196, 10, 68, 42), String(card_data.get("state", "已登记")), 11)
+	state_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	state_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 	status_bar = ColorRect.new()
 	status_bar.name = "ContentStateBar"
-	status_bar.position = Vector2(7, 74)
-	status_bar.size = Vector2(150, 3)
+	status_bar.position = Vector2(7, 60)
+	status_bar.size = Vector2(257, 3)
 	status_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(status_bar)
 

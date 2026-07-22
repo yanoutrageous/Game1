@@ -39,7 +39,7 @@ func _run() -> void:
 	_check((shell.get("tab_buttons") as Dictionary).size() == 5, "Production primary module count must be five")
 	_check(not (shell.get("tab_buttons") as Dictionary).has(&"gacha"), "Unauthorised gacha module is still exposed")
 	_check((shell.get("tab_buttons") as Dictionary).has(&"task_archive"), "Canonical task archive module is missing")
-	_check((shell.get("character_frames") as Array).size() == 8, "Profile character must load eight unique source frames")
+	_check(not (shell.get("character_frames") as Array).is_empty(), "Profile character presentation did not resolve a usable clip")
 	var module_group := shell.get("module_group") as Control
 	_check(module_group != null and module_group.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Module group blocks primary-tab mouse input")
 	_check(shell.get_node_or_null("LongTermSceneCleanPlate") is TextureRect, "Clean archive room plate is missing")
@@ -47,6 +47,7 @@ func _run() -> void:
 	_check(shell.get_node_or_null("LongTermPlayerSprite") is TextureRect, "Fixed player sprite is missing")
 	_check(shell.get_node_or_null("LongTermArchiveLever") is Button, "Bottom-left archive lever is missing")
 	_check(shell.get_node_or_null("LongTermModuleGroup/LongTermContentDetailBlock") is TextureRect, "Compatibility content detail block is missing")
+	_check(shell.get_node_or_null("LongTermModuleGroup/LongTermContentListScroll") is ScrollContainer, "Scrollable module record list is missing")
 	_check(shell.get("content_detail_title_label") is Label, "Compatibility content title label is missing")
 	var readable_font := load("res://assets/fonts/NotoSansCJKsc-Regular.otf") as Font
 	_check(readable_font != null, "Readable CJK body font is missing")
@@ -106,7 +107,12 @@ func _run() -> void:
 			secondary_page_count += 1
 			_check(StringName(shell.call("get_selected_secondary_id")) == group_id, "Secondary selection mismatch: %s/%s" % [String(module_id), String(group_id)])
 			_check(((shell.get("secondary_buttons") as Dictionary)[group_id] as Button).button_pressed, "Secondary lacks selected state: %s/%s" % [String(module_id), String(group_id)])
-			_check((shell.get("long_term_card_buttons") as Array).size() == 3, "Secondary page must expose three readable slots: %s/%s" % [String(module_id), String(group_id)])
+			var record_count := int(shell.get("current_record_count"))
+			var display_count := (shell.get("long_term_card_buttons") as Array).size()
+			_check(display_count == maxi(1, record_count), "Secondary page lost records or padded fake cards: %s/%s records=%d display=%d" % [String(module_id), String(group_id), record_count, display_count])
+			for card_variant in shell.get("current_content_cards") as Array:
+				var card := card_variant as Dictionary
+				_check(not str(card.get("title", "")).contains("预留档案位") and not str(card.get("title", "")).contains("暂无更多记录"), "Secondary page contains a fake padding card: %s/%s" % [String(module_id), String(group_id)])
 			var title_label := shell.get("content_detail_title_label") as Label
 			var body_label := shell.get("content_detail_body_label") as Label
 			_check(not title_label.text.strip_edges().is_empty(), "Secondary title is empty: %s/%s" % [String(module_id), String(group_id)])
@@ -167,7 +173,7 @@ func _run() -> void:
 	shell.call("_request_appearance_settings")
 	await create_timer(0.82).timeout
 	_check(StringName(shell.call("get_selected_module_id")) == &"collection_appearance", "Appearance button did not route to collection module")
-	_check(StringName(shell.call("get_selected_secondary_id")) == &"appearance_config", "Appearance button did not route to appearance_config")
+	_check(StringName(shell.call("get_selected_secondary_id")) == &"unique_display", "Collection archive button did not route to unique_display")
 
 	shell.call("set_archive_collapsed", true, false)
 	_check((shell.get("module_group") as Control).position == Vector2(0, 610), "Collapsed module group does not clear the room")
@@ -176,7 +182,7 @@ func _run() -> void:
 	_check((shell.get("module_group") as Control).position == Vector2.ZERO, "Expanded module group does not restore exactly")
 	await create_timer(0.82).timeout
 	_check(StringName(shell.get("displayed_module_id")) == &"collection_appearance", "Expand did not preserve the routed collection module")
-	_check(StringName(shell.call("get_selected_secondary_id")) == &"appearance_config", "Expand did not preserve appearance_config")
+	_check(StringName(shell.call("get_selected_secondary_id")) == &"unique_display", "Expand did not preserve the collection archive page")
 
 	shell.call("show_module", &"task_archive")
 	shell.call("show_module", &"codex")
@@ -223,7 +229,7 @@ func _frames(count: int) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive character_frames=8 states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING")
+		print("ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive workspace=scrollable states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING")
 		quit(0)
 		return
 	for failure in failures:

@@ -188,12 +188,17 @@ static func _m7_cards_by_group(meta: Dictionary) -> Dictionary:
 		"task_archive/commission_record": _commission_cards(meta),
 		"research/unlock_interface": _research_cards(meta),
 		"research/research_entry": _research_cards(meta),
+		"profile/qualification_level": _qualification_cards(meta),
+		"profile/history": _history_cards(meta.get("history_records", [])),
+		"profile/statistics": _statistics_cards(meta),
 		"profile/milestone": _milestone_cards(meta),
 		"profile/title": _simple_owned_cards(meta.get("titles", []), "称号"),
 		"profile/badge": _simple_owned_cards(meta.get("badges", []), "徽章"),
 		"collection_appearance/unique_display": _collection_cards(meta),
+		"collection_appearance/appearance_config": [],
 		"collection_appearance/display_content": _collection_cards(meta),
 		"collection_appearance/badge_title": _simple_owned_cards((meta.get("titles", []) as Array) + (meta.get("badges", []) as Array), "资历展示"),
+		"collection_appearance/settlement_display": _settlement_cards(meta.get("history_records", [])),
 	}
 	for group_id in [&"map", &"monster", &"collectible", &"equipment", &"consumable", &"event", &"rule", &"lore"]:
 		result["codex/%s" % String(group_id)] = _codex_group_cards(meta, group_id)
@@ -212,11 +217,18 @@ static func _goal_cards(meta: Dictionary, goal_kind: String, definitions_value: 
 		var state: Dictionary = states.get(goal_id, {})
 		var status := str(state.get("status", "locked"))
 		var reward: Dictionary = definition.get("reward", {})
+		var progress := int(state.get("progress", 0))
+		var target := int(state.get("target", 0))
+		var facts: Array[String] = []
+		if target > 0:
+			facts.append("进度：%d / %d" % [mini(progress, target), target])
+		facts.append("奖励：%s" % _reward_text(reward))
 		var card := {
 			"id": goal_id,
 			"title": str(definition.get("display_name", goal_id)),
 			"state": _goal_status_label(status),
-			"description": "%s\n奖励：%s" % [str(definition.get("description", "")), _reward_text(reward)],
+			"description": str(definition.get("description", "")),
+			"facts": facts,
 			"sort_order": _goal_sort_order(status),
 		}
 		if status == "claimable":
@@ -237,15 +249,20 @@ static func _commission_cards(meta: Dictionary) -> Array[Dictionary]:
 		var record: Dictionary = history[reverse_index] if history[reverse_index] is Dictionary else {}
 		var commission_id := str(record.get("commission_id", ""))
 		var definition: Dictionary = definitions.get(commission_id, {})
+		var map_name := _map_display_name(str(record.get("map_id", record.get("map_config_id", ""))))
+		var outcome_label := _outcome_label(str(record.get("outcome", "")))
 		cards.append({
 			"id": "commission_record_%d" % reverse_index,
 			"content_id": commission_id,
-			"title": str(definition.get("display_name", commission_id)),
+			"title": str(definition.get("display_name", "委托记录")),
 			"state": "已完成" if bool(record.get("completed", false)) else "未完成",
-			"description": "地图：%s；结局：%s" % [str(record.get("map_id", "未知")), str(record.get("outcome", "未知"))],
+			"description": str(definition.get("description", "该局委托结果已登记。")),
+			"facts": [
+				"地图：%s" % map_name,
+				"探索结果：%s" % outcome_label,
+				"委托状态：%s" % ("已达成" if bool(record.get("completed", false)) else "未达成"),
+			],
 		})
-	if cards.is_empty():
-		cards.append({"title": "暂无委托记录", "state": "完成探索后登记", "description": "每局委托结果会在终局结算后写入。"})
 	return cards
 
 
@@ -270,11 +287,22 @@ static func _research_cards(meta: Dictionary) -> Array[Dictionary]:
 			material_name = str(material_definition.get("display_name", material_name))
 		var can_complete := prerequisite_met and gold >= int(definition.get("gold_cost", 0)) and has_material
 		var state := "已完成" if is_completed else ("可研究" if can_complete else ("前置未完成" if not prerequisite_met else ("材料不足" if not has_material else "金币不足")))
+		var prerequisite_label := "无"
+		if prerequisite != "":
+			var prerequisite_definition := M7ContentCatalogScript.research_definition(prerequisite)
+			prerequisite_label = str(prerequisite_definition.get("display_name", prerequisite))
+		var gold_fact := "研究费用：%d 金币（已投入）" % int(definition.get("gold_cost", 0)) if is_completed else "消耗：%d 金币（当前 %d）" % [int(definition.get("gold_cost", 0)), gold]
+		var material_fact := "研究材料：%s ×1（已投入）" % material_name if is_completed else "材料：%s ×1（%s）" % [material_name, "已备齐" if has_material else "缺少"]
 		var card := {
 			"id": research_id,
 			"title": str(definition.get("display_name", research_id)),
 			"state": state,
-			"description": "消耗：%d 金币 + %s ×1（当前 %d 金币）\n效果：%s" % [int(definition.get("gold_cost", 0)), material_name, gold, str(definition.get("effect", ""))],
+			"description": str(definition.get("effect", "")),
+			"facts": [
+				"前置：%s" % prerequisite_label,
+				gold_fact,
+				material_fact,
+			],
 		}
 		if not is_completed and can_complete:
 			card["action"] = {"action": &"complete_research", "research_id": research_id}
@@ -300,6 +328,8 @@ static func _codex_group_cards(meta: Dictionary, group_id: StringName) -> Array[
 			"title": _codex_entry_title(entry_id) if known else unknown_title,
 			"state": "已发现" if known else "未发现",
 			"description": "该条目已永久登记，出售或消耗对应物品不会抹除记录。" if known else "在探索、回收或研究中首次接触后登记。",
+			"facts": ["发现状态：%s" % ("已永久登记" if known else "尚未登记")],
+			"known": known,
 			"sort_order": 0 if known else 1,
 		})
 	cards.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("sort_order", 1)) < int(b.get("sort_order", 1)))
@@ -358,6 +388,7 @@ static func _collection_cards(meta: Dictionary) -> Array[Dictionary]:
 			"title": str(definition.get("display_name", set_id)),
 			"state": "已完成" if completed.has(set_id) else "%d / %d" % [count, item_ids.size()],
 			"description": "按曾经成功回收过的藏品累计；出售实体不会降低收集进度。",
+			"facts": ["已发现：%d" % count, "总条目：%d" % item_ids.size(), "永久记录：是"],
 		})
 	return cards
 
@@ -371,7 +402,12 @@ static func _milestone_cards(meta: Dictionary) -> Array[Dictionary]:
 			"id": "profile_level_%d" % int(definition.get("level", 1)),
 			"title": "Lv.%d · %s" % [int(definition.get("level", 1)), str(definition.get("title", "回收员"))],
 			"state": "已达成" if exp_value >= threshold else "还需 %d 经验" % (threshold - exp_value),
-			"description": "资历经验阈值：%d。%s" % [threshold, "徽章：%s" % str(definition.get("badge", "")) if definition.has("badge") else ""],
+			"description": "资历经验达到阈值后永久登记对应称号与徽章。",
+			"facts": [
+				"经验阈值：%d" % threshold,
+				"当前经验：%d" % exp_value,
+				"徽章：%s" % str(definition.get("badge", "无")),
+			],
 		})
 	return cards
 
@@ -379,11 +415,114 @@ static func _milestone_cards(meta: Dictionary) -> Array[Dictionary]:
 static func _simple_owned_cards(values_value: Variant, empty_label: String) -> Array[Dictionary]:
 	var values: Array = values_value if values_value is Array else []
 	var cards: Array[Dictionary] = []
-	for value in values:
-		cards.append({"title": str(value), "state": "已获得", "description": "随资历进度永久登记。"})
-	if cards.is_empty():
-		cards.append({"title": "暂无%s" % empty_label, "state": "未获得", "description": "达到对应资历阈值后登记。"})
+	for index in range(values.size()):
+		var value := str(values[index])
+		cards.append({
+			"id": "%s_%d" % [empty_label, index],
+			"title": value,
+			"state": "已获得",
+			"description": "随资历进度永久登记。",
+			"facts": ["登记类型：%s" % empty_label, "当前状态：永久持有"],
+		})
 	return cards
+
+
+static func _qualification_cards(meta: Dictionary) -> Array[Dictionary]:
+	var level := maxi(1, int(meta.get("profile_level", 1)))
+	var exp_value := maxi(0, int(meta.get("profile_exp", 0)))
+	var current_title := "回收员"
+	var next_threshold := -1
+	for definition in M7ContentCatalogScript.profile_levels():
+		var definition_level := int(definition.get("level", 1))
+		if definition_level <= level:
+			current_title = str(definition.get("title", current_title))
+		elif next_threshold < 0:
+			next_threshold = int(definition.get("exp", 0))
+	return [{
+		"id": "profile_current_qualification",
+		"title": "Lv.%d · %s" % [level, current_title],
+		"state": "已登记",
+		"description": "当前角色资历来自已提交的局外进度，不在本页重算。",
+		"facts": [
+			"累计经验：%d" % exp_value,
+			"下一阈值：%s" % (str(next_threshold) if next_threshold >= 0 else "已达当前上限"),
+		],
+	}]
+
+
+static func _statistics_cards(meta: Dictionary) -> Array[Dictionary]:
+	var definitions := [
+		["run_count", "探索次数", int(meta.get("run_count", 0))],
+		["extract_count", "成功撤离", int(meta.get("extract_count", 0))],
+		["fail_count", "失败结算", int(meta.get("fail_count", 0))],
+		["abandon_count", "主动放弃", int(meta.get("abandon_count", 0))],
+		["long_term_gold", "长期金币", int(meta.get("long_term_gold", meta.get("gold", 0)))],
+	]
+	var cards: Array[Dictionary] = []
+	for entry in definitions:
+		cards.append({
+			"id": "profile_stat_%s" % str(entry[0]),
+			"title": str(entry[1]),
+			"state": str(entry[2]),
+			"description": "读取已提交的局外统计；浏览不会修改该数值。",
+			"facts": ["当前累计：%s" % str(entry[2]), "该统计已随基地档案保存"],
+		})
+	return cards
+
+
+static func _history_cards(records_value: Variant) -> Array[Dictionary]:
+	var records: Array = records_value if records_value is Array else []
+	var cards: Array[Dictionary] = []
+	for reverse_index in range(records.size() - 1, -1, -1):
+		var record: Dictionary = records[reverse_index] if records[reverse_index] is Dictionary else {}
+		var result_id := str(record.get("result_id", record.get("history_id", "history_%d" % reverse_index)))
+		var map_name := str(record.get("map_display_name", ""))
+		if map_name.is_empty():
+			map_name = _map_display_name(str(record.get("map_config_id", record.get("map_id", ""))))
+		var outcome := str(record.get("outcome", "未知结局"))
+		cards.append({
+			"id": "profile_history_%s" % result_id,
+			"title": map_name if map_name != "" else "未命名探索",
+			"state": _outcome_label(outcome),
+			"description": "该条记录来自已经完成的探索；浏览不会改变历史。",
+			"facts": [
+				"难度：%s" % str(record.get("difficulty_label", record.get("difficulty", "未登记"))),
+				"委托：%s" % _commission_display_name(str(record.get("commission_label", "")), str(record.get("commission_id", ""))),
+				"金币变化：%d" % int(record.get("gold_delta", 0)),
+			],
+		})
+	return cards
+
+
+static func _settlement_cards(records_value: Variant) -> Array[Dictionary]:
+	var cards := _history_cards(records_value)
+	for card in cards:
+		card["description"] = "回看已经完成的探索结果；浏览不会改变历史。"
+	return cards
+
+
+static func _map_display_name(map_id: String) -> String:
+	if map_id.is_empty():
+		return "未知地图"
+	var definition := M7ContentCatalogScript.map_definition_exact(map_id)
+	return str(definition.get("display_name", "未知地图")) if not definition.is_empty() else "未知地图"
+
+
+static func _commission_display_name(explicit_label: String, commission_id: String) -> String:
+	if not explicit_label.is_empty():
+		return explicit_label
+	for definition in M7ContentCatalogScript.commission_definitions():
+		if str(definition.get("id", "")) == commission_id:
+			return str(definition.get("display_name", "未登记"))
+	return "未登记"
+
+
+static func _outcome_label(outcome: String) -> String:
+	match outcome:
+		"success": return "成功撤离"
+		"failed", "failure": return "撤离失败"
+		"abandon", "abandoned": return "主动放弃"
+	return outcome if outcome != "" else "未知结局"
 
 
 static func _goal_sort_order(status: String) -> int:
@@ -430,7 +569,7 @@ static func _latest_run_result_summary(latest_result: Dictionary = {}) -> Dictio
 static func _codex_cards(codex_lite_model: Dictionary) -> Array[Dictionary]:
 	var cards: Array[Dictionary] = []
 	var discovered: Array = codex_lite_model.get("discovered_entries", [])
-	for entry in discovered.slice(0, 12):
+	for entry in discovered:
 		if entry is Dictionary:
 			var item: Dictionary = entry
 			cards.append({
@@ -442,7 +581,7 @@ static func _codex_cards(codex_lite_model: Dictionary) -> Array[Dictionary]:
 				"group": "Codex Lite",
 			})
 	var undiscovered: Array = codex_lite_model.get("undiscovered_entries", [])
-	for entry in undiscovered.slice(0, 12):
+	for entry in undiscovered:
 		if entry is Dictionary:
 			var item: Dictionary = entry
 			cards.append({
@@ -453,14 +592,6 @@ static func _codex_cards(codex_lite_model: Dictionary) -> Array[Dictionary]:
 				"codex_kind": _codex_kind(item),
 				"group": "Codex Lite",
 			})
-	if cards.is_empty():
-		cards.append({
-			"id": "codex_lite_empty",
-			"title": "No discovery yet",
-			"description": "Recover collectibles or monster samples into warehouse_items to discover entries.",
-			"state": "empty",
-			"group": "Codex Lite",
-		})
 	return cards
 
 

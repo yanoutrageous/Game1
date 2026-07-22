@@ -547,7 +547,7 @@ I1_SAVE_RELIABILITY=PASS atomic_replace=PASS backup_recovery=PASS future_schema=
 quick/worktree: 33/33 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T015916488Z_9abf1c12\report.json; SHA-256=879914C4B1A777F7284BB6CDDB1F28343CE9D4FF244EC44AE7B0C5F818704939
 ui/worktree: 34/34 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T015916486Z_414e3e9e\report.json; SHA-256=8054E52DF7B54DEE4C04413BE936C87422BAAE8CF1D82976BB755B188B6BE129
 manifest SHA-256: 7CB171162F5862BE017520472B0224266904EE3DDC9A0976F50ED325E4633ACB; pollution_guard=PASS
-independent final review: P0=0, P1=0, P2=0
+independent final review: P0=0, P1=0, P2=2 (non-blocking: 1280 Codex secondary-tab overflow lacks an explicit mouse hint; paired Research/Collection pages still share honest source records and differ mainly by page semantics)
 full/worktree and exact full/head: NOT_RUN (reserved for I2.7 closeout)
 player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
 ```
@@ -632,3 +632,81 @@ player input-feel acceptance: NOT_RUN (I2.4B/I2.7 production route)
 ```
 
 接受边界：本记录仅接受任务档案责任迁移、红点/已读可靠性和生产入口清理，不关闭 I2.4 或 I2。模块专用信息布局、角色档案与可替换角色表现进入 I2.4B；天赋点来源、成本、依赖、等级、重置/返还和六节点效果权威仍缺产品规则，因此继续显式阻塞，不以空树、禁用按钮或历史 UE/Lua 价格冒充完成。
+
+## 17. I2.4B 模块专用工作区与局外角色表现端口（2026-07-22）
+
+```text
+status: ACCEPTED_WITH_NOTES (I2.4 authorised workspace/presentation scope; talent authority remains blocked; I2 remains active)
+feedback: LONG-01, LONG-02, LONG-04, CROSS-01, CROSS-04, CROSS-05, CROSS-07, CROSS-08
+rollback: 6b06f25 (I2.4A accepted checkpoint)
+```
+
+代码优先检查确认五个正式模块均已有足够的真实只读数据或既有显式事务：任务档案具有任务、成就、委托记录及领取；图鉴具有分类、发现态和未知态；研究具有链路、前置、金币/材料、效果、阻塞原因及确认；角色档案具有等级阈值、真实统计、称号徽章与完整局次记录；收藏外观具有收集进度、图册与详情。当前问题是这些数据仍被压进同一组三卡工程模板，中央工作区过小、真实记录被分页和占位卡稀释、详情不足，而不是缺少第二套领域 schema。
+
+本门把中央区改为模块专用语义的“可滚动真实记录列表 + 同步详情/事实 + 既有显式动作”工作区。生产 UI 不得为了填满版面补“预留档案位”“暂无更多记录”等假卡；零数据只允许一个与当前模块相符的诚实空态，任意数量真实记录均须可达。卡片选择、悬停和焦点只改变只读详情，领取与研究确认继续走既有显式事务，禁止显示选择直接提交。角色档案要展示已有等级、统计、称号、徽章和完整历史，不得把当前没有的可装备外观、多角色队伍或战斗属性伪装成可操作能力；右侧“设置外观”改为诚实的收藏档案入口。
+
+同时建立局外角色表现端口：以 `actor_id + appearance_id + clip_id` 描述表现，默认只解析现有 ART21 角色帧；Main Menu、Deploy、Long Term 共享同一目录和帧序列解析，不再假设八帧、固定前缀或固定路径。缺少角色、外观、动作或单帧时必须稳定回退到已审计默认表现并保持导航可用；测试夹具需证明可变帧数、不同序列和缺失 clip 均可处理。该端口是后续素材替换的接缝，不新增皮肤持有/装备权威，不触碰 ART24 局内角色，也不引入运行时骨骼系统。
+
+现有 ART21、ART23、ART25 审计素材足够完成本门，不生成、不导入且不修改任何素材或 manifest。天赋树和抽奖继续阻塞；appearance 仅是表现描述符与默认值，不进入 save/meta schema，也不能在玩家文案中声明“已拥有/已装备”。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+Godot/GraytailGodot/scripts/presentation/character/character_presentation_catalog.gd
+Godot/GraytailGodot/scripts/ui/main_menu/main_menu_shell.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_shell.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_content_card_view.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_content_framework.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_layout_contract.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_model.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_module_projection.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_shell.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_tab_model.gd
+Godot/GraytailGodot/tests/art21_main_menu_runtime_runner.gd
+Godot/GraytailGodot/tests/art22_deploy_prep_runtime_runner.gd
+Godot/GraytailGodot/tests/art23_long_term_capture_runner.gd
+Godot/GraytailGodot/tests/art23_long_term_main_route_runner.gd
+Godot/GraytailGodot/tests/art23_long_term_matrix_capture_runner.gd
+Godot/GraytailGodot/tests/art23_long_term_runtime_runner.gd
+Godot/GraytailGodot/tests/m7_meta_ui_runtime_runner.gd
+Godot/GraytailGodot/tests/i2_character_presentation_swap_runner.gd
+Godot/GraytailGodot/tests/i2_long_term_module_workspace_runner.gd
+tools/i1/validation_manifest.json
+```
+
+保护边界：`project.godot`、全部 scene/resource/`.uid`/`.translation`/import metadata、素材本体与 asset manifest、SaveAdapter/MetaProgressAdapter、save/meta schema、任务/研究/收藏/经济权威、RunStateMachine、RunAssetLedger、terminal settlement、ART24 局内角色、导航/路由权威及历史验收证据均禁止修改。本门不得新增真实角色、皮肤、装备动作、天赋、抽奖、奖励、货币、研究规则或批量领域动作。
+
+完成证据必须覆盖：五模块二十四个二级页均可达；0/1/多条及至少 50 条历史记录不截断且无假占位；模块标题、摘要、事实、空态与动作均取自真实投影；任务领取和研究确认各恰好一次；显示选择零领域动作；长期系统显式事务须在同步 emit 前进入 pending，只接受 request/source/action/target 全部匹配的结果，陈旧或未知结果不得清除 pending，失败结果必须恢复动作并显示玩家文案，自动已读请求也须具有可关联回执；Main Menu/Deploy/Long Term 共用角色表现端口；三帧等可变帧夹具、缺失 clip/帧/角色回退；键鼠/手柄焦点（包括从后续可操作记录进入动作按钮）、ESC、收起/展开、reduced-motion；1280×720、1600×900、1920×1080 三分辨率生产截图矩阵；static、定向、quick/ui 与独立复核。full/worktree 与 exact full/head 仍由 I2.7 统一执行。
+
+停止条件：真实数据需要改 schema 才能投影；列表仍静默截断或补假卡；显示选择发出领取/研究/装备等动作；appearance 被写入存档或冒充已装备皮肤；角色表现仍依赖固定八帧/路径；缺失素材导致导航中断；需要修改素材、manifest、ART24 或领域权威；将天赋/抽奖/多角色声明为完成。任一条件出现即回退到 `6b06f25` 并将本门标记 `BLOCKED`。
+
+### 17.1 I2.4B 复核与接受记录
+
+五个正式模块的二十四个二级页现统一使用“可滚动真实记录列表 + 同步详情/事实 + 显式动作”工作区，但各页标题、摘要、事实与空态由模块语义投影决定，不再补三卡工程占位或截断真实记录。零条数据只生成一个诚实空态；任务、成就、研究、图鉴、收藏、资历统计与完整五十条历史均可到达，选择、悬停和焦点不会提交领域动作。旧 M7 的三卡分页测试已迁移为完整滚动列表契约。
+
+领取与研究的页面事务现在均在同步 signal emit 前生成 `long_term:*` request 并进入全局前台 pending；结果只在 request/source/action/target 四项全部匹配时消费。陈旧、错目标、重复与未知结果不会清除 pending，失败结果恢复动作并显示玩家文案；图鉴/历史/收藏的自动已读请求使用互不覆盖的后台关联集合。生产主路由测试通过真实 `Main -> RunScene -> AppShell -> LongTermShell -> MetaProgressAdapter` 领取链证明：权威快照先刷新、结果后回投、delivery revision 相同且奖励只发放一次。快照刷新同时更新一级模块红点，未知图鉴不再泄露内部 ID 或真实彩色图标。
+
+Main Menu、Deploy 与 Long Term 已共同消费 `actor_id + appearance_id + clip_id` 表现端口；默认仍只解析已审计 ART21 帧。三帧夹具、非固定序列、缺失角色/外观/clip/单帧均稳定回退，且第一语义帧不会因缺图压缩而错位。该端口只负责展示，不写入外观拥有/装备存档，也不触碰 ART24 局内角色或领域状态。右侧入口只打开收藏档案；当前不存在的外观装备能力、天赋树、抽奖和多角色均未伪装为可用功能。
+
+验证记录：
+
+```text
+I2_CHARACTER_PRESENTATION_SWAP=PASS default=graytail/base_art21/idle fixture_frames=3 sequence_steps=5 fallbacks=actor,appearance,clip missing_frame=bounded authority=presentation_only
+I2_LONG_TERM_MODULE_WORKSPACE=PASS pages=24 records=0,1,many,50 selection_actions=0 explicit_actions=once
+I2_LONG_TERM_TASK_ARCHIVE=PASS canonical=task_archive aliases=goals,tasks,overview modules=5 commission_records=12 pages=4 authority=read_only
+M7_META_UI_RUNTIME:PASS long_term=PASS deploy_refresh=PASS sale_confirm=PASS meta_transactions=PASS map_fact=PASS
+ART21_MAIN_MENU_RUNTIME=PASS
+ART22_DEPLOY_PREP_RUNTIME=PASS
+ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive workspace=scrollable states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING
+ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=5 canonical=task_archive
+static/worktree: PASS; required/full/runners=55; manifest SHA-256=296BB04D8D9A64301766496626FC7D02006E95702A4C277A1B74BB69573D2220
+quick/worktree: 36/36 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T033342881Z_d259a943\report.json; SHA-256=A23AFE11CCB2E662274F5A016704606067B23B4BD461144DBFEEC90AF841F082; pollution_guard=PASS
+ui/worktree: 37/37 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T033342904Z_b86a9ca4\report.json; SHA-256=1699A778A64D8735CC715D4C825E8E0ACEF8A1BAC499339A829440E8817B0CC5; pollution_guard=PASS
+visible captures: 24 pages x 1280x720,1600x900,1920x1080 = 72 PNG; output=.tmp/i2-4b-final-matrix; manual blocking layout findings=0
+independent final review: P0=0, P1=0, P2=0
+full/worktree and exact full/head: NOT_RUN (reserved for I2.7 closeout)
+player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
+```
+
+接受边界：本记录关闭 I2.4 已授权的任务档案迁移、模块工作区与局外角色表现端口范围，不关闭 I2。1280 分辨率下图鉴八个二级页签虽可由焦点自动滚动到达，但鼠标侧尚无“左右仍有内容”的显式提示；研究的两个二级页与收藏的部分二级页继续复用同一组真实权威记录，差异主要体现在页面语义与摘要。这两项登记为非阻塞 P2，不以伪造新 schema 消除。天赋树仍缺少点数来源、成本、依赖、等级、重置/返还和节点效果权威，继续显式阻塞；外观持有/装备、多角色、抽奖和运行时骨骼也未进入本门。局内世界对象、HUD、弹窗、战斗房、特殊房型、终局结果与综合输入手感继续由 I2.5、I2.6、I2.7 处理。

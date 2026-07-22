@@ -1,5 +1,7 @@
 extends SceneTree
 
+const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
+
 var failures: Array[String] = []
 var page_change_count := 0
 var last_page: StringName = &""
@@ -82,8 +84,57 @@ func _run() -> void:
 	_check(StringName(long_term.get("displayed_module_id")) == &"task_archive", "actual long-term route did not select task_archive")
 	_check(StringName(last_payload.get("module_id", &"")) == &"task_archive", "main-menu route payload was not normalized to task_archive")
 	_check(StringName(last_payload.get("entry_id", &"")) == &"task_archive", "main-menu route entry alias was not normalized")
+	_check_meta_transaction_production_chain(run_scene, app_shell, long_term)
 
+	main.queue_free()
+	await _frames(4)
 	_finish()
+
+
+func _check_meta_transaction_production_chain(run_scene: Node, app_shell: Control, long_term: Control) -> void:
+	var adapter = run_scene.get("meta_progress_adapter")
+	var controller = run_scene.get("runtime_controller")
+	_check(adapter != null and controller != null, "Production LongTerm transaction authority is missing")
+	if adapter == null or controller == null:
+		return
+	adapter.set_active_profile_path("user://tests/art23_long_term_main_route_transactions.json", "art23_long_term_main_route_transactions")
+	adapter.clear()
+	var task_definition := M7ContentCatalogScript.task_definitions()[0] as Dictionary
+	var task_id := str(task_definition.get("id", ""))
+	var task_states := adapter.data.get("task_states", {}) as Dictionary
+	task_states[task_id] = {"status": "claimable", "progress": 1, "target": 1, "achieved": true, "claimed": false}
+	adapter.data["task_states"] = task_states
+	_check(adapter.save(), "Production LongTerm transaction seed save failed")
+	controller.bind_meta_progress_adapter(adapter)
+	app_shell.call("apply_snapshot", run_scene.call("_shell_snapshot"))
+	long_term.call("_apply_module_immediately", &"task_archive")
+	long_term.call("show_secondary", &"task")
+	long_term.call("_set_long_term_card_selected", 0)
+	var action_button := long_term.get("content_action_button") as Button
+	_check(action_button != null and action_button.visible and not action_button.disabled, "Production claim action is not reachable")
+	if action_button == null or not action_button.visible or action_button.disabled:
+		adapter.clear()
+		return
+	var before: Dictionary = adapter.get_summary()
+	var revision_before := int((app_shell.call("get_meta_result_delivery_snapshot") as Dictionary).get("current_snapshot_revision", -1))
+	long_term.call("_on_content_action_pressed")
+	var state := long_term.call("get_meta_transaction_snapshot") as Dictionary
+	var result := state.get("last_result", {}) as Dictionary
+	var after: Dictionary = adapter.get_summary()
+	var delivery_snapshot := app_shell.call("get_meta_result_delivery_snapshot") as Dictionary
+	var delivery := delivery_snapshot.get("last_delivery", {}) as Dictionary
+	var reward := task_definition.get("reward", {}) as Dictionary
+	_check(not bool(state.get("pending", true)), "Production claim remained pending after synchronous result")
+	_check(bool(result.get("ok", false)) and StringName(result.get("status", &"")) == &"claimed", "Production claim result was not routed back to LongTerm")
+	_check(StringName(result.get("source_page", &"")) == &"long_term" and str(result.get("request_id", "")).begins_with("long_term:"), "Production claim lost source/request correlation")
+	_check(str(result.get("target_id", "")) == "task:%s" % task_id, "Production claim lost its exact task target")
+	_check(int(after.get("gold", -1)) == int(before.get("gold", 0)) + int(reward.get("gold", 0)), "Production claim did not grant the exact task gold once")
+	_check((after.get("claimed_reward_ids", []) as Array).has("task:%s" % task_id), "Production claim did not persist its claimed identity")
+	_check((long_term.get("content_record_state_label") as Label).text.contains("奖励已领取"), "Production snapshot refresh overwrote claim feedback")
+	_check(bool(delivery.get("accepted", false)) and str(delivery.get("request_id", "")) == str(result.get("request_id", "")), "Production claim delivery trace lost the matching result")
+	_check(int(delivery_snapshot.get("current_snapshot_revision", -1)) == revision_before + 1, "Production claim did not refresh one authoritative snapshot")
+	_check(int(delivery.get("snapshot_revision", -1)) == int(delivery_snapshot.get("current_snapshot_revision", -2)) and int(delivery.get("page_snapshot_revision", -1)) == int(delivery_snapshot.get("current_snapshot_revision", -2)), "Production claim result was delivered before its authoritative snapshot")
+	adapter.clear()
 
 
 func _frames(count: int) -> void:

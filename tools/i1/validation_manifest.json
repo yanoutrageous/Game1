@@ -95,6 +95,7 @@
     "I1_UI_INTERACTION",
     "I1_PROJECT_METADATA",
     "ART21_MAIN_MENU_RUNTIME",
+    "I2_CHARACTER_PRESENTATION_SWAP",
     "I2_MAIN_MENU_ANCHOR_TEXT",
     "I2_MAIN_MENU_TRANSITION_COORDINATOR",
     "I2_MAIN_MENU_TRANSITION_FALLBACK",
@@ -105,6 +106,7 @@
     "ART23_LONG_TERM_RUNTIME",
     "ART23_LONG_TERM_MAIN_ROUTE",
     "I2_LONG_TERM_TASK_ARCHIVE",
+    "I2_LONG_TERM_MODULE_WORKSPACE",
     "ART24_IN_RUN_RUNTIME",
     "ART24_RUN_SURFACE_LAYER_ROUTING",
     "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
@@ -147,6 +149,7 @@
         "I1_UI_INTERACTION",
         "I1_PROJECT_METADATA",
         "ART21_MAIN_MENU_RUNTIME",
+        "I2_CHARACTER_PRESENTATION_SWAP",
         "I2_MAIN_MENU_ANCHOR_TEXT",
         "I2_MAIN_MENU_TRANSITION_COORDINATOR",
         "I2_MAIN_MENU_TRANSITION_FALLBACK",
@@ -155,6 +158,7 @@
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_MAIN_ROUTE",
         "I2_LONG_TERM_TASK_ARCHIVE",
+        "I2_LONG_TERM_MODULE_WORKSPACE",
         "ART24_IN_RUN_RUNTIME",
         "ART24_CONTEXT_ANCHOR_INTEGRATION",
         "I2_ROUTE_AUTHORITY_LIFECYCLE",
@@ -214,6 +218,7 @@
         "I1_ANIMATION_RUNTIME",
         "I1_UI_INTERACTION",
         "ART21_MAIN_MENU_RUNTIME",
+        "I2_CHARACTER_PRESENTATION_SWAP",
         "I2_MAIN_MENU_ANCHOR_TEXT",
         "I2_MAIN_MENU_TRANSITION_COORDINATOR",
         "I2_MAIN_MENU_TRANSITION_FALLBACK",
@@ -224,6 +229,7 @@
         "ART23_LONG_TERM_RUNTIME",
         "ART23_LONG_TERM_MAIN_ROUTE",
         "I2_LONG_TERM_TASK_ARCHIVE",
+        "I2_LONG_TERM_MODULE_WORKSPACE",
         "ART24_IN_RUN_RUNTIME",
         "ART24_RUN_SURFACE_LAYER_ROUTING",
         "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
@@ -276,6 +282,7 @@
         "I1_UI_INTERACTION",
         "I1_PROJECT_METADATA",
         "ART21_MAIN_MENU_RUNTIME",
+        "I2_CHARACTER_PRESENTATION_SWAP",
         "I2_MAIN_MENU_ANCHOR_TEXT",
         "I2_MAIN_MENU_TRANSITION_COORDINATOR",
         "I2_MAIN_MENU_TRANSITION_FALLBACK",
@@ -286,6 +293,7 @@
         "ART23_LONG_TERM_RUNTIME",
         "ART23_LONG_TERM_MAIN_ROUTE",
         "I2_LONG_TERM_TASK_ARCHIVE",
+        "I2_LONG_TERM_MODULE_WORKSPACE",
         "ART24_IN_RUN_RUNTIME",
         "ART24_RUN_SURFACE_LAYER_ROUTING",
         "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
@@ -610,6 +618,13 @@
       "coverage": ["main_menu", "transitions", "motion"]
     },
     {
+      "id": "I2_CHARACTER_PRESENTATION_SWAP",
+      "relative_path": "Godot/GraytailGodot/tests/i2_character_presentation_swap_runner.gd",
+      "pass_marker": "I2_CHARACTER_PRESENTATION_SWAP=PASS default=graytail/base_art21/idle fixture_frames=3 sequence_steps=5 fallbacks=actor,appearance,clip missing_frame=bounded authority=presentation_only",
+      "fail_marker": "I2_CHARACTER_PRESENTATION_SWAP=FAIL",
+      "coverage": ["character_presentation", "variable_frames", "semantic_fallback", "main_menu", "deploy_prep", "long_term"]
+    },
+    {
       "id": "I2_MAIN_MENU_ANCHOR_TEXT",
       "relative_path": "Godot/GraytailGodot/tests/i2_main_menu_anchor_text_runner.gd",
       "pass_marker": "I2_MAIN_MENU_ANCHOR_TEXT=PASS contract_cases=36 resolutions=3 text_profiles=3 focus_states=4 entry_lines_max=2 entry_font_min=18",
@@ -661,7 +676,7 @@
     {
       "id": "ART23_LONG_TERM_RUNTIME",
       "relative_path": "Godot/GraytailGodot/tests/art23_long_term_runtime_runner.gd",
-      "pass_marker": "ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive character_frames=8 states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING",
+      "pass_marker": "ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive workspace=scrollable states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING",
       "fail_marker": "ART23_LONG_TERM_RUNTIME=FAIL",
       "coverage": ["long_term", "layout", "state", "task_archive", "route_alias", "asset_reuse", "red_dot"]
     },
@@ -678,6 +693,13 @@
       "pass_marker": "I2_LONG_TERM_TASK_ARCHIVE=PASS canonical=task_archive aliases=goals,tasks,overview modules=5 commission_records=12 pages=4 authority=read_only",
       "fail_marker": "I2_LONG_TERM_TASK_ARCHIVE=FAIL",
       "coverage": ["long_term", "task_archive", "migration", "alias", "goal_authority", "commission_history", "pagination"]
+    },
+    {
+      "id": "I2_LONG_TERM_MODULE_WORKSPACE",
+      "relative_path": "Godot/GraytailGodot/tests/i2_long_term_module_workspace_runner.gd",
+      "pass_marker": "I2_LONG_TERM_MODULE_WORKSPACE=PASS pages=24 records=0,1,many,50 selection_actions=0 explicit_actions=once",
+      "fail_marker": "I2_LONG_TERM_MODULE_WORKSPACE=FAIL",
+      "coverage": ["long_term", "module_workspace", "scroll", "record_reachability", "explicit_actions", "profile_history", "honest_empty_state"]
     },
     {
       "id": "ART24_IN_RUN_RUNTIME",
@@ -885,6 +907,7 @@
         "ERROR: 7 resources still in use at exit (run with --verbose for details)."
       ],
       "ART21_MAIN_MENU_RUNTIME": [],
+      "I2_CHARACTER_PRESENTATION_SWAP": [],
       "I2_MAIN_MENU_ANCHOR_TEXT": [],
       "I2_MAIN_MENU_TRANSITION_COORDINATOR": [],
       "I2_MAIN_MENU_TRANSITION_FALLBACK": [],
@@ -901,6 +924,7 @@
         "ERROR: 10 resources still in use at exit (run with --verbose for details)."
       ],
       "I2_LONG_TERM_TASK_ARCHIVE": [],
+      "I2_LONG_TERM_MODULE_WORKSPACE": [],
       "ART24_IN_RUN_RUNTIME": [],
       "ART24_RUN_SURFACE_LAYER_ROUTING": [],
       "ART24_WORLD_CONTEXT_POPUP_LAYOUT": [],

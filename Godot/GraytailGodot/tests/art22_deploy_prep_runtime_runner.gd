@@ -633,14 +633,27 @@ func _check_collapse_contract(shell: Control) -> void:
 
 func _check_motion_contract(shell: Control) -> void:
 	var frames := shell.get("character_frames") as Array
-	_check(frames.size() == 8, "Character motion must load eight source frames")
-	var unique_paths := {}
+	var descriptors := shell.get("character_clip_descriptors") as Dictionary
+	var clip_frames := shell.get("character_clip_frames") as Dictionary
+	var idle_descriptor := descriptors.get(&"idle", {}) as Dictionary
+	var idle_visual_keys := idle_descriptor.get("visual_keys", []) as Array
+	_check(not idle_visual_keys.is_empty(), "Character idle descriptor has no semantic frame slots")
+	_check(frames.size() == idle_visual_keys.size(), "Character idle frames do not preserve descriptor slots")
 	for frame in frames:
-		if frame is Texture2D:
-			var texture := frame as Texture2D
-			var identity := texture.resource_path if not texture.resource_path.is_empty() else texture.resource_name
-			unique_paths[identity] = true
-	_check(unique_paths.size() == 8, "Character motion frames are not resource-distinct")
+		_check(frame is Texture2D, "Character idle descriptor resolved a null frame slot")
+	var reachable_character_frames := {}
+	for clip_id in [&"idle", &"look"]:
+		var descriptor := descriptors.get(clip_id, {}) as Dictionary
+		var sequence := descriptor.get("sequence", []) as Array
+		var loaded := clip_frames.get(clip_id, []) as Array
+		_check(not sequence.is_empty() and not loaded.is_empty(), "Character clip is unavailable: " + String(clip_id))
+		for step in range(sequence.size()):
+			_check(bool(shell.call("_apply_character_clip_pose", clip_id, step)), "Character clip pose could not be applied: %s/%d" % [String(clip_id), step])
+			var pose_texture := (shell.get("character_texture") as TextureRect).texture
+			if pose_texture != null:
+				var pose_identity := pose_texture.resource_path if not pose_texture.resource_path.is_empty() else pose_texture.resource_name
+				reachable_character_frames[pose_identity] = true
+	_check(not reachable_character_frames.is_empty(), "Character descriptors expose no reachable presentation frames")
 	_check((shell.get("ambient_animations") as Array).size() == 8, "Expected eight ambient frame animations")
 	_check((shell.get("ambient_particles") as Array).size() == 2, "Expected two ambient particle fields")
 	var observed_frames := {}
@@ -654,7 +667,9 @@ func _check_motion_contract(shell: Control) -> void:
 		var summary_root := shell.get_node_or_null("SideStatusRoot") as Control
 		if summary_root != null and summary_root.position != Vector2.ZERO:
 			observed_sway = true
-	_check(observed_frames.size() == 8, "Character cadence did not expose all eight distinct frames")
+	_check(not observed_frames.is_empty(), "Character cadence did not expose a presentation frame")
+	for observed_identity in observed_frames.keys():
+		_check(reachable_character_frames.has(observed_identity), "Character cadence escaped the resolved clip descriptors")
 	_check(observed_sway, "Hanging summary board did not produce subtle sway")
 
 

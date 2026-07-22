@@ -17,6 +17,7 @@ const Art21MainMenuAssetContractScript := preload("res://scripts/presentation/ar
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const Art22DeployPrepAssetContractScript := preload("res://scripts/presentation/art22_deploy_prep_asset_contract.gd")
 const Art25ContentAssetContractScript := preload("res://scripts/presentation/art25_content_asset_contract.gd")
+const CharacterPresentationCatalogScript := preload("res://scripts/presentation/character/character_presentation_catalog.gd")
 
 signal deploy_start_intent_requested(intent: Dictionary)
 signal navigation_intent_requested(intent: Dictionary)
@@ -28,10 +29,6 @@ const SUMMARY_PAGES := [
 	{"id": &"effect", "label": "效果"},
 	{"id": &"objective", "label": "目标"},
 ]
-const CHARACTER_IDLE_SEQUENCE := [0, 0, 1, 1, 2, 1, 0, 0, 3, 3, 0, 4, 5, 4, 0, 0]
-const CHARACTER_LOOK_SEQUENCE := [0, 6, 6, 7, 7, 6, 0]
-const CHARACTER_IDLE_FRAME_SECONDS := 0.34
-const CHARACTER_LOOK_FRAME_SECONDS := 0.42
 const CHARACTER_FIRST_LOOK_SECONDS := 5.0
 const CHARACTER_LOOK_INTERVAL_SECONDS := 10.0
 const META_DETAIL_ACTION_IDS := [&"purchase", &"sell"]
@@ -87,6 +84,10 @@ var modal_cancel_button: Button
 var modal_confirm_button: Button
 var character_texture: TextureRect
 var character_frames: Array[Texture2D] = []
+var character_actor_id: StringName = CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID
+var character_appearance_id: StringName = CharacterPresentationCatalogScript.DEFAULT_APPEARANCE_ID
+var character_clip_descriptors: Dictionary = {}
+var character_clip_frames: Dictionary = {}
 var ambient_animations: Array[Dictionary] = []
 var ambient_particles: Array[CPUParticles2D] = []
 var summary_chain_bases: Dictionary = {}
@@ -289,6 +290,10 @@ func _clear_children() -> void:
 	card_views.clear()
 	summary_buttons.clear()
 	character_frames.clear()
+	character_clip_descriptors.clear()
+	character_clip_frames.clear()
+	character_actor_id = CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID
+	character_appearance_id = CharacterPresentationCatalogScript.DEFAULT_APPEARANCE_ID
 	ambient_animations.clear()
 	ambient_particles.clear()
 	summary_chain_bases.clear()
@@ -385,11 +390,17 @@ func _build_ambient_motion() -> void:
 func _build_character() -> void:
 	var root := _root(&"CharacterRoot")
 	_add_art21_texture(root, "DeployCharacterShadow", DeployPrepLayoutContractScript.CHARACTER_SHADOW, &"main_menu.scene.character.shadow", 0)
-	for index in range(8):
-		var frame := Art21MainMenuAssetContractScript.texture(StringName("main_menu.scene.character.idle.%02d" % index))
-		if frame != null:
-			character_frames.append(frame)
-	var initial: Texture2D = character_frames[0] if not character_frames.is_empty() else null
+	var presentation := _dictionary_from(current_model.get("character_presentation", {}))
+	character_actor_id = StringName(presentation.get("actor_id", CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID))
+	character_appearance_id = StringName(presentation.get("appearance_id", CharacterPresentationCatalogScript.DEFAULT_APPEARANCE_ID))
+	_load_character_clip(&"idle")
+	_load_character_clip(&"look")
+	character_frames.assign(character_clip_frames.get(&"idle", []) as Array)
+	var initial := CharacterPresentationCatalogScript.frame_at(
+		character_frames,
+		_dictionary_from(character_clip_descriptors.get(&"idle", {})),
+		0
+	)
 	character_texture = _add_texture_from_texture(root, "DeployCharacter", DeployPrepLayoutContractScript.CHARACTER, initial, 1, true)
 
 
@@ -1236,28 +1247,55 @@ func _process(delta: float) -> void:
 
 
 func _update_character_motion(delta: float) -> void:
-	if character_texture == null or character_frames.size() < 8:
+	if character_texture == null or character_frames.is_empty():
 		return
 	if character_look_index < 0 and scene_elapsed >= next_character_look:
 		character_look_index = 0
 		character_elapsed = 0.0
 	character_elapsed += delta
-	var frame_seconds := CHARACTER_LOOK_FRAME_SECONDS if character_look_index >= 0 else CHARACTER_IDLE_FRAME_SECONDS
+	var active_clip_id := &"look" if character_look_index >= 0 else &"idle"
+	var active_descriptor := _dictionary_from(character_clip_descriptors.get(active_clip_id, {}))
+	var frame_seconds := maxf(0.01, float(active_descriptor.get("frame_seconds", 0.32)))
 	if character_elapsed < frame_seconds:
 		return
 	character_elapsed = fmod(character_elapsed, frame_seconds)
 	if character_look_index >= 0:
-		var look_frame := int(CHARACTER_LOOK_SEQUENCE[character_look_index])
-		character_texture.texture = character_frames[look_frame]
+		_apply_character_clip_pose(&"look", character_look_index)
 		character_look_index += 1
-		if character_look_index >= CHARACTER_LOOK_SEQUENCE.size():
+		var look_sequence := active_descriptor.get("sequence", []) as Array
+		if look_sequence.is_empty() or character_look_index >= look_sequence.size():
 			character_look_index = -1
 			character_frame_index = 0
 			next_character_look = scene_elapsed + CHARACTER_LOOK_INTERVAL_SECONDS
 		return
-	character_frame_index = (character_frame_index + 1) % CHARACTER_IDLE_SEQUENCE.size()
-	var idle_frame := int(CHARACTER_IDLE_SEQUENCE[character_frame_index])
-	character_texture.texture = character_frames[idle_frame]
+	var idle_sequence := active_descriptor.get("sequence", []) as Array
+	if idle_sequence.is_empty():
+		return
+	character_frame_index = (character_frame_index + 1) % idle_sequence.size()
+	_apply_character_clip_pose(&"idle", character_frame_index)
+
+
+func _load_character_clip(clip_id: StringName) -> void:
+	var descriptor := CharacterPresentationCatalogScript.resolve_descriptor(
+		character_actor_id,
+		character_appearance_id,
+		clip_id
+	)
+	character_clip_descriptors[clip_id] = descriptor
+	character_clip_frames[clip_id] = CharacterPresentationCatalogScript.load_frames(descriptor)
+
+
+func _apply_character_clip_pose(clip_id: StringName, step: int = 0) -> bool:
+	if character_texture == null:
+		return false
+	var descriptor := _dictionary_from(character_clip_descriptors.get(clip_id, {}))
+	var frames := character_clip_frames.get(clip_id, []) as Array
+	var frame := CharacterPresentationCatalogScript.frame_at(frames, descriptor, step)
+	if frame == null:
+		return false
+	character_texture.texture = frame
+	character_texture.flip_h = bool(descriptor.get("flip_h", false))
+	return true
 
 
 func _register_art21_loop(parent: Control, node_name: String, rect: Rect2, prefix: String, sequence: Array, frame_seconds: float, tint: Color, base_alpha: float) -> void:
@@ -1352,7 +1390,7 @@ func _update_summary_sway() -> void:
 
 func _freeze_motion() -> void:
 	if character_texture != null and not character_frames.is_empty():
-		character_texture.texture = character_frames[0]
+		_apply_character_clip_pose(&"idle", 0)
 	for group in ambient_animations:
 		var node := group.get("node") as TextureRect
 		var frames := group.get("frames", []) as Array
