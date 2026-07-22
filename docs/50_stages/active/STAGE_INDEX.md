@@ -1,31 +1,37 @@
 # Active Stage Index
 
-文档状态：当前无 active stage；I2 已关闭。
-最后更新：2026-07-22
+文档状态：NO_ACTIVE_STAGE。
+最后更新：2026-07-23
 
 ## 当前阶段
 
 | Item | Current fact |
 | --- | --- |
-| Stage | none |
-| Status | `NO_ACTIVE_STAGE` |
-| Latest closed non-art baseline | I2 / `CLOSED / PASS_WITH_NOTES` |
+| Active stage | NONE |
+| Latest closed non-art baseline | I3 / CLOSED / PASS_WITH_NOTES |
 | Latest closed art stage | ART21 |
-| Later accepted page/UI evidence | ART23 |
-| Successor authorization | none; I2 closeout does not authorize a follow-up stage |
+| Later accepted page/UI evidence | ART23 / scoped only |
+| Successor authorization | NONE |
 
-## 已关闭阶段的边界
+I3 已完成范围内审计、实现、生产公开输入、Base、性能、全量 worktree 与收口文档，
+关闭为 PASS_WITH_NOTES。I3.0–I3.7 只是该阶段内部门，不是可单独延续的 active stage。
 
-I2 在不破坏 I1 权威、保存、结算和快速回归基线的前提下，对主菜单、出发探索、长期系统、局内、特殊房和结果解释进行了面向玩家体验的受控重构。其收口事实和可复现说明以 validation/handoff 原文为准。
+## 外部交付条件
 
-I2 是单一阶段；I2.0–I2.7 只是内部切片。其关闭不使任何新阶段、能力或发布自动生效。
+I3 关闭仍以同一候选提交通过 exact-head/full、push 成功且远端 SHA 与本地一致为条件。
+这些结果由最终交付记录提供，不在索引预写未知 SHA。任一门失败时，NO_ACTIVE_STAGE
+立即失效，必须重新打开 I3.7。
 
-## 关闭后的限制
+## 后继限制
 
-I2 已验证的生产 capture 为 39/39，且只构成静态人工检查；性能仅确认可比负载下未见系统性相对回退。最终审美、音频、动态交互手感、长局、设备矩阵、CI full、导出与发布均未验收。新工作必须先经用户或后续治理明确授权，不能由本索引自动启动。
+- I3 关闭不自动授权 I4、ART22 或其他后继阶段。
+- ART21 仍是项目级最新闭合美术阶段；ART23 和 I3 UI 改动不提升 art-stage authority。
+- 后续工作必须取得用户明确授权，并另建范围、验收、回退和来源门。
 
-## I2 收口入口
+## 当前入口
 
-- `docs/validation/I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md`
-- `docs/handoff/HANDOFF_I2_PLAYER_EXPERIENCE_REFACTOR.md`
-- `docs/00_governance/I2_SLICE_GATE_LEDGER.md`
+- docs/50_stages/closed/STAGE_INDEX.md
+- docs/validation/I3_PLAYER_PERCEPTION_AND_BASELINE_CALIBRATION_VALIDATION.md
+- docs/handoff/HANDOFF_I3_PLAYER_PERCEPTION_AND_BASELINE_CALIBRATION.md
+- docs/10_current/CURRENT_STATE.md
+- docs/10_current/NEXT_ACTION.md

@@ -1,11 +1,11 @@
 document_status: current_capability_matrix
-updated: "2026-07-22"
-updated_by: "I2_closeout_pass_with_notes"
+updated: "2026-07-23"
+updated_by: "I3_closeout_pass_with_notes"
 
 repository:
   workspace_resolution: "git rev-parse --show-toplevel"
   godot_project: "<git-worktree-root>/Godot/GraytailGodot"
-  observed_branch: "codex/i2-player-experience-refactor"
+  observed_branch: "codex/i3-player-experience-calibration"
   source_head_before_i1: "2212992337aeef7cda412dbaaa191c3ad6cbb81a"
   implementation_commit: "6a4f207d743583c7342655488c2d9a652b9ab05c"
   closure_fix_commit: "492d74fcdc94cb75e47401c203defd49dac11ae9"
@@ -13,9 +13,16 @@ repository:
   i2_entry_validated_tree: "1d26f1415851755f1a8cc57f4804dfb12d9cea4d"
   i2_implementation_commit: "c500bdb8b931fada26f4f617a3feaad643281b4c"
   i2_implementation_tree: "7b04e81882961f65a516e192c33093ec98162667"
-  observed_base_ref: "origin/main_at_b77132b9de655b36f71c930a35a191c383b55522"
-  current_stage: "no_active_successor_i2_closed_pass_with_notes"
-  latest_closed_non_art_baseline: "I2"
+  i3_entry_validated_head: "09aaafe283aa2e4c2f30708c5f88b89ebf7753eb"
+  i3_entry_validated_tree: "a077da34237dce5e4a6081d833efd939098b4641"
+  i3_base_commit: "506955ec26f866707c4821b21d1969d211bc8cd8"
+  i3_base_tree: "0cf56aa44aadda254c107fae579fd4e093568c10"
+  i3_runtime_commit: "4da77decfe2b7aa813f80edaa44cdd99096163ae"
+  i3_runtime_tree: "69283b632c5717c0546e207f9003ec683122fe4d"
+  i2_observed_base_ref: "origin/main_at_b77132b9de655b36f71c930a35a191c383b55522"
+  observed_base_ref: "i3_entry_at_09aaafe283aa2e4c2f30708c5f88b89ebf7753eb"
+  current_stage: "no_active_successor_i3_closed_pass_with_notes"
+  latest_closed_non_art_baseline: "I3"
   latest_closed_art_stage: "ART21"
   later_accepted_page_ui_evidence: "ART23"
   failed_historical_art_attempt: "ART24R2_24_of_61_pass"
@@ -50,6 +57,13 @@ runtime_capabilities:
   i2_player_experience_and_explanation: validated_scoped_pass_with_notes
   i2_combat_explicit_flee_and_special_room_journey: validated_scoped
   i2_terminal_reason_items_and_save_recovery: validated_scoped
+  i3_player_centered_map_and_explicit_route_confirmation: validated_scoped
+  i3_search_reveal_stable_chest_and_ground_loot_feedback: validated_scoped
+  i3_shared_item_descriptor_scroll_and_single_input_path: validated_scoped
+  i3_combat_special_room_and_result_explanation: validated_scoped
+  i3_main_menu_spatial_transition_and_real_master_volume: validated_scoped
+  i3_long_term_research_projection: validated_scoped_talent_rules_zero
+  i3_base_original_planning_and_art_dedup: governed_source_baseline_not_runtime_admission
 
 i1_implementation:
   restart_confirmation_and_debug_gate: validated_closed
@@ -82,41 +96,89 @@ i2_closeout:
   final_validation: "docs/validation/I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md"
   final_handoff: "docs/handoff/HANDOFF_I2_PLAYER_EXPERIENCE_REFACTOR.md"
 
+i3_closeout:
+  stage_status: closed_pass_with_notes_subject_to_external_delivery_gates
+  internal_slices: i3_0_through_i3_7_not_independent_stages
+  implementation_target: godot
+  ue_reference: read_only_experience_reason_comparison_only
+  deploy_map_route: same_page_split_no_region_difficulty_step
+  feedback_disposition: 44_implemented_and_verified_6_rejected_with_evidence_13_blocked_with_owner_and_gate
+  original_planning: 25_files_728214_bytes_exact_names_and_bytes
+  art_dedup: 1407_members_to_1012_unique_objects_plus_395_aliases
+  base_repository_physical: 1042_files_179095285_bytes
+  production_journeys: 6_pass_seed_13_47_png_1280x720
+  production_journey_boundary: no_real_gamepad_other_resolution_reduced_motion_or_exhaustive_branches
+  long_term_projection: m7_research_prerequisite_tree_nodes_3_talent_rules_0
+  cleanup_classification: 33_runners_66_diagnostics_resource_counts_7x1_10x2_16x10_18x19_21x1
+  production_cleanup_subset: six_runs_each_18_resources
+  performance_conclusion: enemy1_absolute_regression_retained_headless_cpu_not_gpu_fps
+  successor_authorized: false
+  external_exact_head_full: required_after_final_document_commit
+  external_push_remote_sha_match: required_for_closure_to_take_effect
+  final_validation: "docs/validation/I3_PLAYER_PERCEPTION_AND_BASELINE_CALIBRATION_VALIDATION.md"
+  final_handoff: "docs/handoff/HANDOFF_I3_PLAYER_PERCEPTION_AND_BASELINE_CALIBRATION.md"
+
 validation:
-  static_final: pass_39_blocking_46_inventory_13_exclusions_705_checks
-  preflight_worktree: pass_120233_ms
-  quick_worktree: pass_21_of_21
-  core_worktree: pass_24_of_24
-  ui_worktree: pass_23_of_23
-  full_worktree: pass_39_of_39_precommit_evidence
-  m5_seed_fixture_stability: pass_three_independent_then_full
-  production_preview_human_review: pass_static_layout_27_of_27
-  production_preview_machine_status: pass_with_visual_review_required
-  production_preview_visual_acceptance: not_run
-  preview_static_evidence_applicability: retained_no_visible_path_delta
-  closure_status: pass_with_notes
-  full_committed_head: pass_39_of_39
-  full_head_report_sha256: "AF6F7C5A4B74B6E8E17FA89443E0DD77BCC25E6F0E2752E07DE707439B1E2851"
-  combat_performance_scope: "microbenchmark_only"
-  combat_p95_core_us: 519
-  combat_p50_head_full_us: 110
-  combat_p95_head_full_us: 222
-  combat_p99_head_full_us: 310
-  combat_max_head_full_us: 356
-  full_refresh_p95_head_full_us: 151070
-  latest_full_head_duration_ms: 291203
-  full_plain_pass_runner_count: 17
-  full_cleanup_runner_count: 22
-  full_cleanup_diagnostic_total: 44
-  full_blocking_diagnostic_count: 0
-  full_report_fatal_error: none
-  full_business_file_count: 2121
-  full_business_fingerprint_sha256: "6367CCAB6D542F8B9562EA09E484FC40104E2D8843F1085A8191A18EEEF15460"
-  full_manual_playtest: not_claimed
-  general_performance: not_claimed
-  ci_quick: pass_run_29760789712_job_88414602442
-  ci_full: not_claimed
-  export_release: not_claimed
+  latest_stage: I3
+  i3_static_final: pass
+  i3_base_import_verify: pass_files_1041_planning_25_art_members_1407_art_unique_1012_aliases_395
+  i3_base_committed_verify: pass_files_1041_planning_25_art_members_1407_art_unique_1012_aliases_395
+  i3_quick_worktree: pass_53_of_53_after_documented_fail_and_remediation
+  i3_quick_worktree_duration_ms: 403410
+  i3_quick_worktree_report_sha256: "ACB78574948879F9724BF0F216DFB01AFE93C40BC55F44A8DCE0006FF5AE0FD6"
+  i3_full_worktree: pass_75_of_75_after_documented_fail_and_remediation
+  i3_full_worktree_duration_ms: 785952
+  i3_full_worktree_plain_pass_runner_count: 42
+  i3_full_worktree_cleanup_runner_count: 33
+  i3_full_worktree_cleanup_diagnostic_total: 66
+  i3_full_worktree_cleanup_resource_distribution: "7x1,10x2,16x10,18x19,21x1"
+  i3_full_worktree_blocking_diagnostic_count: 0
+  i3_full_worktree_pollution: pass
+  i3_full_worktree_manifest_sha256: "7A85382E1B2DBDC4B1260720369D9C8FC8448DD01E125873060F58907B6589C9"
+  i3_full_worktree_report_sha256: "5E07C1FDA64391738ABAC8ABDFA2E71AFE398F88EF1C4DF0F567FECEF710D34D"
+  i3_full_worktree_business_file_count: 2220
+  i3_full_worktree_business_fingerprint_sha256: "ED5E6A08A3569470C00F241E265B544E2BBA6766844924D32CC83277E3D0F545"
+  i3_production_journeys: pass_6_of_6_seed_13_47_png
+  i3_exact_head_full: required_after_final_commit
+  i3_push_remote_sha_match: required_after_exact_head_full
+  i3_manual_final_aesthetic_audio_acceptance: not_run
+  i3_real_gamepad_other_resolution_reduced_motion_matrix: not_run
+  i3_ci_full_export_release: not_run
+  historical_unprefixed_scope: none
+  i1_static_final: pass_39_blocking_46_inventory_13_exclusions_705_checks
+  i1_preflight_worktree: pass_120233_ms
+  i1_quick_worktree: pass_21_of_21
+  i1_core_worktree: pass_24_of_24
+  i1_ui_worktree: pass_23_of_23
+  i1_full_worktree: pass_39_of_39_precommit_evidence
+  i1_m5_seed_fixture_stability: pass_three_independent_then_full
+  i1_production_preview_human_review: pass_static_layout_27_of_27
+  i1_production_preview_machine_status: pass_with_visual_review_required
+  i1_production_preview_visual_acceptance: not_run
+  i1_preview_static_evidence_applicability: retained_no_visible_path_delta
+  i1_closure_status: pass_with_notes
+  i1_full_committed_head: pass_39_of_39
+  i1_full_head_report_sha256: "AF6F7C5A4B74B6E8E17FA89443E0DD77BCC25E6F0E2752E07DE707439B1E2851"
+  i1_combat_performance_scope: "microbenchmark_only"
+  i1_combat_p95_core_us: 519
+  i1_combat_p50_head_full_us: 110
+  i1_combat_p95_head_full_us: 222
+  i1_combat_p99_head_full_us: 310
+  i1_combat_max_head_full_us: 356
+  i1_full_refresh_p95_head_full_us: 151070
+  i1_latest_full_head_duration_ms: 291203
+  i1_full_plain_pass_runner_count: 17
+  i1_full_cleanup_runner_count: 22
+  i1_full_cleanup_diagnostic_total: 44
+  i1_full_blocking_diagnostic_count: 0
+  i1_full_report_fatal_error: none
+  i1_full_business_file_count: 2121
+  i1_full_business_fingerprint_sha256: "6367CCAB6D542F8B9562EA09E484FC40104E2D8843F1085A8191A18EEEF15460"
+  i1_full_manual_playtest: not_claimed
+  i1_general_performance: not_claimed
+  i1_ci_quick: pass_run_29760789712_job_88414602442
+  i1_ci_full: not_claimed
+  i1_export_release: not_claimed
   i2_entry_full_head: pass_39_of_39_at_b77132b
   i2_entry_full_head_report_sha256: "2072F1DBD067C607E82220F06DEFE15F410ED68807BFAA4EF36B5202007167E8"
   i2_entry_full_head_duration_ms: 254980

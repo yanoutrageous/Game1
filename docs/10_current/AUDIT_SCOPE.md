@@ -1,60 +1,56 @@
 # Audit Scope
 
-文档状态：I2 当前审计范围；阶段 active，运行时实现尚未声明。
-最后更新：2026-07-22
+文档状态：I3 关闭完成审计范围。
+最后更新：2026-07-23
 
-## 已纳入
+## 已纳入并完成审计
 
-- 由 `git rev-parse --show-toplevel` 解析的 I2 活动 worktree、Godot 工程、分支/HEAD/origin/index/stash/worktree/dirty/staged/untracked。
-- I2 起点 `b77132b9de655b36f71c930a35a191c383b55522` 的 exact full/head 39/39 报告及其污染/diagnostic 边界。
-- I1 关闭契约、权威/保存/结算不变量、runner 和生产预览作为 I2 继承基线。
-- 主菜单、Deploy、长期、局内 12 项、特殊房 4 项和补充跨域判断的逐项 U/R/UE/D/A 追踪。
-- 程序耦合、模块职责、状态转换、UI/动效/交互、真实工作负载性能、资源/许可/import 和文档治理计划。
-- production `main.tscn` 的当前 9 状态 × 3 分辨率预览基线；其机器状态仍要求视觉复核。
-- `E:\UE\Game\UE\Graytail` 的只读语义/交互/视觉参考边界；不把 UE 设为实现或性能权威。
-- I2 每切片的 allowed/protected paths、产品决策、characterization、回退、自动/可见/人工/输入/性能/失败/来源证据门。
-
-## I2.0 当前写入范围
-
-I2.0 只写启动审计、契约、评估、追踪矩阵、架构计划、验证计划、切片门账和必要当前入口。Godot 脚本、场景、资源、项目设置、tools、validation、handoff 和历史关闭记录不在当前写入范围。
-
-I2.0 的有效结论仅为：
-
-```text
-I2 = ACTIVE
-implementation = not yet claimed
-runtime capability delta = none claimed
-next execution = gated per slice
-```
+- 独立 I3 worktree 的 Git 身份、差异、污染、保护路径、全量 worktree 门和交付条件。
+- 用户对主菜单、出发探索、长期系统、局内、特殊房、撤离和结果的全部反馈处置。
+- 地图/小地图共享语义、KnownMap 防泄漏、搜索/箱子/地面物反馈、HUD/协议、背包/
+  物品、输入、角色表现、战斗/特殊房、撤离和结果叙事。
+- 生产 main.tscn 的公开输入连续路线：三条 runner 各自 headless/rendered PASS，
+  共 47 张 1280×720 PNG 和 6 组 JSON/CSV。
+- 主菜单空间转场、Deploy 同页双栏、长期研究前置链投影与主音量设置真实效果。
+- 同机冻结战斗 workload 五轮分布，以及 enemy1 低基数残余的非隐藏登记。
+- sources.zip 的 25 份原始策划与 1407 个 art/draw member；原名/原字节、SHA 去重、
+  395 个 alias、保留理由、关系与 runtime admission 边界。
+- 最终 worktree full 75/75 PASS、报告绑定和首次失败补救链。
 
 ## 证据优先级
 
-1. 当前可复现代码、数据、运行和 exact fingerprint；
-2. 当前自动化、生产截图、动态人工、输入、性能、失败与资产审计各自证据；
-3. 当前产品/架构契约；
-4. UE/历史文档/历史截图等有边界的参考；
-5. 对话观察和偏好。
+1. 当前 Godot 代码、权威快照、真实消费者和可复现生产运行；
+2. 当前自动化、公开输入旅程、渲染、人工检查、性能与失败恢复证据；
+3. I3 契约、切片台账、反馈处置矩阵与 Base manifests；
+4. 原始策划案的设计意图及版本关系；
+5. UE/Lua/历史截图与报告的有边界参考。
 
-用户观察必须保留并验证，但不能覆盖仓库事实。UE 参考不能覆盖 Godot 产品约束；尤其禁止把 Deploy 地图改为 region→difficulty 分步页面。
+用户观察必须逐项处理，但不能覆盖仓库事实。UE 参考不能覆盖 Godot 的 KnownMap、
+GroundLoot、保存、结算、fixed tick 和容量替换权威。
 
-## protected dirty / asset 范围
+## 保护边界
 
-隔离 I2 worktree 启动时干净。另一个主工作树 `E:\AGAME1` 已观察到 `Godot/GraytailGodot/project.godot` 和七个 `data/assets/asset_manifest.*.translation` 文件的受保护状态；它们不属于 I2.0。不得清理、覆盖、复制或暂存。
+- 仓库根由 git rev-parse --show-toplevel 动态解析。
+- E:\UE 只读；主工作树和 UE 的用户既有 dirty 不属于 I3 暂存对象。
+- Base 原始策划不复制到 repo docs；Base art 保持 not_admitted。
+- project.godot、scene/resource、.uid、.translation、import metadata 和运行时二进制
+  只有在专门门允许时才能修改或暂存。
+- UI/表现不得拥有或猜测地图真值、掉落、伤害、经济、保存、结算或状态机权威。
 
-Godot scene/resource/`.uid`/`.translation`/import metadata/`project.godot` 只有在对应实现切片给出精确路径和专门 gate 后才可变更。UE `.uasset`、烤字固定布局、过程帧和未知许可素材不在可导入范围。
+## 未包含或仍为 notes
 
-## 当前明确未声称完成
+- 最终跨页面审美、统一视觉 token、角色动画/时装、音频和整体交互手感。
+- 目标设备 GPU/FPS、完整键鼠/手柄人工旅程、长局、内存和发布性能。
+- 退出时 18 个生产 RefCounted/GDScript 资源仍在使用的生命周期债务。
+- 批量售卖、完整天赋规则、跨进程 active-run 恢复、完整经济与更深内容。
+- 平台认证、导出、商店与 release gate。
 
-- MAIN-01..05、DEP-01..10、LONG-01..04、RUN-01..12、ROOM-01..04 的任何运行时改善。
-- 真实设置、角色骨骼/烘焙动画、时装替换、仓库批售、任务 taxonomy、天赋树或长期模块迁移。
-- 战斗房整帧性能、通用性能、设备/输入矩阵、人工长局、最终视觉或音频。
-- 跨进程 active-run 恢复、完整经济/内容、导出、发布或 release gate。
-- I2 validation/handoff、能力提升、提交、推送或合并。
+## 关闭与交付口径
 
-## 当前证据口径
-
-- I1 是最新闭合非美术基线，ART21 是项目级最新闭合美术阶段；ART23 仍只是较晚页面/UI 证据。
-- I2 起点 full/head 报告为 39/39 PASS，SHA-256 `2072F1DBD067C607E82220F06DEFE15F410ED68807BFAA4EF36B5202007167E8`；它证明 entry regression，不证明 I2。
-- 最新 27/27 production capture 为 `PASS_WITH_VISUAL_REVIEW_REQUIRED / visual_acceptance=NOT_RUN`；静态图不能证明动态、输入或手感。
-- combat refresh 历史指标仅是微基准，不能当作 FPS 或真实战斗房性能。
-- I2 切片通过也不关闭 I2；最终必须逐条处置追踪矩阵并运行 full/worktree、提交后 exact full/head 及综合证据审计。
+- I3.0–I3.7 的详细门与反馈处置分别由 ledger 和 matrix 冻结。
+- I3 状态为 CLOSED / PASS_WITH_NOTES，是最新闭合非美术基线。
+- worktree full 为 75/75 PASS；报告 SHA-256 为
+  5E07C1FDA64391738ABAC8ABDFA2E71AFE398F88EF1C4DF0F567FECEF710D34D。
+- exact-head/full 与 push 后远端 SHA 一致是外部交付门。最终交付记录必须证明两者；
+  任一失败都使关闭无效并重新打开 I3.7。
+- 当前没有 active stage，也没有自动授权的后继阶段。项目级 latest art 仍为 ART21。
