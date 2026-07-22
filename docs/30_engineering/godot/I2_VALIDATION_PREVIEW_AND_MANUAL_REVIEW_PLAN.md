@@ -1,6 +1,6 @@
 # I2 Validation, Preview and Manual Review Plan
 
-文档状态：I2 执行计划；不是 validation 结果，未运行项不得写成 PASS。
+文档状态：I2 执行计划已结束；本文仍不是 validation 结果，实际证据以待建 I2 validation 为准，未运行项不得写成 PASS。
 最后更新：2026-07-22
 
 ## 1. 目标
@@ -296,3 +296,9 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
 ```
 
 最终审计必须逐条关闭反馈矩阵并分别报告 `PASS / FAIL / NOT_RUN / DEFERRED`。只有 exact HEAD 与综合证据一致时，才可创建 I2 validation/handoff 并考虑 capability promotion；本计划本身不提供这些结论。
+
+## 11. 执行结束后的证据口径
+
+本计划已经完成其作为 I2 执行约束的职责。最终自动化、production capture、定向运行时/结算/保存回归、工作负载测量和逐项反馈处置的实际结果，必须在待建 `docs/validation/I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md` 中逐项登记；操作交接和延期项以待建 `docs/handoff/HANDOFF_I2_PLAYER_EXPERIENCE_REFACTOR.md` 为准。本文件中的进入基线、命令和风险说明保留为历史实施上下文，不自行升级为 PASS。
+
+以下项目在未有独立可复核证据前仍为 `NOT_RUN` 或 `DEFERRED`：最终审美/音频验收；跨页面键鼠与手柄的完整玩家手感；长时人工游玩；非 16:9、窗口 DPI 与设备/GPU 矩阵；战斗房绝对 FPS 改善；CI full、导出和发布。真实工作负载测量只能报告同机同配置的已测结果，不得用 headless、截图或 refresh 微基准替代这些门。

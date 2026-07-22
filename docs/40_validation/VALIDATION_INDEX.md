@@ -1,9 +1,17 @@
 # Validation Index
 
-文档状态：I1 已关闭、提交态 full/head 已通过的当前验证入口。
-最后更新：2026-07-21
+文档状态：I2 已关闭、`CLOSED / PASS_WITH_NOTES` 的当前验证入口。
+最后更新：2026-07-22
 
-## I1 统一入口
+## I2 收口证据
+
+I2 是最新闭合非美术基线，状态为 `CLOSED / PASS_WITH_NOTES`。阶段 validation 原文：`docs/validation/I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md`（本次收口文档）；handoff 原文：`docs/handoff/HANDOFF_I2_PLAYER_EXPERIENCE_REFACTOR.md`。
+
+已覆盖的自动化与静态人工复核包括 39/39 production capture 矩阵、局内/特殊房/结果态交互与回归门。39/39 仅表示生产场景静态 capture 的人工检查已完成，不等同于动态视觉、审美或完整游玩验收。性能结论仅为在本机可比负载下未见系统性相对回退，不能写成 FPS 或设备性能提升。
+
+以下尚未验收：最终审美、音频、动态交互手感、长局、设备矩阵、CI full、导出与发布。I2 关闭不自动授权任何后续阶段。
+
+## I1 历史统一入口
 
 静态完整性：
 
@@ -37,7 +45,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
 
 本机路径不是跨机器权威；解析与身份复验规则见 I1 runbook。
 
-## 当前状态
+## I1 历史状态
 
 | 验证 | 结果 | 边界 |
 | --- | --- | --- |
@@ -63,8 +71,9 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
 
 | 证据 | 当前用法 |
 | --- | --- |
-| I1 validation | 最新闭合非美术基线；`CLOSED / PASS_WITH_NOTES` |
-| I0 validation | 前序闭合非美术基线；冻结历史，不覆盖 I1 |
+| I2 validation | 最新闭合非美术基线；`CLOSED / PASS_WITH_NOTES`；详见 I2 validation/handoff 原文 |
+| I1 validation | 前序闭合非美术基线；冻结历史，不覆盖 I2 |
+| I0 validation | 更早闭合非美术基线；冻结历史，不覆盖 I2 |
 | ART21 closeout/validation | 项目级最新闭合美术阶段 |
 | ART23 validation | 较晚页面/UI 验收证据切片；不提升项目级 stage authority |
 | ART24R2 final Computer Use | 失败封存，24/61 PASS；不得改写 |
@@ -81,4 +90,4 @@ I1 对应处理是：行为回归由 manifest 中已校准的 runner 承担；`p
 - cleanup diagnostic 必须保留分类，不能假装不存在。
 - worktree PASS 不代替提交后的 head PASS；Actions quick 也不代替本地 full/head。
 - screenshot/capture、静态、headless、manual、performance、CI 和 release 分开声明。
-- 历史 stage validator 的失败或旧 PASS 都不替代 I1 manifest + 专门 gate 的当前结果。
+- 历史 stage validator 的失败或旧 PASS 都不替代 I2 收口证据及其继承的 I1 manifest + 专门 gate。

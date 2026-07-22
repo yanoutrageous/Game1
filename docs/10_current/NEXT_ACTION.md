@@ -1,46 +1,35 @@
 # Next Action
 
-文档状态：I2 active 执行入口；I2.0 已接受，运行时实现尚未声明。
+文档状态：I2 关闭后的下一步入口；无后续阶段自动授权。
 最后更新：2026-07-22
 
 ## 当前状态
 
-I1 已以 `CLOSED / PASS_WITH_NOTES` 收口，I2 已由用户明确授权为单一的玩家体验重构阶段。I2.0 已完成范围、风险、反馈追踪、架构、验证和切片门并通过独立 claim review；I2.1–I2.7 仍不因阶段激活自动获得写权限。
+I1 是前序闭合非美术基线；I2 已以 `CLOSED / PASS_WITH_NOTES` 成为最新闭合非美术基线。ART21 仍是项目级最新闭合美术阶段。I2 的内部切片已经结束，不构成后续工作的隐含写权限。
 
 ```text
-I2 stage: ACTIVE
-I2 current slice: I2.1A/I2.1B foundation and isolated I2.5A ready for implementation
-I2 runtime implementation: NOT_STARTED / NOT_CLAIMED
-entry head: b77132b9de655b36f71c930a35a191c383b55522
-entry full/head: 39/39 PASS
+latest closed non-art baseline: I2 / CLOSED / PASS_WITH_NOTES
+latest closed art stage: ART21
+active successor stage: NONE
+I2 closeout records: validation/handoff are the exact evidence source
 ```
 
 ## 立即下一步
 
-1. 保持 I2.0 `ACCEPTED_WITH_NOTES / no runtime delta`；其 quick/worktree 21/21 PASS，不创建 validation/handoff，不提升 capability。
-2. 按门账并行执行互不重叠的 I2.1A 状态/生命周期、I2.1B 设置/输入 foundation 与 I2.5A 既有资产接线；不得越过各自精确 allowed paths。
-3. 主审统一登记新增 runner，并在定向测试、quick/ui 与交叉 claim review 后再开放 AppShell/Run 的设置/焦点集成门。
+1. 在新工作开始前阅读 I2 validation/handoff、反馈矩阵和 I2 gate ledger；把 I2 已验证范围与九项延期明确分开。
+2. 若要处理延期项，先建立新的范围/产品决策/资产或性能门，不以 I2 的关闭状态取得写权限。
+3. 若只做局部增量，沿用 I1 profiles、生产 preview、权威/保存/结算不变量与受保护路径规则；将新的用户体验声明与可复核证据一同提交。
 
-## 后续切片顺序
+## 已延期项目的重新开启门
 
-| 顺序 | 切片 | 进入前必须解决 |
+| 项目 | 重新开启前提 |
 | --- | --- | --- |
-| 1 | I2.1 shared foundation | 设置字段、动画 proof、input/focus ownership、保护路径 |
-| 2 | I2.2 main menu | 四入口转场状态/失败/reduced motion、锚点和素材复用 |
-| 3 | I2.3 Deploy | 地图同页 no-regression、经济命令、任务 taxonomy、出勤配置落点 |
-| 4 | I2.4 long-term | 任务档案迁移先于 Goal→天赋、天赋真实数据/效果权威 |
-| 5 | I2.5 in-run presentation | room/object/ledger/map/modal characterization、proximity 不自动拾取 |
-| 6 | I2.6 rooms/result/performance | 战斗离房规则、结算幂等、真实 1/3/5 敌人 workload 与阈值 |
-| 7 | I2.7 integration/closeout | 反馈矩阵逐项处置、full/worktree→full/head、视觉/动态/输入/性能/来源综合证据 |
-
-顺序可在风险审计后调整，但 I2.4 不能先改 Goal 名称再迁移真实任务，I2.3 不能把地图拆成新页面，I2.6 不能先声称性能改善再补 workload。
-
-## 默认开发反馈
-
-- 普通修改先 quick；程序权威/保存/战斗跑 core；UI/动画/路由跑 ui + production preview；切片 review 跑 full/worktree。
-- UI 切片必须附 1280×720、1600×900、1920×1080 静态图和动态操作；键鼠、手柄/焦点、reduced motion、颜色冗余、长文本/本地化、生命周期/保存失败按相关性执行。
-- 性能使用整帧、模拟、快照、表现、加载、分配和内存数据；combat refresh 微基准不能替代 FPS。
-- 最终只在提交后 exact HEAD full 通过并完成综合证据审计时创建 I2 validation/handoff。
+| 最终角色动画/时装与移动手感 | 获批素材/动画方案、替换夹具、reduced-motion、动态人工与性能门 |
+| 空间叙事转场与跨页最终视觉 | 交互原型、导航失败回退、动态可见验收、资产方向批准 |
+| 批量出售 | 价格/确认/原子性/幂等/保存失败回滚产品与工程契约 |
+| 真实天赋树 | 点数、成本、依赖、效果、重置/返还和持久化权威 |
+| 战斗房绝对性能 | 同机设备/GPU/长时 workload 与玩家可见掉帧验收 |
+| 整合 UX/长局 | 跨页面键鼠/手柄、长文本/DPI、动态人工游玩与多终局回归 |
 
 ## 必须继承的事实
 
@@ -49,13 +38,12 @@ entry full/head: 39/39 PASS
 - `RunAssetLedger`、`RunStateMachine`、`RunRuntimeController`/meta adapter 和 `SaveAdapter` 权威不得绕开。
 - 失败保全确认前不写局外，同一 `result_id` 不重复提交；UI/动画不拥有奖励和结算。
 - 现有 Godot/UE/本地素材依次经 source/license/hash/manifest/import gate；确认不足后才允许批准的新生成。
-- 主工作树的 `project.godot` 和七个 `asset_manifest.*.translation` 是外部受保护 dirty，不得吸收或清理。
+- `project.godot`、scene/resource、`.uid`、import metadata 与 `asset_manifest.*.translation` 均保持受保护；没有专门 gate 时不得吸收、改写或清理。
 
-## 当前不可声明
+## 仍不可声明
 
-- 主菜单、Deploy、长期、局内或特殊房已经按用户反馈改善。
-- 设置、骨骼/烘焙动画、时装替换、批量售卖或天赋树已经实现。
-- 战斗房 FPS 已优化、最终视觉/音频已完成、人工长局已通过。
-- I2 validation/handoff、capability promotion、commit/push/merge 或 release gate 已完成。
+- 被延期的骨骼/烘焙动画、时装替换、批量售卖或天赋树已经实现。
+- 战斗房绝对 FPS 已优化、最终视觉/音频已完成、整合玩家手感或人工长局已通过。
+- I2 关闭自动授权了 I3、发布、导出或任何新功能范围。
 
 详细范围见 `docs/20_product/I2_REFACTOR_DIRECTION_AND_INCREMENTAL_BASELINE_CONTRACT.md`；逐项反馈见 `docs/20_product/I2_PLAYER_FEEDBACK_TRACEABILITY_MATRIX.md`；执行状态见 `docs/00_governance/I2_SLICE_GATE_LEDGER.md`。

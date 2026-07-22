@@ -1,38 +1,33 @@
 # Game1 Docs
 
-本目录是当前仓库文档入口。I1 已关闭为 `PASS_WITH_NOTES`；用户已明确授权 I2 玩家体验重构阶段，当前状态为 `ACTIVE / implementation not yet claimed`。I2.0 只建立范围、风险、追踪、架构、验证和门账，不改写 I1、I0、ART21 或其他历史 validation / handoff / closeout。
+本目录是当前仓库文档入口。I2 已关闭为 `CLOSED / PASS_WITH_NOTES`，是最新闭合非美术基线；当前没有 active stage，I2 关闭不自动授权后续工作。ART21 仍为项目级最新闭合美术阶段。
 
 ## 第一读取顺序
 
 1. `docs/README.md`
 2. `docs/INDEX.md`
-3. `docs/50_stages/active/STAGE_INDEX.md`
+3. `docs/50_stages/closed/STAGE_INDEX.md`
 4. `docs/10_current/CURRENT_STATE.md`
-5. `docs/20_product/I2_REFACTOR_DIRECTION_AND_INCREMENTAL_BASELINE_CONTRACT.md`
-6. `docs/20_product/I2_PLAYER_FEEDBACK_TRACEABILITY_MATRIX.md`
-7. `docs/00_governance/I2_SLICE_GATE_LEDGER.md`
-8. `docs/10_current/CAPABILITY_MATRIX.yaml`
-9. `docs/10_current/NEXT_ACTION.md`
+5. `docs/validation/I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md`
+6. `docs/handoff/HANDOFF_I2_PLAYER_EXPERIENCE_REFACTOR.md`
+7. `docs/10_current/CAPABILITY_MATRIX.yaml`
+8. `docs/10_current/NEXT_ACTION.md`
 
 ## 当前基线口径
 
-- 最新闭合非美术基线：I1。
+- 最新闭合非美术基线：I2。
 - 项目级最新闭合美术阶段：ART21 主菜单场景重构。
 - ART23：较晚且已验收的页面/UI 运行证据切片，可用于具体页面回归，但不提升为项目级 art-stage authority。
 - ART24R2：`FAIL (24/61 PASS)` 后封存的历史美术尝试。
-- I1：当前最新闭合的跨程序、美术、验证与治理基线，状态 `CLOSED / PASS_WITH_NOTES`。
-- I2：用户明确授权的跨线玩家体验重构阶段，当前 `ACTIVE`；内部切片不独立关闭，且尚未声明任何运行时能力增量。
+- I1：前序闭合非美术基线，状态 `CLOSED / PASS_WITH_NOTES`。
+- I2：当前最新闭合的跨线玩家体验重构基线，状态 `CLOSED / PASS_WITH_NOTES`；内部切片不独立关闭。
 
-## I2 直接入口
+## I2 收口入口
 
 | 类型 | 文档 |
 | --- | --- |
-| 启动审计 | `docs/00_governance/I2_PRE_EXECUTION_SCOPE_RISK_AUDIT.md` |
-| 产品/交付契约 | `docs/20_product/I2_REFACTOR_DIRECTION_AND_INCREMENTAL_BASELINE_CONTRACT.md` |
-| 起点评估 | `docs/10_current/I2_PRE_EXECUTION_BASELINE_ASSESSMENT.md` |
-| 玩家反馈追踪 | `docs/20_product/I2_PLAYER_FEEDBACK_TRACEABILITY_MATRIX.md` |
-| 目标架构/迁移 | `docs/30_engineering/architecture/I2_TARGET_ARCHITECTURE_AND_MIGRATION_PLAN.md` |
-| 预览/测试/人工计划 | `docs/30_engineering/godot/I2_VALIDATION_PREVIEW_AND_MANUAL_REVIEW_PLAN.md` |
+| validation | `docs/validation/I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md` |
+| handoff | `docs/handoff/HANDOFF_I2_PLAYER_EXPERIENCE_REFACTOR.md` |
 | 切片门账 | `docs/00_governance/I2_SLICE_GATE_LEDGER.md` |
 
 ## 目录职责
@@ -70,3 +65,4 @@
 - 新长期文档先按 `docs/00_governance/DOC_PLACEMENT_STANDARD.md` 落位。
 - 旧评估在阶段关闭后冻结；新事实写入当前摘要或新的 approved assessment。
 - 自动化、capture、人工、性能、CI 与发布证据必须分别声明，不得相互替代。
+- I2 的 39/39 production capture 仅为静态人工检查；性能仅结论为未见系统性相对回退。最终审美、音频、动态交互手感、长局、设备矩阵、CI full、导出与发布均未验收。

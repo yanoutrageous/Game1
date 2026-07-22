@@ -1,6 +1,6 @@
 # I2 Player Feedback Traceability Matrix
 
-文档状态：I2 当前需求追踪入口；所有条目尚未形成 I2 实现声明。
+文档状态：I2 最终反馈追踪入口；第 9 节登记逐项的获批范围结果与延期门，不能替代最终审美、完整手感或通用性能声明。
 最后更新：2026-07-22
 
 ## 1. 使用规则
@@ -101,3 +101,61 @@ DEFERRED_WITH_OWNER_AND_GATE
 ```
 
 `ACCEPTED_DIRECTION`、`CONDITIONAL`、`DECISION_REQUIRED` 等都是 I2 启动状态，不是完成状态。I2 最终审计必须逐条附证据或明确延期责任；任何未追踪条目都会阻止综合 closeout。
+
+## 9. I2 最终逐项处置
+
+本节是本矩阵的最终处置层：它不删除上文的用户原意、起点证据或当时的决策理由。`IMPLEMENTED_AND_VERIFIED` 只表示该条在 I2 已批准的范围内有自动化、生产 capture、权威/失败路径或独立复核证据；它不等同于最终美术、完整玩家手感、通用 FPS、长时人工游玩、导出或发布通过。所有精确 marker、capture 与报告以 I2.7 validation/handoff 为准；本表只提供稳定的追踪入口。
+
+计数：`IMPLEMENTED_AND_VERIFIED = 34`；`DEFERRED_WITH_OWNER_AND_GATE = 9`；`REJECTED_WITH_REPOSITORY_EVIDENCE = 0`（被拒绝的是下文列出的具体子方案，不是任何一整条用户意见）。
+
+| ID | 最终状态 | 已验证范围与证据，或延期 owner / 重新开启门 |
+| --- | --- | --- |
+| MAIN-01 | `IMPLEMENTED_AND_VERIFIED` | I2.2A 主菜单文字层级、动态文本、安全区与三分辨率 production capture；I2.7 final visual matrix。不是最终审美签收。 |
+| MAIN-02 | `DEFERRED_WITH_OWNER_AND_GATE` | owner：美术/动画管线；需获批的离线 rig-assisted 或逐帧素材方案、时装替换夹具、动态 idle/focus/walk 人工复核及加载/内存门。现有 catalog/表现端口不是最终动作手感。 |
+| MAIN-03 | `IMPLEMENTED_AND_VERIFIED` | I2.2A 语义锚点/resize/focus 复核、三分辨率 capture 与独立 review；不以固定 rect 维持对象效果。 |
+| MAIN-04 | `DEFERRED_WITH_OWNER_AND_GATE` | owner：产品 UX + 导航表现；现有安全路由、取消/回退、reduced-motion 已验证。洞口步入、Long 向下连续空间及各入口动态叙事须有原型、失败回退和动态人工验收后再开。 |
+| MAIN-05 | `IMPLEMENTED_AND_VERIFIED` | I2.1 设置 round-trip/default/failure 及 `I1_SAVE_RELIABILITY`；仅真实生效、可持久化字段进入界面，不宣称音频设置或完整音频已完成。 |
+| DEP-01 | `DEFERRED_WITH_OWNER_AND_GATE` | owner：角色表现/资产；共享角色表现端口和缺失回退已接入，但真实时装素材替换与页面侧动态手感仍需至少一套获批素材夹具、reduced-motion 与人工复核。 |
+| DEP-02 | `IMPLEMENTED_AND_VERIFIED` | I2.3A 同页左右选择/详情、局外权威金币投影、三分辨率 capture、焦点与交易刷新回归。 |
+| DEP-03 | `IMPLEMENTED_AND_VERIFIED` | I2.3A 八地图 ID/规模与难度同页投影、启动 round-trip、单页返回无额外 route；保留地图→难度同页硬约束。 |
+| DEP-04 | `DEFERRED_WITH_OWNER_AND_GATE` | owner：经济/产品规则；拥有/使用、品质冗余、单件买卖与真实回执已验证（I2.3B）。批量选择/售卖仍需价格、确认、原子性、幂等、保存失败回滚契约。 |
+| DEP-05 | `IMPLEMENTED_AND_VERIFIED` | I2.3B 领取/购买条件、库存、货币和重复/失败回执的真实投影；不复制仓库命令文案。 |
+| DEP-06 | `IMPLEMENTED_AND_VERIFIED` | I2.3/I2.4 任务档案与本局委托分流、导航/红点/领取回归；未造空页。 |
+| DEP-07 | `IMPLEMENTED_AND_VERIFIED` | `RunStartConfig` 的真实配置、限制与启动 round-trip 已投影；隐藏必需项与仅为工程术语的独立页签被移除/重构。 |
+| DEP-08 | `IMPLEMENTED_AND_VERIFIED` | I2.3A/B 摘要禁词、具体内容、四页同步与三分辨率 layout evidence。 |
+| DEP-09 | `IMPLEMENTED_AND_VERIFIED` | I2.3A/B 的“概览/配置/效果/目标”真实投影、`RunStartConfig`/委托 truth 对照、空/溢出状态回归。 |
+| DEP-10 | `IMPLEMENTED_AND_VERIFIED` | I2.3A 的 CTA、continue、blocked/错误反馈取代独立运行状态块；new/continue/blocked 路径已回归。 |
+| LONG-01 | `IMPLEMENTED_AND_VERIFIED` | I2.4A/B 共享导航、按钮/focus、收起/恢复、reduced-motion 与跨页 capture；不宣称最终统一美术风格。 |
+| LONG-02 | `IMPLEMENTED_AND_VERIFIED` | `I2_LONG_TERM_TASK_ARCHIVE`、ART23 runtime/main-route、五模块/二十四二级页真实记录投影与 72 capture；无假数据填充。 |
+| LONG-03 | `DEFERRED_WITH_OWNER_AND_GATE` | owner：产品成长系统；任务/成就已迁到任务档案，但天赋点来源、成本、依赖、节点效果、重置/返还权威未冻结。不得以改名、空树或禁用按钮冒充完成。 |
+| LONG-04 | `IMPLEMENTED_AND_VERIFIED` | I2.4B 角色档案按真实身份/成长/外观/记录分层、共享表现端口、缺帧回退、三分辨率和 focus 复核；不等于多角色/外观持有已实现。 |
+| RUN-01 | `IMPLEMENTED_AND_VERIFIED` | I2.5B 世界对象 ID→状态→投影/锚点统一；chest/door/ground-loot 状态、重建和三分辨率 capture；`I2_WORLD_INTERACTION_RUNTIME`/G41 回归。 |
+| RUN-02 | `DEFERRED_WITH_OWNER_AND_GATE` | owner：角色表现 + UX QA；四姿态、30/60/144Hz、reduced-motion 与逻辑位置一致已验证，但启停/转向/受击的最终玩家手感和最终素材仍需动态人工验收。 |
+| RUN-03 | `IMPLEMENTED_AND_VERIFIED` | I2.5B 首开命令结果展示、重进已开箱 proximity 内容、满包/重复零双发及无工程式状态句回归。 |
+| RUN-04 | `IMPLEMENTED_AND_VERIFIED` | I2.5B proximity 零命令/零 ledger 变化；仅显式拾取改变位置，多物/满包/离开范围已覆盖。 |
+| RUN-05 | `IMPLEMENTED_AND_VERIFIED` | I2.5C 43 项品质非颜色冗余、动态快捷列表/滚动、无假空位、居中负重、空/少/满/溢出 capture 与 ledger truth 回归。 |
+| RUN-06 | `IMPLEMENTED_AND_VERIFIED` | I2.5C 已知周围雷险/未知不泄露、当前可执行动作与禁用原因、工程式冗余文本清理。 |
+| RUN-07 | `IMPLEMENTED_AND_VERIFIED` | I2.5C KnownMap/邻雷数/隐藏房型无泄露、外点关闭、Esc/focus 归还、三规模与三分辨率 capture。 |
+| RUN-08 | `IMPLEMENTED_AND_VERIFIED` | I2.5C 协议 1–5 的权威值/等级/原因映射、颜色冗余和房间主题分离；仅借 UE 语义。 |
+| RUN-09 | `IMPLEMENTED_AND_VERIFIED` | I2.5C 只读 item tooltip、hover/focus 等价、长文本、空态和显式 action 一次性回归。 |
+| RUN-10 | `DEFERRED_WITH_OWNER_AND_GATE` | owner：UI 美术系统；layer/token、模态遮罩和点击穿透等工程边界已验证，但跨页最终框体风格与图层美术签收仍需批准的视觉方向、全页动态人工复核和资产门。 |
+| RUN-11 | `IMPLEMENTED_AND_VERIFIED` | `I2_RUNTIME_MODAL_PRIORITY`、I2.5C 暂停→设置/放弃、两次确认、嵌套 Esc、焦点恢复和居中 capture；领域状态不因取消改变。 |
+| RUN-12 | `IMPLEMENTED_AND_VERIFIED` | Gate21 的 `I2_TERMINAL_RESULT_AUTHORITY`、`I2_TERMINAL_COMMIT_RECOVERY`、ART24 result matrix：成功/失败待选/最终/放弃/保存失败、权威物品分类、重试及两次丢弃确认。 |
+| ROOM-01 | `DEFERRED_WITH_OWNER_AND_GATE` | owner：性能/战斗体验；显式战斗撤离、确认不双扣、0.18s 怪物入场、固定步确定性和 1/3/5 敌人+弹丸真实 workload 已验证。五轮同机 A/B/A 仅支持“未见系统性相对代码退化”，不能宣称掉帧/FPS 已解决；需设备/GPU/长时体验门。 |
+| ROOM-02 | `IMPLEMENTED_AND_VERIFIED` | Gate20 的 event/chest/monster/mine/exit “发现→意图→结果→离开”公开旅程、工程枚举清理、proximity fail-closed 与 production visual matrix。 |
+| ROOM-03 | `IMPLEMENTED_AND_VERIFIED` | Gate20 exit 的一次性提示、基于权威快照的未结算摘要、靠近/离开和 popup/entity prompt 互斥回归。 |
+| ROOM-04 | `IMPLEMENTED_AND_VERIFIED` | Gate20 mine 的伤害原因、正常/减少动态下的冗余反馈和 0.18s entry envelope；未接入或验收最终音频。 |
+| CROSS-01 | `IMPLEMENTED_AND_VERIFIED` | 本矩阵 U/R/UE/D/A 链、I2 gate ledger、独立 scope/claim reviews；运行事实优先于偏好。 |
+| CROSS-02 | `IMPLEMENTED_AND_VERIFIED` | I2 作为单一阶段，I2.0–I2.7 仅内部门；唯一 validation/handoff closeout 路径由 ledger 与阶段索引登记。 |
+| CROSS-03 | `IMPLEMENTED_AND_VERIFIED` | I2 复用已治理 Godot 资产；无 UE runtime dependency、`.uasset` 导入或未经批准的新素材；asset/source review 与 ART25/I2 binding 证据。 |
+| CROSS-04 | `IMPLEMENTED_AND_VERIFIED` | `I1_TERMINAL_AUTHORITY`、`I1_SAVE_RELIABILITY`、G41、result authority/recovery 与 full 回归保持 RunStateMachine、ledger、settlement、SaveAdapter 权威。 |
+| CROSS-05 | `IMPLEMENTED_AND_VERIFIED` | I1 profiles、I2 定向 runner、production capture matrix 与 ledger 的最短命令/操作步骤；具体报告位置由 I2 validation/handoff 固化。 |
+| CROSS-06 | `IMPLEMENTED_AND_VERIFIED` | `I2_COMBAT_FRAME_BASELINE` 的真实 Main/Run 路径、60 秒 visible 测量和同机 A/B/A；已正确区分 refresh 微基准与整帧测量，未声明绝对性能改善。 |
+| CROSS-07 | `IMPLEMENTED_AND_VERIFIED` | 所有 UE 引用限定 concept-only；代码/资产审查无 UE 架构复制、烤字布局或 `.uasset` 运行时依赖。 |
+| CROSS-08 | `DEFERRED_WITH_OWNER_AND_GATE` | owner：整合 UX QA；局部 focus/ESC/reduced-motion、保存失败和文本门已覆盖，但跨页面键鼠/手柄手感、长文本/DPI、长局动态人工体验未整体运行。截图不能替代该门。 |
+
+### 9.1 被拒绝的子方案，不是整项需求被拒绝
+
+- 运行时骨骼“自动生成”被拒绝为当前实现方案：缺少获批素材管线、时装替换夹具及性能/可见验收；这不拒绝 `MAIN-02` 的动画连续性或 `DEP-01` 的可替换角色需求。
+- 将地图拆为“区域→难度”的分步页面被拒绝：它会违反同一 Deploy 地图页的 `DEP-03` 硬约束并回退既定路由；这不拒绝地图规模、难度和详情的清晰分栏需求。
+- 复制 UE 架构、Tick/UI 组织或导入 `.uasset` 被拒绝：UE 仅作只读概念参考，且来源/许可不构成 Godot 运行时授权；这不拒绝 `CROSS-07` 下的交互、信息层级和视觉语义借鉴。

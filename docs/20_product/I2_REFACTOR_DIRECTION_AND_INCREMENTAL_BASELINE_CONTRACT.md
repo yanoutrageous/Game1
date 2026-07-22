@@ -1,6 +1,6 @@
 # I2 Refactor Direction and Incremental Baseline Contract
 
-文档状态：I2 当前产品/交付契约；阶段 `ACTIVE`，实现尚未声明。
+文档状态：I2 执行完成后的产品/交付契约；阶段 `CLOSED / PASS_WITH_NOTES`。原计划正文保留为实施时约束，实际证据以待建 I2 validation/handoff 为准。
 最后更新：2026-07-22
 
 ## 1. 阶段目标
@@ -150,3 +150,9 @@ I2 所有切片必须继承：
 - 在无规则/数据/命令的情况下制作看似可用的按钮或天赋树。
 - 将动画、截图、微基准或文档当成玩法/性能/发布完成。
 - 自动解决跨进程 active-run 恢复、完整经济、全量内容、最终音频、导出或发布；除非后续 I2 切片获得明确扩展授权并通过专门门。
+
+## 11. Closeout 注记
+
+I2 已按获批切片完成并进入 `CLOSED / PASS_WITH_NOTES`；本契约的目标、边界和非目标仍是后续增量的约束，不应反向改写为“所有方向均已完成”。最终已验证范围、精确命令/marker、capture、性能测量和反馈矩阵逐项处置，将记录在待建的 `docs/validation/I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md`；交接操作与未完成项将记录在待建的 `docs/handoff/HANDOFF_I2_PLAYER_EXPERIENCE_REFACTOR.md`。
+
+仍明确不构成 I2 已完成事实的项目包括：运行时骨骼自动生成和最终角色手感、完整空间叙事转场、批量出售、真实天赋规则、最终跨页美术风格、战斗房绝对 FPS 改善、最终音频、长时人工体验、设备/GPU 矩阵、导出与发布。它们只能由新的范围授权和独立证据门重新开启。

@@ -1,6 +1,6 @@
 # I2 Slice Gate Ledger
 
-文档状态：I2 当前门账；阶段 `ACTIVE`，已产生若干受门控运行时检查点，但尚未综合关闭。
+文档状态：I2 最终门账；阶段 `CLOSED / PASS_WITH_NOTES`，内部切片仅记录执行控制与保留边界。
 最后更新：2026-07-22
 
 ## 1. 状态定义
@@ -20,10 +20,10 @@
 ## 2. 当前总览
 
 ```text
-I2 stage: ACTIVE
-I2 runtime implementation: AUTHORIZED_BY_SUBSLICE_GATE / IN_PROGRESS / NOT_CLAIMED
-I2 capability promotion: NONE
-I2 final validation/handoff: NOT_CREATED
+I2 stage: CLOSED / PASS_WITH_NOTES
+I2 runtime implementation: SCOPED_PLAYER_EXPERIENCE_REFACTOR_VALIDATED
+I2 capability promotion: PLAYER_EXPERIENCE_AND_EXPLANATION_ONLY
+I2 final validation/handoff: CREATED / CLOSEOUT_EVIDENCE_RECORDED
 entry HEAD: b77132b9de655b36f71c930a35a191c383b55522
 entry full/head: 39/39 PASS
 ```
@@ -31,13 +31,13 @@ entry full/head: 39/39 PASS
 | Slice | 范围 | 依赖 | 当前状态 | 当前证据/下一门 |
 | --- | --- | --- | --- | --- |
 | I2.0 | 启动审计、契约、评估、矩阵、架构、验证计划、门账、入口 | I1 closed + exact entry baseline | `ACCEPTED_WITH_NOTES` | 独立复核修正 I1/I2 报告字段后，16/16 allowed paths、43/43 IDs、refs/UTF-8/YAML basic/diff/static 与 quick 21/21 PASS；无 runtime claim |
-| I2.1 | 共享导航/转场、设置、focus/modal、character presentation、style/layer seam | I2.0；设置字段与动画技术决策 | `IN_PROGRESS` | I2.1A/B/C 的路由、真实设置、输入、focus 与生命周期基础已 `READY_FOR_REVIEW`；character/transition/style seam 随 I2.2 继续，不提前关闭 I2.1 |
-| I2.2 | 主菜单文字/场景/锚点/动效/空间转场 | I2.1 最小 seam | `IN_PROGRESS` | I2.2A 主菜单安全回退切片已 `ACCEPTED_WITH_NOTES`；完整洞口步行动画、下层连续背景与玩家手感复核仍待后续切片，不关闭 I2.2 |
+| I2.1 | 共享导航/转场、设置、focus/modal、character presentation、style/layer seam | I2.0；设置字段与动画技术决策 | `ACCEPTED_WITH_NOTES` | 路由、真实设置、输入、focus/modal 与表现端口基础已接受；最终角色动画、完整空间转场和全局视觉签收按反馈矩阵延期 |
+| I2.2 | 主菜单文字/场景/锚点/动效/空间转场 | I2.1 最小 seam | `ACCEPTED_WITH_NOTES` | 主菜单文字层级、语义锚点、安全转场/回退范围已接受；完整洞口步入、连续下层空间与最终手感明确延期，不以局部范围冒充完成 |
 | I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `ACCEPTED_WITH_NOTES` | I2.3A 同页双栏与八地图精确投影、I2.3B 单件购买/出售真实事务闭环均已接受；批量售卖继续禁止，玩家动态手感并入 I2.7 综合复核 |
 | I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `ACCEPTED_WITH_NOTES` | I2.4A/B 已关闭获授权的任务档案、模块工作区与角色表现端口；天赋规则缺少产品权威，作为显式阻塞项保留，不用假数据冒充完成 |
 | I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `ACCEPTED_WITH_NOTES` | I2.5A/B/C 均已接受；世界对象、公开信息、品质、地图、背包与统一模态已闭环，战斗逃离/特殊房/结算解释转入 I2.6，最终玩家手感复核留 I2.7 |
 | I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `ACCEPTED_WITH_NOTES` | Gate20/21 已按冻结范围实施并通过定向、视觉、五轮正式性能与独立完成审计；绝对 FPS、最终动态手感/美术/音频仍不接受 |
-| I2.7 | 跨页面整合、操作说明、全量回归、综合验收 | I2.1–I2.6 accepted/deferred with owner | `IN_PROGRESS` | 反馈矩阵已逐项形成 34/9 处置；validation/handoff 正在收口，尚待 final worktree、commit 与 exact full/head |
+| I2.7 | 跨页面整合、操作说明、全量回归、综合验收 | I2.1–I2.6 accepted/deferred with owner | `ACCEPTED_WITH_NOTES` | 43 项反馈形成 34 implemented / 9 deferred；static、quick/ui/full worktree、39/39 capture、性能与独立完成审计通过；exact full/head 在关闭文档提交后执行并记录于最终交付 |
 
 ## 3. 全局进入门
 
@@ -1028,3 +1028,21 @@ tools/i1/validation_manifest.json
 停止条件：UI 自算任何结算；修改 adapter/ledger/state machine/规则公式；pending 或未保存被标记为已保存；未保存结果可无确认离开；重试重新触发 terminal/result signal、重复发奖或写两条 history；原因由非权威状态猜测；历史存档需迁移；结果项与 settlement instance ID 不一致。任一条件出现即回滚到 `0b88f7b` 并将 Gate21 标记 `BLOCKED`。
 
 实施后证据：`I2_TERMINAL_RESULT_AUTHORITY=PASS outcomes=success,failure_pending,failure_finalized,abandon reason=lifecycle_event items=authoritative_arrays floor_loss=visible pending_meta_writes=0`；`I2_TERMINAL_COMMIT_RECOVERY=PASS nonce=128bit legacy_ids=compatible save_failure=rollback retry=same_snapshot duplicate=idempotent result_signals=unchanged exits=guarded discard_confirmations=2`。结果页生产 probe 覆盖 success、failure empty/pending/selected/capacity blocked/final、abandon 与 save_failed，marker 为 `ART24_RESULT_PANEL_SCENE=PASS resolutions=5 states=success,failure_empty,failure_pending,failure_selected,failure_capacity_blocked,failure_final,abandon,save_failed focus=visible danger=preserved item_sections=whole`。I1 terminal authority、save reliability、runtime safety 及 G41/modal/world interaction 回归全部通过；UI 未取得领域、结算或保存权威。
+
+## 22. I2.7 综合关闭记录（2026-07-22）
+
+```text
+status: ACCEPTED_WITH_NOTES
+implementation_commit: c500bdb8b931fada26f4f617a3feaad643281b4c
+implementation_tree: 7b04e81882961f65a516e192c33093ec98162667
+feedback: 34 IMPLEMENTED_AND_VERIFIED / 9 DEFERRED_WITH_OWNER_AND_GATE
+full_worktree: PASS 67/67
+full_head: REQUIRED_AFTER_CLOSEOUT_COMMIT_AND_RECORDED_IN_FINAL_DELIVERY
+successor_authorized: false
+```
+
+I2.7 不重新实现 I2.1–I2.6，而是核对跨页说明、证据边界、反馈处置和提交闭环。最终 production capture 为 13 状态 × 3 分辨率 = 39/39，并经人工静态检查；它不替代动态审美、音频、整合输入手感或长局验收。`I2_COMBAT_FRAME_BASELINE` 五轮正式 workload 与可见四场景测量只支持“未发现系统性相对代码回退”，不支持绝对 FPS 改善。资产结论为只复用已治理 Godot 资产、无新生成/导入运行时素材、UE 只读且无 `.uasset`/架构依赖。
+
+关闭候选在 implementation commit `c500bdb8…` 上通过：static 67/67 登记；quick/worktree 48/48；ui/worktree 49/49；full/worktree 67/67（39 plain + 28 cleanup、56 条已分类 cleanup、blocking 0、污染守卫 PASS）。full/worktree 报告：`E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T113228922Z_4f00a3b8\report.json`，SHA256 `A6F7978C038EFC6F5FFCA9FA058A0DA161AA28B12DD0B589F87354E126FABCAB`。提交关闭文档后必须运行 exact `full/head`；若该门失败，I2 不得按本记录推送为闭合基线。
+
+唯一最终原文为 `docs/validation/I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md` 与 `docs/handoff/HANDOFF_I2_PLAYER_EXPERIENCE_REFACTOR.md`。反馈逐项状态见 `docs/20_product/I2_PLAYER_FEEDBACK_TRACEABILITY_MATRIX.md`。阶段关闭为 `PASS_WITH_NOTES`，不授权 I3 或任何后继阶段；最终角色动画/时装、完整空间转场、批量出售、真实天赋树、最终移动手感/跨页视觉、绝对战斗性能、整合输入与长时人工体验继续由新范围门处理。

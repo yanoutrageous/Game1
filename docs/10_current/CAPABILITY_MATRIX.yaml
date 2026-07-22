@@ -1,6 +1,6 @@
 document_status: current_capability_matrix
 updated: "2026-07-22"
-updated_by: "I2_startup_no_capability_promotion"
+updated_by: "I2_closeout_pass_with_notes"
 
 repository:
   workspace_resolution: "git rev-parse --show-toplevel"
@@ -9,11 +9,13 @@ repository:
   source_head_before_i1: "2212992337aeef7cda412dbaaa191c3ad6cbb81a"
   implementation_commit: "6a4f207d743583c7342655488c2d9a652b9ab05c"
   closure_fix_commit: "492d74fcdc94cb75e47401c203defd49dac11ae9"
-  validated_head: "b77132b9de655b36f71c930a35a191c383b55522"
-  validated_tree: "1d26f1415851755f1a8cc57f4804dfb12d9cea4d"
+  i2_entry_validated_head: "b77132b9de655b36f71c930a35a191c383b55522"
+  i2_entry_validated_tree: "1d26f1415851755f1a8cc57f4804dfb12d9cea4d"
+  i2_implementation_commit: "c500bdb8b931fada26f4f617a3feaad643281b4c"
+  i2_implementation_tree: "7b04e81882961f65a516e192c33093ec98162667"
   observed_base_ref: "origin/main_at_b77132b9de655b36f71c930a35a191c383b55522"
-  current_stage: "i2_active_implementation_not_yet_claimed"
-  latest_closed_non_art_baseline: "I1"
+  current_stage: "no_active_successor_i2_closed_pass_with_notes"
+  latest_closed_non_art_baseline: "I2"
   latest_closed_art_stage: "ART21"
   later_accepted_page_ui_evidence: "ART23"
   failed_historical_art_attempt: "ART24R2_24_of_61_pass"
@@ -45,6 +47,9 @@ runtime_capabilities:
   complete_content_and_balance: incomplete
   final_art_audio_productization: incomplete
   export_and_release_pipeline: incomplete
+  i2_player_experience_and_explanation: validated_scoped_pass_with_notes
+  i2_combat_explicit_flee_and_special_room_journey: validated_scoped
+  i2_terminal_reason_items_and_save_recovery: validated_scoped
 
 i1_implementation:
   restart_confirmation_and_debug_gate: validated_closed
@@ -61,15 +66,21 @@ i1_implementation:
   production_preview_capture: generated_27_of_27_machine_review_required_static_human_pass
   unified_headless_harness: validated_closed
 
-i2_startup:
-  stage_status: active
-  runtime_implementation: not_started_not_claimed
-  runtime_capability_delta: none_claimed
-  current_slice: i2_0_docs_and_governance_only
+i2_closeout:
+  stage_status: closed_pass_with_notes
+  runtime_implementation: scoped_player_experience_refactor_validated
+  runtime_capability_delta: player_experience_and_explanation_only
+  internal_slices: i2_0_through_i2_7_not_independent_stages
   implementation_target: godot
   ue_reference: read_only_concept_interaction_visual_only
   deploy_map_route: same_page_no_region_difficulty_step
-  final_validation_handoff: not_created
+  feedback_disposition: 34_implemented_and_verified_9_deferred
+  production_capture: accepted_static_human_review_39_of_39
+  asset_delta: no_new_generated_or_imported_runtime_assets
+  performance_conclusion: no_systematic_relative_code_regression_not_absolute_fps_improvement
+  successor_authorized: false
+  final_validation: "docs/validation/I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md"
+  final_handoff: "docs/handoff/HANDOFF_I2_PLAYER_EXPERIENCE_REFACTOR.md"
 
 validation:
   static_final: pass_39_blocking_46_inventory_13_exclusions_705_checks
@@ -116,4 +127,25 @@ validation:
   i2_entry_combat_p99_us: 276
   i2_entry_combat_max_us: 290
   i2_entry_full_refresh_p95_us: 139759
-  i2_visual_manual_performance_acceptance: not_run
+  i2_quick_worktree: pass_48_of_48
+  i2_quick_worktree_duration_ms: 480990
+  i2_quick_worktree_report_sha256: "9A480DC36C211EF33E33F81FFE7B7F889C576F8F6486C72A45A7FFE878486117"
+  i2_ui_worktree: pass_49_of_49
+  i2_ui_worktree_duration_ms: 333221
+  i2_ui_worktree_report_sha256: "DAFFEAD953E3BE4E853EC1CC1649369E4F0227BEB98FEA7E98C66F0B2DBD2925"
+  i2_full_worktree: pass_67_of_67
+  i2_full_worktree_duration_ms: 598866
+  i2_full_worktree_plain_pass_runner_count: 39
+  i2_full_worktree_cleanup_runner_count: 28
+  i2_full_worktree_cleanup_diagnostic_total: 56
+  i2_full_worktree_blocking_diagnostic_count: 0
+  i2_full_worktree_report_sha256: "A6F7978C038EFC6F5FFCA9FA058A0DA161AA28B12DD0B589F87354E126FABCAB"
+  i2_full_worktree_business_file_count: 2207
+  i2_full_worktree_business_fingerprint_sha256: "B2D8AC543DD54C699586C5DA8CC71936521E81E89C8A129BF221BFEBE0A34423"
+  i2_static_manifest_sha256: "B294F80EC3953B7DDC86A662DD744B824D99A68AA3988139ABF63A7D81295A92"
+  i2_combat_formal_median_p95_us: "enemy_1=757,enemy_3=1315,enemy_5=1675,projectile_peak=1703"
+  i2_combat_visible_measurement: measured_not_accepted_four_scenarios_60_seconds_each
+  i2_final_aesthetic_audio_acceptance: not_run
+  i2_integrated_input_feel_long_play_acceptance: not_run
+  i2_device_gpu_dpi_matrix: not_run
+  i2_ci_full_export_release: not_run

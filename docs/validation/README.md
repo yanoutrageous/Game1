@@ -1,16 +1,17 @@
 # Validation Docs
 
 文档状态：阶段验证原文入口。
-最后更新：2026-07-21
+最后更新：2026-07-22
 
-最新闭合验证：`I1_INCREMENTAL_DEVELOPMENT_BASELINE_VALIDATION.md`，状态 `CLOSED_PASS_WITH_NOTES`。当前无已授权的新阶段验证。
+最新闭合验证：`I2_PLAYER_EXPERIENCE_REFACTOR_VALIDATION.md`，状态 `CLOSED_PASS_WITH_NOTES`。当前无 active stage，I2 关闭不自动授权新阶段。
 
 本目录保存阶段验证原文。验证记录只证明明确覆盖的范围；static、headless、capture、manual、performance、CI、export 和 release 证据分别声明。
 
 ## 当前证据口径
 
-- I1 validation：最新闭合非美术基线；提交态 full/head 39/39 PASS，分支已交付，Actions quick 成功；保留排除项见原文。
-- I0 validation：前序闭合非美术基线，冻结历史。
+- I2 validation：最新闭合非美术基线；`CLOSED / PASS_WITH_NOTES`。39/39 production capture 仅为静态人工检查，性能仅表示可比本机负载下未见系统性相对回退。
+- I1 validation：前序闭合非美术基线；提交态 full/head 39/39 PASS，分支已交付，Actions quick 成功；保留排除项见原文。
+- I0 validation：更早闭合非美术基线，冻结历史。
 - ART21 closeout/validation：项目级最新闭合美术阶段。
 - ART23 validation：较晚且已验收的页面/UI 证据切片，不提升项目级 stage authority。
 - ART24R2 final Computer Use：`FAIL / 24 of 61 PASS`，保持失败封存。
@@ -25,3 +26,5 @@
 5. worktree PASS 不等于 committed HEAD PASS。
 6. 未运行的性能、CI、导出或发布不得声明通过。
 ```
+
+I2 未验收最终审美、音频、动态交互手感、长局、设备矩阵、CI full、导出或发布；上述范围不能由静态 capture 或相对性能观察替代。
