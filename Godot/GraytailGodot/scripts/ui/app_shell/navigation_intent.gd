@@ -7,6 +7,7 @@ const TARGET_LONG_TERM := &"long_term_placeholder"
 const TARGET_SETTINGS := &"settings_placeholder"
 const TARGET_EXIT := &"exit_game"
 const TARGET_RUN := &"run"
+const LONG_TERM_DEFAULT_MODULE := &"task_archive"
 
 const KNOWN_TARGETS := [
 	TARGET_MAIN_MENU,
@@ -46,10 +47,11 @@ static func make_deploy(source: StringName = &"unknown", payload: Dictionary = {
 	return make(TARGET_DEPLOY, source, deploy_payload)
 
 
-static func make_long_term(source: StringName = &"unknown", module_id: StringName = &"goals", payload: Dictionary = {}) -> Dictionary:
+static func make_long_term(source: StringName = &"unknown", module_id: StringName = LONG_TERM_DEFAULT_MODULE, payload: Dictionary = {}) -> Dictionary:
+	var canonical_module_id := normalize_long_term_module_id(module_id)
 	var long_term_payload := {
-		"module_id": module_id,
-		"entry_id": module_id,
+		"module_id": canonical_module_id,
+		"entry_id": canonical_module_id,
 		"source_page": StringName(payload.get("source_page", source)),
 		"preview_only": bool(payload.get("preview_only", true)),
 	}
@@ -57,6 +59,10 @@ static func make_long_term(source: StringName = &"unknown", module_id: StringNam
 		if not long_term_payload.has(key):
 			long_term_payload[key] = payload[key]
 	return make(TARGET_LONG_TERM, source, long_term_payload)
+
+
+static func normalize_long_term_module_id(module_id: StringName) -> StringName:
+	return LONG_TERM_DEFAULT_MODULE if module_id in [&"goals", &"tasks", &"overview", &""] else module_id
 
 
 static func make_run(source: StringName = &"unknown", payload: Dictionary = {}) -> Dictionary:

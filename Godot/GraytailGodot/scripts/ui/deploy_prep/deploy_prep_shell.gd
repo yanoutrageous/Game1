@@ -1210,7 +1210,7 @@ func _request_back_to_main() -> void:
 func _request_long_term() -> void:
 	navigation_intent_requested.emit(NavigationIntentScript.make_long_term(
 		&"deploy_prep",
-		&"goals",
+		&"task_archive",
 		{"source_page": &"deploy_prep", "preview_only": false}
 	))
 

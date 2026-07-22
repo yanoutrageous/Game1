@@ -44,7 +44,7 @@ func _validate_navigation_intent_payloads() -> void:
 	_require_equal(StringName(NavigationIntentScript.payload(deploy_intent).get("tab", &"")), &"config", "deploy intent tab payload")
 	var long_term_intent: Dictionary = NavigationIntentScript.make_long_term(&"deploy_prep", &"goals", {"preview_only": false})
 	_require_equal(NavigationIntentScript.target(long_term_intent), NavigationIntentScript.TARGET_LONG_TERM, "long-term intent target")
-	_require_equal(StringName(NavigationIntentScript.payload(long_term_intent).get("module_id", &"")), &"goals", "long-term module payload")
+	_require_equal(StringName(NavigationIntentScript.payload(long_term_intent).get("module_id", &"")), &"task_archive", "long-term module payload")
 	var run_intent: Dictionary = NavigationIntentScript.make_run(&"deploy_prep", {"uses_existing_route": true, "entry_id": &"standard_10x10"})
 	_require_equal(NavigationIntentScript.target(run_intent), NavigationIntentScript.TARGET_RUN, "run intent target")
 	_require_equal(StringName(NavigationIntentScript.payload(run_intent).get("entry_id", &"")), &"standard_10x10", "run entry payload")

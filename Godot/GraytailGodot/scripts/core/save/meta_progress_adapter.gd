@@ -363,6 +363,7 @@ func claim_goal_reward(goal_kind: String, goal_id: String) -> Dictionary:
 func mark_long_term_viewed(view_kind: String) -> Dictionary:
 	if not _ensure_writable("mark_long_term_viewed"):
 		return {"ok": false, "status": "write_blocked", "reason": write_block_reason}
+	var previous_data := data.duplicate(true)
 	match view_kind:
 		"codex": data["unread_codex_ids"] = []
 		"history": data["unread_history_ids"] = []
@@ -375,6 +376,8 @@ func mark_long_term_viewed(view_kind: String) -> Dictionary:
 			return {"ok": false, "status": "unknown_view_kind", "view_kind": view_kind}
 	M7ProgressionServiceScript.refresh_red_dots(data)
 	var saved := save()
+	if not saved:
+		data = previous_data
 	return {"ok": saved, "status": "viewed" if saved else "save_failed", "view_kind": view_kind, "summary": get_summary()}
 
 

@@ -3,6 +3,7 @@ extends SceneTree
 var failures: Array[String] = []
 var page_change_count := 0
 var last_page: StringName = &""
+var last_payload: Dictionary = {}
 
 
 func _initialize() -> void:
@@ -75,9 +76,12 @@ func _run() -> void:
 	_check(long_term.get_node_or_null("LongTermSceneCleanPlate") is TextureRect, "actual route is missing ART23 clean room")
 	_check(long_term.get_node_or_null("LongTermProfileFrame") is TextureRect, "actual route is missing fixed profile frame")
 	_check(long_term.get_node_or_null("LongTermModuleGroup/LongTermModuleFurniture") is TextureRect, "actual route is missing module furniture")
-	_check(long_term.get("tab_buttons").size() == 6, "actual route does not expose six ART23 primary modules")
-	_check(long_term.get("secondary_buttons").size() == 3, "actual default goals route does not expose three secondary pages")
-	_check(StringName(long_term.get("displayed_module_id")) == &"goals", "actual long-term route did not select goals")
+	_check(long_term.get("tab_buttons").size() == 5, "actual route does not expose five authorised primary modules")
+	_check(not long_term.get("tab_buttons").has(&"gacha"), "actual route still exposes unauthorised gacha")
+	_check(long_term.get("secondary_buttons").size() == 3, "actual default task archive route does not expose three secondary pages")
+	_check(StringName(long_term.get("displayed_module_id")) == &"task_archive", "actual long-term route did not select task_archive")
+	_check(StringName(last_payload.get("module_id", &"")) == &"task_archive", "main-menu route payload was not normalized to task_archive")
+	_check(StringName(last_payload.get("entry_id", &"")) == &"task_archive", "main-menu route entry alias was not normalized")
 
 	_finish()
 
@@ -87,14 +91,15 @@ func _frames(count: int) -> void:
 		await process_frame
 
 
-func _on_page_changed(page_id: StringName, _payload: Dictionary) -> void:
+func _on_page_changed(page_id: StringName, payload: Dictionary) -> void:
 	page_change_count += 1
 	last_page = page_id
+	last_payload = payload.duplicate(true)
 
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=6")
+		print("ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=5 canonical=task_archive")
 		quit(0)
 		return
 	for failure in failures:

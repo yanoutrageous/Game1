@@ -34,7 +34,7 @@ entry full/head: 39/39 PASS
 | I2.1 | 共享导航/转场、设置、focus/modal、character presentation、style/layer seam | I2.0；设置字段与动画技术决策 | `IN_PROGRESS` | I2.1A/B/C 的路由、真实设置、输入、focus 与生命周期基础已 `READY_FOR_REVIEW`；character/transition/style seam 随 I2.2 继续，不提前关闭 I2.1 |
 | I2.2 | 主菜单文字/场景/锚点/动效/空间转场 | I2.1 最小 seam | `IN_PROGRESS` | I2.2A 主菜单安全回退切片已 `ACCEPTED_WITH_NOTES`；完整洞口步行动画、下层连续背景与玩家手感复核仍待后续切片，不关闭 I2.2 |
 | I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `ACCEPTED_WITH_NOTES` | I2.3A 同页双栏与八地图精确投影、I2.3B 单件购买/出售真实事务闭环均已接受；批量售卖继续禁止，玩家动态手感并入 I2.7 综合复核 |
-| I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `NOT_STARTED` | 先证明任务/成就/红点/领取不丢失，再改 Goal 入口 |
+| I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `IN_PROGRESS` | I2.4A 任务档案责任迁移与红点可靠性门已进入实施；天赋仍受产品权威决策门阻塞，不伪造可玩能力 |
 | I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `AUDIT_REQUIRED` | 独立 I2.5A 结果框/协议色板/物品 binding 已 `READY_FOR_REVIEW`；其余局内职责仍待分项授权 |
 | I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `IN_PROGRESS` | I2.6A v2 工作负载与 I2.6B pre-authority combat asset admission 已 `READY_FOR_REVIEW`；特殊房、结算与 visible 验收仍待后续 gate |
 | I2.7 | 跨页面整合、操作说明、全量回归、综合验收 | I2.1–I2.6 accepted/deferred with owner | `NOT_STARTED` | full/worktree→commit→full/head；matrix 逐项；创建唯一 validation/handoff |
@@ -474,6 +474,7 @@ Godot/GraytailGodot/tests/art22_deploy_prep_runtime_runner.gd
 Godot/GraytailGodot/tests/i2_deploy_map_projection_runner.gd
 Godot/GraytailGodot/tests/i2_route_authority_lifecycle_runner.gd
 Godot/GraytailGodot/tests/m7_meta_ui_runtime_runner.gd
+tools/godot_g39_navigation_boundary_runner.gd
 tools/i1/validation_manifest.json
 ```
 
@@ -554,3 +555,80 @@ player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
 接受边界：本记录关闭 I2.3 的已授权单件经济与信息架构范围，不关闭 I2；批量出售仍需独立原子事务、确认、幂等、失败回滚和产品规则后才能进入。动态鼠标/手柄手感、生产长时间交互与跨页面综合说明继续由 I2.7 验收。
 
 停止条件：购买成功必须精确扣款并只新增一个真实实例；出售成功必须只删除指定实例并精确加款；失败前后余额/库存不变；同 ID 同 payload 返回缓存结果且不得二次写入，同 ID 异 payload fail closed，不同 ID 的同类购买仍允许。pending 必须先于同步 emit 建立，pending 时禁止重复提交；只有匹配结果能清除 pending，陈旧/未知/其他页面结果必须忽略。`insufficient_gold`、`locked`、`write_blocked`、`save_failed`、`configured_item_blocked`、`instance_not_found`、`item_not_sellable` 均需玩家文案。若需要改写 MetaProgress/Save schema、根据快照差值猜测结果、或无法证明保存失败不改变经济状态，立即停止本门。
+
+## 16. I2.4A 任务档案责任迁移与红点可靠性门（2026-07-22）
+
+```text
+status: ACCEPTED_WITH_NOTES (task archive migration only; talent authority remains blocked)
+feedback: LONG-01, LONG-02, LONG-03, LONG-04, CROSS-01, CROSS-04, CROSS-05, CROSS-07, CROSS-08
+rollback: 6cd923d (I2.3B accepted checkpoint)
+```
+
+代码优先审计确认任务、成就、领取状态、红点和委托历史已经由现有 M7 progression/save 数据提供真实权威，缺口是长期页仍以旧 `goals` 命名并混入工程预览文案；委托投影还只返回最近七条记录。该数据足以迁移为玩家语义上的“任务档案”，无需新增任务 schema 或重算进度。本门以 `task_archive` 为 canonical module ID，将历史 `goals`、`tasks` 与通用 `overview` 路由规范化为同一入口；二级页固定为任务、成就、委托记录。旧 ID 只保留为输入兼容，不作为新的显示或存档权威。
+
+任务档案查看不得清除 `claimable_rewards`；任务/成就领取继续只走现有 `claim_goal_reward` 权威，卡片选择不触发领域动作。委托记录必须投影当前存档中全部保留记录并由现有分页浏览，不得静默截断为最近七条。`mark_long_term_viewed` 仍只处理 codex/history/collection；若保存失败，已读数组与派生红点必须回滚到调用前状态，不得让 UI 快照冒充已保存成功。
+
+现有 ART23/ART25 已审计素材足以完成本门：`task_archive` 显式复用既有 `goals` 模块按钮、家具与任务/成就/委托卡面运行时键。不得修改素材、manifest、import metadata 或生成新图。尚无点数来源、花费、依赖、等级、重置/返还规则的天赋树继续保持阻塞；尚无概率/消耗/保底权威的抽奖不进入生产一级导航，也不得以禁用按钮冒充玩家模块。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+Godot/GraytailGodot/scripts/core/save/meta_progress_adapter.gd
+Godot/GraytailGodot/scripts/presentation/art23_long_term_asset_contract.gd
+Godot/GraytailGodot/scripts/presentation/art25_content_asset_contract.gd
+Godot/GraytailGodot/scripts/ui/app_shell/app_shell.gd
+Godot/GraytailGodot/scripts/ui/app_shell/navigation_intent.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_shell.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_content_framework.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_content_slot_model.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_layout_contract.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_model.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_shell.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_snapshot.gd
+Godot/GraytailGodot/scripts/ui/long_term/long_term_tab_model.gd
+Godot/GraytailGodot/tests/art23_long_term_main_route_runner.gd
+Godot/GraytailGodot/tests/art23_long_term_capture_runner.gd
+Godot/GraytailGodot/tests/art23_long_term_matrix_capture_runner.gd
+Godot/GraytailGodot/tests/art23_long_term_runtime_runner.gd
+Godot/GraytailGodot/tests/i1_save_reliability_runner.gd
+Godot/GraytailGodot/tests/i1_refresh_scope_runner.gd
+Godot/GraytailGodot/tests/i2_long_term_task_archive_runner.gd
+Godot/GraytailGodot/tests/i2_route_authority_lifecycle_runner.gd
+Godot/GraytailGodot/tests/i2_settings_shell_wiring_runner.gd
+Godot/GraytailGodot/tests/m7_meta_ui_runtime_runner.gd
+tools/i1/validation_manifest.json
+```
+
+保护边界：`project.godot`、scene/resource/`.uid`/`.translation`/import、全部素材本体与 asset manifest、SaveAdapter/save schema 与既有字段、M7 task/achievement 定义和 ID、任务判定/奖励数值/领取规则、RunStateMachine、RunAssetLedger、terminal settlement、经济权威与天赋字段/规则均禁止修改。本门不得新增任务、奖励、货币、天赋节点、点数来源、抽奖能力或批量领域动作。
+
+完成证据必须覆盖：canonical/alias 路由往返；生产主场景从主菜单和 Deploy 进入任务档案；任务/成就定义、状态、已领取与已发放记录迁移前后精确相等；claimable 红点查看后不变；成功领取仍恰好一次；已读保存失败时原数据与红点精确回滚；全部保留委托记录可分页到达；抽奖不在生产一级导航；ART23/ART25 复用解析；focus/ESC/reduced-motion；static、定向、quick/ui 与三分辨率截图检查点。full/worktree 与 exact full/head 仍由 I2.7 统一执行。
+
+停止条件：旧 `goals`/`tasks` 不能无损归一化；任务/成就 ID、状态、claimed/granted、claimable 红点或委托记录发生差异；查看任务档案清除待领取奖励；保存失败后内存已读/红点仍被修改；需要改写 schema、任务/奖励权威或素材 manifest；把预览天赋/抽奖声明为可玩。任一条件出现即回退到 `6cd923d` 并将本门标记 `BLOCKED`。
+
+### 16.1 I2.4A 复核与接受记录
+
+生产长期页现以 `task_archive` 为唯一正式入口，主菜单、Deploy、AppShell 与 G39 导航边界均输出 canonical payload；历史 `goals`、`tasks` 和通用 `overview` 在导航、模型、framework、slot 与 shell 边界无损归一。一级导航只保留任务档案、图鉴、研究、角色与收藏外观五个已有权威模块，未显示无概率/消耗权威的抽奖，也未伪造天赋树。
+
+任务/成就 definitions、states、claimed/granted 和 claimable 红点均只读投影；打开任务档案显式禁止发出 `mark_viewed`，领取仍只走既有 `claim_goal` 事务。委托记录由“最近七条”改为投影存档中全部保留记录，并由现有三卡分页完整到达。`MetaProgressAdapter.mark_long_term_viewed()` 在真实保存失败时恢复完整 `data` 与派生红点，返回 summary 也反映回滚态。ART23 的 `task_archive` 家具/按钮和 ART25 卡片显式映射到既有 `goals` 审计资产；未修改或生成素材、manifest、import metadata。
+
+首轮 quick 暴露 G39 仍期待旧 payload，修正为 canonical 断言并纳入 allowed path；独立复核随后发现 `overview` 只在导航层归一、模型能力标记与 slot 不一致，补齐五层 alias 后最终审查为 P0/P1/P2=0。三分辨率代表图及 1280×720 的 24 页完整矩阵均使用最终代码生成；人工检查未见阻塞性裁切/遮挡，但中央内容区偏小、五模块仍过度共享三卡模板，明确进入 I2.4B，不能据此关闭 I2.4。
+
+验证记录：
+
+```text
+I2_LONG_TERM_TASK_ARCHIVE=PASS canonical=task_archive aliases=goals,tasks,overview modules=5 commission_records=12 pages=4 authority=read_only
+I1_SAVE_RELIABILITY=PASS atomic_replace=PASS backup_recovery=PASS future_schema=PASS long_term_view_rollback=PASS
+ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive character_frames=8 states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING
+ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=5 canonical=task_archive
+G39_NAVIGATION_BOUNDARY=PASS
+static/worktree: PASS; manifest SHA-256=22E5EACD66EFEB282B498635012B1EA486508F0F845FF846DABA65BB18E64638
+quick/worktree: 34/34 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T023552379Z_41bf8877\report.json; SHA-256=E8CA8C1778536088F5ABD11E1D402497B3CF448819880873FB2676B59A283E1B
+ui/worktree: 35/35 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T024030731Z_371b26b7\report.json; SHA-256=94858C14AABDCB18FDC8281A1905FE59AA49FED9C51C094DC97FB59150015B26
+visible captures: task_archive/task at 1280x720, 1600x900, 1920x1080 plus 24-state 1280x720 matrix; output=.tmp/i2-longterm-captures/i2_4a; manual blocking layout findings=0
+independent final review: P0=0, P1=0, P2=0
+full/worktree and exact full/head: NOT_RUN (reserved for I2.7 closeout)
+player input-feel acceptance: NOT_RUN (I2.4B/I2.7 production route)
+```
+
+接受边界：本记录仅接受任务档案责任迁移、红点/已读可靠性和生产入口清理，不关闭 I2.4 或 I2。模块专用信息布局、角色档案与可替换角色表现进入 I2.4B；天赋点来源、成本、依赖、等级、重置/返还和六节点效果权威仍缺产品规则，因此继续显式阻塞，不以空树、禁用按钮或历史 UE/Lua 价格冒充完成。

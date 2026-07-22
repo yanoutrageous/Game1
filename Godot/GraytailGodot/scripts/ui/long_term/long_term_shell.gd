@@ -23,17 +23,16 @@ const STATE_CLOSING := &"CLOSING"
 const STATE_SWITCHING := &"SWITCHING"
 
 const MODULE_IDS: Array[StringName] = [
-	&"goals", &"codex", &"research", &"profile", &"gacha", &"collection_appearance",
+	&"task_archive", &"codex", &"research", &"profile", &"collection_appearance",
 ]
 const MODULE_LABELS := {
-	&"goals": "目标",
+	&"task_archive": "任务档案",
 	&"codex": "图鉴",
 	&"research": "研究",
 	&"profile": "角色",
-	&"gacha": "抽奖",
 	&"collection_appearance": "收藏外观",
 }
-const LOCKED_MODULES := {&"gacha": true}
+const LOCKED_MODULES: Dictionary = {}
 const CHARACTER_IDLE_SEQUENCE := [0, 0, 1, 1, 2, 1, 0, 0, 3, 3, 0, 4, 5, 4, 0, 0]
 const CHARACTER_LOOK_SEQUENCE := [0, 6, 6, 7, 7, 6, 0]
 const CHARACTER_IDLE_FRAME_SECONDS := 0.34
@@ -43,9 +42,9 @@ const CHARACTER_LOOK_INTERVAL_SECONDS := 10.0
 const CANCEL_DEBOUNCE_MSEC := 600
 
 const PAGE_COPY := {
-	"goals/task": "当前任务按顺序推进；达成后在这里手动领取奖励。",
-	"goals/achievement": "成就由真实探索记录判定；达成后在这里手动领取奖励。",
-	"goals/commission_record": "回看每局真实委托结果；本页不改变下一局选择。",
+	"task_archive/task": "当前任务按顺序推进；达成后在这里手动领取奖励。",
+	"task_archive/achievement": "成就由真实探索记录判定；达成后在这里手动领取奖励。",
+	"task_archive/commission_record": "回看每局真实委托结果；本页不改变下一局选择。",
 	"codex/map": "永久归档已经进入过的地图；未知地图保持遮蔽。",
 	"codex/monster": "永久归档已经遭遇或通过研究解析的怪物。",
 	"codex/collectible": "按曾经成功回收的藏品登记，出售实体不会抹除发现。",
@@ -62,9 +61,6 @@ const PAGE_COPY := {
 	"profile/milestone": "展示真实资历阈值及距离下一阶段所需经验。",
 	"profile/title": "展示已经由资历等级永久授予的称号。",
 	"profile/badge": "展示已经由资历等级永久授予的徽章。",
-	"gacha/pool": "奖池主题仅作界面预留；概率、保底和真实奖池尚未接入。",
-	"gacha/cost": "消耗字段仅作预览，不读取可支付状态，也不会扣除货币。",
-	"gacha/result_entry": "结果入口保持封存，不生成、保存或发放任何抽奖结果。",
 	"collection_appearance/unique_display": "展示三组真实藏品收集进度；出售物品不降低历史收集。",
 	"collection_appearance/appearance_config": "外观配置入口已落位；真实换装保存未接入时保持只读。",
 	"collection_appearance/display_content": "展示三组各 8 件藏品的永久收集进度。",
@@ -74,8 +70,8 @@ const PAGE_COPY := {
 
 var current_model: Dictionary = {}
 var current_app_snapshot: Dictionary = {}
-var selected_module_id: StringName = &"goals"
-var displayed_module_id: StringName = &"goals"
+var selected_module_id: StringName = &"task_archive"
+var displayed_module_id: StringName = &"task_archive"
 var selected_secondary_by_module: Dictionary = {}
 var texture_cache: Dictionary = {}
 
@@ -121,10 +117,10 @@ var lever_button: Button
 var lever_label: Label
 
 var transition_state: StringName = STATE_OPEN
-var requested_module_id: StringName = &"goals"
+var requested_module_id: StringName = &"task_archive"
 var switch_running := false
 var archive_collapsed := false
-var archive_context_module_id: StringName = &"goals"
+var archive_context_module_id: StringName = &"task_archive"
 var archive_context_secondary_id: StringName = &"task"
 var reduced_motion := false
 var module_tween: Tween
@@ -268,7 +264,7 @@ func _apply_reduced_motion_pose() -> void:
 			particles.emitting = false
 
 
-func show_module(module_id: StringName = &"goals") -> void:
+func show_module(module_id: StringName = &"task_archive") -> void:
 	var normalized := _normalize_module_id(module_id)
 	selected_module_id = normalized
 	requested_module_id = normalized
@@ -923,7 +919,13 @@ func _selected_group() -> Dictionary:
 
 
 func _normalize_module_id(module_id: StringName) -> StringName:
-	return module_id if module_id in MODULE_IDS else LongTermTabModelScript.default_module_id()
+	var canonical := &"task_archive" if module_id in [&"overview", &"goals", &"tasks"] else module_id
+	if canonical in MODULE_IDS:
+		return canonical
+	var model_default := LongTermTabModelScript.default_module_id()
+	if model_default in [&"overview", &"goals", &"tasks"]:
+		return &"task_archive"
+	return model_default if model_default in MODULE_IDS else &"task_archive"
 
 
 func _normalize_secondary_id(module_id: StringName, group_id: StringName) -> StringName:
@@ -1051,7 +1053,7 @@ func _refresh_content_page_buttons(page: int, page_count: int) -> void:
 
 func _module_has_red_dot(module_id: StringName, red_dots: Dictionary) -> bool:
 	match module_id:
-		&"goals": return int(red_dots.get("claimable_rewards", 0)) > 0
+		&"task_archive": return int(red_dots.get("claimable_rewards", 0)) > 0
 		&"codex": return int(red_dots.get("new_codex", 0)) > 0
 		&"research": return int(red_dots.get("research_available", 0)) > 0
 		&"profile": return int(red_dots.get("new_history", 0)) > 0
@@ -1060,6 +1062,10 @@ func _module_has_red_dot(module_id: StringName, red_dots: Dictionary) -> bool:
 
 
 func _mark_current_module_viewed(module_id: StringName) -> void:
+	# Claimable task rewards are actions, not unread notices. Merely opening the
+	# task archive must never acknowledge or clear them.
+	if _normalize_module_id(module_id) == &"task_archive":
+		return
 	var red_dots: Dictionary = current_model.get("m7_red_dot_state", {})
 	var view_kind := ""
 	var count := 0

@@ -10,15 +10,15 @@ const STATE_DISABLED := &"disabled"
 static func build_modules() -> Array:
 	return [
 		_module(
-			&"goals",
-			"目标",
+			&"task_archive",
+			"任务档案",
 			"任务 / 成就 / 委托记录",
 			STATE_PREVIEW,
-			"当前仅展示目标模块结构，不接入进度、判定或委托流程。",
+			"读取现有任务、成就与委托记录，不重算进度或奖励。",
 			{
-				"module": "goals",
+				"module": "task_archive",
 				"state": "preview",
-				"message": "任务、成就、委托记录只作为长期页入口预览。",
+				"message": "任务、成就与委托记录共用任务档案入口。",
 			},
 			[
 				_group("任务", ["任务列表位置", "任务进度摘要位置", "任务筛选位置"]),
@@ -26,10 +26,10 @@ static func build_modules() -> Array:
 				_group("委托记录", ["委托历史入口", "委托状态摘要", "后续记录筛选"]),
 			],
 			{
-				"label": "目标关联入口",
-				"message": "后续可从任务、成就或委托记录跳转到对应详情；G19 不打开详情本体。",
+				"label": "任务档案关联入口",
+				"message": "任务、成就或委托记录可切换到对应档案页。",
 			},
-			"后续阶段再接入真实目标数据与进度计算。"
+			"进度、领取与奖励发放继续由现有局外进度事务负责。"
 		),
 		_module(
 			&"codex",
@@ -98,26 +98,6 @@ static func build_modules() -> Array:
 			"后续阶段再接入真实资历、历史战绩和奖励流通。"
 		),
 		_module(
-			&"gacha",
-			"抽奖",
-			"抽取入口、奖池展示和结果历史入口",
-			STATE_DISABLED,
-			"抽奖系统未接入；G19 不实现概率、奖池、结果或消耗。",
-			{
-				"module": "gacha",
-				"state": "disabled",
-				"message": "抽奖只作为长期页信息架构中的禁用入口。",
-			},
-			[
-				_group("抽奖入口", ["奖池说明位置", "消耗说明位置", "结果历史入口"]),
-			],
-			{
-				"label": "抽奖链接",
-				"message": "只展示禁用入口，不执行抽取。",
-			},
-			"后续阶段再独立规划抽奖规则、资源消耗和结果展示。"
-		),
-		_module(
 			&"collection_appearance",
 			"收藏 / 外观",
 			"收藏品、外观库和展示配置入口",
@@ -142,12 +122,21 @@ static func build_modules() -> Array:
 
 
 static func default_module_id() -> StringName:
-	return &"goals"
+	return &"task_archive"
+
+
+static func normalize_module_id(module_id: StringName) -> StringName:
+	match module_id:
+		&"", &"overview", &"goals", &"tasks", &"task_archive":
+			return &"task_archive"
+		_:
+			return module_id
 
 
 static func find_module(modules: Array, module_id: StringName) -> Dictionary:
+	var normalized_module_id := normalize_module_id(module_id)
 	for module: Dictionary in modules:
-		if StringName(module.get("id", &"")) == module_id:
+		if StringName(module.get("id", &"")) == normalized_module_id:
 			return module.duplicate(true)
 	return (modules[0] as Dictionary).duplicate(true) if not modules.is_empty() else {}
 

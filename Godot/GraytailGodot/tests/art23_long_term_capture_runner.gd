@@ -9,7 +9,7 @@ func _capture() -> void:
 	var options := _parse_options(OS.get_cmdline_user_args())
 	var width := int(options.get("width", 1280))
 	var height := int(options.get("height", 720))
-	var module_id := StringName(options.get("module", "goals"))
+	var module_id := StringName(options.get("module", "task_archive"))
 	var secondary_id := StringName(options.get("secondary", ""))
 	var collapsed := String(options.get("collapsed", "false")) == "true"
 	var sample_time := float(options.get("time", "0"))

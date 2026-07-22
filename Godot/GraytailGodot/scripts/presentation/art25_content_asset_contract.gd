@@ -42,26 +42,34 @@ static func long_term_card_ref(card: Dictionary) -> Dictionary:
 
 
 static func long_term_visual_key(group_key: String, card: Dictionary) -> StringName:
+	var canonical_group_key := _canonical_long_term_group_key(group_key)
 	var card_id := String(card.get("id", card.get("content_id", "")))
 	if card_id == "":
 		return &"art25.long_term.unknown"
-	if group_key == "goals/task":
+	if canonical_group_key == "task_archive/task":
 		return StringName("art25.long_term.task.%s" % card_id)
-	if group_key == "goals/achievement":
+	if canonical_group_key == "task_archive/achievement":
 		return StringName("art25.long_term.achievement.%s" % card_id)
-	if group_key == "goals/commission_record":
+	if canonical_group_key == "task_archive/commission_record":
 		return StringName("art25.deploy.commission.%s" % String(card.get("content_id", card_id)))
-	if group_key.begins_with("research/"):
+	if canonical_group_key.begins_with("research/"):
 		return StringName("art25.long_term.research.%s" % card_id)
-	if group_key == "profile/milestone":
+	if canonical_group_key == "profile/milestone":
 		return StringName("art25.long_term.profile.%s" % card_id.trim_prefix("profile_level_"))
-	if group_key.begins_with("profile/"):
+	if canonical_group_key.begins_with("profile/"):
 		return &"art25.long_term.profile.1"
-	if group_key.begins_with("collection_appearance/") and card_id.begins_with("collection_"):
+	if canonical_group_key.begins_with("collection_appearance/") and card_id.begins_with("collection_"):
 		return StringName("art25.long_term.collection.%s" % card_id)
-	if group_key.begins_with("codex/"):
+	if canonical_group_key.begins_with("codex/"):
 		return _codex_visual_key(card_id)
 	return &"art25.long_term.unknown"
+
+
+static func _canonical_long_term_group_key(group_key: String) -> String:
+	for legacy_prefix in ["goals/", "tasks/"]:
+		if group_key.begins_with(legacy_prefix):
+			return "task_archive/%s" % group_key.trim_prefix(legacy_prefix)
+	return group_key
 
 
 static func texture_for_long_term_card(card: Dictionary) -> Texture2D:

@@ -11,19 +11,19 @@ const STATE_DISABLED := &"disabled"
 static func build_modules() -> Array:
 	return [
 		_module(
-			&"goals",
-			"目标",
-			"目标模块保留任务、成就、委托记录三类内容入口。",
+			&"task_archive",
+			"任务档案",
+			"任务档案统一承载任务、成就、委托记录三类现有内容。",
 			STATE_PREVIEW,
 			[
-				_group(&"task", "任务", ["日常任务", "阶段任务", "目标筛选"], "long_term.goals.task.group_icon"),
-				_group(&"achievement", "成就", ["成就分类", "达成条件", "展示奖励"], "long_term.goals.achievement.group_icon"),
-				_group(&"commission_record", "委托记录", ["委托历史", "委托状态", "委托来源"], "long_term.goals.commission.group_icon"),
+				_group(&"task", "任务", ["日常任务", "阶段任务", "目标筛选"], "long_term.task_archive.task.group_icon"),
+				_group(&"achievement", "成就", ["成就分类", "达成条件", "展示奖励"], "long_term.task_archive.achievement.group_icon"),
+				_group(&"commission_record", "委托记录", ["委托历史", "委托状态", "委托来源"], "long_term.task_archive.commission.group_icon"),
 			],
 			[
-				_card("goals_task_card", "任务 preview card", "只展示任务入口和目标摘要，不计算进度。", "任务", LongTermContentSlotModelScript.SLOT_OBJECTIVE),
-				_card("goals_achievement_card", "成就 preview card", "只展示成就分类和后续奖励接口，不判断达成。", "成就", LongTermContentSlotModelScript.SLOT_REWARD_EVENT),
-				_card("goals_commission_card", "委托记录 preview card", "只展示委托记录入口，不接取或结算委托。", "委托记录", LongTermContentSlotModelScript.SLOT_OBJECTIVE),
+				_card("task_archive_task_card", "任务 preview card", "读取现有任务状态，不重算进度。", "任务", LongTermContentSlotModelScript.SLOT_OBJECTIVE),
+				_card("task_archive_achievement_card", "成就 preview card", "读取现有成就与奖励状态，不执行判定。", "成就", LongTermContentSlotModelScript.SLOT_REWARD_EVENT),
+				_card("task_archive_commission_card", "委托记录 preview card", "读取全部已存档委托记录，不接取或结算委托。", "委托记录", LongTermContentSlotModelScript.SLOT_OBJECTIVE),
 			],
 			[
 				_link("图鉴", "目标相关条目未来可跳转图鉴；当前只显示 cross-link preview。"),
@@ -96,26 +96,6 @@ static func build_modules() -> Array:
 			]
 		),
 		_module(
-			&"gacha",
-			"抽奖",
-			"抽奖模块保留奖池、消耗和结果入口 preview。",
-			STATE_DISABLED,
-			[
-				_group(&"pool", "奖池", ["奖池主题", "奖池状态"], "long_term.gacha.pool.group_icon"),
-				_group(&"cost", "消耗", ["票券需求", "资源提示"], "long_term.gacha.cost.group_icon"),
-				_group(&"result_entry", "结果入口", ["结果展示", "历史入口"], "long_term.gacha.result.group_icon"),
-			],
-			[
-				_card("gacha_pool_card", "奖池 preview card", "只展示奖池主题，不计算概率。", "抽奖", LongTermContentSlotModelScript.SLOT_GACHA_POOL),
-				_card("gacha_cost_card", "消耗 preview card", "只展示消耗字段，不扣资源。", "抽奖", LongTermContentSlotModelScript.SLOT_GACHA_COST),
-				_card("gacha_result_card", "结果入口 preview card", "只展示结果入口，不生成结果。", "抽奖", LongTermContentSlotModelScript.SLOT_GACHA_RESULT),
-			],
-			[
-				_link("奖励", "抽奖未来可产生奖励事件；当前不发放。"),
-				_link("收藏 / 外观", "抽奖未来可关联收藏或外观；当前不写收藏。"),
-			]
-		),
-		_module(
 			&"collection_appearance",
 			"收藏 / 外观",
 			"收藏 / 外观模块保留唯一展示、外观配置、展示内容、徽章称号和结算展示。",
@@ -141,12 +121,21 @@ static func build_modules() -> Array:
 
 
 static func default_module_id() -> StringName:
-	return &"goals"
+	return &"task_archive"
+
+
+static func normalize_module_id(module_id: StringName) -> StringName:
+	match module_id:
+		&"", &"overview", &"goals", &"tasks", &"task_archive":
+			return &"task_archive"
+		_:
+			return module_id
 
 
 static func find_module(module_id: StringName) -> Dictionary:
+	var normalized_module_id := normalize_module_id(module_id)
 	for module: Dictionary in build_modules():
-		if StringName(module.get("module_id", &"")) == module_id:
+		if StringName(module.get("module_id", &"")) == normalized_module_id:
 			return module.duplicate(true)
 	return build_modules()[0].duplicate(true)
 
@@ -330,8 +319,6 @@ static func _ui_art_data_keys(module_id: StringName) -> Dictionary:
 		"rarity_frame_key": "long_term.%s.rarity_frame" % id_text,
 		"badge_icon_key": "long_term.%s.badge_icon" % id_text,
 		"title_icon_key": "long_term.%s.title_icon" % id_text,
-		"gacha_pool_art_key": "long_term.%s.gacha_pool_art" % id_text,
-		"gacha_ticket_icon_key": "long_term.%s.gacha_ticket_icon" % id_text,
 		"collection_slot_art_key": "long_term.%s.collection_slot_art" % id_text,
 		"codex_category_icon_key": "long_term.%s.codex_category_icon" % id_text,
 		"research_node_icon_key": "long_term.%s.research_node_icon" % id_text,
@@ -347,8 +334,8 @@ static func _ui_art_data_keys(module_id: StringName) -> Dictionary:
 
 
 static func _module_scope(module_id: StringName) -> Dictionary:
-	match module_id:
-		&"goals":
+	match normalize_module_id(module_id):
+		&"task_archive":
 			return _scope(["tasks", "achievements", "commission_records"], ["objective progress preview", "RewardBundle preview", "claim state preview"])
 		&"codex":
 			return _scope(["maps", "monsters", "items", "events", "rules", "lore"], ["discovery state preview", "asset reference preview"])
@@ -356,8 +343,6 @@ static func _module_scope(module_id: StringName) -> Dictionary:
 			return _scope(["research lines", "unlock entry preview"], ["research unlock preview", "requirement preview"])
 		&"profile":
 			return _scope(["profile level", "history records", "statistics", "milestones", "titles", "badges"], ["HistoryRecordEvent preview", "qualification preview"])
-		&"gacha":
-			return _scope(["pool descriptor", "cost descriptor", "result ownership preview"], ["pool preview", "RewardBundle preview"])
 		&"collection_appearance":
 			return _scope(["unique display", "appearance config intent", "badges", "settlement display"], ["asset display preview", "cosmetic unlock preview"])
 		_:
@@ -412,8 +397,8 @@ static func _asset_interface_preview(module_id: StringName) -> Dictionary:
 
 
 static func _jump_targets(module_id: StringName) -> Array:
-	match module_id:
-		&"goals":
+	match normalize_module_id(module_id):
+		&"task_archive":
 			return [
 				AssetDomainContractScript.default_jump_target(&"deploy_prep", "Open DeployPrep objective selection preview"),
 				AssetDomainContractScript.default_jump_target(&"warehouse", "Open reward asset reference preview"),
@@ -433,11 +418,6 @@ static func _jump_targets(module_id: StringName) -> Array:
 				AssetDomainContractScript.default_jump_target(&"history", "Open history record preview"),
 				AssetDomainContractScript.default_jump_target(&"collection_appearance", "Open badge/title display preview"),
 			]
-		&"gacha":
-			return [
-				AssetDomainContractScript.default_jump_target(&"collection_appearance", "Open result display preview"),
-				AssetDomainContractScript.default_jump_target(&"warehouse", "Open item result preview"),
-			]
 		&"collection_appearance":
 			return [
 				AssetDomainContractScript.default_jump_target(&"codex", "Open source codex preview"),
@@ -448,8 +428,8 @@ static func _jump_targets(module_id: StringName) -> Array:
 
 
 static func _current_landable_scope(module_id: StringName) -> Array:
-	match module_id:
-		&"goals":
+	match normalize_module_id(module_id):
+		&"task_archive":
 			return ["display objective categories", "display reward state preview", "display red_dot_policy preview"]
 		&"codex":
 			return ["display codex categories", "display asset/codex relation preview"]
@@ -457,8 +437,6 @@ static func _current_landable_scope(module_id: StringName) -> Array:
 			return ["display disabled research lines", "display unlock interface preview"]
 		&"profile":
 			return ["display profile/history preview", "display milestone/title/badge preview"]
-		&"gacha":
-			return ["display disabled pool/cost/result preview"]
 		&"collection_appearance":
 			return ["display collection/cosmetic/unique preview", "display asset reference preview"]
 		_:
@@ -469,7 +447,6 @@ static func _deferred_scope(module_id: StringName) -> Array:
 	return [
 		"real backend state",
 		"real reward delivery",
-		"real gacha result",
 		"real objective progress",
 		"real asset mutation",
 		"real persistence for %s" % String(module_id),

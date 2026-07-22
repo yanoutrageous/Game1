@@ -22,7 +22,7 @@ static func texture(visual_key: StringName) -> Texture2D:
 
 
 static func asset_id(visual_key: StringName) -> StringName:
-	var key := String(visual_key)
+	var key := _audited_asset_visual_key(String(visual_key))
 	if not key.begins_with(VISUAL_PREFIX):
 		return &""
 	return StringName("%s%s" % [ASSET_PREFIX, key])
@@ -47,10 +47,18 @@ static func control_ref(control_id: StringName, state: StringName = &"normal") -
 
 
 static func load_group(visual_key: StringName) -> StringName:
-	var key := String(visual_key)
+	var key := _audited_asset_visual_key(String(visual_key))
 	if key.find(".furniture.") >= 0:
 		return StringName("long_term_%s" % key.get_slice(".", 2))
 	return &"long_term_default"
+
+
+static func _audited_asset_visual_key(visual_key: String) -> String:
+	if visual_key == "long_term.furniture.task_archive":
+		return "long_term.furniture.goals"
+	if visual_key.begins_with("long_term.control.module.task_archive."):
+		return visual_key.replace("long_term.control.module.task_archive.", "long_term.control.module.goals.")
+	return visual_key
 
 
 static func _fallback_asset_id(visual_key: StringName) -> StringName:

@@ -2,6 +2,8 @@ extends SceneTree
 
 var failures: Array[String] = []
 var route_intents: Array[Dictionary] = []
+var deploy_route_intents: Array[Dictionary] = []
+var meta_actions: Array[Dictionary] = []
 
 
 func _initialize() -> void:
@@ -30,10 +32,13 @@ func _run() -> void:
 	shell.size = Vector2(1280, 720)
 	canvas.add_child(shell)
 	shell.connect("navigation_intent_requested", _on_route_intent)
+	shell.connect("meta_action_requested", _on_meta_action)
 	shell.call("build")
 	await _frames(20)
 
-	_check((shell.get("tab_buttons") as Dictionary).size() == 6, "Primary module count must be six")
+	_check((shell.get("tab_buttons") as Dictionary).size() == 5, "Production primary module count must be five")
+	_check(not (shell.get("tab_buttons") as Dictionary).has(&"gacha"), "Unauthorised gacha module is still exposed")
+	_check((shell.get("tab_buttons") as Dictionary).has(&"task_archive"), "Canonical task archive module is missing")
 	_check((shell.get("character_frames") as Array).size() == 8, "Profile character must load eight unique source frames")
 	var module_group := shell.get("module_group") as Control
 	_check(module_group != null and module_group.mouse_filter == Control.MOUSE_FILTER_IGNORE, "Module group blocks primary-tab mouse input")
@@ -75,11 +80,10 @@ func _run() -> void:
 	_check(not bool(shell.call("_cancel_press_is_debounced", 1600)), "A later intentional Escape press remained debounced")
 
 	var expected := {
-		&"goals": [&"task", &"achievement", &"commission_record"],
+		&"task_archive": [&"task", &"achievement", &"commission_record"],
 		&"codex": [&"map", &"monster", &"collectible", &"equipment", &"consumable", &"event", &"rule", &"lore"],
 		&"research": [&"unlock_interface", &"research_entry"],
 		&"profile": [&"qualification_level", &"history", &"statistics", &"milestone", &"title", &"badge"],
-		&"gacha": [&"pool", &"cost", &"result_entry"],
 		&"collection_appearance": [&"unique_display", &"appearance_config", &"display_content", &"badge_title", &"settlement_display"],
 	}
 	var profile_node := shell.get_node("LongTermProfileFrame")
@@ -107,7 +111,7 @@ func _run() -> void:
 			var body_label := shell.get("content_detail_body_label") as Label
 			_check(not title_label.text.strip_edges().is_empty(), "Secondary title is empty: %s/%s" % [String(module_id), String(group_id)])
 			_check(not body_label.text.strip_edges().is_empty(), "Secondary body is empty: %s/%s" % [String(module_id), String(group_id)])
-	_check(secondary_page_count == 27, "Expected 27 secondary pages, got %d" % secondary_page_count)
+	_check(secondary_page_count == 24, "Expected 24 production secondary pages, got %d" % secondary_page_count)
 
 	shell.call("apply_snapshot", {
 		"meta_progress_summary": {
@@ -120,6 +124,7 @@ func _run() -> void:
 			"gold": 987654,
 			"warehouse_items": [],
 			"warehouse_items_count": 0,
+			"red_dot_state": {"claimable_rewards": 2},
 		},
 	})
 	await _frames(3)
@@ -128,6 +133,36 @@ func _run() -> void:
 	var stat_labels := shell.get("profile_stat_labels") as Array
 	_check((stat_labels[0] as Label).text.contains("123"), "Run count is not bound")
 	_check((stat_labels[3] as Label).text.contains("987,654"), "Long-term gold formatting or binding failed")
+	_check(bool(shell.call("_module_has_red_dot", &"task_archive", {"claimable_rewards": 2})), "Claimable task reward indicator is missing")
+	meta_actions.clear()
+	shell.call("show_module", &"goals")
+	await _frames(3)
+	_check(StringName(shell.call("get_selected_module_id")) == &"task_archive", "goals alias did not normalize to task_archive")
+	shell.call("show_module", &"tasks")
+	await _frames(3)
+	_check(StringName(shell.call("get_selected_module_id")) == &"task_archive", "tasks alias did not normalize to task_archive")
+	_check(meta_actions.is_empty(), "Opening task archive emitted mark_viewed and could clear claimable rewards")
+
+	var art23_contract := load("res://scripts/presentation/art23_long_term_asset_contract.gd")
+	_check(
+		StringName(art23_contract.asset_id(&"long_term.furniture.task_archive")) == &"ui.art23.long_term.furniture.goals",
+		"Task archive furniture did not explicitly reuse the audited goals asset"
+	)
+	_check(
+		StringName(art23_contract.asset_id(&"long_term.control.module.task_archive.selected")) == &"ui.art23.long_term.control.module.goals.selected",
+		"Task archive module control did not explicitly reuse the audited goals asset"
+	)
+	var art25_contract := load("res://scripts/presentation/art25_content_asset_contract.gd")
+	var sample_card := {"id": "task_daily_first_steps"}
+	_check(
+		StringName(art25_contract.long_term_visual_key("task_archive/task", sample_card)) == StringName(art25_contract.long_term_visual_key("goals/task", sample_card)),
+		"Canonical and legacy task groups did not resolve to the same ART25 visual key"
+	)
+	var layout_contract := load("res://scripts/ui/long_term/long_term_layout_contract.gd")
+	_check(
+		Rect2(layout_contract.furniture_rect(&"gacha")) == Rect2(layout_contract.FURNITURE_DEFAULT),
+		"Removed gacha route still exposes a dedicated production furniture layout"
+	)
 
 	shell.call("_request_appearance_settings")
 	await create_timer(0.82).timeout
@@ -143,13 +178,12 @@ func _run() -> void:
 	_check(StringName(shell.get("displayed_module_id")) == &"collection_appearance", "Expand did not preserve the routed collection module")
 	_check(StringName(shell.call("get_selected_secondary_id")) == &"appearance_config", "Expand did not preserve appearance_config")
 
-	shell.call("show_module", &"goals")
+	shell.call("show_module", &"task_archive")
 	shell.call("show_module", &"codex")
 	shell.call("show_module", &"profile")
-	shell.call("show_module", &"gacha")
 	shell.call("show_module", &"goals")
 	await create_timer(1.15).timeout
-	_check(StringName(shell.get("displayed_module_id")) == &"goals", "Rapid switching did not keep the latest requested target")
+	_check(StringName(shell.get("displayed_module_id")) == &"task_archive", "Rapid switching did not keep the normalized latest target")
 	_check((shell.get("transition_state") as StringName) == &"OPEN", "Rapid switching left the state machine unsettled")
 
 	shell.call("_request_deploy")
@@ -157,11 +191,29 @@ func _run() -> void:
 	await _frames(2)
 	_check(route_intents.size() == 2, "Navigation plaques did not emit both route intents")
 
+	var deploy_shell_script := load("res://scripts/ui/deploy_prep/deploy_prep_shell.gd")
+	var deploy_shell := deploy_shell_script.new() as Control
+	deploy_shell.connect("navigation_intent_requested", _on_deploy_route_intent)
+	deploy_shell.call("_request_long_term")
+	_check(deploy_route_intents.size() == 1, "Deploy long-term plaque did not emit a route intent")
+	if deploy_route_intents.size() == 1:
+		var deploy_payload := deploy_route_intents[0].get("payload", {}) as Dictionary
+		_check(StringName(deploy_payload.get("module_id", &"")) == &"task_archive", "Deploy long-term route did not default to task_archive")
+	deploy_shell.free()
+
 	_finish()
 
 
 func _on_route_intent(intent: Dictionary) -> void:
 	route_intents.append(intent.duplicate(true))
+
+
+func _on_deploy_route_intent(intent: Dictionary) -> void:
+	deploy_route_intents.append(intent.duplicate(true))
+
+
+func _on_meta_action(action: Dictionary) -> void:
+	meta_actions.append(action.duplicate(true))
 
 
 func _frames(count: int) -> void:
@@ -171,7 +223,7 @@ func _frames(count: int) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART23_LONG_TERM_RUNTIME=PASS primary_modules=6 secondary_pages=27 character_frames=8 states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING")
+		print("ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive character_frames=8 states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING")
 		quit(0)
 		return
 	for failure in failures:

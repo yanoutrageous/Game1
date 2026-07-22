@@ -14,7 +14,6 @@ const MODULE_BUTTON_GAP := 8.0
 
 const MODULE_GROUP := Rect2(170, 112, 820, 580)
 const FURNITURE_DEFAULT := Rect2(170, 144, 820, 536)
-const FURNITURE_GACHA := Rect2(220, 220, 720, 420)
 const SECONDARY_SCROLL := Rect2(194, 118, 772, 42)
 const SECONDARY_ROW_MIN := Vector2(112, 36)
 const CONTENT_PANEL := Rect2(300, 292, 560, 248)
@@ -43,8 +42,8 @@ const PROFILE_STAT_GAP := 9.0
 const PROFILE_APPEARANCE := Rect2(1036, 646, 210, 48)
 
 
-static func furniture_rect(module_id: StringName) -> Rect2:
-	return FURNITURE_GACHA if module_id == &"gacha" else FURNITURE_DEFAULT
+static func furniture_rect(_module_id: StringName) -> Rect2:
+	return FURNITURE_DEFAULT
 
 
 static func module_button_rect(index: int) -> Rect2:

@@ -109,19 +109,19 @@ func _show_deploy_internal(tab_id: StringName = &"overview") -> void:
 		deploy_page.call("show_tab", tab_id)
 
 
-func show_long_term(_entry_id: StringName = &"overview") -> void:
+func show_long_term(_entry_id: StringName = NavigationIntentScript.LONG_TERM_DEFAULT_MODULE) -> void:
 	if not _cancel_navigation_transition_for_external_page_change():
 		return
 	_show_long_term_internal(_entry_id)
 
 
-func _show_long_term_internal(entry_id: StringName = &"overview") -> void:
+func _show_long_term_internal(entry_id: StringName = NavigationIntentScript.LONG_TERM_DEFAULT_MODULE) -> void:
 	_current_page_id = PageRouterScript.PAGE_LONG_TERM
 	_set_page_visible(long_term_page)
 	_hide_settings(false)
 	_hide_exit_confirm(false)
 	if long_term_page != null and long_term_page.has_method("show_module"):
-		long_term_page.call("show_module", entry_id)
+		long_term_page.call("show_module", NavigationIntentScript.normalize_long_term_module_id(entry_id))
 
 
 func show_settings() -> bool:
@@ -587,7 +587,13 @@ func _commit_navigation_intent(intent: Dictionary) -> Dictionary:
 				_show_main_internal()
 			else:
 				var long_term_payload := page_payload
-				_show_long_term_internal(StringName(long_term_payload.get("module_id", long_term_payload.get("entry_id", &"goals"))))
+				var long_term_module_id := NavigationIntentScript.normalize_long_term_module_id(StringName(
+					long_term_payload.get("module_id", long_term_payload.get("entry_id", NavigationIntentScript.LONG_TERM_DEFAULT_MODULE))
+				))
+				long_term_payload["module_id"] = long_term_module_id
+				long_term_payload["entry_id"] = long_term_module_id
+				page_payload = long_term_payload
+				_show_long_term_internal(long_term_module_id)
 		PageRouterScript.PAGE_SETTINGS_PLACEHOLDER:
 			if not _show_settings_internal():
 				committed = false

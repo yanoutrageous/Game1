@@ -1,11 +1,10 @@
 extends SceneTree
 
 const MATRIX := [
-	[&"goals", [&"task", &"achievement", &"commission_record"]],
+	[&"task_archive", [&"task", &"achievement", &"commission_record"]],
 	[&"codex", [&"map", &"monster", &"collectible", &"equipment", &"consumable", &"event", &"rule", &"lore"]],
 	[&"research", [&"unlock_interface", &"research_entry"]],
 	[&"profile", [&"qualification_level", &"history", &"statistics", &"milestone", &"title", &"badge"]],
-	[&"gacha", [&"pool", &"cost", &"result_entry"]],
 	[&"collection_appearance", [&"unique_display", &"appearance_config", &"display_content", &"badge_title", &"settlement_display"]],
 ]
 
@@ -69,7 +68,7 @@ func _capture_matrix() -> void:
 				return
 			captured += 1
 	print("ART23_MATRIX_CAPTURE=PASS states=%d size=%dx%d output=%s" % [captured, width, height, output_path])
-	quit(0 if captured == 27 else 2)
+	quit(0 if captured == 24 else 2)
 
 
 func _frames(count: int) -> void:

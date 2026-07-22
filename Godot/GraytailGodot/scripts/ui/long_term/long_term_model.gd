@@ -8,11 +8,9 @@ const CodexLiteModelScript := preload("res://scripts/ui/codex_lite/codex_lite_mo
 const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
 
 
-static func build(selected_module_id: StringName = &"goals", source: StringName = &"long_term_shell") -> Dictionary:
+static func build(selected_module_id: StringName = &"task_archive", source: StringName = &"long_term_shell") -> Dictionary:
 	var modules: Array = LongTermTabModelScript.build_modules()
-	var safe_module_id := selected_module_id
-	if safe_module_id == &"":
-		safe_module_id = LongTermTabModelScript.default_module_id()
+	var safe_module_id := LongTermTabModelScript.normalize_module_id(selected_module_id)
 	var current_module: Dictionary = LongTermTabModelScript.find_module(modules, safe_module_id)
 	var current_module_id := StringName(current_module.get("id", LongTermTabModelScript.default_module_id()))
 	var content_framework_modules: Array = LongTermContentFrameworkScript.build_modules()
@@ -58,6 +56,8 @@ static func build(selected_module_id: StringName = &"goals", source: StringName 
 
 static func build_from_snapshot(selected_module_id: StringName, app_snapshot: Dictionary = {}, source: StringName = &"app_shell_snapshot") -> Dictionary:
 	var model: Dictionary = build(selected_module_id, source)
+	var current_module_id := StringName(model.get("selected_module_id", LongTermTabModelScript.default_module_id()))
+	var requested_module_id := LongTermTabModelScript.normalize_module_id(selected_module_id)
 	var meta_summary: Dictionary = app_snapshot.get("meta_progress_summary", {})
 	var latest_result: Dictionary = app_snapshot.get("last_result_snapshot", app_snapshot.get("result_snapshot", {}))
 	var profile_runtime_panel := _profile_runtime_panel(meta_summary, latest_result)
@@ -69,10 +69,10 @@ static func build_from_snapshot(selected_module_id: StringName, app_snapshot: Di
 	model["profile_runtime_panel"] = profile_runtime_panel
 	model["m7_cards_by_group"] = _m7_cards_by_group(meta_summary)
 	model["m7_red_dot_state"] = (meta_summary.get("red_dot_state", {}) as Dictionary).duplicate(true)
-	model["m7_real_module"] = selected_module_id != &"gacha"
+	model["m7_real_module"] = _contains_module(model.get("modules", []), requested_module_id)
 	var panel: Dictionary = model.get("placeholder_panel", {})
 	panel["profile_runtime_panel"] = profile_runtime_panel.duplicate(true)
-	if selected_module_id == &"codex":
+	if current_module_id == &"codex":
 		panel["description"] = "Codex Lite reads discovered collectibles and monster samples from MetaProgress warehouse_items."
 		panel["codex_lite_model"] = codex_lite_model.duplicate(true)
 		panel["content_cards"] = _codex_cards(codex_lite_model)
@@ -84,18 +84,26 @@ static func build_from_snapshot(selected_module_id: StringName, app_snapshot: Di
 	return model
 
 
+static func _contains_module(modules_value: Variant, module_id: StringName) -> bool:
+	if not modules_value is Array:
+		return false
+	for raw_module in modules_value as Array:
+		if raw_module is Dictionary and StringName((raw_module as Dictionary).get("id", &"")) == module_id:
+			return true
+	return false
+
+
 static func _overview_summary(modules: Array) -> Dictionary:
 	return {
 		"title": "长期系统档案",
 		"state": "foundation",
 		"module_count": modules.size(),
-		"message": "当前展示目标、图鉴、研究、角色、抽奖和收藏外观入口。",
+		"message": "当前展示任务档案、图鉴、研究、个人资历和收藏外观入口。",
 		"modules": [
-			"目标",
+			"任务档案",
 			"图鉴",
 			"研究",
 			"个人资历",
-			"抽奖",
 			"收藏 / 外观",
 		],
 	}
@@ -175,9 +183,9 @@ static func _profile_runtime_panel(meta_summary: Dictionary = {}, latest_result:
 
 static func _m7_cards_by_group(meta: Dictionary) -> Dictionary:
 	var result := {
-		"goals/task": _goal_cards(meta, "task", meta.get("task_definitions", []), meta.get("task_states", {})),
-		"goals/achievement": _goal_cards(meta, "achievement", meta.get("achievement_definitions", []), meta.get("achievement_states", {})),
-		"goals/commission_record": _commission_cards(meta),
+		"task_archive/task": _goal_cards(meta, "task", meta.get("task_definitions", []), meta.get("task_states", {})),
+		"task_archive/achievement": _goal_cards(meta, "achievement", meta.get("achievement_definitions", []), meta.get("achievement_states", {})),
+		"task_archive/commission_record": _commission_cards(meta),
 		"research/unlock_interface": _research_cards(meta),
 		"research/research_entry": _research_cards(meta),
 		"profile/milestone": _milestone_cards(meta),
@@ -225,7 +233,7 @@ static func _commission_cards(meta: Dictionary) -> Array[Dictionary]:
 		definitions[str(definition.get("id", ""))] = definition
 	var history: Array = meta.get("commission_history", [])
 	var cards: Array[Dictionary] = []
-	for reverse_index in range(history.size() - 1, maxi(-1, history.size() - 8), -1):
+	for reverse_index in range(history.size() - 1, -1, -1):
 		var record: Dictionary = history[reverse_index] if history[reverse_index] is Dictionary else {}
 		var commission_id := str(record.get("commission_id", ""))
 		var definition: Dictionary = definitions.get(commission_id, {})

@@ -12,9 +12,6 @@ const SLOT_CLAIMABLE := &"claimable_preview_slot"
 const SLOT_RED_DOT := &"red_dot_preview_slot"
 const SLOT_CODEX_UNLOCK := &"codex_unlock_preview_slot"
 const SLOT_RESEARCH_UNLOCK := &"research_unlock_preview_slot"
-const SLOT_GACHA_POOL := &"gacha_pool_preview_slot"
-const SLOT_GACHA_COST := &"gacha_cost_preview_slot"
-const SLOT_GACHA_RESULT := &"gacha_result_preview_slot"
 const SLOT_COLLECTION_DISPLAY := &"collection_display_preview_slot"
 const SLOT_COSMETIC := &"cosmetic_preview_slot"
 const SLOT_UNIQUE_COLLECTIBLE := &"unique_collectible_preview_slot"
@@ -31,9 +28,6 @@ static func build_all_preview_slots() -> Array:
 		red_dot_preview_slot(),
 		codex_unlock_preview_slot(),
 		research_unlock_preview_slot(),
-		gacha_pool_preview_slot(),
-		gacha_cost_preview_slot(),
-		gacha_result_preview_slot(),
 		collection_display_preview_slot(),
 		cosmetic_preview_slot(),
 		unique_collectible_preview_slot(),
@@ -44,8 +38,8 @@ static func build_all_preview_slots() -> Array:
 
 
 static func build_slots_for_module(module_id: StringName) -> Array:
-	match module_id:
-		&"goals":
+	match _normalize_module_id(module_id):
+		&"task_archive":
 			return _clone_slots([
 				objective_preview_slot(),
 				reward_event_preview_slot(),
@@ -72,13 +66,6 @@ static func build_slots_for_module(module_id: StringName) -> Array:
 				reward_event_preview_slot(),
 				red_dot_preview_slot(),
 			])
-		&"gacha":
-			return _clone_slots([
-				gacha_pool_preview_slot(),
-				gacha_cost_preview_slot(),
-				gacha_result_preview_slot(),
-				reward_event_preview_slot(),
-			])
 		&"collection_appearance":
 			return _clone_slots([
 				collection_display_preview_slot(),
@@ -88,6 +75,14 @@ static func build_slots_for_module(module_id: StringName) -> Array:
 			])
 		_:
 			return []
+
+
+static func _normalize_module_id(module_id: StringName) -> StringName:
+	match module_id:
+		&"overview", &"goals", &"tasks", &"task_archive":
+			return &"task_archive"
+		_:
+			return module_id
 
 
 static func objective_preview_slot() -> Dictionary:
@@ -141,33 +136,6 @@ static func research_unlock_preview_slot() -> Dictionary:
 		&"research_unlock",
 		"研究解锁接口 preview",
 		"预留研究节点和条件展示；不解锁研究，不消耗资源。"
-	)
-
-
-static func gacha_pool_preview_slot() -> Dictionary:
-	return _slot(
-		SLOT_GACHA_POOL,
-		&"gacha_pool",
-		"奖池展示 preview",
-		"预留奖池入口、主题和规则摘要；不计算概率。"
-	)
-
-
-static func gacha_cost_preview_slot() -> Dictionary:
-	return _slot(
-		SLOT_GACHA_COST,
-		&"gacha_cost",
-		"抽取消耗 preview",
-		"预留票券、金币或其他消耗说明；不扣除资源。"
-	)
-
-
-static func gacha_result_preview_slot() -> Dictionary:
-	return _slot(
-		SLOT_GACHA_RESULT,
-		&"gacha_result",
-		"抽取结果入口 preview",
-		"预留结果历史和展示入口；不生成结果，不发放物品。"
 	)
 
 

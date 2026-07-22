@@ -104,6 +104,7 @@
     "ART22_DEPLOY_PREP_MAIN_ROUTE",
     "ART23_LONG_TERM_RUNTIME",
     "ART23_LONG_TERM_MAIN_ROUTE",
+    "I2_LONG_TERM_TASK_ARCHIVE",
     "ART24_IN_RUN_RUNTIME",
     "ART24_RUN_SURFACE_LAYER_ROUTING",
     "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
@@ -153,6 +154,7 @@
         "I2_DEPLOY_META_ACTION_TRANSACTION",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_MAIN_ROUTE",
+        "I2_LONG_TERM_TASK_ARCHIVE",
         "ART24_IN_RUN_RUNTIME",
         "ART24_CONTEXT_ANCHOR_INTEGRATION",
         "I2_ROUTE_AUTHORITY_LIFECYCLE",
@@ -192,6 +194,7 @@
         "I1_COMMAND_MODULE",
         "I1_PROJECT_METADATA",
         "I2_DEPLOY_META_ACTION_TRANSACTION",
+        "I2_LONG_TERM_TASK_ARCHIVE",
         "I2_ROUTE_AUTHORITY_LIFECYCLE",
         "I2_SETTINGS_TRANSACTION",
         "I2_RUNTIME_INPUT_PROFILE"
@@ -220,6 +223,7 @@
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_RUNTIME",
         "ART23_LONG_TERM_MAIN_ROUTE",
+        "I2_LONG_TERM_TASK_ARCHIVE",
         "ART24_IN_RUN_RUNTIME",
         "ART24_RUN_SURFACE_LAYER_ROUTING",
         "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
@@ -281,6 +285,7 @@
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_RUNTIME",
         "ART23_LONG_TERM_MAIN_ROUTE",
+        "I2_LONG_TERM_TASK_ARCHIVE",
         "ART24_IN_RUN_RUNTIME",
         "ART24_RUN_SURFACE_LAYER_ROUTING",
         "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
@@ -536,9 +541,9 @@
     {
       "id": "I1_SAVE_RELIABILITY",
       "relative_path": "Godot/GraytailGodot/tests/i1_save_reliability_runner.gd",
-      "pass_marker": "I1_SAVE_RELIABILITY=PASS atomic_replace=PASS backup_recovery=PASS future_schema=PASS",
+      "pass_marker": "I1_SAVE_RELIABILITY=PASS atomic_replace=PASS backup_recovery=PASS future_schema=PASS long_term_view_rollback=PASS",
       "fail_marker": "I1_SAVE_RELIABILITY=FAIL",
-      "coverage": ["save", "atomic_replace", "recovery", "schema"]
+      "coverage": ["save", "atomic_replace", "recovery", "schema", "transaction_rollback", "red_dot"]
     },
     {
       "id": "I1_TERMINAL_AUTHORITY",
@@ -656,16 +661,23 @@
     {
       "id": "ART23_LONG_TERM_RUNTIME",
       "relative_path": "Godot/GraytailGodot/tests/art23_long_term_runtime_runner.gd",
-      "pass_marker": "ART23_LONG_TERM_RUNTIME=PASS primary_modules=6 secondary_pages=27 character_frames=8 states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING",
+      "pass_marker": "ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive character_frames=8 states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING",
       "fail_marker": "ART23_LONG_TERM_RUNTIME=FAIL",
-      "coverage": ["long_term", "layout", "state"]
+      "coverage": ["long_term", "layout", "state", "task_archive", "route_alias", "asset_reuse", "red_dot"]
     },
     {
       "id": "ART23_LONG_TERM_MAIN_ROUTE",
       "relative_path": "Godot/GraytailGodot/tests/art23_long_term_main_route_runner.gd",
-      "pass_marker": "ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=6",
+      "pass_marker": "ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=5 canonical=task_archive",
       "fail_marker": "ART23_LONG_TERM_MAIN_ROUTE=FAIL",
       "coverage": ["main_route", "long_term"]
+    },
+    {
+      "id": "I2_LONG_TERM_TASK_ARCHIVE",
+      "relative_path": "Godot/GraytailGodot/tests/i2_long_term_task_archive_runner.gd",
+      "pass_marker": "I2_LONG_TERM_TASK_ARCHIVE=PASS canonical=task_archive aliases=goals,tasks,overview modules=5 commission_records=12 pages=4 authority=read_only",
+      "fail_marker": "I2_LONG_TERM_TASK_ARCHIVE=FAIL",
+      "coverage": ["long_term", "task_archive", "migration", "alias", "goal_authority", "commission_history", "pagination"]
     },
     {
       "id": "ART24_IN_RUN_RUNTIME",
@@ -888,6 +900,7 @@
         "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
         "ERROR: 10 resources still in use at exit (run with --verbose for details)."
       ],
+      "I2_LONG_TERM_TASK_ARCHIVE": [],
       "ART24_IN_RUN_RUNTIME": [],
       "ART24_RUN_SURFACE_LAYER_ROUTING": [],
       "ART24_WORLD_CONTEXT_POPUP_LAYOUT": [],
