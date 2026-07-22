@@ -790,3 +790,68 @@ player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
 ```
 
 接受边界：本门关闭世界对象投影、箱子/地面物交互时序、公开门状态与局内角色运动表现，不关闭 I2。捕获中仍可见的固定“空位”、原始 `common`、左侧“正常作业”、底部“操作完成”、地图信息密度、协议语义和背包 hover/focus 详情均不是本门遗漏结论，而是 I2.5C 的已证实输入；战斗逃离、特殊房、撤离点、雷房与结果解释继续由 I2.6C/D 处理。当前没有获批 opened-chest 静态素材，因此不得将状态变换表述为最终美术完成。
+
+## 19. I2.5C 局内信息表面、地图公开信息、背包详情与运行时模态（2026-07-22）
+
+```text
+status: AUTHORIZED (I2 internal risk gate; implementation not yet accepted; I2 remains active)
+feedback: RUN-05, RUN-06, RUN-07, RUN-08, RUN-09, RUN-10, RUN-11, CROSS-01, CROSS-04, CROSS-05, CROSS-07, CROSS-08
+rollback: f98aecc (I2.5B accepted checkpoint)
+```
+
+代码优先检查确认：生产局内 HUD 为 `RunSurface`，旧 HUD 已隐藏；快捷背包仍固定四格、补“空位”并静默截断更多物品；左侧资源区硬编码“正常作业”，虽然公开快照已经具有 `adjacent_mines`；协议已接入五张治理合格底板，但标题、强调色与压力色尚未统一到权威五级，且变化原因没有稳定穿过 effect 到 snapshot，视图不得猜测。正式物品目录共有 43 个物品，真实品质域为 `tier_1` 至 `tier_6`，而部署页、结算页、世界悬浮窗及背包分别存在 T5/T6 丢失、原始键泄露或仅用颜色区分等漂移。小地图和展开地图已有 KnownMap 输入，但小地图未完整复制公开相邻雷数、格子未给出右下角数字，展开地图也没有地图外左键关闭与打开后的焦点交接。背包详情只响应按下而不响应 hover/focus，长文本与工程状态句仍直接进入玩家表面；运行时暂停框为右侧临时面板，RunScene 使用硬编码模态 if-chain，已有 `ModalFocusStack` 与全局 `SettingsManager` 尚未接入本路线。
+
+本门只重构公开信息的只读表达和模态输入编排。建立单一代码侧品质描述器，将 T1–T6 及 locked `unique`/unknown 映射为中文标签、非颜色徽记、边框 token 与颜色；部署、快捷背包、完整背包、箱子/地面悬浮窗和结果预览必须消费同一描述器，不得显示原始 `tier_N`，也不得把 `unique` 当作普通掉落品质。不得新增或伪称 ART24 item row/slot 是六级品质素材；本门不新增二进制素材。
+
+快捷背包必须按真实当前内容完整可达：不补假“空位”、不固定截断为四件、使用滚动容器容纳当前板面外的项目；每项显示数量、重量与非颜色品质语义，hover、键盘和手柄 focus 只更新详情，不提交命令。负重移到背包区域下方居中。左侧资源摘要改为玩家语义的“周围雷险”，只在 KnownMap 已公开相邻雷数时显示数值，并同时提供图形/文字等级，未知必须保持未知；删除“正常作业”等无关工程占位。
+
+协议区继续只消费 `RunBalanceCatalog` 已有阈值：0–19→5、20–39→4、40–59→3、60–79→2、80–100→1；五级玩家标题固定为“正常作业 / 轻度警戒 / 风险作业 / 返程建议 / 最终建议”，压力条和强调色均从协议级别派生，不再借用房间危险色。现有五张正式协议底板继续复用。由于公开快照当前没有稳定变化原因，本门只诚实显示当前等级、压力与公开效果，不硬编码、回看 event log 或根据差值猜测“为何变化”。
+
+小地图和展开地图只能读取 KnownMap/public cell；未知房间、未公开类型、TruthMap 与隐藏相邻雷数不得泄露。已公开非负 `adjacent_mines` 以格子右下角数字及非颜色语义表达，未知不显示数字。小地图可获得键盘/手柄焦点并显式打开展开地图；展开后焦点进入地图，点击地图面板外部或按 Esc 仅关闭地图并把焦点归还原控件，底部说明必须换行并保持可读留白。打开、悬停、焦点移动和关闭全程零领域命令、零 map mutation。
+
+完整背包与地面物面板的 hover/focus 必须显示名称、统一品质、重量、数量及已有公开说明；长文本可换行/滚动，不再显示“选择物品，可丢弃、直接使用”“操作完成”、raw ID、payload、schema、command 等工程文案。拖放、拾取、替换、使用和丢弃仍走既有显式 action/result 契约，视图不得根据 hover/focus 改变物品位置或重新解释禁用理由。
+
+运行时模态必须接入单一栈优先级：展开地图、物品详情、设置、放弃确认、暂停等只允许栈顶消费 Esc，并在关闭后恢复此前焦点。暂停面板居中并删去工程说明；设置视图复用既有 `SettingsManager` 作为唯一读写权威，音量、reduced-motion、文本速度等现有设置必须真实生效，关闭设置回到暂停而不是退出游戏。放弃必须在暂停上方显示独立确认，第一次操作只打开确认，确认恰好一次才调用既有 abandon 请求；取消回到暂停。不得增加或修改 InputMap、设置 schema 或领域规则。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+Godot/GraytailGodot/scripts/core/run/run_scene.gd
+Godot/GraytailGodot/scripts/presentation/item_rarity_descriptor.gd
+Godot/GraytailGodot/scripts/presentation/presentation_theme.gd
+Godot/GraytailGodot/scripts/ui/run_surface/run_surface.gd
+Godot/GraytailGodot/scripts/ui/run_surface/run_surface_model.gd
+Godot/GraytailGodot/scripts/ui/minimap/minimap_view_model.gd
+Godot/GraytailGodot/scripts/ui/minimap/minimap_panel.gd
+Godot/GraytailGodot/scripts/ui/map_overlay/map_overlay_panel.gd
+Godot/GraytailGodot/scripts/ui/inventory/inventory_panel.gd
+Godot/GraytailGodot/scripts/ui/ground_loot/ground_loot_panel.gd
+Godot/GraytailGodot/scripts/ui/shell/run_ui_view_model.gd
+Godot/GraytailGodot/scripts/ui/shell/modal_focus_stack.gd
+Godot/GraytailGodot/scripts/ui/settings/settings_panel.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_model.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_card_view.gd
+Godot/GraytailGodot/scripts/ui/loot_result/loot_result_panel.gd
+Godot/GraytailGodot/scripts/gameplay/interaction/g41_world_context_popup.gd
+Godot/GraytailGodot/tests/i2_run_information_surface_runner.gd
+Godot/GraytailGodot/tests/i2_map_public_information_input_runner.gd
+Godot/GraytailGodot/tests/i2_inventory_hover_focus_runner.gd
+Godot/GraytailGodot/tests/i2_runtime_modal_priority_runner.gd
+Godot/GraytailGodot/tests/i2_item_rarity_presentation_runner.gd
+Godot/GraytailGodot/tests/art25_production_visual_capture_runner.gd
+Godot/GraytailGodot/tests/i1_ui_interaction_runner.gd
+Godot/GraytailGodot/tests/i1_input_gateway_runner.gd
+Godot/GraytailGodot/tests/i1_layout_contract_runner.gd
+Godot/GraytailGodot/tests/i1_layer_contract_runner.gd
+Godot/GraytailGodot/tests/i2_asset_binding_runner.gd
+tools/i1/validation_manifest.json
+```
+
+条件路径：只有在定向测试证明 `RunUIViewModel` 无法从现有公开快照提供品质/玩家说明时，才允许修改该文件，且不得读取领域私有对象。`SettingsPanel` 只允许增加可复用装配/焦点接口，不得成为第二个设置状态源。若协议变化原因必须修改 `RunQueryFacade`、`RunAssetEffectHandler`、`ProtocolService` 或 `RunContext` 才能传递，则本门明确延期该原因，不扩张领域边界。若现有 capture runner 无法覆盖本门状态，可在白名单内扩充 fixture，但 fixture 不得修改生产权威。
+
+保护边界：`project.godot`、全部 scene/resource/`.uid`/`.translation`/import metadata、素材本体与 asset manifest、ContentDB/item catalog 内容、CommandBus、RunContext、RunQueryFacade、RunStateMachine、ProtocolService、RunAssetLedger/EffectHandler、RunInventory、RunRuleService/Content、RoomResolver、G41InRunRuntime、combat、map truth、settlement/result/save/meta authority、设置 schema 与 InputMap 均禁止修改。不得改变物品品质、掉落、数量、重量、位置、负重规则、雷数、地图公开规则、协议阈值/效果、奖励、伤害、通行、撤离或终局规则。
+
+完成证据必须覆盖：T1–T6、unique、unknown 的统一非颜色品质表达与 43 个正式物品映射；部署、快捷背包、完整背包、世界悬浮窗和结果页无 raw `tier_N` 且 T6 不降级；0、1、4、5、8+ 件快捷背包全部可达，无假空位、无静默截断，hover/focus 零命令，负重居中；周围雷险已知 0–8 与未知状态；协议 1–5 标题、底板、压力色和房间危险主题相互独立；KnownMap 已知/未知格、相邻雷数、隐藏房型和边界的无泄露测试；小地图焦点、展开地图外部点击、Esc 与焦点归还；背包长详情、hover/focus、显式 action 恰好一次；暂停→设置→返回、暂停→放弃确认→取消/确认、嵌套地图/详情的栈顶 Esc 顺序与焦点恢复；1280×720、1600×900、1920×1080 可见矩阵及 reduced-motion 状态；static、定向、quick/ui 和独立复核。full/worktree 与 exact full/head 继续留到 I2.7。
+
+停止条件：视图读取 TruthMap 或未公开房型/雷数；hover/focus/proximity/open/close 产生领域命令；快捷背包隐藏真实物品或用假空位填版；品质仍仅靠颜色或把 T5/T6 降级；协议原因由 UI 猜测或更改阈值/效果；第二套设置状态与 `SettingsManager` 分叉；Esc 同时关闭两层、吞掉领域输入或不恢复焦点；放弃绕过二次确认或重复提交；实现要求改领域/schema/InputMap/素材/manifest；既有 layer、layout、action-result、input gateway、地图公开或保存回归失败。任一条件出现即回退到 `f98aecc` 并将本门标记 `BLOCKED`。
