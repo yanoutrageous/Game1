@@ -1,5 +1,7 @@
 extends SceneTree
 
+const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
+
 var failures: Array[String] = []
 var page_change_count := 0
 var last_page: StringName = &""
@@ -97,6 +99,8 @@ func _run() -> void:
 			_check((map_view.get("difficulty_buttons") as Dictionary).size() == 3, "Actual 13x13 scale does not expose three difficulties")
 			_check(page_change_count == 1 and StringName(run_scene.get("screen_state")) == &"deploy_shell", "Map scale preview navigated away from the single Deploy page")
 
+	_check_meta_transaction_production_chain(run_scene, app_shell, deploy_page)
+
 	main.queue_free()
 	await _frames(4)
 	_finish()
@@ -117,6 +121,93 @@ func _check_player_tab_labels(deploy_page: Control) -> void:
 		_check(button != null and button.text == str(expected[tab_id]), "Actual deploy route has the wrong player tab label: " + String(tab_id))
 
 
+func _check_meta_transaction_production_chain(run_scene: Node, app_shell: Control, deploy_page: Control) -> void:
+	var adapter = run_scene.get("meta_progress_adapter")
+	var controller = run_scene.get("runtime_controller")
+	_check(adapter != null and controller != null, "Production meta transaction authority is missing")
+	if adapter == null or controller == null:
+		return
+	adapter.set_active_profile_path("user://tests/art22_deploy_main_route_transactions.json", "art22_deploy_main_route_transactions")
+	adapter.clear()
+	adapter.data["gold"] = 500
+	var collectible := M7ContentCatalogScript.item_definition("col_01")
+	collectible["instance_id"] = "art22_route_collectible"
+	adapter.data["warehouse_items"].append(collectible)
+	_check(adapter.save(), "Production transaction seed save failed")
+	controller.bind_meta_progress_adapter(adapter)
+	app_shell.call("apply_snapshot", run_scene.call("_shell_snapshot"))
+	var draft_before := _draft_signature((deploy_page.get("current_model") as Dictionary).get("config", {}))
+	var purchase_before: Dictionary = adapter.get_summary()
+	var purchase_revision_before := int((app_shell.call("get_meta_result_delivery_snapshot") as Dictionary).get("current_snapshot_revision", -1))
+	deploy_page.call("_submit_explicit_card_action", &"claim", &"m7_shop_con_ration", &"m7_shop_con_ration")
+	var purchase_state := deploy_page.call("get_meta_transaction_snapshot") as Dictionary
+	var purchase_result := purchase_state.get("last_result", {}) as Dictionary
+	var purchase_after: Dictionary = adapter.get_summary()
+	var purchase_delivery_snapshot := app_shell.call("get_meta_result_delivery_snapshot") as Dictionary
+	var purchase_delivery := purchase_delivery_snapshot.get("last_delivery", {}) as Dictionary
+	var purchase_price := int(M7ContentCatalogScript.shop_definition("con_ration").get("price", -1))
+	_check(not bool(purchase_state.get("pending", true)), "Production purchase remained pending after synchronous result")
+	_check(bool(purchase_result.get("ok", false)) and StringName(purchase_result.get("status", &"")) == &"purchased", "Production purchase result was not routed back to Deploy")
+	_check(StringName(purchase_result.get("source_page", &"")) == &"deploy_prep" and str(purchase_result.get("request_id", "")).begins_with("deploy:"), "Production purchase lost source/request correlation")
+	_check(int(purchase_after.get("gold", -1)) == int(purchase_before.get("gold", 0)) - purchase_price, "Production purchase did not apply the exact catalog price")
+	_check(_instance_ids(purchase_after.get("warehouse_items", [])).size() == _instance_ids(purchase_before.get("warehouse_items", [])).size() + 1, "Production purchase did not add exactly one instance")
+	_check(_draft_signature((deploy_page.get("current_model") as Dictionary).get("config", {})) == draft_before, "Production purchase refresh lost the Deploy draft")
+	_check(str((deploy_page.get("current_model") as Dictionary).get("action_message", "")).contains("购买成功"), "Production snapshot refresh overwrote the purchase feedback")
+	_check(bool(purchase_delivery.get("accepted", false)) and str(purchase_delivery.get("request_id", "")) == str(purchase_result.get("request_id", "")), "Production purchase delivery trace lost the matching result")
+	_check(int(purchase_delivery_snapshot.get("current_snapshot_revision", -1)) == purchase_revision_before + 1, "Production purchase did not refresh one authoritative snapshot")
+	_check(int(purchase_delivery.get("snapshot_revision", -1)) == int(purchase_delivery_snapshot.get("current_snapshot_revision", -2)) and int(purchase_delivery.get("page_snapshot_revision", -1)) == int(purchase_delivery_snapshot.get("current_snapshot_revision", -2)), "Production purchase result was delivered before its authoritative snapshot")
+
+	var sale_before: Dictionary = adapter.get_summary()
+	var sale_revision_before := int((app_shell.call("get_meta_result_delivery_snapshot") as Dictionary).get("current_snapshot_revision", -1))
+	deploy_page.call("_submit_explicit_card_action", &"warehouse", &"m3r_art22_route_collectible", &"m3r_art22_route_collectible")
+	deploy_page.call("_submit_explicit_card_action", &"warehouse", &"m3r_art22_route_collectible", &"m3r_art22_route_collectible")
+	var sale_state := deploy_page.call("get_meta_transaction_snapshot") as Dictionary
+	var sale_result := sale_state.get("last_result", {}) as Dictionary
+	var sale_after: Dictionary = adapter.get_summary()
+	var sale_delivery_snapshot := app_shell.call("get_meta_result_delivery_snapshot") as Dictionary
+	var sale_delivery := sale_delivery_snapshot.get("last_delivery", {}) as Dictionary
+	var sale_value := int(collectible.get("base_value", -1))
+	_check(not bool(sale_state.get("pending", true)), "Production sale remained pending after synchronous result")
+	_check(bool(sale_result.get("ok", false)) and StringName(sale_result.get("status", &"")) == &"sold", "Production sale result was not routed back to Deploy")
+	_check(StringName(sale_result.get("source_page", &"")) == &"deploy_prep" and str(sale_result.get("target_id", "")) == "art22_route_collectible", "Production sale lost exact instance correlation")
+	_check(int(sale_after.get("gold", -1)) == int(sale_before.get("gold", 0)) + sale_value, "Production sale did not apply the exact collectible value")
+	_check(not _instance_ids(sale_after.get("warehouse_items", [])).has("art22_route_collectible"), "Production sale did not remove the exact instance")
+	_check(_draft_signature((deploy_page.get("current_model") as Dictionary).get("config", {})) == draft_before, "Production sale refresh lost the Deploy draft")
+	_check(str((deploy_page.get("current_model") as Dictionary).get("action_message", "")).contains("%d 金币" % sale_value), "Production snapshot refresh overwrote the authoritative sale feedback")
+	_check(bool(sale_delivery.get("accepted", false)) and str(sale_delivery.get("request_id", "")) == str(sale_result.get("request_id", "")), "Production sale delivery trace lost the matching result")
+	_check(int(sale_delivery_snapshot.get("current_snapshot_revision", -1)) == sale_revision_before + 1, "Production sale did not refresh one authoritative snapshot")
+	_check(int(sale_delivery.get("snapshot_revision", -1)) == int(sale_delivery_snapshot.get("current_snapshot_revision", -2)) and int(sale_delivery.get("page_snapshot_revision", -1)) == int(sale_delivery_snapshot.get("current_snapshot_revision", -2)), "Production sale result was delivered before its authoritative snapshot")
+	adapter.clear()
+
+
+func _draft_signature(config: Dictionary) -> Dictionary:
+	return {
+		"map_config_id": str(config.get("map_config_id", "")),
+		"selected_objective_id": str(config.get("selected_objective_id", "")),
+		"selected_equipment_ids": _sorted_strings(config.get("selected_equipment_ids", [])),
+		"selected_consumable_ids": _sorted_strings(config.get("selected_consumable_ids", [])),
+	}
+
+
+func _instance_ids(raw_items: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if raw_items is Array:
+		for raw_item in raw_items as Array:
+			if raw_item is Dictionary:
+				result.append(str((raw_item as Dictionary).get("instance_id", "")))
+	result.sort()
+	return result
+
+
+func _sorted_strings(raw_values: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if raw_values is Array:
+		for raw_value in raw_values as Array:
+			result.append(str(raw_value))
+	result.sort()
+	return result
+
+
 func _frames(count: int) -> void:
 	for _index in range(count):
 		await process_frame
@@ -129,7 +220,7 @@ func _on_page_changed(page_id: StringName, _payload: Dictionary) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=3")
+		print("ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=3 meta=purchase,sell")
 		quit(0)
 		return
 	for failure in failures:

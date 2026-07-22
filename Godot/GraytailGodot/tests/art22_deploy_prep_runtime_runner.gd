@@ -320,6 +320,19 @@ func _check_non_map_split_and_explicit_actions(shell: Control) -> void:
 				var sale_action := meta_actions.back() as Dictionary
 				_check(StringName(sale_action.get("action", &"")) == &"sell_collectible", "Sell confirmation emitted the wrong domain action")
 				_check(str(sale_action.get("instance_id", "")) == "i2_collectible", "Sell confirmation lost exact collectible instance identity")
+				_check(not str(sale_action.get("request_id", "")).is_empty() and StringName(sale_action.get("source_page", &"")) == &"deploy_prep", "Sell request lacks transaction correlation")
+				var sale_transaction := shell.call("get_meta_transaction_snapshot") as Dictionary
+				_check(bool(sale_transaction.get("pending", false)), "Sell request did not enter pending before returning from emit")
+				shell.call("_on_detail_action_pressed", 0)
+				_check(meta_actions.size() == meta_before_sell + 1, "Pending sell request emitted a duplicate action")
+				var stale_sale := _meta_result_envelope(sale_action, true, &"sold", {"gold_gained": 13})
+				stale_sale["request_id"] = "stale-request"
+				_check(not bool(shell.call("apply_meta_action_result", stale_sale)), "Stale sell result was consumed")
+				_check(bool((shell.call("get_meta_transaction_snapshot") as Dictionary).get("pending", false)), "Stale sell result cleared the true pending request")
+				var sale_result := _meta_result_envelope(sale_action, true, &"sold", {"gold_gained": 13})
+				_check(bool(shell.call("apply_meta_action_result", sale_result)), "Matching sell result was not consumed")
+				_check(not bool((shell.call("get_meta_transaction_snapshot") as Dictionary).get("pending", true)), "Matching sell result did not clear pending")
+				_check(str((shell.get("current_model") as Dictionary).get("action_message", "")).contains("13 金币"), "Sell success did not show the authoritative gold gain")
 
 	shell.call("show_tab", &"claim")
 	await _frames(4)
@@ -358,8 +371,16 @@ func _check_non_map_split_and_explicit_actions(shell: Control) -> void:
 				var purchase_action := meta_actions.back() as Dictionary
 				_check(StringName(purchase_action.get("action", &"")) == &"purchase", "Explicit claim action emitted the wrong domain action")
 				_check(str(purchase_action.get("item_id", "")) == "con_ration", "Explicit purchase lost the exact catalog item id")
+				_check(not str(purchase_action.get("request_id", "")).is_empty() and StringName(purchase_action.get("source_page", &"")) == &"deploy_prep", "Purchase request lacks transaction correlation")
 				var purchase_carry_ids := purchase_action.get("selected_consumable_ids", []) as Array
 				_check(purchase_carry_ids.has("i2_con_ration_a") and not purchase_carry_ids.has("i2_con_ration_b"), "Purchase action attached the wrong exact carried instances")
+				_check(bool((shell.call("get_meta_transaction_snapshot") as Dictionary).get("pending", false)), "Purchase request did not enter pending")
+				shell.call("_on_detail_action_pressed", 0)
+				_check(meta_actions.size() == meta_before_purchase + 1, "Pending purchase emitted a duplicate action")
+				var purchase_failure := _meta_result_envelope(purchase_action, false, &"insufficient_gold")
+				_check(bool(shell.call("apply_meta_action_result", purchase_failure)), "Matching purchase failure was not consumed")
+				_check(not bool((shell.call("get_meta_transaction_snapshot") as Dictionary).get("pending", true)), "Purchase failure did not clear pending")
+				_check(str((shell.get("current_model") as Dictionary).get("action_message", "")).contains("金币不足"), "Purchase failure lacks player-facing feedback")
 
 	shell.call("show_tab", &"objective")
 	await _frames(3)
@@ -718,6 +739,24 @@ func _cancel_echo_event() -> InputEventKey:
 	event.pressed = true
 	event.echo = true
 	return event
+
+
+func _meta_result_envelope(action: Dictionary, ok: bool, status: StringName, extra_result: Dictionary = {}) -> Dictionary:
+	var result := extra_result.duplicate(true)
+	result["ok"] = ok
+	result["status"] = status
+	var action_id := StringName(action.get("action", &""))
+	return {
+		"request_id": str(action.get("request_id", "")),
+		"source_page": StringName(action.get("source_page", &"")),
+		"action": action_id,
+		"target_id": str(action.get("item_id", "")) if action_id == &"purchase" else str(action.get("instance_id", "")),
+		"ok": ok,
+		"status": status,
+		"duplicate": false,
+		"result": result,
+		"meta_progress_summary": {},
+	}
 
 
 func _on_route_intent(intent: Dictionary) -> void:

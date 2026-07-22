@@ -31,6 +31,8 @@ var _owned_settings_manager: Node
 var current_snapshot: Dictionary = {}
 var _has_snapshot := false
 var _snapshot_revision := 0
+var _meta_request_sequence := 0
+var _last_meta_result_delivery: Dictionary = {}
 var _current_page_id: StringName = PageRouterScript.PAGE_MAIN_MENU
 var _shell_active := true
 var _navigation_transition_coordinator: RefCounted
@@ -49,6 +51,7 @@ var _snapshot_refresh_counts: Dictionary = {
 func build() -> void:
 	_cancel_active_navigation_transition(&"shell_rebuilt", false)
 	_navigation_transition_coordinator = NavigationTransitionCoordinatorScript.new()
+	_last_meta_result_delivery.clear()
 	_clear_children()
 	_reset_page_snapshot_revisions()
 	if not visibility_changed.is_connected(_on_shell_visibility_changed):
@@ -328,7 +331,7 @@ func _build_deploy_prep() -> void:
 	if deploy_page.has_signal("deploy_start_intent_requested"):
 		deploy_page.connect("deploy_start_intent_requested", _on_deploy_start_intent_requested)
 	if deploy_page.has_signal("meta_action_requested"):
-		deploy_page.connect("meta_action_requested", _forward_meta_action)
+		deploy_page.connect("meta_action_requested", _forward_meta_action.bind(PageRouterScript.PAGE_DEPLOY_PREP))
 
 
 func _build_long_term() -> void:
@@ -339,16 +342,54 @@ func _build_long_term() -> void:
 	if long_term_page.has_signal("navigation_intent_requested"):
 		long_term_page.connect("navigation_intent_requested", _on_navigation_intent_requested)
 	if long_term_page.has_signal("meta_action_requested"):
-		long_term_page.connect("meta_action_requested", _forward_meta_action)
+		long_term_page.connect("meta_action_requested", _forward_meta_action.bind(PageRouterScript.PAGE_LONG_TERM))
 
 
-func _forward_meta_action(action: Dictionary) -> void:
+func _forward_meta_action(action: Dictionary, source_page: StringName = &"") -> void:
 	var forwarded := action.duplicate(true)
+	if source_page.is_empty():
+		source_page = StringName(forwarded.get("source_page", &""))
+	forwarded["source_page"] = source_page
+	if str(forwarded.get("request_id", "")).is_empty():
+		_meta_request_sequence += 1
+		forwarded["request_id"] = "app:%d:%d" % [get_instance_id(), _meta_request_sequence]
 	if deploy_page != null and deploy_page.has_method("get_selected_instance_ids"):
 		var selected: Dictionary = deploy_page.call("get_selected_instance_ids")
 		forwarded["selected_equipment_ids"] = (selected.get("selected_equipment_ids", []) as Array).duplicate()
 		forwarded["selected_consumable_ids"] = (selected.get("selected_consumable_ids", []) as Array).duplicate()
 	meta_action_requested.emit(forwarded)
+
+
+func apply_meta_action_result(envelope: Dictionary) -> bool:
+	var source_page := StringName(envelope.get("source_page", &""))
+	var target_page: Control
+	match source_page:
+		PageRouterScript.PAGE_DEPLOY_PREP:
+			target_page = deploy_page
+		PageRouterScript.PAGE_LONG_TERM:
+			target_page = long_term_page
+		_:
+			return false
+	if target_page == null or not target_page.has_method("apply_meta_action_result"):
+		return false
+	var accepted := bool(target_page.call("apply_meta_action_result", envelope))
+	_last_meta_result_delivery = {
+		"request_id": str(envelope.get("request_id", "")),
+		"source_page": source_page,
+		"action": StringName(envelope.get("action", &"")),
+		"target_id": str(envelope.get("target_id", "")),
+		"accepted": accepted,
+		"snapshot_revision": _snapshot_revision,
+		"page_snapshot_revision": int(_page_snapshot_revisions.get(source_page, -1)),
+	}
+	return accepted
+
+
+func get_meta_result_delivery_snapshot() -> Dictionary:
+	return {
+		"current_snapshot_revision": _snapshot_revision,
+		"last_delivery": _last_meta_result_delivery.duplicate(true),
+	}
 
 
 func _build_placeholder_page(page_name: String, title: String, body: String) -> Control:

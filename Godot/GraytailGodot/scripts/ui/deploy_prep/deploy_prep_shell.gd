@@ -34,6 +34,7 @@ const CHARACTER_IDLE_FRAME_SECONDS := 0.34
 const CHARACTER_LOOK_FRAME_SECONDS := 0.42
 const CHARACTER_FIRST_LOOK_SECONDS := 5.0
 const CHARACTER_LOOK_INTERVAL_SECONDS := 10.0
+const META_DETAIL_ACTION_IDS := [&"purchase", &"sell"]
 
 var current_model: Dictionary = {}
 var current_snapshot: Dictionary = {}
@@ -70,6 +71,9 @@ var detail_feedback_label: Label
 var detail_primary_action_button: Button
 var detail_secondary_action_button: Button
 var detail_actions: Array[Dictionary] = []
+var pending_meta_action: Dictionary = {}
+var last_meta_action_result: Dictionary = {}
+var meta_request_sequence := 0
 var result_hint_panel: Panel
 var result_hint_label: Label
 var collapse_button: Button
@@ -129,6 +133,33 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	current_model = DeployPrepModelScript.model_with_tab(current_model, previous_tab)
 	_restore_model_state(previous_tab)
 	_refresh_all(true)
+
+
+func apply_meta_action_result(envelope: Dictionary) -> bool:
+	if pending_meta_action.is_empty():
+		return false
+	if str(envelope.get("request_id", "")) != str(pending_meta_action.get("request_id", "")):
+		return false
+	if StringName(envelope.get("source_page", &"")) != &"deploy_prep":
+		return false
+	if StringName(envelope.get("action", &"")) != StringName(pending_meta_action.get("action", &"")):
+		return false
+	if str(envelope.get("target_id", "")) != str(pending_meta_action.get("target_id", "")):
+		return false
+	pending_meta_action.clear()
+	last_meta_action_result = envelope.duplicate(true)
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, _meta_result_player_message(envelope))
+	_refresh_all(false)
+	return true
+
+
+func get_meta_transaction_snapshot() -> Dictionary:
+	return {
+		"pending": not pending_meta_action.is_empty(),
+		"pending_request": pending_meta_action.duplicate(true),
+		"last_result": last_meta_action_result.duplicate(true),
+		"request_sequence": meta_request_sequence,
+	}
 
 
 func set_page_active(value: bool) -> void:
@@ -283,6 +314,8 @@ func _clear_children() -> void:
 	detail_primary_action_button = null
 	detail_secondary_action_button = null
 	detail_actions.clear()
+	pending_meta_action.clear()
+	last_meta_action_result.clear()
 	result_hint_panel = null
 	result_hint_label = null
 	collapse_button = null
@@ -776,11 +809,13 @@ func _refresh_detail_action_button(button: Button, index: int, control_id: Strin
 		button.disabled = true
 		return
 	var action := detail_actions[index]
-	var enabled := bool(action.get("enabled", false))
+	var action_id := StringName(action.get("id", action.get("action", &"")))
+	var meta_blocked := not pending_meta_action.is_empty() and action_id in META_DETAIL_ACTION_IDS
+	var enabled := bool(action.get("enabled", false)) and not meta_blocked
 	button.visible = true
 	button.disabled = not enabled
-	button.text = str(action.get("label", "查看"))
-	button.tooltip_text = _detail_action_reason(action)
+	button.text = "处理中…" if meta_blocked and _pending_matches_detail_action(action_id) else str(action.get("label", "查看"))
+	button.tooltip_text = "正在等待基地确认" if meta_blocked else _detail_action_reason(action)
 	_apply_image_button_surface(button, &"danger" if bool(action.get("destructive", false)) else control_id, &"normal" if enabled else &"disabled")
 
 
@@ -797,6 +832,11 @@ func _detail_action_reason(action: Dictionary) -> String:
 		&"only_available_in_run": return "只能在探索中使用"
 		&"supply_slots_full": return "携带栏已满"
 	return "当前不可操作"
+
+
+func _pending_matches_detail_action(action_id: StringName) -> bool:
+	var pending_action := StringName(pending_meta_action.get("action", &""))
+	return (action_id == &"purchase" and pending_action == &"purchase") or (action_id == &"sell" and pending_action == &"sell_collectible")
 
 
 func _refresh_tab_buttons() -> void:
@@ -997,6 +1037,10 @@ func _on_detail_action_pressed(index: int) -> void:
 	if not bool(action.get("enabled", false)):
 		return
 	var action_id := StringName(action.get("id", action.get("action", &"")))
+	if not pending_meta_action.is_empty() and action_id in META_DETAIL_ACTION_IDS:
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "上一项基地操作仍在确认，请稍候。")
+		_refresh_all(false)
+		return
 	var payload := _dictionary_from(action.get("payload", {}))
 	match action_id:
 		&"select_map":
@@ -1016,11 +1060,24 @@ func _submit_explicit_card_action(domain_tab: StringName, domain_card_id: String
 	var result := DeployConfigScript.apply_card_action(_config(), domain_tab, domain_card_id)
 	var meta_action := _dictionary_from(result.get("meta_action", {}))
 	if not meta_action.is_empty():
+		if not pending_meta_action.is_empty():
+			current_model = DeployPrepModelScript.model_with_action_message(current_model, "上一项基地操作仍在确认，请稍候。")
+			_refresh_all(false)
+			return
 		meta_action["selected_equipment_ids"] = _array_from(_config().get("selected_equipment_ids", []))
 		meta_action["selected_consumable_ids"] = _array_from(_config().get("selected_consumable_ids", []))
-		meta_action_requested.emit(meta_action)
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, str(result.get("message", "正在提交操作。")))
+		meta_request_sequence += 1
+		meta_action["request_id"] = "deploy:%d:%d" % [get_instance_id(), meta_request_sequence]
+		meta_action["source_page"] = &"deploy_prep"
+		pending_meta_action = {
+			"request_id": str(meta_action.get("request_id", "")),
+			"source_page": &"deploy_prep",
+			"action": StringName(meta_action.get("action", &"")),
+			"target_id": _meta_action_target_id(meta_action),
+		}
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, _meta_pending_player_message(meta_action))
 		_refresh_all(false)
+		meta_action_requested.emit(meta_action)
 		return
 	current_model = DeployPrepModelScript.model_with_config(
 		current_model,
@@ -1029,6 +1086,40 @@ func _submit_explicit_card_action(domain_tab: StringName, domain_card_id: String
 		str(result.get("message", ""))
 	)
 	_refresh_all(bool(result.get("changed", false)))
+
+
+func _meta_action_target_id(action: Dictionary) -> String:
+	match StringName(action.get("action", &"")):
+		&"purchase": return str(action.get("item_id", ""))
+		&"sell_collectible": return str(action.get("instance_id", ""))
+	return ""
+
+
+func _meta_pending_player_message(action: Dictionary) -> String:
+	return "正在确认购买…" if StringName(action.get("action", &"")) == &"purchase" else "正在确认出售…"
+
+
+func _meta_result_player_message(envelope: Dictionary) -> String:
+	var result := _dictionary_from(envelope.get("result", {}))
+	var status := StringName(envelope.get("status", result.get("status", &"unknown")))
+	if bool(envelope.get("ok", result.get("ok", false))):
+		match status:
+			&"purchased": return "购买成功，物品已进入仓库。"
+			&"sold": return "出售成功，获得 %d 金币。" % int(result.get("gold_gained", 0))
+			&"duplicate_ignored": return "该操作已完成，无需重复提交。"
+		return "基地操作已完成。"
+	match status:
+		&"insufficient_gold": return "金币不足，购买未发生。"
+		&"locked": return "该物品尚未解锁，购买未发生。"
+		&"write_blocked": return "当前存档不可写，余额与库存未改变。"
+		&"save_failed": return "保存失败，余额与库存已恢复。"
+		&"configured_item_blocked": return "该物品正在出勤配置中，请先移出后再出售。"
+		&"instance_not_found": return "该物品已不存在，未发生出售。"
+		&"item_not_sellable": return "该物品不可出售。"
+		&"request_id_conflict": return "操作校验冲突，未发生交易。"
+		&"unknown_shop_item", &"item_definition_missing": return "该商品暂不可购买。"
+		&"meta_progress_adapter_missing": return "基地档案暂不可用，未发生交易。"
+	return "基地操作未完成，请稍后重试。"
 
 
 func _on_primary_action_pressed() -> void:

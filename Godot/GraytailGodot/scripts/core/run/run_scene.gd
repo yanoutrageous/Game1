@@ -934,27 +934,16 @@ func _on_long_term_entry_requested(entry_id: StringName) -> void:
 
 
 func _on_m7_meta_action_requested(action: Dictionary) -> void:
-	if meta_progress_adapter == null:
+	if runtime_controller == null:
 		return
-	var blocked_ids: Array = action.get("selected_equipment_ids", []) + action.get("selected_consumable_ids", [])
-	var result := {}
-	match StringName(action.get("action", &"")):
-		&"purchase":
-			result = meta_progress_adapter.purchase_item(str(action.get("item_id", "")))
-		&"sell_collectible":
-			result = meta_progress_adapter.sell_collectible(str(action.get("instance_id", "")), blocked_ids)
-		&"complete_research":
-			result = meta_progress_adapter.complete_research(str(action.get("research_id", "")), blocked_ids)
-		&"claim_goal":
-			result = meta_progress_adapter.claim_goal_reward(str(action.get("goal_kind", "")), str(action.get("goal_id", "")))
-		&"mark_viewed":
-			result = meta_progress_adapter.mark_long_term_viewed(str(action.get("view_kind", "")))
-		_:
-			result = {"ok": false, "status": "unknown_meta_action"}
+	var envelope: Dictionary = runtime_controller.execute_meta_action(action)
+	var result := (envelope.get("result", {}) as Dictionary).duplicate(true)
 	last_command_result = result.duplicate(true)
 	_show_command_feedback(result)
 	if ui_shell != null:
 		ui_shell.call("apply_snapshot", _shell_snapshot())
+		if ui_shell.has_method("apply_meta_action_result"):
+			ui_shell.call("apply_meta_action_result", envelope)
 
 
 func _handle_interact_pressed() -> void:

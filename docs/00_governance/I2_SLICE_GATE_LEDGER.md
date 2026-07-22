@@ -33,7 +33,7 @@ entry full/head: 39/39 PASS
 | I2.0 | 启动审计、契约、评估、矩阵、架构、验证计划、门账、入口 | I1 closed + exact entry baseline | `ACCEPTED_WITH_NOTES` | 独立复核修正 I1/I2 报告字段后，16/16 allowed paths、43/43 IDs、refs/UTF-8/YAML basic/diff/static 与 quick 21/21 PASS；无 runtime claim |
 | I2.1 | 共享导航/转场、设置、focus/modal、character presentation、style/layer seam | I2.0；设置字段与动画技术决策 | `IN_PROGRESS` | I2.1A/B/C 的路由、真实设置、输入、focus 与生命周期基础已 `READY_FOR_REVIEW`；character/transition/style seam 随 I2.2 继续，不提前关闭 I2.1 |
 | I2.2 | 主菜单文字/场景/锚点/动效/空间转场 | I2.1 最小 seam | `IN_PROGRESS` | I2.2A 主菜单安全回退切片已 `ACCEPTED_WITH_NOTES`；完整洞口步行动画、下层连续背景与玩家手感复核仍待后续切片，不关闭 I2.2 |
-| I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `IN_PROGRESS` | I2.3A 同页双栏、八地图精确投影与显式详情动作已 `ACCEPTED_WITH_NOTES`；批量售卖仍禁止，真实经济结果关联另设同阶段 gate |
+| I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `ACCEPTED_WITH_NOTES` | I2.3A 同页双栏与八地图精确投影、I2.3B 单件购买/出售真实事务闭环均已接受；批量售卖继续禁止，玩家动态手感并入 I2.7 综合复核 |
 | I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `NOT_STARTED` | 先证明任务/成就/红点/领取不丢失，再改 Goal 入口 |
 | I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `AUDIT_REQUIRED` | 独立 I2.5A 结果框/协议色板/物品 binding 已 `READY_FOR_REVIEW`；其余局内职责仍待分项授权 |
 | I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `IN_PROGRESS` | I2.6A v2 工作负载与 I2.6B pre-authority combat asset admission 已 `READY_FOR_REVIEW`；特殊房、结算与 visible 验收仍待后续 gate |
@@ -497,3 +497,60 @@ independent reviews: exact/domain, split-view, duplicate-instance, left/right pr
 ```
 
 接受边界：本记录只接受 I2.3A，不关闭 I2.3 或 I2。真实 purchase/sell 结果关联、失败回执与刷新证明进入 I2.3B；无原子命令、幂等、确认和回滚前继续禁止批量售卖。截图仅为人工布局检查点，不构成自动玩家手感 PASS；full/worktree、commit 后 full/head 与最终 capability promotion 仍留到 I2.7。
+
+## 15. I2.3B Deploy 单件经济事务闭环门（2026-07-22）
+
+```text
+status: ACCEPTED_WITH_NOTES (single-item economy closure; I2 remains active)
+feedback: DEPLOY-04, DEPLOY-05, DEPLOY-08, CROSS-04, CROSS-07
+rollback: 44c1907 (I2.3A accepted checkpoint)
+```
+
+代码优先审计确认购买/出售的真实权威已存在于 `MetaProgressAdapter`，保存失败也已有内存回滚；当前缺口是 Deploy 的同步调用时序会覆盖真实结果，且没有请求/结果关联或同请求去重。本门只为现有单件 `purchase` / `sell_collectible` 建立会话内事务 envelope：UI 在发出前进入 pending，运行时按 `request_id + normalized payload` 去重并执行一次，AppShell 把匹配结果返回来源页，Deploy 只消费自己的匹配结果并从真实快照刷新余额与库存。价格与售价继续由 catalog/adapter 决定，UI payload 不得成为经济权威。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+Godot/GraytailGodot/scripts/core/run/run_runtime_controller.gd
+Godot/GraytailGodot/scripts/core/run/run_scene.gd
+Godot/GraytailGodot/scripts/ui/app_shell/app_shell.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_config.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_model.gd
+Godot/GraytailGodot/scripts/ui/deploy_prep/deploy_prep_shell.gd
+Godot/GraytailGodot/tests/i2_deploy_meta_action_transaction_runner.gd
+Godot/GraytailGodot/tests/art22_deploy_prep_runtime_runner.gd
+Godot/GraytailGodot/tests/art22_deploy_prep_main_route_runner.gd
+Godot/GraytailGodot/tests/m7_meta_ui_runtime_runner.gd
+tools/i1/validation_manifest.json
+```
+
+保护边界：`MetaProgressAdapter`、`SaveAdapter`/save schema、`RunStateMachine`、`RunAssetLedger`、terminal settlement、地图/content schema、scene/resource/素材/import/translation 均禁止修改；不持久化 request ID，不引入网络或异步队列，不新增 `instance_ids`、循环出售或批量出售入口。
+
+审计中确认仅有控制器、页面与真实适配器的分层测试不足以证明同步生产链的 signal bind、快照先刷新和结果后回送顺序，因此本门补充允许既有 `art22_deploy_prep_main_route_runner.gd`，只用于 `Main/RunScene/AppShell/Deploy/MetaProgressAdapter` 的购买与出售整链断言；不扩大任何 production 写入边界。
+
+### 15.1 I2.3B 复核与接受记录
+
+单件购买与出售现在统一由 `RunRuntimeController.execute_meta_action()` 包装现有 `MetaProgressAdapter` 权威：请求以 `request_id + normalized payload` 在同一 controller/adapter 会话完整去重，同 ID 同 payload 返回不可变缓存副本，同 ID 异 payload 以 `request_id_conflict` fail closed；切换适配器才清空会话缓存。UI 不计算价格、售价或成功结果。Deploy 在同步 emit 前建立 pending，阻止重复提交，只消费 request/source/action/target 全部匹配的结果；RunScene 先应用真实 meta 快照，再把事务 envelope 回送来源页。AppShell 的只读 delivery trace 记录结果交付时的全局与页面 snapshot revision，生产整链测试要求每笔交易恰好刷新一次且结果交付 revision 与刷新后 revision 相同，从而阻断调用顺序回退。
+
+真实适配器回归证明：购买按 catalog 精确扣款且只增加一个真实实例；出售只删除 exact `instance_id` 并按 `base_value` 精确加款；锁定购买、配置中物品出售等失败前后 gold/warehouse 完整不变；同请求不二次写入；购买与出售刷新后地图、本局委托、装备及消耗品草稿保持。玩家页显示购买成功、真实出售获币及已登记失败文案。批量/循环出售、持久化 request ID、网络/异步队列与经济 schema 修改仍不在本门授权内。
+
+验证记录：
+
+```text
+I2_DEPLOY_META_ACTION_TRANSACTION=PASS actions=5 duplicate=cached conflict=fail_closed cache=session authority=adapter
+M7_META_UI_RUNTIME:PASS long_term=PASS deploy_refresh=PASS sale_confirm=PASS meta_transactions=PASS map_fact=PASS
+ART22_DEPLOY_PREP_RUNTIME=PASS tabs=5 map_page=single map_scales=3 map_difficulties=2,3,3 exact_maps=8 split=selection_detail explicit_actions=local,meta summary=overview,config,effect,objective card_height=76 active_run=locked input=focus,escape,reduced_motion
+ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=3 meta=purchase,sell
+I1_SAVE_RELIABILITY=PASS atomic_replace=PASS backup_recovery=PASS future_schema=PASS
+quick/worktree: 33/33 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T015916488Z_9abf1c12\report.json; SHA-256=879914C4B1A777F7284BB6CDDB1F28343CE9D4FF244EC44AE7B0C5F818704939
+ui/worktree: 34/34 PASS; report=E:\AGAME1\.tmp\worktrees\i2\.tmp\i1\20260722T015916486Z_414e3e9e\report.json; SHA-256=8054E52DF7B54DEE4C04413BE936C87422BAAE8CF1D82976BB755B188B6BE129
+manifest SHA-256: 7CB171162F5862BE017520472B0224266904EE3DDC9A0976F50ED325E4633ACB; pollution_guard=PASS
+independent final review: P0=0, P1=0, P2=0
+full/worktree and exact full/head: NOT_RUN (reserved for I2.7 closeout)
+player input-feel acceptance: NOT_RUN (I2.7 integrated manual route)
+```
+
+接受边界：本记录关闭 I2.3 的已授权单件经济与信息架构范围，不关闭 I2；批量出售仍需独立原子事务、确认、幂等、失败回滚和产品规则后才能进入。动态鼠标/手柄手感、生产长时间交互与跨页面综合说明继续由 I2.7 验收。
+
+停止条件：购买成功必须精确扣款并只新增一个真实实例；出售成功必须只删除指定实例并精确加款；失败前后余额/库存不变；同 ID 同 payload 返回缓存结果且不得二次写入，同 ID 异 payload fail closed，不同 ID 的同类购买仍允许。pending 必须先于同步 emit 建立，pending 时禁止重复提交；只有匹配结果能清除 pending，陈旧/未知/其他页面结果必须忽略。`insufficient_gold`、`locked`、`write_blocked`、`save_failed`、`configured_item_blocked`、`instance_not_found`、`item_not_sellable` 均需玩家文案。若需要改写 MetaProgress/Save schema、根据快照差值猜测结果、或无法证明保存失败不改变经济状态，立即停止本门。
