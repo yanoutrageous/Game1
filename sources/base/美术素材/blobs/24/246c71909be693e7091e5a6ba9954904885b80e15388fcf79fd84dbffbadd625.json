@@ -1,0 +1,123 @@
+{
+  "slice": "ART21R2 Slice 9 Main Menu source cut",
+  "source_sheet": "D:\\AGAME1\\sources\\draw\\Main.png",
+  "source_status": "Main.png no-text background; direct crop source, not generated",
+  "write_runtime": true,
+  "count": 6,
+  "rows": [
+    {
+      "asset_id": "ui.art21r2.main_menu.title_board",
+      "visual_key": "art21r2.main_menu.title_board",
+      "crop_rect": [
+        58,
+        88,
+        690,
+        190
+      ],
+      "cut_sha256": "8E1E02EDDF404ED01761E72CA2C340681196D9D6C17E2D9D22910B4B28FB6ED0",
+      "runtime_sha256": "8E1E02EDDF404ED01761E72CA2C340681196D9D6C17E2D9D22910B4B28FB6ED0",
+      "purple_like_after": 0,
+      "output_size": [
+        690,
+        190
+      ],
+      "cut_write_status": "overwritten_by_force",
+      "runtime_write_status": "overwritten_by_force"
+    },
+    {
+      "asset_id": "ui.art21r2.main_menu.board_header",
+      "visual_key": "art21r2.main_menu.board_header",
+      "crop_rect": [
+        1170,
+        78,
+        388,
+        184
+      ],
+      "cut_sha256": "B4C537FB815F1E830943BC4DA8A0D253D019B7FA1FEA8CB5ADBBFCCC00455AD9",
+      "runtime_sha256": "B4C537FB815F1E830943BC4DA8A0D253D019B7FA1FEA8CB5ADBBFCCC00455AD9",
+      "purple_like_after": 0,
+      "output_size": [
+        388,
+        184
+      ],
+      "cut_write_status": "already_present_same_hash",
+      "runtime_write_status": "already_present_same_hash"
+    },
+    {
+      "asset_id": "ui.art21r2.main_menu.entry_plank.deploy",
+      "visual_key": "art21r2.main_menu.entry_plank.deploy",
+      "crop_rect": [
+        1178,
+        282,
+        382,
+        138
+      ],
+      "cut_sha256": "6BD9BF0335108E8216F31AFF4E62EC126CAE9CD38ABD5BF76936A9DF1EF9F437",
+      "runtime_sha256": "6BD9BF0335108E8216F31AFF4E62EC126CAE9CD38ABD5BF76936A9DF1EF9F437",
+      "purple_like_after": 0,
+      "output_size": [
+        382,
+        138
+      ],
+      "cut_write_status": "already_present_same_hash",
+      "runtime_write_status": "already_present_same_hash"
+    },
+    {
+      "asset_id": "ui.art21r2.main_menu.entry_plank.long_term",
+      "visual_key": "art21r2.main_menu.entry_plank.long_term",
+      "crop_rect": [
+        1190,
+        424,
+        368,
+        132
+      ],
+      "cut_sha256": "DBF24F93A995705F2D8E31F48FCF63C0659EAC592B68AEB8DF31D5693D6AA478",
+      "runtime_sha256": "DBF24F93A995705F2D8E31F48FCF63C0659EAC592B68AEB8DF31D5693D6AA478",
+      "purple_like_after": 0,
+      "output_size": [
+        368,
+        132
+      ],
+      "cut_write_status": "already_present_same_hash",
+      "runtime_write_status": "already_present_same_hash"
+    },
+    {
+      "asset_id": "ui.art21r2.main_menu.entry_plank.settings",
+      "visual_key": "art21r2.main_menu.entry_plank.settings",
+      "crop_rect": [
+        1208,
+        562,
+        348,
+        132
+      ],
+      "cut_sha256": "58834CB597C67AEE06F6AF1266A460B62C185B82C5352B51C9ED8CD9C676FC01",
+      "runtime_sha256": "58834CB597C67AEE06F6AF1266A460B62C185B82C5352B51C9ED8CD9C676FC01",
+      "purple_like_after": 0,
+      "output_size": [
+        348,
+        132
+      ],
+      "cut_write_status": "already_present_same_hash",
+      "runtime_write_status": "already_present_same_hash"
+    },
+    {
+      "asset_id": "ui.art21r2.main_menu.entry_plank.exit",
+      "visual_key": "art21r2.main_menu.entry_plank.exit",
+      "crop_rect": [
+        1226,
+        704,
+        328,
+        128
+      ],
+      "cut_sha256": "F1A47C9750DA8E9907FC1C675D18D8E9D8BADB3B7B8741894111B46B3FA44B85",
+      "runtime_sha256": "F1A47C9750DA8E9907FC1C675D18D8E9D8BADB3B7B8741894111B46B3FA44B85",
+      "purple_like_after": 0,
+      "output_size": [
+        328,
+        128
+      ],
+      "cut_write_status": "already_present_same_hash",
+      "runtime_write_status": "already_present_same_hash"
+    }
+  ]
+}

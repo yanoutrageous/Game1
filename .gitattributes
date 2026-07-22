@@ -4,6 +4,13 @@
 *.jpg binary
 *.jpeg binary
 *.webp binary
+*.mp4 binary
+
+# I3 Base originals and content-addressed art objects retain source bytes.
+/sources/base/原始策划案/** binary
+/sources/base/美术素材/blobs/** binary
+/sources/base/manifests/*.csv text eol=lf
+/sources/base/manifests/*.json text eol=lf
 
 # Godot binary resources should not be line-ending normalized.
 *.res binary

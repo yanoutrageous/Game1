@@ -1,0 +1,278 @@
+[
+  {
+    "id": "zuoce_mianban",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      43,
+      30,
+      727,
+      610
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\zuoce_mianban.png",
+    "original_size": [
+      684,
+      580
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      684,
+      580
+    ]
+  },
+  {
+    "id": "xieyi_mianban",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      880,
+      39,
+      1185,
+      428
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\xieyi_mianban.png",
+    "original_size": [
+      305,
+      389
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      305,
+      389
+    ]
+  },
+  {
+    "id": "kuaijie_lan",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      769,
+      467,
+      1359,
+      643
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\kuaijie_lan.png",
+    "original_size": [
+      590,
+      176
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      590,
+      176
+    ]
+  },
+  {
+    "id": "jiaohu_tishi",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      55,
+      642,
+      507,
+      803
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\jiaohu_tishi.png",
+    "original_size": [
+      452,
+      161
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      452,
+      161
+    ]
+  },
+  {
+    "id": "xuetiao_kuang",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      575,
+      661,
+      994,
+      733
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\xuetiao_kuang.png",
+    "original_size": [
+      419,
+      72
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      419,
+      72
+    ]
+  },
+  {
+    "id": "xuetiao_tianchong",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      1173,
+      686,
+      1272,
+      787
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\xuetiao_tianchong.png",
+    "original_size": [
+      99,
+      101
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui\\icons\\xuetiao_tianchong.png",
+    "size": [
+      99,
+      101
+    ]
+  },
+  {
+    "id": "jinbi_icon",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      1043,
+      692,
+      1129,
+      781
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\jinbi_icon.png",
+    "original_size": [
+      86,
+      89
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui\\icons\\jinbi_icon.png",
+    "size": [
+      86,
+      89
+    ]
+  },
+  {
+    "id": "lingjian_icon",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      575,
+      736,
+      994,
+      808
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\lingjian_icon.png",
+    "original_size": [
+      419,
+      72
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      419,
+      72
+    ]
+  },
+  {
+    "id": "beibao_icon",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      312,
+      838,
+      501,
+      1024
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\beibao_icon.png",
+    "original_size": [
+      189,
+      186
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      189,
+      186
+    ]
+  },
+  {
+    "id": "xieyi_huizhang",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      967,
+      848,
+      1376,
+      1034
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\xieyi_huizhang.png",
+    "original_size": [
+      409,
+      186
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      409,
+      186
+    ]
+  },
+  {
+    "id": "tishi_kuang",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      69,
+      851,
+      247,
+      1019
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\tishi_kuang.png",
+    "original_size": [
+      178,
+      168
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      178,
+      168
+    ]
+  },
+  {
+    "id": "11_jiemian_weimingming",
+    "type": "ui",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+    "bbox": [
+      592,
+      857,
+      915,
+      1024
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\11_jiemian_weimingming.png",
+    "original_size": [
+      323,
+      167
+    ],
+    "anchor": "center",
+    "detection_mode": "connected_components",
+    "game_ready": null,
+    "size": [
+      323,
+      167
+    ]
+  }
+]

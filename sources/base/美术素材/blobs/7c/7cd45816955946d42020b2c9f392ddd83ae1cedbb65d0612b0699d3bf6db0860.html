@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Draw Asset Preview</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #101114;
+      color: #eceef2;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 20px;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    h2 {
+      margin: 28px 0 12px;
+      font-size: 18px;
+      font-weight: 650;
+      color: #b9d6ff;
+    }
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+      gap: 14px;
+    }
+    .asset-card {
+      margin: 0;
+      padding: 10px;
+      border: 1px solid #2b3038;
+      border-radius: 8px;
+      background:
+        linear-gradient(45deg, #242832 25%, transparent 25%),
+        linear-gradient(-45deg, #242832 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #242832 75%),
+        linear-gradient(-45deg, transparent 75%, #242832 75%);
+      background-color: #181b21;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      background-size: 16px 16px;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: 128px;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+    figcaption {
+      margin-top: 8px;
+      min-height: 34px;
+      overflow-wrap: anywhere;
+      font-size: 12px;
+      line-height: 1.35;
+      color: #d9dde6;
+    }
+  </style>
+</head>
+<body>
+  <h1>Draw Asset Preview</h1>
+  <section><h2>Characters</h2><div class="asset-grid"><figure class="asset-card"><img src="30_game_ready/characters/huanxiong/huanxiong_sheet.png" alt="huanxiong_sheet"><figcaption>huanxiong_sheet</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/characters/huli/huli_sheet.png" alt="huli_sheet"><figcaption>huli_sheet</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/characters/mao/mao_sheet.png" alt="mao_sheet"><figcaption>mao_sheet</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/characters/tuzi/tuzi_sheet.png" alt="tuzi_sheet"><figcaption>tuzi_sheet</figcaption></figure></div></section><section><h2>Props</h2><div class="asset-grid"><figure class="asset-card"><img src="30_game_ready/props/00_baoxiang_kai.png" alt="00_baoxiang_kai"><figcaption>00_baoxiang_kai</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/01_cheli_zhuangzhi_an.png" alt="01_cheli_zhuangzhi_an"><figcaption>01_cheli_zhuangzhi_an</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/02_cheli_zhuangzhi_liang.png" alt="02_cheli_zhuangzhi_liang"><figcaption>02_cheli_zhuangzhi_liang</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/03_baoxiang_guan.png" alt="03_baoxiang_guan"><figcaption>03_baoxiang_guan</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/04_shangren_tai.png" alt="04_shangren_tai"><figcaption>04_shangren_tai</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/05_yichang_hexin.png" alt="05_yichang_hexin"><figcaption>05_yichang_hexin</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/06_dici_xianjing.png" alt="06_dici_xianjing"><figcaption>06_dici_xianjing</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/07_lingjian_dui.png" alt="07_lingjian_dui"><figcaption>07_lingjian_dui</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/08_saomiaoyi.png" alt="08_saomiaoyi"><figcaption>08_saomiaoyi</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/09_jinbi_dui.png" alt="09_jinbi_dui"><figcaption>09_jinbi_dui</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/10_yiliaobao.png" alt="10_yiliaobao"><figcaption>10_yiliaobao</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/props/11_wuzi_xiang.png" alt="11_wuzi_xiang"><figcaption>11_wuzi_xiang</figcaption></figure></div></section><section><h2>Icons 64</h2><div class="asset-grid"><figure class="asset-card"><img src="30_game_ready/icons/64/00_wanjia_dingwei.png" alt="00_wanjia_dingwei"><figcaption>00_wanjia_dingwei</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/01_weizhi_ge.png" alt="01_weizhi_ge"><figcaption>01_weizhi_ge</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/02_yitan_ge.png" alt="02_yitan_ge"><figcaption>02_yitan_ge</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/03_saomiao_ge.png" alt="03_saomiao_ge"><figcaption>03_saomiao_ge</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/04_biaoji_qi.png" alt="04_biaoji_qi"><figcaption>04_biaoji_qi</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/05_dici_xianjing_icon.png" alt="05_dici_xianjing_icon"><figcaption>05_dici_xianjing_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/06_guaiwu_icon.png" alt="06_guaiwu_icon"><figcaption>06_guaiwu_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/07_baoxiang_icon.png" alt="07_baoxiang_icon"><figcaption>07_baoxiang_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/08_cheli_icon.png" alt="08_cheli_icon"><figcaption>08_cheli_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/09_chukou_icon.png" alt="09_chukou_icon"><figcaption>09_chukou_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/10_yiqingli_icon.png" alt="10_yiqingli_icon"><figcaption>10_yiqingli_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/11_shuzi_1.png" alt="11_shuzi_1"><figcaption>11_shuzi_1</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/12_shuzi_2.png" alt="12_shuzi_2"><figcaption>12_shuzi_2</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/64/13_shuzi_3.png" alt="13_shuzi_3"><figcaption>13_shuzi_3</figcaption></figure></div></section><section><h2>Icons 32</h2><div class="asset-grid"><figure class="asset-card"><img src="30_game_ready/icons/32/00_wanjia_dingwei.png" alt="00_wanjia_dingwei"><figcaption>00_wanjia_dingwei</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/01_weizhi_ge.png" alt="01_weizhi_ge"><figcaption>01_weizhi_ge</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/02_yitan_ge.png" alt="02_yitan_ge"><figcaption>02_yitan_ge</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/03_saomiao_ge.png" alt="03_saomiao_ge"><figcaption>03_saomiao_ge</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/04_biaoji_qi.png" alt="04_biaoji_qi"><figcaption>04_biaoji_qi</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/05_dici_xianjing_icon.png" alt="05_dici_xianjing_icon"><figcaption>05_dici_xianjing_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/06_guaiwu_icon.png" alt="06_guaiwu_icon"><figcaption>06_guaiwu_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/07_baoxiang_icon.png" alt="07_baoxiang_icon"><figcaption>07_baoxiang_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/08_cheli_icon.png" alt="08_cheli_icon"><figcaption>08_cheli_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/09_chukou_icon.png" alt="09_chukou_icon"><figcaption>09_chukou_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/10_yiqingli_icon.png" alt="10_yiqingli_icon"><figcaption>10_yiqingli_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/11_shuzi_1.png" alt="11_shuzi_1"><figcaption>11_shuzi_1</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/12_shuzi_2.png" alt="12_shuzi_2"><figcaption>12_shuzi_2</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/icons/32/13_shuzi_3.png" alt="13_shuzi_3"><figcaption>13_shuzi_3</figcaption></figure></div></section><section><h2>UI Icons</h2><div class="asset-grid"><figure class="asset-card"><img src="30_game_ready/ui/icons/jinbi_icon.png" alt="jinbi_icon"><figcaption>jinbi_icon</figcaption></figure>
+<figure class="asset-card"><img src="30_game_ready/ui/icons/xuetiao_tianchong.png" alt="xuetiao_tianchong"><figcaption>xuetiao_tianchong</figcaption></figure></div></section><section><h2>Rooms</h2><div class="asset-grid"><figure class="asset-card"><img src="30_game_ready/rooms/fangjian_jichu_1024.png" alt="fangjian_jichu_1024"><figcaption>fangjian_jichu_1024</figcaption></figure></div></section>
+</body>
+</html>

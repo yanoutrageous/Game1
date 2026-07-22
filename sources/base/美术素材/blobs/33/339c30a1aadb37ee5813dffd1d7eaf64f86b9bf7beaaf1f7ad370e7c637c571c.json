@@ -1,0 +1,14 @@
+{
+  "source_sheet": "D:\\AGAME1\\sources\\draw\\Zujian3.png",
+  "source_candidate": "D:\\AGAME1\\sources\\draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_001.png",
+  "source_sha256": "A36FD3D879EFFE7AECA5EEC7B031A9FAF80D3E6E518E64B0D437D24736793D1F",
+  "candidate_sha256": "1159345959681A9784DE24096AF5D5B4C293FE7447E77AABA39E43F81D70E23D",
+  "cut_sha256": "7CBB46D500EE5E620BD10152BC7F6FDA9D0199958C5A7666482035CFCD1F1104",
+  "rows": 3,
+  "write_runtime": true,
+  "force": true,
+  "purple_like_before": 3690,
+  "purple_like_after": 0,
+  "output_size": "667x562",
+  "result": "runtime_written"
+}

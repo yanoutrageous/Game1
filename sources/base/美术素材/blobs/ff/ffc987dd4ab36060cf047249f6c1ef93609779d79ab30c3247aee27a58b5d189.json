@@ -1,0 +1,1902 @@
+{
+  "metadata": {
+    "source_manifest": "D:\\A GAME\\26.5.30 GameJam\\Draw\\_manifest\\asset_manifest.json",
+    "candidate_dir": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates",
+    "selection_policy": "conservative AI self-check: A only for clear reusable assets; B for useful processed candidates; C/D not copied",
+    "quality_counts_after_selection": {
+      "B": 40,
+      "A": 44,
+      "C": 1
+    },
+    "selected_count": 85,
+    "copied_to_20_processed": 85,
+    "copied_to_30_game_ready": 44,
+    "last_supplemental_update": "2026-05-31",
+    "supplemental_update_note": "Added Main.png, Next.png reference, and selected deploy UI assets from 5.png."
+  },
+  "assets": {
+    "ui_tab_item_categories_strip": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_tab\\ui_tab_item_categories_strip.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\1\\1_candidate_010.png",
+      "source_sheet": "1.png",
+      "candidate_id": "1_candidate_010",
+      "category": "ui_tab",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_006",
+      "duplicate_choice": "chosen",
+      "usage": "item category tab strip",
+      "notes": "multi-tab strip; needs manual slicing",
+      "bbox": {
+        "x": 19,
+        "y": 295,
+        "width": 519,
+        "height": 69
+      }
+    },
+    "ui_title_extract_confirm_large": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_title_plate\\ui_title_extract_confirm_large.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\1\\1_candidate_018.png",
+      "source_sheet": "1.png",
+      "candidate_id": "1_candidate_018",
+      "category": "ui_title_plate",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "large evacuation confirmation title",
+      "notes": "duplicate of cleaner title concept; processed only",
+      "bbox": {
+        "x": 1214,
+        "y": 633,
+        "width": 292,
+        "height": 142
+      }
+    },
+    "ui_tag_currency_triplet": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_status_tag\\ui_tag_currency_triplet.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\1\\1_candidate_019.png",
+      "source_sheet": "1.png",
+      "candidate_id": "1_candidate_019",
+      "category": "ui_status_tag",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "currency/account tag set",
+      "notes": "covers pending/locked/account but needs manual slicing",
+      "bbox": {
+        "x": 17,
+        "y": 680,
+        "width": 555,
+        "height": 100
+      }
+    },
+    "ui_protocol_5_to_1_strip": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_protocol\\ui_protocol_5_to_1_strip.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\1\\1_candidate_031.png",
+      "source_sheet": "1.png",
+      "candidate_id": "1_candidate_031",
+      "category": "ui_protocol",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_006",
+      "duplicate_choice": "chosen",
+      "usage": "protocol status strip 5 to 1",
+      "notes": "useful strip; needs manual slicing for individual states",
+      "bbox": {
+        "x": 720,
+        "y": 855,
+        "width": 790,
+        "height": 76
+      }
+    },
+    "ui_title_signal_lost": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_title_plate\\ui_title_signal_lost.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_title_plate\\ui_title_signal_lost.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_002.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_002",
+      "category": "ui_title_plate",
+      "quality": "A",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_023",
+      "duplicate_choice": "chosen",
+      "usage": "result title: signal lost",
+      "notes": "current accepted wording",
+      "bbox": {
+        "x": 292,
+        "y": 4,
+        "width": 240,
+        "height": 150
+      }
+    },
+    "ui_title_extraction_success": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_title_plate\\ui_title_extraction_success.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_title_plate\\ui_title_extraction_success.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_003.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_003",
+      "category": "ui_title_plate",
+      "quality": "A",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_023",
+      "duplicate_choice": "chosen",
+      "usage": "result title: job complete",
+      "notes": "current accepted wording",
+      "bbox": {
+        "x": 28,
+        "y": 8,
+        "width": 260,
+        "height": 147
+      }
+    },
+    "ui_title_extract_confirm": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_title_plate\\ui_title_extract_confirm.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_title_plate\\ui_title_extract_confirm.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_004.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_004",
+      "category": "ui_title_plate",
+      "quality": "A",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_023",
+      "duplicate_choice": "chosen",
+      "usage": "result title: evacuation confirm",
+      "notes": "current accepted wording",
+      "bbox": {
+        "x": 540,
+        "y": 9,
+        "width": 243,
+        "height": 150
+      }
+    },
+    "npc_portrait_a7_owl": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\npc_portrait\\npc_portrait_a7_owl.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_005.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_005",
+      "category": "npc_portrait",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_012",
+      "duplicate_choice": "chosen",
+      "usage": "NPC portrait A-7",
+      "notes": "portrait includes fixed label; processed only",
+      "bbox": {
+        "x": 827,
+        "y": 11,
+        "width": 181,
+        "height": 180
+      }
+    },
+    "npc_portrait_merchant_fox": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\npc_portrait\\npc_portrait_merchant_fox.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_006.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_006",
+      "category": "npc_portrait",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_011",
+      "duplicate_choice": "chosen",
+      "usage": "NPC portrait merchant",
+      "notes": "portrait includes fixed label; processed only",
+      "bbox": {
+        "x": 1024,
+        "y": 11,
+        "width": 177,
+        "height": 180
+      }
+    },
+    "npc_portrait_logistics_raccoon": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\npc_portrait\\npc_portrait_logistics_raccoon.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_007.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_007",
+      "category": "npc_portrait",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_024",
+      "duplicate_choice": "chosen",
+      "usage": "NPC portrait logistics",
+      "notes": "portrait includes fixed label; processed only",
+      "bbox": {
+        "x": 1220,
+        "y": 11,
+        "width": 175,
+        "height": 180
+      }
+    },
+    "ui_key_f": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_key_prompt\\ui_key_f.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_key_prompt\\ui_key_f.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_031.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_031",
+      "category": "ui_key_prompt",
+      "quality": "A",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_004",
+      "duplicate_choice": "chosen",
+      "usage": "keyboard prompt F",
+      "notes": "clear key prompt",
+      "bbox": {
+        "x": 807,
+        "y": 443,
+        "width": 65,
+        "height": 66
+      }
+    },
+    "ui_key_e": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_key_prompt\\ui_key_e.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_key_prompt\\ui_key_e.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_032.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_032",
+      "category": "ui_key_prompt",
+      "quality": "A",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_008",
+      "duplicate_choice": "chosen",
+      "usage": "keyboard prompt E",
+      "notes": "clear key prompt",
+      "bbox": {
+        "x": 874,
+        "y": 443,
+        "width": 66,
+        "height": 66
+      }
+    },
+    "ui_key_q": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_key_prompt\\ui_key_q.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_key_prompt\\ui_key_q.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_033.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_033",
+      "category": "ui_key_prompt",
+      "quality": "A",
+      "text_status": "text_ok",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "keyboard prompt Q",
+      "notes": "clear key prompt",
+      "bbox": {
+        "x": 948,
+        "y": 443,
+        "width": 69,
+        "height": 66
+      }
+    },
+    "ui_key_m": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_key_prompt\\ui_key_m.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_key_prompt\\ui_key_m.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_034.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_034",
+      "category": "ui_key_prompt",
+      "quality": "A",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_008",
+      "duplicate_choice": "chosen",
+      "usage": "keyboard prompt M",
+      "notes": "clear key prompt",
+      "bbox": {
+        "x": 1019,
+        "y": 443,
+        "width": 65,
+        "height": 66
+      }
+    },
+    "ui_key_t": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_key_prompt\\ui_key_t.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_key_prompt\\ui_key_t.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_035.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_035",
+      "category": "ui_key_prompt",
+      "quality": "A",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_008",
+      "duplicate_choice": "chosen",
+      "usage": "keyboard prompt T",
+      "notes": "clear key prompt",
+      "bbox": {
+        "x": 1087,
+        "y": 443,
+        "width": 66,
+        "height": 66
+      }
+    },
+    "ui_key_esc": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_key_prompt\\ui_key_esc.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_key_prompt\\ui_key_esc.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_036.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_036",
+      "category": "ui_key_prompt",
+      "quality": "A",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_008",
+      "duplicate_choice": "chosen",
+      "usage": "keyboard prompt ESC",
+      "notes": "clear key prompt",
+      "bbox": {
+        "x": 1157,
+        "y": 443,
+        "width": 71,
+        "height": 66
+      }
+    },
+    "item_consumable_medkit": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_consumable\\item_consumable_medkit.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\item_consumable\\item_consumable_medkit.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_066.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_066",
+      "category": "item_consumable",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_011",
+      "duplicate_choice": "chosen",
+      "usage": "medical consumable icon",
+      "notes": "clear medkit bottle icon",
+      "bbox": {
+        "x": 31,
+        "y": 827,
+        "width": 57,
+        "height": 86
+      }
+    },
+    "item_consumable_syringe": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_consumable\\item_consumable_syringe.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\item_consumable\\item_consumable_syringe.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_072.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_072",
+      "category": "item_consumable",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_010",
+      "duplicate_choice": "chosen",
+      "usage": "medical consumable icon",
+      "notes": "clear syringe icon",
+      "bbox": {
+        "x": 96,
+        "y": 831,
+        "width": 77,
+        "height": 80
+      }
+    },
+    "item_equipment_flashlight": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_equipment\\item_equipment_flashlight.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\item_equipment\\item_equipment_flashlight.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_076.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_076",
+      "category": "item_equipment",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "equipment icon",
+      "notes": "clear flashlight icon",
+      "bbox": {
+        "x": 692,
+        "y": 834,
+        "width": 82,
+        "height": 76
+      }
+    },
+    "item_equipment_goggles": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_equipment\\item_equipment_goggles.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\item_equipment\\item_equipment_goggles.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_081.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_081",
+      "category": "item_equipment",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "equipment icon",
+      "notes": "clear goggles icon",
+      "bbox": {
+        "x": 536,
+        "y": 841,
+        "width": 94,
+        "height": 69
+      }
+    },
+    "item_recovered_ore": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_recovered\\item_recovered_ore.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\item_recovered\\item_recovered_ore.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\3\\3_candidate_090.png",
+      "source_sheet": "3.png",
+      "candidate_id": "3_candidate_090",
+      "category": "item_recovered",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_003",
+      "duplicate_choice": "chosen",
+      "usage": "recovered material icon",
+      "notes": "clear ore pile icon",
+      "bbox": {
+        "x": 18,
+        "y": 923,
+        "width": 79,
+        "height": 73
+      }
+    },
+    "item_chest_open": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_recovered\\item_chest_open.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_001.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_001",
+      "category": "item_recovered",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "open chest prop/icon",
+      "notes": "already has prop pipeline; processed reference",
+      "bbox": {
+        "x": 449,
+        "y": 61,
+        "width": 181,
+        "height": 234
+      }
+    },
+    "item_evac_device_lit": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_recovered\\item_evac_device_lit.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_002.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_002",
+      "category": "item_recovered",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_012",
+      "duplicate_choice": "chosen",
+      "usage": "evacuation device lit",
+      "notes": "already has prop pipeline; processed reference",
+      "bbox": {
+        "x": 1101,
+        "y": 64,
+        "width": 158,
+        "height": 234
+      }
+    },
+    "item_evac_device_dark": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_recovered\\item_evac_device_dark.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_003.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_003",
+      "category": "item_recovered",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_003",
+      "duplicate_choice": "chosen",
+      "usage": "evacuation device dark",
+      "notes": "already has prop pipeline; processed reference",
+      "bbox": {
+        "x": 791,
+        "y": 90,
+        "width": 152,
+        "height": 205
+      }
+    },
+    "item_chest_closed": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_recovered\\item_chest_closed.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_005.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_005",
+      "category": "item_recovered",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_014",
+      "duplicate_choice": "chosen",
+      "usage": "closed chest prop/icon",
+      "notes": "already has prop pipeline; processed reference",
+      "bbox": {
+        "x": 145,
+        "y": 101,
+        "width": 188,
+        "height": 192
+      }
+    },
+    "item_merchant_table": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_recovered\\item_merchant_table.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_008.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_008",
+      "category": "item_recovered",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "merchant table prop",
+      "notes": "large prop; processed reference",
+      "bbox": {
+        "x": 148,
+        "y": 359,
+        "width": 319,
+        "height": 219
+      }
+    },
+    "item_anomaly_core": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_recovered\\item_anomaly_core.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_009.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_009",
+      "category": "item_recovered",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "anomaly core prop",
+      "notes": "large prop; processed reference",
+      "bbox": {
+        "x": 584,
+        "y": 359,
+        "width": 276,
+        "height": 227
+      }
+    },
+    "item_spike_trap": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_recovered\\item_spike_trap.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_010.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_010",
+      "category": "item_recovered",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "spike trap prop",
+      "notes": "large prop; processed reference",
+      "bbox": {
+        "x": 979,
+        "y": 389,
+        "width": 288,
+        "height": 194
+      }
+    },
+    "item_equipment_scanner": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_equipment\\item_equipment_scanner.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_012.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_012",
+      "category": "item_equipment",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_004",
+      "duplicate_choice": "chosen",
+      "usage": "scanner equipment",
+      "notes": "usable; keep processed reference",
+      "bbox": {
+        "x": 1115,
+        "y": 651,
+        "width": 166,
+        "height": 181
+      }
+    },
+    "ui_icon_gold_pile": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_icon\\ui_icon_gold_pile.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_013.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_013",
+      "category": "ui_icon",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_004",
+      "duplicate_choice": "chosen",
+      "usage": "gold pile/currency reference",
+      "notes": "usable icon; processed only until currency semantics are final",
+      "bbox": {
+        "x": 465,
+        "y": 660,
+        "width": 236,
+        "height": 164
+      }
+    },
+    "item_consumable_first_aid_box": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_consumable\\item_consumable_first_aid_box.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_014.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_014",
+      "category": "item_consumable",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_005",
+      "duplicate_choice": "chosen",
+      "usage": "first-aid box prop/icon",
+      "notes": "usable; keep processed reference",
+      "bbox": {
+        "x": 829,
+        "y": 664,
+        "width": 176,
+        "height": 147
+      }
+    },
+    "item_crate_supply": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\item_recovered\\item_crate_supply.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian1\\Zujian1_candidate_015.png",
+      "source_sheet": "Zujian1.png",
+      "candidate_id": "Zujian1_candidate_015",
+      "category": "item_recovered",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "supply crate prop/icon",
+      "notes": "usable; keep processed reference",
+      "bbox": {
+        "x": 627,
+        "y": 866,
+        "width": 202,
+        "height": 173
+      }
+    },
+    "map_tile_unknown": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_tile_icon\\map_tile_unknown.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\map_tile_icon\\map_tile_unknown.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_002.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_002",
+      "category": "map_tile_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "unknown room tile",
+      "notes": "clear map tile",
+      "bbox": {
+        "x": 453,
+        "y": 132,
+        "width": 225,
+        "height": 231
+      }
+    },
+    "map_tile_scanned": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_tile_icon\\map_tile_scanned.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\map_tile_icon\\map_tile_scanned.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_003.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_003",
+      "category": "map_tile_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_014",
+      "duplicate_choice": "chosen",
+      "usage": "scanned room tile",
+      "notes": "clear map tile",
+      "bbox": {
+        "x": 1077,
+        "y": 136,
+        "width": 218,
+        "height": 230
+      }
+    },
+    "map_tile_explored": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_tile_icon\\map_tile_explored.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\map_tile_icon\\map_tile_explored.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_004.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_004",
+      "category": "map_tile_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_004",
+      "duplicate_choice": "chosen",
+      "usage": "explored room tile",
+      "notes": "clear map tile",
+      "bbox": {
+        "x": 771,
+        "y": 138,
+        "width": 218,
+        "height": 227
+      }
+    },
+    "map_icon_marker_flag": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_icon\\map_icon_marker_flag.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\map_icon\\map_icon_marker_flag.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_010.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_010",
+      "category": "map_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "map marker flag",
+      "notes": "clear marker icon",
+      "bbox": {
+        "x": 81,
+        "y": 459,
+        "width": 153,
+        "height": 191
+      }
+    },
+    "map_icon_mine": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_icon\\map_icon_mine.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\map_icon\\map_icon_mine.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_011.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_011",
+      "category": "map_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_014",
+      "duplicate_choice": "chosen",
+      "usage": "mine/trap room",
+      "notes": "clear trap icon",
+      "bbox": {
+        "x": 293,
+        "y": 461,
+        "width": 186,
+        "height": 194
+      }
+    },
+    "map_icon_monster": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_icon\\map_icon_monster.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\map_icon\\map_icon_monster.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_012.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_012",
+      "category": "map_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "monster room",
+      "notes": "clear monster icon",
+      "bbox": {
+        "x": 522,
+        "y": 461,
+        "width": 209,
+        "height": 190
+      }
+    },
+    "map_icon_exit": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_icon\\map_icon_exit.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\map_icon\\map_icon_exit.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_013.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_013",
+      "category": "map_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "exit room",
+      "notes": "clear exit icon",
+      "bbox": {
+        "x": 1203,
+        "y": 461,
+        "width": 165,
+        "height": 192
+      }
+    },
+    "map_icon_chest": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_icon\\map_icon_chest.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\map_icon\\map_icon_chest.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_014.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_014",
+      "category": "map_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "chest room",
+      "notes": "clear chest icon",
+      "bbox": {
+        "x": 774,
+        "y": 469,
+        "width": 183,
+        "height": 178
+      }
+    },
+    "map_icon_event": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_icon\\map_icon_event.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\map_icon\\map_icon_event.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_015.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_015",
+      "category": "map_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_029",
+      "duplicate_choice": "chosen",
+      "usage": "event room",
+      "notes": "clear event/terminal icon",
+      "bbox": {
+        "x": 1002,
+        "y": 470,
+        "width": 150,
+        "height": 185
+      }
+    },
+    "map_label_number_2": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_icon\\map_label_number_2.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_016.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_016",
+      "category": "map_icon",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_050",
+      "duplicate_choice": "chosen",
+      "usage": "map number marker",
+      "notes": "number marker; processed only",
+      "bbox": {
+        "x": 720,
+        "y": 746,
+        "width": 174,
+        "height": 179
+      }
+    },
+    "map_label_number_3": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_icon\\map_label_number_3.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_017.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_017",
+      "category": "map_icon",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_050",
+      "duplicate_choice": "chosen",
+      "usage": "map number marker",
+      "notes": "number marker; processed only",
+      "bbox": {
+        "x": 970,
+        "y": 746,
+        "width": 172,
+        "height": 179
+      }
+    },
+    "map_label_number_1": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\map_icon\\map_label_number_1.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian2\\Zujian2_candidate_019.png",
+      "source_sheet": "Zujian2.png",
+      "candidate_id": "Zujian2_candidate_019",
+      "category": "map_icon",
+      "quality": "B",
+      "text_status": "text_ok",
+      "duplicate_group": "duplicate_group_050",
+      "duplicate_choice": "chosen",
+      "usage": "map number marker",
+      "notes": "number marker; processed only",
+      "bbox": {
+        "x": 474,
+        "y": 747,
+        "width": 170,
+        "height": 178
+      }
+    },
+    "ui_panel_terminal_main": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_panel\\ui_panel_terminal_main.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_panel\\ui_panel_terminal_main.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_001.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_001",
+      "category": "ui_panel",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "large terminal/dialog panel",
+      "notes": "blank reusable panel; clean silhouette",
+      "bbox": {
+        "x": 43,
+        "y": 28,
+        "width": 685,
+        "height": 583
+      }
+    },
+    "ui_panel_detail_danger": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_panel\\ui_panel_detail_danger.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_002.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_002",
+      "category": "ui_panel",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "right detail or danger panel candidate",
+      "notes": "strong candidate; skull decoration limits generality",
+      "bbox": {
+        "x": 880,
+        "y": 39,
+        "width": 305,
+        "height": 391
+      }
+    },
+    "ui_slot_row_four": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_item_card\\ui_slot_row_four.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_003.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_003",
+      "category": "ui_item_card",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "four-slot item row",
+      "notes": "multi-slot strip; useful but may need slicing",
+      "bbox": {
+        "x": 768,
+        "y": 466,
+        "width": 591,
+        "height": 177
+      }
+    },
+    "ui_bar_event_prompt": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_summary_bar\\ui_bar_event_prompt.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_004.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_004",
+      "category": "ui_summary_bar",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "event prompt bar",
+      "notes": "contains fixed icon; useful candidate",
+      "bbox": {
+        "x": 55,
+        "y": 640,
+        "width": 454,
+        "height": 162
+      }
+    },
+    "ui_bar_blank_dark": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_summary_bar\\ui_bar_blank_dark.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_summary_bar\\ui_bar_blank_dark.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_005.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_005",
+      "category": "ui_summary_bar",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "blank dark status/progress bar",
+      "notes": "generic blank bar",
+      "bbox": {
+        "x": 575,
+        "y": 661,
+        "width": 418,
+        "height": 71
+      }
+    },
+    "ui_icon_settings_gear": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_icon\\ui_icon_settings_gear.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_006.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_006",
+      "category": "ui_icon",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "settings/reference icon",
+      "notes": "old settings semantic; keep as processed reference",
+      "bbox": {
+        "x": 1173,
+        "y": 687,
+        "width": 98,
+        "height": 100
+      }
+    },
+    "ui_icon_account_gold": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_icon\\ui_icon_account_gold.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_icon\\ui_icon_account_gold.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_007.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_007",
+      "category": "ui_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_004",
+      "duplicate_choice": "chosen",
+      "usage": "account/currency icon",
+      "notes": "clear coin icon",
+      "bbox": {
+        "x": 1043,
+        "y": 692,
+        "width": 87,
+        "height": 89
+      }
+    },
+    "ui_bar_blank_red": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_summary_bar\\ui_bar_blank_red.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_008.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_008",
+      "category": "ui_summary_bar",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": "duplicate_group_017",
+      "duplicate_choice": "chosen",
+      "usage": "blank danger/progress bar",
+      "notes": "generic but semantic color is danger",
+      "bbox": {
+        "x": 575,
+        "y": 737,
+        "width": 418,
+        "height": 71
+      }
+    },
+    "ui_panel_status_small": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_panel\\ui_panel_status_small.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_010.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_010",
+      "category": "ui_panel",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "small status panel",
+      "notes": "generic small panel with accent",
+      "bbox": {
+        "x": 968,
+        "y": 849,
+        "width": 407,
+        "height": 185
+      }
+    },
+    "ui_button_blank_dark": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_button_blank\\ui_button_blank_dark.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_button_blank\\ui_button_blank_dark.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\Zujian3\\Zujian3_candidate_012.png",
+      "source_sheet": "Zujian3.png",
+      "candidate_id": "Zujian3_candidate_012",
+      "category": "ui_button_blank",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "duplicate_group": null,
+      "duplicate_choice": "not_duplicate",
+      "usage": "blank button background",
+      "notes": "generic blank button; ready for dynamic text",
+      "bbox": {
+        "x": 593,
+        "y": 857,
+        "width": 321,
+        "height": 167
+      }
+    },
+    "main_menu_bg_no_text": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\main_menu\\main_menu_bg_no_text.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\main_menu\\main_menu_bg_no_text.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Main.png",
+      "source_sheet": "Main.png",
+      "candidate_id": null,
+      "category": "main_menu",
+      "quality": "A",
+      "text_status": "no_text",
+      "usage": "main menu no-text background",
+      "notes": "16:9 no-text main menu background; copied to game project as assets/Textures/menu_bg_no_text.png but Lua still references menu_bg.png",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 1672,
+        "height": 941
+      }
+    },
+    "deploy_ui_reference": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\reference\\deploy_ui_reference.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Next.png",
+      "source_sheet": "Next.png",
+      "candidate_id": null,
+      "category": "reference",
+      "quality": "C",
+      "text_status": "reference_composite",
+      "usage": "deploy UI visual reference only",
+      "notes": "full composite reference with fixed text and sample values; not a runtime component",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 1672,
+        "height": 941
+      }
+    },
+    "ui_button_back_main": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_button\\ui_button_back_main.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_button\\ui_button_back_main.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_036.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_036",
+      "category": "ui_deploy_button",
+      "quality": "A",
+      "text_status": "text_ok",
+      "usage": "deploy top navigation: return to main menu",
+      "notes": "current terminology; fixed text button",
+      "bbox": {
+        "x": 27,
+        "y": 54,
+        "width": 194,
+        "height": 56
+      }
+    },
+    "ui_button_nav_warehouse": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_button\\ui_button_nav_warehouse.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_button\\ui_button_nav_warehouse.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_037.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_037",
+      "category": "ui_deploy_button",
+      "quality": "A",
+      "text_status": "text_ok",
+      "usage": "deploy top navigation: warehouse",
+      "notes": "current terminology; fixed text button",
+      "bbox": {
+        "x": 235,
+        "y": 54,
+        "width": 154,
+        "height": 56
+      }
+    },
+    "ui_button_nav_requisition": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_button\\ui_button_nav_requisition.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_button\\ui_button_nav_requisition.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_038.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_038",
+      "category": "ui_deploy_button",
+      "quality": "A",
+      "text_status": "text_ok",
+      "usage": "deploy top navigation: requisition",
+      "notes": "current terminology; fixed text button",
+      "bbox": {
+        "x": 397,
+        "y": 54,
+        "width": 148,
+        "height": 56
+      }
+    },
+    "ui_button_nav_loadout": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_button\\ui_button_nav_loadout.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_button\\ui_button_nav_loadout.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_039.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_039",
+      "category": "ui_deploy_button",
+      "quality": "A",
+      "text_status": "text_ok",
+      "usage": "deploy top navigation: loadout",
+      "notes": "current terminology; fixed text button",
+      "bbox": {
+        "x": 558,
+        "y": 55,
+        "width": 141,
+        "height": 56
+      }
+    },
+    "ui_button_nav_recovery": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_button\\ui_button_nav_recovery.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_button\\ui_button_nav_recovery.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_040.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_040",
+      "category": "ui_deploy_button",
+      "quality": "A",
+      "text_status": "text_ok",
+      "usage": "deploy top navigation: recovery",
+      "notes": "current terminology; fixed text button",
+      "bbox": {
+        "x": 27,
+        "y": 136,
+        "width": 170,
+        "height": 60
+      }
+    },
+    "ui_button_nav_talent_selected": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_button\\ui_button_nav_talent_selected.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_button\\ui_button_nav_talent_selected.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_041.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_041",
+      "category": "ui_deploy_button",
+      "quality": "A",
+      "text_status": "text_ok",
+      "usage": "deploy top navigation: selected talent tab",
+      "notes": "selected state only; normal talent state still missing",
+      "bbox": {
+        "x": 209,
+        "y": 136,
+        "width": 228,
+        "height": 61
+      }
+    },
+    "ui_panel_deploy_main_blank": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_panel\\ui_panel_deploy_main_blank.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_panel\\ui_panel_deploy_main_blank.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_042.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_042",
+      "category": "ui_deploy_panel",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "usage": "large blank deploy/talent content panel",
+      "notes": "blank center panel without sample text",
+      "bbox": {
+        "x": 707,
+        "y": 51,
+        "width": 320,
+        "height": 340
+      }
+    },
+    "ui_scrollbar_vertical": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_scrollbar\\ui_scrollbar_vertical.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_scrollbar\\ui_scrollbar_vertical.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_043.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_043",
+      "category": "ui_scrollbar",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "usage": "vertical scrollbar component",
+      "notes": "clean scrollbar component from deploy sheet",
+      "bbox": {
+        "x": 1051,
+        "y": 51,
+        "width": 29,
+        "height": 340
+      }
+    },
+    "ui_button_confirm_deploy_large": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_button\\ui_button_confirm_deploy_large.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_button\\ui_button_confirm_deploy_large.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_044.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_044",
+      "category": "ui_deploy_button",
+      "quality": "A",
+      "text_status": "text_ok",
+      "usage": "large confirm deploy button",
+      "notes": "current terminology; fixed text button",
+      "bbox": {
+        "x": 708,
+        "y": 465,
+        "width": 289,
+        "height": 98
+      }
+    },
+    "ui_key_or_arrow_small_button": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_button\\ui_key_or_arrow_small_button.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_button\\ui_key_or_arrow_small_button.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_045.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_045",
+      "category": "ui_deploy_button",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "usage": "small arrow/action button",
+      "notes": "small arrow button reusable for compact controls",
+      "bbox": {
+        "x": 986,
+        "y": 465,
+        "width": 60,
+        "height": 54
+      }
+    },
+    "ui_panel_deploy_summary_blank": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_panel\\ui_panel_deploy_summary_blank.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_panel\\ui_panel_deploy_summary_blank.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_046.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_046",
+      "category": "ui_deploy_panel",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "usage": "blank deploy summary panel base",
+      "notes": "blank brown panel base; can be tiled/extended, not full right summary",
+      "bbox": {
+        "x": 967,
+        "y": 714,
+        "width": 95,
+        "height": 141
+      }
+    },
+    "ui_frame_highlight": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_panel\\ui_frame_highlight.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_panel\\ui_frame_highlight.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_047.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_047",
+      "category": "ui_deploy_panel",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "usage": "teal highlight panel/frame",
+      "notes": "blank highlight frame from background panel section",
+      "bbox": {
+        "x": 1178,
+        "y": 714,
+        "width": 98,
+        "height": 141
+      }
+    },
+    "ui_icon_armor": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_icon\\ui_icon_armor.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_icon\\ui_icon_armor.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_048.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_048",
+      "category": "ui_deploy_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "usage": "armor/equipment icon",
+      "notes": "clear armor icon",
+      "bbox": {
+        "x": 31,
+        "y": 718,
+        "width": 55,
+        "height": 54
+      }
+    },
+    "ui_icon_compass": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_icon\\ui_icon_compass.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_icon\\ui_icon_compass.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_049.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_049",
+      "category": "ui_deploy_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "usage": "compass equipment icon",
+      "notes": "clear compass icon",
+      "bbox": {
+        "x": 92,
+        "y": 717,
+        "width": 60,
+        "height": 55
+      }
+    },
+    "ui_icon_bandage": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_icon\\ui_icon_bandage.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_icon\\ui_icon_bandage.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_050.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_050",
+      "category": "ui_deploy_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "usage": "bandage consumable icon",
+      "notes": "clear bandage icon",
+      "bbox": {
+        "x": 176,
+        "y": 717,
+        "width": 51,
+        "height": 55
+      }
+    },
+    "ui_icon_backpack": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_icon\\ui_icon_backpack.png",
+      "game_ready_path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui_deploy_icon\\ui_icon_backpack.png",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_051.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_051",
+      "category": "ui_deploy_icon",
+      "quality": "A",
+      "text_status": "blank_or_dynamic",
+      "usage": "backpack equipment icon",
+      "notes": "clear backpack icon",
+      "bbox": {
+        "x": 244,
+        "y": 716,
+        "width": 57,
+        "height": 58
+      }
+    },
+    "ui_talent_row_normal": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_row\\ui_talent_row_normal.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_052.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_052",
+      "category": "ui_deploy_row",
+      "quality": "B",
+      "text_status": "text_fixed_example",
+      "usage": "talent list row example",
+      "notes": "contains sample talent text; processed only, needs blank redraw or slicing",
+      "bbox": {
+        "x": 1121,
+        "y": 104,
+        "width": 358,
+        "height": 58
+      }
+    },
+    "ui_talent_row_locked": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_row\\ui_talent_row_locked.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_053.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_053",
+      "category": "ui_deploy_row",
+      "quality": "B",
+      "text_status": "text_fixed_example",
+      "usage": "talent row alternate/example",
+      "notes": "contains sample talent text; processed only",
+      "bbox": {
+        "x": 1121,
+        "y": 165,
+        "width": 358,
+        "height": 58
+      }
+    },
+    "ui_list_row_normal": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_row\\ui_list_row_normal.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_054.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_054",
+      "category": "ui_deploy_row",
+      "quality": "B",
+      "text_status": "text_fixed_example",
+      "usage": "small dark label row",
+      "notes": "fixed Lv text; processed only",
+      "bbox": {
+        "x": 1091,
+        "y": 919,
+        "width": 105,
+        "height": 34
+      }
+    },
+    "ui_list_row_selected": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_row\\ui_list_row_selected.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_055.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_055",
+      "category": "ui_deploy_row",
+      "quality": "B",
+      "text_status": "text_fixed_example",
+      "usage": "small dark label row alternate",
+      "notes": "fixed Lv text; processed only",
+      "bbox": {
+        "x": 1091,
+        "y": 962,
+        "width": 105,
+        "height": 35
+      }
+    },
+    "ui_tag_available_points": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_status_tag\\ui_tag_available_points.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_056.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_056",
+      "category": "ui_status_tag",
+      "quality": "B",
+      "text_status": "text_fixed_example",
+      "usage": "available talent points tag",
+      "notes": "contains example number; processed only",
+      "bbox": {
+        "x": 1052,
+        "y": 604,
+        "width": 118,
+        "height": 34
+      }
+    },
+    "ui_tag_level_1_3": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_status_tag\\ui_tag_level_1_3.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_057.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_057",
+      "category": "ui_status_tag",
+      "quality": "B",
+      "text_status": "text_fixed_example",
+      "usage": "level status tag 1/3",
+      "notes": "fixed sample level text; processed only",
+      "bbox": {
+        "x": 1178,
+        "y": 604,
+        "width": 66,
+        "height": 34
+      }
+    },
+    "ui_tag_level_0_3": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_status_tag\\ui_tag_level_0_3.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_058.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_058",
+      "category": "ui_status_tag",
+      "quality": "B",
+      "text_status": "text_fixed_example",
+      "usage": "level status tag 0/3",
+      "notes": "fixed sample level text; processed only",
+      "bbox": {
+        "x": 1248,
+        "y": 604,
+        "width": 66,
+        "height": 34
+      }
+    },
+    "ui_tag_level_1_5": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_status_tag\\ui_tag_level_1_5.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_059.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_059",
+      "category": "ui_status_tag",
+      "quality": "B",
+      "text_status": "text_fixed_example",
+      "usage": "level status tag 1/5",
+      "notes": "fixed sample level text; processed only",
+      "bbox": {
+        "x": 1314,
+        "y": 604,
+        "width": 66,
+        "height": 34
+      }
+    },
+    "ui_icon_life": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_icon\\ui_icon_life.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_060.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_060",
+      "category": "ui_deploy_icon",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "usage": "life status icon",
+      "notes": "clear icon, but semantic mapping needs manual review",
+      "bbox": {
+        "x": 1076,
+        "y": 526,
+        "width": 54,
+        "height": 54
+      }
+    },
+    "ui_icon_scan": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_icon\\ui_icon_scan.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_061.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_061",
+      "category": "ui_deploy_icon",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "usage": "scan status icon",
+      "notes": "clear icon, but semantic mapping needs manual review",
+      "bbox": {
+        "x": 1148,
+        "y": 526,
+        "width": 54,
+        "height": 54
+      }
+    },
+    "ui_icon_escape_time": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_icon\\ui_icon_escape_time.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_062.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_062",
+      "category": "ui_deploy_icon",
+      "quality": "B",
+      "text_status": "blank_or_dynamic",
+      "usage": "escape/monster-flee time icon",
+      "notes": "clear icon, but semantic mapping needs manual review",
+      "bbox": {
+        "x": 1218,
+        "y": 526,
+        "width": 54,
+        "height": 54
+      }
+    },
+    "ui_icon_talent_point": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_icon\\ui_icon_talent_point.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_063.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_063",
+      "category": "ui_deploy_icon",
+      "quality": "B",
+      "text_status": "text_fixed_example",
+      "usage": "talent point/star cost indicator",
+      "notes": "contains sample count; processed only",
+      "bbox": {
+        "x": 819,
+        "y": 585,
+        "width": 89,
+        "height": 48
+      }
+    },
+    "ui_button_upgrade_small": {
+      "path": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui_deploy_button\\ui_button_upgrade_small.png",
+      "game_ready_path": null,
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\candidates\\5\\5_candidate_064.png",
+      "source_sheet": "5.png",
+      "candidate_id": "5_candidate_064",
+      "category": "ui_deploy_button",
+      "quality": "B",
+      "text_status": "text_ok",
+      "usage": "small upgrade button",
+      "notes": "fixed text button; processed only until behavior/state set exists",
+      "bbox": {
+        "x": 707,
+        "y": 584,
+        "width": 97,
+        "height": 50
+      }
+    }
+  },
+  "duplicate_resolutions": {
+    "duplicate_group_003": {
+      "1_candidate_006": "rejected",
+      "1_candidate_008": "rejected",
+      "1_candidate_043": "rejected",
+      "1_candidate_053": "rejected",
+      "1_candidate_054": "rejected",
+      "2_candidate_011": "rejected",
+      "2_candidate_016": "rejected",
+      "2_candidate_019": "rejected",
+      "2_candidate_052": "rejected",
+      "3_candidate_068": "rejected",
+      "3_candidate_090": "chosen",
+      "3_candidate_093": "rejected",
+      "3_candidate_094": "rejected",
+      "Zuhe_candidate_034": "rejected",
+      "Zuhe_candidate_039": "rejected",
+      "Zuhe2_candidate_011": "rejected",
+      "Zujian1_candidate_003": "chosen"
+    },
+    "duplicate_group_004": {
+      "1_candidate_007": "rejected",
+      "1_candidate_017": "rejected",
+      "1_candidate_028": "rejected",
+      "1_candidate_030": "rejected",
+      "1_candidate_032": "rejected",
+      "1_candidate_034": "rejected",
+      "1_candidate_036": "rejected",
+      "1_candidate_038": "rejected",
+      "1_candidate_039": "rejected",
+      "1_candidate_041": "rejected",
+      "1_candidate_045": "rejected",
+      "1_candidate_047": "rejected",
+      "1_candidate_050": "rejected",
+      "1_candidate_051": "rejected",
+      "1_candidate_052": "rejected",
+      "1_candidate_055": "rejected",
+      "1_candidate_056": "rejected",
+      "2_candidate_013": "rejected",
+      "2_candidate_018": "rejected",
+      "2_candidate_035": "rejected",
+      "2_candidate_036": "rejected",
+      "2_candidate_037": "rejected",
+      "2_candidate_038": "rejected",
+      "2_candidate_045": "rejected",
+      "2_candidate_055": "rejected",
+      "2_candidate_056": "rejected",
+      "2_candidate_057": "rejected",
+      "2_candidate_058": "rejected",
+      "3_candidate_025": "rejected",
+      "3_candidate_027": "rejected",
+      "3_candidate_031": "chosen",
+      "3_candidate_038": "rejected",
+      "3_candidate_042": "rejected",
+      "3_candidate_047": "rejected",
+      "3_candidate_057": "rejected",
+      "3_candidate_058": "rejected",
+      "3_candidate_060": "rejected",
+      "3_candidate_061": "rejected",
+      "3_candidate_062": "rejected",
+      "3_candidate_065": "rejected",
+      "3_candidate_070": "rejected",
+      "3_candidate_073": "rejected",
+      "3_candidate_075": "rejected",
+      "3_candidate_077": "rejected",
+      "3_candidate_078": "rejected",
+      "3_candidate_079": "rejected",
+      "3_candidate_080": "rejected",
+      "3_candidate_083": "rejected",
+      "3_candidate_084": "rejected",
+      "3_candidate_086": "rejected",
+      "3_candidate_091": "rejected",
+      "3_candidate_092": "rejected",
+      "3_candidate_095": "rejected",
+      "3_candidate_096": "rejected",
+      "3_candidate_097": "rejected",
+      "3_candidate_098": "rejected",
+      "4_candidate_017": "rejected",
+      "4_candidate_019": "rejected",
+      "4_candidate_020": "rejected",
+      "4_candidate_022": "rejected",
+      "4_candidate_023": "rejected",
+      "4_candidate_027": "rejected",
+      "Zuhe_candidate_006": "rejected",
+      "Zuhe_candidate_010": "rejected",
+      "Zuhe_candidate_024": "rejected",
+      "Zuhe_candidate_033": "rejected",
+      "Zuhe_candidate_040": "rejected",
+      "Zuhe2_candidate_010": "rejected",
+      "Zuhe2_candidate_014": "rejected",
+      "Zuhe2_candidate_034": "rejected",
+      "Zuhe2_candidate_036": "rejected",
+      "Zuhe2_candidate_037": "rejected",
+      "Zuhe2_candidate_039": "rejected",
+      "Zuhe2_candidate_056": "rejected",
+      "Zuhe2_candidate_062": "rejected",
+      "Zuhe2_candidate_065": "rejected",
+      "Zuhe2_candidate_066": "rejected",
+      "Zuhe2_candidate_075": "rejected",
+      "Zuhe2_candidate_111": "rejected",
+      "Zuhe2_candidate_112": "rejected",
+      "Zuhe2_candidate_113": "rejected",
+      "Zuhe2_candidate_114": "rejected",
+      "Zujian1_candidate_012": "chosen",
+      "Zujian1_candidate_013": "chosen",
+      "Zujian2_candidate_004": "chosen",
+      "Zujian3_candidate_007": "chosen",
+      "Zujian3_candidate_009": "rejected",
+      "Zujian3_candidate_011": "rejected"
+    },
+    "duplicate_group_005": {
+      "1_candidate_009": "rejected",
+      "2_candidate_046": "rejected",
+      "Zuhe2_candidate_016": "rejected",
+      "Zujian1_candidate_014": "chosen"
+    },
+    "duplicate_group_006": {
+      "1_candidate_010": "chosen",
+      "1_candidate_031": "chosen",
+      "2_candidate_008": "rejected",
+      "4_candidate_010": "rejected",
+      "Zuhe_candidate_001": "rejected",
+      "Zuhe_candidate_002": "rejected",
+      "Zuhe_candidate_018": "rejected",
+      "Zuhe_candidate_019": "rejected",
+      "Zuhe_candidate_027": "rejected",
+      "Zuhe_candidate_031": "rejected",
+      "Zuhe_candidate_050": "rejected",
+      "Zuhe2_candidate_002": "rejected",
+      "Zuhe2_candidate_003": "rejected",
+      "Zuhe2_candidate_031": "rejected",
+      "Zuhe2_candidate_073": "rejected",
+      "Zuhe2_candidate_090": "rejected",
+      "Zuhe2_candidate_105": "rejected",
+      "Zuhe2_candidate_106": "rejected"
+    },
+    "duplicate_group_008": {
+      "1_candidate_020": "rejected",
+      "1_candidate_021": "rejected",
+      "1_candidate_022": "rejected",
+      "1_candidate_024": "rejected",
+      "1_candidate_025": "rejected",
+      "1_candidate_026": "rejected",
+      "1_candidate_027": "rejected",
+      "1_candidate_029": "rejected",
+      "1_candidate_042": "rejected",
+      "1_candidate_044": "rejected",
+      "1_candidate_046": "rejected",
+      "2_candidate_042": "rejected",
+      "2_candidate_059": "rejected",
+      "3_candidate_032": "chosen",
+      "3_candidate_034": "chosen",
+      "3_candidate_035": "chosen",
+      "3_candidate_036": "chosen",
+      "3_candidate_043": "rejected",
+      "3_candidate_044": "rejected",
+      "3_candidate_046": "rejected",
+      "3_candidate_054": "rejected",
+      "3_candidate_055": "rejected",
+      "3_candidate_056": "rejected",
+      "3_candidate_059": "rejected",
+      "4_candidate_012": "rejected",
+      "4_candidate_016": "rejected",
+      "4_candidate_018": "rejected",
+      "4_candidate_021": "rejected",
+      "4_candidate_024": "rejected",
+      "4_candidate_026": "rejected",
+      "4_candidate_029": "rejected",
+      "4_candidate_030": "rejected",
+      "4_candidate_031": "rejected",
+      "4_candidate_032": "rejected",
+      "4_candidate_033": "rejected",
+      "Zuhe2_candidate_078": "rejected",
+      "Zuhe2_candidate_097": "rejected"
+    },
+    "duplicate_group_010": {
+      "1_candidate_033": "rejected",
+      "1_candidate_035": "rejected",
+      "2_candidate_043": "rejected",
+      "3_candidate_072": "chosen",
+      "Zuhe2_candidate_012": "rejected"
+    },
+    "duplicate_group_011": {
+      "1_candidate_037": "rejected",
+      "2_candidate_039": "rejected",
+      "2_candidate_044": "rejected",
+      "3_candidate_006": "chosen",
+      "3_candidate_066": "chosen",
+      "Zuhe_candidate_007": "rejected",
+      "Zuhe_candidate_038": "rejected"
+    },
+    "duplicate_group_012": {
+      "1_candidate_040": "rejected",
+      "2_candidate_047": "rejected",
+      "3_candidate_005": "chosen",
+      "Zujian1_candidate_002": "chosen"
+    },
+    "duplicate_group_014": {
+      "1_candidate_049": "rejected",
+      "2_candidate_002": "rejected",
+      "2_candidate_049": "rejected",
+      "3_candidate_008": "rejected",
+      "3_candidate_039": "rejected",
+      "3_candidate_049": "rejected",
+      "4_candidate_036": "rejected",
+      "4_candidate_042": "rejected",
+      "Zuhe2_candidate_044": "rejected",
+      "Zuhe2_candidate_079": "rejected",
+      "Zuhe2_candidate_080": "rejected",
+      "Zuhe2_candidate_094": "rejected",
+      "Zuhe2_candidate_095": "rejected",
+      "Zujian1_candidate_005": "chosen",
+      "Zujian2_candidate_003": "chosen",
+      "Zujian2_candidate_011": "chosen",
+      "Zujian2_candidate_018": "rejected"
+    },
+    "duplicate_group_017": {
+      "2_candidate_007": "rejected",
+      "2_candidate_050": "rejected",
+      "Zujian3_candidate_008": "chosen"
+    },
+    "duplicate_group_023": {
+      "3_candidate_002": "chosen",
+      "3_candidate_003": "chosen",
+      "3_candidate_004": "chosen",
+      "3_candidate_085": "rejected",
+      "3_candidate_087": "rejected"
+    },
+    "duplicate_group_024": {
+      "3_candidate_007": "chosen",
+      "3_candidate_012": "rejected",
+      "3_candidate_013": "rejected",
+      "3_candidate_088": "rejected"
+    },
+    "duplicate_group_029": {
+      "3_candidate_024": "rejected",
+      "3_candidate_089": "rejected",
+      "Zujian2_candidate_015": "chosen"
+    },
+    "duplicate_group_050": {
+      "Zujian2_candidate_016": "chosen",
+      "Zujian2_candidate_017": "chosen",
+      "Zujian2_candidate_019": "chosen"
+    }
+  }
+}

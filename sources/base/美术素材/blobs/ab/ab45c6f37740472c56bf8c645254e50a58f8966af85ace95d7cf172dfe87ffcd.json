@@ -1,0 +1,38 @@
+{
+  "slice": "ART21R2 Slice 6 Map Overlay marker cut",
+  "source_sheet": "D:\\AGAME1\\sources\\draw\\Zujian2.png",
+  "source_status": "root sheet has purple background and is not imported directly",
+  "write_runtime": true,
+  "rows": [
+    {
+      "asset_id": "ui.art21r2.map_overlay.marker.event",
+      "visual_key": "art21r2.map_overlay.marker.event",
+      "candidate_sha256": "3DB476901205887CC3025E52B91C9599404D60C2E19E140F5FC87F6AFFE2F80C",
+      "cut_sha256": "F99B3E48EB1D60F38557A913980701C1527CA38807668A86D9C09B021FBABE4A",
+      "runtime_sha256": "F99B3E48EB1D60F38557A913980701C1527CA38807668A86D9C09B021FBABE4A",
+      "purple_like_before": 89,
+      "purple_like_after": 0,
+      "output_size": [
+        132,
+        166
+      ],
+      "cut_write_status": "written",
+      "runtime_write_status": "written"
+    },
+    {
+      "asset_id": "ui.art21r2.map_overlay.marker.flag",
+      "visual_key": "art21r2.map_overlay.marker.flag",
+      "candidate_sha256": "EE5C05ED66F66173A241B5CFC470458AE0C983265CEE2E9C2445CDE83AD84A25",
+      "cut_sha256": "4FAFB6A30BBED4E4D1F806E2F9C6F05A270B8D840F48ED8F8B84EB75E968057B",
+      "runtime_sha256": "4FAFB6A30BBED4E4D1F806E2F9C6F05A270B8D840F48ED8F8B84EB75E968057B",
+      "purple_like_before": 90,
+      "purple_like_after": 0,
+      "output_size": [
+        136,
+        173
+      ],
+      "cut_write_status": "written",
+      "runtime_write_status": "written"
+    }
+  ]
+}

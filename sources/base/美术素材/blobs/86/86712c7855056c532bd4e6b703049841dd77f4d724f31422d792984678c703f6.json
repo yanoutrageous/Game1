@@ -1,0 +1,180 @@
+{
+  "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Maogai.png",
+  "sheet": "sheet.png",
+  "crop_mode": "component",
+  "grid": {
+    "columns": 4,
+    "rows": 3
+  },
+  "frame_size": {
+    "width": 128,
+    "height": 128
+  },
+  "scale": 0.43389830508474575,
+  "component_detection": {
+    "candidate_count": 12,
+    "padding": 12,
+    "alpha_threshold": 1,
+    "connect_radius": 4,
+    "min_component_area": 64,
+    "debug_image": "debug_detected_boxes.png"
+  },
+  "frames": [
+    {
+      "index": 0,
+      "name": "front_idle",
+      "file": "00_front_idle.png",
+      "row": 0,
+      "column": 0,
+      "crop_box": [
+        101,
+        35,
+        337,
+        360
+      ]
+    },
+    {
+      "index": 1,
+      "name": "back_idle",
+      "file": "01_back_idle.png",
+      "row": 0,
+      "column": 1,
+      "crop_box": [
+        452,
+        35,
+        681,
+        359
+      ]
+    },
+    {
+      "index": 2,
+      "name": "left_idle",
+      "file": "02_left_idle.png",
+      "row": 0,
+      "column": 2,
+      "crop_box": [
+        782,
+        33,
+        1034,
+        360
+      ]
+    },
+    {
+      "index": 3,
+      "name": "right_idle",
+      "file": "03_right_idle.png",
+      "row": 0,
+      "column": 3,
+      "crop_box": [
+        1065,
+        33,
+        1315,
+        360
+      ]
+    },
+    {
+      "index": 4,
+      "name": "front_walk_1",
+      "file": "04_front_walk_1.png",
+      "row": 1,
+      "column": 0,
+      "crop_box": [
+        101,
+        383,
+        329,
+        705
+      ]
+    },
+    {
+      "index": 5,
+      "name": "back_walk_1",
+      "file": "05_back_walk_1.png",
+      "row": 1,
+      "column": 1,
+      "crop_box": [
+        449,
+        383,
+        687,
+        705
+      ]
+    },
+    {
+      "index": 6,
+      "name": "left_walk_1",
+      "file": "06_left_walk_1.png",
+      "row": 1,
+      "column": 2,
+      "crop_box": [
+        782,
+        380,
+        1038,
+        703
+      ]
+    },
+    {
+      "index": 7,
+      "name": "right_walk_1",
+      "file": "07_right_walk_1.png",
+      "row": 1,
+      "column": 3,
+      "crop_box": [
+        1058,
+        380,
+        1315,
+        703
+      ]
+    },
+    {
+      "index": 8,
+      "name": "front_walk_2",
+      "file": "08_front_walk_2.png",
+      "row": 2,
+      "column": 0,
+      "crop_box": [
+        101,
+        719,
+        339,
+        1046
+      ]
+    },
+    {
+      "index": 9,
+      "name": "back_walk_2",
+      "file": "09_back_walk_2.png",
+      "row": 2,
+      "column": 1,
+      "crop_box": [
+        449,
+        725,
+        680,
+        1046
+      ]
+    },
+    {
+      "index": 10,
+      "name": "left_walk_2",
+      "file": "10_left_walk_2.png",
+      "row": 2,
+      "column": 2,
+      "crop_box": [
+        782,
+        717,
+        1036,
+        1042
+      ]
+    },
+    {
+      "index": 11,
+      "name": "right_walk_2",
+      "file": "11_right_walk_2.png",
+      "row": 2,
+      "column": 3,
+      "crop_box": [
+        1060,
+        716,
+        1315,
+        1042
+      ]
+    }
+  ]
+}

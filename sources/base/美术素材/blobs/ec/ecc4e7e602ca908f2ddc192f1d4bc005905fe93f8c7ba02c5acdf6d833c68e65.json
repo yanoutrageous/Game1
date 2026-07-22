@@ -1,0 +1,1858 @@
+{
+  "draw_dir": "D:\\A GAME\\26.5.30 GameJam\\Draw",
+  "archived_assets": [
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Huanxiong.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\00_raw\\characters\\Huanxiong.png",
+      "category": "characters"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Huli.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\00_raw\\characters\\Huli.png",
+      "category": "characters"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Mao.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\00_raw\\characters\\Mao.png",
+      "category": "characters"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Tuzi.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\00_raw\\characters\\Tuzi.png",
+      "category": "characters"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Huanxionggai.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\characters\\Huanxionggai.png",
+      "category": "characters"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\HUligai.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\characters\\HUligai.png",
+      "category": "characters"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Maogai.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\characters\\Maogai.png",
+      "category": "characters"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Tuzigai.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\characters\\Tuzigai.png",
+      "category": "characters"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Zujian1.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "category": "props"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Zujian2.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "category": "icons"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Zujian3.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "category": "ui"
+    },
+    {
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Fangjian.png",
+      "target": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\rooms\\Fangjian.png",
+      "category": "rooms"
+    }
+  ],
+  "generated_assets": [
+    {
+      "id": "huanxiong",
+      "type": "character",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\characters\\Huanxionggai.png",
+      "processed": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\characters\\huanxiong",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\characters\\huanxiong",
+      "sheet": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\characters\\huanxiong\\huanxiong_sheet.png",
+      "frames": [
+        {
+          "index": 0,
+          "name": "front_idle",
+          "file": "frames/00_front_idle.png",
+          "bbox": [
+            129,
+            72,
+            333,
+            380
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 1,
+          "name": "back_idle",
+          "file": "frames/01_back_idle.png",
+          "bbox": [
+            468,
+            76,
+            666,
+            376
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 2,
+          "name": "left_idle",
+          "file": "frames/02_left_idle.png",
+          "bbox": [
+            773,
+            75,
+            1025,
+            380
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 3,
+          "name": "right_idle",
+          "file": "frames/03_right_idle.png",
+          "bbox": [
+            1055,
+            75,
+            1305,
+            382
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 4,
+          "name": "front_walk_1",
+          "file": "frames/04_front_walk_1.png",
+          "bbox": [
+            124,
+            395,
+            331,
+            701
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 5,
+          "name": "back_walk_1",
+          "file": "frames/05_back_walk_1.png",
+          "bbox": [
+            467,
+            400,
+            661,
+            701
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 6,
+          "name": "left_walk_1",
+          "file": "frames/06_left_walk_1.png",
+          "bbox": [
+            769,
+            399,
+            1019,
+            698
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 7,
+          "name": "right_walk_1",
+          "file": "frames/07_right_walk_1.png",
+          "bbox": [
+            1060,
+            400,
+            1310,
+            701
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 8,
+          "name": "front_walk_2",
+          "file": "frames/08_front_walk_2.png",
+          "bbox": [
+            123,
+            714,
+            332,
+            1022
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 9,
+          "name": "back_walk_2",
+          "file": "frames/09_back_walk_2.png",
+          "bbox": [
+            468,
+            722,
+            661,
+            1022
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 10,
+          "name": "left_walk_2",
+          "file": "frames/10_left_walk_2.png",
+          "bbox": [
+            771,
+            721,
+            1019,
+            1019
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 11,
+          "name": "right_walk_2",
+          "file": "frames/11_right_walk_2.png",
+          "bbox": [
+            1062,
+            722,
+            1311,
+            1022
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        }
+      ]
+    },
+    {
+      "id": "huli",
+      "type": "character",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\characters\\HUligai.png",
+      "processed": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\characters\\huli",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\characters\\huli",
+      "sheet": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\characters\\huli\\huli_sheet.png",
+      "frames": [
+        {
+          "index": 0,
+          "name": "front_idle",
+          "file": "frames/00_front_idle.png",
+          "bbox": [
+            128,
+            38,
+            332,
+            356
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 1,
+          "name": "back_idle",
+          "file": "frames/01_back_idle.png",
+          "bbox": [
+            471,
+            38,
+            668,
+            355
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 2,
+          "name": "left_idle",
+          "file": "frames/02_left_idle.png",
+          "bbox": [
+            782,
+            38,
+            1023,
+            355
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 3,
+          "name": "right_idle",
+          "file": "frames/03_right_idle.png",
+          "bbox": [
+            1074,
+            39,
+            1316,
+            356
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 4,
+          "name": "front_walk_1",
+          "file": "frames/04_front_walk_1.png",
+          "bbox": [
+            125,
+            367,
+            344,
+            692
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 5,
+          "name": "back_walk_1",
+          "file": "frames/05_back_walk_1.png",
+          "bbox": [
+            471,
+            370,
+            662,
+            689
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 6,
+          "name": "left_walk_1",
+          "file": "frames/06_left_walk_1.png",
+          "bbox": [
+            783,
+            370,
+            1024,
+            687
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 7,
+          "name": "right_walk_1",
+          "file": "frames/07_right_walk_1.png",
+          "bbox": [
+            1078,
+            371,
+            1316,
+            687
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 8,
+          "name": "front_walk_2",
+          "file": "frames/08_front_walk_2.png",
+          "bbox": [
+            116,
+            695,
+            333,
+            1023
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 9,
+          "name": "back_walk_2",
+          "file": "frames/09_back_walk_2.png",
+          "bbox": [
+            472,
+            697,
+            668,
+            1019
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 10,
+          "name": "left_walk_2",
+          "file": "frames/10_left_walk_2.png",
+          "bbox": [
+            783,
+            699,
+            1024,
+            1016
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 11,
+          "name": "right_walk_2",
+          "file": "frames/11_right_walk_2.png",
+          "bbox": [
+            1074,
+            699,
+            1316,
+            1016
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        }
+      ]
+    },
+    {
+      "id": "mao",
+      "type": "character",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\characters\\Maogai.png",
+      "processed": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\characters\\mao",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\characters\\mao",
+      "sheet": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\characters\\mao\\mao_sheet.png",
+      "frames": [
+        {
+          "index": 0,
+          "name": "front_idle",
+          "file": "frames/00_front_idle.png",
+          "bbox": [
+            101,
+            35,
+            337,
+            360
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 1,
+          "name": "back_idle",
+          "file": "frames/01_back_idle.png",
+          "bbox": [
+            452,
+            35,
+            681,
+            359
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 2,
+          "name": "left_idle",
+          "file": "frames/02_left_idle.png",
+          "bbox": [
+            782,
+            33,
+            1034,
+            360
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 3,
+          "name": "right_idle",
+          "file": "frames/03_right_idle.png",
+          "bbox": [
+            1065,
+            33,
+            1315,
+            360
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 4,
+          "name": "front_walk_1",
+          "file": "frames/04_front_walk_1.png",
+          "bbox": [
+            101,
+            383,
+            329,
+            705
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 5,
+          "name": "back_walk_1",
+          "file": "frames/05_back_walk_1.png",
+          "bbox": [
+            449,
+            383,
+            687,
+            705
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 6,
+          "name": "left_walk_1",
+          "file": "frames/06_left_walk_1.png",
+          "bbox": [
+            782,
+            380,
+            1038,
+            703
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 7,
+          "name": "right_walk_1",
+          "file": "frames/07_right_walk_1.png",
+          "bbox": [
+            1058,
+            380,
+            1315,
+            703
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 8,
+          "name": "front_walk_2",
+          "file": "frames/08_front_walk_2.png",
+          "bbox": [
+            101,
+            719,
+            339,
+            1046
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 9,
+          "name": "back_walk_2",
+          "file": "frames/09_back_walk_2.png",
+          "bbox": [
+            449,
+            725,
+            680,
+            1046
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 10,
+          "name": "left_walk_2",
+          "file": "frames/10_left_walk_2.png",
+          "bbox": [
+            782,
+            717,
+            1036,
+            1042
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 11,
+          "name": "right_walk_2",
+          "file": "frames/11_right_walk_2.png",
+          "bbox": [
+            1060,
+            716,
+            1315,
+            1042
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        }
+      ]
+    },
+    {
+      "id": "tuzi",
+      "type": "character",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\characters\\Tuzigai.png",
+      "processed": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\characters\\tuzi",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\characters\\tuzi",
+      "sheet": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\characters\\tuzi\\tuzi_sheet.png",
+      "frames": [
+        {
+          "index": 0,
+          "name": "front_idle",
+          "file": "frames/00_front_idle.png",
+          "bbox": [
+            157,
+            21,
+            342,
+            361
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 1,
+          "name": "back_idle",
+          "file": "frames/01_back_idle.png",
+          "bbox": [
+            470,
+            18,
+            653,
+            361
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 2,
+          "name": "left_idle",
+          "file": "frames/02_left_idle.png",
+          "bbox": [
+            766,
+            19,
+            967,
+            362
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 3,
+          "name": "right_idle",
+          "file": "frames/03_right_idle.png",
+          "bbox": [
+            1120,
+            16,
+            1324,
+            363
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 4,
+          "name": "front_walk_1",
+          "file": "frames/04_front_walk_1.png",
+          "bbox": [
+            154,
+            371,
+            348,
+            716
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 5,
+          "name": "back_walk_1",
+          "file": "frames/05_back_walk_1.png",
+          "bbox": [
+            472,
+            372,
+            651,
+            713
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 6,
+          "name": "left_walk_1",
+          "file": "frames/06_left_walk_1.png",
+          "bbox": [
+            765,
+            366,
+            967,
+            711
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 7,
+          "name": "right_walk_1",
+          "file": "frames/07_right_walk_1.png",
+          "bbox": [
+            1119,
+            370,
+            1324,
+            714
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 8,
+          "name": "front_walk_2",
+          "file": "frames/08_front_walk_2.png",
+          "bbox": [
+            152,
+            724,
+            345,
+            1069
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 9,
+          "name": "back_walk_2",
+          "file": "frames/09_back_walk_2.png",
+          "bbox": [
+            472,
+            725,
+            652,
+            1066
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 10,
+          "name": "left_walk_2",
+          "file": "frames/10_left_walk_2.png",
+          "bbox": [
+            764,
+            718,
+            967,
+            1063
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        },
+        {
+          "index": 11,
+          "name": "right_walk_2",
+          "file": "frames/11_right_walk_2.png",
+          "bbox": [
+            1118,
+            718,
+            1324,
+            1065
+          ],
+          "size": [
+            128,
+            128
+          ],
+          "anchor": "bottom_center"
+        }
+      ]
+    },
+    {
+      "id": "00_baoxiang_kai",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        447,
+        60,
+        632,
+        296
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\00_baoxiang_kai.png",
+      "original_size": [
+        185,
+        236
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\00_baoxiang_kai.png",
+      "size": [
+        160,
+        160
+      ]
+    },
+    {
+      "id": "01_cheli_zhuangzhi_an",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        789,
+        88,
+        945,
+        295
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\01_cheli_zhuangzhi_an.png",
+      "original_size": [
+        156,
+        207
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\01_cheli_zhuangzhi_an.png",
+      "size": [
+        160,
+        160
+      ]
+    },
+    {
+      "id": "02_cheli_zhuangzhi_liang",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        1098,
+        88,
+        1261,
+        299
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\02_cheli_zhuangzhi_liang.png",
+      "original_size": [
+        163,
+        211
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\02_cheli_zhuangzhi_liang.png",
+      "size": [
+        160,
+        160
+      ]
+    },
+    {
+      "id": "03_baoxiang_guan",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        143,
+        100,
+        334,
+        293
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\03_baoxiang_guan.png",
+      "original_size": [
+        191,
+        193
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\03_baoxiang_guan.png",
+      "size": [
+        160,
+        160
+      ]
+    },
+    {
+      "id": "04_shangren_tai",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        147,
+        357,
+        466,
+        579
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\04_shangren_tai.png",
+      "original_size": [
+        319,
+        222
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\04_shangren_tai.png",
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "05_yichang_hexin",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        583,
+        357,
+        860,
+        587
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\05_yichang_hexin.png",
+      "original_size": [
+        277,
+        230
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\05_yichang_hexin.png",
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "06_dici_xianjing",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        977,
+        388,
+        1269,
+        584
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\06_dici_xianjing.png",
+      "original_size": [
+        292,
+        196
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\06_dici_xianjing.png",
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "07_lingjian_dui",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        140,
+        649,
+        372,
+        824
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\07_lingjian_dui.png",
+      "original_size": [
+        232,
+        175
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\07_lingjian_dui.png",
+      "size": [
+        160,
+        160
+      ]
+    },
+    {
+      "id": "08_saomiaoyi",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        1114,
+        649,
+        1283,
+        833
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\08_saomiaoyi.png",
+      "original_size": [
+        169,
+        184
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\08_saomiaoyi.png",
+      "size": [
+        160,
+        160
+      ]
+    },
+    {
+      "id": "09_jinbi_dui",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        463,
+        658,
+        703,
+        825
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\09_jinbi_dui.png",
+      "original_size": [
+        240,
+        167
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\09_jinbi_dui.png",
+      "size": [
+        160,
+        160
+      ]
+    },
+    {
+      "id": "10_yiliaobao",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        828,
+        662,
+        1007,
+        813
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\10_yiliaobao.png",
+      "original_size": [
+        179,
+        151
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\10_yiliaobao.png",
+      "size": [
+        160,
+        160
+      ]
+    },
+    {
+      "id": "11_wuzi_xiang",
+      "type": "props",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+      "bbox": [
+        625,
+        865,
+        829,
+        1040
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\11_wuzi_xiang.png",
+      "original_size": [
+        204,
+        175
+      ],
+      "anchor": "bottom_center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\11_wuzi_xiang.png",
+      "size": [
+        160,
+        160
+      ]
+    },
+    {
+      "id": "00_wanjia_dingwei",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        146,
+        90,
+        378,
+        372
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\00_wanjia_dingwei.png",
+      "original_size": [
+        232,
+        282
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\00_wanjia_dingwei.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\00_wanjia_dingwei.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "01_weizhi_ge",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        453,
+        131,
+        679,
+        363
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\01_weizhi_ge.png",
+      "original_size": [
+        226,
+        232
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\01_weizhi_ge.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\01_weizhi_ge.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "02_yitan_ge",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        770,
+        137,
+        987,
+        365
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\02_yitan_ge.png",
+      "original_size": [
+        217,
+        228
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\02_yitan_ge.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\02_yitan_ge.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "03_saomiao_ge",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        1076,
+        135,
+        1295,
+        366
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\03_saomiao_ge.png",
+      "original_size": [
+        219,
+        231
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\03_saomiao_ge.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\03_saomiao_ge.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "04_biaoji_qi",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        80,
+        459,
+        234,
+        650
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\04_biaoji_qi.png",
+      "original_size": [
+        154,
+        191
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\04_biaoji_qi.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\04_biaoji_qi.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "05_dici_xianjing_icon",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        292,
+        461,
+        479,
+        655
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\05_dici_xianjing_icon.png",
+      "original_size": [
+        187,
+        194
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\05_dici_xianjing_icon.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\05_dici_xianjing_icon.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "06_guaiwu_icon",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        522,
+        461,
+        730,
+        650
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\06_guaiwu_icon.png",
+      "original_size": [
+        208,
+        189
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\06_guaiwu_icon.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\06_guaiwu_icon.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "07_baoxiang_icon",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        775,
+        471,
+        955,
+        647
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\07_baoxiang_icon.png",
+      "original_size": [
+        180,
+        176
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\07_baoxiang_icon.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\07_baoxiang_icon.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "08_cheli_icon",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        1001,
+        471,
+        1151,
+        655
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\08_cheli_icon.png",
+      "original_size": [
+        150,
+        184
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\08_cheli_icon.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\08_cheli_icon.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "09_chukou_icon",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        1203,
+        461,
+        1367,
+        653
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\09_chukou_icon.png",
+      "original_size": [
+        164,
+        192
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\09_chukou_icon.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\09_chukou_icon.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "10_yiqingli_icon",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        221,
+        747,
+        386,
+        924
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\10_yiqingli_icon.png",
+      "original_size": [
+        165,
+        177
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\10_yiqingli_icon.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\10_yiqingli_icon.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "11_shuzi_1",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        473,
+        746,
+        643,
+        926
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\11_shuzi_1.png",
+      "original_size": [
+        170,
+        180
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\11_shuzi_1.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\11_shuzi_1.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "12_shuzi_2",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        719,
+        746,
+        894,
+        926
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\12_shuzi_2.png",
+      "original_size": [
+        175,
+        180
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\12_shuzi_2.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\12_shuzi_2.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "13_shuzi_3",
+      "type": "icons",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\icons\\Zujian2.png",
+      "bbox": [
+        970,
+        746,
+        1142,
+        926
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\icons\\raw\\13_shuzi_3.png",
+      "original_size": [
+        172,
+        180
+      ],
+      "anchor": "center",
+      "detection_mode": "manual_bbox_override",
+      "game_ready_64": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\64\\13_shuzi_3.png",
+      "game_ready_32": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\icons\\32\\13_shuzi_3.png",
+      "size": {
+        "64": [
+          64,
+          64
+        ],
+        "32": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "id": "zuoce_mianban",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        43,
+        30,
+        727,
+        610
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\zuoce_mianban.png",
+      "original_size": [
+        684,
+        580
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        684,
+        580
+      ]
+    },
+    {
+      "id": "xieyi_mianban",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        880,
+        39,
+        1185,
+        428
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\xieyi_mianban.png",
+      "original_size": [
+        305,
+        389
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        305,
+        389
+      ]
+    },
+    {
+      "id": "kuaijie_lan",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        769,
+        467,
+        1359,
+        643
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\kuaijie_lan.png",
+      "original_size": [
+        590,
+        176
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        590,
+        176
+      ]
+    },
+    {
+      "id": "jiaohu_tishi",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        55,
+        642,
+        507,
+        803
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\jiaohu_tishi.png",
+      "original_size": [
+        452,
+        161
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        452,
+        161
+      ]
+    },
+    {
+      "id": "xuetiao_kuang",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        575,
+        661,
+        994,
+        733
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\xuetiao_kuang.png",
+      "original_size": [
+        419,
+        72
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        419,
+        72
+      ]
+    },
+    {
+      "id": "xuetiao_tianchong",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        1173,
+        686,
+        1272,
+        787
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\xuetiao_tianchong.png",
+      "original_size": [
+        99,
+        101
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui\\icons\\xuetiao_tianchong.png",
+      "size": [
+        99,
+        101
+      ]
+    },
+    {
+      "id": "jinbi_icon",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        1043,
+        692,
+        1129,
+        781
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\jinbi_icon.png",
+      "original_size": [
+        86,
+        89
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\ui\\icons\\jinbi_icon.png",
+      "size": [
+        86,
+        89
+      ]
+    },
+    {
+      "id": "lingjian_icon",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        575,
+        736,
+        994,
+        808
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\lingjian_icon.png",
+      "original_size": [
+        419,
+        72
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        419,
+        72
+      ]
+    },
+    {
+      "id": "beibao_icon",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        312,
+        838,
+        501,
+        1024
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\beibao_icon.png",
+      "original_size": [
+        189,
+        186
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        189,
+        186
+      ]
+    },
+    {
+      "id": "xieyi_huizhang",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        967,
+        848,
+        1376,
+        1034
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\xieyi_huizhang.png",
+      "original_size": [
+        409,
+        186
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        409,
+        186
+      ]
+    },
+    {
+      "id": "tishi_kuang",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        69,
+        851,
+        247,
+        1019
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\tishi_kuang.png",
+      "original_size": [
+        178,
+        168
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        178,
+        168
+      ]
+    },
+    {
+      "id": "11_jiemian_weimingming",
+      "type": "ui",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\ui\\Zujian3.png",
+      "bbox": [
+        592,
+        857,
+        915,
+        1024
+      ],
+      "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\ui\\raw\\11_jiemian_weimingming.png",
+      "original_size": [
+        323,
+        167
+      ],
+      "anchor": "center",
+      "detection_mode": "connected_components",
+      "game_ready": null,
+      "size": [
+        323,
+        167
+      ]
+    },
+    {
+      "id": "fangjian_jichu",
+      "type": "room",
+      "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\rooms\\Fangjian.png",
+      "processed": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\rooms\\fangjian_jichu_raw.png",
+      "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\rooms\\fangjian_jichu_1024.png",
+      "size": [
+        1024,
+        1024
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+﻿{
+    "generated_at":  "2026-07-02T12:05:06",
+    "admitted_unique_sources":  27,
+    "excluded_p0_candidates":  1,
+    "copied_files":  27,
+    "already_present_files":  0,
+    "staging_root":  "D:\\AGAME1\\sources\\art\\ART-20\\01_staging_from_draw",
+    "manifest_path":  "D:\\AGAME1\\sources\\art\\ART-20\\_manifest\\staging_manifest.csv",
+    "source_policy":  "Only confirmed P0 sources from D:\\AGAME1\\sources\\draw\\30_game_ready were admitted. Unresolved/reference candidates were excluded."
+}

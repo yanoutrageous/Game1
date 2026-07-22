@@ -1,0 +1,2 @@
+﻿prompt_id,source_id,tool,model_or_method,prompt_summary,generated_at,output_path,status,notes
+ART07-STAGING-OP-001,ART07_source_migration,staging_operation,source_migration,ART07 staging_operation copied_or_verified=166;runtime_candidates=52;visual_targets=10;animation_sources=48;sprite_sheets=4,2026-06-26T10:00:34+08:00,D:\AGAME1\Base Art,pending_review,runtime_import_status=not_ready;not_ai_generation;not_generated_final

@@ -1,0 +1,2 @@
+﻿"item","priority","source_status","source_candidate","reason","allowed_next_action"
+"map_overlay_event_marker_64","P0","needs_source_selection","sources/draw/30_game_ready/icons/64/04_biaoji_qi.png; alternate sources/draw/30_game_ready/map_icon/map_icon_event.png","not_admitted_unresolved_source_status","requires_audit_source_selection_before_staging"

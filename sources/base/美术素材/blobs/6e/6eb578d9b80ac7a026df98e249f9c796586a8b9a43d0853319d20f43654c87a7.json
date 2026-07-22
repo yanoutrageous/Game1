@@ -1,0 +1,180 @@
+{
+  "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\Huanxionggai.png",
+  "sheet": "sheet.png",
+  "crop_mode": "component",
+  "grid": {
+    "columns": 4,
+    "rows": 3
+  },
+  "frame_size": {
+    "width": 128,
+    "height": 128
+  },
+  "scale": 0.463768115942029,
+  "component_detection": {
+    "candidate_count": 12,
+    "padding": 12,
+    "alpha_threshold": 1,
+    "connect_radius": 4,
+    "min_component_area": 64,
+    "debug_image": "debug_detected_boxes.png"
+  },
+  "frames": [
+    {
+      "index": 0,
+      "name": "front_idle",
+      "file": "00_front_idle.png",
+      "row": 0,
+      "column": 0,
+      "crop_box": [
+        129,
+        72,
+        333,
+        380
+      ]
+    },
+    {
+      "index": 1,
+      "name": "back_idle",
+      "file": "01_back_idle.png",
+      "row": 0,
+      "column": 1,
+      "crop_box": [
+        468,
+        76,
+        666,
+        376
+      ]
+    },
+    {
+      "index": 2,
+      "name": "left_idle",
+      "file": "02_left_idle.png",
+      "row": 0,
+      "column": 2,
+      "crop_box": [
+        773,
+        75,
+        1025,
+        380
+      ]
+    },
+    {
+      "index": 3,
+      "name": "right_idle",
+      "file": "03_right_idle.png",
+      "row": 0,
+      "column": 3,
+      "crop_box": [
+        1055,
+        75,
+        1305,
+        382
+      ]
+    },
+    {
+      "index": 4,
+      "name": "front_walk_1",
+      "file": "04_front_walk_1.png",
+      "row": 1,
+      "column": 0,
+      "crop_box": [
+        124,
+        395,
+        331,
+        701
+      ]
+    },
+    {
+      "index": 5,
+      "name": "back_walk_1",
+      "file": "05_back_walk_1.png",
+      "row": 1,
+      "column": 1,
+      "crop_box": [
+        467,
+        400,
+        661,
+        701
+      ]
+    },
+    {
+      "index": 6,
+      "name": "left_walk_1",
+      "file": "06_left_walk_1.png",
+      "row": 1,
+      "column": 2,
+      "crop_box": [
+        769,
+        399,
+        1019,
+        698
+      ]
+    },
+    {
+      "index": 7,
+      "name": "right_walk_1",
+      "file": "07_right_walk_1.png",
+      "row": 1,
+      "column": 3,
+      "crop_box": [
+        1060,
+        400,
+        1310,
+        701
+      ]
+    },
+    {
+      "index": 8,
+      "name": "front_walk_2",
+      "file": "08_front_walk_2.png",
+      "row": 2,
+      "column": 0,
+      "crop_box": [
+        123,
+        714,
+        332,
+        1022
+      ]
+    },
+    {
+      "index": 9,
+      "name": "back_walk_2",
+      "file": "09_back_walk_2.png",
+      "row": 2,
+      "column": 1,
+      "crop_box": [
+        468,
+        722,
+        661,
+        1022
+      ]
+    },
+    {
+      "index": 10,
+      "name": "left_walk_2",
+      "file": "10_left_walk_2.png",
+      "row": 2,
+      "column": 2,
+      "crop_box": [
+        771,
+        721,
+        1019,
+        1019
+      ]
+    },
+    {
+      "index": 11,
+      "name": "right_walk_2",
+      "file": "11_right_walk_2.png",
+      "row": 2,
+      "column": 3,
+      "crop_box": [
+        1062,
+        722,
+        1311,
+        1022
+      ]
+    }
+  ]
+}

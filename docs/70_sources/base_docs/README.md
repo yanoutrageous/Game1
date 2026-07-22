@@ -2,7 +2,22 @@
 
 文档状态：外部来源入口
 适用范围：Base Docs 当前归档来源与冻结历史快照
-最后更新：2026/06/26
+最后更新：2026/07/23
+
+## I3 当前仓库内原始策划基线
+
+用户已在 I3 明确授权将 `sources.zip` 中的原始策划案经审计后纳入仓库。当前原件位于：
+
+```text
+sources/base/原始策划案/
+```
+
+25 份文件保持原名、完整正文和源字节；不在 `repo/docs` 复制正文。精确 SHA 与字节数见
+`sources/base/manifests/ORIGINAL_PLANNING_MANIFEST.csv`，相互关系、当前用途与保留说明见
+`docs/70_sources/base_docs/I3_ORIGINAL_PLANNING_RELATIONSHIP_REGISTRY.md`。
+
+以下 G40/DOC-GOV-001 内容保留为历史外部来源说明；它不覆盖 I3 的新授权，也不把
+历史固定盘符恢复为当前路径权威。
 
 来源注册表：
 

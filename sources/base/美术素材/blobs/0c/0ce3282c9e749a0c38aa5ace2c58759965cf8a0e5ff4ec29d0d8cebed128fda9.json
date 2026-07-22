@@ -1,0 +1,17 @@
+{
+  "component_rows": 36,
+  "runtime_rows": 36,
+  "contract_rows": 36,
+  "art20_blocked_replaced": 8,
+  "screens": [
+    "deploy_prep",
+    "ground_loot",
+    "inventory",
+    "long_term",
+    "main_menu",
+    "map_overlay",
+    "result",
+    "run_hud",
+    "shared"
+  ]
+}

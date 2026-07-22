@@ -1,0 +1,33 @@
+{
+  "source_sheet": "D:\\AGAME1\\sources\\draw\\Zujian3.png",
+  "rows": 3,
+  "write_runtime": true,
+  "force": false,
+  "result": "runtime_written",
+  "sections": [
+    {
+      "asset_id": "ui.art21r2.modal.title_plate",
+      "candidate": "Zujian3_candidate_012.png",
+      "cut_sha256": "C54CAFAD213C02F38073ADD7DA670800749682593FC38A841B0EB60DE91CAAAC",
+      "purple_like_before": 1199,
+      "purple_like_after": 0,
+      "output_size": "305x149"
+    },
+    {
+      "asset_id": "ui.art21r2.modal.section.panel",
+      "candidate": "Zujian3_candidate_010.png",
+      "cut_sha256": "BE9ACAFF54AFE10468BC773F339B55745661553A1AF1D1D4DDDA4BD7AA3496E2",
+      "purple_like_before": 1534,
+      "purple_like_after": 0,
+      "output_size": "391x169"
+    },
+    {
+      "asset_id": "ui.art21r2.modal.action_strip",
+      "candidate": "Zujian3_candidate_012.png",
+      "cut_sha256": "C54CAFAD213C02F38073ADD7DA670800749682593FC38A841B0EB60DE91CAAAC",
+      "purple_like_before": 1199,
+      "purple_like_after": 0,
+      "output_size": "305x149"
+    }
+  ]
+}

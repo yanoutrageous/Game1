@@ -1,0 +1,278 @@
+[
+  {
+    "id": "00_baoxiang_kai",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      447,
+      60,
+      632,
+      296
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\00_baoxiang_kai.png",
+    "original_size": [
+      185,
+      236
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\00_baoxiang_kai.png",
+    "size": [
+      160,
+      160
+    ]
+  },
+  {
+    "id": "01_cheli_zhuangzhi_an",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      789,
+      88,
+      945,
+      295
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\01_cheli_zhuangzhi_an.png",
+    "original_size": [
+      156,
+      207
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\01_cheli_zhuangzhi_an.png",
+    "size": [
+      160,
+      160
+    ]
+  },
+  {
+    "id": "02_cheli_zhuangzhi_liang",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      1098,
+      88,
+      1261,
+      299
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\02_cheli_zhuangzhi_liang.png",
+    "original_size": [
+      163,
+      211
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\02_cheli_zhuangzhi_liang.png",
+    "size": [
+      160,
+      160
+    ]
+  },
+  {
+    "id": "03_baoxiang_guan",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      143,
+      100,
+      334,
+      293
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\03_baoxiang_guan.png",
+    "original_size": [
+      191,
+      193
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\03_baoxiang_guan.png",
+    "size": [
+      160,
+      160
+    ]
+  },
+  {
+    "id": "04_shangren_tai",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      147,
+      357,
+      466,
+      579
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\04_shangren_tai.png",
+    "original_size": [
+      319,
+      222
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\04_shangren_tai.png",
+    "size": [
+      256,
+      256
+    ]
+  },
+  {
+    "id": "05_yichang_hexin",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      583,
+      357,
+      860,
+      587
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\05_yichang_hexin.png",
+    "original_size": [
+      277,
+      230
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\05_yichang_hexin.png",
+    "size": [
+      256,
+      256
+    ]
+  },
+  {
+    "id": "06_dici_xianjing",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      977,
+      388,
+      1269,
+      584
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\06_dici_xianjing.png",
+    "original_size": [
+      292,
+      196
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\06_dici_xianjing.png",
+    "size": [
+      256,
+      256
+    ]
+  },
+  {
+    "id": "07_lingjian_dui",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      140,
+      649,
+      372,
+      824
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\07_lingjian_dui.png",
+    "original_size": [
+      232,
+      175
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\07_lingjian_dui.png",
+    "size": [
+      160,
+      160
+    ]
+  },
+  {
+    "id": "08_saomiaoyi",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      1114,
+      649,
+      1283,
+      833
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\08_saomiaoyi.png",
+    "original_size": [
+      169,
+      184
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\08_saomiaoyi.png",
+    "size": [
+      160,
+      160
+    ]
+  },
+  {
+    "id": "09_jinbi_dui",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      463,
+      658,
+      703,
+      825
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\09_jinbi_dui.png",
+    "original_size": [
+      240,
+      167
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\09_jinbi_dui.png",
+    "size": [
+      160,
+      160
+    ]
+  },
+  {
+    "id": "10_yiliaobao",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      828,
+      662,
+      1007,
+      813
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\10_yiliaobao.png",
+    "original_size": [
+      179,
+      151
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\10_yiliaobao.png",
+    "size": [
+      160,
+      160
+    ]
+  },
+  {
+    "id": "11_wuzi_xiang",
+    "type": "props",
+    "source": "D:\\A GAME\\26.5.30 GameJam\\Draw\\10_working\\props\\Zujian1.png",
+    "bbox": [
+      625,
+      865,
+      829,
+      1040
+    ],
+    "raw": "D:\\A GAME\\26.5.30 GameJam\\Draw\\20_processed\\props\\raw\\11_wuzi_xiang.png",
+    "original_size": [
+      204,
+      175
+    ],
+    "anchor": "bottom_center",
+    "detection_mode": "connected_components",
+    "game_ready": "D:\\A GAME\\26.5.30 GameJam\\Draw\\30_game_ready\\props\\11_wuzi_xiang.png",
+    "size": [
+      160,
+      160
+    ]
+  }
+]

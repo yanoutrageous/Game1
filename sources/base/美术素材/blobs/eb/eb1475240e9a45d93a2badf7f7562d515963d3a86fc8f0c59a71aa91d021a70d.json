@@ -1,0 +1,21 @@
+{
+  "write_cut_output": true,
+  "cut_output_root": "D:\\AGAME1\\sources\\art\\ART-20\\03_cut_output",
+  "cut_manifest_out": "D:\\AGAME1\\sources\\art\\ART-20\\_manifest\\cut_manifest.csv",
+  "cut_blocked_out": "D:\\AGAME1\\sources\\art\\ART-20\\_manifest\\cut_blocked_or_review.csv",
+  "gallery_out": "D:\\AGAME1\\_repo_cache\\Game1_work\\docs\\art\\validation\\art20\\art20_slice3_component_gallery.md",
+  "cut_rows": 54,
+  "blocked_or_skipped_rows": 5,
+  "written_rows": 0,
+  "already_present_same_hash_rows": 54,
+  "governance_review_cut_rows": 11,
+  "ready_for_review_cut_rows": 43,
+  "generated_png_count": 54,
+  "blocked_component_ids": [
+    "deploy_left_character_frame",
+    "longterm_left_character_profile",
+    "map_overlay_cell_64_set",
+    "map_overlay_event_marker_64",
+    "run_gameplay_viewport_background"
+  ]
+}

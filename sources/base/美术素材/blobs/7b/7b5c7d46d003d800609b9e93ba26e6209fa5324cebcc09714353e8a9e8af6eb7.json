@@ -1,0 +1,41 @@
+{
+  "source_sheet": "D:\\AGAME1\\sources\\draw\\Zujian3.png",
+  "rows": 4,
+  "write_runtime": true,
+  "force": false,
+  "result": "runtime_written",
+  "controls": [
+    {
+      "asset_id": "ui.art21r2.modal.item_row.normal",
+      "candidate": "Zujian3_candidate_005.png",
+      "cut_sha256": "8BEB048B8ED78658FB243B9C57BCA45C2038780449E96D788264384CAF3772B3",
+      "purple_like_before": 1297,
+      "purple_like_after": 0,
+      "output_size": "402x54"
+    },
+    {
+      "asset_id": "ui.art21r2.modal.button.primary",
+      "candidate": "Zujian3_candidate_005.png",
+      "cut_sha256": "8BEB048B8ED78658FB243B9C57BCA45C2038780449E96D788264384CAF3772B3",
+      "purple_like_before": 1297,
+      "purple_like_after": 0,
+      "output_size": "402x54"
+    },
+    {
+      "asset_id": "ui.art21r2.modal.button.secondary",
+      "candidate": "Zujian3_candidate_005.png",
+      "cut_sha256": "8BEB048B8ED78658FB243B9C57BCA45C2038780449E96D788264384CAF3772B3",
+      "purple_like_before": 1297,
+      "purple_like_after": 0,
+      "output_size": "402x54"
+    },
+    {
+      "asset_id": "ui.art21r2.modal.button.danger",
+      "candidate": "Zujian3_candidate_008.png",
+      "cut_sha256": "341D90616A28BDFB5E4557FAB0CF69AAD9623DD037F78F52E924E0A456634D82",
+      "purple_like_before": 1184,
+      "purple_like_after": 0,
+      "output_size": "402x54"
+    }
+  ]
+}

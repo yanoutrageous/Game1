@@ -1,0 +1,18 @@
+{
+  "archive_member_count": 1626,
+  "archive_sha256": "A1035F69C412680016E6FB1C4FB181E77E75A517FDB252D6EBBC76D7F7957E71",
+  "archive_uncompressed_bytes": 314060767,
+  "art_canonical_bytes": 177253870,
+  "art_deduplicated_bytes": 79256439,
+  "art_exact_duplicate_alias_count": 395,
+  "art_selected_member_bytes": 256510309,
+  "art_source_member_count": 1407,
+  "art_unique_content_count": 1012,
+  "excluded_governance_snapshot_count": 192,
+  "excluded_nested_archive_count": 1,
+  "planning_original_bytes": 728214,
+  "planning_original_count": 25,
+  "planning_policy": "exact name and bytes; no information reduction",
+  "runtime_admission": "none",
+  "schema": "i3_base_import/v1"
+}
