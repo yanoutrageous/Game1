@@ -36,7 +36,7 @@ entry full/head: 39/39 PASS
 | I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `ACCEPTED_WITH_NOTES` | I2.3A 同页双栏与八地图精确投影、I2.3B 单件购买/出售真实事务闭环均已接受；批量售卖继续禁止，玩家动态手感并入 I2.7 综合复核 |
 | I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `ACCEPTED_WITH_NOTES` | I2.4A/B 已关闭获授权的任务档案、模块工作区与角色表现端口；天赋规则缺少产品权威，作为显式阻塞项保留，不用假数据冒充完成 |
 | I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `ACCEPTED_WITH_NOTES` | I2.5A/B/C 均已接受；世界对象、公开信息、品质、地图、背包与统一模态已闭环，战斗逃离/特殊房/结算解释转入 I2.6，最终玩家手感复核留 I2.7 |
-| I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `IN_PROGRESS` | I2.6A v2 工作负载与 I2.6B pre-authority combat asset admission 已 `READY_FOR_REVIEW`；特殊房、结算与 visible 验收仍待后续 gate |
+| I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `IN_PROGRESS` | I2.6A/B 已形成历史可复核基础；Gate20 战斗/特殊房与 Gate21 终局结果已在 `0b88f7b` 上完成实现前审计并授权，尚未实施或验收 |
 | I2.7 | 跨页面整合、操作说明、全量回归、综合验收 | I2.1–I2.6 accepted/deferred with owner | `NOT_STARTED` | full/worktree→commit→full/head；matrix 逐项；创建唯一 validation/handoff |
 
 ## 3. 全局进入门
@@ -915,3 +915,106 @@ independent post-fix review: P0=0; P1=0
 人工检查 1280 与 1920 代表图确认 run/inventory/map 无阻塞性裁切，背包和地图居中、遮罩与说明可读；但局内底部操作反馈在 1280 下仍拥挤并出现截断，空背包捕获也不能替代富物品品质的可见检查。它们与 push 失败故障注入、debug-only loot 动态覆盖、reduced-motion 玩家可见动画手感一起登记为非阻塞 P2，进入 I2.7 综合可见/输入复核。特殊房型仍可能泄露工程枚举、战斗触边逃离、撤离点/雷房反馈和成功/失败结算解释继续属于 I2.6C/D，不以本门结果冒充完成。
 
 接受边界：I2.5A/B/C 的获授权工程范围已关闭，I2.5 记为 `ACCEPTED_WITH_NOTES`，不关闭 I2。未新增二进制素材，全部 UI/物品/协议图形复用已治理资产；没有改动 scene/resource/project、素材清单或设置/InputMap schema。full/worktree 与 exact full/head 仍保留给 I2.7 最终综合门。
+
+## 20. I2.6C 战斗离房、特殊房玩家旅程与真实性能关闭门（2026-07-22）
+
+```text
+status: AUTHORIZED
+feedback: RUN-01, RUN-02, RUN-03, RUN-04, RUN-06, RUN-07, RUN-08, RUN-10, SPECIAL-COMBAT, SPECIAL-EVENT, SPECIAL-MINE, SPECIAL-EXIT
+rollback: 0b88f7b (I2.5C accepted checkpoint)
+authority: existing RunStateMachine / CommandBus / RoomResolver / EventService / combat fixed-step remain canonical
+```
+
+代码优先审计确认四项 P1：活动战斗中触碰有效门边会自动调用 `request_flee` 并换房；仅删掉该调用会被 `G41InRunRuntime.sync_room()` 在同房立即重启战斗；雷房真实扣血与压力结果被 `CommandBus.move_by()` 吞掉而只留下通用移动反馈；Event 四种真实类型共用旅商语义且选项文案解析英文 label，Exit 则缺少首次发现、世界锚点和靠近摘要。怪物首帧瞬间出现、特殊房 tooltip 泄露 policy/command/schema/raw enum、撤离点全房可操作也都阻断玩家体验验收。Chest 的 I2.5B 首开/回访/剩余内容权威链已经正确，只作防回归，不重写。
+
+冻结交互如下：战斗触边只阻挡并提示，零领域命令、零扣罚、零换房；玩家站在通过既有 `_g41_transition_precheck` 的有效门边后，使用现有 `T`/撤离动作或等价鼠标按钮打开确认。确认成功恰好一次 `request_flee`、随后恰好一次过门；取消、无效位置、模态栈非空均零命令。付费成功而换房失败时保留既有 `flee_authorized`，同房不重启战斗且不二次扣费；房间键真实变化后才清除授权，日后重返未清除怪物房仍正常开战。确认文案只陈述公开的当前 10% 楼层黑资损失及现有 T1/非消耗品可能遗留规则，不预测随机遗失物，也不修改规则服务。
+
+怪物入场只增加约 0.15–0.20 秒的表现包络，首帧保持可辨识；不得暂停 simulation、增加无敌时间、改变攻击时序、位置、碰撞、固定 60Hz 或新增权威 spawn 状态。reduced-motion 直接显示清晰静态姿态。雷房由 `RoomResolver -> CommandBus` 只读返回 `cause/hp_delta/pressure_delta/first_trigger/fatal`；只有真实 `hp_delta < 0` 才播放既有爆炸帧、短红色反馈和受击姿态，回访显示机关已失效，数值与一次触发规则不变。Event 只消费公开 `event_type/completed` 及结构化费用、效果、禁用原因，不解析 label、不回显 ID；四类型使用已有小型徽标区分，完成态保留类型但降强调。Exit 进入时一次非阻塞通知，靠近经治理锚点自动显示公开的黑资、安全收益、背包件数/负重、当前房间遗留与目标摘要；靠近/离开零命令，显式请求/确认/取消继续走既有撤离权威，不由 UI 复算长期兑换总额。
+
+本门只复用已治理资产，不生成或导入素材：`mine_trap.png`、`mine_burst_0..5`、`beacon_pulse_0..7`、现有敌人帧/阴影、ART25 `trader/dice/altar/trap` 小徽标及既有房间背景。ART07 `00_baoxiang_kai`、`01/02` 撤离装置、`04_shangren_tai`、`05_yichang_hexin` 仍为 `internal_staged + replacement_needed + staged_pending_review`，禁止进入生产；UE 仅只读参考交互语义，`.uasset` 不得复制。仓内没有已治理音频链，本门不新增音频，也不得声称声音反馈完成。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+Godot/GraytailGodot/scripts/core/run/run_scene.gd
+Godot/GraytailGodot/scripts/core/run/g41_in_run_runtime.gd
+Godot/GraytailGodot/scripts/core/command/command_bus.gd (仅 room_entry_result 投影与 Gate21 重试转发)
+Godot/GraytailGodot/scripts/core/run/room_resolver.gd (仅结构化入房结果，不改规则/数值)
+Godot/GraytailGodot/scripts/core/run/event_service.gd (仅公开结构化选项字段)
+Godot/GraytailGodot/scripts/core/run/run_query_facade.gd (仅既有权威字段只读投影)
+Godot/GraytailGodot/scripts/gameplay/runtime/g41_world_object_projection.gd
+Godot/GraytailGodot/scripts/gameplay/runtime/g41_room_runtime_view.gd
+Godot/GraytailGodot/scripts/gameplay/runtime/g41_runtime_actor_view.gd
+Godot/GraytailGodot/scripts/gameplay/interaction/g41_world_context_popup.gd
+Godot/GraytailGodot/scripts/ui/run_surface/run_surface.gd
+Godot/GraytailGodot/scripts/ui/run_surface/run_surface_model.gd
+Godot/GraytailGodot/tests/i2_combat_room_experience_runner.gd
+Godot/GraytailGodot/tests/i2_special_room_player_experience_runner.gd
+Godot/GraytailGodot/tests/i2_combat_production_bootstrap_runner.gd
+Godot/GraytailGodot/tests/i2_combat_frame_baseline_runner.gd (测试数据/断言可扩展，冻结 workload v2)
+Godot/GraytailGodot/tests/i2_world_interaction_runtime_runner.gd
+Godot/GraytailGodot/tests/i2_runtime_modal_priority_runner.gd
+Godot/GraytailGodot/tests/art25_production_visual_capture_runner.gd
+tools/i1/validation_manifest.json
+```
+
+保护边界：`project.godot`、InputMap、全部 scene/resource/`.uid`/`.translation`/import metadata、素材二进制与 asset manifest、TruthMap/IntelMap、RunStateMachine、RunRuleService、RunAssetLedger/EffectHandler、RunInventory、save/meta/warehouse、settlement 公式、经济/掉落/伤害/压力/保全/逃离惩罚、战斗 simulation 与 fixed tick、移动/碰撞/门阈值及 UE 工程均禁止修改。`command_bus.gd`、`room_resolver.gd` 和 `event_service.gd` 的授权只是无副作用的结构化回传，不得成为第二权威。
+
+修改前同机五次正式 `workload_schema=v2`、Godot 4.6.3、headless 结果全部 PASS；格式为每场景 `frame_work p50/p95/p99 μs`：
+
+```text
+run1 enemy_1=246/441/693 enemy_3=371/771/1194 enemy_5=462/1056/1818 projectile_peak=468/1337/2117
+run2 enemy_1=247/491/804 enemy_3=361/736/1237 enemy_5=446/938/1634 projectile_peak=445/1117/1713
+run3 enemy_1=248/460/758 enemy_3=373/808/1273 enemy_5=444/904/1649 projectile_peak=459/1156/1840
+run4 enemy_1=247/430/686 enemy_3=366/767/1225 enemy_5=437/896/1576 projectile_peak=442/1100/1673
+run5 enemy_1=247/448/753 enemy_3=370/780/1265 enemy_5=454/931/1744 projectile_peak=449/1121/1716
+median_p95 enemy_1=448 enemy_3=771 enemy_5=931 projectile_peak=1121
+```
+
+完成证据必须包括：推门/无效位置/取消为 0 次 flee 与 0 次 transition，有效显式确认各恰好一次，换房失败不重启/不二扣，重返未清除房正常开战，键盘/鼠标/模态等价；Event 四类型及完成/禁用态、Mine 首次/无伤/回访/致死、Exit 首次/靠近/离开/请求/取消/确认、Chest 回归；玩家表面零 raw ID/command/schema/policy；怪物入场与 reduced-motion 不改变快照、命令序列和 fixed tick；71 张角色纹理 admission 精确不变、预热后零晚加载。修改后以同 executable/seed/分辨率/renderer 再跑五次正式基线并报告分布，不得只挑最好一轮；另以非 headless `--i2-perf-visible` 运行四场景每场至少 60 秒，生产 Main 自然启动覆盖 1/3 敌人。1280×720、1600×900、1920×1080 捕获 Event、Chest、Monster、Mine、Exit 及 reduced-motion，截图产出不等于人工验收。
+
+停止条件：任一动画/靠近/hover/focus 自动发领域命令；战斗触边仍扣费或过门；确认可重复扣费；UI 猜测规则或结算；Event 继续解析 label；未审批 ART07/UE/新音频进入生产；fixed tick、经济、掉落、伤害、压力、移动、碰撞或门阈值变化；同机改后五轮出现 runner 合同失败、预热后加载、孤儿/持续增长，或性能退化超出改前自然波动且无法归因。任一条件出现即回滚到 `0b88f7b` 并将 Gate20 标记 `BLOCKED`。
+
+## 21. I2.6D 终局原因、结算解释与保存失败恢复门（2026-07-22）
+
+```text
+status: AUTHORIZED
+feedback: RUN-12, RESULT-SUCCESS, RESULT-FAILURE, RESULT-ABANDON, RESULT-SAVE-RECOVERY
+rollback: 0b88f7b (I2.5C accepted checkpoint)
+authority: existing terminal result snapshot and MetaProgressAdapter settlement remain canonical
+```
+
+代码优先审计确认结算领域链总体正确，但存在四项 P1：`save_failed/write_blocked/missing adapter` 被界面误报为“已写入”，且未保存结果可直接返回而静默丢失；新局 ID 只由模板、进程内 ticks 与 sequence 组成，跨进程可碰撞并被持久化 ID 误判为重复；最终失败原因仅留在 lifecycle event，保全确认后 `last_message` 已覆盖；成功时 `room_floor_lost_items` 未被结果页读取，真实地面遗留可能显示为 0。现有 metrics 被隐藏，结果页也未按权威数组呈现物品名称、品质、重量、待保全后果与放弃原因。
+
+新局 ID 仅在现有可读前缀后追加 `Crypto` 生成的 128-bit nonce；外层 `result_id=<run_id>:<outcome>:<turn>` 不变，历史 ID 与存档记录作为不透明字符串继续兼容，不做迁移。`RunResultBuilder` 只按最终 outcome 反向读取同一生命周期内 `run_failed` 或 `run_abandoned` 事件并固化顶层 `terminal_reason_code`，QueryFacade 只读投影，UI 白名单映射为玩家文案，未知代码显示通用原因；不得从 `last_message`、房型或 UI 状态猜测。
+
+结果页顶部显示结局与明确原因；收益区显示权威快照中的黑资转化/损失、已锁定收益与实际保存状态；物资区严格按已有数组分类：成功为带回仓库/地面遗留/清除消耗品，失败为已保全/未保全损失/地面遗留/清除消耗品，放弃为各遗失类别与保留收益。每件物品复用 `ItemRarityDescriptor` 显示名称、品质、重量，不建立第二套颜色表。失败待选同时显示容量、已选与未选后果，确认前不得显示已保存。按钮“重新出发”改为“返回出发整备”，不得绕过 Deploy 权威直接开局。
+
+保存状态只允许：`committed=进度已保存`、`duplicate_ignored=此前已保存且未重复结算`、pending salvage=等待确认，以及 failure/missing/write-blocked=结果尚未保存。正常离开只在 committed 或 duplicate 时开放；失败状态提供“重试保存”，沿 `ResultPanel -> RunScene -> CommandBus -> RunRuntimeController.retry_terminal_commit -> MetaProgressAdapter.apply_settlement` 重交同一个 terminal/finalized snapshot，不重新 emit `result_available`。现有 adapter 保存失败会完整回滚，因此重试可恢复；若第一次已成功，既有 committed ID 使重试幂等。为避免永久锁死，只提供经过两次明确确认的“放弃未保存结果”逃生口，且不得伪称保存成功。
+
+允许路径：
+
+```text
+docs/00_governance/I2_SLICE_GATE_LEDGER.md
+Godot/GraytailGodot/scripts/core/run/run_context.gd (仅新 run ID)
+Godot/GraytailGodot/scripts/core/run/run_result_builder.gd
+Godot/GraytailGodot/scripts/core/run/run_query_facade.gd
+Godot/GraytailGodot/scripts/core/run/run_runtime_controller.gd
+Godot/GraytailGodot/scripts/core/command/command_bus.gd (仅重试转发)
+Godot/GraytailGodot/scripts/core/run/run_scene_result_controller.gd
+Godot/GraytailGodot/scripts/core/run/run_scene.gd
+Godot/GraytailGodot/scripts/ui/shell/run_ui_view_model.gd
+Godot/GraytailGodot/scripts/ui/result/result_panel.gd
+Godot/GraytailGodot/tests/i2_terminal_result_authority_runner.gd
+Godot/GraytailGodot/tests/i2_terminal_commit_recovery_runner.gd
+Godot/GraytailGodot/tests/art24_result_panel_scene_probe.gd
+Godot/GraytailGodot/tests/art25_production_visual_capture_runner.gd
+tools/i1/validation_manifest.json
+```
+
+保护边界：RunStateMachine、RunRuleService、RunAssetLedger、MetaProgressAdapter、SaveAdapter、M7 progression、所有货币公式、item location 转换、保全容量/资格、warehouse/history 写入语义、scene/resource/project/assets/manifest/import/translation 与 UE 全部禁止修改。结果 UI、ViewModel、QueryFacade 和 controller 不得重新计算奖励、决定物品归属或成为第二保存权威。
+
+完成证据必须覆盖 success、failure pending、failure finalized、abandon 与 save failure；原因跨保全确认保持；成功地面遗留不再假零；各物品 instance ID 与权威 settlement 数组精确一致；pending failure 零局外写入；真实故障注入证明完整回滚、返回被阻止、同 snapshot 重试成功、再重试为 duplicate 且不重复货币/仓库/history；历史 ID 仍兼容、新 ID 同帧与跨新 controller 唯一。三分辨率可见夹具覆盖 success 多品质与遗留、failure empty/mixed/final、abandon、save_failed；人工检查可读性、滚动、焦点、Esc/modal 层级和两次放弃确认。
+
+停止条件：UI 自算任何结算；修改 adapter/ledger/state machine/规则公式；pending 或未保存被标记为已保存；未保存结果可无确认离开；重试重新触发 terminal/result signal、重复发奖或写两条 history；原因由非权威状态猜测；历史存档需迁移；结果项与 settlement instance ID 不一致。任一条件出现即回滚到 `0b88f7b` 并将 Gate21 标记 `BLOCKED`。
