@@ -20,9 +20,10 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 	var content_delivery_summary: Dictionary = _dict_from(snapshot, "content_delivery_summary_preview")
 	var encounter_section := _encounter_section(snapshot)
 	var last_message := String(snapshot.get("last_message", ""))
+	var visible_last_message := event_result_feedback_text(reward) if _is_event_result(reward) else RunUIViewModel.player_message(last_message, event_state)
 	var command_feedback := RunUIViewModel.command_result_text(last_command_result)
 	if command_feedback == "":
-		command_feedback = _player_message(last_message)
+		command_feedback = _player_message(visible_last_message)
 	var action_data := _action_buttons(snapshot, search_data, event_state, room_type)
 	var status_lines := _status_lines(snapshot, room_type, adjacent_mines, search_data, current_room_detail, return_eligibility, run_flow_snapshot, rule_effect_summary, content_delivery_summary)
 	var commission_line := _commission_progress_line(snapshot)
@@ -43,7 +44,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"danger_theme_key": PresentationTheme.risk_key(adjacent_mines, room_type),
 		"event_summary": _event_summary(event_state),
 		"search_summary": _search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
-		"reward_summary": RunUIViewModel.reward_text(reward, last_message),
+		"reward_summary": RunUIViewModel.reward_text(reward, visible_last_message),
 		"backpack_summary": _backpack_summary(snapshot),
 		"backpack_items": _array_from(snapshot, "inventory_items"),
 		"backpack_used": snapshot.get("backpack_used", 0),
@@ -67,7 +68,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"return_eligibility_summary": _return_eligibility_summary(return_eligibility),
 		"settlement_trigger_summary": _settlement_trigger_summary(run_flow_snapshot),
 		"event_panel_summary": event_modal_text(event_state),
-		"loot_panel_summary": loot_modal_text(reward, last_message),
+		"loot_panel_summary": loot_modal_text(reward, visible_last_message),
 		"extract_summary": extract_modal_text(snapshot),
 		"action_hint": _action_hint(action_data),
 		"action_buttons": action_data,
@@ -116,7 +117,7 @@ static func _encounter_section(snapshot: Dictionary) -> Dictionary:
 	var encounter_type := StringName(view_model.get("encounter_type", state.get("encounter_type", &"none")))
 	var state_id := StringName(state.get("state", &"unavailable"))
 	var title := _encounter_title(String(state.get("title", "遭遇槽")))
-	var description := _encounter_description(String(state.get("description", "当前遭遇无公开信息。")))
+	var description := _encounter_description(String(state.get("description", "当前没有可处理的目标。")))
 	var monster_summary := _dict_variant(view_model.get("monster_summary", {}))
 	var options := _encounter_options(_array_variant(view_model.get("options", [])))
 	var body_lines: Array[String] = [
@@ -148,7 +149,7 @@ static func _encounter_options(raw_options: Array) -> Array[Dictionary]:
 		var disabled_reason := String(option.get("disabled_reason", ""))
 		if command_name != &"select_encounter_option":
 			disabled = true
-			disabled_reason = "unsupported_command:%s" % String(command_name)
+			disabled_reason = "option_unavailable"
 		elif not command_payload.has("option_id"):
 			disabled = true
 			disabled_reason = "missing_option_payload"
@@ -185,30 +186,106 @@ static func _encounter_result_text(result_summary: Dictionary) -> String:
 	var lines: Array[String] = [
 		"最近结果：%s | 类型：%s" % ["成功" if ok else "未完成", _encounter_type_label(encounter_type)],
 	]
-	if option_id != &"":
-		lines.append("选项：%s" % String(option_id))
+	var player_option_title := String(result_summary.get("player_option_title", "")).strip_edges()
+	if player_option_title != "":
+		lines.append("处理：%s" % player_option_title)
 	var blocked_reason := String(result_summary.get("blocked_reason", ""))
 	if blocked_reason != "":
 		lines.append("阻止原因：%s" % _reason_label(blocked_reason))
 	var effect_summary := _dict_variant(result_summary.get("effect_summary", {}))
 	if not effect_summary.is_empty():
 		lines.append("影响：%s" % _effect_summary(effect_summary))
-	var messages := _array_variant(result_summary.get("messages", []))
-	if not messages.is_empty():
-		lines.append("记录：%s" % String(messages[0]))
+	var player_record := _structured_encounter_record(result_summary)
+	if player_record != "":
+		lines.append("记录：%s" % player_record)
 	return _join_lines(lines)
+
+
+static func event_result_feedback_text(result: Dictionary) -> String:
+	if result.is_empty():
+		return "事件没有产生可用结果。"
+	var ok := bool(result.get("ok", false))
+	if not ok:
+		var reason := String(result.get("blocked_reason", result.get("reason", "")))
+		return "事件未能处理：%s。" % _reason_label(reason)
+	var event_type := StringName(result.get("event_type", result.get("encounter_type", &"event")))
+	var option_id := StringName(result.get("option_id", &""))
+	if option_id == &"leave":
+		return "已离开%s，本次未消耗资源。" % _event_type_label(event_type)
+	var effect_summary := _dict_variant(result.get("effect_summary", {}))
+	var black_coin_delta := _result_delta(result, effect_summary, "black_coin_delta", "pending_gold_delta")
+	var gold_coin_delta := _result_delta(result, effect_summary, "gold_coin_delta", "safe_yield_delta")
+	var hp_delta := _result_delta(result, effect_summary, "hp_delta")
+	var spend_black_coin := int(result.get("spend_black_coin", 0))
+	match event_type:
+		&"trader":
+			match option_id:
+				&"sell_best_item", &"confirm_high_value_sale":
+					return "旅商交易完成，安全收益 +%d。" % maxi(gold_coin_delta, 0)
+				&"buy_treatment":
+					return "旅商治疗完成：黑币 -%d，生命 +%d。" % [spend_black_coin, maxi(hp_delta, 0)]
+				&"buy_info":
+					return "路线情报已记录，黑币 -%d。" % spend_black_coin
+				_:
+					return "旅商交易已经结算。"
+		&"dice":
+			var roll := int(result.get("roll", 0))
+			return "骰局点数 %d，本局黑币 %s。" % [roll, _signed_delta(black_coin_delta)]
+		&"altar":
+			var stage := maxi(int(result.get("altar_stage", 0)), 1)
+			var stage_total := maxi(int(result.get("altar_stage_total", 5)), stage)
+			var stage_copy := "祭坛第 %d/%d 阶段完成：生命 %s，本局黑币 %s。" % [stage, stage_total, _signed_delta(hp_delta), _signed_delta(black_coin_delta)]
+			if not bool(result.get("completed", false)):
+				stage_copy += "仍可继续献祭或离开。"
+			return stage_copy
+		&"trap":
+			if hp_delta < 0:
+				return "机关已经处理：生命 %s，本局黑币 %s。" % [_signed_delta(hp_delta), _signed_delta(black_coin_delta)]
+			return "机关已经解除，本局黑币 %s。" % _signed_delta(black_coin_delta)
+		_:
+			return "事件已经结算，探索继续。" if bool(result.get("completed", false)) else "本次事件处理结束，仍可继续选择。"
+
+
+static func _structured_encounter_record(result_summary: Dictionary) -> String:
+	var encounter_type := StringName(result_summary.get("encounter_type", &"none"))
+	if encounter_type in [&"trader", &"dice", &"altar", &"trap"]:
+		return event_result_feedback_text(result_summary)
+	if not bool(result_summary.get("ok", false)):
+		var reason := String(result_summary.get("blocked_reason", ""))
+		return "本次处理未完成：%s。" % _reason_label(reason)
+	return "本次遭遇已按上方影响结算。"
+
+
+static func _is_event_result(result: Dictionary) -> bool:
+	return StringName(result.get("event_type", &"none")) in [&"trader", &"dice", &"altar", &"trap"]
+
+
+static func _result_delta(result: Dictionary, effect_summary: Dictionary, primary_key: String, fallback_key: String = "") -> int:
+	if result.has(primary_key):
+		return int(result.get(primary_key, 0))
+	if fallback_key != "" and result.has(fallback_key):
+		return int(result.get(fallback_key, 0))
+	if effect_summary.has(primary_key):
+		return int(effect_summary.get(primary_key, 0))
+	if fallback_key != "" and effect_summary.has(fallback_key):
+		return int(effect_summary.get(fallback_key, 0))
+	return 0
+
+
+static func _signed_delta(value: int) -> String:
+	return "+%d" % value if value > 0 else str(value)
 
 
 static func _encounter_empty_options_text(encounter_type: StringName, state_id: StringName) -> String:
 	if state_id == &"reserved":
-		return "当前遭遇为后续阶段预留，暂无可执行选项。"
+		return "当前目标暂不可处理。"
 	if state_id == &"completed":
 		return "当前遭遇已处理完成。"
 	match encounter_type:
 		&"combat", &"combat_basic", &"monster_basic":
-			return "战斗遭遇当前没有可执行攻击选项；可能已清理或命令被阻止。"
+			return "当前没有可攻击的威胁。"
 		&"extract", &"exit_beacon":
-			return "撤离仍走既有撤离按钮和确认路径。"
+			return "靠近撤离信标后可查看带出摘要。"
 		_:
 			return "当前遭遇无可用选项。"
 
@@ -230,11 +307,11 @@ static func _encounter_type_label(encounter_type: StringName) -> String:
 		&"extract", &"exit_beacon":
 			return "撤离"
 		&"lottery":
-			return "抽奖预留"
+			return "神秘遭遇"
 		&"none":
 			return "无"
 		_:
-			return String(encounter_type)
+			return "其他遭遇"
 
 
 static func _encounter_state_label(state_id: StringName) -> String:
@@ -244,11 +321,11 @@ static func _encounter_state_label(state_id: StringName) -> String:
 		&"completed":
 			return "已完成"
 		&"reserved":
-			return "预留"
+			return "暂不可处理"
 		&"unavailable":
 			return "不可用"
 		_:
-			return String(state_id)
+			return "待确认"
 
 
 static func _option_title(raw_title: String) -> String:
@@ -264,7 +341,7 @@ static func _option_title(raw_title: String) -> String:
 		"Close":
 			return "关闭遭遇"
 		_:
-			return raw_title
+			return "处理当前遭遇"
 
 
 static func _dict_summary(data: Dictionary, fallback: String) -> String:
@@ -335,7 +412,7 @@ static func _field_label(key: String) -> String:
 		"player_win":
 			return "玩家胜利"
 		"codex_ref":
-			return "图鉴接口"
+			return "图鉴记录"
 		"black_coin_loss":
 			return "黑币损失"
 		"hp_loss":
@@ -345,7 +422,7 @@ static func _field_label(key: String) -> String:
 		"hp":
 			return "生命"
 		_:
-			return key
+			return "其他"
 
 
 static func _encounter_title(raw_title: String) -> String:
@@ -364,8 +441,8 @@ static func _encounter_title(raw_title: String) -> String:
 			return "无遭遇"
 		_:
 			if raw_title.begins_with("Event encounter: "):
-				return "事件遭遇：%s" % raw_title.substr("Event encounter: ".length())
-			return raw_title
+				return "事件遭遇：%s" % _event_type_label(StringName(raw_title.substr("Event encounter: ".length())))
+			return "当前遭遇"
 
 
 static func _encounter_description(raw_description: String) -> String:
@@ -375,26 +452,26 @@ static func _encounter_description(raw_description: String) -> String:
 		"This encounter has already been resolved.":
 			return "当前遭遇已处理完成。"
 		"Search the room through the existing search command path.":
-			return "通过现有搜索命令处理当前房间。"
+			return "搜索当前房间以收集可用物资。"
 		"Open the reward container through the existing search command path.":
-			return "通过现有搜索命令开启物资箱。"
+			return "打开物资箱查看其中物品。"
 		"Choose an event option. Resolution stays in existing event rules.":
-			return "选择事件选项；结算仍由现有事件规则处理。"
+			return "选择一种处理方式，或继续探索。"
 		"Combat is reserved for a later combat encounter stage.":
-			return "战斗遭遇预留到后续战斗阶段。"
+			return "当前威胁暂不可处理。"
 		"Resolve the monster through the existing deterministic combat command path.":
-			return "通过现有确定性战斗命令处理当前怪物遭遇。"
+			return "清理当前房间的威胁。"
 		"Extraction remains on existing request/confirm extract commands.":
-			return "撤离仍走现有请求/确认撤离命令。"
+			return "靠近撤离信标可查看摘要并请求撤离。"
 		_:
 			if raw_description.begins_with("No active encounter option for "):
 				return "当前类型暂无可执行遭遇选项。"
-			return raw_description
+			return "当前遭遇信息待确认。"
 
 
 static func _value_label(value: Variant) -> String:
 	if value is StringName:
-		return str(value)
+		return "待确认"
 	if value is String:
 		match str(value):
 			"possible":
@@ -408,9 +485,9 @@ static func _value_label(value: Variant) -> String:
 			"none":
 				return "无"
 			"future_codex_monster_basic":
-				return "后续图鉴接口预留"
+				return "相关记录暂不可用"
 			_:
-				return str(value)
+				return "待确认"
 	if value is bool:
 		return "是" if bool(value) else "否"
 	return str(value)
@@ -439,14 +516,18 @@ static func _reason_label(reason: String) -> String:
 		"monster_cleared":
 			return "当前怪物已清理"
 		"missing_option_payload":
-			return "缺少公开 option payload"
+			return "该处理方式暂不可用"
+		"option_unavailable":
+			return "该处理方式暂不可用"
 		_:
-			return reason
+			return "当前条件不满足"
 
 
 static func _action_buttons(snapshot: Dictionary, search_data: Dictionary, event_state: Dictionary, room_type: StringName) -> Array[Dictionary]:
 	var run_active := bool(snapshot.get("run_active", false))
 	var phase := StringName(snapshot.get("phase", &"idle"))
+	var combat_runtime: Dictionary = _dict_from(snapshot, "combat_runtime")
+	var combat_flee_available := room_type == &"Monster" and (bool(combat_runtime.get("active", false)) or bool(combat_runtime.get("flee_authorized", false)))
 	var has_event := not event_state.is_empty()
 	var can_search := bool(search_data.get("can_search", false))
 	var floor_count := int(snapshot.get("room_floor_item_count", 0))
@@ -456,7 +537,7 @@ static func _action_buttons(snapshot: Dictionary, search_data: Dictionary, event
 		_action(&"ground_loot", "地面物品", run_active and floor_count > 0, "查看当前房间地面物品。"),
 		_action(&"map", "M/Tab 扫描图", run_active, "打开大地图扫描视图。"),
 		_action(&"combat", "Space/J 清理", run_active and room_type == &"Monster", "当前房间存在可清理威胁时可用。"),
-		_action(&"extract", "撤离", run_active and (room_type == &"Exit" or phase == &"confirm_extract"), "在撤离点请求或确认撤离；键盘 E 通过搜索/交互进入撤离确认。"),
+		_action(&"extract", "撤离", run_active and (room_type == &"Exit" or phase == &"confirm_extract" or combat_flee_available), "靠近可通行的门后按 T 或点击此处，确认逃离战斗。" if combat_flee_available else "在撤离点请求或确认撤离；也可按 E 通过搜索/交互进入确认。"),
 		_action(&"pause", "Esc 暂停", run_active, "打开暂停和设置入口。"),
 	]
 
@@ -490,8 +571,9 @@ static func event_modal_text(event_state: Dictionary) -> String:
 	if event_state.is_empty():
 		return "事件：当前没有待处理事件。"
 	var event_type := StringName(event_state.get("event_type", event_state.get("type", &"event")))
-	var options: Array = _array_variant(event_state.get("options", []))
 	var lines: Array[String] = []
+	if bool(event_state.get("completed", false)):
+		return "%s已经处理，不会重复结算。" % _event_type_label(event_type)
 	match event_type:
 		&"trader":
 			lines.append("旅商的货架只为这次相遇开放。")
@@ -513,39 +595,31 @@ static func event_modal_text(event_state: Dictionary) -> String:
 
 
 static func event_option_label(event_type: StringName, option: Dictionary) -> String:
-	var option_id := StringName(option.get("id", &"leave"))
-	var label := "处理事件"
-	match option_id:
-		&"sell_best_item":
-			label = "出售背包中价值最高的物品"
-		&"confirm_high_value_sale":
-			label = "确认出售高价值物品"
-		&"buy_treatment":
-			label = "购买治疗"
-		&"buy_info":
-			label = "购买路线情报"
-		&"bet_small":
-			label = "押注 20 黑币"
-		&"offer_hp":
-			var hp_cost := _first_integer(String(option.get("label", "")))
-			label = "献祭 %s 点生命" % hp_cost if hp_cost > 0 else "献祭生命"
-		&"disarm":
-			label = "尝试解除机关"
-		&"leave":
-			match event_type:
-				&"trader":
-					label = "离开旅商"
-				&"dice":
-					label = "离开赌桌"
-				&"altar":
-					label = "离开祭坛"
-				&"trap":
-					label = "离开机关"
-				_:
-					label = "离开"
+	var label := String(option.get("player_title", "处理事件")).strip_edges()
+	if label == "":
+		label = "处理事件"
+	var cost: Dictionary = _dict_variant(option.get("player_cost", {}))
+	var cost_text := String(cost.get("display_text", "")).strip_edges()
+	if StringName(cost.get("kind", &"none")) != &"none" and cost_text != "":
+		label += " · %s" % cost_text
 	if not bool(option.get("enabled", true)):
-		label += "（条件不足）"
+		label += "（暂不可用）"
 	return label
+
+
+static func event_option_detail(option: Dictionary) -> String:
+	var lines: Array[String] = []
+	var cost: Dictionary = _dict_variant(option.get("player_cost", {}))
+	var cost_text := String(cost.get("display_text", "")).strip_edges()
+	if cost_text != "":
+		lines.append("花费 · %s" % cost_text)
+	var effect := String(option.get("player_effect", "")).strip_edges()
+	if effect != "":
+		lines.append("结果 · %s" % effect)
+	if not bool(option.get("enabled", true)):
+		var disabled_reason := String(option.get("player_disabled_reason", "当前条件不足。")).strip_edges()
+		lines.append("暂不可用 · %s" % disabled_reason)
+	return _join_lines(lines)
 
 
 static func loot_modal_text(reward: Dictionary, last_message: String = "") -> String:
@@ -680,25 +754,14 @@ static func _event_type_label(event_type: StringName) -> String:
 			return "异常事件"
 
 
-static func _first_integer(text: String) -> int:
-	var digits := ""
-	for index in range(text.length()):
-		var character := text.substr(index, 1)
-		if character >= "0" and character <= "9":
-			digits += character
-		elif digits != "":
-			break
-	return int(digits) if digits != "" else 0
-
-
 static func _search_summary(search_data: Dictionary, search_state: String) -> String:
 	if search_data.is_empty():
-		return "搜索：暂无公开搜索状态。"
+		return "搜索：当前没有可搜索目标。"
 	if bool(search_data.get("searched", false)):
 		return "搜索：当前房间已搜索。"
 	if bool(search_data.get("can_search", false)):
-		return "搜索：可执行，原因 %s。" % String(search_data.get("reason", search_state))
-	return "搜索：不可执行，原因 %s。" % String(search_data.get("reason", search_state))
+		return "搜索：可以搜索当前房间。"
+	return "搜索：暂不可用，%s。" % _reason_label(String(search_data.get("reason", search_state)))
 
 
 static func _backpack_summary(snapshot: Dictionary) -> String:
@@ -743,12 +806,12 @@ static func _monster_summary_text(monster_summary: Dictionary) -> String:
 static func _status_lines(snapshot: Dictionary, room_type: StringName, adjacent_mines: int, search_data: Dictionary, room_detail: Dictionary = {}, return_eligibility: Dictionary = {}, run_flow_snapshot: Dictionary = {}, rule_effect_summary: Dictionary = {}, content_delivery_summary: Dictionary = {}) -> Array[String]:
 	var lifecycle: Dictionary = _dict_variant(run_flow_snapshot.get("RunLifecycle", {}))
 	var state_label := _run_state_label(String(lifecycle.get("state", snapshot.get("phase", "running"))))
-	var return_label := "可回传" if bool(return_eligibility.get("eligible", false)) else "不可回传"
+	var return_label := "可快速返回" if bool(return_eligibility.get("eligible", false)) else "暂不可快速返回"
 	return [
 		"协议 %s · %s | 压力 %s/100 | %s" % [snapshot.get("protocol_level", 5), protocol_title_for_level(snapshot.get("protocol_level", 5)), snapshot.get("pressure", 0), state_label],
 		"房间 %s | %s" % [_room_label(room_type), String(mine_risk_descriptor(adjacent_mines).get("display_text", "周围雷险 ? · 未知"))],
 		_search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
-		"地图 %s | %s" % [_known_state_label(String(room_detail.get("known_state", "unknown"))), return_label],
+		"区域 %s | %s" % [_known_state_label(String(room_detail.get("known_state", "unknown"))), return_label],
 	]
 
 
@@ -787,8 +850,8 @@ static func _scanner_legend_lines(minimap_view_model: MiniMapViewModel) -> Array
 
 static func _scanner_detail(minimap_view_model: MiniMapViewModel, run_map_snapshot: Dictionary = {}) -> String:
 	if minimap_view_model == null:
-		return "图例：等待 MiniMapViewModel；不会触发额外扫描或规则计算。"
-	return "图例只反映已公开 MiniMap 数据；未知、标记、危险、事件、奖励、撤离均不改变地图规则。"
+		return "扫描图正在准备。"
+	return "扫描图只显示已经探明的区域信息。"
 
 
 static func _action_hint(actions: Array[Dictionary]) -> String:
@@ -804,7 +867,7 @@ static func _action_hint(actions: Array[Dictionary]) -> String:
 
 static func _scanner_summary(minimap_view_model: MiniMapViewModel, position: Vector2i) -> String:
 	if minimap_view_model == null:
-		return "扫描器：等待公开地图数据。"
+		return "扫描器：地图信息尚未就绪。"
 	return "扫描器：%sx%s | 当前坐标 %s,%s | 已知格 %s" % [
 		minimap_view_model.width,
 		minimap_view_model.height,
@@ -822,12 +885,12 @@ static func _scanner_markers(minimap_view_model: MiniMapViewModel) -> Array:
 
 static func _map_domain_summary(run_map_snapshot: Dictionary) -> String:
 	if run_map_snapshot.is_empty():
-		return "地图：暂无公开摘要。"
+		return "地图：尚未探明。"
 	var known_map: Dictionary = _dict_variant(run_map_snapshot.get("KnownMap", {}))
 	var public_cells: Array = _array_variant(known_map.get("public_cells", []))
 	if known_map.is_empty():
-		return "地图：暂无公开摘要。"
-	return "地图：%sx%s | 公开格 %s" % [
+		return "地图：尚未探明。"
+	return "地图：%sx%s | 已探明 %s 格" % [
 		known_map.get("width", 0),
 		known_map.get("height", 0),
 		public_cells.size(),
@@ -847,8 +910,8 @@ static func _run_flow_summary(run_flow_snapshot: Dictionary) -> String:
 
 static func _room_state_detail(room_detail: Dictionary) -> String:
 	if room_detail.is_empty():
-		return "房间：暂无公开状态。"
-	return "房间：%s / %s / %s" % [
+		return "区域状态待确认。"
+	return "区域：%s · %s · %s" % [
 		_room_label(StringName(room_detail.get("room_type_key", "Unknown"))),
 		_known_state_label(String(room_detail.get("known_state", "unknown"))),
 		_visibility_label(String(room_detail.get("visibility", "unknown"))),
@@ -857,55 +920,47 @@ static func _room_state_detail(room_detail: Dictionary) -> String:
 
 static func _room_common_rule_summary(room_detail: Dictionary) -> String:
 	if room_detail.is_empty():
-		return "房间规则：暂无公开摘要。"
-	var tags: Array = _array_variant(room_detail.get("RoomTag", []))
-	return "房间规则：%s | 标签 %s | %s" % [
-		_room_label(StringName(room_detail.get("room_type_key", "Unknown"))),
-		tags.size(),
-		_room_policy_compact(room_detail),
-	]
+		return "当前房间尚无可确认的交互。"
+	match StringName(room_detail.get("room_type_key", &"Unknown")):
+		&"mine":
+			return "雷区首次进入会触发；失效后回访不会再次受伤。"
+		&"event":
+			return "靠近事件标记可查看处理方式；完成后不会重复结算。"
+		&"exit":
+			return "靠近撤离信标可查看本局摘要并请求撤离。"
+		&"monster":
+			return "清理全部威胁后，出口封锁才会解除。"
+		&"chest":
+			return "靠近物资箱可直接查看并拾取其中物品。"
+	return "继续探索当前房间，留意附近可交互目标。"
 
 
 static func _encounter_preview_summary(room_detail: Dictionary) -> String:
 	if room_detail.is_empty():
-		return "遭遇：暂无公开摘要。"
-	return "遭遇：%s | 主要交互位" % [
-		_encounter_preview_compact(room_detail),
-	]
+		return "附近暂无可确认目标。"
+	match StringName(room_detail.get("room_type_key", &"Unknown")):
+		&"mine":
+			return "附近目标：雷区机关（%s）" % ("已失效" if bool(room_detail.get("triggered", false)) else "警戒")
+		&"event":
+			return "附近目标：事件标记"
+		&"exit":
+			return "附近目标：撤离信标"
+		&"monster":
+			return "附近目标：房间威胁"
+	return "附近目标：探索点"
 
 
 static func _room_resolution_summary(room_detail: Dictionary) -> String:
 	if room_detail.is_empty():
-		return "结算预览：暂无。"
+		return "当前房间尚无结算变化。"
 	var resolution: Dictionary = _dict_variant(room_detail.get("RoomResolutionPreview", {}))
-	return "结算预览：%s" % _settlement_state_label(String(resolution.get("schema_kind", "pending")))
-
-
-static func _room_policy_compact(room_detail: Dictionary) -> String:
-	var policy: Dictionary = _dict_variant(room_detail.get("RoomPolicy", {}))
-	if policy.is_empty():
-		return "none"
-	return "%s/%s/%s" % [
-		String(policy.get("entry_policy", policy.get("return_policy", "unknown"))),
-		String(policy.get("trigger_policy", policy.get("search_policy", "unknown"))),
-		String(policy.get("repeat_policy", "unknown")),
-	]
-
-
-static func _encounter_preview_compact(room_detail: Dictionary) -> String:
-	var encounter: Dictionary = _dict_variant(room_detail.get("EncounterPreview", {}))
-	if encounter.is_empty():
-		return "none"
-	return "%s/%s" % [
-		String(encounter.get("encounter_type", "empty")),
-		String(encounter.get("option_channel_preview", "none")),
-	]
+	return "处理结果：%s" % _settlement_state_label(String(resolution.get("schema_kind", "pending")))
 
 
 static func _return_eligibility_summary(return_eligibility: Dictionary) -> String:
 	if return_eligibility.is_empty():
-		return "回传：暂无公开目标。"
-	return "回传：%s" % ("可用" if bool(return_eligibility.get("eligible", false)) else RunUIViewModel.reason_label(String(return_eligibility.get("reason_code", ""))))
+		return "快速返回：当前没有可用目标。"
+	return "快速返回：%s" % ("可用" if bool(return_eligibility.get("eligible", false)) else RunUIViewModel.reason_label(String(return_eligibility.get("reason_code", ""))))
 
 
 static func _settlement_trigger_summary(run_flow_snapshot: Dictionary) -> String:
@@ -917,7 +972,7 @@ static func _settlement_trigger_summary(run_flow_snapshot: Dictionary) -> String
 
 static func _rule_effect_modifier_summary(rule_effect_summary: Dictionary, content_delivery_summary: Dictionary) -> String:
 	if rule_effect_summary.is_empty() and content_delivery_summary.is_empty():
-		return "规则：暂无公开影响。"
+		return "当前没有额外影响。"
 	return "规则：%s | 效果 %s | 修正 %s | %s" % [
 		_rule_player_label(rule_effect_summary),
 		_effect_count(rule_effect_summary),
@@ -983,7 +1038,7 @@ static func _phase_label(phase: String) -> String:
 static func _known_state_label(state: String) -> String:
 	match state:
 		"known", "revealed", "visible":
-			return "已公开"
+			return "已探明"
 		"explored", "visited":
 			return "已探索"
 		"cleared":
@@ -1059,7 +1114,7 @@ static func _room_label(room_type: StringName) -> String:
 		&"Exit":
 			return "撤离点"
 		_:
-			return String(room_type)
+			return "未知房间"
 
 
 static func _player_message(message: String) -> String:

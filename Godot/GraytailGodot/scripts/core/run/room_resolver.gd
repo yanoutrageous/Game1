@@ -49,6 +49,9 @@ func enter_room(context: RunContext) -> Dictionary:
 
 	if context.current_room_type == &"Mine":
 		var mine_result := _enter_mine(context, pos)
+		var mine_entry: Dictionary = mine_result.get("room_entry_result", {})
+		mine_entry["first_explore"] = first_explore
+		mine_result["room_entry_result"] = mine_entry
 		_maybe_trigger_tutorial(context, pos)
 		return mine_result
 
@@ -66,7 +69,15 @@ func enter_room(context: RunContext) -> Dictionary:
 	else:
 		context.last_message = RunTextCatalogScript.entered_room(context.current_room_type, context.current_adjacent_mines)
 	_maybe_trigger_tutorial(context, pos)
-	return {"ok": true, "message": context.last_message}
+	return {
+		"ok": true,
+		"message": context.last_message,
+		"room_entry_result": {
+			"room_type": context.current_room_type,
+			"position": pos,
+			"first_explore": first_explore,
+		},
+	}
 
 
 func search_current_room(context: RunContext) -> Dictionary:
@@ -285,7 +296,10 @@ func can_extract(context: RunContext) -> bool:
 
 func _enter_mine(context: RunContext, pos: Vector2i) -> Dictionary:
 	var key := context.cell_key(pos)
-	if not context.entered_cells.has(key):
+	var first_trigger := not context.entered_cells.has(key)
+	var hp_before := context.hp
+	var pressure_before := context.pressure
+	if first_trigger:
 		context.entered_cells[key] = true
 		RunEffectApplierScript.apply_effects(context, [RunEffectApplierScript.effect_mine_mark_triggered(pos)], runtime_controller)
 		var damage := CombatState.take_mine_hit(context, runtime_controller)
@@ -297,7 +311,19 @@ func _enter_mine(context: RunContext, pos: Vector2i) -> Dictionary:
 			_fail_run(context, "fatal_mine")
 	else:
 		context.last_message = RunTextCatalogScript.mine_reentered()
-	return {"ok": true, "message": context.last_message}
+	return {
+		"ok": true,
+		"message": context.last_message,
+		"room_entry_result": {
+			"room_type": &"Mine",
+			"position": pos,
+			"cause": &"mine_triggered" if first_trigger else &"mine_inactive",
+			"first_trigger": first_trigger,
+			"hp_delta": context.hp - hp_before,
+			"pressure_delta": context.pressure - pressure_before,
+			"fatal": context.failed,
+		},
+	}
 
 
 func _maybe_trigger_tutorial(context: RunContext, pos: Vector2i) -> void:

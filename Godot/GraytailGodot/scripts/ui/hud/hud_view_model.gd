@@ -3,6 +3,8 @@ class_name HUDViewModel
 
 # HUD receives public snapshots only. It must not read TruthMap.
 
+const RunUIViewModelScript := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+
 var run_label: String = ""
 var status_text: String = ""
 var protocol_text: String = ""
@@ -87,7 +89,7 @@ static func build_from_snapshot(snapshot: Dictionary) -> HUDViewModel:
 	model.risk_key = PresentationTheme.risk_key(int(snapshot.get("adjacent_mines", 0)), StringName(snapshot.get("current_room", &"Unknown")))
 	var hint_lines: Array[String] = [
 		"提示：%s" % _short_text(model.room_hint, 22),
-		"记录：%s" % _short_text(_player_message(String(snapshot.get("last_message", ""))), 22),
+		"记录：%s" % _short_text(_player_message(String(snapshot.get("last_message", "")), event_state), 22),
 	]
 	for extra in [event_text, enemy_text, popup_text, blocked_text]:
 		if String(extra) != "":
@@ -182,17 +184,18 @@ static func _event_label(event_type: StringName) -> String:
 			return String(event_type)
 
 
-static func _player_message(message: String) -> String:
+static func _player_message(message: String, event_state: Dictionary = {}) -> String:
 	var text := message.strip_edges()
 	if text == "":
 		return "-"
+	if text.begins_with("Event available:"):
+		return RunUIViewModelScript.event_room_entry_message(event_state)
 	text = text.replace("Exit room ready. Request extraction.", "撤离点已就绪：可请求撤离。")
 	text = text.replace("Monster present. Fight is available.", "发现异常体：可执行清理。")
 	text = text.replace("Chest can be searched.", "发现未登记物资箱：可搜索。")
 	text = text.replace("Search complete:", "搜索完成：")
 	text = text.replace("Monster cleared:", "异常体已清理：")
 	text = text.replace("Mine triggered:", "雷险触发：")
-	text = text.replace("Event available:", "发现事件：")
 	text = text.replace("Entered ", "进入")
 	text = text.replace(" room. Adjacent mines:", "房间；周围雷险：")
 	text = text.replace("black coin", "待结算黑币")

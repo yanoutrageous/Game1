@@ -175,7 +175,8 @@ func _initialize_run(config: Dictionary) -> void:
 	active_command = command_before_reset
 	var run_template_id := String(config.get("id", &"run"))
 	run_instance_sequence += 1
-	run_id = StringName("%s_%d_%d" % [run_template_id, Time.get_ticks_msec(), run_instance_sequence])
+	var run_nonce := Crypto.new().generate_random_bytes(16).hex_encode()
+	run_id = StringName("%s_%d_%d_%s" % [run_template_id, Time.get_ticks_msec(), run_instance_sequence, run_nonce])
 	mode = StringName(config.get("mode", &"standard"))
 	seed_value = int(config.get("seed", 1001))
 	run_event_log = RunEventLog.new()

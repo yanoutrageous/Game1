@@ -130,6 +130,10 @@
     "I2_MODAL_FOCUS_LIFECYCLE",
     "I2_ACCESSIBILITY_RUNTIME",
     "I2_ASSET_BINDING",
+    "I2_COMBAT_ROOM_EXPERIENCE",
+    "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
+    "I2_TERMINAL_RESULT_AUTHORITY",
+    "I2_TERMINAL_COMMIT_RECOVERY",
     "I2_COMBAT_FRAME_BASELINE"
   ],
   "profiles": {
@@ -183,7 +187,11 @@
         "I2_RUNTIME_INPUT_PROFILE",
         "I2_MODAL_FOCUS_LIFECYCLE",
         "I2_ACCESSIBILITY_RUNTIME",
-        "I2_ASSET_BINDING"
+        "I2_ASSET_BINDING",
+        "I2_COMBAT_ROOM_EXPERIENCE",
+        "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
+        "I2_TERMINAL_RESULT_AUTHORITY",
+        "I2_TERMINAL_COMMIT_RECOVERY"
       ]
     },
     "core": {
@@ -220,7 +228,11 @@
         "I2_LONG_TERM_TASK_ARCHIVE",
         "I2_ROUTE_AUTHORITY_LIFECYCLE",
         "I2_SETTINGS_TRANSACTION",
-        "I2_RUNTIME_INPUT_PROFILE"
+        "I2_RUNTIME_INPUT_PROFILE",
+        "I2_COMBAT_ROOM_EXPERIENCE",
+        "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
+        "I2_TERMINAL_RESULT_AUTHORITY",
+        "I2_TERMINAL_COMMIT_RECOVERY"
       ]
     },
     "ui": {
@@ -270,7 +282,11 @@
         "I2_RUNTIME_INPUT_PROFILE",
         "I2_MODAL_FOCUS_LIFECYCLE",
         "I2_ACCESSIBILITY_RUNTIME",
-        "I2_ASSET_BINDING"
+        "I2_ASSET_BINDING",
+        "I2_COMBAT_ROOM_EXPERIENCE",
+        "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
+        "I2_TERMINAL_RESULT_AUTHORITY",
+        "I2_TERMINAL_COMMIT_RECOVERY"
       ]
     },
     "performance": {
@@ -344,6 +360,10 @@
         "I2_MODAL_FOCUS_LIFECYCLE",
         "I2_ACCESSIBILITY_RUNTIME",
         "I2_ASSET_BINDING",
+        "I2_COMBAT_ROOM_EXPERIENCE",
+        "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
+        "I2_TERMINAL_RESULT_AUTHORITY",
+        "I2_TERMINAL_COMMIT_RECOVERY",
         "I2_COMBAT_FRAME_BASELINE"
       ]
     }
@@ -417,7 +437,7 @@
       "relative_path": "Godot/GraytailGodot/tests/art25_production_visual_capture_runner.gd",
       "category": "capture",
       "disposition": "EXCLUDED_NON_SLICE",
-      "reason": "ART25 capture is outside the explicitly requested ART24 I1-V1 runtime slice."
+      "reason": "Production capture writes review artifacts and requires human visual acceptance; it is tracked as I2 evidence but is not a self-verifying headless runner."
     },
     {
       "id": "I1_PRODUCTION_PREVIEW_CAPTURE",
@@ -846,9 +866,9 @@
     {
       "id": "ART24_RESULT_PANEL_SCENE",
       "relative_path": "Godot/GraytailGodot/tests/art24_result_panel_scene_probe.gd",
-      "pass_marker": "ART24_RESULT_PANEL_SCENE=PASS resolutions=5 states=success,failure_empty,failure_pending,failure_selected,failure_capacity_blocked,failure_final,abandon",
+      "pass_marker": "ART24_RESULT_PANEL_SCENE=PASS resolutions=5 states=success,failure_empty,failure_pending,failure_selected,failure_capacity_blocked,failure_final,abandon,save_failed focus=visible danger=preserved item_sections=whole",
       "fail_marker": "ART24_RESULT_PANEL_SCENE=FAIL",
-      "coverage": ["layout", "result_panel", "state_matrix"]
+      "coverage": ["layout", "result_panel", "state_matrix", "focus_visibility", "danger_action", "whole_item_sections"]
     },
     {
       "id": "I2_ROUTE_AUTHORITY_LIFECYCLE",
@@ -898,6 +918,34 @@
       "pass_marker": "I2_ASSET_BINDING=PASS result_states=3 protocol_levels=5 item_bindings=43 verified_hashes=56",
       "fail_marker": "I2_ASSET_BINDING=FAIL",
       "coverage": ["assets", "manifest", "item_binding", "result_panel", "protocol"]
+    },
+    {
+      "id": "I2_COMBAT_ROOM_EXPERIENCE",
+      "relative_path": "Godot/GraytailGodot/tests/i2_combat_room_experience_runner.gd",
+      "pass_marker": "I2_COMBAT_ROOM_EXPERIENCE=PASS touch=zero_command mouse=enabled invalid=zero_command cancel=zero_command confirm=flee_1,transition_retry_2 modal=blocked",
+      "fail_marker": "I2_COMBAT_ROOM_EXPERIENCE=FAIL",
+      "coverage": ["in_run", "combat_room", "flee_confirmation", "door_authority", "modal", "exactly_once"]
+    },
+    {
+      "id": "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
+      "relative_path": "Godot/GraytailGodot/tests/i2_special_room_player_experience_runner.gd",
+      "pass_marker": "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE=PASS event=structured,proximity_gated,room_entry_scrub,stage_feedback,token_scrub world=proximity_only mine=entry_result monster=0.18s exit=public_summary,proximity_gated",
+      "fail_marker": "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE=FAIL",
+      "coverage": ["in_run", "special_rooms", "event", "mine", "monster", "exit", "player_information", "proximity_authority", "structured_feedback", "event_room_entry_copy", "engineering_token_scrub"]
+    },
+    {
+      "id": "I2_TERMINAL_RESULT_AUTHORITY",
+      "relative_path": "Godot/GraytailGodot/tests/i2_terminal_result_authority_runner.gd",
+      "pass_marker": "I2_TERMINAL_RESULT_AUTHORITY=PASS outcomes=success,failure_pending,failure_finalized,abandon reason=lifecycle_event items=authoritative_arrays floor_loss=visible pending_meta_writes=0",
+      "fail_marker": "I2_TERMINAL_RESULT_AUTHORITY=FAIL",
+      "coverage": ["terminal_state", "result_panel", "lifecycle_reason", "item_authority", "floor_loss", "no_ui_commit"]
+    },
+    {
+      "id": "I2_TERMINAL_COMMIT_RECOVERY",
+      "relative_path": "Godot/GraytailGodot/tests/i2_terminal_commit_recovery_runner.gd",
+      "pass_marker": "I2_TERMINAL_COMMIT_RECOVERY=PASS nonce=128bit legacy_ids=compatible save_failure=rollback retry=same_snapshot duplicate=idempotent result_signals=unchanged exits=guarded discard_confirmations=2",
+      "fail_marker": "I2_TERMINAL_COMMIT_RECOVERY=FAIL",
+      "coverage": ["terminal_state", "persistence", "retry", "idempotency", "route_guard", "discard_confirmation", "legacy_compatibility"]
     },
     {
       "id": "I2_COMBAT_FRAME_BASELINE",
@@ -1048,6 +1096,22 @@
       "I2_MODAL_FOCUS_LIFECYCLE": [],
       "I2_ACCESSIBILITY_RUNTIME": [],
       "I2_ASSET_BINDING": [],
+      "I2_COMBAT_ROOM_EXPERIENCE": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I2_TERMINAL_RESULT_AUTHORITY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I2_TERMINAL_COMMIT_RECOVERY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
       "I2_COMBAT_FRAME_BASELINE": []
     },
     "preview_capture_expected_cleanup_diagnostics_by_scene": {

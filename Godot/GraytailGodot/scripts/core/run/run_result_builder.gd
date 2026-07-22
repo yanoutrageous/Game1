@@ -14,6 +14,8 @@ static func build(context: RunContext, ledger_snapshot: Dictionary = {}, run_map
 	var settlement: Dictionary = context.settlement_result.duplicate(true)
 	var carried_items: Array = _array(ledger_snapshot.get("inventory_items", []))
 	var room_floor_items: Array = _array(ledger_snapshot.get("room_floor_items", []))
+	var run_events: Array = context.run_event_log.snapshot() if context.run_event_log != null else []
+	var terminal_reason_code := _terminal_reason_code(context.outcome, settlement, run_events)
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"schema_kind": &"RunResult",
@@ -21,6 +23,7 @@ static func build(context: RunContext, ledger_snapshot: Dictionary = {}, run_map
 		"run_id": context.run_id,
 		"mode": context.mode,
 		"outcome": context.outcome,
+		"terminal_reason_code": terminal_reason_code,
 		"settlement_outcome": settlement.get("outcome", ""),
 		"extracted": context.extracted,
 		"failed": context.failed,
@@ -62,7 +65,7 @@ static func build(context: RunContext, ledger_snapshot: Dictionary = {}, run_map
 		"run_flow_snapshot_ref": &"RunFlowSnapshot" if not run_flow_snapshot.is_empty() else &"unavailable",
 		"run_stats": context.run_stats.duplicate(true),
 		"unique_rooms_explored": context.explored_cells.size(),
-		"run_events": context.run_event_log.snapshot() if context.run_event_log != null else [],
+		"run_events": run_events,
 		"debug_used": context.debug_used,
 		"debug_commands": context.debug_commands.duplicate(true),
 		"failure_salvage": context.failure_salvage.duplicate(true),
@@ -81,6 +84,7 @@ static func default_result() -> Dictionary:
 		"schema_version": SCHEMA_VERSION,
 		"schema_kind": &"RunResult",
 		"terminal": false,
+		"terminal_reason_code": &"",
 		"settlement_single_input": false,
 		"settlement_reads_run_result_only": true,
 		"ui_recalculation_allowed": false,
@@ -92,3 +96,25 @@ static func _array(value: Variant) -> Array:
 	if value is Array:
 		return value.duplicate(true)
 	return []
+
+
+static func _terminal_reason_code(outcome: String, settlement: Dictionary, run_events: Array) -> StringName:
+	var settlement_outcome := StringName(settlement.get("outcome", &""))
+	var target_event := &""
+	if outcome == "Failed" or settlement_outcome == &"failure":
+		target_event = &"run_failed"
+	elif outcome == "Abandoned" or settlement_outcome == &"abandon":
+		target_event = &"run_abandoned"
+	elif outcome == "Extracted" or outcome == "Training Complete" or settlement_outcome == &"success":
+		return &"extracted"
+	else:
+		return &""
+	for index in range(run_events.size() - 1, -1, -1):
+		var event: Dictionary = run_events[index] if run_events[index] is Dictionary else {}
+		if StringName(event.get("event_type", &"")) != target_event:
+			continue
+		var payload: Dictionary = event.get("payload", {}) if event.get("payload", {}) is Dictionary else {}
+		var reason := String(payload.get("reason", "")).strip_edges()
+		if not reason.is_empty():
+			return StringName(reason)
+	return &"unknown_failure" if target_event == &"run_failed" else &"unknown_abandon"

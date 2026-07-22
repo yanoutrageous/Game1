@@ -44,7 +44,7 @@ static func format_long_term_summary(snapshot: Dictionary) -> String:
 
 
 static func item_display_line(item: Dictionary) -> String:
-	var display_name: String = String(item.get("display_name", item.get("item_id", "item")))
+	var display_name := item_display_name(item)
 	var item_type: String = String(item.get("item_type", item.get("main_type", "item")))
 	var rarity: Dictionary = ItemRarityDescriptorScript.describe_item(item)
 	var weight: Variant = item.get("weight", 1)
@@ -59,6 +59,14 @@ static func item_display_line(item: Dictionary) -> String:
 		weight,
 		value,
 	]
+
+
+static func item_display_name(item: Dictionary, fallback: String = "未命名物资") -> String:
+	var display_name := String(item.get("display_name", "")).strip_edges()
+	var item_id := String(item.get("item_id", "")).strip_edges()
+	if display_name.is_empty() or (not item_id.is_empty() and display_name == item_id):
+		return fallback
+	return display_name
 
 
 static func item_tooltip(item: Dictionary) -> String:
@@ -135,7 +143,7 @@ static func command_result_text(result: Dictionary) -> String:
 	if accepted:
 		var status := StringName(result.get("status", result.get("rule_result", &"")))
 		var item: Dictionary = _dict_from(result, "item")
-		var item_name := String(item.get("display_name", item.get("item_id", "物品")))
+		var item_name := item_display_name(item)
 		match status:
 			&"picked_up":
 				return "已拾取：%s。" % item_name
@@ -145,7 +153,7 @@ static func command_result_text(result: Dictionary) -> String:
 				var dropped: Dictionary = _dict_from(result, "dropped_item")
 				return "已收起%s，放下%s。" % [
 					item_name,
-					String(dropped.get("display_name", dropped.get("item_id", "原物品"))),
+					item_display_name(dropped),
 				]
 			&"consumed":
 				return "已使用：%s。" % item_name
@@ -162,8 +170,23 @@ static func command_result_text(result: Dictionary) -> String:
 	return "操作受阻：%s" % reason_label(reason)
 
 
-static func player_message(message: String) -> String:
-	return _player_message(message)
+static func player_message(message: String, event_state: Dictionary = {}) -> String:
+	return _player_message(message, event_state)
+
+
+static func event_room_entry_message(event_state: Dictionary) -> String:
+	var event_type := StringName(event_state.get("event_type", &"event"))
+	var event_label := "异常事件"
+	match event_type:
+		&"trader", &"traveler", &"merchant":
+			event_label = "旅商"
+		&"dice":
+			event_label = "骰局"
+		&"altar":
+			event_label = "祭坛"
+		&"trap":
+			event_label = "机关"
+	return "附近发现%s，靠近事件标记后可查看处理方式。" % event_label
 
 
 static func reason_label(reason_code: String) -> String:
@@ -182,7 +205,7 @@ static func reason_label(reason_code: String) -> String:
 		"out_of_bounds":
 			return "目标超出地图范围。"
 		"blocked_hidden":
-			return "目标房间尚未公开。"
+			return "目标房间尚未探明。"
 		"blocked_flagged":
 			return "目标已被标记为风险。"
 		"blocked_capacity":
@@ -198,7 +221,7 @@ static func reason_label(reason_code: String) -> String:
 		"item_not_in_inventory":
 			return "该物品不在背包中。"
 		"room_unrevealed":
-			return "目标房间尚未公开。"
+			return "目标房间尚未探明。"
 		"room_not_searchable":
 			return "当前位置不可搜索。"
 		"spawn_not_searchable":
@@ -248,46 +271,167 @@ static func result_summary(snapshot: Dictionary) -> Dictionary:
 	var outcome := String(snapshot.get("outcome", "Running"))
 	var settlement := _dict_from(snapshot, "settlement")
 	var settlement_outcome := String(settlement.get("outcome", snapshot.get("settlement_outcome", "")))
-	var title := "探索结算"
-	if outcome == "Extracted" or settlement_outcome == "success":
-		title = "撤离成功"
-	elif outcome == "Failed" or settlement_outcome == "failure":
-		title = "探索失败"
-	elif outcome == "Abandoned" or settlement_outcome == "abandon":
-		title = "已放弃探索"
+	var result_state := _result_state(outcome, settlement_outcome)
+	var title := _result_title(result_state)
+	var terminal_reason_code := StringName(snapshot.get("terminal_reason_code", &""))
+	var reason_text := _terminal_reason_text(result_state, terminal_reason_code)
+	var awaiting_salvage := bool(settlement.get("requires_salvage_selection", false)) and not bool(settlement.get("finalized", false))
+	var persistence_state := _result_persistence_state(snapshot, awaiting_salvage)
+	var normal_exit_allowed := bool(snapshot.get("normal_exit_allowed", persistence_state in [&"committed", &"duplicate_ignored"]))
+	var retry_save_allowed := bool(snapshot.get("retry_save_allowed", not awaiting_salvage and not normal_exit_allowed))
+	var discard_unsaved_allowed := bool(snapshot.get("discard_unsaved_allowed", not awaiting_salvage and not normal_exit_allowed))
+	var currency_metrics := _result_currency_metrics(result_state, settlement)
+	var item_sections := _result_item_sections(result_state, settlement)
+	var salvage_candidates := result_item_models(_array_from(settlement, "settlement_pool"))
 	var lines: Array[String] = []
-	lines.append("结局：%s" % _outcome_label(outcome, settlement_outcome))
-	var is_success := outcome == "Extracted" or settlement_outcome == "success"
-	if is_success:
-		lines.append("黑资转化：%s　金资写入：%s" % [
-			settlement.get("black_coin_converted", 0),
-			settlement.get("gold_coin_gained", 0),
-		])
-		lines.append("物资入库：%s　物资损失：%s" % [
-			_array_from(settlement, "warehouse_items").size(),
-			settlement.get("lost_item_count", _array_from(settlement, "lost_items").size()),
-		])
+	lines.append(reason_text)
+	if awaiting_salvage:
+		lines.append("请选择要带回的物资；确认前，本次结果不会保存。")
 	else:
-		lines.append("黑资损失：%s　物资保全：%s" % [
-			settlement.get("black_coin_lost", 0),
-			_array_from(settlement, "salvaged_items").size(),
-		])
-		lines.append("物资损失：%s" % settlement.get("lost_item_count", _array_from(settlement, "lost_items").size()))
-	var cleared_consumables := int(settlement.get("cleared_consumable_count", 0))
-	if cleared_consumables > 0:
-		lines.append("消耗品清除：%s" % cleared_consumables)
-	var meta_commit := _dict_from(snapshot, "meta_progress_commit")
-	if StringName(meta_commit.get("status", &"")) == &"awaiting_salvage_confirmation":
-		lines.append("局外记录：等待玩家确认保全")
-	elif not meta_commit.is_empty():
-		lines.append("局外记录：%s" % ("已存在，未重复写入" if bool(meta_commit.get("duplicate", false)) else "已写入"))
-	# Raw event/source codes remain in diagnostics. The player-facing result
-	# keeps their counts without turning the settlement card into a debug log.
-	lines.append("行动记录：%s 条　物资流转：%s 条" % [
-		_array_from(snapshot, "event_log").size(),
-		_array_from(snapshot, "transaction_log").size(),
-	])
-	return {"title": title, "summary": _join_lines(lines)}
+		lines.append(_persistence_text(persistence_state))
+	return {
+		"title": title,
+		"summary": _join_lines(lines),
+		"result_state": result_state,
+		"reason_text": reason_text,
+		"terminal_reason_code": terminal_reason_code,
+		"currency_metrics": currency_metrics,
+		"item_sections": item_sections,
+		"awaiting_salvage": awaiting_salvage,
+		"salvage_candidates": salvage_candidates,
+		"salvage_capacity": int(settlement.get("salvage_capacity", 0)),
+		"persistence_state": persistence_state,
+		"persistence_text": _persistence_text(persistence_state),
+		"normal_exit_allowed": normal_exit_allowed,
+		"retry_save_allowed": retry_save_allowed,
+		"discard_unsaved_allowed": discard_unsaved_allowed,
+		"discard_unsaved_confirmation_count": int(snapshot.get("discard_unsaved_confirmation_count", 2)),
+	}
+
+
+static func result_item_models(items: Array) -> Array[Dictionary]:
+	var models: Array[Dictionary] = []
+	for raw_item in items:
+		if raw_item is Dictionary:
+			models.append(result_item_model(raw_item))
+	return models
+
+
+static func result_item_model(item: Dictionary) -> Dictionary:
+	var rarity := ItemRarityDescriptorScript.describe_item(item)
+	return {
+		"instance_id": String(item.get("instance_id", "")),
+		"display_name": item_display_name(item),
+		"short_description": String(item.get("short_description", "")),
+		"weight": maxi(0, int(item.get("weight", 1))),
+		"rarity": rarity,
+		"source_item": item.duplicate(true),
+	}
+
+
+static func _result_state(outcome: String, settlement_outcome: String) -> StringName:
+	if outcome in ["Extracted", "Training Complete"] or settlement_outcome == "success":
+		return &"success"
+	if outcome == "Failed" or settlement_outcome == "failure":
+		return &"failure"
+	if outcome == "Abandoned" or settlement_outcome == "abandon":
+		return &"abandon"
+	return &"unknown"
+
+
+static func _result_title(result_state: StringName) -> String:
+	match result_state:
+		&"success":
+			return "撤离成功"
+		&"failure":
+			return "探索失败"
+		&"abandon":
+			return "已放弃探索"
+		_:
+			return "探索结算"
+
+
+static func _terminal_reason_text(result_state: StringName, reason_code: StringName) -> String:
+	if result_state == &"success":
+		return "已抵达撤离点，带回的收益与物资如下。"
+	if result_state == &"abandon":
+		return "你主动结束了本次探索，未能带回的内容如下。"
+	var reason := String(reason_code)
+	if reason in ["mine", "fatal_mine", "mine_triggered"]:
+		return "雷险使生命值归零，本次探索中断。"
+	if reason == "hp_depleted":
+		return "生命值归零，本次探索中断。"
+	if reason == "monster" or reason == "runtime_combat_defeat" or reason.begins_with("runtime_combat_"):
+		return "你在与异常体的交战中失去行动能力。"
+	if reason.begins_with("event_"):
+		return "事件造成致命后果，本次探索中断。"
+	return "作业信号中断，本次探索未能完成。"
+
+
+static func _result_currency_metrics(result_state: StringName, settlement: Dictionary) -> Array[Dictionary]:
+	if result_state == &"success":
+		return [
+			{"label": "黑资转化", "value": int(settlement.get("black_coin_converted", 0)), "tone": &"positive"},
+			{"label": "已锁定收益", "value": int(settlement.get("safe_yield_retained", settlement.get("safe_yield", 0))), "tone": &"positive"},
+			{"label": "结算收益", "value": int(settlement.get("gold_coin_gained", 0)), "tone": &"positive"},
+		]
+	return [
+		{"label": "黑资损失", "value": int(settlement.get("black_coin_lost", 0)), "tone": &"negative"},
+		{"label": "已锁定收益", "value": int(settlement.get("safe_yield_retained", settlement.get("safe_yield", 0))), "tone": &"positive"},
+		{"label": "可保留收益", "value": int(settlement.get("gold_coin_gained", settlement.get("safe_yield", 0))), "tone": &"positive"},
+	]
+
+
+static func _result_item_sections(result_state: StringName, settlement: Dictionary) -> Array[Dictionary]:
+	var sections: Array[Dictionary] = []
+	if result_state == &"success":
+		sections.append(_result_item_section(&"warehouse_items", "带回仓库", _array_from(settlement, "warehouse_items")))
+	else:
+		sections.append(_result_item_section(&"salvaged_items", "已保全", _array_from(settlement, "salvaged_items")))
+		sections.append(_result_item_section(&"lost_items", "未能带回", _array_from(settlement, "lost_items")))
+	sections.append(_result_item_section(&"room_floor_lost_items", "遗留在现场", _array_from(settlement, "room_floor_lost_items")))
+	sections.append(_result_item_section(&"cleared_consumables", "已消耗或清除", _array_from(settlement, "cleared_consumables")))
+	return sections
+
+
+static func _result_item_section(section_id: StringName, title: String, items: Array) -> Dictionary:
+	return {
+		"section_id": section_id,
+		"title": title,
+		"items": result_item_models(items),
+		"count": items.size(),
+	}
+
+
+static func _result_persistence_state(snapshot: Dictionary, awaiting_salvage: bool) -> StringName:
+	if awaiting_salvage:
+		return &"awaiting_salvage_confirmation"
+	var explicit_state := StringName(snapshot.get("persistence_state", &""))
+	if explicit_state != &"":
+		return explicit_state
+	var commit := _dict_from(snapshot, "meta_progress_commit")
+	var status := StringName(commit.get("status", &""))
+	match status:
+		&"committed", &"duplicate_ignored", &"save_failed", &"write_blocked", &"meta_progress_adapter_missing":
+			return status
+		_:
+			return &"missing"
+
+
+static func _persistence_text(state: StringName) -> String:
+	match state:
+		&"committed":
+			return "进度已保存。"
+		&"duplicate_ignored":
+			return "本次结果此前已保存，且未重复结算。"
+		&"awaiting_salvage_confirmation":
+			return "确认保全后才会保存本次结果。"
+		&"write_blocked":
+			return "档案暂时无法写入，本次结果尚未保存。"
+		&"meta_progress_adapter_missing":
+			return "暂时无法连接进度存储，本次结果尚未保存。"
+		_:
+			return "本次结果尚未保存，请重试。"
 
 
 static func _legacy_result_summary_m5(snapshot: Dictionary) -> Dictionary:
@@ -382,10 +526,15 @@ static func reward_text(reward: Dictionary, last_message: String = "") -> String
 	return _join_lines(lines)
 
 
-static func _player_message(message: String) -> String:
+static func _player_message(message: String, event_state: Dictionary = {}) -> String:
 	var text := message.strip_edges()
 	if text == "":
 		return ""
+	# Legacy room-entry messages carry raw event enums. The enum in that string
+	# is never presentation authority: use the structured EventService projection
+	# when available, and a generic player-safe fallback otherwise.
+	if text.begins_with("Event available:"):
+		return event_room_entry_message(event_state)
 	if text.find("Map overlay") >= 0 and text.find("opened") >= 0:
 		# `open_map` is retained only for existing progression accounting. The
 		# visible overlay and focus transfer are already the complete feedback;

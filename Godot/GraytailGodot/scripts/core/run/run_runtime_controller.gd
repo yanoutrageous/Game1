@@ -336,6 +336,39 @@ func _on_terminal_result_available(result_snapshot: Dictionary) -> void:
 	last_meta_commit = meta_progress_adapter.apply_settlement(result_snapshot)
 
 
+func retry_terminal_commit() -> Dictionary:
+	if context == null or context.result_snapshot.is_empty():
+		last_meta_commit = {
+			"ok": false,
+			"status": &"terminal_result_missing",
+			"committed": false,
+		}
+		return _with_actor(last_meta_commit)
+	var result_snapshot: Dictionary = context.result_snapshot.duplicate(true)
+	var settlement: Dictionary = result_snapshot.get("settlement", {}) if result_snapshot.get("settlement", {}) is Dictionary else {}
+	var outcome := String(result_snapshot.get("outcome", ""))
+	var terminal := outcome in ["Extracted", "Training Complete", "Failed", "Abandoned"]
+	var finalized := bool(settlement.get("finalized", false)) and not bool(settlement.get("requires_salvage_selection", false))
+	if not terminal or not finalized:
+		last_meta_commit = {
+			"ok": false,
+			"status": &"terminal_result_not_finalized",
+			"committed": false,
+			"result_id": String(result_snapshot.get("result_id", "")),
+		}
+		return _with_actor(last_meta_commit)
+	if meta_progress_adapter == null:
+		last_meta_commit = {
+			"ok": false,
+			"status": &"meta_progress_adapter_missing",
+			"committed": false,
+			"result_id": String(result_snapshot.get("result_id", "")),
+		}
+		return _with_actor(last_meta_commit)
+	last_meta_commit = meta_progress_adapter.apply_settlement(result_snapshot)
+	return _with_actor(last_meta_commit)
+
+
 func debug_force_extract() -> Dictionary:
 	var result := _with_actor(state_machine.force_extract(context))
 	in_run_runtime.reset()

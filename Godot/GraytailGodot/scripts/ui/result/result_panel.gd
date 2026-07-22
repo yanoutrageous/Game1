@@ -20,6 +20,8 @@ const RESULT_BANNER_FALLBACK_ASSET := &"ui.art21.shared.panel.card.normal"
 signal return_main_requested
 signal return_deploy_requested
 signal failure_salvage_confirmed(selected_instance_ids: Array)
+signal retry_save_requested
+signal discard_unsaved_result_requested
 
 var result_title_art: TextureRect
 var result_modal_art: NinePatchRect
@@ -28,7 +30,16 @@ var result_actions_art: NinePatchRect
 var result_metrics_row: HBoxContainer
 var result_metric_title_labels: Array[Label] = []
 var result_metric_value_labels: Array[Label] = []
+var result_items_scroll: ScrollContainer
+var result_item_sections_box: VBoxContainer
+var persistence_label: Label
+var return_deploy_button: Button
+var return_main_button: Button
+var retry_save_button: Button
+var discard_unsaved_button: Button
 var salvage_panel: PanelContainer
+var salvage_reason_label: Label
+var salvage_consequence_label: Label
 var salvage_capacity_label: Label
 var salvage_candidates_box: VBoxContainer
 var salvage_confirm_button: Button
@@ -37,6 +48,8 @@ var selected_salvage_ids: Array[String] = []
 var salvage_capacity: int = 0
 var salvage_has_candidates: bool = false
 var current_layout_profile: Dictionary = {}
+var current_result_model: Dictionary = {}
+var discard_unsaved_confirmation_step: int = 0
 
 
 func _ready() -> void:
@@ -69,9 +82,12 @@ func show_summary(snapshot: Dictionary) -> void:
 	# G9 final consumes event_log, transaction_log, failure_salvage,
 	# salvaged_item_count, settlement_log, and currency/item movement data.
 	var model: Dictionary = RunUIViewModel.result_summary(snapshot)
+	current_result_model = model.duplicate(true)
 	set_result_summary(String(model.get("title", "结算")), String(model.get("summary", "")))
 	_apply_result_title_plate(_result_state_from_snapshot(snapshot))
-	_configure_result_metrics(snapshot)
+	_configure_result_metrics(model)
+	_configure_result_item_sections(model)
+	_configure_persistence_actions(model)
 	_configure_failure_salvage(snapshot)
 	visible = true
 	Art10UISkinKitScript.play_panel_open(self)
@@ -81,6 +97,8 @@ func hide_result() -> void:
 	visible = false
 	selected_salvage_ids.clear()
 	salvage_has_candidates = false
+	current_result_model.clear()
+	reset_discard_unsaved_confirmation()
 
 
 func _ensure_backdrop() -> void:
@@ -121,6 +139,7 @@ func _ensure_backdrop() -> void:
 	# let the live buttons define the count instead of leaving a fake empty slot.
 	result_actions_art = _ensure_modal_patch(&"ResultActionStripArt", &"art21r2.modal.section.panel", 32, 0.96)
 	_ensure_result_metrics()
+	_ensure_result_items()
 	result_title_art = get_node_or_null("ResultTitlePlate") as TextureRect
 	if result_title_art == null:
 		result_title_art = TextureRect.new()
@@ -150,7 +169,7 @@ func _ensure_result_metrics() -> void:
 	result_metrics_row.add_theme_constant_override("separation", 8)
 	result_metrics_row.z_index = 4
 	add_child(result_metrics_row)
-	for index in range(4):
+	for index in range(3):
 		var card := PanelContainer.new()
 		card.name = "ResultMetricCard%d" % index
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -187,41 +206,145 @@ func _ensure_result_metrics() -> void:
 		result_metric_value_labels.append(metric_value)
 
 
-func _configure_result_metrics(snapshot: Dictionary) -> void:
+func _configure_result_metrics(model: Dictionary) -> void:
 	_ensure_result_metrics()
-	var settlement: Dictionary = {}
-	var settlement_variant: Variant = snapshot.get("settlement", {})
-	if settlement_variant is Dictionary:
-		settlement = settlement_variant
-	var result_state := _result_state_from_snapshot(snapshot)
-	var is_success := result_state == &"success"
-	var metric_titles := [
-		"黑资转化" if is_success else "黑资损失",
-		"金资写入",
-		"入库" if is_success else "保全",
-		"物资损失",
-	]
-	var metric_values := [
-		str(settlement.get("black_coin_converted", 0) if is_success else settlement.get("black_coin_lost", 0)),
-		str(settlement.get("gold_coin_gained", 0)),
-		str(_array_size(settlement, "warehouse_items") if is_success else _array_size(settlement, "salvaged_items")),
-		str(settlement.get("lost_item_count", _array_size(settlement, "lost_items"))),
-	]
-	for index in range(mini(result_metric_title_labels.size(), metric_titles.size())):
-		result_metric_title_labels[index].text = String(metric_titles[index])
-		result_metric_value_labels[index].text = String(metric_values[index])
+	var metrics: Array = model.get("currency_metrics", []) if model.get("currency_metrics", []) is Array else []
+	for index in range(result_metric_title_labels.size()):
+		var metric: Dictionary = metrics[index] if index < metrics.size() and metrics[index] is Dictionary else {}
+		result_metric_title_labels[index].text = String(metric.get("label", ""))
+		result_metric_value_labels[index].text = str(metric.get("value", 0))
 		result_metric_value_labels[index].add_theme_color_override(
 			"font_color",
-			Color(0.43, 0.91, 0.74, 1.0) if is_success else Color(0.95, 0.52, 0.35, 1.0)
+			Color(0.95, 0.52, 0.35, 1.0) if StringName(metric.get("tone", &"positive")) == &"negative" else Color(0.43, 0.91, 0.74, 1.0)
 		)
+	result_metrics_row.visible = not bool(model.get("awaiting_salvage", false))
 
 
-func _array_size(source: Dictionary, key: String) -> int:
-	var value: Variant = source.get(key, [])
-	return (value as Array).size() if value is Array else 0
+func _ensure_result_items() -> void:
+	if result_items_scroll != null:
+		return
+	result_items_scroll = ScrollContainer.new()
+	result_items_scroll.name = "ResultItemSectionsScroll"
+	result_items_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	result_items_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	result_items_scroll.z_index = 4
+	add_child(result_items_scroll)
+	result_item_sections_box = VBoxContainer.new()
+	result_item_sections_box.name = "ResultItemSections"
+	result_item_sections_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	result_item_sections_box.add_theme_constant_override("separation", 8)
+	result_items_scroll.add_child(result_item_sections_box)
+	persistence_label = Label.new()
+	persistence_label.name = "ResultPersistenceStatus"
+	persistence_label.add_theme_font_override("font", ReadableFont)
+	persistence_label.add_theme_font_size_override("font_size", 13)
+	persistence_label.add_theme_color_override("font_color", PresentationTheme.text_color())
+	persistence_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	persistence_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	persistence_label.z_index = 4
+	add_child(persistence_label)
+
+
+func _configure_result_item_sections(model: Dictionary) -> void:
+	_ensure_result_items()
+	for child in result_item_sections_box.get_children():
+		result_item_sections_box.remove_child(child)
+		child.queue_free()
+	var awaiting := bool(model.get("awaiting_salvage", false))
+	result_items_scroll.visible = not awaiting
+	if awaiting:
+		return
+	var sections: Array = model.get("item_sections", []) if model.get("item_sections", []) is Array else []
+	var visible_section_count := 0
+	for raw_section in sections:
+		if not raw_section is Dictionary:
+			continue
+		var items: Array = raw_section.get("items", []) if raw_section.get("items", []) is Array else []
+		if items.is_empty():
+			continue
+		_add_result_item_section(raw_section)
+		visible_section_count += 1
+	if visible_section_count == 0:
+		var empty_notice := Label.new()
+		empty_notice.name = "ResultItemsEmptyNotice"
+		empty_notice.text = "本次没有需要列出的物资。"
+		empty_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_notice.add_theme_font_override("font", ReadableFont)
+		empty_notice.add_theme_font_size_override("font_size", 13)
+		empty_notice.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
+		result_item_sections_box.add_child(empty_notice)
+
+
+func _add_result_item_section(section: Dictionary) -> void:
+	var section_box := VBoxContainer.new()
+	section_box.add_theme_constant_override("separation", 4)
+	result_item_sections_box.add_child(section_box)
+	var items: Array = section.get("items", []) if section.get("items", []) is Array else []
+	var heading := Label.new()
+	heading.text = "%s · %d" % [String(section.get("title", "物资")), int(section.get("count", items.size()))]
+	heading.add_theme_font_override("font", ReadableFont)
+	heading.add_theme_font_size_override("font_size", 14)
+	heading.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
+	section_box.add_child(heading)
+	if items.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "无"
+		empty_label.add_theme_font_override("font", ReadableFont)
+		empty_label.add_theme_font_size_override("font_size", 13)
+		empty_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
+		section_box.add_child(empty_label)
+		return
+	for raw_item in items:
+		if raw_item is Dictionary:
+			section_box.add_child(_build_result_item_row(raw_item))
+
+
+func _build_result_item_row(item_model: Dictionary) -> Control:
+	var row := PanelContainer.new()
+	row.custom_minimum_size = Vector2(0, 36)
+	var row_style := StyleBoxFlat.new()
+	row_style.bg_color = Color(0.016, 0.043, 0.046, 0.90)
+	row_style.border_color = Color(0.20, 0.50, 0.46, 0.58)
+	row_style.border_width_left = 1
+	row_style.border_width_top = 1
+	row_style.border_width_right = 1
+	row_style.border_width_bottom = 1
+	row_style.content_margin_left = 8
+	row_style.content_margin_right = 8
+	row_style.content_margin_top = 5
+	row_style.content_margin_bottom = 5
+	row.add_theme_stylebox_override("panel", row_style)
+	row.tooltip_text = String(item_model.get("short_description", ""))
+	row.set_meta("instance_id", String(item_model.get("instance_id", "")))
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+	row.add_child(line)
+	var name_label := Label.new()
+	name_label.text = String(item_model.get("display_name", "未命名物资"))
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.add_theme_font_override("font", ReadableFont)
+	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_color_override("font_color", PresentationTheme.text_color())
+	line.add_child(name_label)
+	var rarity: Dictionary = item_model.get("rarity", {}) if item_model.get("rarity", {}) is Dictionary else {}
+	var rarity_label := Label.new()
+	rarity_label.text = String(rarity.get("display_text", "[?] 未鉴定"))
+	rarity_label.add_theme_font_override("font", ReadableFont)
+	rarity_label.add_theme_font_size_override("font_size", 13)
+	rarity_label.add_theme_color_override("font_color", rarity.get("color", PresentationTheme.color_for_key(&"ui.muted")))
+	line.add_child(rarity_label)
+	var weight_label := Label.new()
+	weight_label.text = "重 %d" % int(item_model.get("weight", 0))
+	weight_label.add_theme_font_override("font", ReadableFont)
+	weight_label.add_theme_font_size_override("font_size", 13)
+	weight_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
+	line.add_child(weight_label)
+	return row
 
 
 func _ensure_actions() -> void:
+	if return_deploy_button != null:
+		return
 	var actions := get_node_or_null("ResultActions") as HBoxContainer
 	if actions == null:
 		actions = HBoxContainer.new()
@@ -234,26 +357,139 @@ func _ensure_actions() -> void:
 		actions.z_index = 4
 		add_child(actions)
 
-	var deploy_button := Button.new()
-	deploy_button.name = "ResultReturnDeployButton"
-	deploy_button.text = "重新出发"
-	deploy_button.tooltip_text = "关闭本次结算记录并返回出发页，准备下一次探索。"
-	deploy_button.custom_minimum_size = Vector2(170, 40)
-	deploy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_art21r2_modal_button(deploy_button, &"art21r2.modal.button.primary", &"primary", 13)
-	deploy_button.pressed.connect(func() -> void: return_deploy_requested.emit())
-	actions.add_child(deploy_button)
+	return_deploy_button = Button.new()
+	return_deploy_button.name = "ResultReturnDeployButton"
+	return_deploy_button.text = "返回出发整备"
+	return_deploy_button.tooltip_text = "关闭本次结算并返回出发整备。"
+	return_deploy_button.custom_minimum_size = Vector2(170, 40)
+	return_deploy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_art21r2_modal_button(return_deploy_button, &"art21r2.modal.button.primary", &"primary", 13)
+	return_deploy_button.pressed.connect(func() -> void:
+		if normal_exit_allowed():
+			return_deploy_requested.emit()
+	)
+	actions.add_child(return_deploy_button)
 
-	var main_button := Button.new()
-	main_button.name = "ResultReturnMainButton"
-	main_button.text = "返回菜单"
-	main_button.tooltip_text = "关闭本次结算记录并返回主界面。"
-	main_button.custom_minimum_size = Vector2(170, 40)
-	main_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_apply_art21r2_modal_button(main_button, &"art21r2.modal.button.secondary", &"secondary", 13)
-	main_button.pressed.connect(func() -> void: return_main_requested.emit())
-	actions.add_child(main_button)
+	return_main_button = Button.new()
+	return_main_button.name = "ResultReturnMainButton"
+	return_main_button.text = "返回菜单"
+	return_main_button.tooltip_text = "关闭本次结算并返回主界面。"
+	return_main_button.custom_minimum_size = Vector2(170, 40)
+	return_main_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_art21r2_modal_button(return_main_button, &"art21r2.modal.button.secondary", &"secondary", 13)
+	return_main_button.pressed.connect(func() -> void:
+		if normal_exit_allowed():
+			return_main_requested.emit()
+	)
+	actions.add_child(return_main_button)
+
+	retry_save_button = Button.new()
+	retry_save_button.name = "ResultRetrySaveButton"
+	retry_save_button.text = "重试保存"
+	retry_save_button.tooltip_text = "使用同一份结算结果再次尝试保存。"
+	retry_save_button.custom_minimum_size = Vector2(170, 40)
+	retry_save_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_art21r2_modal_button(retry_save_button, &"art21r2.modal.button.primary", &"primary", 13)
+	retry_save_button.pressed.connect(func() -> void:
+		if retry_save_allowed() and not retry_save_button.disabled:
+			retry_save_button.disabled = true
+			retry_save_requested.emit()
+	)
+	actions.add_child(retry_save_button)
+
+	discard_unsaved_button = Button.new()
+	discard_unsaved_button.name = "ResultDiscardUnsavedButton"
+	discard_unsaved_button.text = "放弃未保存结果"
+	discard_unsaved_button.tooltip_text = "本次结果尚未保存；需要再次确认才会返回出发页。"
+	discard_unsaved_button.custom_minimum_size = Vector2(190, 40)
+	discard_unsaved_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_apply_art21r2_modal_button(discard_unsaved_button, &"art21r2.modal.button.secondary", &"danger", 13)
+	discard_unsaved_button.pressed.connect(_request_discard_unsaved_result)
+	actions.add_child(discard_unsaved_button)
 	_ensure_salvage_panel()
+
+
+func _configure_persistence_actions(model: Dictionary) -> void:
+	_ensure_actions()
+	_ensure_result_items()
+	reset_discard_unsaved_confirmation()
+	var awaiting := bool(model.get("awaiting_salvage", false))
+	var can_exit := bool(model.get("normal_exit_allowed", false))
+	var can_retry := bool(model.get("retry_save_allowed", false))
+	var can_discard := bool(model.get("discard_unsaved_allowed", false))
+	if persistence_label != null:
+		persistence_label.text = String(model.get("persistence_text", "本次结果尚未保存。"))
+		persistence_label.visible = not awaiting
+	if return_deploy_button != null:
+		return_deploy_button.visible = can_exit and not awaiting
+		return_deploy_button.disabled = not can_exit
+	if return_main_button != null:
+		return_main_button.visible = can_exit and not awaiting
+		return_main_button.disabled = not can_exit
+	if retry_save_button != null:
+		retry_save_button.visible = can_retry and not awaiting
+		retry_save_button.disabled = not can_retry
+	if discard_unsaved_button != null:
+		discard_unsaved_button.visible = can_discard and not awaiting
+		discard_unsaved_button.disabled = not can_discard
+
+
+func normal_exit_allowed() -> bool:
+	return bool(current_result_model.get("normal_exit_allowed", false))
+
+
+func retry_save_allowed() -> bool:
+	return bool(current_result_model.get("retry_save_allowed", false))
+
+
+func discard_unsaved_allowed() -> bool:
+	return bool(current_result_model.get("discard_unsaved_allowed", false))
+
+
+func mark_retry_complete() -> void:
+	if retry_save_button != null:
+		retry_save_button.disabled = not retry_save_allowed()
+	var focus_target: Control
+	if normal_exit_allowed() and return_deploy_button != null and return_deploy_button.is_visible_in_tree() and not return_deploy_button.disabled:
+		focus_target = return_deploy_button
+	elif retry_save_allowed() and retry_save_button != null and retry_save_button.is_visible_in_tree() and not retry_save_button.disabled:
+		focus_target = retry_save_button
+	if focus_target != null:
+		focus_target.call_deferred("grab_focus")
+
+
+func preferred_focus_control() -> Control:
+	if salvage_panel != null and salvage_panel.visible and salvage_confirm_button != null and salvage_confirm_button.is_visible_in_tree() and not salvage_confirm_button.disabled:
+		return salvage_confirm_button
+	if retry_save_button != null and retry_save_button.is_visible_in_tree() and not retry_save_button.disabled:
+		return retry_save_button
+	if return_deploy_button != null and return_deploy_button.is_visible_in_tree() and not return_deploy_button.disabled:
+		return return_deploy_button
+	if return_main_button != null and return_main_button.is_visible_in_tree() and not return_main_button.disabled:
+		return return_main_button
+	if discard_unsaved_button != null and discard_unsaved_button.is_visible_in_tree() and not discard_unsaved_button.disabled:
+		return discard_unsaved_button
+	return null
+
+
+func reset_discard_unsaved_confirmation() -> void:
+	discard_unsaved_confirmation_step = 0
+	if discard_unsaved_button != null:
+		discard_unsaved_button.text = "放弃未保存结果"
+		discard_unsaved_button.disabled = not discard_unsaved_allowed()
+
+
+func _request_discard_unsaved_result() -> void:
+	if not discard_unsaved_allowed() or discard_unsaved_button == null or discard_unsaved_button.disabled:
+		return
+	if discard_unsaved_confirmation_step == 0:
+		discard_unsaved_confirmation_step = 1
+		discard_unsaved_button.text = "再次确认：放弃并返回"
+		if persistence_label != null:
+			persistence_label.text = "结果仍未保存。再次确认将放弃本次未保存结果并返回出发页。"
+		return
+	discard_unsaved_button.disabled = true
+	discard_unsaved_result_requested.emit()
 
 
 func _ensure_salvage_panel() -> void:
@@ -284,6 +520,17 @@ func _ensure_salvage_panel() -> void:
 	heading.add_theme_font_size_override("font_size", 16)
 	heading.add_theme_color_override("font_color", Color(0.96, 0.72, 0.34, 1.0))
 	content.add_child(heading)
+	salvage_reason_label = Label.new()
+	salvage_reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	salvage_reason_label.add_theme_font_override("font", ReadableFont)
+	salvage_reason_label.add_theme_color_override("font_color", PresentationTheme.text_color())
+	content.add_child(salvage_reason_label)
+	salvage_consequence_label = Label.new()
+	salvage_consequence_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	salvage_consequence_label.add_theme_font_override("font", ReadableFont)
+	salvage_consequence_label.add_theme_font_size_override("font_size", 12)
+	salvage_consequence_label.add_theme_color_override("font_color", Color(0.95, 0.66, 0.43, 1.0))
+	content.add_child(salvage_consequence_label)
 	salvage_capacity_label = Label.new()
 	salvage_capacity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	salvage_capacity_label.add_theme_font_override("font", ReadableFont)
@@ -298,7 +545,7 @@ func _ensure_salvage_panel() -> void:
 	scroll.add_child(salvage_candidates_box)
 	salvage_confirm_button = Button.new()
 	salvage_confirm_button.text = "确认保全并完成结算"
-	salvage_confirm_button.tooltip_text = "确认后写入仓库；未选择物品与所有消耗品将清除。"
+	salvage_confirm_button.tooltip_text = "确认后将所选物资带回仓库；未选择物资与所有消耗品将无法带回。"
 	salvage_confirm_button.custom_minimum_size = Vector2(0, 44)
 	_apply_art21r2_modal_button(salvage_confirm_button, &"art21r2.modal.button.primary", &"primary", 13)
 	salvage_confirm_button.pressed.connect(_confirm_failure_salvage)
@@ -316,7 +563,11 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 	if result_actions_art != null:
 		result_actions_art.visible = false
 	if result_metrics_row != null:
-		result_metrics_row.visible = false
+		result_metrics_row.visible = not awaiting
+	if result_items_scroll != null:
+		result_items_scroll.visible = not awaiting
+	if persistence_label != null:
+		persistence_label.visible = not awaiting
 	if result_summary_art != null:
 		result_summary_art.visible = false
 	if summary_node != null:
@@ -332,6 +583,13 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 		salvage_confirm_button.disabled = false
 	selected_salvage_ids.clear()
 	salvage_capacity = int(settlement.get("salvage_capacity", 0))
+	if salvage_reason_label != null:
+		salvage_reason_label.text = String(current_result_model.get("reason_text", "本次探索未能完成。"))
+	if salvage_consequence_label != null:
+		salvage_consequence_label.text = "黑资损失 %d；已锁定收益保留 %d。" % [
+			int(settlement.get("black_coin_lost", 0)),
+			int(settlement.get("safe_yield_retained", settlement.get("safe_yield", 0))),
+		]
 	for child in salvage_candidates_box.get_children():
 		child.queue_free()
 	salvage_candidate_buttons.clear()
@@ -346,17 +604,23 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 		if not raw_item is Dictionary:
 			continue
 		var item: Dictionary = raw_item
-		var instance_id := String(item.get("instance_id", ""))
+		var item_model := RunUIViewModel.result_item_model(item)
+		var instance_id := String(item_model.get("instance_id", ""))
+		var rarity: Dictionary = item_model.get("rarity", {}) if item_model.get("rarity", {}) is Dictionary else {}
 		var button := Button.new()
 		button.toggle_mode = true
-		button.text = "%s  ·  重量 %d" % [String(item.get("display_name", item.get("item_id", "物品"))), int(item.get("weight", 1))]
-		button.tooltip_text = String(item.get("short_description", ""))
+		button.text = "%s  ·  %s  ·  重量 %d" % [
+			String(item_model.get("display_name", "未命名物资")),
+			String(rarity.get("display_text", "[?] 未鉴定")),
+			int(item_model.get("weight", 0)),
+		]
+		button.tooltip_text = String(item_model.get("short_description", ""))
 		button.custom_minimum_size = Vector2(0, 42)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		_apply_art21r2_modal_button(button, &"art21r2.modal.item_row.normal", &"secondary", 13, 10)
 		button.add_theme_font_override("font", ReadableFont)
 		button.set_meta("instance_id", instance_id)
-		button.set_meta("weight", int(item.get("weight", 1)))
+		button.set_meta("weight", int(item_model.get("weight", 0)))
 		button.toggled.connect(func(pressed: bool) -> void: _toggle_salvage_item(instance_id, pressed))
 		salvage_candidate_buttons[instance_id] = button
 		salvage_candidates_box.add_child(button)
@@ -388,7 +652,12 @@ func _refresh_salvage_controls() -> void:
 		button.set_pressed_no_signal(is_selected)
 		button.disabled = not is_selected and used + int(button.get_meta("weight", 1)) > salvage_capacity
 	if salvage_capacity_label != null:
-		salvage_capacity_label.text = "保全容量：%d / %d。所有携入或局内获得的消耗品都会清除，不会返还仓库。" % [used, salvage_capacity]
+		salvage_capacity_label.text = "保全容量：%d / %d；已选 %d 件，未选 %d 件。所有消耗品都无法带回。" % [
+			used,
+			salvage_capacity,
+			selected_salvage_ids.size(),
+			maxi(0, salvage_candidate_buttons.size() - selected_salvage_ids.size()),
+		]
 
 
 func _confirm_failure_salvage() -> void:
@@ -437,14 +706,28 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		title_node.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var summary_top := rect.position.y + 160.0
 	var action_strip_top := rect.end.y - 68.0
+	var summary_height := 54.0
+	var metrics_top := summary_top + summary_height + 8.0
+	var metrics_height := 64.0
+	var persistence_height := 38.0
+	var persistence_top := action_strip_top - persistence_height - 8.0
+	var items_top := metrics_top + metrics_height + 8.0
 	if result_summary_art != null:
 		result_summary_art.visible = false
 	if result_metrics_row != null:
-		result_metrics_row.visible = false
-		result_metrics_row.position = Vector2.ZERO
-		result_metrics_row.size = Vector2.ZERO
+		result_metrics_row.visible = not awaiting_salvage
+		_set_absolute_rect(result_metrics_row, Rect2(Vector2(rect.position.x + 34.0, metrics_top), Vector2(rect.size.x - 68.0, metrics_height)))
 	if summary_node != null:
-		_set_absolute_rect(summary_node, Rect2(Vector2(rect.position.x + 34.0, summary_top), Vector2(rect.size.x - 68.0, max(104.0, action_strip_top - summary_top - 16.0))))
+		_set_absolute_rect(summary_node, Rect2(Vector2(rect.position.x + 34.0, summary_top), Vector2(rect.size.x - 68.0, summary_height)))
+	if result_items_scroll != null:
+		result_items_scroll.visible = not awaiting_salvage
+		_set_absolute_rect(result_items_scroll, Rect2(
+			Vector2(rect.position.x + 34.0, items_top),
+			Vector2(rect.size.x - 68.0, max(72.0, persistence_top - items_top - 8.0))
+		))
+	if persistence_label != null:
+		persistence_label.visible = not awaiting_salvage
+		_set_absolute_rect(persistence_label, Rect2(Vector2(rect.position.x + 34.0, persistence_top), Vector2(rect.size.x - 68.0, persistence_height)))
 	if result_actions_art != null:
 		result_actions_art.visible = false
 	var actions := get_node_or_null("ResultActions") as HBoxContainer
@@ -469,8 +752,8 @@ func _main_game_modal_rect(profile: Dictionary, salvage_state: bool = false) -> 
 	var width: float = maxf(1.0, viewport_size.x)
 	var height: float = maxf(1.0, viewport_size.y)
 	var is_high := bool(profile.get("is_high_resolution", false))
-	var modal_width := 560.0 if salvage_state else 448.0
-	var modal_height := 510.0 if salvage_state else 410.0
+	var modal_width := 620.0 if salvage_state else 680.0
+	var modal_height := 600.0 if salvage_state else 660.0
 	if is_high:
 		modal_width *= 1.12
 		modal_height *= 1.12
@@ -542,8 +825,43 @@ func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: S
 	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.button.dark", padding, texture_margin)
 	if style == null:
 		return
-	button.add_theme_stylebox_override("normal", style)
-	button.add_theme_stylebox_override("hover", style.duplicate())
-	button.add_theme_stylebox_override("pressed", style.duplicate())
-	button.add_theme_stylebox_override("disabled", style.duplicate())
-	button.add_theme_stylebox_override("focus", style.duplicate())
+	var normal := style.duplicate() as StyleBoxTexture
+	var hover := style.duplicate() as StyleBoxTexture
+	var pressed := style.duplicate() as StyleBoxTexture
+	var disabled := style.duplicate() as StyleBoxTexture
+	if tone == &"danger":
+		normal.modulate_color = Color(1.08, 0.46, 0.40, 1.0)
+		hover.modulate_color = Color(1.18, 0.58, 0.48, 1.0)
+		pressed.modulate_color = Color(0.94, 0.34, 0.30, 1.0)
+		button.add_theme_color_override("font_color", Color(1.0, 0.78, 0.72, 1.0))
+		button.add_theme_color_override("font_hover_color", Color(1.0, 0.92, 0.86, 1.0))
+	else:
+		hover.modulate_color = Color(1.14, 1.12, 0.92, 1.0) if tone == &"primary" else Color(0.88, 1.12, 1.10, 1.0)
+		pressed.modulate_color = Color(0.92, 0.92, 0.86, 1.0)
+	disabled.modulate_color = Color(0.48, 0.50, 0.48, 0.82)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_stylebox_override("focus", _result_button_focus_style(tone, padding))
+	button.add_theme_color_override("font_focus_color", Color(1.0, 0.96, 0.78, 1.0) if tone != &"danger" else Color(1.0, 0.94, 0.90, 1.0))
+	button.set_meta(&"result_action_tone", tone)
+
+
+func _result_button_focus_style(tone: StringName, padding: int) -> StyleBoxFlat:
+	var focus := StyleBoxFlat.new()
+	focus.bg_color = Color(0.07, 0.10, 0.085, 0.99)
+	focus.border_color = Color(0.34, 0.92, 0.78, 1.0)
+	if tone == &"primary":
+		focus.bg_color = Color(0.14, 0.105, 0.035, 0.99)
+		focus.border_color = Color(1.0, 0.78, 0.24, 1.0)
+	elif tone == &"danger":
+		focus.bg_color = Color(0.19, 0.035, 0.028, 0.99)
+		focus.border_color = Color(1.0, 0.32, 0.22, 1.0)
+	focus.set_border_width_all(3)
+	focus.set_corner_radius_all(4)
+	focus.content_margin_left = padding
+	focus.content_margin_top = padding
+	focus.content_margin_right = padding
+	focus.content_margin_bottom = padding
+	return focus

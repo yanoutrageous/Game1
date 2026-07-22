@@ -95,6 +95,8 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 			action_result = abandon_run(String(command_payload.get("reason", "player_abandoned")))
 		&"confirm_failure_salvage":
 			action_result = confirm_failure_salvage(command_payload.get("selected_instance_ids", []))
+		&"retry_terminal_commit":
+			action_result = retry_terminal_commit()
 		&"request_extract":
 			action_result = request_extract()
 		&"confirm_extract":
@@ -135,7 +137,13 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 		context.active_command.clear()
 	var produced_events: Array[Dictionary] = _events_since(event_start)
 	var produced_transactions: Array[Dictionary] = _transactions_since(transaction_start)
-	return CommandResult.from_action(command, action_result, produced_events, produced_transactions, _snapshot_delta_for(action_result))
+	var command_result := CommandResult.from_action(command, action_result, produced_events, produced_transactions, _snapshot_delta_for(action_result))
+	# Room-entry feedback is a read-only projection of the already-committed
+	# resolver result.  Keeping it on the command envelope lets presentation show
+	# exact damage/pressure without re-reading private room rules.
+	if action_result.has("room_entry_result"):
+		command_result["room_entry_result"] = (action_result.get("room_entry_result", {}) as Dictionary).duplicate(true)
+	return command_result
 
 
 func bind_context(next_context: RunContext) -> void:
@@ -218,11 +226,14 @@ func move_by(delta: Vector2i) -> Dictionary:
 	context.player_pos = target
 	context.current_pos = target
 	RunInventory.record_move(context)
-	room_resolver.enter_room(context)
+	var room_entry: Dictionary = room_resolver.enter_room(context)
 	_emit_state()
 	if context.failed:
 		result_available.emit(context.result_snapshot)
-	return {"ok": true, "status": &"moved", "position": target, "actor_id": DEFAULT_ACTOR_ID}
+	var result := {"ok": true, "status": &"moved", "position": target, "actor_id": DEFAULT_ACTOR_ID}
+	if room_entry.has("room_entry_result"):
+		result["room_entry_result"] = (room_entry.get("room_entry_result", {}) as Dictionary).duplicate(true)
+	return result
 
 
 func toggle_flag_cell(pos = null) -> Dictionary:
@@ -409,6 +420,16 @@ func confirm_failure_salvage(selected_instance_ids: Array) -> Dictionary:
 	_emit_state()
 	if bool(result.get("ok", false)) and context != null and context.phase == &"failed":
 		result_available.emit(context.result_snapshot)
+	return result
+
+
+func retry_terminal_commit() -> Dictionary:
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	# This retries persistence of the same immutable terminal snapshot. It does
+	# not re-emit result_available and therefore cannot run settlement twice.
+	var result: Dictionary = runtime_controller.retry_terminal_commit()
+	_emit_state()
 	return result
 
 

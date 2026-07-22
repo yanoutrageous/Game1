@@ -1,6 +1,7 @@
 extends SceneTree
 
 const M3ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
+const WorldProjectionScript := preload("res://scripts/gameplay/runtime/g41_world_object_projection.gd")
 
 const PASS_MARKER := "I2_RUNTIME_MODAL_PRIORITY=PASS"
 const FAIL_MARKER := "I2_RUNTIME_MODAL_PRIORITY=FAIL"
@@ -322,13 +323,31 @@ func _assert_shield_directly_below(shield: Control, top_modal: Control, context:
 
 
 func _assert_event_modal_priority(run_scene: Node, bus: Variant, stack: Variant, input_shield: Control, base_focus: Control) -> void:
+	var context: Variant = run_scene.get("run_context")
+	var player: Variant = run_scene.get("player_controller")
+	var event_pos := Vector2i(-1, -1)
+	if context != null and context.get("truth_map") != null:
+		for y in range(int(context.get("height"))):
+			for x in range(int(context.get("width"))):
+				var candidate := Vector2i(x, y)
+				if context.get("truth_map").get_room_type(candidate) == &"Event":
+					event_pos = candidate
+					break
+			if event_pos.x >= 0:
+				break
+	_require(event_pos.x >= 0 and player != null, "event modal priority lacks a governed Event interaction fixture")
+	if event_pos.x < 0 or player == null:
+		return
+	context.set("player_pos", event_pos)
+	context.set("current_pos", event_pos)
+	context.get("intel_map").reveal_cell(event_pos, context.get("truth_map"))
+	bus.get("room_resolver").enter_room(context)
+	player.call("set_local_position", WorldProjectionScript.EVENT_LOCAL_POS)
+	run_scene.call("_apply_full_view_models")
 	base_focus.grab_focus()
 	await process_frame
-	run_scene.call("_show_event_panel", {
-		"event_type": &"dice",
-		"completed": false,
-		"options": [{"id": &"leave", "enabled": true}],
-	})
+	var event_state: Dictionary = context.call("get_status_snapshot").get("event_state", {})
+	run_scene.call("_show_event_panel", event_state)
 	await _frames(4)
 	var event_panel := run_scene.get("event_panel") as Control
 	_require(stack.call("top_modal_id") == &"event" and int(stack.call("depth")) == 1, "event did not enter the runtime modal stack")

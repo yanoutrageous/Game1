@@ -11,6 +11,10 @@ const CHEST_LOCAL_POS := Vector2(0.68, 0.53)
 const CHEST_BODY_SIZE := Vector2(0.12, 0.10)
 const CHEST_INTERACTION_RADIUS := 0.18
 const GROUND_INTERACTION_RADIUS := 0.14
+const SPECIAL_INTERACTION_RADIUS := 0.18
+const EVENT_LOCAL_POS := Vector2(0.50, 0.42)
+const MINE_LOCAL_POS := Vector2(0.50, 0.51)
+const EXIT_LOCAL_POS := Vector2(0.50, 0.45)
 
 const DOOR_DIRECTIONS := [
 	{"id": &"north", "delta": Vector2i.UP, "local_pos": Vector2(0.50, 0.04), "body_size": Vector2(0.16, 0.035)},
@@ -34,6 +38,9 @@ static func build(snapshot: Dictionary, combat_snapshot: Dictionary = {}) -> Dic
 		# must not also become floor entities with a second interaction anchor.
 		chest_contents = room_floor_items
 	else:
+		var special_projection := _special_room_projection(snapshot, room_type, room_key)
+		if not special_projection.is_empty():
+			world_objects.append(special_projection)
 		for item in room_floor_items:
 			world_objects.append(_ground_loot_projection(item))
 
@@ -47,6 +54,141 @@ static func build(snapshot: Dictionary, combat_snapshot: Dictionary = {}) -> Dic
 		"read_only": true,
 		"authority": &"public_snapshot_only",
 	}
+
+
+static func _special_room_projection(snapshot: Dictionary, room_type: StringName, room_key: String) -> Dictionary:
+	match room_type:
+		&"Event":
+			return _event_projection(snapshot, room_key)
+		&"Mine":
+			return _mine_projection(snapshot, room_key)
+		&"Exit":
+			return _exit_projection(snapshot, room_key)
+	return {}
+
+
+static func _event_projection(snapshot: Dictionary, room_key: String) -> Dictionary:
+	var event_state: Dictionary = snapshot.get("event_state", {})
+	var encounter_view: Dictionary = snapshot.get("encounter_view_model", {})
+	var encounter_state: Dictionary = encounter_view.get("state", {})
+	var event_type := StringName(event_state.get("event_type", encounter_view.get("encounter_type", &"trader")))
+	var completed := bool(event_state.get("completed", encounter_state.get("completed", StringName(encounter_state.get("state", &"available")) == &"completed")))
+	var title := _event_title(event_type)
+	return _descriptor({
+		"projection_id": "event:%s" % room_key,
+		"interaction_kind": &"event",
+		"local_pos": EVENT_LOCAL_POS,
+		"interaction_radius": SPECIAL_INTERACTION_RADIUS,
+		"body_rect": _centered_rect(EVENT_LOCAL_POS, Vector2(0.085, 0.085)),
+		"context_anchor_local": EVENT_LOCAL_POS + Vector2(0.0, -0.09),
+		"visual_state": &"completed" if completed else &"available",
+		"visual_key": StringName("ui.art25.long_term.event.%s" % String(event_type)),
+		"depth_key": &"world.interactable.event",
+		# A completed event remains inspectable, but display_only prevents a new
+		# event command or a second settlement.
+		"enabled": true,
+		"prompt_text": "事件已处理" if completed else "查看%s" % title,
+		"payload": {
+			"room_key": room_key,
+			"event_type": event_type,
+			"completed": completed,
+			"display_only": completed,
+			"display_title": title,
+			"summary": "已经处理，不会重复结算。" if completed else "靠近后可查看处理方式。",
+		},
+	})
+
+
+static func _mine_projection(snapshot: Dictionary, room_key: String) -> Dictionary:
+	var room_detail: Dictionary = snapshot.get("current_room_detail", {})
+	var triggered := bool(room_detail.get("triggered", false))
+	return _descriptor({
+		"projection_id": "mine:%s" % room_key,
+		"interaction_kind": &"mine",
+		"local_pos": MINE_LOCAL_POS,
+		"interaction_radius": SPECIAL_INTERACTION_RADIUS,
+		"body_rect": _centered_rect(MINE_LOCAL_POS, Vector2(0.075, 0.065)),
+		"context_anchor_local": MINE_LOCAL_POS + Vector2(0.0, -0.075),
+		"visual_state": &"resolved" if triggered else &"armed",
+		"visual_key": &"visual.art24.prop.mine",
+		"depth_key": &"world.interactable.mine",
+		"enabled": true,
+		"prompt_text": "",
+		"payload": {
+			"room_key": room_key,
+			"triggered": triggered,
+			"display_only": true,
+			"display_title": "雷区机关",
+			"summary": "已失效，不会再次造成伤害。" if triggered else "保持距离，留意地面机关。",
+		},
+	})
+
+
+static func _exit_projection(snapshot: Dictionary, room_key: String) -> Dictionary:
+	var inventory_items: Array = snapshot.get("inventory_items", [])
+	var safe_yield := int(snapshot.get("safe_yield", snapshot.get("gold_coin", snapshot.get("safe_gold", 0))))
+	var black_coin := int(snapshot.get("black_coin", snapshot.get("run_black_coin", snapshot.get("pending_gold", 0))))
+	var backpack_used := int(snapshot.get("backpack_used", 0))
+	var backpack_capacity := int(snapshot.get("backpack_capacity", 0))
+	var room_floor_item_count := int(snapshot.get("room_floor_item_count", (snapshot.get("room_floor_items", []) as Array).size()))
+	var objective_summary := _objective_summary(snapshot)
+	return _descriptor({
+		"projection_id": "exit:%s" % room_key,
+		"interaction_kind": &"exit",
+		"local_pos": EXIT_LOCAL_POS,
+		"interaction_radius": 0.20,
+		"body_rect": _centered_rect(EXIT_LOCAL_POS, Vector2(0.10, 0.10)),
+		"context_anchor_local": EXIT_LOCAL_POS + Vector2(0.0, -0.10),
+		"visual_state": &"available",
+		"visual_key": &"visual.art24.fx.beacon_pulse.0",
+		"depth_key": &"world.interactable.exit",
+		"enabled": true,
+		"prompt_text": "查看撤离摘要",
+		"payload": {
+			"room_key": room_key,
+			"display_title": "撤离信标",
+			"summary": "黑币 %d · 安全收益 %d · 背包 %d/%d · 当前房间遗留 %d" % [black_coin, safe_yield, backpack_used, backpack_capacity, room_floor_item_count],
+			"safe_yield": safe_yield,
+			"black_coin": black_coin,
+			"inventory_count": inventory_items.size(),
+			"backpack_used": backpack_used,
+			"backpack_capacity": backpack_capacity,
+			"room_floor_item_count": room_floor_item_count,
+			"objective_summary": objective_summary,
+		},
+	})
+
+
+static func _event_title(event_type: StringName) -> String:
+	match event_type:
+		&"trader":
+			return "旅商"
+		&"dice":
+			return "骰局"
+		&"altar":
+			return "祭坛"
+		&"trap":
+			return "机关"
+	return "异常事件"
+
+
+static func _objective_summary(snapshot: Dictionary) -> String:
+	for raw_summary in [
+		snapshot.get("selected_objective_summary", ""),
+		snapshot.get("objective_summary", ""),
+		(snapshot.get("objective_context_preview", {}) as Dictionary).get("selected_objective_summary", ""),
+	]:
+		var configured := String(raw_summary).strip_edges()
+		if configured != "":
+			return configured
+	var run_start: Dictionary = snapshot.get("run_start_config", {})
+	var configured_start_summary := String(run_start.get("selected_objective_summary", "")).strip_edges()
+	if configured_start_summary != "":
+		return configured_start_summary
+	var label := String(run_start.get("selected_objective_label", "")).strip_edges()
+	if label == "":
+		return "本次探索未设置额外委托。"
+	return label
 
 
 static func _chest_projection(snapshot: Dictionary, room_key: String) -> Dictionary:

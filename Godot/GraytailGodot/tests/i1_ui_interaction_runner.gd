@@ -104,27 +104,30 @@ func _assert_production_resolution(run_scene: Node, resolution_id: StringName) -
 
 func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_size: Vector2i, resolution_id: StringName) -> void:
 	run_surface.call("apply_layout_profile", profile)
+	var action_fixture: Array[Dictionary] = [
+		{"id": &"interact", "label": "E 搜索/交互", "enabled": false, "description": "当前没有可搜索或交互的目标。", "disabled_reason": "当前没有可搜索或交互的目标。", "tone": &"primary"},
+		{"id": &"inventory", "label": "背包", "enabled": true, "description": "查看背包、装备与负重详情。", "disabled_reason": "", "tone": &"secondary"},
+		{"id": &"ground_loot", "label": "地面物品", "enabled": false, "description": "当前房间没有可拾取物。", "disabled_reason": "当前房间没有可拾取物。", "tone": &"warning"},
+		{"id": &"map", "label": "M/Tab 扫描图", "enabled": true, "description": "打开完整区域扫描图。", "disabled_reason": "", "tone": &"secondary"},
+		{"id": &"combat", "label": "Space/J 清理", "enabled": false, "description": "当前房间没有需要清理的威胁。", "disabled_reason": "当前房间没有需要清理的威胁。", "tone": &"danger"},
+		{"id": &"extract", "label": "撤离", "enabled": false, "description": "需到达撤离信标；战斗中可在有效门边确认撤离。", "disabled_reason": "需到达撤离信标；战斗中可在有效门边确认撤离。", "tone": &"danger"},
+		{"id": &"pause", "label": "Esc 暂停", "enabled": true, "description": "打开暂停菜单和设置入口。", "disabled_reason": "", "tone": &"secondary"},
+	]
 	run_surface.call("apply_surface_model", {
-		"command_feedback": "操作已完成",
+		"command_feedback": "路线已更新，返回撤离信标即可结算。",
 		"action_hint": "撤离暂不可用：尚未到达撤离点",
-		"action_buttons": [{
-			"id": &"extract",
-			"label": "撤离",
-			"enabled": false,
-			"disabled_reason": "尚未到达撤离点",
-			"tone": &"secondary",
-		}],
+		"action_buttons": action_fixture,
 		"encounter_section": {
-			"title": "Encounter",
-			"body": "Layout audit",
-			"result_summary": "Ready",
-			"options": [{
-				"id": &"i1_layout_audit",
-				"title": "Confirm route",
-				"disabled": false,
-				"requires_confirm": true,
-				"command_payload": {"option_id": &"i1_layout_audit"},
-			}],
+			"title": "旅商",
+			"body": "选择本次交易。",
+			"result_summary": "等待选择",
+			"options": [
+				{"id": &"sell_best_item", "title": "出售物资", "summary": "所得计入安全收益。", "disabled": false, "requires_confirm": false, "command_payload": {"option_id": &"sell_best_item"}},
+				{"id": &"confirm_high_value_sale", "title": "确认出售", "summary": "确认出售高价值物资。", "disabled": true, "disabled_reason": "当前没有高价值物资。", "requires_confirm": true, "command_payload": {"option_id": &"confirm_high_value_sale"}},
+				{"id": &"buy_treatment", "title": "购买治疗", "summary": "恢复本次探索生命。", "disabled": true, "disabled_reason": "黑币不足。", "requires_confirm": false, "command_payload": {"option_id": &"buy_treatment"}},
+				{"id": &"buy_info", "title": "购买路线情报", "summary": "揭示一条可用路线。", "disabled": true, "disabled_reason": "黑币不足。", "requires_confirm": false, "command_payload": {"option_id": &"buy_info"}},
+				{"id": &"leave", "title": "离开旅商", "summary": "保留资源继续探索。", "disabled": false, "requires_confirm": false, "command_payload": {"option_id": &"leave"}},
+			],
 		},
 		"layout_profile": profile,
 	})
@@ -133,15 +136,18 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 	var hint := run_surface.get("action_hint_label") as Label
 	var feedback_panel := run_surface.get("command_feedback_art") as Control
 	var action_buttons: Dictionary = run_surface.get("action_buttons")
+	var encounter_grid := run_surface.get("encounter_options_box") as GridContainer
 	var encounter_buttons: Array = run_surface.get("encounter_option_buttons")
 	_require(feedback != null and feedback.visible and feedback.text.strip_edges() != "", "%s non-empty command feedback is hidden" % resolution_id)
-	_require(hint != null and hint.visible and hint.text.contains("尚未到达撤离点"), "%s disabled action reason is not visible in the run surface" % resolution_id)
+	_require(hint != null and hint.visible and hint.text.contains("当前没有可搜索或交互的目标") and hint.text.contains("靠近有效目标"), "%s default disabled-action condition is not visible in the run surface" % resolution_id)
 	if feedback != null:
 		_assert_inside_viewport(feedback, viewport_size, "%s RunCommandFeedback" % resolution_id)
 		_assert_font(feedback, "%s RunCommandFeedback" % resolution_id)
+		_assert_single_line_fits(feedback, "%s RunCommandFeedback" % resolution_id)
 	if hint != null:
 		_assert_inside_viewport(hint, viewport_size, "%s RunActionHint" % resolution_id)
 		_assert_font(hint, "%s RunActionHint" % resolution_id)
+		_assert_single_line_fits(hint, "%s RunActionHint" % resolution_id)
 	if feedback != null and hint != null:
 		_require(not feedback.get_global_rect().intersects(hint.get_global_rect()), "%s command feedback overlaps action hint" % resolution_id)
 	if feedback_panel != null and feedback != null and hint != null:
@@ -153,7 +159,11 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 		_require(feedback_rect.position.y - panel_rect.position.y >= 6.0, "%s command feedback enters the top frame border: panel=%s label=%s" % [resolution_id, panel_rect, feedback_rect])
 		_require(panel_rect.end.y - hint_rect.end.y >= 6.0, "%s action hint enters the bottom frame border: panel=%s label=%s" % [resolution_id, panel_rect, hint_rect])
 		_require(feedback_rect.size.y >= 22.0 and hint_rect.size.y >= 22.0, "%s bottom status labels lack readable line height" % resolution_id)
-	_require(encounter_buttons.size() == 1, "%s encounter layout control is missing" % resolution_id)
+		var bottom_overlay := run_surface.get("bottom_overlay_art") as NinePatchRect
+		if bottom_overlay != null and feedback_panel is TextureRect:
+			_require((feedback_panel as TextureRect).texture != bottom_overlay.texture, "%s guidance panel still reuses the painted empty action-slot strip" % resolution_id)
+	_require(encounter_buttons.size() == 5, "%s complete five-option merchant layout is incomplete" % resolution_id)
+	_require(encounter_grid != null and encounter_grid.columns == 3, "%s five-option merchant does not wrap through a three-column grid" % resolution_id)
 	for raw_encounter_button in encounter_buttons:
 		var encounter_button := raw_encounter_button as Button
 		if encounter_button == null:
@@ -165,7 +175,32 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 			_require(not encounter_button.get_global_rect().intersects(feedback.get_global_rect()), "%s encounter option overlaps command feedback" % resolution_id)
 		if hint != null:
 			_require(not encounter_button.get_global_rect().intersects(hint.get_global_rect()), "%s encounter option overlaps action hint" % resolution_id)
+		if feedback_panel != null:
+			_require(feedback_panel.get_global_rect().encloses(encounter_button.get_global_rect()), "%s encounter option escapes the bottom guidance panel" % resolution_id)
 	_assert_left_status_spacing(run_surface, resolution_id)
+	var default_hint := hint.text if hint != null else ""
+	for action_data in action_fixture:
+		var action_id := StringName(action_data.get("id", &""))
+		var guided_button := action_buttons.get(action_id) as Button
+		_require(guided_button != null, "%s run action %s is missing from the complete production set" % [resolution_id, action_id])
+		if guided_button == null or hint == null:
+			continue
+		var expected_detail := String(action_data.get("description", "")) if bool(action_data.get("enabled", true)) else String(action_data.get("disabled_reason", ""))
+		_require(not guided_button.tooltip_text.is_empty() and guided_button.tooltip_text.contains(expected_detail), "%s run action %s has no complete tooltip guidance" % [resolution_id, action_id])
+		guided_button.mouse_entered.emit()
+		await process_frame
+		_require(hint.text.contains(expected_detail), "%s hover guidance does not describe run action %s: %s" % [resolution_id, action_id, hint.text])
+		_assert_single_line_fits(hint, "%s hover guidance %s" % [resolution_id, action_id])
+		guided_button.mouse_exited.emit()
+		await process_frame
+		_require(hint.text == default_hint, "%s leaving run action %s did not restore default guidance" % [resolution_id, action_id])
+		if not guided_button.disabled:
+			guided_button.grab_focus()
+			await process_frame
+			_require(root.gui_get_focus_owner() == guided_button and hint.text.contains(expected_detail), "%s keyboard focus does not describe run action %s" % [resolution_id, action_id])
+			guided_button.release_focus()
+			await process_frame
+			_require(hint.text == default_hint, "%s leaving keyboard focus on %s did not restore default guidance" % [resolution_id, action_id])
 	for action_id in action_buttons.keys():
 		var button := action_buttons[action_id] as Button
 		if button == null:
@@ -173,8 +208,12 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 		_require(button.focus_mode == Control.FOCUS_ALL, "%s run action %s is not focusable" % [resolution_id, action_id])
 		_assert_font(button, "%s run action %s" % [resolution_id, action_id])
 		_assert_inside_viewport(button, viewport_size, "%s run action %s" % [resolution_id, action_id])
-	run_surface.call("show_command_feedback", {"ok": true, "accepted": true, "message": "操作已确认"})
-	_require(feedback != null and feedback.visible and feedback.text.strip_edges() != "", "%s accepted command feedback is hidden" % resolution_id)
+	run_surface.call("show_command_feedback", {"ok": true, "accepted": true})
+	_require(feedback != null and not feedback.visible and not feedback.text.contains("已确认"), "%s generic accepted acknowledgement leaked into player guidance" % resolution_id)
+	run_surface.call("show_command_feedback", {"ok": true, "accepted": true, "message": "已拾取应急药剂。"})
+	_require(feedback != null and feedback.visible and feedback.text.contains("应急药剂"), "%s meaningful accepted feedback was hidden" % resolution_id)
+	if feedback != null:
+		_assert_single_line_fits(feedback, "%s meaningful RunCommandFeedback" % resolution_id)
 
 
 func _assert_left_status_spacing(run_surface: Control, resolution_id: StringName) -> void:
@@ -282,6 +321,15 @@ func _assert_visible_fonts(node: Node, scope: String) -> void:
 
 func _assert_font(control: Control, scope: String) -> void:
 	_require(control.get_theme_font_size("font_size") >= 13, "%s uses a font below 13px" % scope)
+
+
+func _assert_single_line_fits(label: Label, scope: String) -> void:
+	if label == null:
+		return
+	var font := label.get_theme_font("font")
+	var font_size := label.get_theme_font_size("font_size")
+	var measured_width := font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	_require(measured_width <= label.size.x + 0.5, "%s text is clipped: measured=%.1f available=%.1f text=%s" % [scope, measured_width, label.size.x, label.text])
 
 
 func _assert_inside_viewport(control: Control, viewport_size: Vector2i, scope: String) -> void:

@@ -4,6 +4,8 @@ class_name G41WorldContextPopup
 signal pickup_requested(instance_id: String)
 signal replace_requested(ground_instance_id: String, drop_instance_id: String)
 signal chest_open_requested
+signal event_open_requested(payload: Dictionary)
+signal exit_requested(payload: Dictionary)
 
 const POPUP_WIDTH := 308.0
 const ROW_HEIGHT := 44.0
@@ -98,6 +100,16 @@ func activate_primary() -> bool:
 			_begin_replacement(String(item.get("instance_id", "")))
 		else:
 			pickup_requested.emit(String(item.get("instance_id", "")))
+		return true
+	if context_kind == &"event":
+		var event_payload: Dictionary = current_context.get("payload", {})
+		if bool(event_payload.get("completed", false)) or bool(event_payload.get("display_only", false)):
+			return false
+		event_open_requested.emit(event_payload.duplicate(true))
+		return true
+	if context_kind == &"exit":
+		var exit_payload: Dictionary = current_context.get("payload", {})
+		exit_requested.emit(exit_payload.duplicate(true))
 		return true
 	return false
 
@@ -202,17 +214,62 @@ func _rebuild(context: Dictionary) -> void:
 			hint_label.visible = true
 			primary_button.text = "打开物资箱"
 			primary_button.visible = true
-	else:
+	elif context_kind == &"ground_loot":
 		title_label.text = "附近回收物"
 		hint_label.text = "附近 %d 件" % context_items.size()
 		hint_label.visible = true
 		primary_button.visible = false
 		_build_item_rows(context_items, backpack_remaining)
-	item_scroll.visible = context_kind != &"chest" or bool(context.get("container_open", false))
+	else:
+		_rebuild_special_context(context)
+	item_scroll.visible = (context_kind == &"ground_loot") or (context_kind == &"chest" and bool(context.get("container_open", false)))
 	item_scroll.custom_minimum_size.y = minf(ROW_HEIGHT * maxf(1.0, float(context_items.size())), ROW_HEIGHT * 3.0)
 	status_label.text = ""
 	status_label.visible = false
 	_request_content_fit()
+
+
+func _rebuild_special_context(context: Dictionary) -> void:
+	var payload: Dictionary = context.get("payload", {})
+	item_scroll.visible = false
+	primary_button.visible = false
+	hint_label.visible = true
+	match context_kind:
+		&"event":
+			var completed := bool(payload.get("completed", false))
+			title_label.text = "%s · 已处理" % String(payload.get("display_title", "异常事件")) if completed else String(payload.get("display_title", "异常事件"))
+			hint_label.text = String(payload.get("summary", "已经处理，不会重复结算。" if completed else "靠近后可查看处理方式。"))
+			if not completed and not bool(payload.get("display_only", false)):
+				primary_button.text = "查看处理方式"
+				primary_button.visible = true
+		&"mine":
+			var triggered := bool(payload.get("triggered", false))
+			title_label.text = "雷区机关 · 已失效" if triggered else "雷区机关 · 警戒"
+			var result: Dictionary = payload.get("entry_result", {})
+			if not result.is_empty() and bool(result.get("first_trigger", false)):
+				var hp_loss := absi(int(result.get("hp_delta", 0)))
+				var pressure_gain := maxi(0, int(result.get("pressure_delta", 0)))
+				hint_label.text = "生命 -%d · 压力 +%d%s" % [hp_loss, pressure_gain, " · 本次伤害致命" if bool(result.get("fatal", false)) else ""]
+			elif triggered:
+				hint_label.text = "已触发，不会再次造成伤害。"
+			else:
+				hint_label.text = String(payload.get("summary", "保持距离，留意地面机关。"))
+		&"exit":
+			title_label.text = String(payload.get("display_title", "撤离信标"))
+			var objective := String(payload.get("objective_summary", "")).strip_edges()
+			var lines: Array[String] = [
+				"黑币 %d · 安全收益 %d" % [int(payload.get("black_coin", 0)), int(payload.get("safe_yield", 0))],
+				"背包 %d/%d · 携带 %d 件" % [int(payload.get("backpack_used", 0)), int(payload.get("backpack_capacity", 0)), int(payload.get("inventory_count", 0))],
+				"当前房间遗留 %d 件" % int(payload.get("room_floor_item_count", 0)),
+			]
+			if objective != "":
+				lines.append("目标 · %s" % objective)
+			hint_label.text = "\n".join(lines)
+			primary_button.text = "请求撤离"
+			primary_button.visible = true
+		_:
+			title_label.text = "附近目标"
+			hint_label.text = "靠近后查看。"
 
 
 func _build_replacement_view(context: Dictionary, backpack_remaining: int) -> void:
@@ -220,7 +277,7 @@ func _build_replacement_view(context: Dictionary, backpack_remaining: int) -> vo
 	var incoming_rarity := ItemRarityDescriptor.describe_item(incoming)
 	title_label.text = "选择要放下的物品"
 	hint_label.text = "换入：%s　%s　重量 %d。只有释放后容量足够的物品可选。" % [
-		String(incoming.get("display_name", incoming.get("item_id", "回收物"))),
+		RunUIViewModel.item_display_name(incoming),
 		String(incoming_rarity.get("display_text", "[?] 未鉴定")),
 		int(incoming.get("weight", 0)),
 	]
@@ -274,7 +331,7 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		item_button.clip_text = true
 		item_button.text = "%s  ·  %s  ·  重%d" % [
-			String(item.get("display_name", item.get("item_id", "物品"))),
+			RunUIViewModel.item_display_name(item),
 			String(rarity.get("display_text", "[?] 未鉴定")),
 			int(item.get("weight", 0)),
 		]
@@ -322,7 +379,7 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		item_button.clip_text = true
 		item_button.text = "%s  ·  %s  ·  重%d" % [
-			String(item.get("display_name", item.get("item_id", "回收物"))),
+			RunUIViewModel.item_display_name(item),
 			String(rarity.get("display_text", "[?] 未鉴定")),
 			int(item.get("weight", 0)),
 		]
@@ -521,15 +578,32 @@ func _context_signature(context: Dictionary) -> String:
 			int(item.get("weight", 0)),
 			String(ItemRarityDescriptor.normalize(item.get("rarity", &"unknown"))),
 		])
-	return "%s|%s|%s|%s|%s|%s|%s" % [
+	var payload: Dictionary = context.get("payload", {})
+	var parts: Array[String] = [
 		String(context_kind),
-		bool(context.get("opened_once", false)),
-		bool(context.get("container_open", false)),
-		int(context.get("backpack_remaining", 0)),
+		str(context.get("opened_once", false)),
+		str(context.get("container_open", false)),
+		str(context.get("backpack_remaining", 0)),
 		",".join(ids),
 		",".join(inventory_ids),
 		replacement_ground_id,
+		String(payload.get("visual_state", "")),
+		String(payload.get("event_type", "")),
+		String(payload.get("display_title", "")),
+		str(payload.get("completed", false)),
+		str(payload.get("display_only", false)),
+		str(payload.get("triggered", false)),
+		String(payload.get("summary", "")),
+		str(payload.get("entry_result", {})),
+		str(payload.get("black_coin", 0)),
+		str(payload.get("safe_yield", 0)),
+		str(payload.get("inventory_count", 0)),
+		str(payload.get("backpack_used", 0)),
+		str(payload.get("backpack_capacity", 0)),
+		str(payload.get("room_floor_item_count", 0)),
+		String(payload.get("objective_summary", "")),
 	]
+	return "|".join(parts)
 
 
 func _on_primary_pressed() -> void:
@@ -537,6 +611,13 @@ func _on_primary_pressed() -> void:
 		_cancel_replacement()
 	elif context_kind == &"chest" and not bool(current_context.get("opened_once", false)):
 		chest_open_requested.emit()
+	elif context_kind == &"event":
+		var event_payload: Dictionary = current_context.get("payload", {})
+		if not bool(event_payload.get("completed", false)) and not bool(event_payload.get("display_only", false)):
+			event_open_requested.emit(event_payload.duplicate(true))
+	elif context_kind == &"exit":
+		var exit_payload: Dictionary = current_context.get("payload", {})
+		exit_requested.emit(exit_payload.duplicate(true))
 
 
 func _begin_replacement(instance_id: String) -> void:

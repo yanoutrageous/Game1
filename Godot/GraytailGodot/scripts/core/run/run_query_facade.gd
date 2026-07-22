@@ -5,6 +5,7 @@ class_name RunQueryFacade
 # UI and presentation code should consume these snapshots instead of private run state.
 
 const EncounterResolverScript := preload("res://scripts/core/run/encounter/encounter_resolver.gd")
+const EventServiceScript := preload("res://scripts/core/run/event_service.gd")
 const RunFlowStateContractScript := preload("res://scripts/core/run/run_flow_state_contract.gd")
 const RunResultBuilderScript := preload("res://scripts/core/run/run_result_builder.gd")
 const RuleEffectModifierSchemaScript := preload("res://scripts/core/rules/rule_effect_modifier_schema.gd")
@@ -35,6 +36,7 @@ func build_result_snapshot(context: RunContext) -> Dictionary:
 		"debug_commands": context.debug_commands.duplicate(true),
 		"debug_command_count": context.debug_commands.size(),
 		"outcome": context.outcome,
+		"terminal_reason_code": run_result.get("terminal_reason_code", &""),
 		"extracted": context.extracted,
 		"failed": context.failed,
 		"abandoned": context.abandoned,
@@ -223,7 +225,7 @@ func build_status_snapshot(context: RunContext) -> Dictionary:
 		"search_state_data": get_search_state_data(context),
 		"encounter_view_model": get_encounter_view_model(context),
 		"encounter_result_summary": get_encounter_result_summary(context),
-		"event_state": context.event_state.duplicate(true),
+		"event_state": _current_event_state(context),
 		"enemy_state": context.enemy_state.duplicate(true),
 		"last_message": context.last_message,
 		"last_reward": context.last_reward.duplicate(true),
@@ -379,7 +381,16 @@ func get_encounter_view_model(context: RunContext) -> Dictionary:
 
 
 func get_encounter_result_summary(context: RunContext) -> Dictionary:
-	return EncounterResolverScript.build_result_summary(context)
+	var summary := EncounterResolverScript.build_result_summary(context)
+	if context == null or context.last_reward.is_empty():
+		return summary
+	# Keep the presenter's event copy on explicit, player-safe structure. Raw
+	# rule messages remain diagnostic/domain data and are never presentation
+	# authority.
+	for field in ["completed", "altar_stage", "altar_stage_total", "roll", "spend_black_coin"]:
+		if context.last_reward.has(field):
+			summary[field] = context.last_reward[field]
+	return summary
 
 
 func get_search_state_label(context: RunContext) -> String:
@@ -429,6 +440,17 @@ func get_search_state_data(context: RunContext) -> Dictionary:
 		"reason": reason,
 		"is_chest": is_chest,
 	}
+
+
+func _current_event_state(context: RunContext) -> Dictionary:
+	if context == null:
+		return {}
+	if context.current_room_type == &"Event":
+		# EventService remains the sole rule authority. Rebuilding this read-only
+		# projection keeps completed events inspectable after leaving/re-entering,
+		# even though the transient context.event_state was cleared on room entry.
+		return EventServiceScript.get_event_state(context, context.get_current_pos())
+	return context.event_state.duplicate(true)
 
 
 func _empty_run_map_snapshot() -> Dictionary:

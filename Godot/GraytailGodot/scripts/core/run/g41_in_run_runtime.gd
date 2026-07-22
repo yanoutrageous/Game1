@@ -42,6 +42,13 @@ func sync_room(player_local_pos: Vector2) -> void:
 	if context.current_room_type != &"Monster" or context.truth_map.is_cleared(context.get_current_pos()):
 		simulation = null
 		return
+	# A successful explicit flee ends this room's simulation before the room
+	# transition is committed.  Keep that authorization stable until the
+	# authoritative room key changes so a failed transition cannot restart the
+	# encounter or charge the flee cost a second time.
+	if flee_authorized:
+		simulation = null
+		return
 	if simulation == null:
 		_start_current_encounter(player_local_pos)
 	elif simulation.active:
@@ -120,6 +127,7 @@ func build_read_only_snapshot() -> Dictionary:
 		combat = simulation.build_snapshot()
 	combat["room_key"] = current_room_key
 	combat["door_locked"] = is_door_locked()
+	combat["flee_authorized"] = flee_authorized
 	combat["authority"] = &"G41CombatSimulation"
 	combat["fixed_hz"] = 60
 	combat["recent_events"] = recent_domain_events.duplicate(true)

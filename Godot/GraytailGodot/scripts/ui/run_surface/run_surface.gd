@@ -100,10 +100,13 @@ var command_feedback_art: TextureRect
 var command_feedback_label: Label
 var layout_label: Label
 var action_hint_label: Label
-var encounter_options_box: VBoxContainer
+var encounter_options_box: GridContainer
 var action_bar: HBoxContainer
 var action_buttons: Dictionary = {}
 var encounter_option_buttons: Array[Button] = []
+var action_guidance_data: Dictionary = {}
+var default_action_guidance := ""
+var active_guidance_action: StringName = &""
 var last_backpack_signature := "__uninitialized__"
 var current_protocol_level := 5
 var current_protocol_pressure := 0.0
@@ -227,11 +230,13 @@ func build() -> void:
 	player_tag_label = _add_label("RunPlayerTag", "回收员", 12, PresentationTheme.color_for_key(&"ui.accent"))
 
 	encounter_title_label = _add_label("RunEncounterTitle", "遭遇提示", 18, PresentationTheme.color_for_key(&"ui.warning"))
-	encounter_body_label = _add_label("RunEncounterBody", "等待遭遇公开信息。", 13, PresentationTheme.text_color())
+	encounter_body_label = _add_label("RunEncounterBody", "当前没有可处理的目标。", 13, PresentationTheme.text_color())
 	encounter_result_label = _add_label("RunEncounterResult", "最近结果：暂无遭遇结果。", 12, PresentationTheme.color_for_key(&"ui.muted"))
-	encounter_options_box = VBoxContainer.new()
+	encounter_options_box = GridContainer.new()
 	encounter_options_box.name = "RunEncounterOptions"
-	encounter_options_box.add_theme_constant_override("separation", 6)
+	encounter_options_box.columns = 1
+	encounter_options_box.add_theme_constant_override("h_separation", 6)
+	encounter_options_box.add_theme_constant_override("v_separation", 6)
 	encounter_options_box.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(encounter_options_box)
 
@@ -243,7 +248,10 @@ func build() -> void:
 	reward_label = _add_label("RunRewardSummary", "奖励：等待记录。", 12, PresentationTheme.color_for_key(&"ui.muted"))
 	reward_label.visible = false
 	reward_mask.visible = false
-	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.94)
+	# The run bottom-bar brush contains several painted key slots. Reusing it for
+	# player guidance created fake empty controls underneath live copy, so the
+	# information band uses the approved continuous modal section instead.
+	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art21UIPlacementContractScript.component_ref(&"art21r2.modal.section.panel", &"ui.art19.bar.summary_dark"), 0.94)
 	command_feedback_art.stretch_mode = TextureRect.STRETCH_SCALE
 	command_feedback_label = _add_label("RunCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
 	command_feedback_label.autowrap_mode = TextServer.AUTOWRAP_OFF
@@ -307,31 +315,33 @@ func apply_surface_model(model: Dictionary) -> void:
 	event_label.visible = false
 	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", "等待记录。")), 14)
 	var command_feedback := String(model.get("command_feedback", "")).strip_edges()
-	command_feedback_label.text = _feedback_copy(command_feedback)
-	command_feedback_art.visible = command_feedback != ""
-	command_feedback_label.visible = command_feedback != ""
+	var feedback_copy := _feedback_copy(command_feedback)
+	command_feedback_label.text = feedback_copy
+	command_feedback_art.visible = feedback_copy != ""
+	command_feedback_label.visible = feedback_copy != ""
 
 	var status_text := _lines_text(model.get("status_lines", []), "", 3, 18)
-	if status_text != "":
-		right_body_label.tooltip_text = status_text
-	right_body_label.tooltip_text = "%s\n%s\n%s\n%s" % [
-		String(model.get("map_domain_summary", "")),
-		String(model.get("run_flow_summary", "")),
+	right_body_label.tooltip_text = "%s\n%s\n%s\n%s\n%s" % [
+		status_text,
+		String(model.get("room_state_detail", "")),
 		String(model.get("room_common_rule_summary", "")),
-		String(model.get("rule_effect_modifier_summary", "")),
+		String(model.get("encounter_preview_summary", "")),
+		String(model.get("return_eligibility_summary", "")),
 	]
 	event_label.text = ""
 	event_label.visible = false
 	event_label.tooltip_text = String(model.get("event_panel_summary", ""))
 	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", reward_label.text)), 14)
 	reward_label.tooltip_text = String(model.get("loot_panel_summary", reward_label.text))
-	action_hint_label.text = String(model.get("action_hint", "")).strip_edges()
+	var action_data: Variant = model.get("action_buttons", [])
+	default_action_guidance = _player_action_hint(String(model.get("action_hint", "")), action_data)
+	action_hint_label.text = default_action_guidance
 	action_hint_label.visible = action_hint_label.text != ""
 	command_feedback_art.visible = command_feedback_label.visible or action_hint_label.visible
 
 	var profile: Dictionary = model.get("layout_profile", {})
 	layout_label.text = ""
-	_apply_actions(model.get("action_buttons", []))
+	_apply_actions(action_data)
 	_apply_encounter_section(model.get("encounter_section", {}))
 	_apply_art10_text_refresh()
 	_apply_ue_readability_tokens(profile)
@@ -387,7 +397,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var rail_content_width: float = max(220.0, left_width - rail_content_left - margin)
 	var right_card_width: float = clampf(204.0 * ue_reference_scale, 152.0 if is_low else 164.0, 274.0)
 	var right_card_height: float = clampf(122.0 * ue_reference_scale, 104.0 if is_low else 112.0, 164.0)
-	var bottom_info_height: float = 60.0
+	# The production encounter set can contain more than one decision. Reserve two
+	# compact rows so a larger set wraps inside this band instead of entering the
+	# key dock.
+	var bottom_info_height: float = 84.0
 	var bottom_key_height: float = 40.0 if is_low else (48.0 if is_high else 44.0)
 	var center_left: float = gameplay_left
 	var center_width: float = gameplay_width
@@ -408,10 +421,14 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var bottom_key_left: float = gameplay_left + (gameplay_width - bottom_key_width) * 0.5
 	var bottom_key_top: float = height - bottom_key_height - 8.0
 	var bottom_info_top: float = bottom_key_top - bottom_info_height - 6.0
-	var bottom_info_width: float = min(bottom_key_width * 0.72, 520.0 if is_high else 480.0)
+	# Guidance shares this band with an encounter action. Keep enough real text
+	# width at every supported production resolution for a complete condition;
+	# the former 72% key-bar width left only ~160 px at 1280x720.
+	var preferred_info_width := 960.0 if is_low else (1200.0 if is_high else 1080.0)
+	var bottom_info_width: float = minf(gameplay_width - margin * 4.0, preferred_info_width)
 	var bottom_info_left: float = gameplay_left + gameplay_width * 0.5 - bottom_info_width * 0.5
-	var encounter_width: float = 150.0 if is_low else 180.0
-	var encounter_height: float = 44.0 if is_low else 50.0
+	var encounter_width: float = 400.0 if is_low else (480.0 if is_high else 440.0)
+	var encounter_height: float = 70.0
 	var encounter_left: float = clampf(gameplay_left + gameplay_width * 0.58, gameplay_left + margin, width - encounter_width - margin)
 	var encounter_top: float = clampf(height * 0.52 - encounter_height * 0.5, margin + 110.0, bottom_info_top - encounter_height - 12.0)
 	var gameplay_square_size: float = min(gameplay_width - margin * 2.0, height - margin * 2.0)
@@ -539,12 +556,17 @@ func show_command_feedback(result: Dictionary) -> void:
 	command_feedback_label.visible = true
 	var text := RunUIViewModel.command_result_text(result)
 	if text == "":
-		text = "已确认。" if accepted else "当前不可用。"
-	command_feedback_label.text = _feedback_copy(text)
+		text = "" if accepted else "当前条件不足，请查看下方行动条件。"
+	var feedback_copy := _feedback_copy(text)
+	command_feedback_label.text = feedback_copy
+	command_feedback_label.visible = feedback_copy != ""
+	command_feedback_art.visible = command_feedback_label.visible or (action_hint_label != null and action_hint_label.visible)
+	if not command_feedback_label.visible:
+		return
 	var feedback_state := &"neutral"
 	if not accepted:
 		feedback_state = &"warning"
-	_apply_texture_ref(command_feedback_art, Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.82)
+	_apply_texture_ref(command_feedback_art, Art21UIPlacementContractScript.component_ref(&"art21r2.modal.section.panel", &"ui.art19.bar.summary_dark"), 0.82)
 	var pulse_state := &"ready"
 	if not accepted:
 		pulse_state = &"warning"
@@ -600,7 +622,7 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		slot.focus_mode = Control.FOCUS_ALL
 		slot.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		slot.text = "%s ×%d\n%s · %s重" % [
-			_compact_line(String(item.get("display_name", item.get("item_id", "物资"))), 8),
+			_compact_line(RunUIViewModel.item_display_name(item), 8),
 			quantity,
 			String(rarity.get("display_text", "[?] 未鉴定")),
 			item.get("weight", 0),
@@ -634,7 +656,7 @@ func _show_backpack_item_detail(item: Dictionary) -> void:
 	var quantity := int(item.get("quantity", 1))
 	var description := String(item.get("short_description", item.get("description", ""))).strip_edges()
 	backpack_detail_label.text = "%s · %s\n数量 %d · 重量 %s%s" % [
-		String(item.get("display_name", item.get("item_id", "物资"))),
+		RunUIViewModel.item_display_name(item),
 		String(rarity.get("display_text", "[?] 未鉴定")),
 		quantity,
 		item.get("weight", 0),
@@ -885,6 +907,10 @@ func _add_action_button(action_id: StringName, label: String, callback: Callable
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.focus_mode = Control.FOCUS_ALL
 	button.pressed.connect(callback)
+	button.mouse_entered.connect(_show_action_guidance.bind(action_id))
+	button.mouse_exited.connect(_restore_action_guidance.bind(action_id))
+	button.focus_entered.connect(_show_action_guidance.bind(action_id))
+	button.focus_exited.connect(_restore_action_guidance.bind(action_id))
 	button.add_theme_font_size_override("font_size", 13)
 	var copy := Label.new()
 	copy.name = "ActionCopy"
@@ -926,7 +952,9 @@ func _add_slot(node_name: String) -> Control:
 
 
 func _apply_actions(actions: Variant) -> void:
+	action_guidance_data.clear()
 	if not (actions is Array):
+		_restore_default_action_guidance()
 		return
 	for action in actions:
 		if not (action is Dictionary):
@@ -943,12 +971,68 @@ func _apply_actions(actions: Variant) -> void:
 			action_copy.text = display_text
 			action_copy.visible = false
 		var enabled := bool(action_data.get("enabled", true))
-		var description := String(action_data.get("description", ""))
-		var disabled_reason := String(action_data.get("disabled_reason", ""))
+		action_guidance_data[action_id] = action_data.duplicate(true)
 		button.disabled = not enabled
-		button.tooltip_text = ""
+		button.tooltip_text = _action_guidance_text(action_data)
 		_apply_action_button_style(button, StringName(action_data.get("tone", &"secondary")), enabled)
 		_apply_key_prompt_icon(button, action_id)
+	_refresh_active_action_guidance()
+
+
+func _show_action_guidance(action_id: StringName) -> void:
+	var action_data := _dict_variant(action_guidance_data.get(action_id, {}))
+	if action_data.is_empty() or action_hint_label == null:
+		return
+	active_guidance_action = action_id
+	action_hint_label.text = _action_guidance_text(action_data)
+	action_hint_label.visible = not action_hint_label.text.is_empty()
+	if command_feedback_art != null:
+		command_feedback_art.visible = command_feedback_label.visible or action_hint_label.visible
+
+
+func _restore_action_guidance(action_id: StringName) -> void:
+	var button := action_buttons.get(action_id) as Button
+	if button != null and (button.has_focus() or button.is_hovered()):
+		return
+	if active_guidance_action == action_id:
+		active_guidance_action = &""
+		_restore_default_action_guidance()
+
+
+func _refresh_active_action_guidance() -> void:
+	if active_guidance_action == &"" or not action_guidance_data.has(active_guidance_action):
+		active_guidance_action = &""
+		_restore_default_action_guidance()
+		return
+	_show_action_guidance(active_guidance_action)
+
+
+func _restore_default_action_guidance() -> void:
+	if action_hint_label == null:
+		return
+	action_hint_label.text = default_action_guidance
+	action_hint_label.visible = not default_action_guidance.is_empty()
+	if command_feedback_art != null:
+		command_feedback_art.visible = command_feedback_label.visible or action_hint_label.visible
+
+
+func _action_guidance_text(action_data: Dictionary) -> String:
+	var action_id := StringName(action_data.get("id", &""))
+	var label := _short_action_label(action_id, String(action_data.get("label", "行动"))).strip_edges()
+	var key_label := _key_label_for_action(action_id)
+	var prefix := "%s %s" % [key_label, label] if not key_label.is_empty() else label
+	var description := String(action_data.get("description", "")).strip_edges()
+	var disabled_reason := String(action_data.get("disabled_reason", "")).strip_edges()
+	var enabled := bool(action_data.get("enabled", true))
+	var detail := description
+	if not enabled and not disabled_reason.is_empty():
+		if detail.is_empty() or detail == disabled_reason:
+			detail = "暂不可用：%s" % disabled_reason
+		else:
+			detail = "%s；暂不可用：%s" % [detail, disabled_reason]
+	if detail.is_empty():
+		detail = "当前没有补充说明。"
+	return Art10UISkinKitScript.sanitize_player_copy("%s：%s" % [prefix, detail]).strip_edges()
 
 
 func _key_label_for_action(action_id: StringName) -> String:
@@ -994,7 +1078,7 @@ func _short_action_label(action_id: StringName, fallback: String) -> String:
 func _apply_encounter_section(section_variant: Variant) -> void:
 	var section := _dict_variant(section_variant)
 	encounter_title_label.text = _compact_line(String(section.get("title", "事件行动")), 10)
-	encounter_body_label.text = _compact_line(String(section.get("body", "当前无公开信息。")), 22)
+	encounter_body_label.text = _compact_line(String(section.get("body", "当前没有可处理的目标。")), 22)
 	encounter_result_label.text = "结果  %s" % _compact_line(String(section.get("result_summary", "暂无结果。")), 18)
 	_clear_encounter_option_buttons()
 	var options := _array_variant(section.get("options", []))
@@ -1006,7 +1090,7 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 		var option_id := StringName(option.get("id", &""))
 		var disabled := bool(option.get("disabled", false))
 		var requires_confirm := bool(option.get("requires_confirm", false))
-		var title := String(option.get("title", String(option_id)))
+		var title := _encounter_option_title(option_id, String(option.get("title", String(option_id))))
 		button.name = "RunEncounterOption_%s" % String(option_id)
 		button.text = "%s%s" % [_compact_line(title, 9), "  确认" if requires_confirm else ""]
 		button.custom_minimum_size = Vector2(0, 28)
@@ -1025,8 +1109,30 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 			button.pressed.connect(_on_encounter_option_pressed.bind(option_id, payload))
 		encounter_options_box.add_child(button)
 		encounter_option_buttons.append(button)
+	encounter_options_box.columns = clampi(encounter_option_buttons.size(), 1, 3)
 	encounter_backdrop.visible = not encounter_option_buttons.is_empty()
 	encounter_options_box.visible = not encounter_option_buttons.is_empty()
+
+
+func _encounter_option_title(option_id: StringName, fallback: String) -> String:
+	match option_id:
+		&"sell_best_item":
+			return "出售背包物资"
+		&"confirm_high_value_sale":
+			return "出售贵重物"
+		&"buy_treatment":
+			return "购买治疗"
+		&"buy_info":
+			return "购买路线情报"
+		&"bet_small":
+			return "押注黑币"
+		&"offer_hp":
+			return "献祭生命"
+		&"disarm":
+			return "尝试解除机关"
+		&"leave":
+			return "离开当前遭遇"
+	return fallback
 
 
 func _encounter_option_tooltip(option: Dictionary) -> String:
@@ -1251,10 +1357,34 @@ func _compact_line(text: String, max_chars: int) -> String:
 
 
 func _feedback_copy(text: String) -> String:
-	var summary := _compact_line(text, 26)
-	if summary == "":
-		summary = "待命"
-	return summary
+	var copy := Art10UISkinKitScript.sanitize_player_copy(text).strip_edges()
+	if copy in ["已确认", "已确认。", "操作已确认", "操作已确认。", "操作已完成", "操作已完成。", "待命"]:
+		return ""
+	return copy
+
+
+func _player_action_hint(raw_hint: String, actions_variant: Variant) -> String:
+	if actions_variant is Array:
+		for raw_action in actions_variant as Array:
+			if not (raw_action is Dictionary):
+				continue
+			var action := raw_action as Dictionary
+			if bool(action.get("enabled", true)):
+				continue
+			match StringName(action.get("id", &"")):
+				&"interact":
+					return "E 搜索/交互：当前没有可搜索或交互的目标；靠近有效目标后再操作。"
+				&"ground_loot":
+					return "G 拾取：当前房间没有可拾取物；靠近掉落物后会自动显示详情。"
+				&"combat":
+					return "Space/J 清理：当前房间没有需要清理的威胁。"
+				&"extract":
+					return "T 撤离：需到达撤离信标；战斗中可在有效门边确认撤离。"
+			var label := String(action.get("label", "行动")).strip_edges()
+			var reason := String(action.get("disabled_reason", "")).strip_edges()
+			if reason != "":
+				return "%s：%s" % [label, reason]
+	return Art10UISkinKitScript.sanitize_player_copy(raw_hint).strip_edges()
 
 
 func _threat_copy(model: Dictionary) -> String:

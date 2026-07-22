@@ -49,6 +49,8 @@ const SCREEN_DEPLOY := &"deploy_shell"
 const SCREEN_LONG_TERM := &"long_term_shell"
 const SCREEN_SETTINGS := &"settings_shell"
 const SCREEN_RUN := &"run"
+const COMBAT_FLEE_EDGE_DISTANCE := 0.15
+const COMBAT_FLEE_DOOR_ALIGN_HALF := 0.18
 
 const LEGACY_GRAYBOX_VALIDATION_MARKERS := ["Start Tutorial 5x5", "Start Standard 10x10", "Controls: W/A/S/D or arrows move"]
 const G9_UI_NODE_VALIDATION_MARKERS := [
@@ -140,6 +142,8 @@ var refresh_controller
 var last_combat_texture_prewarm_report: Dictionary = {}
 var last_combat_texture_preflight_report: Dictionary = {}
 var combat_texture_prewarm_degraded: bool = false
+var extract_modal_mode: StringName = &"extract"
+var pending_combat_flee_direction := Vector2i.ZERO
 
 
 func _ready() -> void:
@@ -520,6 +524,8 @@ func _build_run_overlay() -> void:
 	result_panel.return_main_requested.connect(_return_from_result_to_main)
 	result_panel.return_deploy_requested.connect(_return_from_result_to_deploy)
 	result_panel.failure_salvage_confirmed.connect(_confirm_failure_salvage_from_result)
+	result_panel.retry_save_requested.connect(_retry_terminal_commit_from_result)
+	result_panel.discard_unsaved_result_requested.connect(_discard_unsaved_result_from_result)
 	result_panel.hide_result()
 	surface_overlay_slot.add_child(result_panel)
 
@@ -1035,6 +1041,8 @@ func _runtime_modal_root(modal_id: StringName) -> Control:
 			return loot_panel
 		&"extract_confirm":
 			return extract_panel
+		&"combat_flee_confirm":
+			return extract_panel
 		&"result":
 			return result_panel
 		&"pause":
@@ -1134,6 +1142,8 @@ func _first_focusable_descendant(root_control: Control) -> Control:
 func _return_from_result_to_main() -> void:
 	if not _runtime_modal_is_top(&"result"):
 		return
+	if result_panel != null and not result_panel.normal_exit_allowed():
+		return
 	_pop_runtime_modal(&"result", false)
 	get_viewport().gui_release_focus()
 	_show_main_menu()
@@ -1141,6 +1151,8 @@ func _return_from_result_to_main() -> void:
 
 func _return_from_result_to_deploy() -> void:
 	if not _runtime_modal_is_top(&"result"):
+		return
+	if result_panel != null and not result_panel.normal_exit_allowed():
 		return
 	_pop_runtime_modal(&"result", false)
 	get_viewport().gui_release_focus()
@@ -1249,22 +1261,33 @@ func _handle_interact_pressed() -> void:
 								"message": String(chest_result.get("message", chest_result.get("reason", "物资箱无法打开。"))),
 							})
 					return
+				&"event":
+					var event_state: Dictionary = run_context.get_status_snapshot().get("event_state", {})
+					if not event_state.is_empty() and not bool(event_state.get("completed", false)):
+						_show_event_panel(event_state)
+					else:
+						_show_command_feedback({"ok": false, "reason": &"event_completed", "message": "这里的事件已经处理完毕。"})
+					return
+				&"exit":
+					_request_extract_from_ui()
+					return
+				&"mine":
+					_show_command_feedback({"ok": true, "status": &"mine_inspected", "message": String((world_request.get("payload", {}) as Dictionary).get("summary", "机关状态已显示。"))})
+					return
 	var snapshot := run_context.get_status_snapshot()
 	var current_room: StringName = StringName(snapshot.get("current_room", &"Unknown"))
 	var search_data: Dictionary = snapshot.get("search_state_data", {})
 	if current_room == &"Event":
-		var event_state: Dictionary = snapshot.get("event_state", {})
-		if not event_state.is_empty() and not bool(event_state.get("completed", false)):
-			_show_event_panel(event_state)
-			return
+		_show_command_feedback({"ok": false, "reason": &"event_out_of_range", "message": "靠近事件标记后再选择处理方式。"})
+		return
 	if current_room == &"Exit":
-		if StringName(snapshot.get("phase", &"running")) == &"confirm_extract":
-			_show_extract_panel(snapshot)
-		else:
-			_request_extract_from_ui()
+		_show_command_feedback({"ok": false, "reason": &"exit_out_of_range", "message": "靠近撤离信标后再查看并申请撤离。"})
+		return
+	if current_room == &"Mine":
+		_show_command_feedback({"ok": true, "status": &"mine_inspected", "message": "靠近机关可查看其当前状态。"})
 		return
 	if current_room == &"Chest":
-		_show_command_feedback({"ok": false, "reason": &"interactable_out_of_range", "message": "Move closer to the chest."})
+		_show_command_feedback({"ok": false, "reason": &"interactable_out_of_range", "message": "靠近物资箱后再查看其中物品。"})
 		return
 	if bool(search_data.get("can_search", false)):
 		_search_and_show_loot()
@@ -1372,7 +1395,33 @@ func _activate_world_context_primary() -> void:
 		return
 	if room_runtime_view != null and room_runtime_view.activate_context_primary():
 		return
-	_show_command_feedback({"ok": false, "reason": &"world_context_out_of_range", "message": "靠近地面物品或物资箱后再操作。"})
+	_show_command_feedback({"ok": false, "reason": &"world_context_out_of_range", "message": "靠近地面物品、物资箱或特殊房间标记后再操作。"})
+
+
+func _world_interaction_in_range(expected_kind: StringName) -> bool:
+	# UI buttons and shortcuts are alternate inputs for the governed world
+	# interaction, not room-wide command authorities. Missing runtime state must
+	# fail closed so a stale/legacy surface cannot bypass proximity.
+	if run_context == null or room_runtime_view == null or player_controller == null:
+		return false
+	var expected_room := &"Event" if expected_kind == &"event" else (&"Exit" if expected_kind == &"exit" else &"Unknown")
+	if expected_room != &"Unknown" and run_context.current_room_type != expected_room:
+		return false
+	var request: Dictionary = room_runtime_view.request_nearest_interaction(player_controller.get_local_position())
+	return bool(request.get("accepted", false)) and StringName(request.get("interaction_kind", &"none")) == expected_kind
+
+
+func _require_world_interaction(expected_kind: StringName) -> bool:
+	if _world_interaction_in_range(expected_kind):
+		return true
+	var is_exit := expected_kind == &"exit"
+	_show_command_feedback({
+		"ok": false,
+		"accepted": false,
+		"reason": &"exit_out_of_range" if is_exit else &"event_out_of_range",
+		"message": "靠近撤离信标后再申请撤离。" if is_exit else "靠近事件标记后再选择处理方式。",
+	})
+	return false
 
 
 func _show_ground_loot_panel() -> void:
@@ -1389,6 +1438,12 @@ func _on_world_context_action_requested(action: StringName, payload: Dictionary)
 			_replace_floor_from_ui(String(payload.get("instance_id", "")), String(payload.get("drop_instance_id", "")))
 		&"chest_open":
 			_handle_interact_pressed()
+		&"event_open":
+			var event_state: Dictionary = run_context.get_status_snapshot().get("event_state", {})
+			if not event_state.is_empty() and not bool(event_state.get("completed", false)):
+				_show_event_panel(event_state)
+		&"exit_request":
+			_request_extract_from_ui()
 
 
 func _on_inventory_drop_requested(instance_id: String) -> void:
@@ -1418,6 +1473,8 @@ func _on_ground_loot_replace_requested(instance_id: String) -> void:
 func _show_event_panel(event_state: Dictionary) -> void:
 	if event_panel == null or _is_runtime_modal_open():
 		return
+	if not _require_world_interaction(&"event"):
+		return
 	event_title_label.text = "事件：%s" % _event_type_label(StringName(event_state.get("event_type", &"event")))
 	event_body_label.text = "选择处理方式。事件完成后不会重复结算奖励。"
 	event_body_label.text = RunSurfaceModel.event_modal_text(event_state)
@@ -1429,7 +1486,7 @@ func _show_event_panel(event_state: Dictionary) -> void:
 		var option_label := RunSurfaceModel.event_option_label(StringName(event_state.get("event_type", &"event")), option)
 		var button := _add_menu_button(event_options_box, option_label, func() -> void: _select_event_option(option_id))
 		button.disabled = not bool(option.get("enabled", true))
-		button.tooltip_text = "事件选项：仍通过既有 select_event_option 命令处理。"
+		button.tooltip_text = RunSurfaceModel.event_option_detail(option)
 		if run_surface != null:
 			run_surface.apply_legacy_button_style(button, &"primary" if not button.disabled else &"secondary")
 	_apply_runtime_modal_layout(_current_layout_profile())
@@ -1451,12 +1508,12 @@ func _cancel_event_modal(_reason: StringName = &"cancel") -> void:
 func _select_event_option(option_id: StringName) -> void:
 	if not _runtime_modal_is_top(&"event"):
 		return
+	if not _require_world_interaction(&"event"):
+		return
 	_pop_runtime_modal(&"event")
 	var result := _dispatch_command(&"select_event_option", {"option_id": option_id, "source": "ui"})
-	var snapshot := run_context.get_status_snapshot()
-	var reward: Dictionary = snapshot.get("last_reward", {})
-	if not reward.is_empty():
-		_show_world_reward_feedback(result, reward, &"event")
+	var action_result: Dictionary = result.get("action_result", {})
+	_show_world_reward_feedback(result, action_result, &"event")
 
 
 func _on_encounter_option_selected(_option_id: StringName, command_payload: Dictionary) -> void:
@@ -1467,6 +1524,8 @@ func _on_encounter_option_selected(_option_id: StringName, command_payload: Dict
 		return
 	if run_context != null and run_context.current_room_type == &"Chest":
 		_handle_interact_pressed()
+		return
+	if run_context != null and run_context.current_room_type == &"Event" and not _require_world_interaction(&"event"):
 		return
 	var payload := command_payload.duplicate(true)
 	if not payload.has("option_id"):
@@ -1480,14 +1539,29 @@ func _on_encounter_option_selected(_option_id: StringName, command_payload: Dict
 		return
 	payload["source"] = "ui"
 	var result := _dispatch_command(&"select_encounter_option", payload)
-	var snapshot := run_context.get_status_snapshot()
-	var reward: Dictionary = snapshot.get("last_reward", {})
-	if not reward.is_empty():
-		_show_world_reward_feedback(result, reward, &"encounter")
+	var action_result: Dictionary = result.get("action_result", {})
+	_show_world_reward_feedback(result, action_result, &"encounter")
 
 
 func _request_extract_from_ui() -> void:
 	if _is_runtime_modal_open():
+		return
+	if in_run_runtime != null and in_run_runtime.has_active_combat():
+		_request_combat_flee_from_ui()
+		return
+	if in_run_runtime != null and bool(in_run_runtime.flee_authorized):
+		var retry_direction := _combat_flee_direction_for_player()
+		if retry_direction != Vector2i.ZERO:
+			_attempt_room_transition(retry_direction)
+		else:
+			_show_command_feedback({
+				"ok": false,
+				"accepted": false,
+				"reason": &"combat_flee_transition_pending",
+				"message": "逃离代价已结算；请回到刚才的有效门边再次通过，不会重复扣除。",
+			})
+		return
+	if not _require_world_interaction(&"exit"):
 		return
 	var result := _dispatch_command(&"request_extract")
 	if bool(result.get("ok", false)):
@@ -1499,9 +1573,13 @@ func _request_extract_from_ui() -> void:
 func _show_extract_panel(snapshot: Dictionary) -> void:
 	if StringName(snapshot.get("phase", &"running")) != &"confirm_extract" or _is_runtime_modal_open():
 		return
+	extract_modal_mode = &"extract"
+	pending_combat_flee_direction = Vector2i.ZERO
 	var risky := int(snapshot.get("protocol_level", 5)) <= 1
 	extract_title_label.text = "高危撤离确认" if risky else "确认撤离"
 	extract_body_label.text = RunSurfaceModel.extract_modal_text(snapshot)
+	extract_confirm_button.text = "确认撤离"
+	extract_cancel_button.text = "继续探索"
 	if run_surface != null:
 		run_surface.apply_legacy_modal_style(extract_panel, &"ui.danger" if risky else &"mini.exit")
 		run_surface.apply_legacy_button_style(extract_confirm_button, &"danger" if risky else &"primary")
@@ -1522,13 +1600,21 @@ func _show_extract_panel(snapshot: Dictionary) -> void:
 
 
 func _confirm_extract_from_ui() -> void:
+	if _runtime_modal_is_top(&"combat_flee_confirm"):
+		_confirm_combat_flee_from_ui()
+		return
 	if not _runtime_modal_is_top(&"extract_confirm"):
+		return
+	if not _require_world_interaction(&"exit"):
 		return
 	_pop_runtime_modal(&"extract_confirm")
 	_dispatch_command(&"confirm_extract")
 
 
 func _cancel_extract_from_ui() -> void:
+	if _runtime_modal_is_top(&"combat_flee_confirm"):
+		_cancel_combat_flee_modal(&"button_cancel")
+		return
 	_cancel_extract_modal(&"button_cancel")
 
 
@@ -1537,6 +1623,125 @@ func _cancel_extract_modal(_reason: StringName = &"cancel") -> void:
 		return
 	_pop_runtime_modal(&"extract_confirm")
 	_dispatch_command(&"cancel_extract")
+
+
+func _request_combat_flee_from_ui() -> void:
+	if in_run_runtime == null or not in_run_runtime.has_active_combat() or player_controller == null:
+		return
+	var direction := _combat_flee_direction_for_player()
+	if direction == Vector2i.ZERO:
+		_show_command_feedback({
+			"ok": false,
+			"accepted": false,
+			"reason": &"combat_flee_door_required",
+			"message": "请先靠近一处可通行的门，再按 T 撤离战斗。",
+		})
+		return
+	_show_combat_flee_panel(direction)
+
+
+func _show_combat_flee_panel(direction: Vector2i) -> void:
+	if extract_panel == null or _is_runtime_modal_open():
+		return
+	extract_modal_mode = &"combat_flee"
+	pending_combat_flee_direction = direction
+	extract_title_label.text = "确认逃离战斗"
+	extract_body_label.text = "逃离会失去当前楼层黑资的 10%。部分 T1 非消耗品可能遗留在本房间；具体结果以确认后的结算为准。"
+	extract_confirm_button.text = "确认逃离"
+	extract_cancel_button.text = "继续战斗"
+	if run_surface != null:
+		run_surface.apply_legacy_modal_style(extract_panel, &"ui.danger")
+		run_surface.apply_legacy_button_style(extract_confirm_button, &"danger")
+		run_surface.apply_legacy_button_style(extract_cancel_button, &"secondary")
+	extract_title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.danger"))
+	_apply_runtime_modal_layout(_current_layout_profile())
+	var pushed := _push_runtime_modal(
+		&"combat_flee_confirm",
+		extract_panel,
+		extract_cancel_button,
+		Callable(self, "_cancel_combat_flee_modal")
+	)
+	if not pushed:
+		extract_panel.hide()
+		pending_combat_flee_direction = Vector2i.ZERO
+
+
+func _confirm_combat_flee_from_ui() -> void:
+	if not _runtime_modal_is_top(&"combat_flee_confirm") or in_run_runtime == null:
+		return
+	var direction := pending_combat_flee_direction
+	var transition_check := _g41_transition_precheck(direction)
+	if direction == Vector2i.ZERO or not _is_player_near_combat_door(direction) or not bool(transition_check.get("ok", false)):
+		_pop_runtime_modal(&"combat_flee_confirm")
+		pending_combat_flee_direction = Vector2i.ZERO
+		_show_command_feedback({
+			"ok": false,
+			"accepted": false,
+			"reason": &"combat_flee_door_changed",
+			"message": "当前位置已无法从该门撤离，请重新靠近有效出口。",
+		})
+		return
+	var flee_result: Dictionary = in_run_runtime.request_flee()
+	last_command_result = flee_result.duplicate(true)
+	_show_command_feedback(flee_result)
+	if not bool(flee_result.get("ok", false)):
+		_pop_runtime_modal(&"combat_flee_confirm")
+		return
+	_pop_runtime_modal(&"combat_flee_confirm", false)
+	_attempt_room_transition(direction)
+
+
+func _cancel_combat_flee_modal(_reason: StringName = &"cancel") -> void:
+	if not _runtime_modal_is_top(&"combat_flee_confirm"):
+		return
+	_pop_runtime_modal(&"combat_flee_confirm")
+	pending_combat_flee_direction = Vector2i.ZERO
+
+
+func _combat_flee_direction_for_player() -> Vector2i:
+	if player_controller == null:
+		return Vector2i.ZERO
+	if pending_combat_flee_direction != Vector2i.ZERO and _is_player_near_combat_door(pending_combat_flee_direction):
+		var pending_check := _g41_transition_precheck(pending_combat_flee_direction)
+		if bool(pending_check.get("ok", false)):
+			return pending_combat_flee_direction
+	var local_pos: Vector2 = player_controller.get_local_position()
+	var candidates: Array[Vector2i] = []
+	if local_pos.x <= COMBAT_FLEE_EDGE_DISTANCE and absf(local_pos.y - 0.5) <= COMBAT_FLEE_DOOR_ALIGN_HALF:
+		candidates.append(Vector2i.LEFT)
+	if local_pos.x >= 1.0 - COMBAT_FLEE_EDGE_DISTANCE and absf(local_pos.y - 0.5) <= COMBAT_FLEE_DOOR_ALIGN_HALF:
+		candidates.append(Vector2i.RIGHT)
+	if local_pos.y <= COMBAT_FLEE_EDGE_DISTANCE and absf(local_pos.x - 0.5) <= COMBAT_FLEE_DOOR_ALIGN_HALF:
+		candidates.append(Vector2i.UP)
+	if local_pos.y >= 1.0 - COMBAT_FLEE_EDGE_DISTANCE and absf(local_pos.x - 0.5) <= COMBAT_FLEE_DOOR_ALIGN_HALF:
+		candidates.append(Vector2i.DOWN)
+	var facing: Vector2 = player_controller.get_facing_vector()
+	var best_direction := Vector2i.ZERO
+	var best_alignment := -2.0
+	for candidate in candidates:
+		var transition_check := _g41_transition_precheck(candidate)
+		if not bool(transition_check.get("ok", false)):
+			continue
+		var alignment := facing.dot(Vector2(candidate))
+		if alignment > best_alignment:
+			best_alignment = alignment
+			best_direction = candidate
+	return best_direction
+
+
+func _is_player_near_combat_door(direction: Vector2i) -> bool:
+	if player_controller == null:
+		return false
+	var local_pos: Vector2 = player_controller.get_local_position()
+	if direction == Vector2i.LEFT:
+		return local_pos.x <= COMBAT_FLEE_EDGE_DISTANCE and absf(local_pos.y - 0.5) <= COMBAT_FLEE_DOOR_ALIGN_HALF
+	if direction == Vector2i.RIGHT:
+		return local_pos.x >= 1.0 - COMBAT_FLEE_EDGE_DISTANCE and absf(local_pos.y - 0.5) <= COMBAT_FLEE_DOOR_ALIGN_HALF
+	if direction == Vector2i.UP:
+		return local_pos.y <= COMBAT_FLEE_EDGE_DISTANCE and absf(local_pos.x - 0.5) <= COMBAT_FLEE_DOOR_ALIGN_HALF
+	if direction == Vector2i.DOWN:
+		return local_pos.y >= 1.0 - COMBAT_FLEE_EDGE_DISTANCE and absf(local_pos.x - 0.5) <= COMBAT_FLEE_DOOR_ALIGN_HALF
+	return false
 
 
 func _show_loot_panel(title: String, reward: Dictionary) -> void:
@@ -1564,14 +1769,14 @@ func _show_world_reward_feedback(result: Dictionary, reward: Dictionary, source:
 	var ground_count := _reward_array_size(reward, "ground_items")
 	var backpack_count := _reward_array_size(reward, "inventory_items") + _reward_array_size(reward, "equipped_items")
 	var feedback := result.duplicate(true)
-	if ground_count > 0:
+	if source == &"event" or source == &"encounter":
+		feedback["message"] = RunSurfaceModel.event_result_feedback_text(reward)
+	elif ground_count > 0:
 		feedback["message"] = "发现 %d 件物资，已落在附近地面。靠近后可查看并拾取。" % ground_count
 	elif backpack_count > 0:
 		feedback["message"] = "回收 %d 件物资，已装入临时回收包。" % backpack_count
 	elif source == &"combat":
 		feedback["message"] = "威胁已清除，房间恢复通行。"
-	elif source == &"event" or source == &"encounter":
-		feedback["message"] = "事件处理完成，探索继续。"
 	else:
 		feedback["message"] = "搜索完成，未发现新的可回收物。"
 	feedback["ok"] = bool(result.get("ok", true))
@@ -1652,6 +1857,8 @@ func _close_top_runtime_modal() -> bool:
 
 func _hide_runtime_popups() -> void:
 	_clear_runtime_modal_stack(false)
+	extract_modal_mode = &"extract"
+	pending_combat_flee_direction = Vector2i.ZERO
 	if event_panel != null:
 		event_panel.visible = false
 	if loot_panel != null:
@@ -1699,6 +1906,8 @@ func _cancel_result_modal(_reason: StringName = &"cancel") -> void:
 		return
 	if result_panel != null and result_panel.requires_salvage_confirmation():
 		return
+	if result_panel != null and not result_panel.normal_exit_allowed():
+		return
 	_return_from_result_to_deploy()
 
 
@@ -1708,6 +1917,24 @@ func _confirm_failure_salvage_from_result(selected_instance_ids: Array) -> void:
 	var result := _dispatch_command(&"confirm_failure_salvage", {"selected_instance_ids": selected_instance_ids})
 	if not bool(result.get("ok", false)) and result_panel != null:
 		result_panel.show_summary(_build_result_display_snapshot(run_context.result_snapshot))
+
+
+func _retry_terminal_commit_from_result() -> void:
+	if not _runtime_modal_is_top(&"result") or result_panel == null or not result_panel.retry_save_allowed():
+		return
+	_dispatch_command(&"retry_terminal_commit", {"source": "result_panel"}, false, false)
+	result_panel.show_summary(_build_result_display_snapshot(run_context.result_snapshot))
+	result_panel.mark_retry_complete()
+
+
+func _discard_unsaved_result_from_result() -> void:
+	if not _runtime_modal_is_top(&"result") or result_panel == null or not result_panel.discard_unsaved_allowed():
+		return
+	# The panel owns the explicit two-step confirmation. This escape path only
+	# releases the UI lock; it never marks the terminal result as persisted.
+	_pop_runtime_modal(&"result", false)
+	get_viewport().gui_release_focus()
+	_show_deploy_shell(&"config")
 
 
 func _build_result_display_snapshot(snapshot: Dictionary) -> Dictionary:
@@ -1851,7 +2078,9 @@ func _suppress_runtime_scene_labels() -> void:
 			room_title.visible = false
 			room_title.text = ""
 		var legacy_prop := room_controller.get_node_or_null("Interactables/PropSprite") as Sprite2D
-		if legacy_prop != null and room_runtime_view != null and room_runtime_view.room_type == &"Chest":
+		if legacy_prop != null and room_runtime_view != null and room_runtime_view.room_type in [&"Chest", &"Event", &"Mine", &"Exit"]:
+			# These room types now use the governed world-interaction projection.
+			# Keeping the old centered prop would duplicate or misalign the target.
 			legacy_prop.visible = false
 	if player_controller != null:
 		var player_label := player_controller.get_node_or_null("Label") as Label
@@ -1919,6 +2148,7 @@ func _dispatch_command(
 		return {}
 	var result: Dictionary = command_bus.dispatch(command_name, payload)
 	last_command_result = result.duplicate(true)
+	_apply_room_entry_result(result)
 	if show_feedback:
 		_show_command_feedback(result)
 	if release_focus:
@@ -2279,25 +2509,52 @@ func _attempt_room_transition(direction: Vector2i) -> void:
 	if in_run_runtime != null and in_run_runtime.has_active_combat():
 		var transition_check := _g41_transition_precheck(direction)
 		if not bool(transition_check.get("ok", false)):
+			pending_combat_flee_direction = Vector2i.ZERO
 			last_command_result = transition_check.duplicate(true)
 			_show_command_feedback(transition_check)
 			player_controller.block_transition(direction)
 			return
-		var flee_result: Dictionary = in_run_runtime.request_flee()
-		last_command_result = flee_result.duplicate(true)
-		_show_command_feedback(flee_result)
-		if not bool(flee_result.get("ok", false)):
-			player_controller.block_transition(direction)
-			return
+		pending_combat_flee_direction = direction
+		var combat_blocked := {
+			"ok": false,
+			"accepted": false,
+			"reason": &"combat_door_locked",
+			"message": "战斗封锁中。停在有效门边后按 T，确认代价再撤离。",
+			"direction": direction,
+		}
+		last_command_result = combat_blocked.duplicate(true)
+		_show_command_feedback(combat_blocked)
+		player_controller.block_transition(direction)
+		return
 	var before := run_context.get_current_pos()
 	var result: Dictionary = command_bus.dispatch(&"attempt_room_transition", {"direction": direction})
 	last_command_result = result.duplicate(true)
+	_apply_room_entry_result(result)
 	_show_command_feedback(result)
 	var moved: bool = bool(result.get("ok", false)) and run_context.get_current_pos() != before
 	if moved:
+		pending_combat_flee_direction = Vector2i.ZERO
 		player_controller.place_from_entry(direction)
 	else:
 		player_controller.block_transition(direction)
+
+
+func _apply_room_entry_result(command_result: Dictionary) -> void:
+	var entry_result: Dictionary = command_result.get("room_entry_result", {})
+	if entry_result.is_empty():
+		var action_result: Dictionary = command_result.get("action_result", {})
+		entry_result = action_result.get("room_entry_result", {})
+	if entry_result.is_empty():
+		return
+	if StringName(entry_result.get("room_type", &"Unknown")) == &"Exit" and bool(entry_result.get("first_explore", false)):
+		# The resolver owns first-discovery authority. Presentation only replaces
+		# the generic move acknowledgement with a non-blocking player notice.
+		command_result["status"] = &"exit_discovered"
+		command_result["message"] = "发现撤离信标。靠近信标可查看本次携带物资与预计保全情况，再决定是否撤离。"
+	if room_runtime_view != null and room_runtime_view.has_method("apply_room_entry_result"):
+		room_runtime_view.call("apply_room_entry_result", entry_result)
+	if player_controller != null and int(entry_result.get("hp_delta", 0)) < 0:
+		player_controller.set_runtime_visual_state(&"hurt")
 
 
 func _g41_transition_precheck(direction: Vector2i) -> Dictionary:

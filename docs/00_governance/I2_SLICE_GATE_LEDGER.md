@@ -36,8 +36,8 @@ entry full/head: 39/39 PASS
 | I2.3 | Deploy 双栏、地图同页、仓库/申领/委托/摘要 | I2.1；经济/taxonomy/loadout 决策 | `ACCEPTED_WITH_NOTES` | I2.3A 同页双栏与八地图精确投影、I2.3B 单件购买/出售真实事务闭环均已接受；批量售卖继续禁止，玩家动态手感并入 I2.7 综合复核 |
 | I2.4 | 长期模块重排、任务档案迁移、天赋、角色档案 | I2.1；taxonomy 与天赋数据权威 | `ACCEPTED_WITH_NOTES` | I2.4A/B 已关闭获授权的任务档案、模块工作区与角色表现端口；天赋规则缺少产品权威，作为显式阻塞项保留，不用假数据冒充完成 |
 | I2.5 | 局内 HUD、地图、背包、箱/门/掉落、协议、Esc/modal | I2.1；对象/ledger/map characterization | `ACCEPTED_WITH_NOTES` | I2.5A/B/C 均已接受；世界对象、公开信息、品质、地图、背包与统一模态已闭环，战斗逃离/特殊房/结算解释转入 I2.6，最终玩家手感复核留 I2.7 |
-| I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `IN_PROGRESS` | I2.6A/B 已形成历史可复核基础；Gate20 战斗/特殊房与 Gate21 终局结果已在 `0b88f7b` 上完成实现前审计并授权，尚未实施或验收 |
-| I2.7 | 跨页面整合、操作说明、全量回归、综合验收 | I2.1–I2.6 accepted/deferred with owner | `NOT_STARTED` | full/worktree→commit→full/head；matrix 逐项；创建唯一 validation/handoff |
+| I2.6 | 战斗/特殊房、结算解释、真实工作负载性能 | I2.5 基础；性能 baseline/阈值 | `ACCEPTED_WITH_NOTES` | Gate20/21 已按冻结范围实施并通过定向、视觉、五轮正式性能与独立完成审计；绝对 FPS、最终动态手感/美术/音频仍不接受 |
+| I2.7 | 跨页面整合、操作说明、全量回归、综合验收 | I2.1–I2.6 accepted/deferred with owner | `IN_PROGRESS` | 反馈矩阵已逐项形成 34/9 处置；validation/handoff 正在收口，尚待 final worktree、commit 与 exact full/head |
 
 ## 3. 全局进入门
 
@@ -919,7 +919,7 @@ independent post-fix review: P0=0; P1=0
 ## 20. I2.6C 战斗离房、特殊房玩家旅程与真实性能关闭门（2026-07-22）
 
 ```text
-status: AUTHORIZED
+status: ACCEPTED_WITH_NOTES
 feedback: RUN-01, RUN-02, RUN-03, RUN-04, RUN-06, RUN-07, RUN-08, RUN-10, SPECIAL-COMBAT, SPECIAL-EVENT, SPECIAL-MINE, SPECIAL-EXIT
 rollback: 0b88f7b (I2.5C accepted checkpoint)
 authority: existing RunStateMachine / CommandBus / RoomResolver / EventService / combat fixed-step remain canonical
@@ -949,12 +949,16 @@ Godot/GraytailGodot/scripts/gameplay/runtime/g41_runtime_actor_view.gd
 Godot/GraytailGodot/scripts/gameplay/interaction/g41_world_context_popup.gd
 Godot/GraytailGodot/scripts/ui/run_surface/run_surface.gd
 Godot/GraytailGodot/scripts/ui/run_surface/run_surface_model.gd
+Godot/GraytailGodot/scripts/ui/shell/run_ui_view_model.gd (仅结构化 Event 入房玩家文案与 legacy token scrub)
+Godot/GraytailGodot/scripts/ui/hud/hud_view_model.gd (仅结构化 Event 入房玩家文案与 legacy token scrub)
 Godot/GraytailGodot/tests/i2_combat_room_experience_runner.gd
 Godot/GraytailGodot/tests/i2_special_room_player_experience_runner.gd
 Godot/GraytailGodot/tests/i2_combat_production_bootstrap_runner.gd
 Godot/GraytailGodot/tests/i2_combat_frame_baseline_runner.gd (测试数据/断言可扩展，冻结 workload v2)
 Godot/GraytailGodot/tests/i2_world_interaction_runtime_runner.gd
 Godot/GraytailGodot/tests/i2_runtime_modal_priority_runner.gd
+Godot/GraytailGodot/tests/g41_in_run_core_gameplay_runtime_runner.gd (仅逃离授权生命周期回归)
+Godot/GraytailGodot/tests/i1_ui_interaction_runner.gd (仅动作坞三分辨率布局、焦点/悬停说明回归)
 Godot/GraytailGodot/tests/art25_production_visual_capture_runner.gd
 tools/i1/validation_manifest.json
 ```
@@ -976,10 +980,14 @@ median_p95 enemy_1=448 enemy_3=771 enemy_5=931 projectile_peak=1121
 
 停止条件：任一动画/靠近/hover/focus 自动发领域命令；战斗触边仍扣费或过门；确认可重复扣费；UI 猜测规则或结算；Event 继续解析 label；未审批 ART07/UE/新音频进入生产；fixed tick、经济、掉落、伤害、压力、移动、碰撞或门阈值变化；同机改后五轮出现 runner 合同失败、预热后加载、孤儿/持续增长，或性能退化超出改前自然波动且无法归因。任一条件出现即回滚到 `0b88f7b` 并将 Gate20 标记 `BLOCKED`。
 
+实施后证据：`I2_COMBAT_ROOM_EXPERIENCE=PASS touch=zero_command mouse=enabled invalid=zero_command cancel=zero_command confirm=flee_1,transition_retry_2 modal=blocked`；`I2_SPECIAL_ROOM_PLAYER_EXPERIENCE=PASS event=structured,proximity_gated,room_entry_scrub,stage_feedback,token_scrub world=proximity_only mine=entry_result monster=0.18s exit=public_summary,proximity_gated`。Event 四类真实入房、Exit proximity/prompt 互斥、Mine 结构化伤害、怪物约 0.18 秒入场与 reduced-motion 静态姿态均由生产路径 runner 覆盖；39 个最终 production capture（13 状态 × 3 分辨率）生成完成并经人工静态检查，`CAPTURE_MATRIX_ACCEPTED=PASS expected=39 actual=39`。独立完成审计为 P0=0、P1=0、P2=0；无受保护 scene/resource/project/asset/import/translation 变更。
+
+修改后五轮正式 `workload_schema=v2` 全部 `I2_COMBAT_FRAME_BASELINE=PASS`，各场景 p95（μs）如下：run1 `757/1328/1548/1784`，run2 `748/1284/1382/1703`，run3 `756/1318/1675/1600`，run4 `787/1315/1686/1883`，run5 `799/1258/1884/1159`；median p95 为 `757/1315/1675/1703`（enemy_1/enemy_3/enemy_5/projectile_peak）。五轮全部预热后加载 0、orphan delta 0。结合同机 A/B/A 探针，未发现相对基线的系统性代码回退；该结论不等于绝对 FPS 改善。非 headless 生产 Main 的四场景各至少 60 秒测量已完成，marker 为 `I2_COMBAT_FRAME_VISIBLE=MEASURED_NOT_ACCEPTED`，只证明可见测量完成，不构成 GPU、设备或玩家掉帧验收。
+
 ## 21. I2.6D 终局原因、结算解释与保存失败恢复门（2026-07-22）
 
 ```text
-status: AUTHORIZED
+status: ACCEPTED_WITH_NOTES
 feedback: RUN-12, RESULT-SUCCESS, RESULT-FAILURE, RESULT-ABANDON, RESULT-SAVE-RECOVERY
 rollback: 0b88f7b (I2.5C accepted checkpoint)
 authority: existing terminal result snapshot and MetaProgressAdapter settlement remain canonical
@@ -1018,3 +1026,5 @@ tools/i1/validation_manifest.json
 完成证据必须覆盖 success、failure pending、failure finalized、abandon 与 save failure；原因跨保全确认保持；成功地面遗留不再假零；各物品 instance ID 与权威 settlement 数组精确一致；pending failure 零局外写入；真实故障注入证明完整回滚、返回被阻止、同 snapshot 重试成功、再重试为 duplicate 且不重复货币/仓库/history；历史 ID 仍兼容、新 ID 同帧与跨新 controller 唯一。三分辨率可见夹具覆盖 success 多品质与遗留、failure empty/mixed/final、abandon、save_failed；人工检查可读性、滚动、焦点、Esc/modal 层级和两次放弃确认。
 
 停止条件：UI 自算任何结算；修改 adapter/ledger/state machine/规则公式；pending 或未保存被标记为已保存；未保存结果可无确认离开；重试重新触发 terminal/result signal、重复发奖或写两条 history；原因由非权威状态猜测；历史存档需迁移；结果项与 settlement instance ID 不一致。任一条件出现即回滚到 `0b88f7b` 并将 Gate21 标记 `BLOCKED`。
+
+实施后证据：`I2_TERMINAL_RESULT_AUTHORITY=PASS outcomes=success,failure_pending,failure_finalized,abandon reason=lifecycle_event items=authoritative_arrays floor_loss=visible pending_meta_writes=0`；`I2_TERMINAL_COMMIT_RECOVERY=PASS nonce=128bit legacy_ids=compatible save_failure=rollback retry=same_snapshot duplicate=idempotent result_signals=unchanged exits=guarded discard_confirmations=2`。结果页生产 probe 覆盖 success、failure empty/pending/selected/capacity blocked/final、abandon 与 save_failed，marker 为 `ART24_RESULT_PANEL_SCENE=PASS resolutions=5 states=success,failure_empty,failure_pending,failure_selected,failure_capacity_blocked,failure_final,abandon,save_failed focus=visible danger=preserved item_sections=whole`。I1 terminal authority、save reliability、runtime safety 及 G41/modal/world interaction 回归全部通过；UI 未取得领域、结算或保存权威。

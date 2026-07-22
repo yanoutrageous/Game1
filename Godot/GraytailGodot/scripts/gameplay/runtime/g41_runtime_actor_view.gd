@@ -4,6 +4,9 @@ class_name G41RuntimeActorView
 const EnemyVisualCatalog := preload("res://scripts/presentation/art24/art24_enemy_visual_catalog.gd")
 const ENEMY_SHADOW_TEXTURE := preload("res://assets/ui/art21/main_menu/scene/character/shadow.png")
 const Art24MotionSettingsScript := preload("res://scripts/presentation/art24/art24_motion_settings.gd")
+const APPEARANCE_DURATION := 0.18
+const APPEARANCE_FIRST_FRAME_ALPHA := 0.72
+const APPEARANCE_FIRST_FRAME_SCALE := 0.86
 
 var actor_id: String = ""
 var subject: StringName = &"unknown"
@@ -20,14 +23,18 @@ var animation_elapsed := 0.0
 var animation_frame := 0
 var pending_visual_state: StringName = &""
 var transient_state_remaining := 0.0
+var appearance_remaining := 0.0
 
 
 func configure(next_subject: StringName, snapshot: Dictionary) -> void:
 	var previous_subject := subject
 	var previous_variant := visual_variant
+	var previous_actor_id := actor_id
+	var next_actor_id := String(snapshot.get("enemy_id", snapshot.get("projectile_id", snapshot.get("actor_id", actor_id))))
+	var starts_enemy_appearance := EnemyVisualCatalog.supports(next_subject) and (previous_actor_id == "" or previous_actor_id != next_actor_id or not EnemyVisualCatalog.supports(previous_subject))
 	var next_visual_state := StringName(snapshot.get("state", &"idle"))
 	subject = next_subject
-	actor_id = String(snapshot.get("enemy_id", snapshot.get("projectile_id", snapshot.get("actor_id", actor_id))))
+	actor_id = next_actor_id
 	visual_key = G41RuntimeVisualContract.visual_key_for(subject)
 	visual_variant = StringName(snapshot.get("visual_variant", &"base"))
 	if subject != previous_subject or visual_variant != previous_variant:
@@ -45,6 +52,8 @@ func configure(next_subject: StringName, snapshot: Dictionary) -> void:
 	if not contract_nodes_ready:
 		_ensure_contract_nodes()
 	_ensure_enemy_visual()
+	if starts_enemy_appearance:
+		_start_appearance_envelope()
 	var signature := "%s|%s|%s|%d|%d" % [String(subject), String(visual_state), String(visual_variant), hp, max_hp]
 	if signature != last_visual_signature:
 		last_visual_signature = signature
@@ -68,8 +77,11 @@ func _process(delta: float) -> void:
 	if reduce_motion:
 		animation_elapsed = 0.0
 		animation_frame = 0
+		appearance_remaining = 0.0
 	else:
 		animation_elapsed += delta
+		if appearance_remaining > 0.0:
+			appearance_remaining = maxf(0.0, appearance_remaining - maxf(delta, 0.0))
 	var frame_duration := EnemyVisualCatalog.frame_duration(visual_state)
 	var next_frame := 0 if reduce_motion else int(animation_elapsed / frame_duration)
 	if EnemyVisualCatalog.loops(visual_state):
@@ -83,6 +95,21 @@ func _process(delta: float) -> void:
 	# drone sets continue to use their real frames. No texture is reloaded while
 	# the path is unchanged.
 	_apply_enemy_visual()
+
+
+func appearance_snapshot() -> Dictionary:
+	var reduce_motion := Art24MotionSettingsScript.reduce_motion_enabled()
+	return {
+		"duration": APPEARANCE_DURATION,
+		"remaining": appearance_remaining,
+		"progress": _appearance_progress(reduce_motion),
+		"reduced_motion": reduce_motion,
+		"presentation_only": true,
+	}
+
+
+func _start_appearance_envelope() -> void:
+	appearance_remaining = 0.0 if Art24MotionSettingsScript.reduce_motion_enabled() else APPEARANCE_DURATION
 
 
 func _request_visual_state(next_state: StringName) -> void:
@@ -242,6 +269,29 @@ func _apply_enemy_visual() -> void:
 	else:
 		sprite.modulate = Color.WHITE
 	_apply_enemy_shadow(motion_phase, bob_amount)
+	# The entry envelope is finished during the 300-frame formal warmup. Avoid
+	# paying its transform/node lookup cost for every enemy on every later frame.
+	if appearance_remaining > 0.0:
+		_apply_appearance_envelope(sprite, reduce_motion)
+
+
+func _apply_appearance_envelope(sprite: Sprite2D, reduce_motion: bool) -> void:
+	var progress := _appearance_progress(reduce_motion)
+	var eased := progress * progress * (3.0 - 2.0 * progress)
+	var scale_factor := lerpf(APPEARANCE_FIRST_FRAME_SCALE, 1.0, eased)
+	var alpha_factor := lerpf(APPEARANCE_FIRST_FRAME_ALPHA, 1.0, eased)
+	sprite.scale *= scale_factor
+	sprite.modulate.a *= alpha_factor
+	var shadow := get_node_or_null("VisualRoot/GroundShadow") as Sprite2D
+	if shadow != null:
+		shadow.scale *= lerpf(0.90, 1.0, eased)
+		shadow.modulate.a *= alpha_factor
+
+
+func _appearance_progress(reduce_motion: bool) -> float:
+	if reduce_motion or APPEARANCE_DURATION <= 0.0:
+		return 1.0
+	return clampf(1.0 - appearance_remaining / APPEARANCE_DURATION, 0.0, 1.0)
 
 
 func _apply_enemy_shadow(motion_phase: float, bob_amount: float) -> void:
