@@ -1,13 +1,23 @@
 extends Node2D
 class_name G41Interactable
 
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const RuntimeInputProfileScript := preload("res://scripts/core/input/runtime_input_profile.gd")
+const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
+
 var interaction_id: String = ""
 var interaction_kind: StringName = &"unknown"
 var local_pos := Vector2(0.5, 0.5)
 var interaction_radius: float = 0.15
 var body_rect := Rect2(Vector2(0.46, 0.46), Vector2(0.08, 0.08))
 var context_anchor_local := Vector2(0.5, 0.42)
+var presentation_contract: StringName = &""
+var ground_anchor_local := Vector2(0.5, 0.5)
+var pivot_normalized := Vector2(0.5, 0.5)
+var display_size_local := Vector2(0.08, 0.08)
+var visual_rect_local := Rect2(Vector2(0.46, 0.46), Vector2(0.08, 0.08))
 var visual_key: StringName = &"runtime.missing"
+var orientation: StringName = &"none"
 var depth_key: StringName = &"world.default"
 var enabled: bool = true
 var focused: bool = false
@@ -23,7 +33,16 @@ func configure_interactable(data: Dictionary) -> void:
 	interaction_radius = maxf(0.0, float(data.get("interaction_radius", interaction_radius)))
 	body_rect = Rect2(data.get("body_rect", body_rect))
 	context_anchor_local = Vector2(data.get("context_anchor_local", local_pos))
+	presentation_contract = StringName(data.get("presentation_contract", presentation_contract))
+	ground_anchor_local = Vector2(data.get("ground_anchor_local", local_pos))
+	pivot_normalized = Vector2(data.get("pivot_normalized", pivot_normalized))
+	display_size_local = Vector2(data.get("display_size_local", body_rect.size))
+	visual_rect_local = Rect2(data.get(
+		"visual_rect_local",
+		Rect2(ground_anchor_local - display_size_local * pivot_normalized, display_size_local)
+	))
 	visual_key = StringName(data.get("visual_key", visual_key))
+	orientation = StringName(data.get("orientation", orientation))
 	depth_key = StringName(data.get("depth_key", depth_key))
 	enabled = bool(data.get("enabled", enabled))
 	visual_state = StringName(data.get("visual_state", visual_state))
@@ -71,7 +90,13 @@ func build_snapshot() -> Dictionary:
 		"interaction_radius": interaction_radius,
 		"body_rect": body_rect,
 		"context_anchor_local": context_anchor_local,
+		"presentation_contract": presentation_contract,
+		"ground_anchor_local": ground_anchor_local,
+		"pivot_normalized": pivot_normalized,
+		"display_size_local": display_size_local,
+		"visual_rect_local": visual_rect_local,
 		"visual_key": visual_key,
+		"orientation": orientation,
 		"depth_key": depth_key,
 		"enabled": enabled,
 		"focused": focused,
@@ -82,8 +107,13 @@ func build_snapshot() -> Dictionary:
 
 
 func _ready() -> void:
+	add_to_group(RuntimeInputProfileScript.HINT_CONSUMER_GROUP)
 	position = local_to_world(local_pos)
 	_ensure_contract_nodes()
+	_apply_visual_state()
+
+
+func refresh_input_hints() -> void:
 	_apply_visual_state()
 
 
@@ -111,6 +141,7 @@ func _ensure_contract_nodes() -> void:
 		label.size = Vector2(144, 24)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 12)
+		Art10UISkinKitScript.apply_player_ui_font(label)
 		get_node("PromptAnchor").add_child(label)
 
 
@@ -121,7 +152,12 @@ func _apply_visual_state() -> void:
 		placeholder.visible = get_node_or_null("VisualRoot/ArtVisual") == null
 	var prompt := get_node_or_null("PromptAnchor/InteractionPrompt") as Label
 	if prompt != null:
-		prompt.text = "[E] %s" % prompt_text
+		var interact_hint := SemanticActionHintScript.current_binding_label(&"interact")
+		prompt.text = (
+			"%s %s" % [interact_hint, prompt_text]
+			if not interact_hint.is_empty()
+			else prompt_text
+		)
 		prompt.visible = focused and enabled
 
 
@@ -139,6 +175,11 @@ static func local_to_world(value: Vector2) -> Vector2:
 
 static func _z_index_for_depth(value: StringName) -> int:
 	match value:
+		# Mine grates are embedded in the room floor. At the shared z=0 the
+		# earlier RoomLayer draws them before the later PlayerLayer, matching
+		# the UE floor-hazard ordering while transient burst FX stays above.
+		&"world.interactable.mine":
+			return 0
 		&"world.interactable.loot":
 			return 32
 		&"world.interactable.chest":

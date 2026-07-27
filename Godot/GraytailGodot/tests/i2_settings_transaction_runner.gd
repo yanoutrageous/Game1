@@ -84,13 +84,30 @@ func _check_transaction_and_atomic_store() -> void:
 	_require(manager.begin_transaction(), "non-dangerous transaction did not begin")
 	_require(manager.set_draft_value(&"frame_limit", 120), "frame limit draft was rejected")
 	_require(manager.set_draft_value(&"master_volume", 65), "master-volume draft was rejected")
+	_require(manager.set_draft_value(&"effects_volume", 55), "effects-volume draft was rejected")
+	_require(manager.set_draft_value(&"haptics_enabled", false), "haptics draft was rejected")
 	_require(manager.set_draft_value(&"reduce_motion", true), "reduce-motion draft was rejected")
+	_require(manager.set_draft_value(&"ui_scale_percent", 150), "UI-scale draft was rejected")
+	_require(not manager.set_draft_value(&"ui_scale_percent", 110), "unsupported UI-scale value was accepted")
 	_require(manager.apply_draft(), "non-dangerous apply failed")
 	_require_equal(manager.get_persisted_settings()["frame_limit"], 120, "non-dangerous persistence")
 	_require_equal(manager.get_persisted_settings()["master_volume"], 65, "master-volume persistence")
+	_require_equal(manager.get_persisted_settings()["effects_volume"], 55, "effects-volume persistence")
+	_require_equal(manager.get_persisted_settings()["haptics_enabled"], false, "haptics persistence")
 	_require_equal(manager.get_persisted_settings()["reduce_motion"], true, "reduce-motion persistence")
+	_require_equal(manager.get_persisted_settings()["ui_scale_percent"], 150, "UI-scale persistence")
 	_require(FileAccess.file_exists(TEST_PATH), "settings file was not created")
 	_require(not FileAccess.file_exists(TEST_PATH + ".tmp"), "temporary file remained after save")
+	manager.close_transaction()
+
+	_require(manager.begin_transaction(), "UI-scale reset transaction did not begin")
+	_require(manager.set_draft_value(&"ui_scale_percent", 125), "UI-scale reset fixture was rejected")
+	_require(manager.reset_draft_to_defaults(), "settings reset rejected the UI-scale field")
+	_require_equal(
+		manager.transaction_snapshot().get("draft", {}).get("ui_scale_percent"),
+		100,
+		"settings reset did not restore the default UI scale"
+	)
 	manager.close_transaction()
 
 	var rollback_baseline: Dictionary = manager.get_applied_settings()
@@ -98,6 +115,7 @@ func _check_transaction_and_atomic_store() -> void:
 	_require(manager.set_draft_value(&"resolution_id", "1600x900"), "resolution draft was rejected")
 	_require(manager.set_draft_value(&"frame_limit", 144), "combined frame-limit draft was rejected")
 	_require(manager.set_draft_value(&"reduce_motion", false), "combined accessibility draft was rejected")
+	_require(manager.set_draft_value(&"ui_scale_percent", 125), "combined UI-scale draft was rejected")
 	_require(manager.apply_draft(), "dangerous preview apply failed")
 	_require(manager.is_confirmation_pending(), "dangerous display change skipped confirmation")
 	_require_equal(manager.confirmation_seconds_remaining(), 15, "confirmation countdown start")
@@ -164,10 +182,16 @@ func _check_schema_one_migration() -> void:
 	_require_equal(migrated_settings.get("frame_limit"), 60, "schema-one frame limit preserved")
 	_require_equal(migrated_settings.get("reduce_motion"), true, "schema-one accessibility preserved")
 	_require_equal(migrated_settings.get("master_volume"), 80, "schema-one master volume default")
+	_require_equal(migrated_settings.get("effects_volume"), 80, "schema-one effects volume default")
+	_require_equal(migrated_settings.get("haptics_enabled"), true, "schema-one haptics default")
+	_require_equal(migrated_settings.get("ui_scale_percent"), 100, "schema-one UI-scale default")
 	var repaired := ConfigFile.new()
 	_require_equal(repaired.load(MIGRATION_PATH), OK, "schema-one migrated reload")
 	_require_equal(int(repaired.get_value("meta", "schema_version", -1)), SettingsStoreScript.CURRENT_SCHEMA_VERSION, "schema-one migrated version")
 	_require_equal(int(repaired.get_value("audio", "master_volume", -1)), 80, "schema-one migrated audio value")
+	_require_equal(int(repaired.get_value("audio", "effects_volume", -1)), 80, "schema-one migrated effects value")
+	_require_equal(bool(repaired.get_value("accessibility", "haptics_enabled", false)), true, "schema-one migrated haptics value")
+	_require_equal(int(repaired.get_value("accessibility", "ui_scale_percent", -1)), 100, "schema-one migrated UI-scale value")
 	migrated.free()
 
 

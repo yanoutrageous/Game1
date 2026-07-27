@@ -7,6 +7,19 @@ const RunEffectApplierScript := preload("res://scripts/core/run/run_effect_appli
 
 const BASE_MINE_DAMAGE := RunBalanceCatalogScript.BASE_MINE_DAMAGE
 const MIN_MINE_DAMAGE := RunBalanceCatalogScript.MIN_MINE_DAMAGE
+const ENEMY_POWER_MIN := 5
+const ENEMY_POWER_MAX := 20
+const MONSTER_REWARD_MIN := 0
+const MONSTER_REWARD_MAX := 3
+const MONSTER_POWER_GAIN_PER_CLEAR := 1
+const MONSTER_POWER_GAIN_CAP := 5
+const ENEMY_NAMES := [
+	"滞留工偶",
+	"空壳巡工",
+	"失控搬运机",
+	"头灯哨卫",
+	"管道清理机",
+]
 
 
 static func apply_damage(context: RunContext, amount: int, reason: String = "", fail_authority = null) -> int:
@@ -51,13 +64,10 @@ static func fight_enemy(context: RunContext, pos: Vector2i, adjacent_mines: int,
 			"reward_gold": 0,
 			"black_coin_delta": 0,
 		}
-	var reward_gold: int = preview_reward_gold(context, pos)
+	var reward_gold := reward_gold_for_enemy_power(enemy_power)
 	var reward_result := RunRuleService.apply_combat_reward(context, pos, reward_gold)
-	context.run_stats["monsters_defeated"] = int(context.run_stats.get("monsters_defeated", 0)) + 1
 	context.run_stats["combat_damage"] = int(context.run_stats.get("combat_damage", 0)) + damage
-	if int(context.run_stats.get("monster_power_bonus", 0)) < 5:
-		context.run_stats["monster_power_bonus"] = int(context.run_stats.get("monster_power_bonus", 0)) + 1
-		context.power += 1
+	var power_gain := grant_monster_clear_progress(context)
 	return {
 		"ok": true,
 		"fought": true,
@@ -69,16 +79,24 @@ static func fight_enemy(context: RunContext, pos: Vector2i, adjacent_mines: int,
 		"hp": context.hp,
 		"reward_gold": reward_gold,
 		"black_coin_delta": reward_result.get("black_coin_delta", reward_gold),
-		"power_gain": int(context.run_stats.get("monster_power_bonus", 0)),
+		"power_gain": power_gain,
 	}
 
 
 static func build_enemy_state(context: RunContext, pos: Vector2i, adjacent_mines: int) -> Dictionary:
 	if context == null:
 		return {}
-	var enemy_power: int = 4 + adjacent_mines + absi((pos.x * 17 + pos.y * 31 + context.seed_value) % 3)
+	var identity_hash := enemy_identity_hash(context.seed_value, pos)
+	var power_span := ENEMY_POWER_MAX - ENEMY_POWER_MIN + 1
+	var base_power := ENEMY_POWER_MIN + identity_hash % power_span
+	var adjacent_power_bonus := maxi(0, adjacent_mines) * 2
+	var enemy_power := base_power + adjacent_power_bonus
 	return {
-		"enemy_name": "Anomaly %d,%d" % [pos.x, pos.y],
+		"identity_hash": identity_hash,
+		"enemy_name": String(ENEMY_NAMES[identity_hash % ENEMY_NAMES.size()]),
+		"base_power": base_power,
+		"adjacent_power_bonus": adjacent_power_bonus,
+		"adjacent_mines": adjacent_mines,
 		"enemy_power": enemy_power,
 		"player_power": context.power,
 		"alive": true,
@@ -86,10 +104,36 @@ static func build_enemy_state(context: RunContext, pos: Vector2i, adjacent_mines
 	}
 
 
+static func enemy_identity_hash(run_seed: int, pos: Vector2i) -> int:
+	var raw_hash := int(pos.x) * 131 + int(pos.y) * 97 + run_seed * 41
+	return ((raw_hash % 1000) + 1000) % 1000
+
+
+static func reward_gold_for_enemy_power(enemy_power: int) -> int:
+	var span := MONSTER_REWARD_MAX - MONSTER_REWARD_MIN + 1
+	return MONSTER_REWARD_MIN + (maxi(0, enemy_power) % span if span > 0 else 0)
+
+
+static func grant_monster_clear_progress(context: RunContext) -> int:
+	if context == null:
+		return 0
+	context.run_stats["monsters_defeated"] = int(context.run_stats.get("monsters_defeated", 0)) + 1
+	var current_bonus := int(context.run_stats.get("monster_power_bonus", 0))
+	var power_gain := mini(MONSTER_POWER_GAIN_PER_CLEAR, maxi(0, MONSTER_POWER_GAIN_CAP - current_bonus))
+	if power_gain > 0:
+		context.run_stats["monster_power_bonus"] = current_bonus + power_gain
+		context.power += power_gain
+	return power_gain
+
+
 static func preview_reward_gold(context: RunContext, pos: Vector2i) -> int:
 	if context == null:
 		return 0
-	return RunBalanceCatalogScript.monster_reward_black_coin(context, pos)
+	var adjacent_mines := context.current_adjacent_mines
+	if context.truth_map != null and context.minefield_service != null:
+		adjacent_mines = context.minefield_service.count_adjacent_mines(context.truth_map, pos)
+	var enemy_state := build_enemy_state(context, pos, adjacent_mines)
+	return reward_gold_for_enemy_power(int(enemy_state.get("enemy_power", 0)))
 
 
 static func build_monster_summary(context: RunContext, pos: Vector2i, adjacent_mines: int) -> Dictionary:

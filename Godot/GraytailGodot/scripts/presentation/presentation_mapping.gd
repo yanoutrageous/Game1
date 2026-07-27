@@ -5,6 +5,7 @@ class_name PresentationMapping
 # It is the only layer that maps room/state semantics to asset ids.
 
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
+const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
 
 const ROOM_MINIMAP_ASSET := {
 	&"Spawn": &"icon.room.spawn",
@@ -261,17 +262,19 @@ static func art20_deploy_icon_ref(kind: StringName) -> Dictionary:
 
 
 static func hint_for_snapshot(snapshot: Dictionary) -> String:
+	var interact_hint := SemanticActionHintScript.display_label(&"interact")
+	var attack_hint := SemanticActionHintScript.display_label(&"attack")
 	match StringName(snapshot.get("current_room", &"Unknown")):
 		&"Exit":
-			return "E：请求撤离并确认"
+			return "%s：请求撤离并确认" % interact_hint
 		&"Monster":
-			return "Space/J：清理异常体，注意协议压力"
+			return "%s：清理异常体，注意协议压力" % attack_hint
 		&"Event":
-			return "E：查看事件选项，处理后不会重复结算"
+			return "%s：查看事件选项，处理后不会重复结算" % interact_hint
 		&"Chest":
-			return "E：开启未登记物资箱"
+			return "%s：开启未登记物资箱" % interact_hint
 		&"Normal":
-			return "E：搜索房间，奖励可能进入背包或落在地面"
+			return "%s：搜索房间，奖励可能进入背包或落在地面" % interact_hint
 		&"Mine":
 			return "雷险已确认，谨慎移动"
 		_:

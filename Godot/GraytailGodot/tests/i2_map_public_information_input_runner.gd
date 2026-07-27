@@ -96,6 +96,8 @@ func _check_overlay(canvas: Control, view_model: MiniMapViewModel) -> void:
 	await _frames(3)
 	var preferred := overlay.preferred_focus_control()
 	_check(preferred != null and preferred.has_focus(), "Expanded map did not move focus into its grid")
+	var selected_action := overlay.get_node_or_null("Panel/Content/SelectedAction") as Button
+	_check(selected_action != null and not selected_action.visible, "Expanded map keeps a disabled action button visible")
 	var hidden_button := overlay.get_node_or_null("Panel/Content/Grid/MapCell_0_0") as Button
 	var scanned_button := overlay.get_node_or_null("Panel/Content/Grid/MapCell_1_0") as Button
 	var explored_button := overlay.get_node_or_null("Panel/Content/Grid/MapCell_2_0") as Button
@@ -107,13 +109,19 @@ func _check_overlay(canvas: Control, view_model: MiniMapViewModel) -> void:
 		await _frames(1)
 	_check(map_cell_action_count == 0, "Expanded-map focus movement emitted a cell action")
 	var footer := overlay.get_node_or_null("Panel/Content/Footer") as Label
-	_check(footer != null and footer.text.contains("\n") and footer.text.contains("面板外"), "Expanded-map footer lacks readable multiline outside-click guidance")
+	_check(footer != null and not footer.text.contains("\n") and footer.text.contains("点击外部"), "Expanded-map footer lacks compact single-line outside-click guidance")
+	var panel_internal_outside := _find_panel_internal_outside_point(overlay)
+	_check(panel_internal_outside.x >= 0.0, "Expanded map has no panel-internal lane outside its actual visible controls")
 	var outside_click := InputEventMouseButton.new()
 	outside_click.button_index = MOUSE_BUTTON_LEFT
 	outside_click.pressed = true
-	outside_click.position = Vector2(5, 5)
-	overlay.call("_gui_input", outside_click)
+	outside_click.position = panel_internal_outside if panel_internal_outside.x >= 0.0 else Vector2(5, 5)
+	outside_click.global_position = outside_click.position
+	Input.parse_input_event(outside_click)
 	await _frames(2)
+	var outside_release := outside_click.duplicate() as InputEventMouseButton
+	outside_release.pressed = false
+	Input.parse_input_event(outside_release)
 	_check(not overlay.visible and map_close_count == 1, "Outside left click did not close exactly one expanded map")
 	_check(return_button.has_focus(), "Outside-click close did not restore prior focus")
 	_check(map_cell_action_count == 0, "Outside-click close emitted a map cell action")
@@ -121,8 +129,8 @@ func _check_overlay(canvas: Control, view_model: MiniMapViewModel) -> void:
 	return_button.grab_focus()
 	overlay.show_overlay()
 	await _frames(2)
-	var escape_event := InputEventKey.new()
-	escape_event.keycode = KEY_ESCAPE
+	var escape_event := InputEventAction.new()
+	escape_event.action = &"cancel"
 	escape_event.pressed = true
 	overlay.call("_input", escape_event)
 	await _frames(2)
@@ -183,6 +191,19 @@ func _adjacent_label_text(cell: Control) -> String:
 		return ""
 	var label := cell.get_node_or_null("AdjacentMineCount") as Label
 	return label.text if label != null else ""
+
+
+func _find_panel_internal_outside_point(overlay: MapOverlayPanel) -> Vector2:
+	var panel := overlay.get_node_or_null("Panel") as Control
+	if panel == null:
+		return Vector2(-1, -1)
+	var panel_rect := panel.get_global_rect()
+	for y in range(int(panel_rect.position.y) + 1, int(panel_rect.end.y), 4):
+		for x in range(int(panel_rect.position.x) + 1, int(panel_rect.end.x), 4):
+			var point := Vector2(x, y)
+			if not bool(overlay.call("_point_hits_map_content", point)):
+				return point
+	return Vector2(-1, -1)
 
 
 func _frames(count: int) -> void:

@@ -2,6 +2,8 @@ extends Control
 class_name MiniMapPanel
 
 const ContentDBAccessScript := preload("res://scripts/core/content/content_db_access.gd")
+const RuntimeInputProfileScript := preload("res://scripts/core/input/runtime_input_profile.gd")
+const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
 
 # UI reads MiniMapViewModel only. UI must not read TruthMap directly.
 
@@ -29,6 +31,7 @@ const EVENT_MARKER_ASSET_ID := &"ui.art21.map.marker.event"
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
 	view_model = next_view_model
+	refresh_input_hints()
 	_rebuild_grid()
 	queue_redraw()
 
@@ -51,15 +54,25 @@ func clear() -> void:
 
 
 func _ready() -> void:
+	add_to_group(RuntimeInputProfileScript.HINT_CONSUMER_GROUP)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
-	tooltip_text = "区域地图 · Enter / 点击展开"
+	refresh_input_hints()
 	focus_entered.connect(queue_redraw)
 	focus_exited.connect(queue_redraw)
 	var placeholder := get_node_or_null("PlaceholderLabel") as Label
 	if placeholder != null:
 		placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_rebuild_grid()
+
+
+func refresh_input_hints() -> void:
+	var map_hint := SemanticActionHintScript.current_binding_label(&"open_map")
+	tooltip_text = (
+		"区域地图 · %s / 点击展开" % map_hint
+		if not map_hint.is_empty()
+		else "区域地图 · 点击展开"
+	)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -299,15 +312,12 @@ func _emit_open_map_from_mouse_event(event: InputEvent) -> void:
 			open_map_requested.emit()
 			accept_event()
 		return
-	if event.is_action_pressed("ui_accept"):
+	if (
+		RuntimeInputProfileScript.event_pressed(event, RuntimeInputProfileScript.ACTION_OPEN_MAP)
+		or event.is_action_pressed("ui_accept")
+	):
 		open_map_requested.emit()
 		accept_event()
-		return
-	if event is InputEventKey:
-		var key_event := event as InputEventKey
-		if key_event.pressed and not key_event.echo and key_event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
-			open_map_requested.emit()
-			accept_event()
 
 
 func _public_adjacent_mines(marker: Dictionary) -> int:

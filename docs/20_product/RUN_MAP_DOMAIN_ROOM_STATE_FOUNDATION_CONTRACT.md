@@ -11,17 +11,17 @@ Status: G31-R2 implementation contract.
 
 Primary read-only planning source:
 
-- `D:\AGAME1\Base Docs\局内地图本体与生成规则策划案.md`
+- `sources/base/原始策划案/局内地图本体与生成规则策划案.md`
 
 Supplemental read-only sources:
 
-- `D:\AGAME1\Base Docs\房间类型、标签与遭遇通用规则策划案.md`
-- `D:\AGAME1\Base Docs\局内流程与状态流转规则策划案.md`
-- `D:\AGAME1\Base Docs\规则、效果、Modifier 与内容投放通用系统策划案.md`
-- `D:\AGAME1\Base Docs\战斗房与怪物遭遇通用规则策划案.md`
-- `D:\AGAME1\Base Docs\本局结算报告与历史战绩系统.md`
-- `D:\AGAME1\Base Docs\出发探索界面与出勤准备规则策划修正案.md`
-- `D:\AGAME1\Base Docs\物品资产模型与内容映射规则策划案.md`
+- `sources/base/原始策划案/房间类型、标签与遭遇通用规则策划案.md`
+- `sources/base/原始策划案/局内流程与状态流转规则策划案.md`
+- `sources/base/原始策划案/规则、效果、Modifier 与内容投放通用系统策划案.md`
+- `sources/base/原始策划案/战斗房与怪物遭遇通用规则策划案.md`
+- `sources/base/原始策划案/本局结算报告与历史战绩系统.md`
+- `sources/base/原始策划案/出发探索界面与出勤准备规则策划修正案.md`
+- `sources/base/原始策划案/物品资产模型与内容映射规则策划案.md`
 
 ## Stage Positioning
 

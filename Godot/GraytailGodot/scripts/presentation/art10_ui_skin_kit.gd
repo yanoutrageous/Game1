@@ -10,8 +10,20 @@ const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 
-const FONT_ASSET_ID := &"ui.art23.long_term.font.body"
+const DISPLAY_FONT_ASSET_ID := &"ui.font.fusion_pixel"
+const READABLE_FONT_ASSET_ID := &"ui.art23.long_term.font.body"
 const CANVAS_SIZE := Vector2(1280, 720)
+const MIN_RUNTIME_UI_SCALE := 1.0
+const MAX_RUNTIME_UI_SCALE := 1.5
+
+static var _player_ui_font_cache: Font
+static var _player_ui_theme_cache: Theme
+static var _runtime_ui_scale_factor := 1.0
+
+const CONTROL_SLICE_INSETS := Vector4(18.0, 6.0, 18.0, 6.0)
+const CONTROL_CONTENT_INSETS := Vector4(22.0, 5.0, 22.0, 5.0)
+const POPUP_SLICE_INSETS := Vector4(20.0, 14.0, 20.0, 14.0)
+const POPUP_CONTENT_INSETS := Vector4(24.0, 16.0, 24.0, 16.0)
 
 const FONT_TOKENS := {
 	&"title": 54,
@@ -55,6 +67,54 @@ const LABEL_SAFE_PADDING := {
 	&"key_prompt": Vector2(6, 4),
 	&"hud": Vector2(9, 6),
 	&"hud_small": Vector2(7, 5),
+}
+
+const DISPLAY_FONT_TOKENS := [
+	&"title",
+	&"page_title",
+	&"section_title",
+	&"main_button",
+	&"button",
+	&"tab",
+	&"key_prompt",
+]
+
+# Shared semantic contract for text laid over framed art. Consumers may keep
+# their own geometry, but must choose one of these roles instead of treating
+# every label as the same font and padding case.
+const COMPOSITION_DESCRIPTORS := {
+	&"title": {
+		"font_role": &"display",
+		"font_token": &"page_title",
+		"text_budget_token": &"page_title",
+		"max_lines": 1,
+		"panel_safe_margin": 20,
+		"label_safe_padding": Vector2(10, 8),
+	},
+	&"body": {
+		"font_role": &"readable",
+		"font_token": &"body",
+		"text_budget_token": &"body",
+		"max_lines": 3,
+		"panel_safe_margin": 16,
+		"label_safe_padding": Vector2(10, 7),
+	},
+	&"button": {
+		"font_role": &"display",
+		"font_token": &"button",
+		"text_budget_token": &"button",
+		"max_lines": 1,
+		"panel_safe_margin": 14,
+		"label_safe_padding": Vector2(10, 6),
+	},
+	&"status": {
+		"font_role": &"display",
+		"font_token": &"hud",
+		"text_budget_token": &"hud_small",
+		"max_lines": 1,
+		"panel_safe_margin": 12,
+		"label_safe_padding": Vector2(7, 5),
+	},
 }
 
 const ICON_SIZES := {
@@ -149,10 +209,374 @@ const RUN_RECTS := {
 
 
 static func pixel_font() -> Resource:
-	var resource := ContentDBAccessScript.get_asset_ref(FONT_ASSET_ID)
+	return player_ui_font()
+
+
+static func readable_font() -> Resource:
+	return player_ui_font()
+
+
+static func font_for_role(_role: StringName) -> Resource:
+	return player_ui_font()
+
+
+static func set_runtime_ui_scale_factor(value: float) -> float:
+	var resolved := normalize_runtime_ui_scale_factor(value)
+	_runtime_ui_scale_factor = resolved
+	if _player_ui_theme_cache != null:
+		_apply_runtime_ui_scale_to_theme(_player_ui_theme_cache)
+	return _runtime_ui_scale_factor
+
+
+static func runtime_ui_scale_factor() -> float:
+	return _runtime_ui_scale_factor
+
+
+static func normalize_runtime_ui_scale_factor(value: float) -> float:
+	return clampf(value, MIN_RUNTIME_UI_SCALE, MAX_RUNTIME_UI_SCALE)
+
+
+static func scaled_font_size(base_size: int, factor: float = -1.0) -> int:
+	var resolved_factor := _runtime_ui_scale_factor if factor <= 0.0 else normalize_runtime_ui_scale_factor(factor)
+	return maxi(1, int(round(float(base_size) * resolved_factor)))
+
+
+static func scaled_control_minimum(base_size: Vector2, factor: float = -1.0) -> Vector2:
+	var resolved_factor := _runtime_ui_scale_factor if factor <= 0.0 else normalize_runtime_ui_scale_factor(factor)
+	return (base_size * resolved_factor).round()
+
+
+static func player_ui_font() -> Font:
+	if _player_ui_font_cache != null:
+		return _player_ui_font_cache
+	var display_font := _font_asset(DISPLAY_FONT_ASSET_ID)
+	if display_font == null:
+		return null
+	var fallback_font := _font_asset(READABLE_FONT_ASSET_ID)
+	_apply_player_font_runtime_policy(display_font, true)
+	_apply_player_font_runtime_policy(fallback_font, false)
+	var font_stack := FontVariation.new()
+	font_stack.resource_name = "FusionPixelPlayerUIWithNotoGlyphFallback"
+	font_stack.base_font = display_font
+	if fallback_font != null:
+		font_stack.fallbacks = [fallback_font]
+	_player_ui_font_cache = font_stack
+	return _player_ui_font_cache
+
+
+static func _apply_player_font_runtime_policy(font: Font, pixel_primary: bool) -> void:
+	if not (font is FontFile):
+		return
+	var font_file := font as FontFile
+	font_file.allow_system_fallback = false
+	if not pixel_primary:
+		return
+	font_file.antialiasing = TextServer.FONT_ANTIALIASING_NONE
+	font_file.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+
+
+static func player_ui_theme() -> Theme:
+	if _player_ui_theme_cache != null:
+		return _player_ui_theme_cache
+	var font := player_ui_font()
+	var shared_theme := Theme.new()
+	shared_theme.resource_name = "FusionPixelPlayerUITheme"
+	shared_theme.set_type_variation(&"TooltipLabel", &"Label")
+	shared_theme.set_type_variation(&"TooltipPanel", &"PopupPanel")
+	if font != null:
+		shared_theme.default_font = font
+	shared_theme.default_font_size = font_size(&"body")
+	for theme_type in [
+		&"Label",
+		&"Button",
+		&"CheckBox",
+		&"CheckButton",
+		&"MenuButton",
+		&"OptionButton",
+		&"PopupMenu",
+		&"TooltipLabel",
+		&"LineEdit",
+		&"TextEdit",
+		&"ItemList",
+		&"Tree",
+		&"TabBar",
+	]:
+		if font != null:
+			shared_theme.set_font(&"font", theme_type, font)
+	for rich_font_name in [
+		&"normal_font",
+		&"bold_font",
+		&"italics_font",
+		&"bold_italics_font",
+		&"mono_font",
+	]:
+		if font != null:
+			shared_theme.set_font(rich_font_name, &"RichTextLabel", font)
+	shared_theme.set_font_size(&"font_size", &"TooltipLabel", font_size(&"body_small"))
+	shared_theme.set_color(&"font_color", &"TooltipLabel", color(&"text"))
+	shared_theme.set_color(&"font_color", &"PopupMenu", color(&"text"))
+	_configure_shared_control_theme(shared_theme)
+	_apply_runtime_ui_scale_to_theme(shared_theme)
+	var tooltip_style := style_box_from_asset_ref(
+		Art21UIPlacementContractScript.panel_ref(&"tooltip"),
+		12,
+		12
+	)
+	if tooltip_style != null:
+		shared_theme.set_stylebox(&"panel", &"TooltipPanel", tooltip_style)
+	_player_ui_theme_cache = shared_theme
+	return _player_ui_theme_cache
+
+
+static func _apply_runtime_ui_scale_to_theme(shared_theme: Theme) -> void:
+	if shared_theme == null:
+		return
+	shared_theme.default_font_size = scaled_font_size(font_size(&"body"))
+	var type_tokens := {
+		&"Label": &"body",
+		&"Button": &"button",
+		&"CheckBox": &"body",
+		&"CheckButton": &"body",
+		&"MenuButton": &"button",
+		&"OptionButton": &"body",
+		&"PopupMenu": &"body",
+		&"TooltipLabel": &"body_small",
+		&"LineEdit": &"body",
+		&"TextEdit": &"body",
+		&"ItemList": &"body",
+		&"Tree": &"body",
+		&"TabBar": &"tab",
+	}
+	for theme_type_variant in type_tokens:
+		var theme_type := StringName(theme_type_variant)
+		var token := StringName(type_tokens[theme_type_variant])
+		shared_theme.set_font_size(&"font_size", theme_type, scaled_font_size(font_size(token)))
+	for rich_font_size_name in [
+		&"normal_font_size",
+		&"bold_font_size",
+		&"italics_font_size",
+		&"bold_italics_font_size",
+		&"mono_font_size",
+	]:
+		shared_theme.set_font_size(
+			rich_font_size_name,
+			&"RichTextLabel",
+			scaled_font_size(font_size(&"body"))
+		)
+	shared_theme.set_meta("runtime_ui_scale_factor", _runtime_ui_scale_factor)
+
+
+static func apply_player_ui_theme(root_control: Control) -> void:
+	if root_control == null:
+		return
+	root_control.theme = player_ui_theme()
+
+
+static func apply_player_ui_font(control: Control) -> void:
+	if control == null:
+		return
+	var font := player_ui_font()
+	if font == null:
+		return
+	if control is RichTextLabel:
+		for rich_font_name in [
+			&"normal_font",
+			&"bold_font",
+			&"italics_font",
+			&"bold_italics_font",
+			&"mono_font",
+		]:
+			control.add_theme_font_override(rich_font_name, font)
+		return
+	control.add_theme_font_override(&"font", font)
+
+
+static func apply_option_button_theme(option: OptionButton) -> void:
+	if option == null:
+		return
+	var shared_theme := player_ui_theme()
+	option.theme = shared_theme
+	var popup := option.get_popup()
+	if popup != null:
+		popup.theme = shared_theme
+
+
+static func _configure_shared_control_theme(shared_theme: Theme) -> void:
+	if shared_theme == null:
+		return
+	var normal := registered_control_style(&"secondary")
+	var hover := registered_control_style(&"primary")
+	var pressed := registered_control_style(&"primary")
+	var disabled := registered_control_style(&"disabled")
+	var focus := registered_control_style(&"focus")
+	for theme_type in [&"Button", &"MenuButton", &"OptionButton", &"CheckBox", &"CheckButton"]:
+		shared_theme.set_stylebox(&"normal", theme_type, normal)
+		shared_theme.set_stylebox(&"hover", theme_type, hover)
+		shared_theme.set_stylebox(&"pressed", theme_type, pressed)
+		shared_theme.set_stylebox(&"hover_pressed", theme_type, pressed)
+		shared_theme.set_stylebox(&"disabled", theme_type, disabled)
+		shared_theme.set_stylebox(&"focus", theme_type, focus)
+		shared_theme.set_color(&"font_color", theme_type, color(&"text"))
+		shared_theme.set_color(&"font_hover_color", theme_type, color(&"accent"))
+		shared_theme.set_color(&"font_pressed_color", theme_type, color(&"gold"))
+		shared_theme.set_color(&"font_focus_color", theme_type, color(&"accent"))
+		shared_theme.set_color(&"font_disabled_color", theme_type, color(&"muted"))
+		shared_theme.set_constant(&"h_separation", theme_type, 10)
+		shared_theme.set_constant(&"outline_size", theme_type, 0)
+	shared_theme.set_constant(&"arrow_margin", &"OptionButton", 12)
+
+	var popup_panel := registered_popup_style()
+	var popup_row := registered_control_style(&"row")
+	var popup_row_hover := registered_control_style(&"primary")
+	shared_theme.set_stylebox(&"panel", &"PopupMenu", popup_panel)
+	shared_theme.set_stylebox(&"panel", &"PopupPanel", popup_panel)
+	shared_theme.set_stylebox(&"hover", &"PopupMenu", popup_row_hover)
+	shared_theme.set_stylebox(&"separator", &"PopupMenu", popup_row)
+	shared_theme.set_stylebox(&"labeled_separator_left", &"PopupMenu", popup_row)
+	shared_theme.set_stylebox(&"labeled_separator_right", &"PopupMenu", popup_row)
+	shared_theme.set_color(&"font_hover_color", &"PopupMenu", color(&"gold"))
+	shared_theme.set_color(&"font_disabled_color", &"PopupMenu", color(&"muted"))
+	shared_theme.set_color(&"font_accelerator_color", &"PopupMenu", color(&"caption"))
+	shared_theme.set_color(&"font_separator_color", &"PopupMenu", color(&"muted"))
+	shared_theme.set_constant(&"item_start_padding", &"PopupMenu", 12)
+	shared_theme.set_constant(&"item_end_padding", &"PopupMenu", 12)
+	shared_theme.set_constant(&"v_separation", &"PopupMenu", 4)
+	shared_theme.set_constant(&"outline_size", &"PopupMenu", 0)
+
+	var slider_track := registered_slider_style(&"secondary")
+	var slider_fill := registered_slider_style(&"primary")
+	shared_theme.set_stylebox(&"slider", &"HSlider", slider_track)
+	shared_theme.set_stylebox(&"grabber_area", &"HSlider", slider_fill)
+	shared_theme.set_stylebox(&"grabber_area_highlight", &"HSlider", slider_fill)
+	shared_theme.set_constant(&"center_grabber", &"HSlider", 1)
+	shared_theme.set_constant(&"grabber_offset", &"HSlider", 0)
+
+	var off_icon := _shared_arrow_icon(false, false)
+	var on_icon := _shared_arrow_icon(true, true)
+	var hover_icon := _shared_arrow_icon(true, false)
+	if off_icon != null and on_icon != null:
+		for icon_name in [&"unchecked", &"unchecked_disabled", &"unchecked_hover", &"unchecked_pressed", &"unchecked_hover_pressed"]:
+			shared_theme.set_icon(icon_name, &"CheckButton", off_icon)
+			shared_theme.set_icon(icon_name, &"CheckBox", off_icon)
+		for icon_name in [&"checked", &"checked_disabled", &"checked_hover", &"checked_pressed", &"checked_hover_pressed"]:
+			shared_theme.set_icon(icon_name, &"CheckButton", on_icon)
+			shared_theme.set_icon(icon_name, &"CheckBox", on_icon)
+		shared_theme.set_icon(&"arrow", &"OptionButton", hover_icon if hover_icon != null else on_icon)
+		shared_theme.set_icon(&"arrow_mirrored", &"OptionButton", off_icon)
+		shared_theme.set_icon(&"checked", &"PopupMenu", on_icon)
+		shared_theme.set_icon(&"unchecked", &"PopupMenu", off_icon)
+		shared_theme.set_icon(&"radio_checked", &"PopupMenu", on_icon)
+		shared_theme.set_icon(&"radio_unchecked", &"PopupMenu", off_icon)
+		shared_theme.set_icon(&"submenu", &"PopupMenu", hover_icon if hover_icon != null else on_icon)
+		shared_theme.set_icon(&"submenu_mirrored", &"PopupMenu", off_icon)
+		shared_theme.set_icon(&"grabber", &"HSlider", hover_icon if hover_icon != null else on_icon)
+		shared_theme.set_icon(&"grabber_highlight", &"HSlider", on_icon)
+		shared_theme.set_icon(&"grabber_disabled", &"HSlider", off_icon)
+
+
+static func registered_control_style(state: StringName = &"secondary") -> StyleBox:
+	var visual_key := &"art21r2.modal.button.secondary"
+	match state:
+		&"primary", &"selected":
+			visual_key = &"art21r2.modal.button.primary"
+		&"danger":
+			visual_key = &"art21r2.modal.button.danger"
+		&"row":
+			visual_key = &"art21r2.modal.item_row.normal"
+	var style := _registered_texture_style(
+		visual_key,
+		&"ui.art19.button.dark",
+		CONTROL_SLICE_INSETS,
+		CONTROL_CONTENT_INSETS
+	)
+	if style == null:
+		return button_style(&"primary" if state == &"primary" else &"secondary")
+	if state == &"focus" and style is StyleBoxTexture:
+		(style as StyleBoxTexture).draw_center = false
+	return style
+
+
+static func registered_popup_style() -> StyleBox:
+	var style := _registered_texture_style(
+		&"art21r2.modal.section.panel",
+		&"ui.art19.panel.terminal_main",
+		POPUP_SLICE_INSETS,
+		POPUP_CONTENT_INSETS
+	)
+	return style if style != null else panel_style(&"deep")
+
+
+static func registered_slider_style(state: StringName = &"secondary") -> StyleBox:
+	var visual_key := &"art21r2.modal.button.primary" if state == &"primary" else &"art21r2.modal.button.secondary"
+	var style := _registered_texture_style(
+		visual_key,
+		&"ui.art19.button.dark",
+		Vector4(18.0, 7.0, 18.0, 7.0),
+		Vector4(2.0, 6.0, 2.0, 6.0)
+	)
+	return style if style != null else transparent_style_box(2)
+
+
+static func _registered_texture_style(
+	visual_key: StringName,
+	fallback_asset_id: StringName,
+	slice_insets: Vector4,
+	content_insets: Vector4
+) -> StyleBoxTexture:
+	var texture := Art21UIPlacementContractScript.texture_for_visual_key(visual_key, fallback_asset_id)
+	if texture == null:
+		return null
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = slice_insets.x
+	style.texture_margin_top = slice_insets.y
+	style.texture_margin_right = slice_insets.z
+	style.texture_margin_bottom = slice_insets.w
+	style.content_margin_left = content_insets.x
+	style.content_margin_top = content_insets.y
+	style.content_margin_right = content_insets.z
+	style.content_margin_bottom = content_insets.w
+	style.draw_center = true
+	return style
+
+
+static func _shared_arrow_icon(selected: bool, point_right: bool) -> Texture2D:
+	var visual_key := &"shared.button.secondary.selected" if selected else &"shared.button.secondary.normal"
+	var fallback_asset_id := &"ui.art19.button.selected_tab" if selected else &"ui.art19.button.dark"
+	var texture := Art21UIPlacementContractScript.texture_for_visual_key(visual_key, fallback_asset_id)
+	if texture == null:
+		return null
+	var width := float(texture.get_width())
+	var height := float(texture.get_height())
+	if width < 52.0 or height < 24.0:
+		return texture
+	var icon := AtlasTexture.new()
+	icon.atlas = texture
+	var icon_width := 28.0
+	var icon_height := minf(28.0, height)
+	var x := width - icon_width - 6.0 if point_right else 6.0
+	icon.region = Rect2(x, (height - icon_height) * 0.5, icon_width, icon_height)
+	return icon
+
+
+static func _font_asset(asset_id: StringName) -> Font:
+	var resource := ContentDBAccessScript.get_asset_ref(asset_id)
 	if resource is Font:
-		return resource
+		return resource as Font
 	return null
+
+
+static func font_role_for_token(token: StringName) -> StringName:
+	return &"display" if DISPLAY_FONT_TOKENS.has(token) else &"readable"
+
+
+static func composition_descriptor(role: StringName) -> Dictionary:
+	var value: Variant = COMPOSITION_DESCRIPTORS.get(role, COMPOSITION_DESCRIPTORS[&"body"])
+	return (value as Dictionary).duplicate(true) if value is Dictionary else COMPOSITION_DESCRIPTORS[&"body"].duplicate(true)
+
+
+static func composition_panel_safe_margin(role: StringName) -> int:
+	return int(composition_descriptor(role).get("panel_safe_margin", 16))
 
 
 static func art19_texture(role: StringName) -> Texture2D:
@@ -382,15 +806,32 @@ static func apply_visual_state(control: Control, state: Variant, selected: bool 
 
 
 static func apply_label(label: Label, font_size_value: int = -1, font_color: Color = Color(-1, -1, -1, -1)) -> void:
+	_apply_label_with_font(label, readable_font(), font_size_value, font_color)
+	if label != null:
+		label.set_meta("ui_composition_role", &"body")
+
+
+static func apply_composition_label(label: Label, role: StringName, font_size_value: int = -1, font_color: Color = Color(-1, -1, -1, -1)) -> void:
+	if label == null:
+		return
+	var descriptor := composition_descriptor(role)
+	var token := StringName(descriptor.get("font_token", &"body"))
+	var resolved_size := font_size_value if font_size_value > 0 else font_size(token)
+	_apply_label_with_font(label, font_for_role(StringName(descriptor.get("font_role", &"readable"))), resolved_size, font_color)
+	label.set_meta("ui_composition_role", role)
+	label.set_meta("ui_panel_safe_margin", int(descriptor.get("panel_safe_margin", 16)))
+	label.set_meta("ui_label_safe_padding", descriptor.get("label_safe_padding", Vector2(8, 6)))
+
+
+static func _apply_label_with_font(label: Label, font_resource: Resource, font_size_value: int, font_color: Color) -> void:
 	if label == null:
 		return
 	label.text = sanitize_player_copy(label.text)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.clip_text = false
 	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
-	var font := pixel_font()
-	if font is Font:
-		label.add_theme_font_override("font", font as Font)
+	if font_resource is Font:
+		label.add_theme_font_override("font", font_resource as Font)
 	var resolved_size := font_size_value if font_size_value > 0 else font_size(&"body")
 	label.add_theme_font_size_override("font_size", resolved_size)
 	label.add_theme_constant_override("line_spacing", _line_spacing_for(resolved_size))
@@ -399,16 +840,19 @@ static func apply_label(label: Label, font_size_value: int = -1, font_color: Col
 
 
 static func apply_label_token(label: Label, token: StringName, color_token: StringName = &"text") -> void:
-	apply_label(label, font_size(token), color(color_token))
+	if label == null:
+		return
+	_apply_label_with_font(label, font_for_role(font_role_for_token(token)), font_size(token), color(color_token))
+	label.set_meta("ui_composition_role", &"title" if font_role_for_token(token) == &"display" else &"body")
 
 
-static func apply_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button") -> void:
+static func apply_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button", font_role: StringName = &"display") -> void:
 	if button == null:
 		return
 	button.focus_mode = Control.FOCUS_ALL
 	button.text = sanitize_player_copy(button.text)
 	button.tooltip_text = sanitize_player_copy(button.tooltip_text)
-	var font := pixel_font()
+	var font := font_for_role(font_role)
 	if font is Font:
 		button.add_theme_font_override("font", font as Font)
 	var resolved_size := font_size_value if font_size_value > 0 else font_size(&"body")
@@ -425,12 +869,15 @@ static func apply_button(button: Button, tone: StringName = &"secondary", font_s
 	button.add_theme_stylebox_override("focus", button_style(tone, true, false))
 	button.add_theme_stylebox_override("disabled", button_style(&"disabled", false, false))
 	button.modulate = Color(1, 1, 1, 1) if not button.disabled else Color(0.72, 0.76, 0.74, 1.0)
+	button.set_meta("ui_composition_role", &"button")
+	button.set_meta("ui_font_role", font_role)
+	button.set_meta("ui_panel_safe_margin", composition_panel_safe_margin(&"button"))
 
 
-static func apply_transparent_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button", padding: int = 2) -> void:
+static func apply_transparent_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button", padding: int = 2, font_role: StringName = &"display") -> void:
 	if button == null:
 		return
-	apply_button(button, tone, font_size_value, icon_token)
+	apply_button(button, tone, font_size_value, icon_token, font_role)
 	button.add_theme_stylebox_override("normal", transparent_style_box(padding))
 	button.add_theme_stylebox_override("hover", transparent_style_box(padding))
 	button.add_theme_stylebox_override("pressed", transparent_style_box(padding))
@@ -447,20 +894,63 @@ static func apply_transparent_button_token(button: Button, tone: StringName, tok
 
 static func style_box_from_asset_ref(asset_ref: Dictionary, padding: int = 8, texture_margin: int = 16) -> StyleBoxTexture:
 	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	return style_box_from_texture(texture, padding, texture_margin)
+
+
+static func style_box_from_asset_ref_with_insets(
+	asset_ref: Dictionary,
+	content_insets: Vector4,
+	slice_insets: Vector4
+) -> StyleBoxTexture:
+	var texture := Art09ManifestAssetMappingScript.resolve_texture(asset_ref)
+	return style_box_from_texture_with_insets(texture, content_insets, slice_insets)
+
+
+static func style_box_from_texture(texture: Texture2D, padding: int = 8, texture_margin: int = 16) -> StyleBoxTexture:
+	if texture == null:
+		return null
+	var slice_margin := maxi(texture_margin, 0)
+	var content_inset := safe_content_margin(padding, slice_margin)
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.texture_margin_left = slice_margin
+	style.texture_margin_top = slice_margin
+	style.texture_margin_right = slice_margin
+	style.texture_margin_bottom = slice_margin
+	style.content_margin_left = content_inset
+	style.content_margin_top = content_inset
+	style.content_margin_right = content_inset
+	style.content_margin_bottom = content_inset
+	style.draw_center = true
+	return style
+
+
+static func style_box_from_texture_with_insets(
+	texture: Texture2D,
+	content_insets: Vector4,
+	slice_insets: Vector4
+) -> StyleBoxTexture:
 	if texture == null:
 		return null
 	var style := StyleBoxTexture.new()
 	style.texture = texture
-	style.texture_margin_left = texture_margin
-	style.texture_margin_top = texture_margin
-	style.texture_margin_right = texture_margin
-	style.texture_margin_bottom = texture_margin
-	style.content_margin_left = padding
-	style.content_margin_top = padding
-	style.content_margin_right = padding
-	style.content_margin_bottom = padding
+	style.texture_margin_left = maxf(0.0, slice_insets.x)
+	style.texture_margin_top = maxf(0.0, slice_insets.y)
+	style.texture_margin_right = maxf(0.0, slice_insets.z)
+	style.texture_margin_bottom = maxf(0.0, slice_insets.w)
+	style.content_margin_left = maxf(0.0, content_insets.x)
+	style.content_margin_top = maxf(0.0, content_insets.y)
+	style.content_margin_right = maxf(0.0, content_insets.z)
+	style.content_margin_bottom = maxf(0.0, content_insets.w)
 	style.draw_center = true
+	style.set_meta("ui_content_insets_decoupled_from_slice", true)
+	style.set_meta("ui_content_safe_insets", content_insets)
+	style.set_meta("ui_texture_slice_insets", slice_insets)
 	return style
+
+
+static func safe_content_margin(padding: int, texture_margin: int) -> int:
+	return maxi(maxi(padding, 0), maxi(texture_margin, 0))
 
 
 static func apply_image_button_ref(button: Button, asset_ref: Dictionary, tone: StringName, token: StringName, icon_token: StringName = &"button", padding: int = 8, texture_margin: int = 16) -> void:
@@ -911,20 +1401,7 @@ static func _texture_style_box(role: StringName, padding: int, texture_margin: i
 	var texture := art21_texture(role)
 	if texture == null:
 		texture = art19_texture(role)
-	if texture == null:
-		return null
-	var style := StyleBoxTexture.new()
-	style.texture = texture
-	style.texture_margin_left = texture_margin
-	style.texture_margin_top = texture_margin
-	style.texture_margin_right = texture_margin
-	style.texture_margin_bottom = texture_margin
-	style.content_margin_left = padding
-	style.content_margin_top = padding
-	style.content_margin_right = padding
-	style.content_margin_bottom = padding
-	style.draw_center = true
-	return style
+	return style_box_from_texture(texture, padding, texture_margin)
 
 
 static func _texture_margin_for(role: StringName) -> int:
@@ -942,7 +1419,7 @@ static func _texture_margin_for(role: StringName) -> int:
 		&"button_selected_tab":
 			return 14
 		&"button_dark":
-			return 28
+			return 14
 		&"bar_summary":
 			return 18
 		_:

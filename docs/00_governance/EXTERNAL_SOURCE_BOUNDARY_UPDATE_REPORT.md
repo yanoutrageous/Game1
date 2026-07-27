@@ -1,5 +1,12 @@
 # External Source Boundary Update Report
 
+> 历史冻结说明（2026-07-26）：本文记录 2026-06-23 当时机器上的
+> `D:\AGAME1` 布局，仅作为执行历史保留；其中“当前”措辞不得再解释为本机路径权威。
+> 现行仓库、Godot 与文档入口必须从活动工作树动态解析，Base Docs / Connection
+> 旧路径只按来源登记使用，具体边界以 `AGENTS.md`、
+> `docs/00_governance/SOURCE_REGISTRY.md` 和
+> `docs/70_sources/base_docs/BASE_DOCS_SOURCE_REGISTRY.md` 为准。
+
 文档状态：执行记录
 适用范围：Base Docs 归档来源与 Connection 并行交接边界校准
 执行日期：2026/06/23

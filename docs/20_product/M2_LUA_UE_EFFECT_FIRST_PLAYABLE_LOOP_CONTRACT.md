@@ -10,7 +10,7 @@
 
 ## Planning / Prototype Sources
 
-- `D:\AGAME1\Base Docs` latest planning drafts, read-only.
+- `sources/base/原始策划案/` registered byte-exact planning originals, read-only; exact identities are in `sources/base/manifests/ORIGINAL_PLANNING_MANIFEST.csv`.
 - Lua prototype code, read-only reference for HP, pressure, black coin, inventory, event, combat, extraction, and meta settlement behavior.
 - UE prototype code, read-only reference for command flow, loot rules, settlement, and meta progress.
 

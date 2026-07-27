@@ -65,6 +65,19 @@ static func start_from_payload(payload: Dictionary, command_bus, admission_check
 	}
 
 
+static func transition_attempt_is_suppressed(
+	direction: Vector2i,
+	rejected_direction: Vector2i,
+	cooldown_remaining: float,
+	awaiting_release: bool
+) -> bool:
+	return (
+		direction != Vector2i.ZERO
+		and direction == rejected_direction
+		and (awaiting_release or cooldown_remaining > 0.0)
+	)
+
+
 static func _run_admission_check(admission_check: Callable) -> Dictionary:
 	if admission_check.is_null():
 		return {"ok": true, "status": &"no_admission_check"}

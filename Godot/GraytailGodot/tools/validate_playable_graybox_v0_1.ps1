@@ -36,11 +36,20 @@ function Test-FileContains {
 
 Test-FileContains $ProjectRoot 'scripts/core/run/run_scene.gd' @(
     'ModeEntryPanel',
-    'Start Tutorial 5x5',
-    'Start Standard 10x10',
-    'Controls: W/A/S/D or arrows move',
-    'command_bus.dispatch(&"start_tutorial_run")',
-    'command_bus.dispatch(&"start_standard_run")'
+    '_show_deploy_shell',
+    'deploy_shell_panel.call("_on_primary_action_pressed")',
+    '_start_run_from_route',
+    'command_bus.dispatch(command_name, payload)'
+)
+
+Test-FileContains $ProjectRoot 'scripts/core/content/m7_content_catalog.gd' @(
+    '"tutorial_5x5"',
+    '"classic_7x7_simple"'
+)
+
+Test-FileContains $ProjectRoot 'scripts/ui/deploy_prep/deploy_map_projection.gd' @(
+    'map_id == "tutorial_5x5"',
+    'const SCALE_IDS := [&"5x5", &"7x7", &"10x10", &"13x13"]'
 )
 
 Test-FileContains $ProjectRoot 'scripts/core/command/command_bus.gd' @(
@@ -115,6 +124,6 @@ if ($Failures.Count -gt 0) {
 
 Write-Output 'PLAYABLE_GRAYBOX_V0_1_VALIDATION=PASS'
 Write-Output "PROJECT_ROOT=$ProjectRoot"
-Write-Output 'TUTORIAL_MANUAL_START=PASS'
-Write-Output 'STANDARD_MANUAL_START=PASS'
+Write-Output 'TUTORIAL_DEPLOY_MAP_ROUTE=PASS'
+Write-Output 'STANDARD_DEPLOY_ROUTE=PASS'
 Write-Output 'HUD_MINIMAP_RESULT_READABLE=PASS'

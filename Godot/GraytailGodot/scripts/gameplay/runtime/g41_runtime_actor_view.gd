@@ -3,12 +3,15 @@ class_name G41RuntimeActorView
 
 const EnemyVisualCatalog := preload("res://scripts/presentation/art24/art24_enemy_visual_catalog.gd")
 const ENEMY_SHADOW_TEXTURE := preload("res://assets/ui/art21/main_menu/scene/character/shadow.png")
+const PROJECTILE_TEXTURE := preload("res://assets/art24/fx/ue_bat_bolt.png")
 const Art24MotionSettingsScript := preload("res://scripts/presentation/art24/art24_motion_settings.gd")
-const APPEARANCE_DURATION := 0.18
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const APPEARANCE_DURATION := 0.32
 const APPEARANCE_FIRST_FRAME_ALPHA := 0.72
 const APPEARANCE_FIRST_FRAME_SCALE := 0.72
 const APPEARANCE_LIFT_PIXELS := 9.0
 const ENTRY_CUE_COLOR := Color(1.0, 0.68, 0.26, 0.42)
+const PROJECTILE_SOURCE_FORWARD := Vector2.UP
 
 var actor_id: String = ""
 var subject: StringName = &"unknown"
@@ -17,6 +20,8 @@ var visual_state: StringName = &"idle"
 var visual_variant: StringName = &"base"
 var max_hp: int = 1
 var hp: int = 1
+var enemy_name: String = ""
+var enemy_power: int = -1
 var placeholder_color := Color(0.78, 0.30, 0.30, 1.0)
 var contract_nodes_ready: bool = false
 var last_visual_signature := ""
@@ -37,11 +42,15 @@ var placeholder_polygon: Polygon2D
 var state_label: Label
 var health_fill: ColorRect
 var health_background: ColorRect
+var identity_label: Label
 var cached_visual_scale := 1.0
 var cached_visual_offset := Vector2.ZERO
 var cached_shadow_scale := Vector2.ONE
 var cached_shadow_position := Vector2.ZERO
 var enemy_visual_enabled := false
+var projectile_visual_radius := 0.0
+
+const ENEMY_STATUS_Z := 80
 
 
 func configure(next_subject: StringName, snapshot: Dictionary) -> void:
@@ -59,6 +68,8 @@ func configure(next_subject: StringName, snapshot: Dictionary) -> void:
 	visual_variant = StringName(snapshot.get("visual_variant", &"base"))
 	max_hp = maxi(1, int(snapshot.get("max_hp", max_hp)))
 	hp = clampi(int(snapshot.get("hp", hp)), 0, max_hp)
+	enemy_name = String(snapshot.get("enemy_name", ""))
+	enemy_power = int(snapshot.get("enemy_power", -1))
 	position = local_to_world(Vector2(snapshot.get("pos", Vector2(0.5, 0.5))))
 	if not contract_nodes_ready:
 		_ensure_contract_nodes()
@@ -92,7 +103,15 @@ func configure(next_subject: StringName, snapshot: Dictionary) -> void:
 	_ensure_enemy_visual()
 	if starts_enemy_appearance:
 		_start_appearance_envelope()
-	var signature := "%s|%s|%s|%d|%d" % [String(subject), String(visual_state), String(visual_variant), hp, max_hp]
+	var signature := "%s|%s|%s|%d|%d|%s|%d" % [
+		String(subject),
+		String(visual_state),
+		String(visual_variant),
+		hp,
+		max_hp,
+		enemy_name,
+		enemy_power,
+	]
 	if signature != last_visual_signature:
 		last_visual_signature = signature
 		_apply_placeholder()
@@ -102,13 +121,16 @@ func configure(next_subject: StringName, snapshot: Dictionary) -> void:
 func configure_projectile(snapshot: Dictionary) -> void:
 	var previous_subject := subject
 	var previous_state := visual_state
+	var previous_radius := projectile_visual_radius
 	subject = &"projectile"
 	enemy_visual_enabled = false
 	actor_id = String(snapshot.get("projectile_id", actor_id))
 	visual_state = StringName(snapshot.get("state", &"active"))
+	projectile_visual_radius = maxf(0.0, float(snapshot.get("visual_radius", snapshot.get("radius", 0.0))))
 	position = local_to_world(Vector2(snapshot.get("pos", Vector2(0.5, 0.5))))
 	if not contract_nodes_ready:
 		_ensure_contract_nodes()
+	_ensure_projectile_visual(snapshot)
 	if previous_subject != subject:
 		visual_key = G41RuntimeVisualContract.visual_key_for(subject)
 		visual_variant = &"base"
@@ -120,12 +142,23 @@ func configure_projectile(snapshot: Dictionary) -> void:
 	elif visual_state != previous_state and state_label != null:
 		state_label.text = String(visual_state)
 		state_label.visible = false
+	if not is_equal_approx(previous_radius, projectile_visual_radius):
+		_apply_projectile_geometry(snapshot)
+	_apply_placeholder()
 
 
 func _ready() -> void:
 	_ensure_contract_nodes()
 	_apply_placeholder()
-	last_visual_signature = "%s|%s|%s|%d|%d" % [String(subject), String(visual_state), String(visual_variant), hp, max_hp]
+	last_visual_signature = "%s|%s|%s|%d|%d|%s|%d" % [
+		String(subject),
+		String(visual_state),
+		String(visual_variant),
+		hp,
+		max_hp,
+		enemy_name,
+		enemy_power,
+	]
 	set_process(true)
 
 
@@ -240,6 +273,13 @@ func _ensure_contract_nodes() -> void:
 		var anchor := Node2D.new()
 		anchor.name = String(anchor_name)
 		add_child(anchor)
+	var health_bar_anchor := get_node_or_null("HealthBarAnchor") as Node2D
+	if health_bar_anchor != null:
+		# Combat status is screen-readable HUD, not world decoration. Keep it
+		# above slash/telegraph and foreground props even when the enemy sprite
+		# itself is depth-sorted behind the altar or a doorway.
+		health_bar_anchor.z_as_relative = false
+		health_bar_anchor.z_index = ENEMY_STATUS_Z
 	if visual_root.get_node_or_null("ProgramPlaceholder") == null:
 		var polygon := Polygon2D.new()
 		polygon.name = "ProgramPlaceholder"
@@ -247,16 +287,35 @@ func _ensure_contract_nodes() -> void:
 	if get_node_or_null("HealthBarAnchor/HealthBackground") == null:
 		var background := ColorRect.new()
 		background.name = "HealthBackground"
-		background.position = Vector2(-16, -23)
-		background.size = Vector2(32, 4)
-		background.color = Color(0.12, 0.07, 0.08, 0.90)
+		background.position = Vector2(-36, -30)
+		background.size = Vector2(72, 7)
+		background.color = Color(0.035, 0.026, 0.024, 0.96)
 		get_node("HealthBarAnchor").add_child(background)
 		var fill := ColorRect.new()
 		fill.name = "HealthFill"
-		fill.position = Vector2(-15, -22)
-		fill.size = Vector2(30, 2)
-		fill.color = Color(0.85, 0.20, 0.22, 1.0)
+		fill.position = Vector2(-35, -29)
+		fill.size = Vector2(70, 5)
+		fill.color = Color(0.88, 0.24, 0.20, 1.0)
 		get_node("HealthBarAnchor").add_child(fill)
+	if get_node_or_null("HealthBarAnchor/IdentityLabel") == null:
+		var identity := Label.new()
+		identity.name = "IdentityLabel"
+		identity.position = Vector2(-48, -48)
+		identity.size = Vector2(96, 15)
+		identity.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		identity.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		identity.autowrap_mode = TextServer.AUTOWRAP_OFF
+		identity.clip_text = false
+		identity.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		Art10UISkinKitScript.apply_composition_label(
+			identity,
+			&"status",
+			10,
+			Color(0.96, 0.86, 0.58, 1.0)
+		)
+		identity.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
+		identity.add_theme_constant_override("outline_size", 3)
+		get_node("HealthBarAnchor").add_child(identity)
 	if get_node_or_null("PromptAnchor/StateLabel") == null:
 		var label := Label.new()
 		label.name = "StateLabel"
@@ -269,6 +328,7 @@ func _ensure_contract_nodes() -> void:
 	state_label = get_node_or_null("PromptAnchor/StateLabel") as Label
 	health_fill = get_node_or_null("HealthBarAnchor/HealthFill") as ColorRect
 	health_background = get_node_or_null("HealthBarAnchor/HealthBackground") as ColorRect
+	identity_label = get_node_or_null("HealthBarAnchor/IdentityLabel") as Label
 	contract_nodes_ready = true
 
 
@@ -287,7 +347,16 @@ func _apply_placeholder() -> void:
 		health_background.visible = show_health
 	if health_fill != null:
 		health_fill.visible = show_health
-		health_fill.size.x = 30.0 * float(hp) / float(max_hp)
+		var inner_width := _enemy_health_bar_width() - 2.0
+		health_fill.size.x = inner_width * float(hp) / float(max_hp)
+	if identity_label != null:
+		identity_label.visible = show_health and enemy_power >= 0 and not enemy_name.is_empty()
+		if identity_label.visible:
+			identity_label.text = (
+				"%s  战力 %d" % [enemy_name, enemy_power]
+				if subject != &"slimeling"
+				else "幼体  %d" % enemy_power
+			)
 	_apply_enemy_health_position()
 
 
@@ -325,6 +394,45 @@ func _ensure_enemy_visual() -> void:
 	art_sprite = visual_root.get_node_or_null("ArtVisual") as Sprite2D
 	if placeholder_polygon != null:
 		placeholder_polygon.visible = false
+
+
+func _ensure_projectile_visual(snapshot: Dictionary) -> void:
+	var visual_root := get_node_or_null("VisualRoot") as Node2D
+	if visual_root == null:
+		return
+	if visual_root.get_node_or_null("ArtVisual") == null:
+		var sprite := Sprite2D.new()
+		sprite.name = "ArtVisual"
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		visual_root.add_child(sprite)
+	art_sprite = visual_root.get_node_or_null("ArtVisual") as Sprite2D
+	if art_sprite == null:
+		return
+	art_sprite.texture = PROJECTILE_TEXTURE
+	art_sprite.visible = true
+	art_sprite.modulate = Color.WHITE
+	last_texture_path = PROJECTILE_TEXTURE.resource_path
+	_apply_projectile_geometry(snapshot)
+	if placeholder_polygon != null:
+		placeholder_polygon.visible = false
+
+
+func _apply_projectile_geometry(snapshot: Dictionary) -> void:
+	if art_sprite == null or art_sprite.texture == null:
+		return
+	var radius_pixels := G41RuntimeLayout.local_size_to_world(
+		Vector2(projectile_visual_radius, projectile_visual_radius)
+	)
+	var diameter := maxf(4.0, radius_pixels.x * 2.0)
+	var source_size := art_sprite.texture.get_size()
+	var uniform_scale := diameter / maxf(1.0, maxf(source_size.x, source_size.y))
+	art_sprite.scale = Vector2.ONE * uniform_scale
+	art_sprite.position = Vector2.ZERO
+	var velocity := Vector2(snapshot.get("velocity", Vector2.ZERO))
+	if velocity.length_squared() > 0.000001:
+		art_sprite.rotation = PROJECTILE_SOURCE_FORWARD.angle_to(velocity.normalized())
+	else:
+		art_sprite.rotation = 0.0
 
 
 func _apply_enemy_visual() -> void:
@@ -460,10 +568,22 @@ func _apply_enemy_health_position() -> void:
 	if not EnemyVisualCatalog.supports(subject):
 		return
 	var health_y := EnemyVisualCatalog.health_bar_y(subject)
+	var bar_width := _enemy_health_bar_width()
+	var bar_height := 6.0 if subject == &"slimeling" else 7.0
 	if health_background != null:
-		health_background.position.y = health_y
+		health_background.position = Vector2(-bar_width * 0.5, health_y)
+		health_background.size = Vector2(bar_width, bar_height)
 	if health_fill != null:
-		health_fill.position.y = health_y + 1.0
+		health_fill.position = Vector2(-bar_width * 0.5 + 1.0, health_y + 1.0)
+		health_fill.size.y = bar_height - 2.0
+	if identity_label != null:
+		var identity_width := 60.0 if subject == &"slimeling" else 96.0
+		identity_label.position = Vector2(-identity_width * 0.5, health_y - 17.0)
+		identity_label.size = Vector2(identity_width, 15.0)
+
+
+func _enemy_health_bar_width() -> float:
+	return 54.0 if subject == &"slimeling" else 72.0
 
 
 func _ellipse_points(radius_x: float, radius_y: float, point_count: int) -> PackedVector2Array:
@@ -485,7 +605,10 @@ func _shape_for_subject() -> PackedVector2Array:
 		&"drone":
 			return PackedVector2Array([Vector2(-14, -12), Vector2(14, -12), Vector2(18, 0), Vector2(14, 12), Vector2(-14, 12), Vector2(-18, 0)])
 		&"projectile":
-			return PackedVector2Array([Vector2(-5, 0), Vector2(0, -5), Vector2(5, 0), Vector2(0, 5)])
+			var radius_pixels := G41RuntimeLayout.local_size_to_world(
+				Vector2(projectile_visual_radius, projectile_visual_radius)
+			)
+			return _ellipse_points(maxf(2.0, radius_pixels.x), maxf(2.0, radius_pixels.y), 16)
 	return PackedVector2Array([Vector2(-10, -10), Vector2(10, -10), Vector2(10, 10), Vector2(-10, 10)])
 
 

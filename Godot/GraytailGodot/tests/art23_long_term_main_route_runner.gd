@@ -78,17 +78,74 @@ func _run() -> void:
 	_check(long_term.get_node_or_null("LongTermSceneCleanPlate") is TextureRect, "actual route is missing ART23 clean room")
 	_check(long_term.get_node_or_null("LongTermProfileFrame") is TextureRect, "actual route is missing fixed profile frame")
 	_check(long_term.get_node_or_null("LongTermModuleGroup/LongTermModuleFurniture") is TextureRect, "actual route is missing module furniture")
-	_check(long_term.get("tab_buttons").size() == 5, "actual route does not expose five authorised primary modules")
+	_check(long_term.get("tab_buttons").size() == 6, "actual route does not expose six authorised primary modules")
 	_check(not long_term.get("tab_buttons").has(&"gacha"), "actual route still exposes unauthorised gacha")
 	_check(long_term.get("secondary_buttons").size() == 3, "actual default task archive route does not expose three secondary pages")
 	_check(StringName(long_term.get("displayed_module_id")) == &"task_archive", "actual long-term route did not select task_archive")
 	_check(StringName(last_payload.get("module_id", &"")) == &"task_archive", "main-menu route payload was not normalized to task_archive")
 	_check(StringName(last_payload.get("entry_id", &"")) == &"task_archive", "main-menu route entry alias was not normalized")
+	await _check_ui_scale_production_chain(run_scene, app_shell, long_term)
 	_check_meta_transaction_production_chain(run_scene, app_shell, long_term)
 
 	main.queue_free()
 	await _frames(4)
 	_finish()
+
+
+func _check_ui_scale_production_chain(run_scene: Node, app_shell: Control, long_term: Control) -> void:
+	var content_panel := long_term.get_node_or_null("LongTermModuleGroup/LongTermContentDetailBlock") as Control
+	var nav_button := long_term.get_node_or_null("LongTermNavMainButton") as Button
+	var profile_heading := long_term.get_node_or_null("LongTermProfileHeading") as Label
+	_check(content_panel != null and nav_button != null and profile_heading != null, "Long-term scale probe controls are missing")
+	if content_panel == null or nav_button == null or profile_heading == null:
+		return
+	var base_content_position := content_panel.position
+	var base_content_size := content_panel.size
+	var base_canvas_scale := root.content_scale_factor
+	var signatures: Array[String] = []
+	var nav_sizes: Array[int] = []
+	var heading_sizes: Array[int] = []
+	for factor in [1.0, 1.25, 1.5]:
+		_check(bool(run_scene.call("set_ui_scale_factor", factor)), "RunScene rejected supported UI scale %.2f" % factor)
+		await _frames(2)
+		_check(is_equal_approx(float(long_term.call("get_ui_scale_factor")), factor), "LongTermShell did not consume UI scale %.2f" % factor)
+		_check(is_equal_approx(float(app_shell.call("get_ui_scale_factor")), factor), "AppShell lost UI scale %.2f" % factor)
+		_check(is_equal_approx(root.content_scale_factor, base_canvas_scale), "UI scale %.2f changed the world/canvas scale" % factor)
+		_check(content_panel.position == base_content_position and content_panel.size == base_content_size, "UI scale %.2f changed fixed long-term composition geometry" % factor)
+		var card_buttons := long_term.get("long_term_card_buttons") as Array
+		var first_card := card_buttons[0] as Button if not card_buttons.is_empty() else null
+		var card_title := first_card.get_node_or_null("ContentTitle") as Label if first_card != null else null
+		_check(card_title != null, "Long-term card title disappeared at UI scale %.2f" % factor)
+		var nav_size := nav_button.get_theme_font_size("font_size")
+		var heading_size := profile_heading.get_theme_font_size("font_size")
+		var card_title_size := card_title.get_theme_font_size("font_size") if card_title != null else -1
+		nav_sizes.append(nav_size)
+		heading_sizes.append(heading_size)
+		signatures.append("%d:%d:%d" % [nav_size, heading_size, card_title_size])
+		_check_long_term_text_fit(long_term, factor)
+	_check(signatures[0] != signatures[1] and signatures[1] != signatures[2] and signatures[0] != signatures[2], "Long-term UI scale produced an identical visible font signature")
+	_check(nav_sizes[0] < nav_sizes[1] and nav_sizes[1] <= nav_sizes[2], "Long-term navigation copy did not scale monotonically")
+	_check(heading_sizes[0] < heading_sizes[1] and heading_sizes[1] <= heading_sizes[2], "Long-term profile heading did not scale monotonically")
+	_check(bool(run_scene.call("set_ui_scale_factor", 1.0)), "RunScene could not restore default UI scale after the probe")
+	await _frames(2)
+
+
+func _check_long_term_text_fit(long_term: Control, factor: float) -> void:
+	var pending: Array[Node] = [long_term]
+	while not pending.is_empty():
+		var node: Node = pending.pop_back()
+		for child in node.get_children():
+			pending.append(child)
+		var control := node as Control
+		if control == null or not control.has_meta("long_term_base_font_size"):
+			continue
+		if control.has_method("get_ui_scale_factor") and control.name.begins_with("LongTermCard_"):
+			continue
+		var fit_value: Variant = control.get_meta("runtime_text_fit", {})
+		var fit := fit_value as Dictionary if fit_value is Dictionary else {}
+		_check(not fit.is_empty(), "%s has no runtime text-fit evidence at %.2f" % [control.name, factor])
+		_check(bool(fit.get("fits", false)), "%s does not fit its authored rect at %.2f" % [control.name, factor])
+		_check(is_equal_approx(float(control.get_meta("runtime_ui_scale_factor", 0.0)), factor), "%s did not receive UI scale %.2f" % [control.name, factor])
 
 
 func _check_meta_transaction_production_chain(run_scene: Node, app_shell: Control, long_term: Control) -> void:
@@ -150,7 +207,7 @@ func _on_page_changed(page_id: StringName, payload: Dictionary) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=5 canonical=task_archive")
+		print("ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=6 canonical=task_archive")
 		quit(0)
 		return
 	for failure in failures:

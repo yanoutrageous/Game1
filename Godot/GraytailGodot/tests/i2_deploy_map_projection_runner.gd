@@ -7,6 +7,7 @@ const RunStartConfigScript := preload("res://scripts/core/run/run_start_config.g
 const RunConfigScript := preload("res://scripts/core/run/run_config.gd")
 
 const MAP_IDS := [
+	"tutorial_5x5",
 	"classic_7x7_simple",
 	"classic_7x7_normal",
 	"classic_10x10_easy",
@@ -33,7 +34,7 @@ func _run() -> void:
 
 
 func _test_exact_catalog_and_projection() -> void:
-	_check(M7ContentCatalogScript.map_definitions().size() == 8, "catalog_count")
+	_check(M7ContentCatalogScript.map_definitions().size() == 9, "catalog_count")
 	for map_id in MAP_IDS:
 		var definition := M7ContentCatalogScript.map_definition_exact(map_id)
 		_check(not definition.is_empty(), "exact_missing:%s" % map_id)
@@ -50,7 +51,7 @@ func _test_exact_catalog_and_projection() -> void:
 	_check(simple.get("difficulty") != easy.get("difficulty"), "simple_collapsed_into_easy")
 
 	var catalog := DeployMapProjectionScript.project_catalog(MAP_IDS)
-	_check(catalog.size() == 8, "projection_count")
+	_check(catalog.size() == 9, "projection_count")
 	var projected_ids: Array[String] = []
 	var page_ids := {}
 	for projection in catalog:
@@ -64,9 +65,9 @@ func _test_exact_catalog_and_projection() -> void:
 	_check(projected_ids == MAP_IDS, "projection_id_order_or_content")
 	_check(page_ids.keys() == [&"deploy_prep"], "projection_added_route_page")
 	var groups := DeployMapProjectionScript.scale_groups(MAP_IDS)
-	_check(groups.size() == 3, "scale_group_count")
-	var expected_counts := [2, 3, 3]
-	var expected_scales := [&"7x7", &"10x10", &"13x13"]
+	_check(groups.size() == 4, "scale_group_count")
+	var expected_counts := [1, 2, 3, 3]
+	var expected_scales := [&"5x5", &"7x7", &"10x10", &"13x13"]
 	for index in range(groups.size()):
 		var group := groups[index]
 		_check(StringName(group.get("scale_id", &"")) == expected_scales[index], "scale_order:%d" % index)
@@ -74,7 +75,7 @@ func _test_exact_catalog_and_projection() -> void:
 
 	var base := DeployConfigScript.default_config(1, {"unlocked_map_ids": MAP_IDS})
 	var view := DeployMapProjectionScript.project(base)
-	_check((view.get("scale_options", []) as Array).size() == 3, "view_scale_options")
+	_check((view.get("scale_options", []) as Array).size() == 4, "view_scale_options")
 	_check((view.get("difficulty_options", []) as Array).size() == 2, "view_selected_scale_difficulties")
 	_check(StringName(view.get("fallback_policy", &"")) == &"fail_closed", "view_fallback_policy")
 
@@ -135,6 +136,7 @@ func _test_fail_closed_selection() -> void:
 	_assert_rejected_without_mutation(active, "classic_10x10_standard", &"active_run_locked", "active")
 
 	var no_maps := DeployConfigScript.default_config(5, {"unlocked_map_ids": []})
+	no_maps["unlocked_map_ids"] = []
 	_assert_rejected_without_mutation(no_maps, "classic_7x7_simple", &"no_maps_available", "empty")
 	var empty_view := DeployMapProjectionScript.project(no_maps)
 	_check(not bool(empty_view.get("selection_unlocked", true)), "empty_projection_unlocked")
@@ -190,7 +192,7 @@ func _check(condition: bool, message: String) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("I2_DEPLOY_MAP_PROJECTION=PASS maps=8 scales=3 round_trip=8 route_pages=1 fallback=fail_closed")
+		print("I2_DEPLOY_MAP_PROJECTION=PASS maps=9 scales=4 round_trip=9 route_pages=1 tutorial=map_mode route_pages=1 fallback=fail_closed")
 		quit(0)
 		return
 	for failure in failures:

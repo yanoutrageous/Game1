@@ -32,6 +32,7 @@ git diff --check
 git status --short
 git diff --name-only
 rg -n "start_tutorial_requested|start_standard_requested|start_tutorial_run|start_standard_run|command_bus\\.dispatch|RunContext|Encounter|Combat|fight_current_enemy|fight_enemy" Godot/GraytailGodot/scripts/ui/app_shell Godot/GraytailGodot/scripts/ui/main_menu
+# I3R supersession: start_tutorial_run must have zero production hits; tutorial_5x5 enters through start_standard_run.
 rg -n "NavigationIntent|PageRouter|MainMenuShell|deploy_placeholder|long_term_placeholder|exit_confirm" Godot/GraytailGodot/scripts docs Godot/GraytailGodot/docs
 rg -n "_show_main_menu|_show_deploy_shell|_show_long_term_shell|_show_settings_shell|_show_run_screen|G9ShellPanel|AppShell" Godot/GraytailGodot/scripts/core/run/run_scene.gd
 ```

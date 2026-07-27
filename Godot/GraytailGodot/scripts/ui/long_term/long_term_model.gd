@@ -6,6 +6,8 @@ const LongTermSnapshotScript := preload("res://scripts/ui/long_term/long_term_sn
 const LongTermTabModelScript := preload("res://scripts/ui/long_term/long_term_tab_model.gd")
 const CodexLiteModelScript := preload("res://scripts/ui/codex_lite/codex_lite_model.gd")
 const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
+const M7TalentCatalogScript := preload("res://scripts/core/progression/m7_talent_catalog.gd")
+const ResultPresentationModelScript := preload("res://scripts/ui/result/result_presentation_model.gd")
 
 
 static func build(selected_module_id: StringName = &"task_archive", source: StringName = &"long_term_shell") -> Dictionary:
@@ -70,6 +72,7 @@ static func build_from_snapshot(selected_module_id: StringName, app_snapshot: Di
 	var cards_by_group := _m7_cards_by_group(meta_summary)
 	model["m7_cards_by_group"] = cards_by_group
 	model["research_tree_contract"] = _research_tree_contract(cards_by_group.get("research/unlock_interface", []))
+	model["talent_tree_contract"] = _talent_tree_contract(cards_by_group.get("talent/tree", []), meta_summary)
 	model["m7_red_dot_state"] = (meta_summary.get("red_dot_state", {}) as Dictionary).duplicate(true)
 	model["m7_real_module"] = _contains_module(model.get("modules", []), requested_module_id)
 	var panel: Dictionary = model.get("placeholder_panel", {})
@@ -100,11 +103,12 @@ static func _overview_summary(modules: Array) -> Dictionary:
 		"title": "长期系统档案",
 		"state": "foundation",
 		"module_count": modules.size(),
-		"message": "当前展示任务档案、图鉴、研究、个人资历和收藏外观入口。",
+		"message": "当前展示任务档案、图鉴、研究、天赋、个人资历和收藏外观入口。",
 		"modules": [
 			"任务档案",
 			"图鉴",
 			"研究",
+			"天赋",
 			"个人资历",
 			"收藏 / 外观",
 		],
@@ -112,6 +116,11 @@ static func _overview_summary(modules: Array) -> Dictionary:
 
 
 static func _placeholder_panel(module: Dictionary, content_preview: Dictionary = {}) -> Dictionary:
+	var module_state := StringName(module.get("state", &"preview"))
+	var landed := module_state in [
+		LongTermTabModelScript.STATE_AVAILABLE,
+		LongTermTabModelScript.STATE_ARCHIVE,
+	]
 	return {
 		"title": module.get("title", ""),
 		"state": module.get("state", &"preview"),
@@ -135,7 +144,7 @@ static func _placeholder_panel(module: Dictionary, content_preview: Dictionary =
 		"art_slots_preview": (content_preview.get("art_slots_preview", []) as Array).duplicate(true),
 		"read_only": true,
 		"display_only": true,
-		"preview": true,
+		"preview": not landed,
 	}
 
 
@@ -159,38 +168,57 @@ static func _history_preview_panel(snapshot: Dictionary) -> Dictionary:
 
 
 static func _profile_runtime_panel(meta_summary: Dictionary = {}, latest_result: Dictionary = {}) -> Dictionary:
+	var level := maxi(1, int(meta_summary.get("profile_level", 1)))
+	var exp_value := maxi(0, int(meta_summary.get("profile_exp", 0)))
+	var run_count := maxi(0, int(meta_summary.get("run_count", 0)))
+	var extract_count := clampi(int(meta_summary.get("extract_count", 0)), 0, run_count)
+	var history_records := _array(meta_summary.get("history_records", []))
+	var titles := _array(meta_summary.get("titles", []))
+	var current_title := str(titles.back()) if not titles.is_empty() else "回收员"
+	var next_level_exp := -1
+	for definition in M7ContentCatalogScript.profile_levels():
+		if int(definition.get("level", 1)) > level:
+			next_level_exp = int(definition.get("exp", 0))
+			break
 	return {
-		"title": "M2 MetaProgress / History consumer",
-		"profile_level": maxi(1, int(meta_summary.get("profile_level", 1))),
-		"profile_exp": maxi(0, int(meta_summary.get("profile_exp", 0))),
+		"title": "角色档案",
+		"profile_level": level,
+		"profile_exp": exp_value,
+		"current_title": current_title,
+		"next_level_exp": next_level_exp,
+		"exp_to_next_level": maxi(0, next_level_exp - exp_value) if next_level_exp >= 0 else 0,
 		"gold": int(meta_summary.get("gold", 0)),
 		"long_term_gold": int(meta_summary.get("long_term_gold", meta_summary.get("gold", 0))),
-		"run_count": int(meta_summary.get("run_count", 0)),
-		"extract_count": int(meta_summary.get("extract_count", 0)),
+		"run_count": run_count,
+		"extract_count": extract_count,
+		"extract_rate_percent": int(round(float(extract_count) * 100.0 / float(run_count))) if run_count > 0 else 0,
 		"fail_count": int(meta_summary.get("fail_count", 0)),
 		"abandon_count": int(meta_summary.get("abandon_count", 0)),
-		"history_record_count": int(meta_summary.get("history_record_count", 0)),
+		"history_record_count": int(meta_summary.get("history_record_count", history_records.size())),
 		"warehouse_items_count": int(meta_summary.get("warehouse_items_count", 0)),
 		"latest_result_id": str(latest_result.get("result_id", "")),
 		"latest_outcome": str(latest_result.get("outcome", "")),
-		"titles": (meta_summary.get("titles", []) as Array).duplicate(),
-		"badges": (meta_summary.get("badges", []) as Array).duplicate(),
-		"boundary": "长期页读取已提交的结算历史与 M7 局外进度；研究和领奖通过独立事务写入，不重算结算。",
+		"titles": titles,
+		"badges": _array(meta_summary.get("badges", [])),
+		"authority": &"meta_progress_summary",
+		"boundary": "这里只回看已经保存的角色成长与探索档案；浏览不会改变任何进度。",
 		"read_only": true,
 		"display_only": true,
-		"preview": true,
+		"preview": false,
 		"no_persistence": true,
 	}
 
 
 static func _m7_cards_by_group(meta: Dictionary) -> Dictionary:
 	var research_cards := _research_cards(meta)
+	var talent_cards := _talent_cards(meta)
 	var result := {
 		"task_archive/task": _goal_cards(meta, "task", meta.get("task_definitions", []), meta.get("task_states", {})),
 		"task_archive/achievement": _goal_cards(meta, "achievement", meta.get("achievement_definitions", []), meta.get("achievement_states", {})),
 		"task_archive/commission_record": _commission_cards(meta),
 		"research/unlock_interface": research_cards.duplicate(true),
 		"research/research_entry": research_cards.duplicate(true),
+		"talent/tree": talent_cards,
 		"profile/qualification_level": _qualification_cards(meta),
 		"profile/history": _history_cards(meta.get("history_records", [])),
 		"profile/statistics": _statistics_cards(meta),
@@ -222,14 +250,25 @@ static func _goal_cards(meta: Dictionary, goal_kind: String, definitions_value: 
 		var reward: Dictionary = definition.get("reward", {})
 		var progress := int(state.get("progress", 0))
 		var target := int(state.get("target", 0))
-		var facts: Array[String] = []
+		var status_label := _goal_status_label(status)
+		var facts: Array[String] = [
+			"类型：%s" % ("任务" if goal_kind == "task" else "成就"),
+			"状态：%s" % status_label,
+		]
 		if target > 0:
 			facts.append("进度：%d / %d" % [mini(progress, target), target])
 		facts.append("奖励：%s" % _reward_text(reward))
+		match status:
+			"claimed":
+				facts.append("领取状态：奖励已领取")
+			"claimable":
+				facts.append("领取状态：可以领取")
+			_:
+				facts.append("领取方式：达成后手动领取")
 		var card := {
 			"id": goal_id,
 			"title": str(definition.get("display_name", goal_id)),
-			"state": _goal_status_label(status),
+			"state": status_label,
 			"description": str(definition.get("description", "")),
 			"facts": facts,
 			"sort_order": _goal_sort_order(status),
@@ -333,6 +372,66 @@ static func _research_cards(meta: Dictionary) -> Array[Dictionary]:
 	return cards
 
 
+static func _talent_cards(meta: Dictionary) -> Array[Dictionary]:
+	var source: Array = meta.get("talent_catalog", [])
+	if source.is_empty():
+		source = M7TalentCatalogScript.projection(meta)
+	var names_by_id := {}
+	for raw_node in source:
+		if raw_node is Dictionary:
+			names_by_id[str((raw_node as Dictionary).get("talent_id", ""))] = str((raw_node as Dictionary).get("display_name", ""))
+	var cards: Array[Dictionary] = []
+	for raw_node in source:
+		if raw_node is not Dictionary:
+			continue
+		var node := (raw_node as Dictionary).duplicate(true)
+		var talent_id := str(node.get("talent_id", ""))
+		var prerequisite_ids: Array = node.get("prerequisite_ids", [])
+		var prerequisite_names := PackedStringArray()
+		for raw_prerequisite in prerequisite_ids:
+			var prerequisite_id := str(raw_prerequisite)
+			prerequisite_names.append(str(names_by_id.get(prerequisite_id, prerequisite_id)))
+		var unlocked := bool(node.get("unlocked", false))
+		var available := bool(node.get("available", false))
+		var state := "已生效" if unlocked else ("可解锁" if available else "暂不可用")
+		var prerequisite_text := "无" if prerequisite_names.is_empty() else "、".join(prerequisite_names)
+		var card := {
+			"id": talent_id,
+			"title": "%s · %s" % [str(node.get("branch_label", "天赋")), str(node.get("display_name", talent_id))],
+			"state": state,
+			"description": str(node.get("reason", "当前节点不可用。")),
+			"facts": [
+				"分支层级：%s · 第 %d 层" % [str(node.get("branch_label", "")), int(node.get("tier", 1))],
+				"前置：%s" % prerequisite_text,
+				"消耗：%d 天赋点（当前 %d）" % [int(node.get("cost", 1)), int(node.get("current_talent_points", meta.get("talent_points", 0)))],
+				"精确效果：%s" % str(node.get("effect_label", "")),
+				"生效范围：确认出发后生成的新一局",
+			],
+			"presentation_kind": &"talent_unlock_node",
+			"tree_source": &"m7_talent_catalog",
+			"adds_talent_rules": true,
+			"talent_id": talent_id,
+			"branch_id": StringName(node.get("branch_id", &"")),
+			"tier": int(node.get("tier", 1)),
+			"prerequisite_ids": prerequisite_ids.duplicate(),
+			"reason_code": StringName(node.get("reason_code", &"talent_blocked")),
+			"effect_kind": StringName(node.get("effect_kind", &"")),
+			"effect_amount": int(node.get("effect_amount", 0)),
+			"effect_label": str(node.get("effect_label", "")),
+			"cost": int(node.get("cost", 1)),
+			"unlocked": unlocked,
+			"available": available,
+			"tree_depth": maxi(0, int(node.get("tier", 1)) - 1),
+			"tree_index": maxi(0, int(node.get("tier", 1)) - 1),
+			"tree_total": 2,
+		}
+		if available:
+			card["action"] = {"action": &"unlock_talent", "talent_id": talent_id}
+			card["action_label"] = "消耗 %d 点并解锁" % int(node.get("cost", 1))
+		cards.append(card)
+	return cards
+
+
 static func _research_catalog(meta: Dictionary) -> Array[Dictionary]:
 	var source: Array = meta.get("research_catalog", [])
 	if source.is_empty():
@@ -378,6 +477,34 @@ static func _research_tree_contract(cards_value: Variant) -> Dictionary:
 		"node_count": cards.size(),
 		"edge_count": edge_count,
 		"root_ids": root_ids,
+	}
+
+
+static func _talent_tree_contract(cards_value: Variant, meta: Dictionary) -> Dictionary:
+	var cards: Array = cards_value if cards_value is Array else []
+	var root_ids: Array[String] = []
+	var edge_count := 0
+	var branch_ids := {}
+	for raw_card in cards:
+		if raw_card is not Dictionary:
+			continue
+		var card: Dictionary = raw_card
+		branch_ids[StringName(card.get("branch_id", &""))] = true
+		if (card.get("prerequisite_ids", []) as Array).is_empty():
+			root_ids.append(str(card.get("id", "")))
+		else:
+			edge_count += 1
+	var talent_summary: Dictionary = meta.get("talent_summary", M7TalentCatalogScript.summary(meta))
+	return {
+		"source": &"m7_talent_catalog",
+		"presentation": &"talent_unlock_tree",
+		"adds_talent_rules": true,
+		"node_count": cards.size(),
+		"edge_count": edge_count,
+		"branch_count": branch_ids.size(),
+		"root_ids": root_ids,
+		"points_available": int(talent_summary.get("points_available", meta.get("talent_points", 0))),
+		"budget_total": int(talent_summary.get("budget_total", maxi(0, int(meta.get("profile_level", 1)) - 1))),
 	}
 
 
@@ -550,16 +677,65 @@ static func _history_cards(records_value: Variant) -> Array[Dictionary]:
 		if map_name.is_empty():
 			map_name = _map_display_name(str(record.get("map_config_id", record.get("map_id", ""))))
 		var outcome := str(record.get("outcome", "未知结局"))
+		var result_state := _history_result_state(outcome)
+		var reason_code := StringName(record.get("terminal_reason_code", &""))
+		var carried_items := _array(record.get("carried_equipment", [])) + _array(record.get("carried_consumables", []))
+		var extracted_items := _array(record.get("extracted_items", []))
+		var salvaged_items := _array(record.get("salvaged_items", []))
+		var lost_items := _array(record.get("lost_items", []))
+		var floor_items := _array(record.get("room_floor_lost_items", []))
+		var item_result_line := ""
+		if result_state == &"success":
+			item_result_line = "带回：%s；现场遗留：%s" % [
+				_history_item_summary(extracted_items),
+				_history_item_summary(floor_items),
+			]
+		else:
+			item_result_line = "保全：%s；未能带回：%s" % [
+				_history_item_summary(salvaged_items),
+				_history_item_summary(lost_items + floor_items),
+			]
+		var recorded_at := int(record.get("recorded_at_unix", 0))
+		var recorded_text := (
+			Time.get_datetime_string_from_unix_time(recorded_at, true)
+			if recorded_at > 0
+			else "未登记"
+		)
+		if recorded_at > 0 and recorded_text.length() > 16:
+			recorded_text = recorded_text.left(16)
+		var currency_line := (
+			"结算：黑资转化 %d；金币 +%d" % [
+				int(record.get("black_coin_converted", 0)),
+				int(record.get("gold_delta", 0)),
+			]
+			if result_state == &"success"
+			else "结算：黑资损失 %d；锁定收益 %d；金币 +%d" % [
+				int(record.get("black_coin_lost", 0)),
+				int(record.get("safe_yield_retained", 0)),
+				int(record.get("gold_delta", 0)),
+			]
+		)
 		cards.append({
 			"id": "profile_history_%s" % result_id,
 			"title": map_name if map_name != "" else "未命名探索",
 			"state": _outcome_label(outcome),
-			"description": "该条记录来自已经完成的探索；浏览不会改变历史。",
+			"description": ResultPresentationModelScript.reason_text_for(result_state, reason_code),
 			"facts": [
+				"记录时间：%s" % recorded_text,
 				"难度：%s" % str(record.get("difficulty_label", record.get("difficulty", "未登记"))),
 				"委托：%s" % _commission_display_name(str(record.get("commission_label", "")), str(record.get("commission_id", ""))),
-				"金币变化：%d" % int(record.get("gold_delta", 0)),
+				"携入：%s" % _history_item_summary(carried_items),
+				item_result_line,
+				currency_line,
 			],
+			"outcome": outcome,
+			"result_state": result_state,
+			"terminal_reason_code": reason_code,
+			"recorded_at_unix": recorded_at,
+			"carried_item_count": carried_items.size(),
+			"extracted_item_count": extracted_items.size(),
+			"salvaged_item_count": salvaged_items.size(),
+			"lost_item_count": lost_items.size() + floor_items.size(),
 		})
 	return cards
 
@@ -588,11 +764,45 @@ static func _commission_display_name(explicit_label: String, commission_id: Stri
 
 
 static func _outcome_label(outcome: String) -> String:
-	match outcome:
-		"success": return "成功撤离"
-		"failed", "failure": return "撤离失败"
-		"abandon", "abandoned": return "主动放弃"
+	match outcome.to_lower():
+		"success", "extracted", "training complete":
+			return "成功撤离"
+		"failed", "failure":
+			return "撤离失败"
+		"abandon", "abandoned":
+			return "主动放弃"
 	return outcome if outcome != "" else "未知结局"
+
+
+static func _history_result_state(outcome: String) -> StringName:
+	match outcome.to_lower():
+		"success", "extracted", "training complete":
+			return &"success"
+		"failed", "failure":
+			return &"failure"
+		"abandon", "abandoned":
+			return &"abandon"
+	return &"unknown"
+
+
+static func _history_item_summary(items: Array) -> String:
+	if items.is_empty():
+		return "无"
+	var names: Array[String] = []
+	for raw_item in items:
+		if not raw_item is Dictionary:
+			continue
+		var item := raw_item as Dictionary
+		var display_name := str(item.get("display_name", ""))
+		if display_name.is_empty():
+			var definition := M7ContentCatalogScript.item_definition(str(item.get("item_id", "")))
+			display_name = str(definition.get("display_name", "未命名物资"))
+		names.append(display_name)
+	var visible_count := mini(2, names.size())
+	var summary := "、".join(names.slice(0, visible_count))
+	if names.size() > visible_count:
+		summary += "等 %d 件" % names.size()
+	return summary if not summary.is_empty() else "%d 件物资" % items.size()
 
 
 static func _goal_sort_order(status: String) -> int:
@@ -671,6 +881,10 @@ static func _codex_kind(item: Dictionary) -> StringName:
 	if source == &"monster" or tags.has("monster") or tags.has("sample") or tags.has("trophy"):
 		return &"monster"
 	return &"collectible"
+
+
+static func _array(value: Variant) -> Array:
+	return (value as Array).duplicate(true) if value is Array else []
 
 
 static func _next_stage_notes(modules: Array) -> Array:

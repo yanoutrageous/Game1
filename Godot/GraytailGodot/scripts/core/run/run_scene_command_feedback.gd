@@ -23,3 +23,30 @@ static func apply_feedback(
 		inventory_panel.call("show_command_result", result)
 	if ground_loot_panel != null and ground_loot_panel.visible:
 		ground_loot_panel.call("show_command_result", result)
+
+
+static func route_combat_attack_resolution(
+	event: Dictionary,
+	event_id: String,
+	hit_cue_id: StringName,
+	emit_cue: Callable,
+	show_feedback: Callable
+) -> void:
+	if int(event.get("hit_count", 0)) > 0:
+		if emit_cue.is_valid():
+			emit_cue.call(hit_cue_id, event_id, event)
+		return
+	if not show_feedback.is_valid():
+		return
+	if int(event.get("blocked_count", 0)) > 0:
+		show_feedback.call({
+			"ok": false,
+			"status": &"attack_occluded",
+			"message": "攻击被障碍挡住。",
+		})
+		return
+	show_feedback.call({
+		"ok": false,
+		"status": &"attack_missed",
+		"message": "攻击未命中。",
+	})

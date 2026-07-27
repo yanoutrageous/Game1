@@ -19,6 +19,7 @@ const RUN_LEFT_MAX := 430.0
 const RUN_STATUS_WIDTH_LOW := 210.0
 const RUN_STATUS_WIDTH_STANDARD := 244.0
 const RUN_STATUS_WIDTH_HIGH := 270.0
+const RUN_STATUS_FRAME_ASPECT := 244.0 / 110.0
 
 const PAGE_ROOT_ORDER := [
 	&"BackgroundRoot",
@@ -185,6 +186,8 @@ static func run_root_for_node(node: Node) -> StringName:
 	var node_name := String(node.name)
 	if node_name.find("Modal") >= 0:
 		return &"RunModalRoot"
+	if node_name.find("MineRisk") >= 0:
+		return &"RunFloatingInfoRoot"
 	# BottomOverlay is the action-bar skin, not a full-screen overlay. Route
 	# specific action-layer names before the generic Overlay match so buttons
 	# and their copy remain above the frame texture.
@@ -242,12 +245,122 @@ static func viewport_size_from_profile(profile: Dictionary) -> Vector2:
 
 static func run_left_width(profile: Dictionary) -> float:
 	var viewport_size := viewport_size_from_profile(profile)
-	return clamp(viewport_size.x * RUN_LEFT_RATIO, RUN_LEFT_MIN, RUN_LEFT_MAX)
+	var base_width := clampf(viewport_size.x * RUN_LEFT_RATIO, RUN_LEFT_MIN, RUN_LEFT_MAX)
+	var ui_scale_factor := clampf(float(profile.get("ui_scale_factor", 1.0)), 1.0, 1.5)
+	var readability_expansion := lerpf(1.0, 1.08, (ui_scale_factor - 1.0) / 0.5)
+	return minf(base_width * readability_expansion, RUN_LEFT_MAX + 36.0)
 
 
 static func run_status_card_size(profile: Dictionary) -> Vector2:
 	var is_low := bool(profile.get("is_low_resolution", false))
 	var is_high := bool(profile.get("is_high_resolution", false))
-	var width := RUN_STATUS_WIDTH_LOW if is_low else (RUN_STATUS_WIDTH_HIGH if is_high else RUN_STATUS_WIDTH_STANDARD)
-	var height := 96.0 if is_low else (126.0 if is_high else 110.0)
-	return Vector2(width, height)
+	var ui_scale_factor := clampf(float(profile.get("ui_scale_factor", 1.0)), 1.0, 1.5)
+	var scale_step := (ui_scale_factor - 1.0) / 0.5
+	var width := (RUN_STATUS_WIDTH_LOW if is_low else (RUN_STATUS_WIDTH_HIGH if is_high else RUN_STATUS_WIDTH_STANDARD)) + 90.0 * scale_step
+	return Vector2(width, width / RUN_STATUS_FRAME_ASPECT)
+
+
+static func run_footer_geometry(profile: Dictionary) -> Dictionary:
+	var viewport_size := viewport_size_from_profile(profile)
+	var is_low := bool(profile.get("is_low_resolution", false))
+	var is_high := bool(profile.get("is_high_resolution", false))
+	var ui_scale_factor := clampf(float(profile.get("ui_scale_factor", 1.0)), 1.0, 1.5)
+	var scale_step := (ui_scale_factor - 1.0) / 0.5
+	var key_height := (40.0 if is_low else (50.0 if is_high else 44.0)) + 12.0 * scale_step
+	var mine_risk_height := (40.0 if is_low else (50.0 if is_high else 44.0)) + 6.0 * scale_step
+	var bottom_margin := 8.0
+	var key_top := viewport_size.y - key_height - bottom_margin
+	var info_height := 0.0
+	var info_top := key_top
+	var mine_risk_top := key_top - mine_risk_height - 4.0
+	return {
+		"key_top": key_top,
+		"key_height": key_height,
+		"info_top": info_top,
+		"info_height": info_height,
+		"mine_risk_top": mine_risk_top,
+		"mine_risk_height": mine_risk_height,
+		"room_bottom": mine_risk_top - 4.0,
+		"bottom_margin": bottom_margin,
+	}
+
+
+static func run_tutorial_geometry(profile: Dictionary, blocking: bool = true) -> Dictionary:
+	var viewport_size := viewport_size_from_profile(profile)
+	var left_width := run_left_width(profile)
+	var footer := run_footer_geometry(profile)
+	var status_size := run_status_card_size(profile)
+	var ui_scale_factor := clampf(float(profile.get("ui_scale_factor", 1.0)), 1.0, 1.5)
+	var compact := viewport_size.x < 1100.0 or viewport_size.y < 620.0
+	var margin := 8.0 if compact else (16.0 if viewport_size.x >= 1700.0 else 12.0)
+	var gap := 10.0 if compact else (20.0 if viewport_size.x >= 1700.0 else 14.0)
+	var gameplay_width := maxf(1.0, viewport_size.x - left_width)
+	# The protocol card already owns the top-right corner. Reserving its width
+	# keeps both the tutorial and the shifted room away from that persistent
+	# status surface instead of solving one overlap by creating another.
+	var gameplay_right := viewport_size.x - margin
+	if viewport_size.x >= 1180.0:
+		gameplay_right -= status_size.x
+	var available_width := maxf(1.0, gameplay_right - (left_width + margin))
+	# At the 1280x720 accessibility ceiling the enlarged left rail and protocol
+	# card otherwise squeeze the tutorial below a readable text column. The
+	# room remains above the 320px interaction floor while the tutorial keeps
+	# enough width for one-line headings and an explicit current-device hint.
+	var room_min_width := (
+		150.0
+		if compact
+		else (
+			520.0
+			if viewport_size.x >= 1700.0
+			else (350.0 if bool(profile.get("is_low_resolution", false)) else 420.0)
+		)
+	)
+	var maximum_panel_width := maxf(160.0, available_width - gap - room_min_width)
+	var panel_ratio := 0.25 + (ui_scale_factor - 1.0) * 0.10
+	var desired_panel_width := clampf(gameplay_width * panel_ratio, 220.0, 420.0)
+	var panel_width := minf(desired_panel_width, maximum_panel_width)
+	panel_width = minf(maxf(160.0, panel_width), maxf(160.0, available_width - gap - 120.0))
+	var stage_top := margin
+	var stage_bottom := maxf(stage_top + 180.0, float(footer.get("room_bottom", viewport_size.y - 160.0)))
+	var available_panel_height := maxf(180.0, stage_bottom - stage_top - margin)
+	var desired_panel_height := (
+		(520.0 if bool(profile.get("is_low_resolution", false)) else 620.0)
+		if blocking
+		else (260.0 if bool(profile.get("is_low_resolution", false)) else 320.0)
+	)
+	desired_panel_height *= minf(ui_scale_factor, 1.2)
+	var panel_height := minf(available_panel_height, desired_panel_height)
+	var panel_top := stage_top + maxf(0.0, (available_panel_height - panel_height) * 0.5)
+	var panel_rect := Rect2(
+		left_width + margin,
+		panel_top,
+		panel_width,
+		panel_height
+	)
+	var room_left := panel_rect.end.x + gap
+	var room_stage_rect := Rect2(
+		room_left,
+		stage_top,
+		maxf(1.0, gameplay_right - room_left),
+		maxf(1.0, stage_bottom - stage_top)
+	)
+	return {
+		"viewport_rect": Rect2(Vector2.ZERO, viewport_size),
+		"left_hud_rect": Rect2(0.0, 0.0, left_width, viewport_size.y),
+		"panel_rect": panel_rect,
+		"room_stage_rect": room_stage_rect,
+		"right_status_rect": Rect2(
+			viewport_size.x - status_size.x - margin,
+			margin,
+			status_size.x,
+			status_size.y
+		),
+		"footer_rect": Rect2(
+			left_width,
+			float(footer.get("mine_risk_top", viewport_size.y)),
+			gameplay_width,
+			maxf(0.0, viewport_size.y - float(footer.get("mine_risk_top", viewport_size.y)))
+		),
+		"compact": compact,
+		"gap": gap,
+	}

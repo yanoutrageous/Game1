@@ -9,6 +9,7 @@ const DeployPrepCardViewScript := preload("res://scripts/ui/deploy_prep/deploy_p
 const DeployPrepLayoutContractScript := preload("res://scripts/ui/deploy_prep/deploy_prep_layout_contract.gd")
 const DeployMapSplitViewScript := preload("res://scripts/ui/deploy_prep/deploy_map_split_view.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
+const MetaActionRequestIdScript := preload("res://scripts/core/progression/meta_action_request_id.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const ModalFocusStackScript := preload("res://scripts/ui/shell/modal_focus_stack.gd")
 const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
@@ -31,7 +32,7 @@ const SUMMARY_PAGES := [
 ]
 const CHARACTER_FIRST_LOOK_SECONDS := 5.0
 const CHARACTER_LOOK_INTERVAL_SECONDS := 10.0
-const META_DETAIL_ACTION_IDS := [&"purchase", &"sell"]
+const META_DETAIL_ACTION_IDS := [&"purchase", &"sell", &"confirm_batch_sell"]
 
 var current_model: Dictionary = {}
 var current_snapshot: Dictionary = {}
@@ -53,6 +54,9 @@ var filter_previous_button: Button
 var filter_next_button: Button
 var card_scroll: ScrollContainer
 var card_list: VBoxContainer
+var warehouse_batch_entry_button: Button
+var warehouse_batch_select_all_button: Button
+var warehouse_batch_clear_button: Button
 var map_split_view: Control
 var detail_panel: Panel
 var detail_gold_panel: Panel
@@ -82,6 +86,10 @@ var summary_row_labels: Array[Label] = []
 var modal_layer: Control
 var modal_cancel_button: Button
 var modal_confirm_button: Button
+var warehouse_batch_modal_layer: Control
+var warehouse_batch_modal_body: Label
+var warehouse_batch_modal_cancel_button: Button
+var warehouse_batch_modal_confirm_button: Button
 var character_texture: TextureRect
 var character_frames: Array[Texture2D] = []
 var character_actor_id: StringName = CharacterPresentationCatalogScript.DEFAULT_ACTOR_ID
@@ -96,6 +104,7 @@ var modal_focus_stack = ModalFocusStackScript.new()
 var active_summary_page: StringName = &"overview"
 var parchment_collapsed := false
 var reduced_motion := false
+var ui_scale_factor := 1.0
 var scene_elapsed := 0.0
 var character_elapsed := 0.0
 var character_frame_index := 0
@@ -103,11 +112,17 @@ var character_look_index := -1
 var next_character_look := CHARACTER_FIRST_LOOK_SECONDS
 var collapse_tween: Tween
 var page_active := true
+var warehouse_batch_active := false
+var warehouse_batch_selected_ids: Array[String] = []
+var warehouse_batch_feedback := ""
 
 
 func build(model: Dictionary = {}) -> void:
 	modal_focus_stack.clear(false)
 	_clear_children()
+	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	Art10UISkinKitScript.apply_player_ui_theme(self)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	current_model = model.duplicate(true) if not model.is_empty() else DeployPrepModelScript.build(current_snapshot)
 	reduced_motion = Art10UISkinKitScript.reduce_motion_enabled()
@@ -121,7 +136,9 @@ func build(model: Dictionary = {}) -> void:
 	_build_summary_board()
 	_build_primary_actions()
 	_build_cancel_modal()
+	_build_warehouse_batch_confirm_modal()
 	_refresh_all(true)
+	_refresh_ui_scale_metrics()
 	set_page_active(true)
 	call_deferred("_grab_initial_focus")
 
@@ -147,11 +164,26 @@ func apply_meta_action_result(envelope: Dictionary) -> bool:
 		return false
 	if str(envelope.get("target_id", "")) != str(pending_meta_action.get("target_id", "")):
 		return false
+	var completed_action := StringName(envelope.get("action", &""))
 	pending_meta_action.clear()
 	last_meta_action_result = envelope.duplicate(true)
-	current_model = DeployPrepModelScript.model_with_action_message(current_model, _meta_result_player_message(envelope))
+	var player_message := _meta_result_player_message(envelope)
+	if completed_action == &"sell_collectibles_batch":
+		if bool(envelope.get("ok", false)) and StringName(envelope.get("status", &"")) == &"batch_sold":
+			warehouse_batch_active = false
+			warehouse_batch_selected_ids.clear()
+			warehouse_batch_feedback = ""
+		else:
+			warehouse_batch_feedback = player_message
+		_hide_warehouse_batch_confirmation()
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, player_message)
 	_refresh_all(false)
 	return true
+
+
+func show_action_message(message: String) -> void:
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, message)
+	_refresh_all(false)
 
 
 func get_meta_transaction_snapshot() -> Dictionary:
@@ -160,6 +192,7 @@ func get_meta_transaction_snapshot() -> Dictionary:
 		"pending_request": pending_meta_action.duplicate(true),
 		"last_result": last_meta_action_result.duplicate(true),
 		"request_sequence": meta_request_sequence,
+		"warehouse_batch": get_warehouse_batch_snapshot(),
 	}
 
 
@@ -180,9 +213,13 @@ func set_page_active(value: bool) -> void:
 		if is_visible_in_tree():
 			call_deferred("_grab_initial_focus")
 		return
+	if warehouse_batch_active:
+		_cancel_warehouse_batch_sell(false)
 	modal_focus_stack.clear(false)
 	if modal_layer != null:
 		modal_layer.hide()
+	if warehouse_batch_modal_layer != null:
+		warehouse_batch_modal_layer.hide()
 	set_process(false)
 	set_process_input(false)
 	set_process_unhandled_input(false)
@@ -229,6 +266,8 @@ func set_reduced_motion_enabled(value: bool) -> void:
 			card_scroll.modulate = Color.WHITE
 		if modal_layer != null:
 			modal_layer.modulate = Color.WHITE
+		if warehouse_batch_modal_layer != null:
+			warehouse_batch_modal_layer.modulate = Color.WHITE
 	if page_active:
 		set_process(not reduced_motion)
 	for particles in ambient_particles:
@@ -240,13 +279,34 @@ func is_reduced_motion_enabled() -> bool:
 	return reduced_motion
 
 
+func set_ui_scale_factor(value: float) -> void:
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	_refresh_ui_scale_metrics()
+	if map_split_view != null and map_split_view.has_method("set_ui_scale_factor"):
+		map_split_view.call("set_ui_scale_factor", ui_scale_factor)
+	for view in card_views:
+		if view != null and is_instance_valid(view) and view.has_method("set_ui_scale_factor"):
+			view.call("set_ui_scale_factor", ui_scale_factor)
+	if not current_model.is_empty():
+		_refresh_wallet()
+		_refresh_detail_projection()
+		_refresh_summary()
+		_refresh_actions()
+
+
+func get_ui_scale_factor() -> float:
+	return ui_scale_factor
+
+
 func show_tab(tab_id: StringName) -> void:
 	var normalized := _normalize_tab_id(tab_id)
 	if current_model.is_empty():
 		current_model = DeployPrepModelScript.build(current_snapshot)
 	if normalized == _active_tab():
-		_refresh_all(false)
 		return
+	if warehouse_batch_active:
+		_cancel_warehouse_batch_sell(false)
 	_save_active_view_state()
 	current_model = DeployPrepModelScript.model_with_tab(current_model, normalized)
 	_restore_model_state(normalized)
@@ -304,6 +364,9 @@ func _clear_children() -> void:
 	filter_next_button = null
 	card_scroll = null
 	card_list = null
+	warehouse_batch_entry_button = null
+	warehouse_batch_select_all_button = null
+	warehouse_batch_clear_button = null
 	map_split_view = null
 	detail_panel = null
 	detail_gold_panel = null
@@ -332,6 +395,13 @@ func _clear_children() -> void:
 	modal_layer = null
 	modal_cancel_button = null
 	modal_confirm_button = null
+	warehouse_batch_modal_layer = null
+	warehouse_batch_modal_body = null
+	warehouse_batch_modal_cancel_button = null
+	warehouse_batch_modal_confirm_button = null
+	warehouse_batch_active = false
+	warehouse_batch_selected_ids.clear()
+	warehouse_batch_feedback = ""
 	character_texture = null
 	scene_elapsed = 0.0
 	character_elapsed = 0.0
@@ -423,6 +493,7 @@ func _build_parchment_content() -> void:
 	_build_primary_tabs()
 	_build_filter_row()
 	_build_card_list()
+	_build_warehouse_batch_controls()
 	_build_map_split_view()
 	_build_detail_panel()
 	collapse_button = _add_image_button(root, "DeployCollapseHandle", DeployPrepLayoutContractScript.COLLAPSE_HANDLE, "收起内容", &"handle", _toggle_parchment, 15)
@@ -506,12 +577,43 @@ func _build_card_list() -> void:
 	result_hint_label = _add_label(parchment_group, "DeployResultHint", DeployPrepLayoutContractScript.RESULT_HINT, "", 13, Color(0.78, 0.72, 0.58), HORIZONTAL_ALIGNMENT_CENTER, VERTICAL_ALIGNMENT_CENTER, 3)
 
 
+func _build_warehouse_batch_controls() -> void:
+	warehouse_batch_entry_button = _add_image_button(
+		parchment_group,
+		"DeployWarehouseBatchEntry",
+		DeployPrepLayoutContractScript.WAREHOUSE_BATCH_ENTRY,
+		"快捷多选售卖",
+		&"action",
+		_enter_warehouse_batch_sell,
+		14
+	)
+	warehouse_batch_select_all_button = _add_image_button(
+		parchment_group,
+		"DeployWarehouseBatchSelectAll",
+		DeployPrepLayoutContractScript.WAREHOUSE_BATCH_SELECT_ALL,
+		"全选可售",
+		&"action",
+		_select_all_warehouse_batch_sellable,
+		13
+	)
+	warehouse_batch_clear_button = _add_image_button(
+		parchment_group,
+		"DeployWarehouseBatchClear",
+		DeployPrepLayoutContractScript.WAREHOUSE_BATCH_CLEAR,
+		"清除",
+		&"nav",
+		_clear_warehouse_batch_selection,
+		13
+	)
+
+
 func _build_map_split_view() -> void:
 	map_split_view = DeployMapSplitViewScript.new() as Control
 	map_split_view.name = "DeployMapSplitView"
 	map_split_view.call("build", _dictionary_from(current_model.get("map_projection", {})))
 	map_split_view.connect("scale_requested", _on_map_scale_requested)
 	map_split_view.connect("map_requested", _on_map_requested)
+	map_split_view.call("set_ui_scale_factor", ui_scale_factor)
 	map_split_view.call("set_reduced_motion_enabled", reduced_motion)
 	parchment_group.add_child(map_split_view)
 
@@ -605,9 +707,58 @@ func _build_cancel_modal() -> void:
 	modal_cancel_button = _add_image_button(modal_layer, "DeployCancelModalBack", DeployPrepLayoutContractScript.MODAL_CANCEL, "返回", &"nav", _hide_cancel_modal, 16)
 
 
+func _build_warehouse_batch_confirm_modal() -> void:
+	var root := _root(&"ModalRoot")
+	warehouse_batch_modal_layer = Control.new()
+	warehouse_batch_modal_layer.name = "DeployWarehouseBatchSellModal"
+	warehouse_batch_modal_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	warehouse_batch_modal_layer.visible = false
+	root.add_child(warehouse_batch_modal_layer)
+	var scrim := _add_color_rect(
+		warehouse_batch_modal_layer,
+		"DeployWarehouseBatchSellScrim",
+		Rect2(0, 0, 1280, 720),
+		Color(0.01, 0.015, 0.02, 0.76)
+	)
+	scrim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_add_texture(warehouse_batch_modal_layer, "DeployWarehouseBatchSellBoard", DeployPrepLayoutContractScript.MODAL_BOARD, &"deploy_prep.panel.modal_board", 1)
+	_add_label(warehouse_batch_modal_layer, "DeployWarehouseBatchSellTitle", DeployPrepLayoutContractScript.MODAL_TITLE, "确认批量售卖", 26, Color(0.97, 0.72, 0.38), HORIZONTAL_ALIGNMENT_CENTER, VERTICAL_ALIGNMENT_CENTER, 2)
+	warehouse_batch_modal_body = _add_label(
+		warehouse_batch_modal_layer,
+		"DeployWarehouseBatchSellBody",
+		DeployPrepLayoutContractScript.MODAL_BODY,
+		"",
+		16,
+		Color(0.94, 0.88, 0.76),
+		HORIZONTAL_ALIGNMENT_CENTER,
+		VERTICAL_ALIGNMENT_CENTER,
+		2
+	)
+	warehouse_batch_modal_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	warehouse_batch_modal_confirm_button = _add_image_button(
+		warehouse_batch_modal_layer,
+		"DeployWarehouseBatchSellConfirm",
+		DeployPrepLayoutContractScript.MODAL_CONFIRM,
+		"确认出售",
+		&"danger",
+		_confirm_warehouse_batch_sell,
+		16
+	)
+	warehouse_batch_modal_cancel_button = _add_image_button(
+		warehouse_batch_modal_layer,
+		"DeployWarehouseBatchSellBack",
+		DeployPrepLayoutContractScript.MODAL_CANCEL,
+		"返回检查",
+		&"nav",
+		_hide_warehouse_batch_confirmation,
+		16
+	)
+
+
 func _refresh_all(rebuild_lists: bool) -> void:
 	if current_model.is_empty() or parchment_group == null:
 		return
+	_sanitize_warehouse_batch_selection()
 	_refresh_tab_buttons()
 	var map_active := _active_tab() == DeployTabModelScript.TAB_MAP
 	if map_active:
@@ -620,6 +771,7 @@ func _refresh_all(rebuild_lists: bool) -> void:
 		_refresh_card_selection()
 	_refresh_map_workspace()
 	_refresh_wallet()
+	_refresh_warehouse_batch_controls()
 	_refresh_detail_projection()
 	_refresh_workspace_visibility(map_active)
 	_refresh_summary()
@@ -711,6 +863,7 @@ func _refresh_map_workspace() -> void:
 	if map_split_view == null:
 		return
 	map_split_view.call("set_reduced_motion_enabled", reduced_motion)
+	map_split_view.call("set_ui_scale_factor", ui_scale_factor)
 	map_split_view.call("apply_projection", _dictionary_from(current_model.get("map_projection", {})))
 
 
@@ -720,12 +873,49 @@ func _refresh_wallet() -> void:
 	var wallet := _dictionary_from(current_model.get("wallet_projection", {}))
 	var available := bool(wallet.get("available", false))
 	var display := str(wallet.get("display", "—")) if available else "—"
-	detail_gold_label.text = "%s  金币" % display
+	detail_gold_label.text = "%s 金币" % display
 	detail_gold_label.tooltip_text = str(wallet.get("display_text", "金币 —"))
+	_apply_scaled_control_font(detail_gold_label)
+
+
+func _refresh_warehouse_batch_controls() -> void:
+	var warehouse_tab := _active_tab() == DeployTabModelScript.TAB_WAREHOUSE
+	var transaction_pending := not pending_meta_action.is_empty()
+	if card_scroll != null:
+		_set_rect(
+			card_scroll,
+			DeployPrepLayoutContractScript.WAREHOUSE_CARD_SCROLL
+			if warehouse_tab
+			else DeployPrepLayoutContractScript.CARD_SCROLL
+		)
+	if warehouse_batch_entry_button != null:
+		warehouse_batch_entry_button.visible = warehouse_tab and not warehouse_batch_active
+		warehouse_batch_entry_button.disabled = _has_active_run() or transaction_pending
+		warehouse_batch_entry_button.tooltip_text = (
+			"探索进行中，仓库交易暂不可用"
+			if _has_active_run()
+			else ("正在等待上一项基地操作" if transaction_pending else "进入逐项勾选与批量售卖")
+		)
+		_apply_image_button_surface(warehouse_batch_entry_button, &"action", &"disabled" if warehouse_batch_entry_button.disabled else &"normal")
+	var projection := _warehouse_batch_projection()
+	if warehouse_batch_select_all_button != null:
+		warehouse_batch_select_all_button.visible = warehouse_tab and warehouse_batch_active
+		warehouse_batch_select_all_button.disabled = transaction_pending or int(projection.get("eligible_count", 0)) == 0
+		warehouse_batch_select_all_button.tooltip_text = "选择仓库内全部可售且未出勤的物品"
+		_apply_image_button_surface(warehouse_batch_select_all_button, &"action", &"disabled" if warehouse_batch_select_all_button.disabled else &"normal")
+	if warehouse_batch_clear_button != null:
+		warehouse_batch_clear_button.visible = warehouse_tab and warehouse_batch_active
+		warehouse_batch_clear_button.disabled = transaction_pending or warehouse_batch_selected_ids.is_empty()
+		warehouse_batch_clear_button.tooltip_text = "清除当前全部勾选"
+		_apply_image_button_surface(warehouse_batch_clear_button, &"nav", &"disabled" if warehouse_batch_clear_button.disabled else &"normal")
+	_apply_warehouse_batch_card_states()
 
 
 func _refresh_detail_projection() -> void:
 	if detail_title_label == null:
+		return
+	if _active_tab() == DeployTabModelScript.TAB_WAREHOUSE and warehouse_batch_active:
+		_refresh_warehouse_batch_detail_projection()
 		return
 	var detail := _dictionary_from(current_model.get("detail_projection", {}))
 	var empty := bool(detail.get("empty", detail.is_empty()))
@@ -763,6 +953,147 @@ func _refresh_detail_projection() -> void:
 	detail_feedback_label.text = message
 	if empty:
 		detail_description_label.text = ""
+	_refit_detail_controls()
+
+
+func _refresh_warehouse_batch_detail_projection() -> void:
+	var projection := _warehouse_batch_projection()
+	if detail_artwork != null:
+		detail_artwork.texture = null
+	detail_title_label.text = "快捷多选售卖"
+	detail_badge_label.text = "已选 %d 件 · 预计 %d 金币" % [
+		int(projection.get("selected_count", 0)),
+		int(projection.get("total_value", 0)),
+	]
+	detail_description_label.text = "逐项点击左侧物品进行勾选。当前出勤、唯一物品与不可售物不会加入交易；确认后整批一次提交。"
+	var fact_values := [
+		"可售且未出勤  %d 件" % int(projection.get("eligible_count", 0)),
+		"已勾选  %d 件" % int(projection.get("selected_count", 0)),
+		"预计获得  %d 金币" % int(projection.get("total_value", 0)),
+		"事务规则  全部成功或全部不变",
+	]
+	for index in range(detail_fact_labels.size()):
+		detail_fact_labels[index].text = fact_values[index] if index < fact_values.size() else ""
+	var selected_count := int(projection.get("selected_count", 0))
+	var transaction_pending := not pending_meta_action.is_empty()
+	detail_actions = [
+		{
+			"id": &"confirm_batch_sell",
+			"label": "确认售卖",
+			"enabled": selected_count > 0 and not transaction_pending,
+			"destructive": true,
+			"requires_confirm": true,
+			"reason_code": &"empty_batch" if selected_count == 0 else (&"transaction_pending" if transaction_pending else &"ok"),
+			"payload": {},
+		},
+		{
+			"id": &"cancel_batch_sell",
+			"label": "取消多选",
+			"enabled": not transaction_pending,
+			"destructive": false,
+			"requires_confirm": false,
+			"reason_code": &"transaction_pending" if transaction_pending else &"ok",
+			"payload": {},
+		},
+	]
+	_refresh_detail_action_button(detail_primary_action_button, 0, &"danger")
+	_refresh_detail_action_button(detail_secondary_action_button, 1, &"nav")
+	var message := Art10UISkinKitScript.short_summary(warehouse_batch_feedback, 38)
+	detail_feedback_panel.visible = not message.is_empty()
+	detail_feedback_label.visible = not message.is_empty()
+	detail_feedback_label.text = message
+	_refit_detail_controls()
+
+
+func get_warehouse_batch_snapshot() -> Dictionary:
+	var projection := _warehouse_batch_projection()
+	projection["active"] = warehouse_batch_active
+	projection["selected_instance_ids"] = warehouse_batch_selected_ids.duplicate()
+	projection["confirmation_visible"] = warehouse_batch_modal_layer != null and warehouse_batch_modal_layer.visible
+	projection["pending"] = not pending_meta_action.is_empty() and StringName(pending_meta_action.get("action", &"")) == &"sell_collectibles_batch"
+	projection["feedback"] = warehouse_batch_feedback
+	return projection
+
+
+func _warehouse_batch_projection() -> Dictionary:
+	var selected_lookup := {}
+	for instance_id in warehouse_batch_selected_ids:
+		selected_lookup[instance_id] = true
+	var eligible_ids: Array[String] = []
+	var selected_items: Array[Dictionary] = []
+	var reason_counts := {}
+	var total_value := 0
+	for row in _all_warehouse_rows():
+		var instance_id := str(row.get("instance_id", ""))
+		var eligible := bool(row.get("batch_sell_eligible", false))
+		if eligible:
+			eligible_ids.append(instance_id)
+		else:
+			var reason_code := StringName(row.get("batch_sell_reason_code", &"item_not_sellable"))
+			reason_counts[reason_code] = int(reason_counts.get(reason_code, 0)) + 1
+		if selected_lookup.has(instance_id):
+			selected_items.append(row.duplicate(true))
+			total_value += maxi(0, int(row.get("value", 0)))
+	eligible_ids.sort()
+	return {
+		"atomicity": &"all_or_nothing",
+		"eligible_instance_ids": eligible_ids,
+		"eligible_count": eligible_ids.size(),
+		"selected_count": selected_items.size(),
+		"selected_items": selected_items,
+		"total_value": total_value,
+		"reason_counts": reason_counts,
+	}
+
+
+func _all_warehouse_rows() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if current_model.is_empty() or _active_tab() != DeployTabModelScript.TAB_WAREHOUSE:
+		return result
+	var all_model := DeployPrepModelScript.model_with_filter(current_model, DeployTabModelScript.FILTER_ALL)
+	for raw_row in _array_from(all_model, "selection_rows"):
+		var row := _dictionary_from(raw_row)
+		if StringName(row.get("detail_kind", &"")) == &"warehouse_item":
+			result.append(row)
+	return result
+
+
+func _warehouse_row_for_instance(instance_id: String) -> Dictionary:
+	for row in _all_warehouse_rows():
+		if str(row.get("instance_id", "")) == instance_id:
+			return row
+	return {}
+
+
+func _sanitize_warehouse_batch_selection() -> void:
+	if not warehouse_batch_active:
+		return
+	var eligible_lookup := {}
+	for row in _all_warehouse_rows():
+		if bool(row.get("batch_sell_eligible", false)):
+			eligible_lookup[str(row.get("instance_id", ""))] = true
+	var retained: Array[String] = []
+	for instance_id in warehouse_batch_selected_ids:
+		if eligible_lookup.has(instance_id) and not retained.has(instance_id):
+			retained.append(instance_id)
+	retained.sort()
+	warehouse_batch_selected_ids = retained
+
+
+func _apply_warehouse_batch_card_states() -> void:
+	var batch_visible := warehouse_batch_active and _active_tab() == DeployTabModelScript.TAB_WAREHOUSE
+	for view in card_views:
+		if view == null or not is_instance_valid(view):
+			continue
+		var row := _dictionary_from(view.get("card_data"))
+		var instance_id := str(row.get("instance_id", ""))
+		view.call(
+			"apply_batch_selection",
+			batch_visible,
+			warehouse_batch_selected_ids.has(instance_id),
+			bool(row.get("batch_sell_eligible", false)),
+			str(row.get("batch_sell_reason", "该物品不可出售"))
+		)
 
 
 func _refresh_detail_artwork(empty: bool) -> void:
@@ -840,6 +1171,11 @@ func _detail_action_reason(action: Dictionary) -> String:
 		&"insufficient_gold": return "金币不足"
 		&"balance_unavailable": return "金币余额暂不可用"
 		&"remove_from_attendance_first": return "请先移出出勤"
+		&"configured_item_blocked": return "当前出勤项不可出售，请先移出出勤"
+		&"unique_item": return "唯一物品不可出售"
+		&"item_not_sellable": return "该物品不可出售"
+		&"empty_batch": return "请先勾选至少一件可售物品"
+		&"transaction_pending": return "上一项基地操作仍在确认"
 		&"only_available_in_run": return "只能在探索中使用"
 		&"supply_slots_full": return "携带栏已满"
 	return "当前不可操作"
@@ -847,7 +1183,11 @@ func _detail_action_reason(action: Dictionary) -> String:
 
 func _pending_matches_detail_action(action_id: StringName) -> bool:
 	var pending_action := StringName(pending_meta_action.get("action", &""))
-	return (action_id == &"purchase" and pending_action == &"purchase") or (action_id == &"sell" and pending_action == &"sell_collectible")
+	return (
+		(action_id == &"purchase" and pending_action == &"purchase")
+		or (action_id == &"sell" and pending_action == &"sell_collectible")
+		or (action_id == &"confirm_batch_sell" and pending_action == &"sell_collectibles_batch")
+	)
 
 
 func _refresh_tab_buttons() -> void:
@@ -916,6 +1256,7 @@ func _rebuild_cards() -> void:
 		view.name = "DeployCard_%s" % String(card_id)
 		card_list.add_child(view)
 		view.call("setup", card, active, card_id == selected_card)
+		view.call("set_ui_scale_factor", ui_scale_factor)
 		view.connect("card_pressed", _on_card_pressed)
 		card_views.append(view)
 	if result_hint_panel != null and result_hint_label != null:
@@ -943,10 +1284,17 @@ func _refresh_summary() -> void:
 		_apply_image_button_surface(button, &"filter", &"selected" if selected else &"normal")
 	var blocks := _summary_page_blocks(active_summary_page)
 	for index in range(summary_row_labels.size()):
-		summary_row_labels[index].text = String(blocks[index]) if index < blocks.size() else ""
+		var row_label := summary_row_labels[index]
+		var full_text := String(blocks[index]) if index < blocks.size() else ""
+		row_label.text = Art10UISkinKitScript.short_summary(full_text, _summary_character_budget())
+		row_label.tooltip_text = full_text
+		_apply_scaled_control_font(row_label)
 	if summary_message_label != null:
-		var message := Art10UISkinKitScript.short_summary(String(current_model.get("action_message", "")), 24)
+		var full_message := Art10UISkinKitScript.sanitize_player_copy(String(current_model.get("action_message", ""))).strip_edges()
+		var message := Art10UISkinKitScript.short_summary(full_message, _summary_message_budget())
 		summary_message_label.text = message
+		summary_message_label.tooltip_text = full_message
+		_apply_scaled_control_font(summary_message_label)
 		summary_message_label.visible = not message.is_empty()
 		var message_panel := get_node_or_null("SideStatusRoot/DeploySummaryMessagePanel") as CanvasItem
 		if message_panel != null:
@@ -1008,6 +1356,12 @@ func _on_filter_pressed(filter_id: StringName) -> void:
 
 func _on_card_pressed(card_id: StringName) -> void:
 	var scroll_value := card_scroll.scroll_vertical if card_scroll != null else 0
+	if warehouse_batch_active and _active_tab() == DeployTabModelScript.TAB_WAREHOUSE:
+		var instance_id := String(card_id).trim_prefix("m3r_")
+		_toggle_warehouse_batch_item(instance_id)
+		if card_scroll != null:
+			card_scroll.scroll_vertical = scroll_value
+		return
 	current_model = DeployPrepModelScript.model_with_card(current_model, card_id)
 	var state := _state_for_tab(_active_tab())
 	state["card"] = card_id
@@ -1021,6 +1375,95 @@ func _on_card_pressed(card_id: StringName) -> void:
 			break
 	if card_scroll != null:
 		card_scroll.scroll_vertical = scroll_value
+
+
+func _enter_warehouse_batch_sell() -> void:
+	if _active_tab() != DeployTabModelScript.TAB_WAREHOUSE:
+		return
+	if _has_active_run():
+		warehouse_batch_feedback = "探索进行中，仓库交易暂不可用。"
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, warehouse_batch_feedback)
+		_refresh_all(false)
+		return
+	if not pending_meta_action.is_empty():
+		warehouse_batch_feedback = "上一项基地操作仍在确认，请稍候。"
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, warehouse_batch_feedback)
+		_refresh_all(false)
+		return
+	warehouse_batch_active = true
+	warehouse_batch_selected_ids.clear()
+	warehouse_batch_feedback = "点击物品逐项勾选，或使用“全选可售”。"
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, warehouse_batch_feedback)
+	_refresh_all(false)
+
+
+func _select_all_warehouse_batch_sellable() -> void:
+	if not warehouse_batch_active or not pending_meta_action.is_empty():
+		return
+	warehouse_batch_selected_ids.clear()
+	for raw_instance_id in _array_from(_warehouse_batch_projection(), "eligible_instance_ids"):
+		warehouse_batch_selected_ids.append(str(raw_instance_id))
+	warehouse_batch_feedback = (
+		"已选择全部 %d 件可售物品。" % warehouse_batch_selected_ids.size()
+		if not warehouse_batch_selected_ids.is_empty()
+		else "当前没有可售且未出勤的物品。"
+	)
+	_refresh_all(false)
+
+
+func _clear_warehouse_batch_selection() -> void:
+	if not warehouse_batch_active or not pending_meta_action.is_empty():
+		return
+	warehouse_batch_selected_ids.clear()
+	warehouse_batch_feedback = "已清除全部勾选。"
+	_refresh_all(false)
+
+
+func _toggle_warehouse_batch_item(instance_id: String) -> void:
+	if not warehouse_batch_active or not pending_meta_action.is_empty():
+		return
+	var row := _warehouse_row_for_instance(instance_id)
+	if row.is_empty():
+		warehouse_batch_feedback = "该物品已不在仓库中。"
+	elif not bool(row.get("batch_sell_eligible", false)):
+		warehouse_batch_feedback = str(row.get("batch_sell_reason", "该物品不可出售。"))
+	elif warehouse_batch_selected_ids.has(instance_id):
+		warehouse_batch_selected_ids.erase(instance_id)
+		warehouse_batch_feedback = "已取消勾选 %s。" % str(row.get("title", "物品"))
+	else:
+		warehouse_batch_selected_ids.append(instance_id)
+		warehouse_batch_selected_ids.sort()
+		warehouse_batch_feedback = "已勾选 %s。" % str(row.get("title", "物品"))
+	_refresh_all(false)
+
+
+func _request_warehouse_batch_confirmation() -> void:
+	_sanitize_warehouse_batch_selection()
+	var projection := _warehouse_batch_projection()
+	if int(projection.get("selected_count", 0)) <= 0:
+		warehouse_batch_feedback = "请先勾选至少一件可售物品。"
+		_refresh_all(false)
+		return
+	if not pending_meta_action.is_empty():
+		warehouse_batch_feedback = "上一项基地操作仍在确认，请稍候。"
+		_refresh_all(false)
+		return
+	if warehouse_batch_modal_body != null:
+		warehouse_batch_modal_body.text = "将出售 %d 件物品，预计获得 %d 金币。\n交易按整批原子提交，确认后不可撤销。" % [
+			int(projection.get("selected_count", 0)),
+			int(projection.get("total_value", 0)),
+		]
+	_show_warehouse_batch_confirmation()
+
+
+func _cancel_warehouse_batch_sell(refresh: bool = true) -> void:
+	_hide_warehouse_batch_confirmation()
+	warehouse_batch_active = false
+	warehouse_batch_selected_ids.clear()
+	warehouse_batch_feedback = ""
+	if refresh and not current_model.is_empty():
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "已取消批量售卖，仓库未发生变化。")
+		_refresh_all(false)
 
 
 func _on_map_scale_requested(_scale_id: StringName) -> void:
@@ -1063,6 +1506,10 @@ func _on_detail_action_pressed(index: int) -> void:
 		&"remove_from_loadout":
 			var instance_id := String(payload.get("instance_id", ""))
 			_submit_explicit_card_action(DeployTabModelScript.TAB_WAREHOUSE, StringName("m3r_%s" % instance_id), StringName(current_model.get("selected_card", &"")))
+		&"confirm_batch_sell":
+			_request_warehouse_batch_confirmation()
+		&"cancel_batch_sell":
+			_cancel_warehouse_batch_sell()
 		&"toggle_attendance", &"toggle_carry", &"sell", &"toggle_claim", &"purchase", &"select_objective":
 			_submit_explicit_card_action(_active_tab(), StringName(current_model.get("selected_card", &"")), StringName(current_model.get("selected_card", &"")))
 
@@ -1071,24 +1518,7 @@ func _submit_explicit_card_action(domain_tab: StringName, domain_card_id: String
 	var result := DeployConfigScript.apply_card_action(_config(), domain_tab, domain_card_id)
 	var meta_action := _dictionary_from(result.get("meta_action", {}))
 	if not meta_action.is_empty():
-		if not pending_meta_action.is_empty():
-			current_model = DeployPrepModelScript.model_with_action_message(current_model, "上一项基地操作仍在确认，请稍候。")
-			_refresh_all(false)
-			return
-		meta_action["selected_equipment_ids"] = _array_from(_config().get("selected_equipment_ids", []))
-		meta_action["selected_consumable_ids"] = _array_from(_config().get("selected_consumable_ids", []))
-		meta_request_sequence += 1
-		meta_action["request_id"] = "deploy:%d:%d" % [get_instance_id(), meta_request_sequence]
-		meta_action["source_page"] = &"deploy_prep"
-		pending_meta_action = {
-			"request_id": str(meta_action.get("request_id", "")),
-			"source_page": &"deploy_prep",
-			"action": StringName(meta_action.get("action", &"")),
-			"target_id": _meta_action_target_id(meta_action),
-		}
-		current_model = DeployPrepModelScript.model_with_action_message(current_model, _meta_pending_player_message(meta_action))
-		_refresh_all(false)
-		meta_action_requested.emit(meta_action)
+		_submit_meta_action(meta_action)
 		return
 	current_model = DeployPrepModelScript.model_with_config(
 		current_model,
@@ -1099,15 +1529,42 @@ func _submit_explicit_card_action(domain_tab: StringName, domain_card_id: String
 	_refresh_all(bool(result.get("changed", false)))
 
 
+func _submit_meta_action(action: Dictionary) -> void:
+	if not pending_meta_action.is_empty():
+		current_model = DeployPrepModelScript.model_with_action_message(current_model, "上一项基地操作仍在确认，请稍候。")
+		_refresh_all(false)
+		return
+	var meta_action := action.duplicate(true)
+	meta_action["selected_equipment_ids"] = _array_from(_config().get("selected_equipment_ids", []))
+	meta_action["selected_consumable_ids"] = _array_from(_config().get("selected_consumable_ids", []))
+	meta_request_sequence += 1
+	meta_action["request_id"] = MetaActionRequestIdScript.generate(&"deploy")
+	meta_action["source_page"] = &"deploy_prep"
+	pending_meta_action = {
+		"request_id": str(meta_action.get("request_id", "")),
+		"source_page": &"deploy_prep",
+		"action": StringName(meta_action.get("action", &"")),
+		"target_id": _meta_action_target_id(meta_action),
+	}
+	current_model = DeployPrepModelScript.model_with_action_message(current_model, _meta_pending_player_message(meta_action))
+	_refresh_all(false)
+	meta_action_requested.emit(meta_action)
+
+
 func _meta_action_target_id(action: Dictionary) -> String:
 	match StringName(action.get("action", &"")):
 		&"purchase": return str(action.get("item_id", ""))
 		&"sell_collectible": return str(action.get("instance_id", ""))
+		&"sell_collectibles_batch":
+			return "batch:%s" % ",".join(_normalized_string_ids(action.get("instance_ids", [])))
 	return ""
 
 
 func _meta_pending_player_message(action: Dictionary) -> String:
-	return "正在确认购买…" if StringName(action.get("action", &"")) == &"purchase" else "正在确认出售…"
+	match StringName(action.get("action", &"")):
+		&"purchase": return "正在确认购买…"
+		&"sell_collectibles_batch": return "正在提交整批售卖…"
+	return "正在确认出售…"
 
 
 func _meta_result_player_message(envelope: Dictionary) -> String:
@@ -1117,6 +1574,7 @@ func _meta_result_player_message(envelope: Dictionary) -> String:
 		match status:
 			&"purchased": return "购买成功，物品已进入仓库。"
 			&"sold": return "出售成功，获得 %d 金币。" % int(result.get("gold_gained", 0))
+			&"batch_sold": return "批量售卖成功：%d 件，共获得 %d 金币。" % [int(result.get("sold_count", 0)), int(result.get("gold_gained", 0))]
 			&"duplicate_ignored": return "该操作已完成，无需重复提交。"
 		return "基地操作已完成。"
 	match status:
@@ -1127,10 +1585,27 @@ func _meta_result_player_message(envelope: Dictionary) -> String:
 		&"configured_item_blocked": return "该物品正在出勤配置中，请先移出后再出售。"
 		&"instance_not_found": return "该物品已不存在，未发生出售。"
 		&"item_not_sellable": return "该物品不可出售。"
+		&"empty_batch": return "没有选择可售物品，仓库未发生变化。"
+		&"batch_validation_failed": return _batch_validation_player_message(result)
 		&"request_id_conflict": return "操作校验冲突，未发生交易。"
 		&"unknown_shop_item", &"item_definition_missing": return "该商品暂不可购买。"
 		&"meta_progress_adapter_missing": return "基地档案暂不可用，未发生交易。"
 	return "基地操作未完成，请稍后重试。"
+
+
+func _batch_validation_player_message(result: Dictionary) -> String:
+	var failures := _array_from(result.get("item_failures", []))
+	if failures.is_empty():
+		return "批量售卖校验未通过，整批物品均未出售。"
+	var first := _dictionary_from(failures[0])
+	match StringName(first.get("reason_code", &"")):
+		&"configured_item_blocked":
+			return "所选物品中包含当前出勤项；请先移出出勤。整批均未出售。"
+		&"instance_not_found":
+			return "所选物品已发生变化；请重新勾选。整批均未出售。"
+		&"item_not_sellable", &"duplicate_instance_record":
+			return "所选物品中包含不可售项目；请重新勾选。整批均未出售。"
+	return "批量售卖校验未通过，整批物品均未出售。"
 
 
 func _on_primary_action_pressed() -> void:
@@ -1173,12 +1648,14 @@ func _hide_cancel_modal() -> void:
 
 
 func _confirm_cancel_active_run() -> void:
+	if modal_focus_stack.top_modal_id() != &"deploy_abandon":
+		return
 	if not _has_active_run():
 		_hide_cancel_modal()
 		return
 	current_model = DeployPrepModelScript.model_with_action_message(current_model, "正在放弃当前探索并进入结算。", false)
 	_hide_cancel_modal_visual()
-	var payload := {"target_route": &"run", "route_mode": &"abandon_run", "entry_id": &"m6_abandon_active_run", "uses_existing_route": true, "abandon_active_run": true, "reason": "player_deploy_abandon"}
+	var payload := {"target_route": &"run", "route_mode": &"abandon_run", "entry_id": &"m6_abandon_active_run", "uses_existing_route": true, "abandon_active_run": true, "reason": "player_deploy_abandon", "confirmed": true}
 	deploy_start_intent_requested.emit(NavigationIntentScript.make_run(&"deploy_prep", payload))
 
 
@@ -1204,6 +1681,52 @@ func _hide_cancel_modal_visual() -> void:
 
 func _on_cancel_modal_requested(_reason: StringName) -> void:
 	_hide_cancel_modal()
+
+
+func _show_warehouse_batch_confirmation() -> void:
+	if warehouse_batch_modal_layer == null or warehouse_batch_modal_cancel_button == null:
+		return
+	if modal_focus_stack.contains(&"warehouse_batch_sell"):
+		return
+	if not modal_focus_stack.push(
+		&"warehouse_batch_sell",
+		warehouse_batch_modal_layer,
+		warehouse_batch_modal_cancel_button,
+		_on_warehouse_batch_modal_requested
+	):
+		return
+	warehouse_batch_modal_layer.visible = true
+	if reduced_motion:
+		warehouse_batch_modal_layer.modulate = Color.WHITE
+	else:
+		Art10UISkinKitScript.play_panel_open(warehouse_batch_modal_layer)
+
+
+func _hide_warehouse_batch_confirmation() -> void:
+	if warehouse_batch_modal_layer == null:
+		return
+	if modal_focus_stack.contains(&"warehouse_batch_sell"):
+		modal_focus_stack.pop(&"warehouse_batch_sell")
+	else:
+		warehouse_batch_modal_layer.visible = false
+
+
+func _on_warehouse_batch_modal_requested(_reason: StringName) -> void:
+	_hide_warehouse_batch_confirmation()
+
+
+func _confirm_warehouse_batch_sell() -> void:
+	if modal_focus_stack.top_modal_id() != &"warehouse_batch_sell":
+		return
+	if not warehouse_batch_active or warehouse_batch_selected_ids.is_empty() or not pending_meta_action.is_empty():
+		_hide_warehouse_batch_confirmation()
+		return
+	var instance_ids := warehouse_batch_selected_ids.duplicate()
+	_hide_warehouse_batch_confirmation()
+	_submit_meta_action({
+		"action": &"sell_collectibles_batch",
+		"instance_ids": instance_ids,
+	})
 
 
 func _toggle_parchment() -> void:
@@ -1410,16 +1933,23 @@ func _freeze_motion() -> void:
 				chain.position = summary_chain_bases[node_name] as Vector2
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func handle_cancel_event(event: InputEvent) -> bool:
 	if event == null or event.is_echo() or not page_active or not is_visible_in_tree():
-		return
+		return false
 	if modal_focus_stack.handle_cancel_event(event):
-		get_viewport().set_input_as_handled()
-		return
-	if not event.is_action_pressed("ui_cancel"):
-		return
+		return true
+	if not (event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel")):
+		return false
+	if warehouse_batch_active:
+		_cancel_warehouse_batch_sell()
+		return true
 	_request_back_to_main()
-	get_viewport().set_input_as_handled()
+	return true
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if handle_cancel_event(event):
+		get_viewport().set_input_as_handled()
 
 
 func _summary_page_blocks(page_id: StringName) -> Array[String]:
@@ -1432,8 +1962,24 @@ func _summary_page_blocks(page_id: StringName) -> Array[String]:
 			result.append("")
 			continue
 		var line := Art10UISkinKitScript.sanitize_player_copy(str(lines[index])).strip_edges()
-		result.append(Art10UISkinKitScript.short_summary(line, 28))
+		result.append(line)
 	return result
+
+
+func _summary_character_budget() -> int:
+	if ui_scale_factor >= 1.5:
+		return 9
+	if ui_scale_factor >= 1.25:
+		return 11
+	return 13
+
+
+func _summary_message_budget() -> int:
+	if ui_scale_factor >= 1.5:
+		return 10
+	if ui_scale_factor >= 1.25:
+		return 13
+	return 18
 
 
 func _wire_focus_neighbors() -> void:
@@ -1468,6 +2014,8 @@ func _wire_focus_neighbors() -> void:
 	_wire_linear(_buttons_from_dictionary(summary_buttons), false)
 	if modal_confirm_button != null and modal_cancel_button != null:
 		_trap_modal_focus(modal_confirm_button, modal_cancel_button)
+	if warehouse_batch_modal_confirm_button != null and warehouse_batch_modal_cancel_button != null:
+		_trap_modal_focus(warehouse_batch_modal_confirm_button, warehouse_batch_modal_cancel_button)
 	var nav_main := get_node_or_null("PrimaryActionRoot/DeployNavMain") as Button
 	var nav_long := get_node_or_null("PrimaryActionRoot/DeployNavLongTerm") as Button
 	var appearance := get_node_or_null("PrimaryActionRoot/DeployAppearanceButton") as Button
@@ -1633,6 +2181,10 @@ func _add_image_button(parent: Control, node_name: String, rect: Rect2, text: St
 	button.clip_text = true
 	button.z_index = 3
 	Art10UISkinKitScript.apply_button(button, &"secondary", font_size, &"button")
+	button.set_meta("deploy_base_font_size", font_size)
+	button.set_meta("deploy_max_font_size", maxi(font_size, int(floor(rect.size.y - 10.0))))
+	button.set_meta("deploy_text_bounds", rect.size)
+	_apply_scaled_control_font(button)
 	_set_rect(button, rect)
 	_apply_image_button_surface(button, control_id, &"normal")
 	if callback.is_valid():
@@ -1650,11 +2202,20 @@ func _add_container_image_button(parent: Container, node_name: String, minimum_s
 	button.name = node_name
 	button.text = text
 	button.custom_minimum_size = minimum_size
+	button.set_meta("deploy_base_minimum_size", minimum_size)
+	button.set_meta(
+		"deploy_max_minimum_size",
+		Vector2(INF, DeployPrepLayoutContractScript.FILTER_SCROLL.size.y)
+	)
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.clip_text = true
 	button.z_index = 3
 	Art10UISkinKitScript.apply_button(button, &"secondary", font_size, &"button")
+	button.set_meta("deploy_base_font_size", font_size)
+	button.set_meta("deploy_text_bounds", minimum_size)
+	_apply_scaled_control_font(button)
+	_apply_scaled_control_minimum(button)
 	_apply_image_button_surface(button, control_id, &"normal")
 	if callback.is_valid():
 		button.pressed.connect(callback)
@@ -1755,10 +2316,138 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.vertical_alignment = vertical
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.z_index = local_z
-	Art10UISkinKitScript.apply_label(label, font_size, color)
+	var composition_role := &"body"
+	if node_name.ends_with("Title"):
+		composition_role = &"title"
+	elif node_name.ends_with("Badge") or node_name.ends_with("Badges") or node_name.ends_with("Hint") or node_name.ends_with("Feedback"):
+		composition_role = &"status"
+	Art10UISkinKitScript.apply_composition_label(label, composition_role, font_size, color)
+	label.set_meta("deploy_base_font_size", font_size)
+	label.set_meta("deploy_composition_role", composition_role)
+	label.set_meta("deploy_max_font_size", maxi(font_size, int(floor(rect.size.y - 4.0))))
+	var max_lines := _label_max_lines(node_name)
+	label.set_meta("deploy_max_lines", max_lines)
+	label.set_meta("deploy_multiline", max_lines > 1)
+	label.set_meta("deploy_text_padding", Vector2(4, 2))
+	label.set_meta("deploy_text_bounds", rect.size)
+	_apply_label_flow_policy(label)
+	_apply_scaled_control_font(label)
 	_set_rect(label, rect)
 	parent.add_child(label)
 	return label
+
+
+func _refresh_ui_scale_metrics() -> void:
+	for control in _control_descendants(self):
+		if control.has_meta("deploy_base_font_size"):
+			_apply_scaled_control_font(control)
+		if control.has_meta("deploy_base_minimum_size"):
+			_apply_scaled_control_minimum(control)
+
+
+func _apply_scaled_control_font(control: Control) -> void:
+	if control == null or not control.has_meta("deploy_base_font_size"):
+		return
+	var base_font_size := int(control.get_meta("deploy_base_font_size", 0))
+	var scaled_font_size := Art10UISkinKitScript.scaled_font_size(base_font_size, ui_scale_factor)
+	var max_font_size := int(control.get_meta("deploy_max_font_size", scaled_font_size))
+	var text := ""
+	var multiline := false
+	var alignment := HORIZONTAL_ALIGNMENT_LEFT
+	var padding := Vector2(12, 8)
+	if control is Label:
+		var label := control as Label
+		text = label.text
+		multiline = bool(label.get_meta("deploy_multiline", false))
+		alignment = label.horizontal_alignment
+		padding = label.get_meta("deploy_text_padding", Vector2(4, 2))
+	elif control is Button:
+		var button := control as Button
+		text = button.text
+		multiline = text.contains("\n")
+		alignment = button.alignment
+	var fit := DeployPrepLayoutContractScript.fit_text(
+		text,
+		control.get_theme_font("font"),
+		control.get_meta("deploy_text_bounds", control.size),
+		base_font_size,
+		ui_scale_factor,
+		multiline,
+		alignment,
+		padding,
+		max_font_size
+	)
+	scaled_font_size = int(fit.get("font_size", scaled_font_size))
+	control.add_theme_font_size_override("font_size", scaled_font_size)
+	control.set_meta("deploy_text_fit", fit)
+	control.set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	if control is Label:
+		_apply_label_flow_policy(control as Label)
+
+
+func _refit_detail_controls() -> void:
+	for control in [
+		detail_title_label,
+		detail_badge_label,
+		detail_description_label,
+		detail_feedback_label,
+		detail_primary_action_button,
+		detail_secondary_action_button,
+	]:
+		if control != null:
+			_apply_scaled_control_font(control)
+	for fact_label in detail_fact_labels:
+		if fact_label != null:
+			_apply_scaled_control_font(fact_label)
+
+
+func _label_max_lines(node_name: String) -> int:
+	match node_name:
+		"DeployDetailBadges":
+			return 2
+		"DeployDetailDescription":
+			return 3
+		"DeployCancelModalBody", "DeployWarehouseBatchSellBody":
+			return 3
+		"DeploySummaryMessage":
+			return 2
+		_:
+			return 1
+
+
+func _apply_label_flow_policy(label: Label) -> void:
+	if label == null:
+		return
+	var max_lines := int(label.get_meta("deploy_max_lines", 1))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if max_lines > 1 else TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.max_lines_visible = max_lines
+
+
+func _apply_scaled_control_minimum(control: Control) -> void:
+	if control == null or not control.has_meta("deploy_base_minimum_size"):
+		return
+	var base_minimum: Vector2 = control.get_meta("deploy_base_minimum_size", Vector2.ZERO)
+	var scaled_minimum := Art10UISkinKitScript.scaled_control_minimum(base_minimum, ui_scale_factor)
+	var max_minimum: Vector2 = control.get_meta(
+		"deploy_max_minimum_size",
+		Vector2(INF, INF)
+	)
+	control.custom_minimum_size = Vector2(
+		minf(scaled_minimum.x, max_minimum.x),
+		minf(scaled_minimum.y, max_minimum.y)
+	)
+	control.set_meta("runtime_ui_scale_factor", ui_scale_factor)
+
+
+func _control_descendants(root_node: Node) -> Array[Control]:
+	var result: Array[Control] = []
+	for child in root_node.get_children():
+		if child is Control:
+			result.append(child as Control)
+		result.append_array(_control_descendants(child))
+	return result
 
 
 func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Color) -> ColorRect:
@@ -1914,6 +2603,19 @@ func _card_focus_buttons() -> Array:
 func _array_from(source: Variant, key: String = "") -> Array:
 	var raw: Variant = source.get(key, []) if source is Dictionary and key != "" else source
 	return (raw as Array).duplicate(true) if raw is Array else []
+
+
+func _normalized_string_ids(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if value is not Array:
+		return result
+	for raw_id in value:
+		var normalized := str(raw_id).strip_edges()
+		if normalized.is_empty() or normalized in result:
+			continue
+		result.append(normalized)
+	result.sort()
+	return result
 
 
 func _dictionary_from(value: Variant) -> Dictionary:

@@ -24,6 +24,13 @@ const MODULE_WORKSPACE := {
 		"empty_title": "暂无研究课题",
 		"empty_description": "当前研究分类没有已定义的课题。",
 	},
+	&"talent": {
+		"kind": &"talent_tree",
+		"list_label": "三分支天赋树",
+		"detail_label": "前置、成本与新局效果",
+		"empty_title": "暂无天赋节点",
+		"empty_description": "权威天赋目录当前没有可展示的节点。",
+	},
 	&"profile": {
 		"kind": &"profile_archive",
 		"list_label": "资历记录",
@@ -50,6 +57,7 @@ const GROUP_EMPTY_COPY := {
 	"collection_appearance/appearance_config": ["尚无可配置外观", "目前没有可配置的角色外观；已登记的收藏仍可在收藏档案查看。"],
 	"collection_appearance/badge_title": ["暂无资历展示", "已获得的称号与徽章会在这里汇总展示。"],
 	"collection_appearance/settlement_display": ["暂无结算档案", "完成一局并提交结算后，可在这里回看对应记录。"],
+	"talent/tree": ["暂无天赋节点", "权威天赋目录当前没有可展示的节点。"],
 }
 
 
@@ -89,6 +97,11 @@ static func build(
 		workspace["list_label"] = "研究解锁树"
 		workspace["detail_label"] = "节点条件与效果"
 		workspace["tree_contract"] = (model.get("research_tree_contract", {}) as Dictionary).duplicate(true)
+	elif group_key == "talent/tree":
+		workspace["kind"] = &"talent_unlock_tree"
+		workspace["list_label"] = "三分支天赋树"
+		workspace["detail_label"] = "前置、成本与新局效果"
+		workspace["tree_contract"] = (model.get("talent_tree_contract", {}) as Dictionary).duplicate(true)
 	return workspace
 
 

@@ -7,6 +7,7 @@ const LongTermContentSlotModelScript := preload("res://scripts/ui/long_term/long
 const STATE_PREVIEW := &"preview"
 const STATE_DISABLED := &"disabled"
 const STATE_AVAILABLE := &"available"
+const STATE_ARCHIVE := &"archive"
 
 
 static func build_modules() -> Array:
@@ -74,10 +75,25 @@ static func build_modules() -> Array:
 			]
 		),
 		_module(
+			&"talent",
+			"天赋",
+			"整备、安全与勘探各有两级节点；只展示并提交权威天赋目录中的真实效果。",
+			STATE_AVAILABLE,
+			[
+				_group(&"tree", "天赋树", ["前置关系", "点数成本", "新局精确效果"], "long_term.talent.tree.group_icon"),
+			],
+			[
+				_card("talent_node_card", "天赋节点", "选择节点查看前置、成本、阻塞原因与精确数值。", "天赋", LongTermContentSlotModelScript.SLOT_TALENT_UNLOCK),
+			],
+			[
+				_link("出发探索", "已解锁天赋只进入之后确认出发的新一局配置。"),
+			]
+		),
+		_module(
 			&"profile",
 			"个人资历",
-			"个人资历模块保留等级、历史战绩、统计、里程碑、称号和徽章。",
-			STATE_PREVIEW,
+			"读取已保存的角色等级、探索履历、统计、里程碑、称号和徽章。",
+			STATE_ARCHIVE,
 			[
 				_group(&"qualification_level", "资历等级", ["等级摘要", "经验来源"], "long_term.profile.level.group_icon"),
 				_group(&"history", "历史战绩", ["历史战绩卡片", "筛选入口"], "long_term.profile.history.group_icon"),
@@ -88,12 +104,12 @@ static func build_modules() -> Array:
 			],
 			[
 				_card("profile_history_card", "历史战绩", "回看已经完成的探索；浏览不会改变历史记录。", "个人资历", LongTermContentSlotModelScript.SLOT_HISTORY_RECORD),
-				_card("profile_qualification_card", "资历变化 preview card", "只展示资历变化接口，不升级资历。", "个人资历", LongTermContentSlotModelScript.SLOT_QUALIFICATION),
-				_card("profile_badge_card", "徽章称号 preview card", "只展示称号和徽章位置，不发放奖励。", "个人资历", LongTermContentSlotModelScript.SLOT_REWARD_EVENT),
+				_card("profile_qualification_card", "角色资历", "显示当前等级、累计经验与下一资历阈值。", "个人资历", LongTermContentSlotModelScript.SLOT_QUALIFICATION),
+				_card("profile_badge_card", "徽章称号", "显示已经永久登记的称号和徽章。", "个人资历", LongTermContentSlotModelScript.SLOT_REWARD_EVENT),
 			],
 			[
 				_link("探索历史", "历史战绩保留最近五十次探索记录。"),
-				_link("目标", "目标达成未来可影响资历；当前不写目标或资历。"),
+				_link("任务档案", "已经结算的任务与成就通过局外进度影响资历。"),
 			]
 		),
 		_module(
@@ -145,15 +161,18 @@ static func module_summaries(modules: Array = []) -> Dictionary:
 	var source := modules if not modules.is_empty() else build_modules()
 	var summaries := {}
 	for module: Dictionary in source:
+		var state := StringName(module.get("preview_state", STATE_PREVIEW))
+		var interactive := state == STATE_AVAILABLE
+		var landed := state in [STATE_AVAILABLE, STATE_ARCHIVE]
 		summaries[String(module.get("module_id", &""))] = {
 			"display_name": module.get("display_name", ""),
 			"preview_state": module.get("preview_state", STATE_PREVIEW),
 			"secondary_group_count": (module.get("secondary_groups", []) as Array).size(),
 			"card_count": (module.get("cards", []) as Array).size(),
 			"slot_count": (module.get("event_slots_preview", []) as Array).size(),
-			"read_only": true,
-			"display_only": true,
-			"preview": true,
+			"read_only": not interactive,
+			"display_only": not interactive,
+			"preview": not landed,
 		}
 	return summaries
 
@@ -168,6 +187,8 @@ static func _module(
 	cross_links: Array
 ) -> Dictionary:
 	var id_text := String(module_id)
+	var interactive := preview_state == STATE_AVAILABLE
+	var landed := preview_state in [STATE_AVAILABLE, STATE_ARCHIVE]
 	var event_slots := LongTermContentSlotModelScript.build_slots_for_module(module_id)
 	var reward_bundle := AssetDomainContractScript.default_reward_bundle_preview("long_term.%s.reward_bundle.preview" % id_text, &"long_term")
 	return {
@@ -184,11 +205,11 @@ static func _module(
 		"ui_group_key": "long_term.module.%s" % id_text,
 		"preview_state": preview_state,
 		"state": preview_state,
-		"display_only": true,
-		"read_only": true,
-		"preview": true,
-		"preview_only": true,
-		"no_persistence": true,
+		"display_only": not interactive,
+		"read_only": not interactive,
+		"preview": not landed,
+		"preview_only": not landed,
+		"no_persistence": not interactive,
 		"no_reward_grant": true,
 		"no_asset_write": true,
 		"module_scope": _module_scope(module_id),
@@ -342,6 +363,8 @@ static func _module_scope(module_id: StringName) -> Dictionary:
 			return _scope(["maps", "monsters", "items", "events", "rules", "lore"], ["discovery state preview", "asset reference preview"])
 		&"research":
 			return _scope(["research lines", "unlock entry preview"], ["research unlock preview", "requirement preview"])
+		&"talent":
+			return _scope(["authoritative talent tree", "permanent point unlock"], ["MetaActionEnvelope unlock_talent", "RunStartConfig new-run effects"])
 		&"profile":
 			return _scope(["profile level", "history records", "statistics", "milestones", "titles", "badges"], ["HistoryRecordEvent preview", "qualification preview"])
 		&"collection_appearance":
@@ -414,6 +437,10 @@ static func _jump_targets(module_id: StringName) -> Array:
 				AssetDomainContractScript.default_jump_target(&"codex", "Open codex requirement preview"),
 				AssetDomainContractScript.default_jump_target(&"deploy_prep", "Open future unlock consumer preview"),
 			]
+		&"talent":
+			return [
+				AssetDomainContractScript.default_jump_target(&"deploy_prep", "Open the new-run configuration consumer"),
+			]
 		&"profile":
 			return [
 				AssetDomainContractScript.default_jump_target(&"history", "Open history record preview"),
@@ -436,6 +463,8 @@ static func _current_landable_scope(module_id: StringName) -> Array:
 			return ["display codex categories", "display asset/codex relation preview"]
 		&"research":
 			return ["display authoritative research chain", "submit existing research transaction explicitly"]
+		&"talent":
+			return ["display authoritative three-branch talent tree", "submit explicit unlock_talent transaction"]
 		&"profile":
 			return ["display profile/history preview", "display milestone/title/badge preview"]
 		&"collection_appearance":

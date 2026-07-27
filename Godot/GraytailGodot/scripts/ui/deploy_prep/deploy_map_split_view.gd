@@ -10,7 +10,7 @@ const Art25ContentAssetContractScript := preload("res://scripts/presentation/art
 signal scale_requested(scale_id: StringName)
 signal map_requested(map_config_id: StringName)
 
-const EXPECTED_SCALE_IDS := [&"7x7", &"10x10", &"13x13"]
+const EXPECTED_SCALE_IDS := [&"5x5", &"7x7", &"10x10", &"13x13"]
 
 var current_projection: Dictionary = {}
 var scale_options: Array = []
@@ -24,6 +24,7 @@ var reduced_motion := false
 var page_active := true
 var built := false
 var last_focus_key: StringName = &""
+var ui_scale_factor := 1.0
 
 var scale_button_group := ButtonGroup.new()
 var difficulty_button_group := ButtonGroup.new()
@@ -54,6 +55,8 @@ func _ready() -> void:
 func build(projection: Dictionary = {}) -> void:
 	built = true
 	_clear_children()
+	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -121,6 +124,7 @@ func build(projection: Dictionary = {}) -> void:
 		detail_content_nodes.append(metrics_panel)
 
 	apply_projection(projection)
+	_refresh_ui_scale_metrics()
 	set_active(page_active)
 
 
@@ -128,8 +132,11 @@ func apply_projection(projection: Dictionary) -> void:
 	if not built:
 		build(projection)
 		return
+	var normalized_projection := _normalize_projection(projection)
+	if normalized_projection == current_projection:
+		return
 	var focus_was_inside := _focus_is_inside()
-	current_projection = _normalize_projection(projection)
+	current_projection = normalized_projection
 	scale_options = _array_copy(current_projection.get("scale_options", []))
 	selected_scale_id = StringName(current_projection.get("selected_scale_id", &""))
 	selected_map_id = StringName(current_projection.get("selected_map_id", &""))
@@ -169,6 +176,18 @@ func set_reduced_motion_enabled(value: bool) -> void:
 
 func is_reduced_motion_enabled() -> bool:
 	return reduced_motion
+
+
+func set_ui_scale_factor(value: float) -> void:
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	_refresh_ui_scale_metrics()
+	if built:
+		_refresh_detail()
+
+
+func get_ui_scale_factor() -> float:
+	return ui_scale_factor
 
 
 func focus_buttons() -> Array[Button]:
@@ -356,16 +375,20 @@ func _refresh_scale_status() -> void:
 		return
 	if scale_options.is_empty():
 		scale_status_label.text = "地图资料暂不可用。"
+		_apply_scaled_control_font(scale_status_label)
 		return
 	if active_run_locked:
 		scale_status_label.text = "探索进行中\n可查看全部地图，本局配置不可更改。"
+		_apply_scaled_control_font(scale_status_label)
 		return
 	if not selection_exact:
 		scale_status_label.text = "地图记录无法识别\n请重新选择已解锁地图。"
+		_apply_scaled_control_font(scale_status_label)
 		return
 	var selected_map := _find_map_across_scales(selected_map_id)
 	var selected_name := String(selected_map.get("display_name", ""))
 	scale_status_label.text = "本次出发\n%s" % (selected_name if not selected_name.is_empty() else "请选择地图难度")
+	_apply_scaled_control_font(scale_status_label)
 
 
 func _refresh_detail() -> void:
@@ -397,12 +420,27 @@ func _refresh_detail() -> void:
 	var visible_exits := int(selected_detail.get("visible_exit_count", 0))
 	var hidden_exits := int(selected_detail.get("hidden_exit_count", selected_detail.get("random_exit_count", 0)))
 	var total_exits := int(selected_detail.get("exit_count", visible_exits + hidden_exits))
+	var tutorial_map := bool(selected_detail.get("tutorial_map", false))
 	_set_metric(&"difficulty", "难度  %s" % String(selected_detail.get("difficulty_label", selected_detail.get("difficulty", "—"))))
 	_set_metric(&"mine", "雷房  %d" % int(selected_detail.get("mine_count", 0)) if selected_detail.has("mine_count") else "雷房  —")
-	_set_metric(&"content", "内容房\n事件 / 怪物 / 箱 各 %d" % int(selected_detail.get("content_room_count", 0)) if selected_detail.has("content_room_count") else "内容房  —")
-	_set_metric(&"exit", "出口  %d\n固定 %d · 隐藏 %d" % [total_exits, visible_exits, hidden_exits] if has_exit_data else "出口  —")
+	var content_counts := [
+		int(selected_detail.get("event_room_count", selected_detail.get("content_room_count", 0))),
+		int(selected_detail.get("monster_room_count", selected_detail.get("content_room_count", 0))),
+		int(selected_detail.get("chest_room_count", selected_detail.get("content_room_count", 0))),
+	]
+	var content_full := "内容房\n事件 %d · 怪物 %d · 箱 %d" % content_counts if selected_detail.has("content_room_count") else "内容房  —"
+	var content_copy := "内容  %d/%d/%d" % content_counts if ui_scale_factor >= 1.25 and selected_detail.has("content_room_count") else content_full
+	_set_metric(
+		&"content",
+		content_copy,
+		content_full.replace("\n", " · ")
+	)
+	var exit_full := "出口  %d\n固定 %d · 隐藏 %d" % [total_exits, visible_exits, hidden_exits] if has_exit_data else "出口  —"
+	var exit_copy := "出口  %d（%d/%d）" % [total_exits, visible_exits, hidden_exits] if ui_scale_factor >= 1.25 and has_exit_data else exit_full
+	_set_metric(&"exit", exit_copy, exit_full.replace("\n", " · "))
 	var has_experience := selected_detail.has("success_exp") or selected_detail.has("experience")
-	_set_metric(&"experience", "成功经验  +%d" % int(selected_detail.get("success_exp", selected_detail.get("experience", 0))) if has_experience else "成功经验  —")
+	var experience_copy := "档案  完成记录" if tutorial_map else (("经验  +%d" if ui_scale_factor >= 1.25 else "成功经验  +%d") % int(selected_detail.get("success_exp", selected_detail.get("experience", 0))) if has_experience else ("经验  —" if ui_scale_factor >= 1.25 else "成功经验  —"))
+	_set_metric(&"experience", experience_copy)
 	detail_description_label.text = _detail_description(selected_detail, unlocked)
 
 	var action := _dictionary_copy(selected_detail.get("select_action", {}))
@@ -413,6 +451,7 @@ func _refresh_detail() -> void:
 	_apply_button_skin(select_action_button, &"primary" if action_enabled else &"disabled", &"button", &"action", &"normal" if action_enabled else &"disabled")
 	_refresh_difficulty_buttons()
 	_refresh_scale_status()
+	_refit_dynamic_controls()
 
 
 func _refresh_empty_copy() -> void:
@@ -430,6 +469,7 @@ func _refresh_empty_copy() -> void:
 	else:
 		empty_state_title.text = "请选择地图难度"
 		empty_state_body.text = "先查看上方难度，再用右下按钮确认。"
+	_refit_dynamic_controls()
 
 
 func _on_scale_pressed(scale_id: StringName) -> void:
@@ -583,6 +623,9 @@ func _scale_label(option: Dictionary) -> String:
 func _scale_button_text(option: Dictionary) -> String:
 	var map_name := String(option.get("map_name", option.get("display_name", "常规扫雷"))).strip_edges()
 	var count := int(option.get("map_count", _maps_for_scale(option).size()))
+	for raw_map in _maps_for_scale(option):
+		if bool((raw_map as Dictionary).get("tutorial_map", false)):
+			return "%s\n%s · 固定模式" % [map_name, _scale_label(option)]
 	return "%s\n%s · %d 个难度" % [map_name, _scale_label(option), count]
 
 
@@ -621,8 +664,13 @@ func _detail_state_text(unlocked: bool, is_selected: bool) -> String:
 		return "探索进行中 · 配置锁定"
 	if not unlocked:
 		return "尚未解锁 · 可查看"
+	if bool(selected_detail.get("tutorial_map", false)):
+		var completed := bool(selected_detail.get("tutorial_completed", false))
+		if is_selected:
+			return "已完成 · 本次重播已采用" if completed else "未完成 · 本次教学已采用"
+		return "已完成 · 可重播" if completed else "未完成 · 可开始"
 	if is_selected:
-		return "本次出发已采用"
+		return ""
 	return "可用于本次出发"
 
 
@@ -635,6 +683,8 @@ func _detail_state_color(unlocked: bool, is_selected: bool) -> Color:
 func _detail_description(detail: Dictionary, unlocked: bool) -> String:
 	var provided := Art10UISkinKitScript.sanitize_player_copy(String(detail.get("detail", detail.get("description", ""))))
 	if not provided.is_empty():
+		if bool(detail.get("tutorial_map", false)):
+			return "%s\n完成状态：%s" % [provided, str(detail.get("completion_label", "未完成"))]
 		return provided
 	if not unlocked:
 		return "满足对应研究、资历或成就条件后开放。"
@@ -649,7 +699,9 @@ func _action_text(unlocked: bool, is_selected: bool) -> String:
 	if not unlocked:
 		return "尚未解锁"
 	if is_selected:
-		return "已用于出发"
+		return "当前难度"
+	if bool(selected_detail.get("tutorial_map", false)):
+		return "重播教程" if bool(selected_detail.get("tutorial_completed", false)) else "开始教程"
 	return "采用此难度"
 
 
@@ -678,10 +730,11 @@ func _resolve_map_texture(map_id: StringName, detail: Dictionary) -> Texture2D:
 	return Art09ManifestAssetMappingScript.resolve_texture(Art22DeployPrepAssetContractScript.route_ref(&"map_unlocked_route"))
 
 
-func _set_metric(metric_id: StringName, text: String) -> void:
+func _set_metric(metric_id: StringName, text: String, tooltip: String = "") -> void:
 	var label := detail_metric_labels.get(metric_id) as Label
 	if label != null:
 		label.text = text
+		label.tooltip_text = tooltip if not tooltip.is_empty() else text.replace("\n", " · ")
 
 
 func _add_metric_label(metric_id: StringName, node_name: String, rect: Rect2) -> void:
@@ -718,7 +771,22 @@ func _add_label(node_name: String, rect: Rect2, text: String, font_size: int, co
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.clip_text = true
-	Art10UISkinKitScript.apply_label(label, font_size, color)
+	var composition_role := &"body"
+	if node_name.ends_with("Title") or node_name.ends_with("Name"):
+		composition_role = &"title"
+	elif node_name.ends_with("Status") or node_name.ends_with("State") or node_name.ends_with("Role"):
+		composition_role = &"status"
+	Art10UISkinKitScript.apply_composition_label(label, composition_role, font_size, color)
+	label.set_meta("deploy_map_base_font_size", font_size)
+	label.set_meta("deploy_map_composition_role", composition_role)
+	label.set_meta("deploy_map_max_font_size", maxi(font_size, int(floor(rect.size.y - 4.0))))
+	var max_lines := _label_max_lines(node_name)
+	label.set_meta("deploy_map_max_lines", max_lines)
+	label.set_meta("deploy_map_multiline", max_lines > 1)
+	label.set_meta("deploy_map_text_padding", Vector2(4, 2))
+	label.set_meta("deploy_map_text_bounds", rect.size)
+	_apply_label_flow_policy(label)
+	_apply_scaled_control_font(label)
 	_set_rect(label, rect)
 	add_child(label)
 	return label
@@ -729,6 +797,12 @@ func _add_button(node_name: String, rect: Rect2, text: String, tone: StringName,
 	button.name = node_name
 	button.text = text
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.set_meta("deploy_map_font_token", token)
+	button.set_meta(
+		"deploy_map_max_font_size",
+		maxi(Art10UISkinKitScript.font_size(token), int(floor(rect.size.y - 10.0)))
+	)
+	button.set_meta("deploy_map_text_bounds", rect.size)
 	_set_rect(button, rect)
 	add_child(button)
 	_apply_button_skin(button, tone, token, &"filter", &"normal")
@@ -748,6 +822,8 @@ func _apply_button_skin(button: Button, tone: StringName, token: StringName, con
 		8,
 		16
 	)
+	button.set_meta("deploy_map_font_token", token)
+	_apply_scaled_control_font(button)
 	button.add_theme_stylebox_override("normal", Art10UISkinKitScript.style_box_from_asset_ref(Art22DeployPrepAssetContractScript.control_ref(control_id, normal_state), 8, 16))
 	button.add_theme_stylebox_override("hover", Art10UISkinKitScript.style_box_from_asset_ref(Art22DeployPrepAssetContractScript.control_ref(control_id, &"focused"), 8, 16))
 	button.add_theme_stylebox_override("focus", Art10UISkinKitScript.style_box_from_asset_ref(Art22DeployPrepAssetContractScript.control_ref(control_id, &"focused"), 8, 16))
@@ -764,6 +840,116 @@ func _apply_button_skin(button: Button, tone: StringName, token: StringName, con
 		button.add_theme_color_override("font_pressed_color", ink.darkened(0.12))
 		button.add_theme_color_override("font_hover_pressed_color", ink.darkened(0.12))
 		button.add_theme_color_override("font_disabled_color", Color(ink.r, ink.g, ink.b, 0.55))
+
+
+func _refresh_ui_scale_metrics() -> void:
+	for control in _control_descendants(self):
+		if control.has_meta("deploy_map_base_font_size") or control.has_meta("deploy_map_font_token"):
+			_apply_scaled_control_font(control)
+
+
+func _apply_scaled_control_font(control: Control) -> void:
+	if control == null:
+		return
+	var base_font_size := 0
+	if control.has_meta("deploy_map_base_font_size"):
+		base_font_size = int(control.get_meta("deploy_map_base_font_size", 0))
+	elif control.has_meta("deploy_map_font_token"):
+		base_font_size = Art10UISkinKitScript.font_size(
+			StringName(control.get_meta("deploy_map_font_token", &"body"))
+		)
+	if base_font_size <= 0:
+		return
+	var scaled_font_size := Art10UISkinKitScript.scaled_font_size(base_font_size, ui_scale_factor)
+	var max_font_size := int(control.get_meta("deploy_map_max_font_size", scaled_font_size))
+	var text := ""
+	var multiline := false
+	var alignment := HORIZONTAL_ALIGNMENT_LEFT
+	var padding := Vector2(12, 8)
+	if control is Label:
+		var label := control as Label
+		text = label.text
+		multiline = bool(label.get_meta("deploy_map_multiline", false))
+		alignment = label.horizontal_alignment
+		padding = label.get_meta("deploy_map_text_padding", Vector2(4, 2))
+	elif control is Button:
+		var button := control as Button
+		text = button.text
+		multiline = text.contains("\n")
+		alignment = button.alignment
+	var fit := DeployPrepLayoutContractScript.fit_text(
+		text,
+		control.get_theme_font("font"),
+		control.get_meta("deploy_map_text_bounds", control.size),
+		base_font_size,
+		ui_scale_factor,
+		multiline,
+		alignment,
+		padding,
+		max_font_size
+	)
+	scaled_font_size = int(fit.get("font_size", scaled_font_size))
+	control.add_theme_font_size_override("font_size", scaled_font_size)
+	control.set_meta("deploy_text_fit", fit)
+	control.set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	if control is Label:
+		_apply_label_flow_policy(control as Label)
+
+
+func _refit_dynamic_controls() -> void:
+	for control in [
+		scale_status_label,
+		detail_name_label,
+		detail_role_label,
+		detail_state_label,
+		detail_description_label,
+		select_action_button,
+		empty_state_title,
+		empty_state_body,
+	]:
+		if control != null:
+			_apply_scaled_control_font(control)
+	for raw_label in detail_metric_labels.values():
+		var metric_label := raw_label as Label
+		if metric_label != null:
+			_apply_scaled_control_font(metric_label)
+
+
+func _label_max_lines(node_name: String) -> int:
+	match node_name:
+		"MapScaleCaption":
+			return 2
+		"MapScaleStatus":
+			return 5
+		"MapDetailRole":
+			return 2
+		"MapDetailDescription":
+			return 5
+		"MapMetricContent", "MapMetricExit":
+			return 2
+		"MapEmptyStateBody":
+			return 4
+		_:
+			return 1
+
+
+func _apply_label_flow_policy(label: Label) -> void:
+	if label == null:
+		return
+	var max_lines := int(label.get_meta("deploy_map_max_lines", 1))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if max_lines > 1 else TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.max_lines_visible = max_lines
+
+
+func _control_descendants(root_node: Node) -> Array[Control]:
+	var result: Array[Control] = []
+	for child in root_node.get_children():
+		if child is Control:
+			result.append(child as Control)
+		result.append_array(_control_descendants(child))
+	return result
 
 
 func _register_focus_button(button: Button, key: StringName) -> void:

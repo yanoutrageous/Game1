@@ -1,11 +1,14 @@
 # Base Docs Source Registry
 
-文档状态：外部只读来源注册表
-适用范围：`D:\AGAME1\Base Docs` 当前归档文件与仓库历史快照的区分
+文档状态：`HISTORICAL / 2026-06-23 READ-ONLY OBSERVATION`
+适用范围：保留 `D:\AGAME1\Base Docs` 在旧机器上的一次观测；不得作为当前路径权威
 最后更新：2026/06/23
 只读观测时间：2026/06/23
 
-Base Docs 是当前策划文档归档后的只读事实来源之一。下表中的路径、时间和 SHA256 是一次只读观测，不冻结外部目录结构，也不授权复制或实现。
+当前策划原件已由 I3 注册到 `sources/base/原始策划案/`；精确身份以
+`sources/base/manifests/ORIGINAL_PLANNING_MANIFEST.csv` 为准。下表只保留
+2026-06-23 的历史路径、时间和 SHA256。表内 `external_live_reference` 是当时状态值，
+不表示该 D 盘路径在当前机器仍然存在，也不得触发新的外部扫描。
 
 ## 文本来源
 
@@ -27,7 +30,8 @@ Base Docs 是当前策划文档归档后的只读事实来源之一。下表中�
 | `主菜单策划案.md` | `D:\AGAME1\Base Docs\主菜单策划案.md` | `2026-06-15 11:31:01` | `F9738188D2EB30175C458AFDDED0FEB0EA7E74B50D6957F69CC30E80622B7581` | external_live_reference | `source_snapshot/主菜单策划案.md` |
 | `主模块修改策划案.txt` | `D:\AGAME1\Base Docs\主模块修改策划案.txt` | `2026-06-10 10:43:01` | `1C4E41B51E76C1449CC8E669818D93DC0AD849DDAE39841E64C2D2AEE97EF997` | external_live_reference | `source_snapshot/主模块修改策划案.txt` |
 
-`historical_repo_copy` 仅表示 2026/06/22 曾获授权生成的冻结历史快照。当前读取必须优先核对外部路径；无新授权不得刷新这些副本。
+`historical_repo_copy` 仅表示 2026/06/22 曾获授权生成的冻结历史快照。当前读取应使用
+I3 注册原件和关系表；无新授权不得刷新这些旧副本。
 
 ## UI 图片来源
 
@@ -36,8 +40,8 @@ UI 图片当前外部登记见 `docs/70_sources/ui_reference/UI_REFERENCE_REGIST
 ## 边界
 
 ```text
-1. Base Docs 外部原件是当前归档后的只读策划来源之一。
-2. 文件名变化时按主题、相近名称、更新时间和文档状态重新定位。
+1. 本表的外部路径是历史观测，不是当前机器事实。
+2. 当前原件按 `source_id / repository_path / SHA256` 从 I3 manifest 定位。
 3. 不修改、移动、删除、重命名、复制或清理 Base Docs。
 4. 仓库历史副本不覆盖当前外部原件，不自动同步。
 5. UI 图片不作为规则权威。

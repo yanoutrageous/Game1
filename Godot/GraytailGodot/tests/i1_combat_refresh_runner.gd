@@ -79,10 +79,14 @@ func _run() -> void:
 	for scope in observed_scopes:
 		_require(scope == &"combat", "damage emitted a non-combat state scope")
 	var run_surface: Variant = run_scene.get("run_surface")
-	var combat_status_label: Variant = run_surface.get("right_body_label") if run_surface != null else null
+	var combat_status_label: Variant = run_surface.get("scanner_legend_label") if run_surface != null else null
 	_require(combat_status_label != null, "production combat status label is missing")
 	if combat_status_label != null:
-		_require(String(combat_status_label.text).contains("%s/%s" % [context.hp, context.max_hp]), "lightweight combat refresh did not expose current HP")
+		var expected_hp_ratio := String(run_surface.call(
+			"_compact_stat_token",
+			"%s/%s" % [context.hp, context.max_hp]
+		))
+		_require(String(combat_status_label.text).contains(expected_hp_ratio), "lightweight combat refresh did not expose current HP")
 
 	for warmup_index in range(4):
 		bus.call("_emit_state")

@@ -238,7 +238,7 @@ Test-FileContains 'scripts/core/run/run_context.gd' @(
 )
 
 $RunSceneText = Read-ProjectText 'scripts/core/run/run_scene.gd'
-if ($RunSceneText -match 'command_bus\.(move_by|attempt_room_transition|search_current_room|interact_current_room|fight_current_enemy|select_event_option|pickup_ground_item|drop_inventory_item|request_extract|confirm_extract|cancel_extract|restart_run|start_tutorial_run|start_standard_run|toggle_flag_cell|teleport_to_explored|confirm_tutorial_popup|flag_current_cell)\s*\(') {
+if ($RunSceneText -match 'command_bus\.(move_by|attempt_room_transition|search_current_room|interact_current_room|fight_current_enemy|select_event_option|pickup_ground_item|drop_inventory_item|request_extract|confirm_extract|cancel_extract|restart_run|start_standard_run|toggle_flag_cell|teleport_to_explored|confirm_tutorial_popup|flag_current_cell)\s*\(') {
     Add-Failure 'formal UI/debug path directly calls CommandBus action method instead of dispatch'
 }
 if ($RunSceneText -notmatch 'command_bus\.dispatch') {

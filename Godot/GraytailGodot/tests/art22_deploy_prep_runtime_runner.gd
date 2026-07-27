@@ -1,6 +1,7 @@
 extends SceneTree
 
 const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 var failures: Array[String] = []
 var route_intents: Array[Dictionary] = []
@@ -40,6 +41,7 @@ func _run() -> void:
 	await _frames(12)
 
 	_check_shell_frame(shell)
+	await _check_ui_scale_contract(shell)
 	_check_player_tabs(shell)
 	_check_map_same_page_contract(shell)
 	await _check_map_selection_contract(shell)
@@ -74,6 +76,87 @@ func _check_shell_frame(shell: Control) -> void:
 	_check(shell.get_node_or_null("PrimaryActionRoot/DeployNavMain") is Button, "Main-menu plaque is missing")
 	_check(shell.get_node_or_null("PrimaryActionRoot/DeployNavLongTerm") is Button, "Long-term plaque is missing")
 	_check(shell.get_node_or_null("MainContentRoot/DeployCollapseHandle") is Button, "Parchment collapse handle is missing")
+	var detail_action := shell.get("detail_primary_action_button") as Button
+	var collapse_handle := shell.get("collapse_button") as Button
+	_check(
+		detail_action != null
+		and collapse_handle != null
+		and collapse_handle.position.y - detail_action.get_rect().end.y >= 30.0,
+		"Deploy collapse handle intrudes into the detail action focal zone: detail=%s collapse=%s" % [
+			detail_action.get_rect() if detail_action != null else Rect2(),
+			collapse_handle.get_rect() if collapse_handle != null else Rect2(),
+		]
+	)
+
+
+func _check_ui_scale_contract(shell: Control) -> void:
+	var clean_plate := shell.get_node_or_null("BackgroundRoot/DeployPrepSceneCleanPlate") as TextureRect
+	var clean_plate_rect := clean_plate.get_rect() if clean_plate != null else Rect2()
+	shell.call("set_ui_scale_factor", 1.5)
+	await _frames(2)
+	_check(
+		is_equal_approx(float(shell.call("get_ui_scale_factor")), 1.5),
+		"DeployPrep rejected 150% UI scale"
+	)
+	var map_view := shell.get("map_split_view") as Control
+	_check(
+		map_view != null and is_equal_approx(float(map_view.call("get_ui_scale_factor")), 1.5),
+		"Deploy map split did not inherit the parent UI scale"
+	)
+	var scale_buttons := map_view.get("scale_buttons") as Dictionary if map_view != null else {}
+	var scale_button := scale_buttons.get(&"7x7") as Button
+	var base_scale_font := Art10UISkinKitScript.font_size(&"body_small")
+	var requested_scale_font := Art10UISkinKitScript.scaled_font_size(base_scale_font, 1.5)
+	var actual_scale_font := scale_button.get_theme_font_size("font_size") if scale_button != null else 0
+	var scale_fit := scale_button.get_meta("deploy_text_fit", {}) as Dictionary if scale_button != null else {}
+	_check(
+		scale_button != null
+		and actual_scale_font > base_scale_font
+		and actual_scale_font <= requested_scale_font
+		and bool(scale_fit.get("fits", false)),
+		"Deploy map decision controls did not scale within their fixed text bounds"
+	)
+	var metric_content := map_view.get_node_or_null("MapMetricContent") as Label
+	var metric_exit := map_view.get_node_or_null("MapMetricExit") as Label
+	var metric_experience := map_view.get_node_or_null("MapMetricExperience") as Label
+	_check(
+		metric_content != null
+		and metric_content.get_rect() == Rect2(522, 426, 168, 52)
+		and metric_experience != null
+		and not metric_content.get_global_rect().intersects(metric_experience.get_global_rect()),
+		"Deploy content metric escaped its fixed contract or overlaps experience"
+	)
+	_check(
+		metric_exit != null
+		and metric_exit.get_rect() == Rect2(704, 426, 176, 52)
+		and metric_experience != null
+		and not metric_exit.get_global_rect().intersects(metric_experience.get_global_rect()),
+		"Deploy exit metric escaped its fixed contract or overlaps experience"
+	)
+	for metric_label in [metric_content, metric_exit, metric_experience]:
+		var text_fit := metric_label.get_meta("deploy_text_fit", {}) as Dictionary if metric_label != null else {}
+		_check(metric_label != null and bool(text_fit.get("fits", false)), "Deploy metric text did not fit its authoritative contract")
+	for raw_summary_label in shell.get("summary_row_labels") as Array:
+		var summary_label := raw_summary_label as Label
+		var summary_fit := summary_label.get_meta("deploy_text_fit", {}) as Dictionary if summary_label != null else {}
+		_check(
+			summary_label != null
+			and summary_label.autowrap_mode == TextServer.AUTOWRAP_OFF
+			and summary_label.max_lines_visible == 1
+			and summary_label.text.length() <= 9
+			and bool(summary_fit.get("fits", false)),
+			"Deploy summary row escaped its 150% compact single-line contract"
+		)
+	_check(
+		clean_plate != null and clean_plate.get_rect() == clean_plate_rect,
+		"Deploy UI scale transformed the fixed pixel-art clean plate"
+	)
+	_check(
+		shell.get_global_rect().encloses(scale_button.get_global_rect()) if scale_button != null else false,
+		"Deploy 1280x720@150 scale control escaped the production canvas"
+	)
+	shell.call("set_ui_scale_factor", 1.0)
+	await _frames(2)
 
 
 func _check_player_tabs(shell: Control) -> void:
@@ -109,32 +192,44 @@ func _check_map_same_page_contract(shell: Control) -> void:
 	_check(StringName(projection.get("tab_id", &"")) == &"map", "Map projection is outside the Deploy map tab")
 	_check(StringName(projection.get("fallback_policy", &"")) == &"fail_closed", "Map projection no longer fails closed")
 	var scale_options := projection.get("scale_options", []) as Array
-	_check(scale_options.size() == 3, "Map split must expose exactly three scales")
 	var expected_ids := {
 		&"7x7": ["classic_7x7_simple", "classic_7x7_normal"],
 		&"10x10": ["classic_10x10_easy", "classic_10x10_standard", "classic_10x10_hard"],
 		&"13x13": ["classic_13x13_normal", "classic_13x13_hard", "classic_13x13_hell"],
 	}
-	var all_ids: Array[String] = []
+	var standard_scale_count := 0
+	var standard_ids: Array[String] = []
+	var tutorial_ids: Array[String] = []
 	for raw_scale in scale_options:
 		var scale := raw_scale as Dictionary
 		var scale_id := StringName(scale.get("scale_id", &""))
-		_check(expected_ids.has(scale_id), "Unexpected map scale: " + String(scale_id))
 		var actual_ids: Array[String] = []
 		for raw_map in scale.get("maps", []) as Array:
 			var map_data := raw_map as Dictionary
 			var map_id := str(map_data.get("map_config_id", ""))
 			actual_ids.append(map_id)
-			all_ids.append(map_id)
 			_check(not M7ContentCatalogScript.map_definition_exact(map_id).is_empty(), "Map split projected a non-exact id: " + map_id)
 		if expected_ids.has(scale_id):
+			standard_scale_count += 1
+			standard_ids.append_array(actual_ids)
 			_check(actual_ids == expected_ids[scale_id], "Difficulty ids drifted for %s: %s" % [String(scale_id), actual_ids])
-	_check(all_ids.size() == 8, "Map split must cover all eight exact map ids")
+		elif scale_id == &"5x5":
+			tutorial_ids = actual_ids
+			_check(StringName(scale.get("page_id", &"")) == &"deploy_prep", "Tutorial scale escaped the existing Deploy page")
+			_check(StringName(scale.get("tab_id", &"")) == &"map", "Tutorial scale escaped the existing Deploy map tab")
+		else:
+			_check(false, "Unexpected map scale: " + String(scale_id))
+	_check(standard_scale_count == 3, "Map split must retain exactly three standard scales")
+	_check(standard_ids.size() == 8, "Map split must retain all eight exact standard map ids")
+	_check(tutorial_ids == ["tutorial_5x5"], "Tutorial map must be an additional exact tutorial_5x5 entry")
 	var snapshot := map_view.call("projection_snapshot") as Dictionary
-	_check(int(snapshot.get("scale_count", 0)) == 3, "Map view did not build three scale controls")
+	_check(int(snapshot.get("scale_count", 0)) == 4, "Map view did not build three standard scale controls plus tutorial 5x5")
 	_check(int(snapshot.get("difficulty_count", 0)) == 2, "Default 7x7 scale must expose two difficulties")
 	var scale_buttons := map_view.get("scale_buttons") as Dictionary
-	_check(_sorted_key_strings(scale_buttons) == ["10x10", "13x13", "7x7"], "Map scale controls are not exactly 7x7/10x10/13x13")
+	var standard_scale_buttons := scale_buttons.duplicate()
+	standard_scale_buttons.erase(&"5x5")
+	_check(_sorted_key_strings(standard_scale_buttons) == ["10x10", "13x13", "7x7"], "Standard map scale controls are not exactly 7x7/10x10/13x13")
+	_check(scale_buttons.get(&"5x5") is Button, "Tutorial 5x5 scale control is missing from the same Deploy map page")
 	var gold_label := shell.get("detail_gold_label") as Label
 	var gold_panel := shell.get("detail_gold_panel") as Control
 	_check(gold_label != null and gold_label.visible and gold_label.text.begins_with("—") and gold_label.text.ends_with("金币"), "Missing wallet value must display — 金币")
@@ -176,6 +271,9 @@ func _check_map_selection_contract(shell: Control) -> void:
 		await _frames(3)
 		_check(str(_config(shell).get("map_config_id", "")) == "classic_10x10_standard", "Explicit map action did not commit the exact id")
 		_check(route_intents.size() == route_count_before, "Explicit map action created a second route page")
+		var detail_state := map_view.get("detail_state_label") as Label
+		_check(detail_state != null and detail_state.text.is_empty(), "Selected standard map repeats its adopted state above the action")
+		_check(select_action.disabled and select_action.text == "当前难度", "Selected standard map action does not identify the current difficulty")
 	for scale_id in [&"7x7", &"10x10", &"13x13"]:
 		var scale_button := (map_view.get("scale_buttons") as Dictionary).get(scale_id) as Button
 		_check(scale_button != null, "Scale button disappeared after exact selection: " + String(scale_id))
@@ -186,6 +284,23 @@ func _check_map_selection_contract(shell: Control) -> void:
 		var count := (map_view.get("difficulty_buttons") as Dictionary).size()
 		var expected_count := 2 if scale_id == &"7x7" else 3
 		_check(count == expected_count, "Difficulty count mismatch for %s: %d" % [String(scale_id), count])
+	var tutorial_scale := (map_view.get("scale_buttons") as Dictionary).get(&"5x5") as Button
+	_check(tutorial_scale != null, "Tutorial 5x5 scale control disappeared after standard-map selection")
+	if tutorial_scale != null:
+		tutorial_scale.emit_signal("pressed")
+		await _frames(2)
+		_check(route_intents.size() == route_count_before, "Tutorial preview left the single Deploy page")
+		var tutorial_snapshot := map_view.call("projection_snapshot") as Dictionary
+		_check(StringName(tutorial_snapshot.get("selected_scale_id", &"")) == &"5x5", "Tutorial 5x5 scale preview was not retained")
+		_check(int(tutorial_snapshot.get("difficulty_count", 0)) == 1, "Tutorial 5x5 scale must expose exactly one tutorial map")
+		var tutorial_difficulties := map_view.get("difficulty_buttons") as Dictionary
+		_check(_sorted_key_strings(tutorial_difficulties) == ["tutorial_5x5"], "Tutorial scale substituted another map id")
+		var tutorial_map := tutorial_difficulties.get(&"tutorial_5x5") as Button
+		if tutorial_map != null:
+			tutorial_map.emit_signal("pressed")
+			await _frames(2)
+			_check(StringName(map_view.call("get_preview_map_id")) == &"tutorial_5x5", "Tutorial preview did not retain tutorial_5x5")
+			_check(route_intents.size() == route_count_before, "Tutorial map preview introduced another route page")
 
 
 func _check_non_map_split_and_explicit_actions(shell: Control) -> void:
@@ -572,7 +687,9 @@ func _check_run_actions_and_escape(shell: Control, representative: Dictionary) -
 		await _frames(2)
 	_check(start_intents.size() == 3, "Confirmed abandon did not emit one additional run intent")
 	if start_intents.size() == 3:
-		_check(bool((start_intents[2].get("payload", {}) as Dictionary).get("abandon_active_run", false)), "Confirmed abandon intent lacks runtime authority marker")
+		var abandon_payload := start_intents[2].get("payload", {}) as Dictionary
+		_check(bool(abandon_payload.get("abandon_active_run", false)), "Confirmed abandon intent lacks runtime authority marker")
+		_check(bool(abandon_payload.get("confirmed", false)), "Confirmed abandon intent lacks explicit confirmation proof")
 
 	var route_before_page_escape := route_intents.size()
 	shell.call("_unhandled_input", _cancel_event())
@@ -801,7 +918,7 @@ func _frames(count: int) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART22_DEPLOY_PREP_RUNTIME=PASS tabs=5 map_page=single map_scales=3 map_difficulties=2,3,3 exact_maps=8 split=selection_detail explicit_actions=local,meta summary=overview,config,effect,objective card_height=76 active_run=locked input=focus,escape,reduced_motion")
+		print("ART22_DEPLOY_PREP_RUNTIME=PASS tabs=5 map_page=single map_scales=3 map_difficulties=2,3,3 exact_maps=8 tutorial_scale=5x5 tutorial_map=tutorial_5x5 split=selection_detail explicit_actions=local,meta summary=overview,config,effect,objective card_height=76 active_run=locked input=focus,escape,reduced_motion")
 		quit(0)
 		return
 	for failure in failures:

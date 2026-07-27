@@ -138,7 +138,10 @@ func _validate_abandon_settlement_branch() -> void:
 		_fail("abandon preview missing settle_abandon branch")
 	if String(preview_before.get("boundary", "")).find("no real abandon settlement") >= 0:
 		_fail("abandon preview still contains outdated no-real-settlement wording")
-	var abandon_result: Dictionary = bus.dispatch(&"abandon_run", {"reason": "m3h_abandon"})
+	var abandon_result: Dictionary = bus.dispatch(
+		&"abandon_run",
+		{"reason": "m3h_abandon", "confirmed": true}
+	)
 	_require_ok(abandon_result, "abandon through CommandBus/runtime authority")
 	var settlement: Dictionary = controller.context.result_snapshot.get("settlement", {})
 	if StringName(settlement.get("outcome", &"")) != &"abandon":

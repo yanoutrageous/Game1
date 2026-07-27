@@ -4,13 +4,29 @@ class_name RunRuntimeController
 const CommandBusScript := preload("res://scripts/core/command/command_bus.gd")
 const G41InRunRuntimeScript := preload("res://scripts/core/run/g41_in_run_runtime.gd")
 const RunContextScript := preload("res://scripts/core/run/run_context.gd")
+const RunStartConfigScript := preload("res://scripts/core/run/run_start_config.gd")
 const RunStateMachineScript := preload("res://scripts/core/run/run_state_machine.gd")
 
 const META_ACTION_PURCHASE := &"purchase"
 const META_ACTION_SELL := &"sell_collectible"
+const META_ACTION_SELL_BATCH := &"sell_collectibles_batch"
+const META_ACTION_UNLOCK_TALENT := &"unlock_talent"
 const META_ACTION_RESEARCH := &"complete_research"
 const META_ACTION_CLAIM := &"claim_goal"
 const META_ACTION_MARK_VIEWED := &"mark_viewed"
+const TERMINAL_COMMIT_PENDING_STATUSES := [
+	&"awaiting_salvage_confirmation",
+	&"awaiting_salvage_selection",
+	&"save_failed",
+	&"write_blocked",
+	&"meta_progress_adapter_missing",
+]
+const TERMINAL_COMMIT_DISCARDABLE_STATUSES := [
+	&"save_failed",
+	&"write_blocked",
+	&"meta_progress_adapter_missing",
+]
+const TERMINAL_COMMIT_DISCARDED_STATUS := &"discarded_unsaved"
 
 var context
 var command_bus
@@ -51,14 +67,29 @@ func start_demo_run(room_resolver: RoomResolver) -> Dictionary:
 	return _with_actor(result)
 
 
-func start_tutorial_run(room_resolver: RoomResolver) -> Dictionary:
-	var result: Dictionary = state_machine.start_tutorial_run(context)
-	_finalize_start(result, room_resolver)
-	return _with_actor(result)
-
-
 func start_standard_run(room_resolver: RoomResolver, run_start_config: Dictionary = {}) -> Dictionary:
-	var result: Dictionary = state_machine.start_standard_run(context, run_start_config)
+	var authorized_config := run_start_config.duplicate(true)
+	if meta_progress_adapter != null and meta_progress_adapter.has_method("get_summary"):
+		var summary_variant: Variant = meta_progress_adapter.get_summary()
+		if not summary_variant is Dictionary:
+			return _with_actor({
+				"ok": false,
+				"status": &"invalid_meta_progress_summary",
+				"reason_code": "invalid_meta_progress_summary",
+			})
+		var authorization := RunStartConfigScript.authorize_with_meta(
+			run_start_config,
+			summary_variant as Dictionary
+		)
+		if not bool(authorization.get("ok", false)):
+			return _with_actor({
+				"ok": false,
+				"status": &"invalid_run_start_authority",
+				"reason_code": "invalid_run_start_authority",
+				"issues": _array_copy(authorization.get("issues", [])),
+			})
+		authorized_config = _dictionary_copy(authorization.get("config", {}))
+	var result: Dictionary = state_machine.start_standard_run(context, authorized_config)
 	_finalize_start(result, room_resolver)
 	return _with_actor(result)
 
@@ -94,7 +125,10 @@ func restart_run(room_resolver: RoomResolver) -> Dictionary:
 		&"standard":
 			result = state_machine.restart_standard_run(context, context.run_start_config.duplicate(true))
 		&"tutorial":
-			result = state_machine.restart_tutorial_run(context)
+			# Tutorial is a map mode on the standard route. Reuse the exact
+			# admitted start configuration instead of exposing a parallel
+			# tutorial lifecycle interface.
+			result = state_machine.restart_standard_run(context, context.run_start_config.duplicate(true))
 		&"demo":
 			result = state_machine.restart_demo_run(context)
 		_:
@@ -131,10 +165,11 @@ func execute_meta_action(action: Dictionary) -> Dictionary:
 			StringName(normalized.get("status", &"invalid_meta_action"))
 		)
 	var payload: Dictionary = normalized.get("payload", {})
+	var identity_payload := _meta_action_identity_payload(payload)
 	var target_id := str(normalized.get("target_id", ""))
 	if _meta_action_cache.has(request_id):
 		var cached_entry: Dictionary = _meta_action_cache.get(request_id, {})
-		if cached_entry.get("payload", {}) == payload:
+		if cached_entry.get("payload", {}) == identity_payload:
 			var duplicate_envelope: Dictionary = cached_entry.get("envelope", {}).duplicate(true)
 			duplicate_envelope["duplicate"] = true
 			return duplicate_envelope
@@ -143,7 +178,53 @@ func execute_meta_action(action: Dictionary) -> Dictionary:
 		return _meta_action_error(request_id, source_page, action_id, target_id, &"request_id_conflict", conflict_summary)
 	if meta_progress_adapter == null:
 		return _meta_action_error(request_id, source_page, action_id, target_id, &"meta_progress_adapter_missing")
-	var adapter_result := _dispatch_meta_action(payload)
+	var adapter_result: Dictionary
+	var persisted_duplicate := false
+	if meta_progress_adapter.has_method("execute_idempotent_meta_action"):
+		var transaction_variant: Variant = meta_progress_adapter.call(
+			"execute_idempotent_meta_action",
+			request_id,
+			identity_payload,
+			Callable(self, "_dispatch_meta_action").bind(payload)
+		)
+		if not transaction_variant is Dictionary:
+			return _meta_action_error(
+				request_id,
+				source_page,
+				action_id,
+				target_id,
+				&"invalid_meta_action_transaction",
+				_meta_summary_after_action({})
+			)
+		var transaction := transaction_variant as Dictionary
+		var idempotency_status := StringName(transaction.get("idempotency_status", &""))
+		if idempotency_status == &"request_id_conflict":
+			return _meta_action_error(
+				request_id,
+				source_page,
+				action_id,
+				target_id,
+				&"request_id_conflict",
+				_meta_summary_after_action({})
+			)
+		if idempotency_status not in [&"executed", &"duplicate", &"persistence_failed", &"write_blocked", &"invalid_result"]:
+			return _meta_action_error(
+				request_id,
+				source_page,
+				action_id,
+				target_id,
+				idempotency_status if idempotency_status != &"" else &"invalid_meta_action_transaction",
+				_meta_summary_after_action({})
+			)
+		adapter_result = _dictionary_copy(transaction.get("adapter_result", {}))
+		if adapter_result.is_empty():
+			adapter_result = {
+				"ok": false,
+				"status": &"invalid_meta_action_result",
+			}
+		persisted_duplicate = idempotency_status == &"duplicate"
+	else:
+		adapter_result = _dispatch_meta_action(payload)
 	var summary := _meta_summary_after_action(adapter_result)
 	var envelope := {
 		"request_id": request_id,
@@ -152,11 +233,11 @@ func execute_meta_action(action: Dictionary) -> Dictionary:
 		"target_id": target_id,
 		"ok": bool(adapter_result.get("ok", false)),
 		"status": StringName(adapter_result.get("status", &"ok" if bool(adapter_result.get("ok", false)) else &"failed")),
-		"duplicate": false,
+		"duplicate": persisted_duplicate,
 		"result": adapter_result.duplicate(true),
 		"meta_progress_summary": summary,
 	}
-	_store_meta_action_result(request_id, payload, envelope)
+	_store_meta_action_result(request_id, identity_payload, envelope)
 	return envelope.duplicate(true)
 
 
@@ -184,6 +265,18 @@ func _normalize_meta_action(source_page: String, action_id: StringName, action: 
 				return {"ok": false, "status": &"missing_target_id"}
 			payload["instance_id"] = target_id
 			payload["blocked_instance_ids"] = _normalized_blocked_instance_ids(action)
+		META_ACTION_SELL_BATCH:
+			var instance_ids := _normalized_instance_id_list(action.get("instance_ids", []))
+			if instance_ids.is_empty():
+				return {"ok": false, "status": &"missing_target_id"}
+			target_id = "batch:%s" % ",".join(instance_ids)
+			payload["instance_ids"] = instance_ids
+			payload["blocked_instance_ids"] = _normalized_blocked_instance_ids(action)
+		META_ACTION_UNLOCK_TALENT:
+			target_id = _exact_meta_id(action.get("talent_id", ""))
+			if target_id.is_empty():
+				return {"ok": false, "status": &"missing_target_id"}
+			payload["talent_id"] = target_id
 		META_ACTION_RESEARCH:
 			target_id = _exact_meta_id(action.get("research_id", ""))
 			if target_id.is_empty():
@@ -195,6 +288,8 @@ func _normalize_meta_action(source_page: String, action_id: StringName, action: 
 			var goal_id := _exact_meta_id(action.get("goal_id", ""))
 			if goal_kind.is_empty() or goal_id.is_empty():
 				return {"ok": false, "status": &"missing_target_id"}
+			if goal_kind not in ["task", "achievement"]:
+				return {"ok": false, "status": &"invalid_goal_kind"}
 			target_id = "%s:%s" % [goal_kind, goal_id]
 			payload["goal_kind"] = goal_kind
 			payload["goal_id"] = goal_id
@@ -223,6 +318,13 @@ func _dispatch_meta_action(payload: Dictionary) -> Dictionary:
 				str(payload.get("instance_id", "")),
 				_array_copy(payload.get("blocked_instance_ids", []))
 			)
+		META_ACTION_SELL_BATCH:
+			result = meta_progress_adapter.sell_collectibles_batch(
+				_array_copy(payload.get("instance_ids", [])),
+				_array_copy(payload.get("blocked_instance_ids", []))
+			)
+		META_ACTION_UNLOCK_TALENT:
+			result = meta_progress_adapter.unlock_talent(str(payload.get("talent_id", "")))
 		META_ACTION_RESEARCH:
 			result = meta_progress_adapter.complete_research(
 				str(payload.get("research_id", "")),
@@ -295,6 +397,64 @@ func _normalized_blocked_instance_ids(action: Dictionary) -> Array[String]:
 			var instance_id := _exact_meta_id(raw_value)
 			if not instance_id.is_empty():
 				unique[instance_id] = true
+	for active_instance_id in _active_run_protected_instance_ids():
+		unique[active_instance_id] = true
+	var normalized: Array[String] = []
+	for raw_instance_id in unique.keys():
+		normalized.append(str(raw_instance_id))
+	normalized.sort()
+	return normalized
+
+
+func _active_run_protected_instance_ids() -> Array[String]:
+	var protected: Dictionary = {}
+	if (
+		context == null
+		or (
+			not bool(context.run_active)
+			and StringName(context.phase) != &"failure_salvage"
+			and not _terminal_commit_requires_instance_protection()
+		)
+	):
+		return []
+	var run_start := _dictionary_copy(context.run_start_config)
+	for key in ["selected_equipment_ids", "selected_consumable_ids", "selected_loadout", "carried_consumables"]:
+		for raw_id in _array_copy(run_start.get(key, [])):
+			var instance_id := _exact_meta_id(raw_id)
+			if not instance_id.is_empty():
+				protected[instance_id] = true
+	for key in ["selected_equipment_items", "selected_consumable_items"]:
+		for raw_item in _array_copy(run_start.get(key, [])):
+			var item := _dictionary_copy(raw_item)
+			var instance_id := _exact_meta_id(item.get("instance_id", ""))
+			if not instance_id.is_empty():
+				protected[instance_id] = true
+	var normalized: Array[String] = []
+	for raw_id in protected.keys():
+		normalized.append(str(raw_id))
+	normalized.sort()
+	return normalized
+
+
+func _terminal_commit_requires_instance_protection() -> bool:
+	if context == null or context.result_snapshot.is_empty():
+		return false
+	return StringName(last_meta_commit.get("status", &"")) in TERMINAL_COMMIT_PENDING_STATUSES
+
+
+func _meta_action_identity_payload(payload: Dictionary) -> Dictionary:
+	var identity := payload.duplicate(true)
+	identity.erase("blocked_instance_ids")
+	return identity
+
+
+func _normalized_instance_id_list(value: Variant) -> Array[String]:
+	var unique: Dictionary = {}
+	if value is Array:
+		for raw_value in value as Array:
+			var instance_id := _exact_meta_id(raw_value)
+			if not instance_id.is_empty():
+				unique[instance_id] = true
 	var normalized: Array[String] = []
 	for raw_instance_id in unique.keys():
 		normalized.append(str(raw_instance_id))
@@ -337,6 +497,13 @@ func _on_terminal_result_available(result_snapshot: Dictionary) -> void:
 
 
 func retry_terminal_commit() -> Dictionary:
+	if StringName(last_meta_commit.get("status", &"")) == TERMINAL_COMMIT_DISCARDED_STATUS:
+		return _with_actor({
+			"ok": false,
+			"status": &"terminal_commit_discarded",
+			"committed": false,
+			"result_id": String(last_meta_commit.get("result_id", "")),
+		})
 	if context == null or context.result_snapshot.is_empty():
 		last_meta_commit = {
 			"ok": false,
@@ -367,6 +534,58 @@ func retry_terminal_commit() -> Dictionary:
 		return _with_actor(last_meta_commit)
 	last_meta_commit = meta_progress_adapter.apply_settlement(result_snapshot)
 	return _with_actor(last_meta_commit)
+
+
+func discard_unsaved_terminal_commit(confirmed: bool = false) -> Dictionary:
+	if not confirmed:
+		return _with_actor({
+			"ok": false,
+			"status": &"discard_confirmation_required",
+			"committed": false,
+		})
+	if StringName(last_meta_commit.get("status", &"")) == TERMINAL_COMMIT_DISCARDED_STATUS:
+		return _with_actor({
+			"ok": false,
+			"status": &"terminal_commit_already_discarded",
+			"committed": false,
+			"result_id": String(last_meta_commit.get("result_id", "")),
+		})
+	if context == null or context.result_snapshot.is_empty():
+		return _with_actor({
+			"ok": false,
+			"status": &"terminal_result_missing",
+			"committed": false,
+		})
+	var result_snapshot: Dictionary = context.result_snapshot.duplicate(true)
+	var settlement: Dictionary = result_snapshot.get("settlement", {}) if result_snapshot.get("settlement", {}) is Dictionary else {}
+	var outcome := String(result_snapshot.get("outcome", ""))
+	var terminal := outcome in ["Extracted", "Training Complete", "Failed", "Abandoned"]
+	var finalized := bool(settlement.get("finalized", false)) and not bool(settlement.get("requires_salvage_selection", false))
+	if not terminal or not finalized:
+		return _with_actor({
+			"ok": false,
+			"status": &"terminal_result_not_finalized",
+			"committed": false,
+			"result_id": String(result_snapshot.get("result_id", "")),
+		})
+	var current_status := StringName(last_meta_commit.get("status", &""))
+	if current_status not in TERMINAL_COMMIT_DISCARDABLE_STATUSES:
+		return _with_actor({
+			"ok": false,
+			"status": &"terminal_commit_discard_not_pending",
+			"committed": bool(last_meta_commit.get("committed", false)),
+			"result_id": String(result_snapshot.get("result_id", "")),
+		})
+	last_meta_commit = {
+		"ok": false,
+		"status": TERMINAL_COMMIT_DISCARDED_STATUS,
+		"committed": false,
+		"discarded": true,
+		"result_id": String(result_snapshot.get("result_id", "")),
+	}
+	var transition_result := last_meta_commit.duplicate(true)
+	transition_result["ok"] = true
+	return _with_actor(transition_result)
 
 
 func debug_force_extract() -> Dictionary:

@@ -28,7 +28,17 @@ func _validate_terminal_commit_without_ui() -> void:
 	controller.bind_meta_progress_adapter(adapter)
 	var start_result: Dictionary = controller.command_bus.dispatch(&"start_demo_run")
 	_require(bool(start_result.get("ok", false)), "demo start failed")
-	var abandon_result: Dictionary = controller.command_bus.dispatch(&"abandon_run", {"reason": "i1_no_ui"})
+	var unconfirmed_result: Dictionary = controller.command_bus.dispatch(&"abandon_run", {"reason": "i1_no_ui"})
+	_require(not bool(unconfirmed_result.get("ok", true)), "unconfirmed abandon terminal command was accepted")
+	_require(
+		StringName(unconfirmed_result.get("status", &"")) == &"abandon_confirmation_required",
+		"unconfirmed abandon used the wrong rejection"
+	)
+	_require(bool(controller.context.run_active), "unconfirmed abandon changed active-run state")
+	var abandon_result: Dictionary = controller.command_bus.dispatch(
+		&"abandon_run",
+		{"reason": "i1_no_ui", "confirmed": true}
+	)
 	_require(bool(abandon_result.get("ok", false)), "abandon terminal command failed")
 	var summary: Dictionary = adapter.get_summary()
 	_require(int(summary.get("run_count", 0)) == 1, "terminal result was not committed without RunScene")

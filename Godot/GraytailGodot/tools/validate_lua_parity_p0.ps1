@@ -106,14 +106,12 @@ Test-FileContains 'scripts/core/run/run_context.gd' @(
     'var searched_cells',
     'var run_stats',
     'var result_snapshot',
-    'func start_tutorial_run',
     'func start_standard_run',
     'func complete_extract',
     'func fail_run'
 )
 
 Test-FileContains 'scripts/core/command/command_bus.gd' @(
-    'func start_tutorial_run',
     'func start_standard_run',
     'func move_by',
     'func toggle_flag_cell',

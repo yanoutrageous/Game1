@@ -21,7 +21,7 @@ try {
         if ([string]::IsNullOrWhiteSpace($line)) { continue }
         $xy = $line.Substring(0, 2)
         $path = $line.Substring(3)
-        if (Is-GeneratedCandidate $path -or $path -eq "Godot/GraytailGodot/project.godot") {
+        if ((Is-GeneratedCandidate $path) -or $path -eq "Godot/GraytailGodot/project.godot") {
             $kind = "generated_metadata"
             if ($path -eq "Godot/GraytailGodot/project.godot") { $kind = "project_godot_refused" }
             elseif ($xy -ne "??") { $kind = "tracked_metadata_refused" }

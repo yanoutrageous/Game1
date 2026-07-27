@@ -2,25 +2,29 @@ extends RefCounted
 class_name G41WorldObjectProjection
 
 const ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
+const AssetContract := preload("res://scripts/presentation/art24/art24_in_run_asset_contract.gd")
+const PresentationDescriptor := preload("res://scripts/gameplay/runtime/g41_world_object_presentation_descriptor.gd")
 
 # Read-only projection from public run snapshots into stable room presentation
 # descriptors.  This layer never resolves interactions, moves ledger items, or
 # reads the hidden map.
 
-const CHEST_LOCAL_POS := Vector2(0.68, 0.53)
-const CHEST_BODY_SIZE := Vector2(0.12, 0.10)
-const CHEST_INTERACTION_RADIUS := 0.18
+const CHEST_LOCAL_POS := Vector2(0.50, 0.565)
+const CHEST_BODY_SIZE := Vector2(64.0 / 560.0, 28.0 / 560.0)
+const CHEST_INTERACTION_RADIUS := 112.0 / 560.0
 const GROUND_INTERACTION_RADIUS := 0.14
 const SPECIAL_INTERACTION_RADIUS := 0.18
 const EVENT_LOCAL_POS := Vector2(0.50, 0.42)
 const MINE_LOCAL_POS := Vector2(0.50, 0.51)
+const MINE_DISPLAY_SIZE := Vector2(72.0 / 560.0, 72.0 / 560.0)
 const EXIT_LOCAL_POS := Vector2(0.50, 0.45)
+const MONSTER_ALTAR_OCCLUDER_RECT := Rect2(Vector2(0.34, 0.36), Vector2(0.32, 0.28))
 
 const DOOR_DIRECTIONS := [
-	{"id": &"north", "delta": Vector2i.UP, "local_pos": Vector2(0.50, 0.04), "body_size": Vector2(0.16, 0.035)},
-	{"id": &"east", "delta": Vector2i.RIGHT, "local_pos": Vector2(0.96, 0.50), "body_size": Vector2(0.035, 0.16)},
-	{"id": &"south", "delta": Vector2i.DOWN, "local_pos": Vector2(0.50, 0.96), "body_size": Vector2(0.16, 0.035)},
-	{"id": &"west", "delta": Vector2i.LEFT, "local_pos": Vector2(0.04, 0.50), "body_size": Vector2(0.035, 0.16)},
+	{"id": &"north", "delta": Vector2i.UP, "local_pos": Vector2(0.50, 0.06), "body_size": Vector2(0.15, 0.06), "display_size": Vector2(0.17, 0.10), "context_offset": Vector2(0.0, 0.11)},
+	{"id": &"east", "delta": Vector2i.RIGHT, "local_pos": Vector2(0.94, 0.50), "body_size": Vector2(0.06, 0.15), "display_size": Vector2(0.10, 0.17), "context_offset": Vector2(-0.11, 0.0)},
+	{"id": &"south", "delta": Vector2i.DOWN, "local_pos": Vector2(0.50, 0.94), "body_size": Vector2(0.15, 0.06), "display_size": Vector2(0.17, 0.10), "context_offset": Vector2(0.0, -0.11)},
+	{"id": &"west", "delta": Vector2i.LEFT, "local_pos": Vector2(0.06, 0.50), "body_size": Vector2(0.06, 0.15), "display_size": Vector2(0.10, 0.17), "context_offset": Vector2(0.11, 0.0)},
 ]
 
 
@@ -45,12 +49,13 @@ static func build(snapshot: Dictionary, combat_snapshot: Dictionary = {}) -> Dic
 			world_objects.append(_ground_loot_projection(item))
 
 	return {
-		"projection_contract": &"i2.world_object_projection.v1",
+		"projection_contract": &"i3r.world_object_projection.v2",
 		"room_key": room_key,
 		"room_type": room_type,
 		"world_objects": world_objects,
 		"chest_contents": chest_contents,
 		"doors": _door_projections(snapshot, combat_snapshot, room_pos, room_key),
+		"occluders": _occluder_projections(room_type, room_key),
 		"read_only": true,
 		"authority": &"public_snapshot_only",
 	}
@@ -106,6 +111,9 @@ static func _mine_projection(snapshot: Dictionary, room_key: String) -> Dictiona
 		"projection_id": "mine:%s" % room_key,
 		"interaction_kind": &"mine",
 		"local_pos": MINE_LOCAL_POS,
+		"ground_anchor_local": MINE_LOCAL_POS,
+		"pivot_normalized": Vector2(0.5, 0.5),
+		"display_size_local": MINE_DISPLAY_SIZE,
 		"interaction_radius": SPECIAL_INTERACTION_RADIUS,
 		"body_rect": _centered_rect(MINE_LOCAL_POS, Vector2(0.075, 0.065)),
 		"context_anchor_local": MINE_LOCAL_POS + Vector2(0.0, -0.075),
@@ -194,15 +202,26 @@ static func _objective_summary(snapshot: Dictionary) -> String:
 static func _chest_projection(snapshot: Dictionary, room_key: String) -> Dictionary:
 	var search_state: Dictionary = snapshot.get("search_state_data", {})
 	var opened := bool(search_state.get("searched", false))
+	var visual_key := &"visual.art24.prop.chest_open_state" if opened else &"visual.art24.prop.chest_closed"
+	var art_presentation := AssetContract.world_presentation_for(visual_key)
+	var body_rect := Rect2(
+		CHEST_LOCAL_POS - Vector2(CHEST_BODY_SIZE.x * 0.5, CHEST_BODY_SIZE.y),
+		CHEST_BODY_SIZE
+	)
+	var display_size := Vector2(art_presentation.get("display_size_local", Vector2(0.14, 0.14)))
+	var visual_top := CHEST_LOCAL_POS.y - display_size.y
 	return _descriptor({
 		"projection_id": "chest:%s" % room_key,
 		"interaction_kind": &"chest",
 		"local_pos": CHEST_LOCAL_POS,
+		"ground_anchor_local": CHEST_LOCAL_POS,
+		"pivot_normalized": Vector2(art_presentation.get("pivot_normalized", Vector2(0.5, 1.0))),
+		"display_size_local": display_size,
 		"interaction_radius": CHEST_INTERACTION_RADIUS,
-		"body_rect": _centered_rect(CHEST_LOCAL_POS, CHEST_BODY_SIZE),
-		"context_anchor_local": CHEST_LOCAL_POS + Vector2(0.0, -0.075),
+		"body_rect": body_rect,
+		"context_anchor_local": Vector2(CHEST_LOCAL_POS.x, visual_top - 12.0 / 560.0),
 		"visual_state": &"opened" if opened else &"closed",
-		"visual_key": &"visual.art24.prop.chest_open_state" if opened else &"visual.art24.prop.chest_closed",
+		"visual_key": visual_key,
 		"depth_key": &"world.interactable.chest",
 		"enabled": true,
 		"prompt_text": "查看物资" if opened else "打开物资箱",
@@ -234,6 +253,7 @@ static func _door_projections(snapshot: Dictionary, combat_snapshot: Dictionary,
 	var result: Array[Dictionary] = []
 	var width := int(snapshot.get("width", 0))
 	var height := int(snapshot.get("height", 0))
+	var room_visual_token := _door_room_visual_token(StringName(snapshot.get("current_room", &"Normal")))
 	var run_start_config: Dictionary = snapshot.get("run_start_config", {})
 	var requires_revealed := bool(snapshot.get("move_requires_revealed", run_start_config.get("move_requires_revealed", false)))
 	var combat_restricted := bool(combat_snapshot.get("door_locked", false))
@@ -253,38 +273,76 @@ static func _door_projections(snapshot: Dictionary, combat_snapshot: Dictionary,
 			state = &"combat_restricted"
 		var local_pos: Vector2 = door.get("local_pos", Vector2(0.5, 0.5))
 		var body_size: Vector2 = door.get("body_size", Vector2(0.04, 0.12))
+		var display_size := Vector2(door.get("display_size", body_size))
+		var pivot := Vector2(0.5, 0.5)
+		var orientation := StringName(door.get("id", &"unknown"))
+		var texture_region := Rect2(local_pos - display_size * pivot, display_size)
 		result.append(_descriptor({
 			"projection_id": "door:%s:%s" % [room_key, String(door.get("id", &"unknown"))],
 			"interaction_kind": &"door_projection",
 			"local_pos": local_pos,
-			"interaction_radius": 0.0,
+			"ground_anchor_local": local_pos,
+			"pivot_normalized": pivot,
+			"display_size_local": display_size,
+			"texture_region_normalized": texture_region,
+			"interaction_radius": 80.0 / 560.0,
 			"body_rect": _centered_rect(local_pos, body_size),
-			"context_anchor_local": local_pos,
+			"context_anchor_local": local_pos + Vector2(door.get("context_offset", Vector2.ZERO)),
 			"visual_state": state,
-			"visual_key": StringName("runtime.door.%s" % String(state)),
+			"visual_key": StringName("visual.art24.door.%s.%s.%s" % [
+				room_visual_token,
+				String(orientation),
+				String(state),
+			]),
+			"orientation": orientation,
 			"depth_key": &"world.door",
 			"enabled": false,
 			"prompt_text": "",
-			"payload": {"direction": direction, "target": target},
+			"payload": {"direction": direction, "target": target, "orientation": orientation},
 		}))
 	return result
 
 
+static func _door_room_visual_token(room_type: StringName) -> String:
+	var token := String(room_type).to_lower()
+	# Chest intentionally uses the normal room plate so its baked prop cannot
+	# compete with the live chest presentation.
+	if token in ["spawn", "chest"] or not AssetContract.ROOM_PATHS.has(token):
+		return "normal"
+	return token
+
+
+static func _occluder_projections(room_type: StringName, room_key: String) -> Array[Dictionary]:
+	if room_type != &"Monster":
+		return []
+	var rect := MONSTER_ALTAR_OCCLUDER_RECT
+	return [_descriptor({
+		"projection_id": "occluder:%s:monster_altar" % room_key,
+		"interaction_kind": &"visual_occluder",
+		"local_pos": rect.get_center(),
+		"ground_anchor_local": rect.get_center(),
+		"pivot_normalized": Vector2(0.5, 0.5),
+		"display_size_local": rect.size,
+		"texture_region_normalized": rect,
+		"interaction_radius": 0.0,
+		"body_rect": rect,
+		"context_anchor_local": rect.position,
+		"visual_state": &"foreground",
+		"visual_key": &"visual.art24.room.monster",
+		"depth_key": &"world.foreground_occluder",
+		"enabled": false,
+		"prompt_text": "",
+		"payload": {
+			"occlusion_rect_local": rect,
+			"depth_split_local_y": rect.end.y,
+			"masks_combat_geometry": true,
+			"source": &"room_plate_crop",
+		},
+	})]
+
+
 static func _descriptor(values: Dictionary) -> Dictionary:
-	return {
-		"projection_id": String(values.get("projection_id", "")),
-		"interaction_kind": StringName(values.get("interaction_kind", &"unknown")),
-		"local_pos": Vector2(values.get("local_pos", Vector2.ZERO)),
-		"interaction_radius": maxf(0.0, float(values.get("interaction_radius", 0.0))),
-		"body_rect": Rect2(values.get("body_rect", Rect2())),
-		"context_anchor_local": Vector2(values.get("context_anchor_local", values.get("local_pos", Vector2.ZERO))),
-		"visual_state": StringName(values.get("visual_state", &"idle")),
-		"visual_key": StringName(values.get("visual_key", &"runtime.missing")),
-		"depth_key": StringName(values.get("depth_key", &"world.default")),
-		"enabled": bool(values.get("enabled", false)),
-		"prompt_text": String(values.get("prompt_text", "")),
-		"payload": (values.get("payload", {}) as Dictionary).duplicate(true),
-	}
+	return PresentationDescriptor.build(values)
 
 
 static func _known_public_cells(snapshot: Dictionary) -> Array:

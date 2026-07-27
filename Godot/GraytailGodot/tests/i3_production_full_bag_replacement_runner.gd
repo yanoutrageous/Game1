@@ -1,5 +1,7 @@
 extends "res://tests/i3_production_input_journey_runner.gd"
 
+const RunUIViewModelScript := preload("res://scripts/ui/shell/run_ui_view_model.gd")
+
 const BAG_PASS_MARKER := "I3_PRODUCTION_FULL_BAG_REPLACEMENT=PASS"
 const BAG_FAIL_MARKER := "I3_PRODUCTION_FULL_BAG_REPLACEMENT=FAIL"
 
@@ -148,6 +150,7 @@ func _search_and_collect_normal(checkpoint_id: String) -> void:
 			await _tap_key(KEY_G, "%s.open_replacement" % checkpoint_id)
 			var popup = _context_popup()
 			_require(await _wait_until(func() -> bool: return String(popup.get("replacement_ground_id")) != "", 2.0), "full bag did not open replacement candidates")
+			_require_replacement_candidate_layout(popup)
 			var replacement_button := popup.find_child("ReplacementCandidateButton", true, false) as Button
 			_require(replacement_button != null and not replacement_button.disabled, "replacement view exposed no eligible carried item")
 			if replacement_button != null:
@@ -179,6 +182,75 @@ func _inventory_has(instance_id: String) -> bool:
 		if raw is Dictionary and String((raw as Dictionary).get("instance_id", "")) == instance_id:
 			return true
 	return false
+
+
+func _require_replacement_candidate_layout(popup: Node) -> void:
+	var info := popup.find_child("ReplacementCandidateInfo", true, false) as Button
+	var name_line := info.find_child("ReplacementCandidateName", true, false) as Label if info != null else null
+	var meta_line := info.find_child("ReplacementCandidateMeta", true, false) as Label if info != null else null
+	var marker := info.find_child("WorldContextItemRarityMarker", true, false) as ColorRect if info != null else null
+	var scroll := popup.find_child("ContextItemScroll", true, false) as ScrollContainer
+	_require(info != null and info.text.is_empty(), "replacement candidate retained clipped single-control copy")
+	_require(
+		info != null and info.get_meta("replacement_layout", &"") == &"two_line",
+		"replacement candidate did not use the two-line layout"
+	)
+	_require(
+		name_line != null
+		and meta_line != null
+		and not name_line.text.contains("\n")
+		and not meta_line.text.contains("\n")
+		and name_line.position.y < meta_line.position.y,
+		"replacement candidate name and metadata are not two distinct visual lines"
+	)
+	_require(name_line != null and _label_text_fits(name_line), "replacement name/count line is visually clipped")
+	_require(meta_line != null and _label_text_fits(meta_line), "replacement quality/level/weight line is visually clipped")
+	_require(marker != null and marker.mouse_filter == Control.MOUSE_FILTER_IGNORE, "replacement candidate lost its independent rarity marker")
+	_require(scroll != null and scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "replacement candidate list lost vertical scrolling")
+
+	var candidate_id := String(info.get_meta("item_instance_id", "")) if info != null else ""
+	var candidate_item: Dictionary = {}
+	for raw_item in popup.get("inventory_items") as Array:
+		if raw_item is Dictionary and String((raw_item as Dictionary).get("instance_id", "")) == candidate_id:
+			candidate_item = (raw_item as Dictionary).duplicate(true)
+			break
+	_require(not candidate_item.is_empty(), "replacement candidate could not be mapped back to the carried item")
+	if candidate_item.is_empty() or meta_line == null:
+		return
+	var presentation := RunUIViewModelScript.item_presentation(candidate_item)
+	var expected_level := maxi(0, int(presentation.get("collectible_level", 0)))
+	_require(
+		int(meta_line.get_meta("collectible_level", -1)) == expected_level,
+		"replacement candidate collectible level drifted from the carried item"
+	)
+	_require(
+		meta_line.text.contains(String(presentation.get("rarity_text", "[?] 未鉴定")).replace("] ", "]"))
+		and meta_line.text.contains("重%s" % presentation.get("weight", 0)),
+		"replacement candidate metadata omitted quality or weight"
+	)
+	if expected_level > 0:
+		_require(
+			meta_line.text.contains("收藏等级%d" % expected_level),
+			"replacement candidate omitted its real collectible level"
+		)
+	else:
+		_require(
+			not meta_line.text.contains("收藏等级"),
+			"replacement candidate invented a collectible level"
+		)
+
+
+func _label_text_fits(label: Label) -> bool:
+	var font := label.get_theme_font("font")
+	if font == null:
+		return false
+	var text_width := font.get_string_size(
+		label.text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		label.get_theme_font_size("font_size")
+	).x
+	return text_width <= label.size.x + 0.5
 
 
 func _finish_bag() -> void:

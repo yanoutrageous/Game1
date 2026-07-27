@@ -72,8 +72,8 @@ static func default_snapshot(module_summaries: Dictionary = {}, source: StringNa
 		"long_term_asset_interface_full_content_preview": {
 			"title": "G30 LongTerm asset interface full content preview",
 			"state": "display_only",
-			"scope": "五模块 / RewardBundle / ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent / ObjectiveEvent / red_dot / jump_target",
-			"modules": ["任务档案", "图鉴", "研究", "个人资历", "收藏 / 外观"],
+			"scope": "六模块 / RewardBundle / ResourceEvent / ItemEvent / UnlockEvent / HistoryRecordEvent / ObjectiveEvent / red_dot / jump_target",
+			"modules": ["任务档案", "图鉴", "研究", "天赋", "个人资历", "收藏 / 外观"],
 			"reward_bundle_preview": g30_reward_bundle.duplicate(true),
 			"red_dot_policy": g30_red_dot_policy.duplicate(true),
 			"jump_targets": [
@@ -101,7 +101,7 @@ static func default_snapshot(module_summaries: Dictionary = {}, source: StringNa
 			"state": "framework",
 			"module_count": content_framework_modules.size(),
 			"module_summaries": LongTermContentFrameworkScript.module_summaries(content_framework_modules),
-			"message": "记录五个已有权威模块的内容框架、二级分组、卡片和 slot。",
+			"message": "记录六个权威模块的内容框架、二级分组、卡片和 slot。",
 			"read_only": true,
 			"display_only": true,
 			"preview": true,
@@ -110,7 +110,7 @@ static func default_snapshot(module_summaries: Dictionary = {}, source: StringNa
 			"title": "G24 preview slot 汇总",
 			"state": "display_only",
 			"slots": content_preview_slots.duplicate(true),
-			"message": "objective / reward / claimable / red dot / codex / research / collection / history / asset event slots only.",
+			"message": "objective / reward / claimable / red dot / codex / research / talent / collection / history / asset event slots only.",
 			"read_only": true,
 			"display_only": true,
 			"preview": true,

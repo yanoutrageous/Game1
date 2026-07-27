@@ -7,6 +7,7 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const Art24MapOverlayLayoutScript := preload("res://scripts/presentation/art24/art24_map_overlay_layout.gd")
+const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
 
 signal cell_action_requested(marker: Dictionary)
 signal close_requested
@@ -20,11 +21,8 @@ var marker_size: Vector2 = Vector2(42, 42)
 var title_font_size: int = 20
 var footer_font_size: int = 13
 var previous_focus_owner: Control
+var ui_scale_factor := 1.0
 const LEGACY_MAP_OVERLAY_VALIDATION_MARKER := "Click hidden cells to flag"
-const ART21R2_MAP_PANEL_FRAME_VISUAL_KEY := &"art21r2.modal.inventory.frame"
-const ART21R2_MAP_TITLE_PLATE_VISUAL_KEY := &"art21r2.modal.title_plate"
-const ART21R2_MAP_DETAIL_PANEL_VISUAL_KEY := &"art21r2.modal.section.panel"
-const ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY := &"art21r2.modal.action_strip"
 
 
 func apply_view_model(next_view_model: MiniMapViewModel) -> void:
@@ -37,6 +35,11 @@ func apply_view_model(next_view_model: MiniMapViewModel) -> void:
 
 func apply_layout_profile(profile: Dictionary) -> void:
 	layout_profile = profile.duplicate(true)
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(
+		float(layout_profile.get("ui_scale_factor", ui_scale_factor))
+	)
+	layout_profile["ui_scale_factor"] = ui_scale_factor
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
 	var is_low := bool(layout_profile.get("is_low_resolution", false))
 	var is_high := bool(layout_profile.get("is_high_resolution", false))
 	var grid_size := Vector2i(
@@ -44,8 +47,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		maxi(1, view_model.height if view_model != null else 10)
 	)
 	layout_metrics = Art24MapOverlayLayoutScript.calculate(layout_profile, grid_size)
-	title_font_size = 16 if is_low else (20 if is_high else 18)
-	footer_font_size = 13
+	title_font_size = Art10UISkinKitScript.scaled_font_size(16 if is_low else (20 if is_high else 18), ui_scale_factor)
+	footer_font_size = Art10UISkinKitScript.scaled_font_size(13, ui_scale_factor)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	offset_left = 0.0
 	offset_top = 0.0
@@ -68,6 +71,21 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	if content != null:
 		content.add_theme_constant_override("separation", int(layout_metrics.get("content_gap", 5)))
 	_rebuild_grid()
+
+
+func set_ui_scale_factor(value: float) -> void:
+	var resolved := Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	ui_scale_factor = resolved
+	set_meta("runtime_ui_scale_factor", resolved)
+	if layout_profile.is_empty():
+		_rebuild_grid()
+		return
+	layout_profile["ui_scale_factor"] = resolved
+	apply_layout_profile(layout_profile)
+
+
+func get_ui_scale_factor() -> float:
+	return ui_scale_factor
 
 
 func show_overlay() -> void:
@@ -113,6 +131,7 @@ func toggle_overlay() -> void:
 
 
 func _ready() -> void:
+	Art10UISkinKitScript.apply_player_ui_theme(self)
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_ALL
@@ -133,14 +152,20 @@ func _apply_layer_order() -> void:
 	if panel != null:
 		panel.z_as_relative = true
 		panel.z_index = 10
+		if panel is Control:
+			(panel as Control).mouse_filter = Control.MOUSE_FILTER_PASS
+	for path in ["Panel/Content", "Panel/Content/Title", "Panel/Content/Grid", "Panel/Content/Footer"]:
+		var passthrough := get_node_or_null(path) as Control
+		if passthrough != null:
+			passthrough.mouse_filter = Control.MOUSE_FILTER_PASS
 
 
 func _input(event: InputEvent) -> void:
 	if not visible:
 		return
 	var right_click := event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_RIGHT and (event as InputEventMouseButton).pressed
-	var toggle_map := event.is_action_pressed("open_map") or _event_matches_key(event, [KEY_M])
-	if event.is_action_pressed("cancel") or _event_matches_key(event, [KEY_ESCAPE]) or toggle_map or right_click:
+	var toggle_map := event.is_action_pressed("open_map")
+	if event.is_action_pressed("cancel") or toggle_map or right_click:
 		_request_user_close()
 		get_viewport().set_input_as_handled()
 
@@ -151,11 +176,29 @@ func _gui_input(event: InputEvent) -> void:
 	var mouse_event := event as InputEventMouseButton
 	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
 		return
-	var panel := get_node_or_null("Panel") as Control
-	if panel != null and panel.get_rect().has_point(mouse_event.position):
+	if _point_hits_map_content(mouse_event.position):
 		return
 	_request_user_close()
 	accept_event()
+
+
+func _point_hits_map_content(local_point: Vector2) -> bool:
+	var root_rect := get_global_rect()
+	for path in [
+		"Panel/Content/Title",
+		"Panel/Content/Grid",
+		"Panel/Content/Detail",
+		"Panel/Content/SelectedAction",
+		"Panel/Content/Footer",
+	]:
+		var control := get_node_or_null(path) as Control
+		if control == null or not control.visible:
+			continue
+		var global_rect := control.get_global_rect()
+		var local_rect := Rect2(global_rect.position - root_rect.position, global_rect.size)
+		if local_rect.has_point(local_point):
+			return true
+	return false
 
 
 func _request_user_close() -> void:
@@ -193,6 +236,7 @@ func _rebuild_grid() -> void:
 	var detail := _ensure_detail_label()
 	var action_button := _ensure_action_button()
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
+	_order_content_sections()
 	if grid == null:
 		return
 	var focus_pos := Vector2i(-1, -1)
@@ -214,24 +258,24 @@ func _rebuild_grid() -> void:
 	_synchronize_selected_marker()
 	_apply_overlay_text_hierarchy(title, detail, action_button, footer)
 	if title != null:
-		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
-		title.add_theme_font_size_override("font_size", title_font_size)
+		Art10UISkinKitScript.apply_composition_label(title, &"title", title_font_size, PresentationTheme.color_for_key(&"ui.accent"))
 		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		title.text = "区域地图"
+		title.text = "区域扫描图"
 	if detail != null:
 		detail.visible = true
-		detail.add_theme_color_override("font_color", PresentationTheme.text_color())
-		detail.add_theme_font_size_override("font_size", maxi(18, title_font_size))
-		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		detail.max_lines_visible = 2
+		Art10UISkinKitScript.apply_composition_label(detail, &"body", maxi(18, title_font_size), PresentationTheme.text_color())
+		detail.autowrap_mode = TextServer.AUTOWRAP_OFF
+		detail.max_lines_visible = 1
+		detail.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		detail.text = _selected_detail_text()
 	if footer != null:
-		footer.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		footer.add_theme_font_size_override("font_size", maxi(13, footer_font_size))
-		footer.add_theme_constant_override("line_spacing", 2)
+		Art10UISkinKitScript.apply_composition_label(footer, &"status", maxi(13, footer_font_size), PresentationTheme.color_for_key(&"ui.muted"))
+		footer.autowrap_mode = TextServer.AUTOWRAP_OFF
+		footer.max_lines_visible = 1
+		footer.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		footer.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		footer.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_refresh_footer_text()
@@ -248,7 +292,6 @@ func _rebuild_grid() -> void:
 	else:
 		for marker in view_model.room_markers:
 			_add_marker_node(grid, marker)
-	_wire_action_focus_neighbors(grid, action_button)
 	_refresh_selection_presentation()
 	if visible and focus_pos != Vector2i(-1, -1):
 		call_deferred("_focus_marker_position", focus_pos)
@@ -289,7 +332,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 		button.add_theme_constant_override("icon_max_width", _icon_width_for_marker_state(state, marker_size))
 		button.text = "" if label_text != "P" else "P"
 	button.modulate = _modulate_for_marker_state(state, selected)
-	button.pressed.connect(func() -> void: _select_marker(marker))
+	button.pressed.connect(func() -> void: _activate_marker(marker))
 	button.focus_entered.connect(func() -> void: _select_marker(marker))
 	_add_adjacent_mine_count(button, marker)
 	grid.add_child(button)
@@ -330,68 +373,37 @@ func _apply_overlay_panel_style(control: Control) -> void:
 	if not (control is PanelContainer):
 		return
 	var panel := control as PanelContainer
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.005, 0.012, 0.014, 0.16)
-	style.content_margin_left = 16
-	style.content_margin_top = float(layout_metrics.get("frame_vertical_padding", 24.0)) * 0.5
-	style.content_margin_right = 16
-	style.content_margin_bottom = float(layout_metrics.get("frame_vertical_padding", 24.0)) * 0.5
-	panel.add_theme_stylebox_override("panel", style)
+	# The dimmer owns the modal boundary.  A second inventory-derived shell made
+	# the scan read as a warehouse dialog and left almost no usable outside-click
+	# lane, so the panel remains a transparent, tightly fitted layout host.
+	panel.add_theme_stylebox_override("panel", Art10UISkinKitScript.transparent_style_box(0))
 
 
 func _apply_overlay_text_hierarchy(title: Label, detail: Label, action_button: Button, footer: Label) -> void:
-	var label_padding := int(layout_metrics.get("label_padding", 8))
+	var text_width := float(layout_metrics.get("text_width", 620.0))
 	if title != null:
-		title.custom_minimum_size = Vector2(620, float(layout_metrics.get("title_height", 32)))
+		title.custom_minimum_size = Vector2(text_width, float(layout_metrics.get("title_height", 32)))
 		title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		title.add_theme_stylebox_override("normal", _transparent_text_style(label_padding))
+		title.add_theme_stylebox_override("normal", Art10UISkinKitScript.transparent_style_box(0))
 	if detail != null:
-		detail.custom_minimum_size = Vector2(620, float(layout_metrics.get("detail_height", 72)))
+		detail.custom_minimum_size = Vector2(text_width, float(layout_metrics.get("detail_height", 36)))
 		detail.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		detail.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_DETAIL_PANEL_VISUAL_KEY, label_padding, 18))
+		detail.add_theme_stylebox_override("normal", Art10UISkinKitScript.transparent_style_box(0))
 	if action_button != null:
-		action_button.custom_minimum_size = Vector2(360, float(layout_metrics.get("action_height", 38)))
+		action_button.custom_minimum_size = Vector2(
+			roundf(220.0 * ui_scale_factor),
+			float(layout_metrics.get("action_height", 50))
+		)
 		action_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		action_button.add_theme_font_size_override("font_size", maxi(14, footer_font_size + 1))
+		Art10UISkinKitScript.apply_button(
+			action_button,
+			&"primary",
+			Art10UISkinKitScript.scaled_font_size(14, ui_scale_factor)
+		)
 	if footer != null:
-		footer.custom_minimum_size = Vector2(620, float(layout_metrics.get("footer_height", 48)))
+		footer.custom_minimum_size = Vector2(text_width, float(layout_metrics.get("footer_height", 26)))
 		footer.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		footer.add_theme_stylebox_override("normal", _style_box_for_visual_key(ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY, label_padding, 18))
-
-
-func _transparent_text_style(padding: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.0, 0.0, 0.0, 0.0)
-	style.content_margin_left = padding
-	style.content_margin_top = padding
-	style.content_margin_right = padding
-	style.content_margin_bottom = padding
-	return style
-
-
-func _style_box_for_visual_key(visual_key: StringName, padding: int = 8, texture_margin: int = 18) -> StyleBox:
-	var style := StyleBoxFlat.new()
-	var is_title := visual_key == ART21R2_MAP_TITLE_PLATE_VISUAL_KEY
-	var is_footer := visual_key == ART21R2_MAP_FOOTER_STRIP_VISUAL_KEY
-	style.bg_color = Color(0.014, 0.040, 0.043, 0.94)
-	style.border_color = Color(0.18, 0.50, 0.47, 0.78)
-	if is_title:
-		style.border_color = Color(0.88, 0.64, 0.24, 0.90)
-	elif is_footer:
-		style.bg_color = Color(0.010, 0.025, 0.028, 0.96)
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.corner_radius_top_left = 2
-	style.corner_radius_top_right = 2
-	style.corner_radius_bottom_left = 2
-	style.corner_radius_bottom_right = 2
-	style.content_margin_left = padding
-	style.content_margin_top = padding
-	style.content_margin_right = padding
-	style.content_margin_bottom = padding
-	return style
+		footer.add_theme_stylebox_override("normal", Art10UISkinKitScript.transparent_style_box(0))
 
 
 func _apply_marker_button_style(button: Button, theme_key: StringName, state: StringName, selected: bool) -> void:
@@ -437,6 +449,13 @@ func _art24_map_tile_style(state: StringName, selected: bool) -> StyleBox:
 	style.texture_margin_top = 8
 	style.texture_margin_right = 8
 	style.texture_margin_bottom = 8
+	# The tile border uses an 8 px source slice, but its icon needs only a 4 px
+	# rendered safe inset. Leaving content margins implicit made the player icon
+	# enlarge one GridContainer row beyond the requested marker size.
+	style.content_margin_left = 4
+	style.content_margin_top = 4
+	style.content_margin_right = 4
+	style.content_margin_bottom = 4
 	style.draw_center = true
 	if token == "flagged":
 		# UE communicates a player-authored danger flag with a red cell field.  The
@@ -448,17 +467,20 @@ func _art24_map_tile_style(state: StringName, selected: bool) -> StyleBox:
 
 func _icon_width_for_marker_state(state: StringName, size: Vector2) -> int:
 	var base: float = minf(size.x, size.y)
+	var desired: int
 	match state:
 		&"flagged", &"event":
-			return int(base * 0.92)
+			desired = int(base * 0.92)
 		&"player", &"exit", &"mine", &"monster", &"chest":
-			return int(base * 0.82)
+			desired = int(base * 0.82)
 		&"scanned":
-			return int(base * 0.72)
+			desired = int(base * 0.72)
 		&"unknown":
-			return int(base * 0.58)
+			desired = int(base * 0.58)
 		_:
-			return int(base * 0.70)
+			desired = int(base * 0.70)
+	# Four rendered pixels on both sides belong to the tile border, not the icon.
+	return mini(desired, maxi(8, int(base) - 8))
 
 
 func _modulate_for_marker_state(state: StringName, selected: bool) -> Color:
@@ -519,18 +541,6 @@ func _marker_style(bg: Color, border: Color, border_width: int) -> StyleBoxFlat:
 	return style
 
 
-func _event_matches_key(event: InputEvent, keycodes: Array) -> bool:
-	if not (event is InputEventKey):
-		return false
-	var key_event := event as InputEventKey
-	if not key_event.pressed or key_event.echo:
-		return false
-	for keycode: int in keycodes:
-		if key_event.physical_keycode == keycode or key_event.keycode == keycode:
-			return true
-	return false
-
-
 func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var refreshed_marker := _marker_at_position(pos)
@@ -538,7 +548,9 @@ func show_action_feedback(marker: Dictionary, result: Dictionary) -> void:
 	var accepted: bool = bool(result.get("accepted", result.get("ok", false)))
 	var reason: String = String(result.get("reason_code", result.get("reason", "")))
 	if accepted:
-		selected_feedback_text = "已更新格子 (%d,%d)。" % [pos.x, pos.y]
+		# A successful flag change is already visible in the selected tile; an
+		# additional framed status line only repeats the same result.
+		selected_feedback_text = ""
 	else:
 		selected_feedback_text = "格子 (%d,%d)：%s" % [pos.x, pos.y, RunUIViewModel.reason_label(reason)]
 	_refresh_selection_presentation()
@@ -559,6 +571,15 @@ func _select_marker(marker: Dictionary) -> void:
 	_refresh_selection_presentation()
 
 
+func _activate_marker(marker: Dictionary) -> void:
+	# Match the production UE overview: activating a cell is the cell action.
+	# Pointer clicks and ui_accept both arrive through BaseButton.pressed, so
+	# there is one shared route and no pointer-specific command path to double
+	# submit. Focus movement remains selection-only for keyboard/gamepad review.
+	_select_marker(marker)
+	_execute_selected_marker()
+
+
 func _execute_selected_marker() -> void:
 	if selected_marker.is_empty() or not bool(selected_marker.get("action_enabled", false)):
 		return
@@ -569,9 +590,14 @@ func _refresh_footer_text() -> void:
 	var footer := get_node_or_null("Panel/Content/Footer") as Label
 	if footer == null:
 		return
-	footer.text = "选择格子查看详情 · 使用确认按钮执行选中操作\nM / Esc / 右键 / 点击面板外：关闭"
-	if selected_feedback_text != "":
-		footer.text = "%s\nM / Esc / 右键 / 点击面板外：关闭" % selected_feedback_text
+	var confirm_hint := SemanticActionHintScript.current_binding_label(&"ui_accept")
+	var map_hint := SemanticActionHintScript.current_binding_label(&"open_map")
+	var cancel_hint := SemanticActionHintScript.current_binding_label(&"cancel")
+	footer.text = "左键执行格子 · %s执行焦点格 · %s / %s / 右键 / 点击外部关闭" % [
+		confirm_hint if not confirm_hint.is_empty() else "Enter",
+		map_hint if not map_hint.is_empty() else "M",
+		cancel_hint if not cancel_hint.is_empty() else "Esc",
+	]
 
 
 func _focus_marker_position(pos: Vector2i) -> void:
@@ -597,10 +623,8 @@ func _ensure_detail_label() -> Label:
 	detail.name = "Detail"
 	detail.visible = false
 	detail.custom_minimum_size = Vector2.ZERO
+	detail.mouse_filter = Control.MOUSE_FILTER_PASS
 	content.add_child(detail)
-	var grid := get_node_or_null("Panel/Content/Grid")
-	if grid != null:
-		content.move_child(detail, grid.get_index())
 	return detail
 
 
@@ -614,12 +638,21 @@ func _ensure_action_button() -> Button:
 	action_button = Button.new()
 	action_button.name = "SelectedAction"
 	action_button.focus_mode = Control.FOCUS_ALL
+	action_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	action_button.pressed.connect(_execute_selected_marker)
 	content.add_child(action_button)
-	var grid := get_node_or_null("Panel/Content/Grid")
-	if grid != null:
-		content.move_child(action_button, grid.get_index())
 	return action_button
+
+
+func _order_content_sections() -> void:
+	var content := get_node_or_null("Panel/Content") as VBoxContainer
+	if content == null:
+		return
+	var ordered_names := [&"Title", &"Grid", &"Detail", &"SelectedAction", &"Footer"]
+	for index in range(ordered_names.size()):
+		var child := content.get_node_or_null(String(ordered_names[index]))
+		if child != null:
+			content.move_child(child, index)
 
 
 func _selected_detail_text() -> String:
@@ -649,13 +682,20 @@ func _synchronize_selected_marker() -> void:
 func _refresh_selection_presentation() -> void:
 	var detail := get_node_or_null("Panel/Content/Detail") as Label
 	if detail != null:
-		detail.text = _selected_detail_text()
+		var has_feedback := not selected_feedback_text.is_empty()
+		detail.text = selected_feedback_text if has_feedback else _selected_detail_text()
+		detail.add_theme_color_override(
+			"font_color",
+			PresentationTheme.color_for_key(&"ui.danger") if has_feedback else PresentationTheme.text_color()
+		)
 	var action_button := get_node_or_null("Panel/Content/SelectedAction") as Button
 	if action_button != null:
 		var action_label := String(selected_marker.get("action_label", "不可执行"))
 		var action_enabled := not selected_marker.is_empty() and bool(selected_marker.get("action_enabled", false))
 		action_button.disabled = not action_enabled
-		action_button.text = "确认：%s" % action_label if action_enabled else action_label
+		action_button.visible = action_enabled
+		action_button.mouse_filter = Control.MOUSE_FILTER_STOP if action_enabled else Control.MOUSE_FILTER_IGNORE
+		action_button.text = action_label
 		action_button.tooltip_text = "" if action_enabled else RunUIViewModel.reason_label(String(selected_marker.get("disabled_reason", "")))
 	var grid := get_node_or_null("Panel/Content/Grid") as GridContainer
 	if grid != null:
@@ -673,6 +713,7 @@ func _refresh_selection_presentation() -> void:
 			var selected_button := grid.get_node_or_null("MapCell_%d_%d" % [selected_pos.x, selected_pos.y]) as Button
 			if selected_button != null:
 				action_button.focus_neighbor_top = action_button.get_path_to(selected_button)
+	_wire_action_focus_neighbors(grid, action_button)
 	_refresh_footer_text()
 
 
@@ -682,7 +723,11 @@ func _wire_action_focus_neighbors(grid: GridContainer, action_button: Button) ->
 	var buttons: Array[Button] = []
 	for child in grid.get_children():
 		if child is Button:
-			buttons.append(child as Button)
+			var button := child as Button
+			button.focus_neighbor_bottom = NodePath()
+			buttons.append(button)
+	if not action_button.visible or action_button.disabled:
+		return
 	var columns := maxi(1, grid.columns)
 	var bottom_start := maxi(0, buttons.size() - columns)
 	for index in range(bottom_start, buttons.size()):

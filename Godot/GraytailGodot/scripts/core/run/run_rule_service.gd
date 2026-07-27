@@ -415,6 +415,8 @@ static func use_consumable(context: RunContext, instance_id: String = "") -> Dic
 static func settle_success(context: RunContext) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return {}
+	if _uses_tutorial_completion_only_policy(context):
+		return _tutorial_terminal_rule_result(context, &"settle_success", &"success")
 	var request: Dictionary = _make_rule_request(context, &"settle_success", "settlement", {"outcome": &"success"})
 	var effect: Dictionary = _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SETTLE_SUCCESS, "settlement", context.get_current_pos(), {})
 	var applied: Dictionary = RunAssetEffectHandler.apply_effects(context, [effect])
@@ -423,9 +425,19 @@ static func settle_success(context: RunContext) -> Dictionary:
 	return _finalize_rule(context, request, result, applied)
 
 
+static func build_failure_preview(context: RunContext, reason: String = "") -> Dictionary:
+	if context == null or context.asset_ledger == null:
+		return {}
+	if _uses_tutorial_completion_only_policy(context):
+		return _tutorial_terminal_settlement(&"failure", reason)
+	return context.asset_ledger.build_failure_preview()
+
+
 static func settle_failure(context: RunContext, selected_instance_ids: Array = []) -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return {}
+	if _uses_tutorial_completion_only_policy(context):
+		return _tutorial_terminal_rule_result(context, &"settle_failure", &"failure")
 	var request: Dictionary = _make_rule_request(context, &"settle_failure", "settlement", {"outcome": &"failure", "selected_instance_ids": selected_instance_ids.duplicate(true)})
 	var effect: Dictionary = _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SETTLE_FAILURE, "settlement", context.get_current_pos(), {"selected_instance_ids": selected_instance_ids.duplicate(true)})
 	var applied: Dictionary = RunAssetEffectHandler.apply_effects(context, [effect])
@@ -437,12 +449,91 @@ static func settle_failure(context: RunContext, selected_instance_ids: Array = [
 static func settle_abandon(context: RunContext, reason: String = "abandoned") -> Dictionary:
 	if context == null or context.asset_ledger == null:
 		return {}
+	if _uses_tutorial_completion_only_policy(context):
+		return _tutorial_terminal_rule_result(context, &"settle_abandon", &"abandon", reason)
 	var request: Dictionary = _make_rule_request(context, &"settle_abandon", "settlement", {"outcome": &"abandon", "reason": reason})
 	var effect: Dictionary = _effect_for_request(request, 1, RunAssetEffectHandler.EFFECT_SETTLE_ABANDON, "settlement", context.get_current_pos(), {"reason": reason})
 	var applied: Dictionary = RunAssetEffectHandler.apply_effects(context, [effect])
 	var result: Dictionary = _dictionary_from_variant(applied.get("last_result", {}))
 	result.merge(make_rule_result(true, &"settle_abandon", DEFAULT_ACTOR_ID, "", [effect], ["Abandon settlement resolved."]), false)
 	return _finalize_rule(context, request, result, applied)
+
+
+static func _uses_tutorial_completion_only_policy(context: RunContext) -> bool:
+	if context == null:
+		return false
+	var run_start := context.run_start_config
+	return (
+		StringName(run_start.get("persistence_policy", &"")) == &"tutorial_completion_only"
+		or context.mode == &"tutorial"
+		or String(run_start.get("map_config_id", "")) == "tutorial_5x5"
+	)
+
+
+static func _tutorial_terminal_rule_result(context: RunContext, rule_id: StringName, outcome: StringName, reason: String = "") -> Dictionary:
+	var request: Dictionary = _make_rule_request(context, rule_id, "settlement", {"outcome": outcome, "reason": reason})
+	var result := _tutorial_terminal_settlement(outcome, reason)
+	result.merge(
+		make_rule_result(
+			true,
+			rule_id,
+			DEFAULT_ACTOR_ID,
+			"",
+			[],
+			["Tutorial settlement resolved without persistent rewards."]
+		),
+		false
+	)
+	return _finalize_rule(context, request, result)
+
+
+static func _tutorial_terminal_settlement(outcome: StringName, reason: String = "") -> Dictionary:
+	var settlement := {
+		"ok": true,
+		"finalized": true,
+		"requires_salvage_selection": false,
+		"outcome": outcome,
+		"settlement_outcome": outcome,
+		"tutorial_completion_only": true,
+		"persistent_rewards_allowed": false,
+		"reason": reason,
+		"gold_coin": 0,
+		"run_black_coin": 0,
+		"black_coin_lost": 0,
+		"pending_gold_lost": 0,
+		"black_coin_converted": 0,
+		"run_black_coin_converted": 0,
+		"safe_yield": 0,
+		"safe_yield_retained": 0,
+		"safe_yield_state": &"not_persisted",
+		"gold_coin_retained": 0,
+		"gold_coin_gained": 0,
+		"long_term_gold_gained": 0,
+		"currency_delta": {
+			"black_coin": 0,
+			"gold_coin": 0,
+			"safe_yield": 0,
+			"long_term_gold": 0,
+		},
+		"salvage_capacity": 0,
+		"selected_salvage_weight": 0,
+		"settlement_pool": [],
+		"salvaged_items": [],
+		"salvaged_item": {},
+		"salvaged_item_count": 0,
+		"lost_items": [],
+		"lost_item_count": 0,
+		"lost_item_value": 0,
+		"extracted_items": [],
+		"warehouse_items": [],
+		"warehouse_lite": [],
+		"room_floor_lost_items": [],
+		"cleared_consumables": [],
+		"cleared_consumable_count": 0,
+		"status_effects": [],
+		"settlement_log": [],
+	}
+	return settlement
 
 
 static func _find_inventory_item(context: RunContext, instance_id: String) -> Dictionary:

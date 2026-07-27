@@ -9,7 +9,7 @@ G32 记录局内流程与状态流转 full content preview。它说明 RunLifecy
 
 Stage: G32-R2 Run Flow & State Transition Full Content Implementation.
 
-Primary source: `D:\AGAME1\Base Docs\局内流程与状态流转规则策划案.md`.
+Primary registered original: `sources/base/原始策划案/局内流程与状态流转规则策划案.md`.
 
 G32 defines the run lifecycle and state-transition contract that connects the existing RunContext / CommandBus / RoomResolver route, G31 map facts, DeployPrep start intent, RunSurface / HUD display, and Settlement preview handoff. It is not a SaveManager, RoomLoot, Objective, Reward, Rule/Modifier, or persistence stage.
 

@@ -23,11 +23,13 @@ $godotRoot = Join-Path $root "Godot\GraytailGodot"
 $manifestPath = Join-Path $godotRoot "data\assets\asset_manifest.csv"
 $fontSource = Join-Path $root "assets\Fonts\FusionPixel.otf"
 $fontTarget = Join-Path $godotRoot "assets\fonts\FusionPixel.otf"
+$fontLicense = Join-Path $godotRoot "assets\licenses\FusionPixel-OFL.txt"
 $skinKit = Join-Path $godotRoot "scripts\presentation\art10_ui_skin_kit.gd"
 $docPath = Join-Path $root "docs\art\ART10_BASE_LAYOUT_PIXEL_FONT_UI_PRODUCTIZATION.md"
 
 Test-File $fontSource "FusionPixel source font"
 Test-File $fontTarget "FusionPixel runtime font"
+Test-File $fontLicense "FusionPixel OFL evidence"
 Test-File $manifestPath "asset manifest"
 Test-File $skinKit "ART10 UI skin kit"
 Test-File $docPath "ART10 documentation"
@@ -50,12 +52,29 @@ if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
     if ($row.godot_path -ne "res://assets/fonts/FusionPixel.otf") {
       Add-Failure "ui.font.fusion_pixel godot_path mismatch"
     }
-    if ($row.license_status -ne "pending_verification") {
-      Add-Failure "ui.font.fusion_pixel license_status must remain pending_verification"
+    if ($row.license_status -ne "verified_ofl_1_1") {
+      Add-Failure "ui.font.fusion_pixel license_status must be verified_ofl_1_1"
     }
-    if ($row.source_status -ne "pending_verification") {
-      Add-Failure "ui.font.fusion_pixel source_status must remain pending_verification"
+    if ($row.source_status -ne "verified_upstream_ofl_with_font_identity") {
+      Add-Failure "ui.font.fusion_pixel source_status must identify official upstream OFL and bundled font identity evidence"
     }
+    if ($row.replacement_needed -ne "false") {
+      Add-Failure "ui.font.fusion_pixel must be available for display-role production use"
+    }
+    if ($row.note -notlike "*res://assets/licenses/FusionPixel-OFL.txt*") {
+      Add-Failure "ui.font.fusion_pixel must link its repository OFL evidence"
+    }
+  }
+}
+
+if (Test-Path -LiteralPath $fontLicense -PathType Leaf) {
+  $licenseText = Get-Content -Raw -LiteralPath $fontLicense
+  if (
+    -not $licenseText.Contains("SIL OPEN FONT LICENSE Version 1.1") -or
+    -not $licenseText.Contains("https://github.com/TakWolf/fusion-pixel-font/blob/master/LICENSE-OFL") -or
+    -not $licenseText.Contains("verified on 2026-07-24")
+  ) {
+    Add-Failure "FusionPixel OFL evidence file does not record the official upstream license URL, verification date, and full OFL 1.1 text"
   }
 }
 
@@ -127,7 +146,7 @@ try {
 $forbiddenRepoChanges = @($gitStatus | Where-Object {
   ($_ -match "Connection/") -or
   ($_ -match "Godot/GraytailGodot/scripts/core/" -and $_ -notmatch "\.uid$") -or
-  ($_ -match "Godot/GraytailGodot/assets/(?!fonts/|ui/)") -or
+  ($_ -match "Godot/GraytailGodot/assets/(?!fonts/|ui/|licenses/FusionPixel-OFL\.txt$)") -or
   ($_ -match "Godot/GraytailGodot/scenes/(?!ui/)") -or
   ($_ -match "^.. assets/") -or
   ($_ -match "^.. game_material/")

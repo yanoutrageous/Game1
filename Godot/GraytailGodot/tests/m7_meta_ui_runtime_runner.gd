@@ -68,15 +68,29 @@ func _test_long_term_real_content() -> void:
 	var next_button := shell.get("content_next_button") as Button
 	_check(next_button != null and not next_button.visible, "codex_legacy_pagination_visible")
 	var scrollable_cards: Array = shell.get("long_term_card_buttons")
-	_check(scrollable_cards.size() == 8, "codex_scrollable_record_count")
-	_check(not scrollable_cards.is_empty() and int((scrollable_cards[scrollable_cards.size() - 1] as Button).get_meta("card_index", -1)) == 7, "codex_last_record_unreachable")
+	var map_definition_count := M7ContentCatalogScript.map_definitions().size()
+	_check(scrollable_cards.size() == map_definition_count, "codex_scrollable_record_count")
+	_check(
+		not scrollable_cards.is_empty()
+		and int(
+			(scrollable_cards[scrollable_cards.size() - 1] as Button).get_meta(
+				"card_index",
+				-1
+			)
+		)
+		== map_definition_count - 1,
+		"codex_last_record_unreachable"
+	)
 	shell.free()
 	_check(bool(adapter.complete_research("research_anomaly_structure").get("ok", false)), "research_complete_failed")
 	var after: Dictionary = adapter.get_summary()
 	_check((after.get("unread_codex_ids", []) as Array).has("monster:drone"), "research_codex_unread_missing")
 	var codex_model: Dictionary = long_term_model_script.build_from_snapshot(&"codex", {"meta_progress_summary": after})
 	var codex_groups: Dictionary = codex_model.get("m7_cards_by_group", {})
-	_check((codex_groups.get("codex/map", []) as Array).size() == 8, "codex_map_count")
+	_check(
+		(codex_groups.get("codex/map", []) as Array).size() == map_definition_count,
+		"codex_map_count"
+	)
 	_check((codex_groups.get("codex/monster", []) as Array).size() == 4, "codex_monster_count")
 	_check((codex_groups.get("collection_appearance/display_content", []) as Array).size() == 3, "collection_set_count")
 	var gacha_model: Dictionary = long_term_model_script.build_from_snapshot(&"gacha", {"meta_progress_summary": after})

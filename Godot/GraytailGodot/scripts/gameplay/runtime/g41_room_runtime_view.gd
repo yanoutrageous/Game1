@@ -11,6 +11,9 @@ const WorldContextPopupScript := preload("res://scripts/gameplay/interaction/g41
 const WorldObjectProjectionScript := preload("res://scripts/gameplay/runtime/g41_world_object_projection.gd")
 const InteractableScript := preload("res://scripts/gameplay/interaction/g41_interactable.gd")
 const Art24MotionSettingsScript := preload("res://scripts/presentation/art24/art24_motion_settings.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const Art24InRunAssetContractScript := preload("res://scripts/presentation/art24/art24_in_run_asset_contract.gd")
+const CombatSimulationScript := preload("res://scripts/gameplay/combat/g41_combat_simulation.gd")
 const EVENT_BADGE_TEXTURES := {
 	&"trader": preload("res://assets/ui/art25/content/long_term/event/trader.png"),
 	&"dice": preload("res://assets/ui/art25/content/long_term/event/dice.png"),
@@ -36,16 +39,38 @@ const BEACON_PULSE_TEXTURES := [
 	preload("res://assets/art24/fx/beacon_pulse_6.png"),
 	preload("res://assets/art24/fx/beacon_pulse_7.png"),
 ]
+const COMBAT_SLASH_TEXTURES := [
+	preload("res://assets/art24/fx/combat_slash_0.png"),
+	preload("res://assets/art24/fx/combat_slash_1.png"),
+	preload("res://assets/art24/fx/combat_slash_2.png"),
+	preload("res://assets/art24/fx/combat_slash_3.png"),
+	preload("res://assets/art24/fx/combat_slash_4.png"),
+	preload("res://assets/art24/fx/combat_slash_5.png"),
+]
+const COMBAT_LOCK_TEXTURE := preload("res://assets/art24/ui/ue/stat_locked.png")
 const MINE_FEEDBACK_DURATION := 0.27
 const MINE_BURST_FRAME_DURATION := 0.045
+const MINE_RESOLVED_MODULATE := Color(0.30, 0.42, 0.44, 0.48)
+const MINE_RESOLVED_FOCUSED_MODULATE := Color(0.42, 0.56, 0.56, 0.62)
 const EXIT_PULSE_FRAME_DURATION := 0.085
-const AVAILABLE_DOOR_CUE_MARGIN := 0.075
 const FOCUS_EXIT_MARGIN := 0.025
 const FOCUS_SWITCH_MARGIN := 0.025
 const FOCUS_MIN_RESIDENCE_SECONDS := 0.12
 const FOCUS_LOST_GRACE_SECONDS := 0.10
 const EXIT_PULSE_FRAME_COUNT := 8
 const MINE_BURST_FRAME_COUNT := 6
+const DOOR_FOREGROUND_Z := 60
+const ALTAR_FOREGROUND_Z := 40
+const ACTOR_FOREGROUND_Z := 50
+const ATTACK_FX_Z := 20
+const COMBAT_LOCK_ICON_SIZE := 36.0
+const SIDE_DOOR_PROMPT_LIFT_LOCAL := 0.16
+const SOUTH_DOOR_PROMPT_LIFT_LOCAL := 0.09
+# The generated slash frames are centered on the ellipse at (131, 95).
+# Sprite2D is centered on the texture, so the authored origin must be mapped
+# back onto the authoritative attack origin instead of subtracting it twice.
+const SLASH_SOURCE_ORIGIN := Vector2(131.0, 95.0)
+const SLASH_SOURCE_RADIUS := 113.0
 var room_key: String = ""
 var projection_room_key: String = ""
 var room_type: StringName = &"Unknown"
@@ -62,9 +87,12 @@ var combat_snapshot: Dictionary = {}
 var latest_room_snapshot: Dictionary = {}
 var world_projection: Dictionary = {}
 var door_projections: Array[Dictionary] = []
+var door_visuals: Dictionary = {}
+var foreground_occluders: Dictionary = {}
 var logical_obstacles: Array[Rect2] = []
 var context_popup: G41WorldContextPopup
 var last_door_locked: bool = false
+var last_combat_geometry_visible := false
 var door_projection_revision: int = 0
 var context_ui_suppressed: bool = false
 var last_player_local_pos := Vector2(0.5, 0.5)
@@ -76,6 +104,8 @@ var mine_feedback_frame := -1
 var exit_pulse_elapsed := 0.0
 var exit_pulse_frame := -1
 var nearby_available_door := Vector2i.ZERO
+var nearby_door_direction := Vector2i.ZERO
+var nearby_door_state: StringName = &""
 
 
 func _ready() -> void:
@@ -101,6 +131,7 @@ func configure_room(snapshot: Dictionary) -> void:
 	_ensure_layers()
 	_rebuild_world_projection()
 	_update_available_door_cue(last_player_local_pos)
+	_update_visual_depths(last_player_local_pos)
 	if room_type == &"Mine" and not last_room_entry_result.is_empty():
 		_present_room_entry_result(last_room_entry_result)
 	_update_door_prompt()
@@ -115,6 +146,7 @@ func advance(delta: float, player_local_pos: Vector2, next_combat_snapshot: Dict
 	_update_focus(player_local_pos, delta)
 	apply_combat_snapshot(next_combat_snapshot)
 	_update_available_door_cue(player_local_pos)
+	_update_visual_depths(player_local_pos)
 
 
 func set_context_ui_suppressed(suppressed: bool) -> void:
@@ -127,8 +159,8 @@ func set_context_ui_suppressed(suppressed: bool) -> void:
 		_update_focus(last_player_local_pos)
 
 
-func request_nearest_interaction(player_local_pos: Vector2) -> Dictionary:
-	var nearest = _nearest_actionable_interactable(player_local_pos)
+func request_nearest_interaction(player_local_pos: Vector2, allow_visible_focus_grace: bool = false) -> Dictionary:
+	var nearest = _nearest_actionable_interactable(player_local_pos, allow_visible_focus_grace)
 	if nearest == null:
 		return {
 			"accepted": false,
@@ -179,6 +211,8 @@ func apply_chest_search_result(result: Dictionary, snapshot: Dictionary) -> void
 func apply_combat_snapshot(snapshot: Dictionary) -> void:
 	var next_door_locked := bool(snapshot.get("door_locked", false))
 	var door_state_changed := door_projections.is_empty() or next_door_locked != last_door_locked
+	var next_combat_geometry_visible := _has_visible_combat_geometry(snapshot)
+	var combat_geometry_changed := next_combat_geometry_visible or last_combat_geometry_visible
 	combat_snapshot = snapshot
 	var active_ids: Dictionary = {}
 	for raw_enemy in (snapshot.get("enemies", []) as Array):
@@ -196,6 +230,7 @@ func apply_combat_snapshot(snapshot: Dictionary) -> void:
 			get_node("CombatVisuals/Enemies").add_child(view)
 			enemy_views[enemy_id] = view
 		view.configure(StringName(enemy.get("monster_type", &"slime")), enemy)
+		_apply_actor_depth(view, Vector2(enemy.get("pos", Vector2(0.5, 0.5))))
 	_remove_missing_views(enemy_views, active_ids)
 
 	active_ids.clear()
@@ -214,14 +249,17 @@ func apply_combat_snapshot(snapshot: Dictionary) -> void:
 			get_node("CombatVisuals/Projectiles").add_child(view)
 			projectile_views[projectile_id] = view
 		view.configure_projectile(projectile)
+		_apply_actor_depth(view, Vector2(projectile.get("pos", Vector2(0.5, 0.5))))
 	_remove_missing_views(projectile_views, active_ids)
+	_sync_player_attack_visual(snapshot)
 	if door_state_changed:
 		_rebuild_door_projection()
 		_update_available_door_cue(last_player_local_pos)
 		_update_door_prompt()
-	if door_state_changed or not (combat_snapshot.get("lasers", []) as Array).is_empty():
+	if door_state_changed or combat_geometry_changed:
 		queue_redraw()
 	last_door_locked = next_door_locked
+	last_combat_geometry_visible = next_combat_geometry_visible
 
 
 func build_read_only_snapshot() -> Dictionary:
@@ -248,6 +286,8 @@ func build_read_only_snapshot() -> Dictionary:
 		"doors": door_projections.duplicate(true),
 		"door_projection_revision": door_projection_revision,
 		"nearby_available_door": nearby_available_door,
+		"nearby_door_direction": nearby_door_direction,
+		"nearby_door_state": nearby_door_state,
 		"logical_obstacles": logical_obstacles.duplicate(),
 		"room_entry_result": last_room_entry_result.duplicate(true),
 		"mine_feedback_active": mine_feedback_remaining > 0.0,
@@ -269,6 +309,10 @@ func get_logical_obstacles() -> Array[Rect2]:
 	return logical_obstacles.duplicate()
 
 
+func get_door_projections() -> Array[Dictionary]:
+	return door_projections.duplicate(true)
+
+
 func clear_runtime() -> void:
 	latest_room_snapshot.clear()
 	combat_snapshot.clear()
@@ -283,7 +327,10 @@ func clear_runtime() -> void:
 	focus_residence_elapsed = 0.0
 	focus_lost_elapsed = 0.0
 	last_door_locked = false
+	last_combat_geometry_visible = false
 	nearby_available_door = Vector2i.ZERO
+	nearby_door_direction = Vector2i.ZERO
+	nearby_door_state = &""
 	last_room_entry_result.clear()
 	last_room_entry_signature = ""
 	mine_feedback_remaining = 0.0
@@ -294,7 +341,7 @@ func clear_runtime() -> void:
 	if chest != null:
 		chest.queue_free()
 		chest = null
-	for dictionary in [ground_loot_entities, departing_ground_loot_entities, special_entities, enemy_views, projectile_views]:
+	for dictionary in [door_visuals, foreground_occluders, ground_loot_entities, departing_ground_loot_entities, special_entities, enemy_views, projectile_views]:
 		for key in dictionary.keys():
 			var node := dictionary[key] as Node
 			if node != null:
@@ -302,6 +349,10 @@ func clear_runtime() -> void:
 		dictionary.clear()
 	if context_popup != null:
 		context_popup.clear_context()
+	var attack_fx := get_node_or_null("AttackFx") as CanvasItem
+	if attack_fx != null:
+		attack_fx.visible = false
+	_update_visual_depths(last_player_local_pos)
 	_update_door_prompt()
 	queue_redraw()
 
@@ -316,6 +367,8 @@ func _rebuild_world_projection() -> void:
 	_merge_room_entry_result_into_projection()
 	door_projections = _dictionary_array(world_projection.get("doors", []))
 	door_projection_revision += 1
+	_sync_door_visuals()
+	_sync_foreground_occluders(_dictionary_array(world_projection.get("occluders", [])))
 	var objects := _dictionary_array(world_projection.get("world_objects", []))
 	_sync_chest(objects)
 	_sync_ground_loot(objects, same_room)
@@ -329,11 +382,270 @@ func _rebuild_world_projection() -> void:
 func _rebuild_door_projection() -> void:
 	if latest_room_snapshot.is_empty():
 		door_projections.clear()
+		_sync_door_visuals()
 		return
 	var updated := WorldObjectProjectionScript.build(latest_room_snapshot, combat_snapshot)
 	door_projections = _dictionary_array(updated.get("doors", []))
 	world_projection["doors"] = door_projections.duplicate(true)
 	door_projection_revision += 1
+	_sync_door_visuals()
+
+
+func _sync_door_visuals() -> void:
+	_ensure_layers()
+	var active_ids: Dictionary = {}
+	for door in door_projections:
+		var projection_id := String(door.get("projection_id", ""))
+		if projection_id.is_empty():
+			continue
+		active_ids[projection_id] = true
+		var sprite := door_visuals.get(projection_id) as Sprite2D
+		if sprite == null:
+			sprite = Sprite2D.new()
+			sprite.name = "Door_" + _safe_node_name(String(door.get("orientation", "unknown")))
+			sprite.centered = false
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			get_node("DoorVisuals").add_child(sprite)
+			door_visuals[projection_id] = sprite
+		_apply_door_visual(sprite, door)
+	for projection_id in door_visuals.keys():
+		if active_ids.has(projection_id):
+			continue
+		var stale := door_visuals[projection_id] as Node
+		if stale != null:
+			stale.queue_free()
+		door_visuals.erase(projection_id)
+
+
+func _apply_door_visual(sprite: Sprite2D, door: Dictionary) -> void:
+	var visual_key := StringName(door.get("visual_key", &""))
+	var texture := Art24InRunAssetContractScript.texture(visual_key)
+	sprite.texture = texture
+	sprite.visible = texture != null
+	sprite.set_meta("projection_id", String(door.get("projection_id", "")))
+	sprite.set_meta("visual_key", visual_key)
+	sprite.set_meta("pivot_normalized", Vector2(door.get("pivot_normalized", Vector2(0.5, 0.5))))
+	sprite.set_meta("body_rect", Rect2(door.get("body_rect", Rect2())))
+	if texture == null:
+		sprite.region_enabled = false
+		return
+	var texture_size := texture.get_size()
+	var normalized_region := Rect2(door.get(
+		"texture_region_normalized",
+		Rect2(Vector2.ZERO, Vector2.ONE)
+	))
+	var source_rect := Rect2(
+		normalized_region.position * texture_size,
+		normalized_region.size * texture_size
+	)
+	var visual_rect := _door_visual_rect_local(door)
+	var world_size := G41RuntimeLayout.local_size_to_world(visual_rect.size)
+	sprite.region_enabled = true
+	sprite.region_rect = source_rect
+	sprite.position = ActorViewScript.local_to_world(visual_rect.position)
+	sprite.scale = Vector2(
+		world_size.x / maxf(1.0, source_rect.size.x),
+		world_size.y / maxf(1.0, source_rect.size.y)
+	)
+	sprite.set_meta("texture_region_normalized", normalized_region)
+	sprite.set_meta("resolved_texture_path", texture.resource_path)
+	_apply_combat_lock_overlay(sprite, door, source_rect)
+
+
+func _apply_combat_lock_overlay(sprite: Sprite2D, door: Dictionary, source_rect: Rect2) -> void:
+	var overlay := sprite.get_node_or_null("StateOverlay") as Sprite2D
+	if overlay == null:
+		overlay = Sprite2D.new()
+		overlay.name = "StateOverlay"
+		overlay.texture = COMBAT_LOCK_TEXTURE
+		overlay.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		overlay.z_index = 2
+		sprite.add_child(overlay)
+	var locked := StringName(door.get("visual_state", &"")) == &"combat_restricted"
+	overlay.visible = locked
+	sprite.set_meta("state_overlay_kind", &"texture" if locked else &"none")
+	if not locked or overlay.texture == null:
+		return
+	overlay.position = source_rect.size * 0.5
+	var source_size := overlay.texture.get_size()
+	overlay.scale = Vector2(
+		COMBAT_LOCK_ICON_SIZE / maxf(1.0, source_size.x * absf(sprite.scale.x)),
+		COMBAT_LOCK_ICON_SIZE / maxf(1.0, source_size.y * absf(sprite.scale.y))
+	)
+	overlay.modulate = Color(1.0, 0.86, 0.72, 0.98)
+
+
+func _door_visual_rect_local(door: Dictionary) -> Rect2:
+	var anchor := Vector2(door.get("ground_anchor_local", door.get("local_pos", Vector2(0.5, 0.5))))
+	var display_size := Vector2(door.get("display_size_local", Vector2(0.10, 0.10)))
+	var pivot := Vector2(door.get("pivot_normalized", Vector2(0.5, 0.5)))
+	return Rect2(anchor - display_size * pivot, display_size)
+
+
+func _sync_foreground_occluders(occluders: Array[Dictionary]) -> void:
+	_ensure_layers()
+	var active_ids: Dictionary = {}
+	for descriptor in occluders:
+		var projection_id := String(descriptor.get("projection_id", ""))
+		if projection_id.is_empty():
+			continue
+		active_ids[projection_id] = true
+		var sprite := foreground_occluders.get(projection_id) as Sprite2D
+		if sprite == null:
+			sprite = Sprite2D.new()
+			sprite.name = "Occluder_" + _safe_node_name(projection_id)
+			sprite.centered = false
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			get_node("ForegroundOccluders").add_child(sprite)
+			foreground_occluders[projection_id] = sprite
+		_apply_foreground_occluder(sprite, descriptor)
+	for projection_id in foreground_occluders.keys():
+		if active_ids.has(projection_id):
+			continue
+		var stale := foreground_occluders[projection_id] as Node
+		if stale != null:
+			stale.queue_free()
+		foreground_occluders.erase(projection_id)
+
+
+func _apply_foreground_occluder(sprite: Sprite2D, descriptor: Dictionary) -> void:
+	var texture := Art24InRunAssetContractScript.texture(StringName(descriptor.get("visual_key", &"")))
+	sprite.texture = texture
+	sprite.visible = texture != null
+	if texture == null:
+		sprite.region_enabled = false
+		return
+	var texture_region := Rect2(descriptor.get("texture_region_normalized", Rect2()))
+	var texture_size := texture.get_size()
+	var source_rect := Rect2(
+		texture_region.position * texture_size,
+		texture_region.size * texture_size
+	)
+	var visual_rect := Rect2(descriptor.get("visual_rect_local", Rect2()))
+	var world_size := G41RuntimeLayout.local_size_to_world(visual_rect.size)
+	sprite.region_enabled = true
+	sprite.region_rect = source_rect
+	sprite.position = ActorViewScript.local_to_world(visual_rect.position)
+	sprite.scale = Vector2(
+		world_size.x / maxf(1.0, source_rect.size.x),
+		world_size.y / maxf(1.0, source_rect.size.y)
+	)
+	var payload: Dictionary = descriptor.get("payload", {})
+	sprite.set_meta("projection_id", String(descriptor.get("projection_id", "")))
+	sprite.set_meta("occlusion_rect_local", Rect2(payload.get(
+		"occlusion_rect_local",
+		descriptor.get("body_rect", Rect2())
+	)))
+	sprite.set_meta("depth_split_local_y", float(payload.get(
+		"depth_split_local_y",
+		Rect2(descriptor.get("body_rect", Rect2())).end.y
+	)))
+	sprite.set_meta("masks_combat_geometry", bool(payload.get("masks_combat_geometry", true)))
+	sprite.set_meta("resolved_texture_path", texture.resource_path)
+
+
+func _sync_player_attack_visual(snapshot: Dictionary) -> void:
+	var attack_fx := get_node_or_null("AttackFx") as Node2D
+	var mask := get_node_or_null("AttackFx/AttackVisibilityMask") as Polygon2D
+	var slash := get_node_or_null("AttackFx/AttackVisibilityMask/CombatSlash") as Sprite2D
+	if attack_fx == null or mask == null or slash == null:
+		return
+	var geometry: Dictionary = snapshot.get("player_attack_geometry", {})
+	if geometry.is_empty() or not bool(geometry.get("visible", false)):
+		attack_fx.visible = false
+		return
+	var origin := ActorViewScript.local_to_world(Vector2(geometry.get("origin", Vector2.ZERO)))
+	var arc := _player_attack_arc_world_points(geometry)
+	if arc.size() < 2:
+		attack_fx.visible = false
+		return
+	var visibility_polygon := PackedVector2Array([origin])
+	for point in arc:
+		visibility_polygon.append(point)
+	mask.polygon = visibility_polygon
+	var frame := _combat_slash_frame(snapshot, geometry)
+	slash.texture = COMBAT_SLASH_TEXTURES[frame]
+	var facing := Vector2(geometry.get("facing", Vector2.RIGHT)).normalized()
+	if facing.length_squared() <= 0.000001:
+		facing = Vector2.RIGHT
+	var range_local := maxf(0.0, float(geometry.get("range", 0.0)))
+	var range_pixels := G41RuntimeLayout.local_size_to_world(Vector2(range_local, range_local)).x
+	var uniform_scale := range_pixels / SLASH_SOURCE_RADIUS
+	var rotation := facing.angle()
+	slash.scale = Vector2.ONE * uniform_scale
+	slash.rotation = rotation
+	var source_center := slash.texture.get_size() * 0.5
+	var source_origin_offset := (SLASH_SOURCE_ORIGIN - source_center) * uniform_scale
+	slash.position = origin - source_origin_offset.rotated(rotation)
+	slash.modulate = Color(1.0, 1.0, 1.0, 0.94)
+	mask.set_meta("occlusion_contract", geometry.get("occlusion_contract", &""))
+	mask.set_meta("authoritative_visible_arc_points", geometry.get("visible_arc_points", []))
+	attack_fx.visible = true
+
+
+func _combat_slash_frame(snapshot: Dictionary, geometry: Dictionary) -> int:
+	if Art24MotionSettingsScript.reduce_motion_enabled():
+		return 4
+	var tick := int(snapshot.get("tick", geometry.get("started_tick", 0)))
+	var started_tick := int(geometry.get("started_tick", tick))
+	var elapsed_ticks := maxi(0, tick - started_tick)
+	var visible_ticks := maxi(1, int(ceil(
+		(
+			CombatSimulationScript.PLAYER_ATTACK_WINDUP
+			+ CombatSimulationScript.PLAYER_ATTACK_ACTIVE
+		) / CombatSimulationScript.FIXED_STEP
+	)))
+	return clampi(int(float(elapsed_ticks) / float(visible_ticks) * COMBAT_SLASH_TEXTURES.size()), 0, COMBAT_SLASH_TEXTURES.size() - 1)
+
+
+func _update_visual_depths(player_local_pos: Vector2) -> void:
+	var split_y := _foreground_depth_split()
+	var has_foreground := room_type == &"Monster" and split_y < INF
+	var player := _production_player_canvas_item()
+	if player != null:
+		player.z_index = ACTOR_FOREGROUND_Z if has_foreground and player_local_pos.y >= split_y else 0
+	for view in enemy_views.values():
+		if view is CanvasItem:
+			_apply_actor_depth(view as CanvasItem, _actor_local_position(view))
+	for view in projectile_views.values():
+		if view is CanvasItem:
+			_apply_actor_depth(view as CanvasItem, _actor_local_position(view))
+
+
+func _apply_actor_depth(actor: CanvasItem, local_pos: Vector2) -> void:
+	if actor == null:
+		return
+	var split_y := _foreground_depth_split()
+	actor.z_index = (
+		ACTOR_FOREGROUND_Z
+		if room_type == &"Monster" and split_y < INF and local_pos.y >= split_y
+		else 0
+	)
+
+
+func _foreground_depth_split() -> float:
+	for sprite in foreground_occluders.values():
+		if sprite is CanvasItem and (sprite as CanvasItem).is_visible():
+			return float((sprite as CanvasItem).get_meta("depth_split_local_y", INF))
+	return INF
+
+
+func _actor_local_position(actor: Variant) -> Vector2:
+	if actor is Node2D:
+		var world_position := (actor as Node2D).position
+		return Vector2(
+			(world_position.x - G41RuntimeLayout.ROOM_RECT.position.x) / G41RuntimeLayout.ROOM_RECT.size.x,
+			(world_position.y - G41RuntimeLayout.ROOM_RECT.position.y) / G41RuntimeLayout.ROOM_RECT.size.y
+		)
+	return Vector2.ZERO
+
+
+func _production_player_canvas_item() -> CanvasItem:
+	var room_layer := get_parent()
+	var run_scene := room_layer.get_parent() if room_layer != null else null
+	if run_scene == null:
+		return null
+	return run_scene.get_node_or_null("PlayerLayer/PlayerController") as CanvasItem
 
 
 func _sync_chest(objects: Array[Dictionary]) -> void:
@@ -436,9 +748,11 @@ func _apply_special_art(entity, projection: Dictionary) -> void:
 	if sprite == null:
 		sprite = Sprite2D.new()
 		sprite.name = "ArtVisual"
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		visual_root.add_child(sprite)
 	var kind := StringName(projection.get("interaction_kind", &""))
 	var texture: Texture2D
+	var uses_projected_geometry := false
 	match kind:
 		&"event":
 			var event_type := StringName((projection.get("payload", {}) as Dictionary).get("event_type", &"trader"))
@@ -446,16 +760,38 @@ func _apply_special_art(entity, projection: Dictionary) -> void:
 			sprite.scale = Vector2.ONE * 1.22
 		&"mine":
 			texture = MINE_TRAP_TEXTURE
-			sprite.scale = Vector2.ONE * 0.28
+			uses_projected_geometry = true
 		&"exit":
 			texture = BEACON_PULSE_TEXTURES[0]
 			sprite.scale = Vector2.ONE * 0.32
 	if texture != null and sprite.texture != texture and (kind != &"exit" or sprite.texture == null):
 		sprite.texture = texture
+	if uses_projected_geometry:
+		_apply_projected_special_geometry(sprite, projection)
 	var placeholder := visual_root.get_node_or_null("ProgramPlaceholder") as Polygon2D
 	if placeholder != null:
 		placeholder.visible = texture == null
 	_apply_special_focus_visual(entity)
+
+
+func _apply_projected_special_geometry(sprite: Sprite2D, projection: Dictionary) -> void:
+	if sprite == null or sprite.texture == null:
+		return
+	var local_pos := Vector2(projection.get("local_pos", Vector2.ZERO))
+	var ground_anchor := Vector2(projection.get("ground_anchor_local", local_pos))
+	var pivot := Vector2(projection.get("pivot_normalized", Vector2(0.5, 0.5)))
+	var display_size := Vector2(projection.get("display_size_local", Vector2.ZERO))
+	var desired_size := G41RuntimeLayout.local_size_to_world(display_size)
+	var texture_size := sprite.texture.get_size()
+	sprite.scale = Vector2(
+		desired_size.x / maxf(1.0, texture_size.x),
+		desired_size.y / maxf(1.0, texture_size.y)
+	)
+	sprite.position = ActorViewScript.local_to_world(ground_anchor) - ActorViewScript.local_to_world(local_pos) + Vector2(
+		(0.5 - pivot.x) * desired_size.x,
+		(0.5 - pivot.y) * desired_size.y
+	)
+	sprite.rotation = 0.0
 
 
 func _apply_special_focus_visual(entity) -> void:
@@ -465,12 +801,19 @@ func _apply_special_focus_visual(entity) -> void:
 	if sprite == null:
 		return
 	var payload: Dictionary = entity.payload
+	if StringName(entity.interaction_kind) == &"mine" and bool(payload.get("triggered", false)):
+		sprite.modulate = MINE_RESOLVED_FOCUSED_MODULATE if bool(entity.focused) else MINE_RESOLVED_MODULATE
+		_apply_special_prompt_visibility(entity)
+		return
 	var alpha := 1.0
 	if StringName(entity.interaction_kind) == &"event" and bool(payload.get("completed", false)):
 		alpha = 0.55
-	elif StringName(entity.interaction_kind) == &"mine" and bool(payload.get("triggered", false)):
-		alpha = 0.72
 	sprite.modulate = Color(1.0, 0.96, 0.82, alpha) if entity.focused else Color(1.0, 1.0, 1.0, alpha)
+	_apply_special_prompt_visibility(entity)
+
+
+func _apply_special_prompt_visibility(entity) -> void:
+	var payload: Dictionary = entity.payload
 	var prompt := entity.get_node_or_null("PromptAnchor/InteractionPrompt") as Label
 	if prompt != null:
 		prompt.visible = (
@@ -536,21 +879,27 @@ func _update_focus(player_local_pos: Vector2, delta: float = 0.0) -> void:
 
 func _update_available_door_cue(player_local_pos: Vector2) -> void:
 	var next_direction := Vector2i.ZERO
+	var next_state: StringName = &""
 	var nearest_distance := INF
 	for door in door_projections:
-		if StringName(door.get("visual_state", &"")) != &"available":
-			continue
 		var body_rect: Rect2 = door.get("body_rect", Rect2())
-		if not body_rect.grow(AVAILABLE_DOOR_CUE_MARGIN).has_point(player_local_pos):
+		var anchor := Vector2(door.get("ground_anchor_local", body_rect.get_center()))
+		var interaction_radius := maxf(0.0, float(door.get("interaction_radius", 0.0)))
+		var distance := anchor.distance_to(player_local_pos)
+		if distance > interaction_radius and not body_rect.has_point(player_local_pos):
 			continue
-		var distance := Vector2(door.get("local_pos", body_rect.get_center())).distance_to(player_local_pos)
 		if distance >= nearest_distance:
 			continue
 		nearest_distance = distance
 		next_direction = Vector2i((door.get("payload", {}) as Dictionary).get("direction", Vector2i.ZERO))
-	if nearby_available_door == next_direction:
+		next_state = StringName(door.get("visual_state", &"blocked_out_of_bounds"))
+	var next_available := next_direction if next_state == &"available" else Vector2i.ZERO
+	if nearby_door_direction == next_direction and nearby_door_state == next_state and nearby_available_door == next_available:
 		return
-	nearby_available_door = next_direction
+	nearby_door_direction = next_direction
+	nearby_door_state = next_state
+	nearby_available_door = next_available
+	_update_door_prompt()
 	queue_redraw()
 
 
@@ -582,6 +931,7 @@ func _refresh_context_popup(player_local_pos: Vector2, nearest = null) -> void:
 		public_payload["triggered"] = bool(public_payload.get("triggered", false)) or bool(last_room_entry_result.get("first_trigger", false)) or StringName(last_room_entry_result.get("cause", &"")) == &"mine_inactive"
 	var anchor_ui: Vector2 = nearest.get_context_anchor_world()
 	var player_ui: Vector2 = anchor_ui
+	var gameplay_focus_ui_rect := Rect2()
 	var nearest_canvas := nearest as CanvasItem
 	var popup_parent := context_popup.get_parent() as CanvasItem
 	if nearest_canvas != null and popup_parent != null:
@@ -603,6 +953,19 @@ func _refresh_context_popup(player_local_pos: Vector2, nearest = null) -> void:
 		anchor_ui = popup_parent.get_global_transform().affine_inverse() * target_logical_position
 		var player_logical_position := get_global_transform() * ActorViewScript.local_to_world(player_local_pos)
 		player_ui = popup_parent.get_global_transform().affine_inverse() * player_logical_position
+		var popup_inverse := popup_parent.get_global_transform().affine_inverse()
+		var room_top_left := popup_inverse * (get_global_transform() * G41RuntimeLayout.ROOM_RECT.position)
+		var room_bottom_right := popup_inverse * (get_global_transform() * G41RuntimeLayout.ROOM_RECT.end)
+		gameplay_focus_ui_rect = Rect2(
+			Vector2(
+				minf(room_top_left.x, room_bottom_right.x),
+				minf(room_top_left.y, room_bottom_right.y)
+			),
+			Vector2(
+				absf(room_bottom_right.x - room_top_left.x),
+				absf(room_bottom_right.y - room_top_left.y)
+			)
+		)
 	var overlay_size := Vector2(1280, 720)
 	var popup_parent_control := context_popup.get_parent() as Control
 	if popup_parent_control != null and popup_parent_control.size.x > 0.0 and popup_parent_control.size.y > 0.0:
@@ -612,6 +975,8 @@ func _refresh_context_popup(player_local_pos: Vector2, nearest = null) -> void:
 		"world_pos": anchor_ui,
 		"player_world_pos": player_ui,
 		"room_bounds": G41RuntimeLayout.context_ui_rect_for_viewport(overlay_size),
+		"gameplay_focus_rect": gameplay_focus_ui_rect,
+		"reserved_rects": G41RuntimeLayout.context_reserved_rects_for_viewport(overlay_size),
 		"items": items,
 		"opened_once": chest != null and chest.is_opened() if kind == &"chest" else false,
 		"container_open": chest != null and chest.is_opened() if kind == &"chest" else false,
@@ -648,11 +1013,26 @@ func _nearest_interactable(player_local_pos: Vector2):
 	return nearest
 
 
-func _nearest_actionable_interactable(player_local_pos: Vector2):
+func _nearest_actionable_interactable(player_local_pos: Vector2, allow_visible_focus_grace: bool = false):
 	# The proximity surface may focus read-only hazards, but an explicit input
 	# must never turn that observation into an implicit room command.
 	var locked = _interactable_by_id(focused_interaction_id)
-	if _is_actionable_interactable(locked) and locked.can_interact_from(player_local_pos):
+	# Focus deliberately has a small exit margin to keep the visible context card
+	# and a brief lost-target grace period to prevent flicker. While that
+	# actionable card is still visibly locked, the real keyboard interaction may
+	# opt into the same contract. Legacy buttons and domain callers keep the
+	# default strict radius so stale UI cannot bypass proximity authority.
+	if (
+		_is_actionable_interactable(locked)
+		and (
+			locked.can_interact_from(player_local_pos)
+			or (
+				allow_visible_focus_grace
+				and context_popup != null
+				and context_popup.visible
+			)
+		)
+	):
 		return locked
 	var nearest = null
 	var nearest_distance := INF
@@ -836,6 +1216,13 @@ func _special_entity_for_kind(kind: StringName):
 	return null
 
 func _ensure_layers() -> void:
+	if get_node_or_null("DoorVisuals") == null:
+		var doors := Node2D.new()
+		doors.name = "DoorVisuals"
+		# Repainting the admitted doorway crop above actors masks the character
+		# at a blocked threshold instead of letting it cut through the door lip.
+		doors.z_index = DOOR_FOREGROUND_Z
+		add_child(doors)
 	if get_node_or_null("WorldInteractables") == null:
 		var interactables := Node2D.new()
 		interactables.name = "WorldInteractables"
@@ -844,6 +1231,30 @@ func _ensure_layers() -> void:
 		var combat := Node2D.new()
 		combat.name = "CombatVisuals"
 		add_child(combat)
+	if get_node_or_null("AttackFx") == null:
+		var attack_fx := Node2D.new()
+		attack_fx.name = "AttackFx"
+		attack_fx.z_index = ATTACK_FX_Z
+		attack_fx.visible = false
+		add_child(attack_fx)
+		var visibility_mask := Polygon2D.new()
+		visibility_mask.name = "AttackVisibilityMask"
+		visibility_mask.color = Color.WHITE
+		visibility_mask.clip_children = CanvasItem.CLIP_CHILDREN_ONLY
+		attack_fx.add_child(visibility_mask)
+		var slash := Sprite2D.new()
+		slash.name = "CombatSlash"
+		# The authored frame origin is measured from the texture center; keep
+		# Sprite2D centered so the placement formula maps opaque slash pixels
+		# into the authoritative visibility mask.
+		slash.centered = true
+		slash.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		visibility_mask.add_child(slash)
+	if get_node_or_null("ForegroundOccluders") == null:
+		var occluders := Node2D.new()
+		occluders.name = "ForegroundOccluders"
+		occluders.z_index = ALTAR_FOREGROUND_Z
+		add_child(occluders)
 	if get_node_or_null("SpecialRoomFx") == null:
 		var special_fx := Node2D.new()
 		special_fx.name = "SpecialRoomFx"
@@ -882,10 +1293,11 @@ func _ensure_layers() -> void:
 	if get_node_or_null("DoorPrompt") == null:
 		var label := Label.new()
 		label.name = "DoorPrompt"
-		label.position = Vector2(500, 555)
 		label.size = Vector2(280, 24)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 13)
+		Art10UISkinKitScript.apply_player_ui_font(label)
+		label.z_index = DOOR_FOREGROUND_Z + 5
 		add_child(label)
 
 
@@ -893,14 +1305,55 @@ func _update_door_prompt() -> void:
 	var prompt := get_node_or_null("DoorPrompt") as Label
 	if prompt == null:
 		return
-	var restricted := false
+	var nearby_door := _door_projection_for_direction(nearby_door_direction)
+	if nearby_door.is_empty() or nearby_door_state == &"":
+		prompt.visible = false
+		return
+	var anchor_local := _door_prompt_anchor_local(nearby_door)
+	prompt.position = ActorViewScript.local_to_world(anchor_local) - prompt.size * 0.5
+	prompt.visible = true
+	match nearby_door_state:
+		&"available":
+			prompt.text = "继续前进"
+			prompt.add_theme_color_override("font_color", Color(0.42, 0.92, 0.76, 1.0))
+		&"combat_restricted":
+			prompt.text = "战斗中，出口已封锁"
+			prompt.add_theme_color_override("font_color", Color(1.0, 0.46, 0.20, 1.0))
+		&"blocked_flagged":
+			prompt.text = "该方向已标记为雷区"
+			prompt.add_theme_color_override("font_color", Color(1.0, 0.58, 0.22, 1.0))
+		&"blocked_hidden":
+			prompt.text = "先扫描该方向"
+			prompt.add_theme_color_override("font_color", Color(0.94, 0.78, 0.34, 1.0))
+		_:
+			prompt.text = "道路不通"
+			prompt.add_theme_color_override("font_color", Color(0.58, 0.62, 0.64, 1.0))
+
+
+func _door_prompt_anchor_local(door: Dictionary) -> Vector2:
+	var anchor := Vector2(door.get(
+		"context_anchor_local",
+		door.get("local_pos", Vector2(0.5, 0.5))
+	))
+	var direction := Vector2i((door.get("payload", {}) as Dictionary).get(
+		"direction",
+		Vector2i.ZERO
+	))
+	if direction.x != 0:
+		anchor.y -= SIDE_DOOR_PROMPT_LIFT_LOCAL
+	elif direction.y > 0:
+		anchor.y -= SOUTH_DOOR_PROMPT_LIFT_LOCAL
+	return anchor
+
+
+func _door_projection_for_direction(direction: Vector2i) -> Dictionary:
+	if direction == Vector2i.ZERO:
+		return {}
 	for door in door_projections:
-		if StringName(door.get("visual_state", &"")) == &"combat_restricted":
-			restricted = true
-			break
-	prompt.visible = restricted
-	prompt.text = "战斗封锁中 · 靠近出口可尝试撤离"
-	prompt.add_theme_color_override("font_color", Color(1.0, 0.60, 0.28, 1.0))
+		var payload: Dictionary = door.get("payload", {})
+		if Vector2i(payload.get("direction", Vector2i.ZERO)) == direction:
+			return door
+	return {}
 
 
 func _remove_missing_views(views: Dictionary, active_ids: Dictionary) -> void:
@@ -915,6 +1368,8 @@ func _remove_missing_views(views: Dictionary, active_ids: Dictionary) -> void:
 
 func _obstacles_for_room(next_room_type: StringName) -> Array[Rect2]:
 	match next_room_type:
+		&"Monster":
+			return CombatSimulationScript.production_arena_obstacles()
 		&"Event":
 			return [Rect2(Vector2(0.46, 0.32), Vector2(0.10, 0.18))]
 		&"Normal":
@@ -962,50 +1417,112 @@ func _draw() -> void:
 			draw_rect(world_rect, Color(0.55, 0.62, 0.68, 0.75), false, 2.0)
 	for door in door_projections:
 		_draw_door_projection(door)
+	_draw_enemy_melee_geometry()
+	_draw_player_attack_geometry()
 	for raw_laser in (combat_snapshot.get("lasers", []) as Array):
 		if not (raw_laser is Dictionary):
 			continue
 		var laser := raw_laser as Dictionary
 		var origin := ActorViewScript.local_to_world(Vector2(laser.get("origin", Vector2.ZERO)))
 		var direction := Vector2(laser.get("direction", Vector2.LEFT)).normalized()
-		var endpoint := _ray_endpoint_inside_room(origin, direction, room_rect)
-		# The combat laser remains a room-scale threat, but its presentation must
-		# never spill into the scan rail or bottom HUD. Layered strokes read as an
-		# energy beam instead of a debug geometry line.
-		draw_line(origin, endpoint, Color(0.75, 0.02, 0.01, 0.22), 8.0, true)
-		draw_line(origin, endpoint, Color(1.0, 0.10, 0.06, 0.82), 3.0, true)
-		draw_line(origin, endpoint, Color(1.0, 0.74, 0.42, 0.96), 1.0, true)
-		draw_circle(origin, 4.0, Color(1.0, 0.34, 0.12, 0.92))
-		draw_circle(endpoint, 4.5, Color(0.92, 0.08, 0.035, 0.75))
+		var endpoint := (
+			ActorViewScript.local_to_world(Vector2(laser.get("endpoint", Vector2.ZERO)))
+			if laser.has("endpoint")
+			else _ray_endpoint_inside_room(origin, direction, room_rect)
+		)
+		var radius := maxf(0.0, float(laser.get("visual_radius", laser.get("radius", 0.0))))
+		var radius_pixels := maxf(1.0, G41RuntimeLayout.local_size_to_world(Vector2(radius, radius)).x)
+		var beam_width := radius_pixels * 2.0
+		# Every stroke is derived from the authoritative radius. The outer stroke
+		# is the damaging beam boundary; brighter inner strokes add material
+		# contrast without implying a narrower safe lane.
+		draw_line(origin, endpoint, Color(0.75, 0.02, 0.01, 0.24), beam_width, true)
+		draw_line(origin, endpoint, Color(1.0, 0.10, 0.06, 0.84), maxf(2.0, beam_width * 0.46), true)
+		draw_line(origin, endpoint, Color(1.0, 0.74, 0.42, 0.96), maxf(1.0, beam_width * 0.16), true)
+		draw_circle(origin, radius_pixels, Color(1.0, 0.34, 0.12, 0.92))
+		draw_circle(endpoint, radius_pixels, Color(0.92, 0.08, 0.035, 0.75))
 
 
 func _draw_door_projection(door: Dictionary) -> void:
 	var body_rect: Rect2 = door.get("body_rect", Rect2())
-	var world_rect := Rect2(
-		ActorViewScript.local_to_world(body_rect.position),
-		G41RuntimeLayout.local_size_to_world(body_rect.size)
-	)
-	var state := StringName(door.get("visual_state", &"blocked_out_of_bounds"))
-	if state == &"combat_restricted":
-		var horizontal := world_rect.size.x >= world_rect.size.y
-		var from := Vector2(world_rect.position.x, world_rect.get_center().y) if horizontal else Vector2(world_rect.get_center().x, world_rect.position.y)
-		var to := Vector2(world_rect.end.x, world_rect.get_center().y) if horizontal else Vector2(world_rect.get_center().x, world_rect.end.y)
-		_draw_combat_seal_segment(from, to)
+	var direction_i := Vector2i((door.get("payload", {}) as Dictionary).get("direction", Vector2i.ZERO))
+	if direction_i == Vector2i.ZERO:
 		return
-	if state == &"available":
-		var direction := Vector2i((door.get("payload", {}) as Dictionary).get("direction", Vector2i.ZERO))
-		if direction == Vector2i.ZERO or direction != nearby_available_door:
-			return
-	var color := Color(0.22, 0.70, 0.58, 0.72)
+	var state := StringName(door.get("visual_state", &"blocked_out_of_bounds"))
+	if state == &"available" and direction_i != nearby_available_door:
+		return
+	var direction := Vector2(direction_i).normalized()
+	var tangent := Vector2(-direction.y, direction.x)
+	var center := ActorViewScript.local_to_world(body_rect.get_center())
+	var body_size := G41RuntimeLayout.local_size_to_world(body_rect.size)
+	var half_span := (body_size.x if absf(tangent.x) > 0.5 else body_size.y) * 0.5
+	var from := center - tangent * half_span
+	var to := center + tangent * half_span
 	match state:
+		&"available":
+			_draw_available_door_cue(center, from, to, direction, tangent)
+		&"combat_restricted":
+			# The admitted texture child on the doorway owns the lock state.
+			pass
 		&"blocked_flagged":
-			color = Color(0.96, 0.42, 0.20, 0.86)
+			_draw_blocked_door_cue(center, from, to, direction, tangent, Color(0.96, 0.42, 0.20, 0.92), &"flagged")
 		&"blocked_hidden":
-			color = Color(0.78, 0.63, 0.24, 0.72)
+			_draw_blocked_door_cue(center, from, to, direction, tangent, Color(0.86, 0.68, 0.24, 0.84), &"hidden")
 		&"blocked_out_of_bounds":
-			color = Color(0.20, 0.23, 0.24, 0.62)
-	draw_rect(world_rect, Color(color.r, color.g, color.b, color.a * 0.24), true)
-	draw_rect(world_rect, color, false, 2.0)
+			_draw_blocked_door_cue(center, from, to, direction, tangent, Color(0.34, 0.38, 0.39, 0.82), &"boundary")
+
+
+func _draw_available_door_cue(center: Vector2, from: Vector2, to: Vector2, direction: Vector2, tangent: Vector2) -> void:
+	var color := Color(0.24, 0.88, 0.68, 0.94)
+	var shadow := Color(0.015, 0.08, 0.065, 0.90)
+	draw_line(from, to, shadow, 6.0, true)
+	draw_line(from, to, color, 2.4, true)
+	for endpoint in [from, to]:
+		draw_line(endpoint, endpoint - direction * 9.0, shadow, 5.0, true)
+		draw_line(endpoint, endpoint - direction * 9.0, color, 2.0, true)
+	var arrow_center := center + direction * 8.0
+	var arrow := PackedVector2Array([
+		arrow_center + direction * 7.0,
+		arrow_center - direction * 4.0 + tangent * 5.0,
+		arrow_center - direction * 4.0 - tangent * 5.0,
+	])
+	draw_colored_polygon(arrow, color)
+
+
+func _draw_blocked_door_cue(
+	center: Vector2,
+	from: Vector2,
+	to: Vector2,
+	direction: Vector2,
+	tangent: Vector2,
+	color: Color,
+	kind: StringName
+) -> void:
+	var shadow := Color(0.025, 0.025, 0.02, 0.90)
+	draw_line(from, to, shadow, 7.0, true)
+	if kind == &"hidden":
+		var segment := (to - from) / 5.0
+		for index in range(0, 5, 2):
+			draw_line(from + segment * index, from + segment * (index + 1), color, 2.6, true)
+	else:
+		draw_line(from, to, color, 2.8, true)
+	if kind == &"flagged":
+		draw_line(center - tangent * 7.0 - direction * 7.0, center + tangent * 7.0 + direction * 7.0, shadow, 6.0, true)
+		draw_line(center + tangent * 7.0 - direction * 7.0, center - tangent * 7.0 + direction * 7.0, shadow, 6.0, true)
+		draw_line(center - tangent * 7.0 - direction * 7.0, center + tangent * 7.0 + direction * 7.0, color, 2.4, true)
+		draw_line(center + tangent * 7.0 - direction * 7.0, center - tangent * 7.0 + direction * 7.0, color, 2.4, true)
+	elif kind == &"hidden":
+		var diamond := PackedVector2Array([
+			center + direction * 7.0,
+			center + tangent * 7.0,
+			center - direction * 7.0,
+			center - tangent * 7.0,
+			center + direction * 7.0,
+		])
+		draw_polyline(diamond, color, 2.2, true)
+		draw_circle(center, 1.8, color)
+	else:
+		draw_line(from - direction * 5.0, to - direction * 5.0, color.darkened(0.28), 2.2, true)
 
 
 func _ray_endpoint_inside_room(origin: Vector2, direction: Vector2, room_rect: Rect2) -> Vector2:
@@ -1031,25 +1548,147 @@ func _ray_endpoint_inside_room(origin: Vector2, direction: Vector2, room_rect: R
 	return origin + direction * closest_distance
 
 
-func _draw_combat_seal_segment(from: Vector2, to: Vector2) -> void:
-	var direction := (to - from).normalized()
-	var normal := Vector2(-direction.y, direction.x)
-	var midpoint := (from + to) * 0.5
-	# Layered strokes retain the UE prototype's red danger language without
-	# reading as a debug collision line. Values are centralized here so art can
-	# tune the seal without touching combat or door rules.
-	draw_line(from, to, Color(0.68, 0.04, 0.02, 0.18), 13.0, true)
-	draw_line(from, to, Color(0.30, 0.015, 0.008, 0.92), 7.0, true)
-	draw_line(from, to, Color(0.95, 0.16, 0.055, 0.96), 3.5, true)
-	draw_line(from, to, Color(1.0, 0.66, 0.28, 0.92), 1.2, true)
-	for endpoint in [from, to]:
-		draw_circle(endpoint, 4.2, Color(0.28, 0.01, 0.005, 0.95))
-		draw_circle(endpoint, 2.2, Color(1.0, 0.38, 0.10, 0.96))
-	var rune := PackedVector2Array([
-		midpoint - direction * 5.0,
-		midpoint + normal * 5.0,
-		midpoint + direction * 5.0,
-		midpoint - normal * 5.0,
-	])
-	draw_colored_polygon(rune, Color(0.92, 0.12, 0.035, 0.92))
-	draw_polyline(PackedVector2Array([rune[0], rune[1], rune[2], rune[3], rune[0]]), Color(1.0, 0.70, 0.26, 0.96), 1.2, true)
+func _draw_player_attack_geometry() -> void:
+	# AttackFx consumes the same authoritative arc as a clipping mask around the
+	# audited combat-slash frames. No program-colored sector is drawn here.
+	return
+
+
+func _player_attack_arc_world_points(geometry: Dictionary) -> PackedVector2Array:
+	var authored_points: Array = geometry.get("visible_arc_points", [])
+	var result := PackedVector2Array()
+	if not authored_points.is_empty():
+		for raw_point in authored_points:
+			if raw_point is Vector2:
+				result.append(ActorViewScript.local_to_world(raw_point))
+		return result
+
+	# Compatibility for hand-authored snapshots in older focused runners. The
+	# production simulation always supplies visibility-clipped points.
+	var origin := ActorViewScript.local_to_world(Vector2(geometry.get("origin", Vector2.ZERO)))
+	var facing := Vector2(geometry.get("facing", Vector2.RIGHT)).normalized()
+	if facing.length_squared() <= 0.000001:
+		facing = Vector2.RIGHT
+	var half_angle := maxf(0.0, float(geometry.get("half_angle_radians", PI / 3.0)))
+	var range_local := maxf(0.0, float(geometry.get("range", 0.0)))
+	var range_pixels := G41RuntimeLayout.local_size_to_world(Vector2(range_local, range_local)).x
+	var facing_angle := facing.angle()
+	for index in range(21):
+		var ratio := float(index) / 20.0
+		result.append(
+			origin
+			+ Vector2.from_angle(facing_angle + lerpf(-half_angle, half_angle, ratio)) * range_pixels
+		)
+	return result
+
+
+func _draw_enemy_melee_geometry() -> void:
+	for raw_enemy in (combat_snapshot.get("enemies", []) as Array):
+		if not raw_enemy is Dictionary:
+			continue
+		var enemy := raw_enemy as Dictionary
+		var state := StringName(enemy.get("state", &"idle"))
+		if state not in [&"warning", &"active"]:
+			continue
+		var radius_local := maxf(0.0, float(enemy.get("warning_radius", enemy.get("attack_radius", 0.0))))
+		if radius_local <= 0.0:
+			continue
+		var center_local := Vector2(enemy.get("pos", Vector2.ZERO))
+		var samples := _clipped_radial_samples(center_local, radius_local, 64)
+		var outline_points := PackedVector2Array()
+		for sample in samples:
+			outline_points.append(Vector2((sample as Dictionary).get("world_point", Vector2.ZERO)))
+		if outline_points.size() < 3:
+			continue
+		var fill := Color(0.92, 0.18, 0.06, 0.035 if state == &"warning" else 0.12)
+		var outline := Color(1.0, 0.52, 0.18, 0.78 if state == &"warning" else 0.96)
+		draw_colored_polygon(outline_points, fill)
+		# Only draw the real outer danger perimeter. Closing the clipped polygon
+		# drew obstacle intersections as hard L-shaped debug lines across the
+		# floor. Missing perimeter segments now communicate that the altar
+		# blocks the attack without fabricating an internal boundary.
+		for index in range(samples.size()):
+			var next_index := (index + 1) % samples.size()
+			var current := samples[index] as Dictionary
+			var following := samples[next_index] as Dictionary
+			if bool(current.get("blocked", false)) or bool(following.get("blocked", false)):
+				continue
+			if state == &"warning" and int(index / 3) % 2 == 1:
+				continue
+			draw_line(
+				Vector2(current.get("world_point", Vector2.ZERO)),
+				Vector2(following.get("world_point", Vector2.ZERO)),
+				outline,
+				1.6 if state == &"warning" else 2.4,
+				true
+			)
+
+
+func _clipped_radial_outline(center: Vector2, radius: float, segment_count: int) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for sample in _clipped_radial_samples(center, radius, segment_count):
+		points.append(Vector2((sample as Dictionary).get("world_point", Vector2.ZERO)))
+	return points
+
+
+func _clipped_radial_samples(center: Vector2, radius: float, segment_count: int) -> Array[Dictionary]:
+	var samples: Array[Dictionary] = []
+	for index in range(maxi(3, segment_count)):
+		var direction := Vector2.from_angle(TAU * float(index) / float(maxi(3, segment_count)))
+		var endpoint := center + direction * radius
+		var hit_fraction := 1.0
+		for obstacle in logical_obstacles:
+			hit_fraction = minf(
+				hit_fraction,
+				_segment_rect_hit_fraction(center, endpoint, obstacle)
+			)
+		samples.append({
+			"world_point": ActorViewScript.local_to_world(center.lerp(endpoint, hit_fraction)),
+			"blocked": hit_fraction < 1.0 - 0.00001,
+		})
+	return samples
+
+
+func _segment_rect_hit_fraction(start: Vector2, finish: Vector2, rect: Rect2) -> float:
+	var delta := finish - start
+	var entry := 0.0
+	var exit := 1.0
+	for raw_slab in [
+		Vector3(-delta.x, start.x - rect.position.x, 0.0),
+		Vector3(delta.x, rect.end.x - start.x, 0.0),
+		Vector3(-delta.y, start.y - rect.position.y, 0.0),
+		Vector3(delta.y, rect.end.y - start.y, 0.0),
+	]:
+		var slab := raw_slab as Vector3
+		var p: float = slab.x
+		var q: float = slab.y
+		if absf(p) <= 0.000001:
+			if q < 0.0:
+				return 1.0
+			continue
+		var ratio: float = q / p
+		if p < 0.0:
+			entry = maxf(entry, ratio)
+		else:
+			exit = minf(exit, ratio)
+		if entry > exit:
+			return 1.0
+	if entry < 0.0 or entry > 1.0:
+		return 1.0
+	return clampf(entry, 0.0, 1.0)
+
+
+func _has_visible_combat_geometry(snapshot: Dictionary) -> bool:
+	var attack: Dictionary = snapshot.get("player_attack_geometry", {})
+	if not attack.is_empty() and bool(attack.get("visible", false)):
+		return true
+	if not (snapshot.get("lasers", []) as Array).is_empty():
+		return true
+	for raw_enemy in (snapshot.get("enemies", []) as Array):
+		if not raw_enemy is Dictionary:
+			continue
+		var enemy := raw_enemy as Dictionary
+		var state := StringName(enemy.get("state", &"idle"))
+		if state in [&"warning", &"active"]:
+			return true
+	return false

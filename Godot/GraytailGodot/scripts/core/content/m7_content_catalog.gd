@@ -2,8 +2,10 @@ extends RefCounted
 class_name M7ContentCatalog
 
 const M3ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
+const TutorialMapCatalogScript := preload("res://scripts/core/run/tutorial_map_catalog.gd")
 
 const DEFAULT_UNLOCKED_MAPS := [
+	"tutorial_5x5",
 	"classic_7x7_simple",
 	"classic_7x7_normal",
 	"classic_10x10_easy",
@@ -13,6 +15,7 @@ const DEFAULT_UNLOCKED_MAPS := [
 
 static func map_definitions() -> Array[Dictionary]:
 	return [
+		_tutorial_map(),
 		_map("classic_7x7_simple", "7×7 简单", "教学 / 低压入门", 7, 10, 5, 1, 0, true, 20),
 		_map("classic_7x7_normal", "7×7 普通", "入门正式局", 7, 10, 5, 0, 1, false, 20),
 		_map("classic_10x10_easy", "10×10 简单", "低压标准局", 10, 20, 10, 0, 3, false, 30),
@@ -31,7 +34,7 @@ static func map_definition(map_id: String) -> Dictionary:
 	# Historical callers rely on the 10x10 standard fallback. New selection and
 	# projection paths must use map_definition_exact() so an unknown id cannot be
 	# presented as another playable map.
-	return map_definitions()[3].duplicate(true)
+	return map_definition_exact("classic_10x10_standard")
 
 
 static func map_definition_exact(map_id: String) -> Dictionary:
@@ -42,10 +45,12 @@ static func map_definition_exact(map_id: String) -> Dictionary:
 
 
 static func map_runtime_config(map_id: String, seed_value: int, run_start_config: Dictionary = {}) -> Dictionary:
+	if map_id == TutorialMapCatalogScript.MAP_ID:
+		return TutorialMapCatalogScript.runtime_config(run_start_config)
 	var definition := map_definition(map_id)
 	return {
 		"id": StringName(map_id),
-		"mode": &"standard",
+		"mode": StringName(definition.get("mode", &"standard")),
 		"map_config_id": map_id,
 		"map_display_name": str(definition.get("display_name", map_id)),
 		"difficulty": StringName(definition.get("difficulty", &"normal")),
@@ -89,6 +94,8 @@ static func commission_definition(commission_id: String) -> Dictionary:
 
 
 static func commission_candidates(map_id: String, seed_value: int, count: int = 3) -> Array[Dictionary]:
+	if map_id == "tutorial_5x5":
+		return []
 	if map_id == "classic_7x7_simple":
 		return [commission_definition("commission_recover_supply")]
 	var legal: Array[Dictionary] = []
@@ -105,6 +112,18 @@ static func commission_candidates(map_id: String, seed_value: int, count: int = 
 		result.append(pool[index].duplicate(true))
 		pool.remove_at(index)
 	return result
+
+
+static func commission_offer_seed(map_id: String, run_count: int) -> int:
+	var seed := 17
+	for byte_value in map_id.to_utf8_buffer():
+		seed = (seed * 31 + int(byte_value)) % 2147483647
+	seed = (seed + maxi(0, run_count) * 1009) % 2147483647
+	return maxi(1, seed)
+
+
+static func commission_offer_candidates(map_id: String, run_count: int, count: int = 3) -> Array[Dictionary]:
+	return commission_candidates(map_id, commission_offer_seed(map_id, run_count), count)
 
 
 static func task_definitions() -> Array[Dictionary]:
@@ -266,6 +285,10 @@ static func _map(id: String, display_name: String, role: String, size: int, mine
 		"difficulty_label": str(labels.get(difficulty, difficulty)),
 		"success_exp": success_exp,
 	}
+
+
+static func _tutorial_map() -> Dictionary:
+	return TutorialMapCatalogScript.definition()
 
 
 static func _commission(id: String, display_name: String, description: String, metric: StringName, target: int, gold: int, exp_value: int, map_ids: Array = []) -> Dictionary:

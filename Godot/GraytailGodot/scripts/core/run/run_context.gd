@@ -248,10 +248,6 @@ func _register_run_modifiers(config: Dictionary) -> void:
 			rule_pipeline.register_modifier(modifier)
 
 
-func start_tutorial_run() -> void:
-	start_run(RunConfig.tutorial_5x5())
-
-
 func start_standard_run() -> void:
 	start_run(RunConfig.standard_10x10())
 
@@ -299,13 +295,16 @@ func fail_run(reason: String) -> void:
 
 func _apply_failure(reason: String) -> void:
 	record_event(RunEventLog.EVENT_RUN_FAILED, String(active_command.get("command_id", "")), StringName(active_command.get("actor_id", &"system")), "run_context", {"reason": reason, "position": player_pos})
-	var preview := asset_ledger.build_failure_preview() if asset_ledger != null else {}
+	var preview := RunRuleService.build_failure_preview(self, reason)
 	settlement_result = preview.duplicate(true)
 	failure_salvage = preview.duplicate(true)
 	failed = true
 	run_active = false
 	outcome = "Failed"
-	last_message = "Run failed: %s. Select the items to salvage." % reason
+	if bool(preview.get("requires_salvage_selection", false)) and not bool(preview.get("finalized", false)):
+		last_message = "Run failed: %s. Select the items to salvage." % reason
+	else:
+		last_message = "Run failed: %s." % reason
 	result_snapshot = build_result_snapshot()
 	result_snapshot["settlement"] = preview
 

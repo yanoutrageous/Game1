@@ -2,6 +2,8 @@ extends RefCounted
 class_name EventService
 
 const EVENT_TYPES := [&"trader", &"dice", &"altar", &"trap"]
+const EVENT_WEIGHTS := [30, 25, 25, 20]
+const EVENT_WEIGHT_TOTAL := 100
 const RunBalanceCatalogScript := preload("res://scripts/core/run/run_balance_catalog.gd")
 const RunContentCatalogScript := preload("res://scripts/core/run/run_content_catalog.gd")
 const RunTextCatalogScript := preload("res://scripts/core/run/run_text_catalog.gd")
@@ -13,8 +15,14 @@ const TRAP_POWER_REQ := RunBalanceCatalogScript.TRAP_POWER_REQUIREMENT
 static func get_event_type(context: RunContext, pos: Vector2i) -> StringName:
 	if context == null:
 		return &"trader"
-	var index := absi((pos.x * 73 + pos.y * 137 + context.seed_value * 31) % EVENT_TYPES.size())
-	return EVENT_TYPES[index]
+	var event_hash := pos.x * 73 + pos.y * 137 + context.seed_value * 31
+	var roll := ((event_hash % EVENT_WEIGHT_TOTAL) + EVENT_WEIGHT_TOTAL) % EVENT_WEIGHT_TOTAL
+	var threshold := 0
+	for index in range(EVENT_TYPES.size()):
+		threshold += EVENT_WEIGHTS[index]
+		if roll < threshold:
+			return EVENT_TYPES[index]
+	return EVENT_TYPES[0]
 
 
 static func get_event_state(context: RunContext, pos: Vector2i) -> Dictionary:

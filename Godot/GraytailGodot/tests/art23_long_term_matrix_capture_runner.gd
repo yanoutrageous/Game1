@@ -4,6 +4,7 @@ const MATRIX := [
 	[&"task_archive", [&"task", &"achievement", &"commission_record"]],
 	[&"codex", [&"map", &"monster", &"collectible", &"equipment", &"consumable", &"event", &"rule", &"lore"]],
 	[&"research", [&"unlock_interface", &"research_entry"]],
+	[&"talent", [&"tree"]],
 	[&"profile", [&"qualification_level", &"history", &"statistics", &"milestone", &"title", &"badge"]],
 	[&"collection_appearance", [&"unique_display", &"appearance_config", &"display_content", &"badge_title", &"settlement_display"]],
 ]
@@ -21,12 +22,19 @@ func _capture_matrix() -> void:
 	var output_path := output_dir if output_dir.is_absolute_path() else ProjectSettings.globalize_path(output_dir)
 	DirAccess.make_dir_recursive_absolute(output_path)
 
-	root.size = Vector2i(width, height)
+	root.size = Vector2i(1280, 720)
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
+	var capture_viewport := SubViewport.new()
+	capture_viewport.name = "LongTermMatrixCaptureViewport"
+	capture_viewport.size = Vector2i(width, height)
+	capture_viewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ALWAYS
+	capture_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	capture_viewport.disable_3d = true
+	root.add_child(capture_viewport)
 	var design_root := Control.new()
 	design_root.size = Vector2(1280, 720)
 	design_root.scale = Vector2(float(width) / 1280.0, float(height) / 720.0)
-	root.add_child(design_root)
+	capture_viewport.add_child(design_root)
 
 	var shell_script := load("res://scripts/ui/long_term/long_term_shell.gd")
 	if shell_script == null:
@@ -55,7 +63,7 @@ func _capture_matrix() -> void:
 			var group_id := StringName(raw_group_id)
 			shell.call("show_secondary", group_id)
 			await _frames(3)
-			var image := root.get_texture().get_image()
+			var image := capture_viewport.get_texture().get_image()
 			if image == null:
 				push_error("ART23 matrix renderer returned no image")
 				quit(2)
@@ -68,7 +76,7 @@ func _capture_matrix() -> void:
 				return
 			captured += 1
 	print("ART23_MATRIX_CAPTURE=PASS states=%d size=%dx%d output=%s" % [captured, width, height, output_path])
-	quit(0 if captured == 24 else 2)
+	quit(0 if captured == 25 else 2)
 
 
 func _frames(count: int) -> void:

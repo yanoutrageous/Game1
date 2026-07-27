@@ -18,7 +18,9 @@ const PLAYER_MOTIONS := {
 }
 const PLAYER_FRAME_DURATIONS := {
 	&"idle": 0.14,
-	&"move": 0.05,
+	# Four authored phases at 10 fps produce a grounded 0.40 s walk cycle:
+	# each foot contacts every 0.20 s instead of mechanically cutting at 0.10 s.
+	&"move": 0.10,
 	&"attack_active": 0.06,
 	&"attack_windup": 0.08,
 	&"attack_recovery": 0.16,

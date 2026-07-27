@@ -6,6 +6,7 @@ const LongTermContentFrameworkScript := preload("res://scripts/ui/long_term/long
 const STATE_PREVIEW := &"preview"
 const STATE_DISABLED := &"disabled"
 const STATE_AVAILABLE := &"available"
+const STATE_ARCHIVE := &"archive"
 
 
 static func build_modules() -> Array:
@@ -74,29 +75,48 @@ static func build_modules() -> Array:
 			"研究条件与效果以基地档案中的现有课题记录为准。"
 		),
 		_module(
-			&"profile",
-			"个人资历",
-			"等级、历史战绩、统计、里程碑、称号和奖励入口",
-			STATE_PREVIEW,
-			"当前仅展示个人资历信息架构，不读取或写入资历数据。",
+			&"talent",
+			"天赋",
+			"在整备、安全与勘探三条两级分支中分配永久天赋点",
+			STATE_AVAILABLE,
+			"每次资历升级获得 1 点；节点只改变确认出发后生成的新一局配置。",
 			{
-				"module": "profile",
-				"state": "preview",
-				"message": "个人资历只展示只读摘要与后续字段位置。",
+				"module": "talent",
+				"state": "available",
+				"message": "选择节点只查看前置、成本与精确效果；明确确认后才会保存解锁。",
 			},
 			[
-				_group("资历等级", ["等级摘要位置", "经验说明位置", "等级权益预览"]),
-				_group("历史战绩", ["最近记录位置", "统计入口位置", "筛选入口位置"]),
-				_group("数据统计", ["探索次数位置", "撤离统计位置", "收益摘要位置"]),
-				_group("里程碑", ["里程碑列表位置", "达成提示位置", "阶段说明位置"]),
-				_group("称号 / 徽章", ["称号展示位置", "徽章展示位置", "展示规则说明"]),
-				_group("资历奖励", ["奖励列表位置", "领取条件说明", "后续领取入口"]),
+				_group("天赋树", ["整备分支", "安全分支", "勘探分支"]),
 			],
 			{
-				"label": "个人资历链接",
-				"message": "只显示未来跳转说明，不打开历史战绩或奖励领取本体。",
+				"label": "新局效果",
+				"message": "已解锁效果只通过 RunStartConfig 进入之后确认出发的新一局。",
 			},
-			"后续阶段再接入真实资历、历史战绩和奖励流通。"
+			"天赋目录只包含已有真实运行时消费者的六个节点。"
+		),
+		_module(
+			&"profile",
+			"个人资历",
+			"角色等级、探索履历、统计、里程碑、称号和徽章",
+			STATE_ARCHIVE,
+			"读取已保存的角色成长与探索结算；浏览档案不会修改进度。",
+			{
+				"module": "profile",
+				"state": "archive",
+				"message": "角色档案读取真实资历、统计和最近五十次探索记录。",
+			},
+			[
+				_group("资历等级", ["当前等级", "累计经验", "下一资历阈值"]),
+				_group("历史战绩", ["失败原因", "携入物资", "保全与损失"]),
+				_group("数据统计", ["探索次数", "撤离率", "长期金币"]),
+				_group("里程碑", ["等级门槛", "距离下一阶段", "永久登记"]),
+				_group("称号 / 徽章", ["已获称号", "已获徽章", "获得来源"]),
+			],
+			{
+				"label": "角色档案",
+				"message": "探索结算成功写入后，可在历史战绩中回看本局事实。",
+			},
+			"外观装备仍需独立的拥有与应用事务；角色档案本身已经读取真实保存数据。"
 		),
 		_module(
 			&"collection_appearance",
@@ -162,6 +182,8 @@ static func _module(
 ) -> Dictionary:
 	var content_preview: Dictionary = LongTermContentFrameworkScript.find_module(id)
 	var merged_summary := summary.duplicate(true)
+	var interactive := state == STATE_AVAILABLE
+	var landed := state in [STATE_AVAILABLE, STATE_ARCHIVE]
 	merged_summary["content_framework_state"] = content_preview.get("preview_state", STATE_PREVIEW)
 	merged_summary["content_card_count"] = (content_preview.get("cards", []) as Array).size()
 	merged_summary["content_slot_count"] = (content_preview.get("event_slots_preview", []) as Array).size()
@@ -190,9 +212,9 @@ static func _module(
 		"art_slots_preview": (content_preview.get("art_slots_preview", []) as Array).duplicate(true),
 		"future_data_ref": content_preview.get("future_data_ref", ""),
 		"data_source_ref": content_preview.get("data_source_ref", ""),
-		"display_only": true,
-		"read_only": true,
-		"preview": true,
+		"display_only": not interactive,
+		"read_only": not interactive,
+		"preview": not landed,
 	}
 
 

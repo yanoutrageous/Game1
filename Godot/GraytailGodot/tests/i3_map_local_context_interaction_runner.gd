@@ -82,9 +82,15 @@ func _check_expanded_map(canvas: Control, map_size: int) -> void:
 	var grid := overlay.get_node("Panel/Content/Grid") as GridContainer
 	var detail := overlay.get_node("Panel/Content/Detail") as Label
 	var action_button := overlay.get_node("Panel/Content/SelectedAction") as Button
+	var footer := overlay.get_node("Panel/Content/Footer") as Label
 	_check(grid.get_child_count() == map_size * map_size, "Expanded map did not retain the full public overview")
 	_check(detail.visible and detail.text != "" and detail.get_theme_font_size("font_size") >= 18, "Expanded map lacks a synchronized large summary")
+	_check(not detail.text.contains("\n") and footer != null and not footer.text.contains("\n"), "Expanded map reintroduced multiline detail/footer strips")
 	_check(action_button.focus_mode == Control.FOCUS_ALL, "Explicit map action is not keyboard/gamepad focusable")
+	_check(not action_button.visible, "Disabled current-room action remains visible")
+	_check(grid.get_global_rect().end.y <= detail.get_global_rect().position.y + 0.5, "Expanded-map detail appears above or over the grid")
+	if action_button.visible:
+		_check(detail.get_global_rect().end.y <= action_button.get_global_rect().position.y + 0.5, "Expanded-map action appears above or over its detail")
 	var current := _current_pos(map_size)
 	var monster_button := grid.get_node("MapCell_%d_%d" % [current.x - 1, current.y]) as Button
 	var mine_button := grid.get_node("MapCell_%d_%d" % [current.x + 1, current.y]) as Button
@@ -95,19 +101,33 @@ func _check_expanded_map(canvas: Control, map_size: int) -> void:
 	await _frames(1)
 	_check(Vector2i(overlay.selected_marker.get("pos", Vector2i(-1, -1))) == current + Vector2i(-1, 0), "Focus movement did not synchronize selection")
 	_check(emitted_actions.is_empty(), "Focus movement executed a map action")
-	monster_button.emit_signal("pressed")
-	_check(emitted_actions.is_empty(), "Cell activation executed instead of selecting")
-	overlay.call("_execute_selected_marker")
-	_check(emitted_actions.is_empty(), "Disabled selected action emitted a domain request")
+	await _activate_focused_semantic(monster_button)
+	_check(emitted_actions.is_empty(), "Disabled focused-cell semantic activation emitted a domain request")
 	var flag_pos := current + Vector2i(0, -1)
 	var flag_button := grid.get_node("MapCell_%d_%d" % [flag_pos.x, flag_pos.y]) as Button
-	flag_button.emit_signal("pressed")
-	_check(emitted_actions.is_empty(), "First mouse-style cell press executed a flag action")
-	_check(not action_button.disabled and action_button.text.contains("确认"), "Selected flag action was not exposed through explicit confirmation")
-	action_button.emit_signal("pressed")
-	_check(emitted_actions.size() == 1, "Explicit confirmation did not emit exactly one map action")
+	await _click_control(flag_button)
+	_check(emitted_actions.size() == 1, "One pointer click did not emit exactly one unflag action")
 	if emitted_actions.size() == 1:
-		_check(StringName(emitted_actions[0].get("action_id", &"")) == &"toggle_flag", "Explicit confirmation emitted the wrong map action")
+		_check(StringName(emitted_actions[0].get("action_id", &"")) == &"toggle_flag", "Pointer activation emitted the wrong map action")
+		_check(bool(emitted_actions[0].get("flagged", false)), "Pointer activation did not preserve the selected flagged-cell projection")
+	_check(not action_button.disabled and action_button.text in ["标记雷险", "取消标记"], "Selected flag action was not exposed through a compact explicit confirmation")
+	_check(not action_button.text.contains("确认"), "Selected map action repeats the confirmation instruction in its label")
+	var unknown_button := grid.get_node("MapCell_0_0") as Button
+	await _activate_focused_semantic(unknown_button)
+	_check(emitted_actions.size() == 2, "One semantic focus activation did not emit exactly one flag action")
+	if emitted_actions.size() == 2:
+		_check(StringName(emitted_actions[1].get("action_id", &"")) == &"toggle_flag", "Semantic activation emitted the wrong map action")
+		_check(not bool(emitted_actions[1].get("flagged", false)), "Semantic activation did not preserve the selected unknown-cell projection")
+	var return_pos := current + Vector2i(-1, -1)
+	var return_cell := grid.get_node("MapCell_%d_%d" % [return_pos.x, return_pos.y]) as Button
+	await _click_control(return_cell)
+	_check(emitted_actions.size() == 3, "One pointer click did not emit exactly one fast-return action")
+	if emitted_actions.size() == 3:
+		_check(StringName(emitted_actions[2].get("action_id", &"")) == &"fast_return", "Explored-cell pointer activation did not request fast return")
+	var bottom_button := grid.get_node("MapCell_0_%d" % (map_size - 1)) as Button
+	if bottom_button != null:
+		var bottom_neighbor := bottom_button.get_node_or_null(bottom_button.focus_neighbor_bottom) as Control
+		_check(bottom_neighbor == action_button, "Bottom-row focus does not move downward to the visually lower confirmation button")
 	var hidden_button := grid.get_node("MapCell_0_0") as Button
 	_check(StringName(hidden_button.get_meta("map_marker_state", &"")) == &"unknown", "Expanded map leaked a hidden decoy room semantic")
 	var outside_click := InputEventMouseButton.new()
@@ -141,6 +161,15 @@ func _public_snapshot(map_size: int) -> Dictionary:
 				cell.merge({"known_state": &"explored", "revealed": true, "explored": true, "room_type": &"Monster", "adjacent_mines": 1}, true)
 			elif pos == current + Vector2i(1, 0):
 				cell.merge({"known_state": &"explored", "revealed": true, "explored": true, "room_type": &"Mine", "adjacent_mines": 2}, true)
+			elif pos == current + Vector2i(-1, -1):
+				cell.merge({
+					"known_state": &"explored",
+					"revealed": true,
+					"explored": true,
+					"room_type": &"Normal",
+					"adjacent_mines": 1,
+					"return_eligibility": {"eligible": true, "reason_code": &""},
+				}, true)
 			elif pos == current + Vector2i(0, -1):
 				cell.merge({"flagged": true, "room_type": &"Event"}, true)
 			public_cells.append(cell)
@@ -160,6 +189,38 @@ func _current_pos(map_size: int) -> Vector2i:
 	return Vector2i(map_size / 2, map_size - 2)
 
 
+func _click_control(control: Control) -> void:
+	if control == null:
+		return
+	var center := control.get_global_rect().get_center()
+	var motion := InputEventMouseMotion.new()
+	motion.position = center
+	motion.global_position = center
+	Input.parse_input_event(motion)
+	await process_frame
+	for pressed in [true, false]:
+		var event := InputEventMouseButton.new()
+		event.button_index = MOUSE_BUTTON_LEFT
+		event.pressed = pressed
+		event.position = center
+		event.global_position = center
+		Input.parse_input_event(event)
+		await process_frame
+
+
+func _activate_focused_semantic(control: Control) -> void:
+	if control == null:
+		return
+	control.grab_focus()
+	await process_frame
+	for pressed in [true, false]:
+		var event := InputEventAction.new()
+		event.action = &"ui_accept"
+		event.pressed = pressed
+		Input.parse_input_event(event)
+		await process_frame
+
+
 func _frames(count: int) -> void:
 	for _index in range(count):
 		await process_frame
@@ -172,7 +233,7 @@ func _check(condition: bool, message: String) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("I3_MAP_LOCAL_CONTEXT_INTERACTION=PASS sizes=7,10,13 minimap=5x5 semantics=monster,mine selection=separate confirmation=explicit known_map=sealed input=focus,accept,outside_click")
+		print("I3_MAP_LOCAL_CONTEXT_INTERACTION=PASS sizes=7,10,13 minimap=5x5 semantics=monster,mine,flag,fast_return activation=pointer,ui_accept exactly_once=PASS focus=selection_only authority=signal_boundary known_map=sealed close=outside_click")
 		quit(0)
 		return
 	for failure in failures:

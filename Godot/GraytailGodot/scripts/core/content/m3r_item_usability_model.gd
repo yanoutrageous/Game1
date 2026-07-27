@@ -2,6 +2,7 @@
 class_name M3RItemUsabilityModel
 
 const M3ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
+const M7TalentCatalogScript := preload("res://scripts/core/progression/m7_talent_catalog.gd")
 
 const GROUP_EQUIPMENT := &"equipment"
 const GROUP_CONSUMABLE := &"consumable"
@@ -230,24 +231,15 @@ static func build_profile_interfaces(meta_summary: Dictionary = {}) -> Dictionar
 	var profile_level := maxi(1, int(meta_summary.get("profile_level", 1)))
 	var permit_level := maxi(1, int(meta_summary.get("permit_level", 1)))
 	var protocol_difficulty := maxi(1, int(meta_summary.get("protocol_difficulty", 5)))
-	var talents := [
-		_talent("talent_carry_rigging", "Carry Rigging", "backpack_capacity", 1),
-		_talent("talent_salvage_clause", "Salvage Clause", "salvage_capacity", 1),
-		_talent("talent_shock_training", "Shock Training", "mine_damage_reduce", 5),
-		_talent("talent_pressure_reading", "Pressure Reading", "protocol_pressure_reduce", 2),
-		_talent("talent_trader_notes", "Trader Notes", "trader_safe_yield_bonus", 1),
-		_talent("talent_scan_discipline", "Scan Discipline", "scan_hint", 1),
-	]
+	var talents := M7TalentCatalogScript.projection(meta_summary)
 	var backpack_capacity := BASE_BACKPACK_CAPACITY
 	var failure_salvage_capacity := BASE_FAILURE_SALVAGE_CAPACITY
 	var mine_dmg_reduce := 0
 	var pressure_reduce := 0
-	var active_talents: Array[Dictionary] = []
-	var talent_flags := _array_from(meta_summary.get("talent_flags", []))
-	for talent in talents:
-		if not talent_flags.has(str(talent.get("talent_id", ""))):
-			continue
-		active_talents.append(talent.duplicate(true))
+	var search_reward_bonus := 0
+	var scan_hint_bonus := 0
+	var active_talents := M7TalentCatalogScript.active_effects(meta_summary)
+	for talent in active_talents:
 		match str(talent.get("effect_kind", "")):
 			"backpack_capacity":
 				backpack_capacity += int(talent.get("effect_amount", 0))
@@ -257,6 +249,10 @@ static func build_profile_interfaces(meta_summary: Dictionary = {}) -> Dictionar
 				mine_dmg_reduce += int(talent.get("effect_amount", 0))
 			"protocol_pressure_reduce":
 				pressure_reduce += int(talent.get("effect_amount", 0))
+			"search_reward":
+				search_reward_bonus += int(talent.get("effect_amount", 0))
+			"scan_hint":
+				scan_hint_bonus += int(talent.get("effect_amount", 0))
 	return {
 		"profile_id": str(meta_summary.get("profile_id", "default")),
 		"profile_level": profile_level,
@@ -269,6 +265,8 @@ static func build_profile_interfaces(meta_summary: Dictionary = {}) -> Dictionar
 		"failure_salvage_capacity": failure_salvage_capacity,
 		"mine_dmg_reduce": mine_dmg_reduce,
 		"protocol_pressure_reduce": pressure_reduce,
+		"search_reward_bonus": search_reward_bonus,
+		"scan_hint_bonus": scan_hint_bonus,
 		"read_only": true,
 		"display_only": false,
 		"preview": false,
@@ -304,8 +302,8 @@ static func build_run_start_fields(meta_summary: Dictionary = {}) -> Dictionary:
 		"protocol_difficulty": int(profile.get("protocol_difficulty", 5)),
 		"mine_dmg_reduce": int(profile.get("mine_dmg_reduce", 0)),
 		"protocol_pressure_reduce": int(profile.get("protocol_pressure_reduce", 0)),
-		"search_reward_bonus": 0,
-		"scan_hint_bonus": 0,
+		"search_reward_bonus": int(profile.get("search_reward_bonus", 0)),
+		"scan_hint_bonus": int(profile.get("scan_hint_bonus", 0)),
 		"read_only": false,
 		"display_only": false,
 		"preview": false,
@@ -328,6 +326,8 @@ static func runtime_config_patch(run_start_config: Dictionary = {}) -> Dictionar
 		"profile_exp": int(run_start_config.get("profile_exp", 0)),
 		"permit_level": int(run_start_config.get("permit_level", 1)),
 		"protocol_difficulty": int(run_start_config.get("protocol_difficulty", 5)),
+		"talent_interface": _duplicate_array(run_start_config.get("talent_interface", [])),
+		"active_talent_effects": _duplicate_array(run_start_config.get("active_talent_effects", [])),
 		"mine_dmg_reduce": int(run_start_config.get("mine_dmg_reduce", 0)),
 		"protocol_pressure_reduce": int(run_start_config.get("protocol_pressure_reduce", 0)),
 		"search_reward_bonus": int(run_start_config.get("search_reward_bonus", 0)),
@@ -391,19 +391,6 @@ static func _default_equipment_slot(item_id: String) -> String:
 		"eq_goggles", "eq_signal_pin":
 			return "device"
 	return "tool"
-
-
-static func _talent(talent_id: String, display_name: String, effect_kind: String, effect_amount: int) -> Dictionary:
-	return {
-		"talent_id": talent_id,
-		"display_name": display_name,
-		"effect_kind": effect_kind,
-		"effect_amount": effect_amount,
-		"hook_state": "minimal_real",
-		"read_only": true,
-		"display_only": false,
-		"preview": false,
-	}
 
 
 static func _normalize_item_type(value: Variant) -> StringName:

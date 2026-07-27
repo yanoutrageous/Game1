@@ -22,13 +22,13 @@ M3R is not a complete Warehouse, complete LongTerm system, complete Codex resear
 
 External sources were read as read-only planning references. Their body text is not copied into the repository:
 
-- `D:\AGAME1\Base Docs\最小物品包与掉落闭环内容策划案.md`
-- `D:\AGAME1\Base Docs\出发探索界面与出勤准备规则策划修正案.md`
-- `D:\AGAME1\Base Docs\物品资产模型与内容映射规则策划案.md`
-- `D:\AGAME1\Base Docs\长期系统整合与资产接口规则策划案.md`
-- `D:\AGAME1\Base Docs\长期系统内容补全策划案.md`
-- `D:\AGAME1\Base Docs\本局结算报告与历史战绩系统.md`
-- `D:\AGAME1\Base Docs\规则、效果、Modifier 与内容投放通用系统策划案.md`
+- `sources/base/原始策划案/最小物品包与掉落闭环内容策划案.md`
+- `sources/base/原始策划案/出发探索界面与出勤准备规则策划修正案.md`
+- `sources/base/原始策划案/物品资产模型与内容映射规则策划案.md`
+- `sources/base/原始策划案/长期系统整合与资产接口规则策划案.md`
+- `sources/base/原始策划案/长期系统内容补全策划案.md`
+- `sources/base/原始策划案/本局结算报告与历史战绩系统.md`
+- `sources/base/原始策划案/规则、效果、Modifier 与内容投放通用系统策划案.md`
 
 The M3 minimum item pack document has priority for this stage when item category, warehouse, carry-in, salvage, unique item, safe yield, and minimum talent/interface rules conflict with older references.
 

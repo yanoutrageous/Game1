@@ -55,7 +55,10 @@ func _validate_runtime_abandon_authority() -> void:
 	var bus = controller.command_bus
 	var start_result: Dictionary = bus.dispatch(&"start_standard_run")
 	_require_ok(start_result, "start standard run")
-	var abandon_result: Dictionary = bus.dispatch(&"abandon_run", {"reason": "g39_navigation_boundary_runner"})
+	var abandon_result: Dictionary = bus.dispatch(
+		&"abandon_run",
+		{"reason": "g39_navigation_boundary_runner", "confirmed": true}
+	)
 	_require_ok(abandon_result, "abandon through CommandBus/runtime authority")
 	var snapshot: Dictionary = controller.context.result_snapshot
 	if String(snapshot.get("outcome", "")) != "Abandoned":

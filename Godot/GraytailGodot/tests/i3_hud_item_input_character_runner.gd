@@ -141,20 +141,33 @@ func _check_hud_actions_and_items() -> void:
 	await _frames(2)
 	world_popup.pickup_requested.connect(_count_item_action)
 	world_popup.replace_requested.connect(func(_ground_id: String, _drop_id: String) -> void: item_action_count += 1)
+	var candidate_without_level := _sample_item("i3_candidate_no_level", "普通绷带", 1, 1)
+	candidate_without_level.erase("collectible_level")
 	world_popup.apply_context({
 		"interaction_kind": &"ground_loot",
 		"world_pos": Vector2(620, 360),
 		"player_world_pos": Vector2(560, 360),
 		"room_bounds": Rect2(300, 20, 960, 650),
 		"items": [item],
-		"inventory_items": [_sample_item("i3_candidate", "旧式罗盘", 1, 2)],
+		"inventory_items": [
+			_sample_item("i3_candidate", "旧式罗盘", 1, 2),
+			candidate_without_level,
+		],
 		"backpack_remaining": 1,
 		"pickup_allowed": true,
 	})
 	await _frames(2)
 	var world_info := world_popup.find_child("ContextItemInfo", true, false) as Button
-	_require(world_info != null and world_info.text == String(descriptor.get("summary_text", "")), "world item summary bypassed the shared descriptor")
+	var world_marker := world_popup.find_child("WorldContextItemRarityMarker", true, false) as ColorRect
+	for expected in [
+		String(descriptor.get("display_name", "")),
+		String(descriptor.get("rarity_text", "")),
+		String(descriptor.get("collectible_level_text", "")),
+		"重%s" % descriptor.get("weight", 0),
+	]:
+		_require(world_info != null and world_info.text.contains(expected), "world item compact summary omitted shared descriptor field: %s" % expected)
 	_require(world_info != null and world_info.tooltip_text == String(descriptor.get("detail_text", "")), "world item detail bypassed the shared descriptor")
+	_require(world_marker != null and world_marker.color.is_equal_approx(Color((descriptor.get("rarity", {}) as Dictionary).get("color"))), "world item independent rarity marker bypassed the shared descriptor")
 	if world_info != null:
 		world_info.mouse_entered.emit()
 		world_info.grab_focus()
@@ -163,8 +176,70 @@ func _check_hud_actions_and_items() -> void:
 	world_popup.call("_begin_replacement", "i3_shared_item")
 	await _frames(2)
 	var replacement_info := world_popup.find_child("ReplacementCandidateInfo", true, false) as Button
+	var replacement_name := replacement_info.find_child("ReplacementCandidateName", true, false) as Label if replacement_info != null else null
+	var replacement_meta := replacement_info.find_child("ReplacementCandidateMeta", true, false) as Label if replacement_info != null else null
 	var candidate_descriptor := RunUIViewModelScript.item_presentation(_sample_item("i3_candidate", "旧式罗盘", 1, 2))
-	_require(replacement_info != null and replacement_info.text == String(candidate_descriptor.get("summary_text", "")), "replacement candidate bypassed the shared descriptor")
+	_require(replacement_info != null and replacement_info.text.is_empty(), "replacement candidate retained clipped single-control copy")
+	_require(
+		replacement_info != null and replacement_info.get_meta("replacement_layout", &"") == &"two_line",
+		"replacement candidate did not expose the two-line layout contract"
+	)
+	_require(
+		replacement_name != null
+		and replacement_name.text == "%s ×%d" % [
+			candidate_descriptor.get("display_name", ""),
+			candidate_descriptor.get("quantity", 0),
+		],
+		"replacement candidate name/count line drifted from the shared descriptor"
+	)
+	for expected in [
+		String(candidate_descriptor.get("rarity_text", "")).replace("] ", "]"),
+		String(candidate_descriptor.get("collectible_level_text", "")).replace(" ", ""),
+		"重%s" % candidate_descriptor.get("weight", 0),
+	]:
+		_require(replacement_meta != null and replacement_meta.text.contains(expected), "replacement metadata line omitted shared descriptor field: %s" % expected)
+	_require(
+		replacement_name != null
+		and replacement_meta != null
+		and not replacement_name.text.contains("\n")
+		and not replacement_meta.text.contains("\n")
+		and replacement_name.get_global_rect().end.y <= replacement_meta.get_global_rect().end.y,
+		"replacement candidate did not retain a readable two-line hierarchy"
+	)
+	_require(
+		replacement_name != null and _label_text_fits(replacement_name),
+		"replacement name/count line is visually clipped (text %.1f / available %.1f)" % [
+			_label_text_width(replacement_name),
+			replacement_name.size.x if replacement_name != null else 0.0,
+		]
+	)
+	_require(
+		replacement_meta != null and _label_text_fits(replacement_meta),
+		"replacement quality/level/weight line is visually clipped (text %.1f / available %.1f)" % [
+			_label_text_width(replacement_meta),
+			replacement_meta.size.x if replacement_meta != null else 0.0,
+		]
+	)
+	_require(
+		replacement_meta != null
+		and int(replacement_meta.get_meta("collectible_level", -1)) == int(candidate_descriptor.get("collectible_level", 0)),
+		"replacement candidate did not preserve the authoritative collectible level"
+	)
+	var level_less_info: Button
+	for raw_candidate in world_popup.find_children("ReplacementCandidateInfo", "", true, false):
+		var candidate := raw_candidate as Button
+		if candidate != null and String(candidate.get_meta("item_instance_id", "")) == "i3_candidate_no_level":
+			level_less_info = candidate
+			break
+	var level_less_meta := level_less_info.find_child("ReplacementCandidateMeta", true, false) as Label if level_less_info != null else null
+	_require(
+		level_less_meta != null
+		and int(level_less_meta.get_meta("collectible_level", -1)) == 0
+		and not level_less_meta.text.contains("收藏等级"),
+		"replacement candidate invented a collectible level for an item without one"
+	)
+	var replacement_marker := replacement_info.find_child("WorldContextItemRarityMarker", true, false) as ColorRect if replacement_info != null else null
+	_require(replacement_marker != null, "replacement candidate lost its independent rarity marker")
 	_require(replacement_info != null and replacement_info.tooltip_text == String(candidate_descriptor.get("detail_text", "")), "replacement detail bypassed the shared descriptor")
 
 	host.queue_free()
@@ -178,11 +253,9 @@ func _check_input_and_character_profile() -> void:
 	player.set_local_position(Vector2(0.25, 0.25))
 	var before_preview: Vector2 = player.get_local_position()
 	player.play_step(Vector2.RIGHT)
-	var preview_result: Dictionary = player.move_local(Vector2.RIGHT, 0.06)
-	_require(StringName(preview_result.get("status", &"")) == &"input_preview", "key-down preview still used the movement path")
 	_require(player.get_local_position().is_equal_approx(before_preview), "key-down preview added an extra displacement")
 	var move_result: Dictionary = player.move_local(Vector2.RIGHT, 1.0 / 60.0)
-	_require(StringName(move_result.get("status", &"")) == &"moved", "continuous movement did not resume after preview suppression")
+	_require(StringName(move_result.get("status", &"")) == &"moved", "continuous movement did not own the first displacement")
 	_require(player.get_local_position().x > before_preview.x, "continuous movement did not change player position")
 
 	var default_set := RuntimeAnimationCatalogScript.default_player_animation_set()
@@ -264,6 +337,7 @@ func _sample_item(instance_id: String, display_name: String, quantity: int, weig
 		"display_name": display_name,
 		"item_type": "collectible",
 		"rarity": &"tier_6",
+		"collectible_level": 6,
 		"quantity": quantity,
 		"weight": weight,
 		"base_value": 17,
@@ -296,6 +370,24 @@ func _tree_text(node: Node) -> String:
 	return "\n".join(parts)
 
 
+func _label_text_fits(label: Label) -> bool:
+	return _label_text_width(label) <= label.size.x + 0.5
+
+
+func _label_text_width(label: Label) -> float:
+	if label == null:
+		return INF
+	var font := label.get_theme_font("font")
+	if font == null:
+		return INF
+	return font.get_string_size(
+		label.text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		label.get_theme_font_size("font_size")
+	).x
+
+
 func _frames(count: int) -> void:
 	for _index in range(count):
 		await process_frame
@@ -308,7 +400,7 @@ func _require(condition: bool, message: String) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("%s hud=primary_action,mine_risk actions=7,context_order items=shared_descriptor,scroll input=single_path,gamepad_propagated character=appearance,animation_set reduced_motion=preserved" % PASS_MARKER)
+		print("%s hud=primary_action,mine_risk actions=7,context_order items=shared_descriptor,scroll replacement=two_line,no_clip,authoritative_level input=single_path,gamepad_propagated character=appearance,animation_set reduced_motion=preserved" % PASS_MARKER)
 		quit(0)
 		return
 	for failure in failures:

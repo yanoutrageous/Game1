@@ -28,11 +28,14 @@ class CountingRuntimeController:
 
 	func _init() -> void:
 		context = RunContext.new()
-		context.start_tutorial_run()
+		RunStateMachineScript.new().start_standard_run(context, {"map_config_id": "tutorial_5x5"})
 
 	func restart_run(_room_resolver: RoomResolver) -> Dictionary:
 		restart_count += 1
-		var result: Dictionary = RunStateMachineScript.new().restart_tutorial_run(context)
+		var result: Dictionary = RunStateMachineScript.new().restart_standard_run(
+			context,
+			context.run_start_config.duplicate(true)
+		)
 		result["actor_id"] = &"player"
 		return result
 
@@ -80,12 +83,15 @@ func _test_active_run_start_commands_are_blocked() -> void:
 	var initial: Dictionary = controller.start_demo_run(resolver)
 	_require(bool(initial.get("ok", false)), "active-run bypass setup failed")
 	var original_run_id: StringName = controller.context.run_id
-	for command_name: StringName in [&"start_demo_run", &"start_tutorial_run", &"start_standard_run"]:
+	for command_name: StringName in [&"start_demo_run", &"start_standard_run"]:
 		var result: Dictionary = controller.command_bus.dispatch(command_name)
 		_require(not bool(result.get("ok", true)), "%s replaced an active run" % command_name)
 		_require_equal(StringName(result.get("status", &"")), &"active_run_exists", "%s active-run status" % command_name)
 		_require_equal(controller.context.run_id, original_run_id, "%s active-run identity" % command_name)
 		_require_equal(controller.context.mode, &"demo", "%s active-run mode" % command_name)
+	var retired_tutorial_command: Dictionary = controller.command_bus.dispatch(&"start_tutorial_run")
+	_require_equal(StringName(retired_tutorial_command.get("status", &"")), &"unknown_command", "retired tutorial command status")
+	_require_equal(controller.context.run_id, original_run_id, "retired tutorial command active-run identity")
 
 
 func _test_restart_preserves_run_identity() -> void:

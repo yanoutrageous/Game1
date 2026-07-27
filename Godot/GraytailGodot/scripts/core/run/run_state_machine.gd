@@ -84,14 +84,6 @@ func _demo_config() -> Dictionary:
 	}
 
 
-func start_tutorial_run(context: RunContext) -> Dictionary:
-	return start_run(context, RunConfig.tutorial_5x5())
-
-
-func restart_tutorial_run(context: RunContext) -> Dictionary:
-	return restart_run(context, RunConfig.tutorial_5x5())
-
-
 func start_standard_run(context: RunContext, run_start_config: Dictionary = {}) -> Dictionary:
 	return start_run(context, RunConfig.m7_map(run_start_config))
 
@@ -155,6 +147,20 @@ func fail_run(context: RunContext, reason: String = "forced_failure") -> Diction
 	if not bool(transition_result.get("ok", false)):
 		return transition_result
 	context._apply_failure(reason)
+	var settlement := context.settlement_result
+	if bool(settlement.get("finalized", false)) and not bool(settlement.get("requires_salvage_selection", false)):
+		var terminal_transition := _write_phase(context, PHASE_FAILED, TRANSITION_FAIL, [PHASE_FAILURE_SALVAGE])
+		if not bool(terminal_transition.get("ok", false)):
+			return terminal_transition
+		context._finalize_failure_salvage(settlement)
+		return {
+			"ok": true,
+			"status": &"failed",
+			"transition": TRANSITION_FAIL,
+			"reason": reason,
+			"settlement": settlement.duplicate(true),
+			"result_snapshot": context.result_snapshot.duplicate(true),
+		}
 	return {"ok": true, "status": &"failure_salvage_pending", "transition": TRANSITION_FAIL, "reason": reason, "result_snapshot": context.result_snapshot.duplicate(true)}
 
 

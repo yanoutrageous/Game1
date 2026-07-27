@@ -222,12 +222,19 @@ func resolve_runtime_combat(context: RunContext, payload: Dictionary) -> Diction
 	var combat_snapshot: Dictionary = payload.get("combat_snapshot", {})
 	if not bool(combat_snapshot.get("cleared", false)):
 		return {"ok": false, "reason": "combat_not_cleared", "blocked_reason": "combat_not_cleared"}
-	var reward_gold := CombatState.preview_reward_gold(context, pos)
+	var encounter_profile: Dictionary = combat_snapshot.get("encounter_profile", {})
+	var enemy_power := int(encounter_profile.get(
+		"enemy_power",
+		CombatState.build_enemy_state(context, pos, context.current_adjacent_mines).get("enemy_power", 0)
+	))
+	var reward_gold := CombatState.reward_gold_for_enemy_power(enemy_power)
 	var reward_result := RunRuleService.apply_combat_reward(context, pos, reward_gold)
 	RunEffectApplierScript.apply_effects(context, [RunEffectApplierScript.effect(RunEffectApplierScript.EFFECT_MONSTER_MARK_DEFEATED, "runtime_combat_cleared", {"position": pos}, pos)], runtime_controller)
+	var power_gain := CombatState.grant_monster_clear_progress(context)
 	context.last_reward = reward_result.duplicate(true)
 	context.blocked_reason = String(reward_result.get("blocked_reason", ""))
-	context.enemy_state = combat_snapshot.duplicate(true)
+	context.enemy_state = encounter_profile.duplicate(true)
+	context.enemy_state["combat_snapshot"] = combat_snapshot.duplicate(true)
 	context.enemy_state["reward_committed"] = true
 	context.enemy_state["combat_seed"] = int(payload.get("combat_seed", 0))
 	context.last_message = RunTextCatalogScript.monster_cleared(0, reward_gold)
@@ -250,6 +257,8 @@ func resolve_runtime_combat(context: RunContext, payload: Dictionary) -> Diction
 		"status": &"runtime_combat_resolved",
 		"reward_committed": true,
 		"reward_gold": reward_gold,
+		"enemy_power": enemy_power,
+		"power_gain": power_gain,
 		"reward": reward_result,
 		"ground_items": reward_result.get("ground_items", []),
 	}
@@ -327,9 +336,9 @@ func _enter_mine(context: RunContext, pos: Vector2i) -> Dictionary:
 
 
 func _maybe_trigger_tutorial(context: RunContext, pos: Vector2i) -> void:
-	var trigger_id := TutorialService.trigger_for(context, pos)
-	if trigger_id != &"":
-		context.last_message += " Tutorial popup: %s." % String(trigger_id)
+	# The tutorial panel already presents the lesson. Keep the ordinary room
+	# result in the feedback band instead of leaking the internal trigger id.
+	TutorialService.trigger_for(context, pos)
 
 
 func _record_room_event(context: RunContext, event_type: StringName, payload: Dictionary) -> void:

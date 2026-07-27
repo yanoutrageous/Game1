@@ -5,6 +5,15 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 
 const VISUAL_PREFIX := "long_term."
 const ASSET_PREFIX := "ui.art23."
+const TALENT_FURNITURE_PATH := "res://assets/ui/art23/long_term/furniture/talent.png"
+const CURRENT_MODULE_IDS: Array[StringName] = [
+	&"task_archive",
+	&"codex",
+	&"research",
+	&"talent",
+	&"profile",
+	&"collection_appearance",
+]
 
 
 static func component_ref(visual_key: StringName, role: StringName = &"long_term_scene") -> Dictionary:
@@ -21,8 +30,27 @@ static func texture(visual_key: StringName) -> Texture2D:
 	return Art09ManifestAssetMappingScript.resolve_texture(component_ref(visual_key))
 
 
+static func furniture_texture(module_id: StringName) -> Texture2D:
+	if not CURRENT_MODULE_IDS.has(module_id):
+		return null
+	var resolved := texture(StringName("long_term.furniture.%s" % String(module_id)))
+	if module_id == &"talent" and _texture_source_path(resolved) != TALENT_FURNITURE_PATH:
+		return null
+	return resolved
+
+
+static func current_module_ids() -> Array[StringName]:
+	return CURRENT_MODULE_IDS.duplicate()
+
+
+static func is_current_module(module_id: StringName) -> bool:
+	return CURRENT_MODULE_IDS.has(module_id)
+
+
 static func asset_id(visual_key: StringName) -> StringName:
 	var key := _audited_asset_visual_key(String(visual_key))
+	if key == "long_term.furniture.gacha" or key.begins_with("long_term.control.module.gacha."):
+		return &""
 	if not key.begins_with(VISUAL_PREFIX):
 		return &""
 	return StringName("%s%s" % [ASSET_PREFIX, key])
@@ -70,3 +98,11 @@ static func _fallback_asset_id(visual_key: StringName) -> StringName:
 	if key.find("furniture") >= 0:
 		return &"ui.art19.panel.terminal_main"
 	return &"ui.art19.panel.deploy_main"
+
+
+static func _texture_source_path(candidate: Texture2D) -> String:
+	if candidate == null:
+		return ""
+	if not candidate.resource_path.is_empty():
+		return candidate.resource_path
+	return candidate.resource_name

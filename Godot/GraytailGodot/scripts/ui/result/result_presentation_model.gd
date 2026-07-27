@@ -16,7 +16,7 @@ static func build(snapshot: Dictionary) -> Dictionary:
 		String(settlement.get("outcome", snapshot.get("settlement_outcome", "")))
 	)
 	var reason_code := StringName(snapshot.get("terminal_reason_code", &""))
-	var reason_text := _reason_text(result_state, reason_code)
+	var reason_text := reason_text_for(result_state, reason_code)
 	var awaiting_salvage := (
 		bool(settlement.get("requires_salvage_selection", false))
 		and not bool(settlement.get("finalized", false))
@@ -87,7 +87,7 @@ static func _title(result_state: StringName) -> String:
 	return "探索结算"
 
 
-static func _reason_text(result_state: StringName, reason_code: StringName) -> String:
+static func reason_text_for(result_state: StringName, reason_code: StringName) -> String:
 	if result_state == &"success":
 		return "你已抵达撤离信标，本次探索完成。"
 	if result_state == &"abandon":
@@ -175,6 +175,9 @@ static func _item_models(items: Array) -> Array[Dictionary]:
 			"short_description": String(presentation.get("short_description", "")),
 			"weight": maxi(0, int(presentation.get("weight", 1))),
 			"rarity": (presentation.get("rarity", ItemRarityDescriptorScript.describe(&"unknown")) as Dictionary).duplicate(true),
+			"collectible_level": maxi(0, int(presentation.get("collectible_level", 0))),
+			"collectible_level_text": String(presentation.get("collectible_level_text", "")),
+			"detail_text": String(presentation.get("detail_text", "")),
 		})
 	return result
 
@@ -187,7 +190,17 @@ static func _persistence_state(snapshot: Dictionary, awaiting_salvage: bool) -> 
 		return explicit
 	var commit := _dictionary(snapshot.get("meta_progress_commit", {}))
 	var status := StringName(commit.get("status", &""))
-	if status in [&"committed", &"duplicate_ignored", &"save_failed", &"write_blocked", &"meta_progress_adapter_missing"]:
+	if status in [
+		&"committed",
+		&"duplicate_ignored",
+		&"save_failed",
+		&"write_blocked",
+		&"meta_progress_adapter_missing",
+		&"discarded_unsaved",
+		&"tutorial_completed",
+		&"tutorial_replay_complete",
+		&"tutorial_incomplete_no_write",
+	]:
 		return status
 	return &"missing"
 
@@ -204,6 +217,14 @@ static func _persistence_text(state: StringName) -> String:
 			return "档案暂时无法写入；请重试保存，或明确放弃这份未保存结果。"
 		&"meta_progress_adapter_missing":
 			return "暂时无法连接进度存储；本次结果尚未保存。"
+		&"discarded_unsaved":
+			return "你已确认放弃这份未保存结果；本次进度不会写入档案。"
+		&"tutorial_completed":
+			return "教程完成状态已保存；训练收益不会写入正式档案。"
+		&"tutorial_replay_complete":
+			return "教程重播已完成；正式档案没有重复结算。"
+		&"tutorial_incomplete_no_write":
+			return "教程未完成；按训练规则未写入正式档案。"
 	return "本次结果尚未保存，请重试。"
 
 

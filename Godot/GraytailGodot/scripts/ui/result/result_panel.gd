@@ -6,7 +6,6 @@ const Art09ManifestAssetMappingScript := preload("res://scripts/presentation/art
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
-const ReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
 const LEGACY_RESULT_VALIDATION_MARKERS := ["Outcome:", "Mode:", "Moves:", "Mine Hits:", "Monsters Defeated:", "Failure Pending Lost:", "Failure Salvaged Items:", "Carried Items:", "Carried Value:", "Safe Gold:", "Final HP:", "Final Pressure:", "Black Coin:", "Gold Coin:", "Warehouse Lite Items:", "Room Floor Lost:", "Settlement Log Entries:"]
 const RESULT_BANNER_ASSET_BY_STATE := {
 	&"success": &"ui.art24.ui.result_banner.success",
@@ -16,6 +15,12 @@ const RESULT_BANNER_ASSET_BY_STATE := {
 	&"abandoned": &"ui.art24.ui.result_banner.abandoned",
 }
 const RESULT_BANNER_FALLBACK_ASSET := &"ui.art21.shared.panel.card.normal"
+const RESULT_BANNER_SIZE := Vector2(416.0, 96.0)
+const RESULT_TITLE_COLOR_BY_STATE := {
+	&"success": Color(0.43, 0.91, 0.74, 1.0),
+	&"failure": Color(1.0, 0.45, 0.35, 1.0),
+	&"abandon": Color(1.0, 0.76, 0.28, 1.0),
+}
 
 signal return_main_requested
 signal return_deploy_requested
@@ -25,6 +30,7 @@ signal discard_unsaved_result_requested
 
 var result_title_art: TextureRect
 var result_modal_art: NinePatchRect
+var result_modal_backing: ColorRect
 var result_summary_art: NinePatchRect
 var result_actions_art: NinePatchRect
 var result_metrics_row: HBoxContainer
@@ -41,20 +47,27 @@ var salvage_panel: PanelContainer
 var salvage_reason_label: Label
 var salvage_consequence_label: Label
 var salvage_capacity_label: Label
+var salvage_candidates_scroll: ScrollContainer
 var salvage_candidates_box: VBoxContainer
 var salvage_confirm_button: Button
 var salvage_candidate_buttons: Dictionary = {}
 var selected_salvage_ids: Array[String] = []
 var salvage_capacity: int = 0
 var salvage_has_candidates: bool = false
+var result_has_visible_items: bool = false
 var current_layout_profile: Dictionary = {}
 var current_result_model: Dictionary = {}
+var current_result_id := ""
 var discard_unsaved_confirmation_step: int = 0
+var ui_scale_factor := 1.0
 
 
 func _ready() -> void:
+	Art10UISkinKitScript.apply_player_ui_theme(self)
 	_ensure_backdrop()
 	_ensure_actions()
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	_refresh_ui_scale_metrics()
 
 
 func set_result_summary(title: String, summary: String) -> void:
@@ -62,18 +75,20 @@ func set_result_summary(title: String, summary: String) -> void:
 	var summary_node := get_node_or_null("ResultSummary") as Label
 
 	if title_node != null:
-		title_node.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
+		_set_scaled_font_size(title_node, 26)
+		title_node.add_theme_constant_override("outline_size", maxi(5, int(round(5.0 * ui_scale_factor))))
+		title_node.add_theme_color_override("font_outline_color", Color(0.005, 0.010, 0.012, 0.98))
 		title_node.z_index = 4
 		title_node.visible = true
 		title_node.text = title
 
 	if summary_node != null:
-		summary_node.add_theme_font_override("font", ReadableFont)
 		summary_node.add_theme_color_override("font_color", PresentationTheme.text_color())
-		summary_node.add_theme_font_size_override("font_size", 13)
-		summary_node.add_theme_constant_override("line_spacing", 2)
+		_set_scaled_font_size(summary_node, 13)
+		_set_scaled_constant(summary_node, &"line_spacing", 2)
 		summary_node.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		summary_node.clip_text = true
+		summary_node.clip_text = false
+		summary_node.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 		summary_node.z_index = 4
 		summary_node.text = summary
 
@@ -83,6 +98,7 @@ func show_summary(snapshot: Dictionary) -> void:
 	# salvaged_item_count, settlement_log, and currency/item movement data.
 	var model: Dictionary = ResultPresentationModelScript.build(snapshot)
 	current_result_model = model.duplicate(true)
+	current_result_id = String(snapshot.get("result_id", ""))
 	set_result_summary(String(model.get("title", "结算")), String(model.get("summary", "")))
 	_apply_result_title_plate(_result_state_from_snapshot(snapshot))
 	_configure_result_metrics(model)
@@ -93,11 +109,38 @@ func show_summary(snapshot: Dictionary) -> void:
 	Art10UISkinKitScript.play_panel_open(self)
 
 
+func update_persistence_state(snapshot: Dictionary) -> void:
+	var incoming_result_id := String(snapshot.get("result_id", ""))
+	if (
+		current_result_model.is_empty()
+		or not visible
+		or (
+			not current_result_id.is_empty()
+			and not incoming_result_id.is_empty()
+			and incoming_result_id != current_result_id
+		)
+	):
+		show_summary(snapshot)
+		return
+	var refreshed_model: Dictionary = ResultPresentationModelScript.build(snapshot)
+	for key in [
+		"persistence_state",
+		"persistence_text",
+		"normal_exit_allowed",
+		"retry_save_allowed",
+		"discard_unsaved_allowed",
+		"discard_unsaved_confirmation_count",
+	]:
+		current_result_model[key] = refreshed_model.get(key)
+	_configure_persistence_actions(current_result_model)
+
+
 func hide_result() -> void:
 	visible = false
 	selected_salvage_ids.clear()
 	salvage_has_candidates = false
 	current_result_model.clear()
+	current_result_id = ""
 	reset_discard_unsaved_confirmation()
 
 
@@ -113,6 +156,14 @@ func _ensure_backdrop() -> void:
 	backdrop.color = Color(0.0, 0.0, 0.0, 0.66)
 	backdrop.visible = true
 	backdrop.z_index = 0
+	result_modal_backing = get_node_or_null("ResultModalOpaqueBacking") as ColorRect
+	if result_modal_backing == null:
+		result_modal_backing = ColorRect.new()
+		result_modal_backing.name = "ResultModalOpaqueBacking"
+		result_modal_backing.color = Color(0.010, 0.021, 0.024, 0.985)
+		result_modal_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		result_modal_backing.z_index = 1
+		add_child(result_modal_backing)
 	result_modal_art = get_node_or_null("ResultModalFrame") as NinePatchRect
 	if result_modal_art == null:
 		var legacy_modal := get_node_or_null("ResultModalFrame") as TextureRect
@@ -129,7 +180,7 @@ func _ensure_backdrop() -> void:
 		result_modal_art.patch_margin_bottom = 38
 		result_modal_art.draw_center = true
 		add_child(result_modal_art)
-	result_modal_art.z_index = 1
+	result_modal_art.z_index = 2
 	var modal_texture := Art21UIPlacementContractScript.texture_for_slot(&"result", &"result_modal_frame", &"ui.art19.panel.terminal_main")
 	if modal_texture != null:
 		result_modal_art.texture = modal_texture
@@ -146,13 +197,10 @@ func _ensure_backdrop() -> void:
 		result_title_art.name = "ResultTitlePlate"
 		result_title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		result_title_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		# UE stretches the state brush into its 300x130 banner slot. Keeping the
-		# 260x147 source aspect made the visible title only ~212 px wide and left
-		# an unintended empty band on both sides of the report.
-		result_title_art.stretch_mode = TextureRect.STRETCH_SCALE
+		result_title_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		result_title_art.modulate = Color(1.0, 1.0, 1.0, 0.94)
 		add_child(result_title_art)
-	result_title_art.z_index = 1
+	result_title_art.z_index = 2
 	var title_node := get_node_or_null("ResultTitle") as Label
 	if title_node != null:
 		title_node.z_index = 4
@@ -166,7 +214,7 @@ func _ensure_result_metrics() -> void:
 		return
 	result_metrics_row = HBoxContainer.new()
 	result_metrics_row.name = "ResultMetricsRow"
-	result_metrics_row.add_theme_constant_override("separation", 8)
+	_set_scaled_constant(result_metrics_row, &"separation", 8)
 	result_metrics_row.z_index = 4
 	add_child(result_metrics_row)
 	for index in range(3):
@@ -188,19 +236,17 @@ func _ensure_result_metrics() -> void:
 		result_metrics_row.add_child(card)
 		var stack := VBoxContainer.new()
 		stack.alignment = BoxContainer.ALIGNMENT_CENTER
-		stack.add_theme_constant_override("separation", 1)
+		_set_scaled_constant(stack, &"separation", 1)
 		card.add_child(stack)
 		var metric_title := Label.new()
 		metric_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		metric_title.add_theme_font_override("font", ReadableFont)
-		metric_title.add_theme_font_size_override("font_size", 13)
+		_set_scaled_font_size(metric_title, 13)
 		metric_title.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		stack.add_child(metric_title)
 		result_metric_title_labels.append(metric_title)
 		var metric_value := Label.new()
 		metric_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		metric_value.add_theme_font_override("font", ReadableFont)
-		metric_value.add_theme_font_size_override("font_size", 20)
+		_set_scaled_font_size(metric_value, 20)
 		metric_value.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 		stack.add_child(metric_value)
 		result_metric_value_labels.append(metric_value)
@@ -232,12 +278,11 @@ func _ensure_result_items() -> void:
 	result_item_sections_box = VBoxContainer.new()
 	result_item_sections_box.name = "ResultItemSections"
 	result_item_sections_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	result_item_sections_box.add_theme_constant_override("separation", 8)
+	_set_scaled_constant(result_item_sections_box, &"separation", 8)
 	result_items_scroll.add_child(result_item_sections_box)
 	persistence_label = Label.new()
 	persistence_label.name = "ResultPersistenceStatus"
-	persistence_label.add_theme_font_override("font", ReadableFont)
-	persistence_label.add_theme_font_size_override("font_size", 13)
+	_set_scaled_font_size(persistence_label, 13)
 	persistence_label.add_theme_color_override("font_color", PresentationTheme.text_color())
 	persistence_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	persistence_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -251,7 +296,8 @@ func _configure_result_item_sections(model: Dictionary) -> void:
 		result_item_sections_box.remove_child(child)
 		child.queue_free()
 	var awaiting := bool(model.get("awaiting_salvage", false))
-	result_items_scroll.visible = not awaiting
+	result_has_visible_items = false
+	result_items_scroll.visible = false
 	if awaiting:
 		return
 	var sections: Array = model.get("item_sections", []) if model.get("item_sections", []) is Array else []
@@ -264,33 +310,24 @@ func _configure_result_item_sections(model: Dictionary) -> void:
 			continue
 		_add_result_item_section(raw_section)
 		visible_section_count += 1
-	if visible_section_count == 0:
-		var empty_notice := Label.new()
-		empty_notice.name = "ResultItemsEmptyNotice"
-		empty_notice.text = "本次没有需要列出的物资。"
-		empty_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		empty_notice.add_theme_font_override("font", ReadableFont)
-		empty_notice.add_theme_font_size_override("font_size", 13)
-		empty_notice.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
-		result_item_sections_box.add_child(empty_notice)
+	result_has_visible_items = visible_section_count > 0
+	result_items_scroll.visible = result_has_visible_items
 
 
 func _add_result_item_section(section: Dictionary) -> void:
 	var section_box := VBoxContainer.new()
-	section_box.add_theme_constant_override("separation", 4)
+	_set_scaled_constant(section_box, &"separation", 4)
 	result_item_sections_box.add_child(section_box)
 	var items: Array = section.get("items", []) if section.get("items", []) is Array else []
 	var heading := Label.new()
 	heading.text = "%s · %d" % [String(section.get("title", "物资")), int(section.get("count", items.size()))]
-	heading.add_theme_font_override("font", ReadableFont)
-	heading.add_theme_font_size_override("font_size", 14)
+	_set_scaled_font_size(heading, 14)
 	heading.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 	section_box.add_child(heading)
 	if items.is_empty():
 		var empty_label := Label.new()
 		empty_label.text = "无"
-		empty_label.add_theme_font_override("font", ReadableFont)
-		empty_label.add_theme_font_size_override("font_size", 13)
+		_set_scaled_font_size(empty_label, 13)
 		empty_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		section_box.add_child(empty_label)
 		return
@@ -301,7 +338,7 @@ func _add_result_item_section(section: Dictionary) -> void:
 
 func _build_result_item_row(item_model: Dictionary) -> Control:
 	var row := PanelContainer.new()
-	row.custom_minimum_size = Vector2(0, 36)
+	_set_scaled_minimum_size(row, Vector2(0, 36))
 	var row_style := StyleBoxFlat.new()
 	row_style.bg_color = Color(0.016, 0.043, 0.046, 0.90)
 	row_style.border_color = Color(0.20, 0.50, 0.46, 0.58)
@@ -314,29 +351,44 @@ func _build_result_item_row(item_model: Dictionary) -> Control:
 	row_style.content_margin_top = 5
 	row_style.content_margin_bottom = 5
 	row.add_theme_stylebox_override("panel", row_style)
-	row.tooltip_text = String(item_model.get("short_description", ""))
+	row.tooltip_text = String(item_model.get("detail_text", item_model.get("short_description", "")))
 	row.set_meta("instance_id", String(item_model.get("instance_id", "")))
+	row.set_meta("collectible_level", int(item_model.get("collectible_level", 0)))
 	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 8)
+	_set_scaled_constant(line, &"separation", 8)
 	row.add_child(line)
+	var rarity: Dictionary = item_model.get("rarity", {}) if item_model.get("rarity", {}) is Dictionary else {}
+	row.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+	var rarity_marker := ColorRect.new()
+	rarity_marker.name = "ResultItemRarityMarker"
+	rarity_marker.custom_minimum_size = Vector2(4, 24)
+	rarity_marker.color = Color(rarity.get("color", PresentationTheme.color_for_key(&"ui.muted")))
+	rarity_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rarity_marker.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+	line.add_child(rarity_marker)
 	var name_label := Label.new()
 	name_label.text = String(item_model.get("display_name", "未命名物资"))
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.add_theme_font_override("font", ReadableFont)
-	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_set_scaled_font_size(name_label, 13)
 	name_label.add_theme_color_override("font_color", PresentationTheme.text_color())
 	line.add_child(name_label)
-	var rarity: Dictionary = item_model.get("rarity", {}) if item_model.get("rarity", {}) is Dictionary else {}
 	var rarity_label := Label.new()
 	rarity_label.text = String(rarity.get("display_text", "[?] 未鉴定"))
-	rarity_label.add_theme_font_override("font", ReadableFont)
-	rarity_label.add_theme_font_size_override("font_size", 13)
+	_set_scaled_font_size(rarity_label, 13)
 	rarity_label.add_theme_color_override("font_color", rarity.get("color", PresentationTheme.color_for_key(&"ui.muted")))
 	line.add_child(rarity_label)
+	var collectible_level_text := String(item_model.get("collectible_level_text", ""))
+	if collectible_level_text != "":
+		var collectible_level_label := Label.new()
+		collectible_level_label.name = "ResultItemCollectibleLevel"
+		collectible_level_label.text = collectible_level_text
+		_set_scaled_font_size(collectible_level_label, 13)
+		collectible_level_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
+		line.add_child(collectible_level_label)
 	var weight_label := Label.new()
 	weight_label.text = "重 %d" % int(item_model.get("weight", 0))
-	weight_label.add_theme_font_override("font", ReadableFont)
-	weight_label.add_theme_font_size_override("font_size", 13)
+	_set_scaled_font_size(weight_label, 13)
 	weight_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 	line.add_child(weight_label)
 	return row
@@ -353,7 +405,7 @@ func _ensure_actions() -> void:
 		actions.offset_top = 386.0
 		actions.offset_right = 600.0
 		actions.offset_bottom = 430.0
-		actions.add_theme_constant_override("separation", 14)
+		_set_scaled_constant(actions, &"separation", 14)
 		actions.z_index = 4
 		add_child(actions)
 
@@ -361,7 +413,7 @@ func _ensure_actions() -> void:
 	return_deploy_button.name = "ResultReturnDeployButton"
 	return_deploy_button.text = "返回出发整备"
 	return_deploy_button.tooltip_text = "关闭本次结算并返回出发整备。"
-	return_deploy_button.custom_minimum_size = Vector2(170, 40)
+	_set_scaled_minimum_size(return_deploy_button, Vector2(170, 40))
 	return_deploy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_apply_art21r2_modal_button(return_deploy_button, &"art21r2.modal.button.primary", &"primary", 13)
 	return_deploy_button.pressed.connect(func() -> void:
@@ -374,7 +426,7 @@ func _ensure_actions() -> void:
 	return_main_button.name = "ResultReturnMainButton"
 	return_main_button.text = "返回菜单"
 	return_main_button.tooltip_text = "关闭本次结算并返回主界面。"
-	return_main_button.custom_minimum_size = Vector2(170, 40)
+	_set_scaled_minimum_size(return_main_button, Vector2(170, 40))
 	return_main_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_apply_art21r2_modal_button(return_main_button, &"art21r2.modal.button.secondary", &"secondary", 13)
 	return_main_button.pressed.connect(func() -> void:
@@ -387,7 +439,7 @@ func _ensure_actions() -> void:
 	retry_save_button.name = "ResultRetrySaveButton"
 	retry_save_button.text = "重试保存"
 	retry_save_button.tooltip_text = "使用同一份结算结果再次尝试保存。"
-	retry_save_button.custom_minimum_size = Vector2(170, 40)
+	_set_scaled_minimum_size(retry_save_button, Vector2(170, 40))
 	retry_save_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_apply_art21r2_modal_button(retry_save_button, &"art21r2.modal.button.primary", &"primary", 13)
 	retry_save_button.pressed.connect(func() -> void:
@@ -401,7 +453,7 @@ func _ensure_actions() -> void:
 	discard_unsaved_button.name = "ResultDiscardUnsavedButton"
 	discard_unsaved_button.text = "放弃未保存结果"
 	discard_unsaved_button.tooltip_text = "本次结果尚未保存；需要再次确认才会返回出发页。"
-	discard_unsaved_button.custom_minimum_size = Vector2(190, 40)
+	_set_scaled_minimum_size(discard_unsaved_button, Vector2(190, 40))
 	discard_unsaved_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_apply_art21r2_modal_button(discard_unsaved_button, &"art21r2.modal.button.secondary", &"danger", 13)
 	discard_unsaved_button.pressed.connect(_request_discard_unsaved_result)
@@ -513,40 +565,42 @@ func _ensure_salvage_panel() -> void:
 	salvage_panel.add_theme_stylebox_override("panel", salvage_style)
 	add_child(salvage_panel)
 	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 8)
+	_set_scaled_constant(content, &"separation", 8)
 	salvage_panel.add_child(content)
 	var heading := Label.new()
 	heading.text = "选择要保全的非消耗品"
-	heading.add_theme_font_size_override("font_size", 16)
+	_set_scaled_font_size(heading, 16)
 	heading.add_theme_color_override("font_color", Color(0.96, 0.72, 0.34, 1.0))
 	content.add_child(heading)
 	salvage_reason_label = Label.new()
 	salvage_reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	salvage_reason_label.add_theme_font_override("font", ReadableFont)
+	_set_scaled_font_size(salvage_reason_label, 13)
 	salvage_reason_label.add_theme_color_override("font_color", PresentationTheme.text_color())
 	content.add_child(salvage_reason_label)
 	salvage_consequence_label = Label.new()
 	salvage_consequence_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	salvage_consequence_label.add_theme_font_override("font", ReadableFont)
-	salvage_consequence_label.add_theme_font_size_override("font_size", 12)
+	_set_scaled_font_size(salvage_consequence_label, 12)
 	salvage_consequence_label.add_theme_color_override("font_color", Color(0.95, 0.66, 0.43, 1.0))
 	content.add_child(salvage_consequence_label)
 	salvage_capacity_label = Label.new()
 	salvage_capacity_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	salvage_capacity_label.add_theme_font_override("font", ReadableFont)
+	_set_scaled_font_size(salvage_capacity_label, 13)
 	salvage_capacity_label.add_theme_color_override("font_color", PresentationTheme.text_color())
 	content.add_child(salvage_capacity_label)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 92)
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content.add_child(scroll)
+	salvage_candidates_scroll = ScrollContainer.new()
+	salvage_candidates_scroll.name = "FailureSalvageCandidatesScroll"
+	salvage_candidates_scroll.custom_minimum_size = Vector2(0, 92)
+	salvage_candidates_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	salvage_candidates_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	salvage_candidates_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_child(salvage_candidates_scroll)
 	salvage_candidates_box = VBoxContainer.new()
 	salvage_candidates_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(salvage_candidates_box)
+	salvage_candidates_scroll.add_child(salvage_candidates_box)
 	salvage_confirm_button = Button.new()
 	salvage_confirm_button.text = "确认保全并完成结算"
 	salvage_confirm_button.tooltip_text = "确认后将所选物资带回仓库；未选择物资与所有消耗品将无法带回。"
-	salvage_confirm_button.custom_minimum_size = Vector2(0, 44)
+	_set_scaled_minimum_size(salvage_confirm_button, Vector2(0, 44))
 	_apply_art21r2_modal_button(salvage_confirm_button, &"art21r2.modal.button.primary", &"primary", 13)
 	salvage_confirm_button.pressed.connect(_confirm_failure_salvage)
 	content.add_child(salvage_confirm_button)
@@ -576,6 +630,7 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 		salvage_panel.visible = awaiting
 	if not awaiting:
 		selected_salvage_ids.clear()
+		salvage_has_candidates = false
 		if not current_layout_profile.is_empty():
 			apply_layout_profile(current_layout_profile)
 		return
@@ -592,10 +647,15 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 	salvage_candidate_buttons.clear()
 	var candidates: Array = settlement.get("settlement_pool", [])
 	salvage_has_candidates = not candidates.is_empty()
+	if salvage_candidates_scroll != null:
+		_set_scaled_minimum_size(salvage_candidates_scroll, Vector2(0, 92 if salvage_has_candidates else 24))
+		salvage_candidates_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL if salvage_has_candidates else Control.SIZE_SHRINK_BEGIN
 	if candidates.is_empty():
 		var empty_label := Label.new()
+		empty_label.name = "FailureSalvageEmptyNotice"
 		empty_label.text = "没有可保全的非消耗品；可以直接确认结算。"
-		empty_label.add_theme_font_override("font", ReadableFont)
+		_set_scaled_font_size(empty_label, 13)
+		empty_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
 		salvage_candidates_box.add_child(empty_label)
 	for raw_item in candidates:
 		if not raw_item is Dictionary:
@@ -606,18 +666,34 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 		var rarity: Dictionary = item_model.get("rarity", {}) if item_model.get("rarity", {}) is Dictionary else {}
 		var button := Button.new()
 		button.toggle_mode = true
-		button.text = "%s  ·  %s  ·  重量 %d" % [
+		var item_meta: Array[String] = [String(rarity.get("display_text", "[?] 未鉴定"))]
+		var collectible_level_text := String(item_model.get("collectible_level_text", ""))
+		if collectible_level_text != "":
+			item_meta.append(collectible_level_text)
+		item_meta.append("重量 %d" % int(item_model.get("weight", 0)))
+		button.text = "%s  ·  %s" % [
 			String(item_model.get("display_name", "未命名物资")),
-			String(rarity.get("display_text", "[?] 未鉴定")),
-			int(item_model.get("weight", 0)),
+			"  ·  ".join(item_meta),
 		]
-		button.tooltip_text = String(item_model.get("short_description", ""))
-		button.custom_minimum_size = Vector2(0, 42)
+		button.tooltip_text = String(item_model.get("detail_text", item_model.get("short_description", "")))
+		_set_scaled_minimum_size(button, Vector2(0, 42))
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		_apply_art21r2_modal_button(button, &"art21r2.modal.item_row.normal", &"secondary", 13, 10)
-		button.add_theme_font_override("font", ReadableFont)
 		button.set_meta("instance_id", instance_id)
 		button.set_meta("weight", int(item_model.get("weight", 0)))
+		button.set_meta("collectible_level", int(item_model.get("collectible_level", 0)))
+		button.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+		var rarity_marker := ColorRect.new()
+		rarity_marker.name = "ResultSalvageRarityMarker"
+		rarity_marker.color = Color(rarity.get("color", PresentationTheme.color_for_key(&"ui.muted")))
+		rarity_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rarity_marker.anchor_bottom = 1.0
+		rarity_marker.offset_left = 3.0
+		rarity_marker.offset_top = 5.0
+		rarity_marker.offset_right = 7.0
+		rarity_marker.offset_bottom = -5.0
+		rarity_marker.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+		button.add_child(rarity_marker)
 		button.toggled.connect(func(pressed: bool) -> void: _toggle_salvage_item(instance_id, pressed))
 		salvage_candidate_buttons[instance_id] = button
 		salvage_candidates_box.add_child(button)
@@ -667,14 +743,33 @@ func requires_salvage_confirmation() -> bool:
 	return salvage_panel != null and salvage_panel.visible
 
 
+func set_ui_scale_factor(value: float) -> void:
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	if not current_layout_profile.is_empty():
+		current_layout_profile["ui_scale_factor"] = ui_scale_factor
+	_refresh_ui_scale_metrics()
+	if not current_layout_profile.is_empty():
+		apply_layout_profile(current_layout_profile)
+
+
+func get_ui_scale_factor() -> float:
+	return ui_scale_factor
+
+
 func apply_layout_profile(profile: Dictionary) -> void:
 	current_layout_profile = profile.duplicate(true)
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(
+		float(current_layout_profile.get("ui_scale_factor", ui_scale_factor))
+	)
+	current_layout_profile["ui_scale_factor"] = ui_scale_factor
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
 	var is_low := bool(profile.get("is_low_resolution", false))
 	var is_high := bool(profile.get("is_high_resolution", false))
 	var summary_node := get_node_or_null("ResultSummary") as Label
 	if summary_node != null:
-		summary_node.add_theme_font_size_override("font_size", 14 if is_low else (16 if is_high else 14))
-		summary_node.add_theme_constant_override("line_spacing", 3 if is_low else (5 if is_high else 4))
+		_set_scaled_font_size(summary_node, 14 if is_low else (16 if is_high else 14))
+		_set_scaled_constant(summary_node, &"line_spacing", 3 if is_low else (5 if is_high else 4))
 		summary_node.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		summary_node.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	var viewport_size := UILayerContractScript.viewport_size_from_profile(profile)
@@ -686,7 +781,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	# there is nothing to preserve, keep the confirmation step but use the same
 	# compact report footprint as the final outcomes instead of showing a large
 	# empty selection well.
-	var rect := _main_game_modal_rect(profile, awaiting_salvage and salvage_has_candidates)
+	_refresh_ui_scale_metrics()
+	var rect := _main_game_modal_rect(current_layout_profile, awaiting_salvage and salvage_has_candidates)
 	var backdrop := get_node_or_null("Backdrop") as ColorRect
 	if backdrop != null:
 		backdrop.visible = true
@@ -694,44 +790,70 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		backdrop.size = viewport_size
 	if result_modal_art != null:
 		_set_absolute_rect(result_modal_art, rect)
+	if result_modal_backing != null:
+		_set_absolute_rect(result_modal_backing, rect.grow(-12.0))
 	if result_title_art != null:
-		var banner_size := Vector2(300, 130)
-		_set_absolute_rect(result_title_art, Rect2(Vector2(rect.position.x + (rect.size.x - banner_size.x) * 0.5, rect.position.y + 20.0), banner_size))
+		var banner_size := RESULT_BANNER_SIZE
+		var banner_rect := Rect2(
+			Vector2(rect.position.x + (rect.size.x - banner_size.x) * 0.5, rect.position.y + _scaled_metric(18.0)),
+			banner_size
+		)
+		_set_absolute_rect(result_title_art, banner_rect)
 	var title_node := get_node_or_null("ResultTitle") as Label
 	if title_node != null:
-		_set_absolute_rect(title_node, Rect2(rect.position + Vector2(34.0, 52.0), Vector2(rect.size.x - 68.0, 42.0)))
+		var title_rect := result_title_art.get_global_rect() if result_title_art != null else Rect2(
+			Vector2(rect.position.x + _scaled_metric(34.0), rect.position.y + _scaled_metric(18.0)),
+			Vector2(rect.size.x - _scaled_metric(68.0), RESULT_BANNER_SIZE.y)
+		)
+		_set_absolute_rect(title_node, title_rect)
 		title_node.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var summary_top := rect.position.y + 160.0
-	var action_strip_top := rect.end.y - 68.0
-	var summary_height := 54.0
-	var metrics_top := summary_top + summary_height + 8.0
-	var metrics_height := 64.0
-	var persistence_height := 38.0
-	var persistence_top := action_strip_top - persistence_height - 8.0
-	var items_top := metrics_top + metrics_height + 8.0
+		title_node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var section_gap := _scaled_metric(8.0)
+	var horizontal_inset := _scaled_metric(34.0)
+	var bottom_inset := _scaled_metric(18.0)
+	var summary_top := rect.position.y + _scaled_metric(18.0) + RESULT_BANNER_SIZE.y + section_gap
+	var summary_height := _scaled_metric(54.0)
+	var metrics_top := summary_top + summary_height + section_gap
+	var metrics_height := _scaled_metric(64.0)
+	var items_top := metrics_top + metrics_height + section_gap
+	var persistence_height := _scaled_metric(32.0)
+	var action_height := _scaled_metric(48.0)
+	var persistence_top := 0.0
+	var action_strip_top := 0.0
+	if result_has_visible_items:
+		action_strip_top = rect.end.y - bottom_inset - action_height
+		persistence_top = action_strip_top - section_gap - persistence_height
+	else:
+		persistence_top = items_top
+		action_strip_top = persistence_top + persistence_height + section_gap
 	if result_summary_art != null:
 		result_summary_art.visible = false
 	if result_metrics_row != null:
 		result_metrics_row.visible = not awaiting_salvage
-		_set_absolute_rect(result_metrics_row, Rect2(Vector2(rect.position.x + 34.0, metrics_top), Vector2(rect.size.x - 68.0, metrics_height)))
+		_set_absolute_rect(result_metrics_row, Rect2(Vector2(rect.position.x + horizontal_inset, metrics_top), Vector2(rect.size.x - horizontal_inset * 2.0, metrics_height)))
 	if summary_node != null:
-		_set_absolute_rect(summary_node, Rect2(Vector2(rect.position.x + 34.0, summary_top), Vector2(rect.size.x - 68.0, summary_height)))
+		_set_absolute_rect(summary_node, Rect2(Vector2(rect.position.x + horizontal_inset, summary_top), Vector2(rect.size.x - horizontal_inset * 2.0, summary_height)))
 	if result_items_scroll != null:
-		result_items_scroll.visible = not awaiting_salvage
+		result_items_scroll.visible = not awaiting_salvage and result_has_visible_items
 		_set_absolute_rect(result_items_scroll, Rect2(
-			Vector2(rect.position.x + 34.0, items_top),
-			Vector2(rect.size.x - 68.0, max(72.0, persistence_top - items_top - 8.0))
+			Vector2(rect.position.x + horizontal_inset, items_top),
+			Vector2(rect.size.x - horizontal_inset * 2.0, max(0.0, persistence_top - items_top - section_gap))
 		))
 	if persistence_label != null:
 		persistence_label.visible = not awaiting_salvage
-		_set_absolute_rect(persistence_label, Rect2(Vector2(rect.position.x + 34.0, persistence_top), Vector2(rect.size.x - 68.0, persistence_height)))
+		_set_absolute_rect(persistence_label, Rect2(Vector2(rect.position.x + horizontal_inset, persistence_top), Vector2(rect.size.x - horizontal_inset * 2.0, persistence_height)))
 	if result_actions_art != null:
 		result_actions_art.visible = false
 	var actions := get_node_or_null("ResultActions") as HBoxContainer
 	if actions != null:
-		_set_absolute_rect(actions, Rect2(Vector2(rect.position.x + 34.0, action_strip_top), Vector2(rect.size.x - 68.0, 42.0)))
+		_set_absolute_rect(actions, Rect2(Vector2(rect.position.x + horizontal_inset, action_strip_top), Vector2(rect.size.x - horizontal_inset * 2.0, action_height)))
 	if salvage_panel != null:
-		_set_absolute_rect(salvage_panel, Rect2(Vector2(rect.position.x + 34.0, summary_top), Vector2(rect.size.x - 68.0, max(230.0, rect.end.y - summary_top - 34.0))))
+		var salvage_height := rect.end.y - summary_top - bottom_inset if salvage_has_candidates else _scaled_metric(220.0)
+		salvage_height = minf(salvage_height, rect.end.y - summary_top - bottom_inset)
+		_set_absolute_rect(salvage_panel, Rect2(
+			Vector2(rect.position.x + horizontal_inset, summary_top),
+			Vector2(rect.size.x - horizontal_inset * 2.0, salvage_height)
+		))
 
 
 func _set_absolute_rect(control: Control, rect: Rect2) -> void:
@@ -750,15 +872,69 @@ func _main_game_modal_rect(profile: Dictionary, salvage_state: bool = false) -> 
 	var height: float = maxf(1.0, viewport_size.y)
 	var is_high := bool(profile.get("is_high_resolution", false))
 	var modal_width := 620.0 if salvage_state else 680.0
-	var modal_height := 600.0 if salvage_state else 660.0
+	var modal_height := 0.0
+	if salvage_state:
+		# Candidate rows remain scrollable, but three ordinary candidates should
+		# not reserve the same deep well as a long final item report.
+		modal_height = 520.0 if salvage_has_candidates else 380.0
+	else:
+		modal_height = 600.0 if result_has_visible_items else 376.0
+	modal_width *= ui_scale_factor
+	modal_height *= ui_scale_factor
 	if is_high:
 		modal_width *= 1.12
-		modal_height *= 1.12
+		modal_height *= 1.08
 	modal_width = minf(modal_width, width - 48.0)
 	modal_height = minf(modal_height, height - 48.0)
 	var x: float = (width - modal_width) * 0.5
 	var y: float = (height - modal_height) * 0.5
 	return Rect2(x, y, modal_width, modal_height)
+
+
+func _scaled_metric(base_value: float) -> float:
+	return roundf(base_value * ui_scale_factor)
+
+
+func _set_scaled_font_size(control: Control, base_size: int) -> void:
+	if control == null:
+		return
+	control.set_meta(&"result_ui_scale_base_font_size", base_size)
+	control.add_theme_font_size_override("font_size", Art10UISkinKitScript.scaled_font_size(base_size, ui_scale_factor))
+
+
+func _set_scaled_minimum_size(control: Control, base_size: Vector2) -> void:
+	if control == null:
+		return
+	control.set_meta(&"result_ui_scale_base_minimum_size", base_size)
+	control.custom_minimum_size = Art10UISkinKitScript.scaled_control_minimum(base_size, ui_scale_factor)
+
+
+func _set_scaled_constant(control: Control, constant_name: StringName, base_value: int) -> void:
+	if control == null:
+		return
+	var constants: Dictionary = control.get_meta(&"result_ui_scale_base_constants", {})
+	constants[constant_name] = base_value
+	control.set_meta(&"result_ui_scale_base_constants", constants)
+	control.add_theme_constant_override(constant_name, maxi(0, int(round(float(base_value) * ui_scale_factor))))
+
+
+func _refresh_ui_scale_metrics(node: Node = self) -> void:
+	if node is Control:
+		var control := node as Control
+		if control.has_meta(&"result_ui_scale_base_font_size"):
+			var base_font_size := int(control.get_meta(&"result_ui_scale_base_font_size", 13))
+			control.add_theme_font_size_override("font_size", Art10UISkinKitScript.scaled_font_size(base_font_size, ui_scale_factor))
+		if control.has_meta(&"result_ui_scale_base_minimum_size"):
+			var base_minimum: Vector2 = control.get_meta(&"result_ui_scale_base_minimum_size", Vector2.ZERO)
+			control.custom_minimum_size = Art10UISkinKitScript.scaled_control_minimum(base_minimum, ui_scale_factor)
+		var constants: Dictionary = control.get_meta(&"result_ui_scale_base_constants", {})
+		for constant_name: StringName in constants:
+			control.add_theme_constant_override(
+				constant_name,
+				maxi(0, int(round(float(constants[constant_name]) * ui_scale_factor)))
+			)
+	for child in node.get_children():
+		_refresh_ui_scale_metrics(child)
 
 
 func _apply_result_title_plate(state: StringName) -> void:
@@ -780,6 +956,9 @@ func _apply_result_title_plate(state: StringName) -> void:
 	if title_node != null:
 		# ART24 result banners are intentionally text-free. Keep the localized live
 		# title visible for every state instead of relying on legacy baked copy.
+		var title_state := state if RESULT_TITLE_COLOR_BY_STATE.has(state) else &"abandon"
+		title_node.add_theme_color_override("font_color", RESULT_TITLE_COLOR_BY_STATE[title_state])
+		title_node.set_meta(&"result_title_tone", title_state)
 		title_node.visible = true
 
 
@@ -818,7 +997,9 @@ func _ensure_modal_patch(node_name: StringName, visual_key: StringName, margin: 
 
 
 func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: StringName, font_size_value: int, padding: int = 8, texture_margin: int = 18) -> void:
-	Art10UISkinKitScript.apply_button(button, tone, font_size_value)
+	var font_role := &"readable" if visual_key == &"art21r2.modal.item_row.normal" else &"display"
+	_set_scaled_font_size(button, font_size_value)
+	Art10UISkinKitScript.apply_button(button, tone, Art10UISkinKitScript.scaled_font_size(font_size_value, ui_scale_factor), &"button", font_role)
 	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.button.dark", padding, texture_margin)
 	if style == null:
 		return

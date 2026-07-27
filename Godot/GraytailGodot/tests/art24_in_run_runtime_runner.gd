@@ -61,7 +61,7 @@ func _run() -> void:
 			failures.append("missing_visual_key=%s" % String(visual_key))
 
 	var run_scene_source := FileAccess.get_file_as_string("res://scripts/core/run/run_scene.gd")
-	var production_source := run_scene_source.get_slice("func _debug_search_and_show_loot", 0)
+	var production_source := run_scene_source.get_slice("func _on_tutorial_popup_confirmed", 0)
 	if production_source.count("_show_loot_panel(") != 1:
 		failures.append("production_reward_path_reopened_blocking_loot_modal")
 	if not production_source.contains("room_runtime_view.activate_context_primary()"):

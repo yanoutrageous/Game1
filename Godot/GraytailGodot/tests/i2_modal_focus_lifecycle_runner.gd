@@ -51,11 +51,13 @@ func _run() -> void:
 	await process_frame
 	_require_equal(focus_stack.top_modal_id(), &"second", "nested top modal")
 	_require_equal(root.gui_get_focus_owner(), second_button, "second modal focus")
+	_require(not first_modal.visible, "covered parent modal stayed visible")
 	_require(not focus_stack.pop(&"first"), "out-of-order modal pop was accepted")
 	_require(focus_stack.request_cancel_top(&"escape"), "top modal cancel")
 	await process_frame
 	_require_equal(focus_stack.top_modal_id(), &"first", "top-only cancel lifecycle")
 	_require(not second_modal.visible, "cancelled nested modal stayed visible")
+	_require(first_modal.visible, "parent modal was not restored after nested cancel")
 	_require_equal(root.gui_get_focus_owner(), first_button, "focus after nested cancel")
 
 	_require(focus_stack.request_cancel_top(&"user_close"), "callback modal cancel")

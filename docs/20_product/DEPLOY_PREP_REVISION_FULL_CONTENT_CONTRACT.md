@@ -1,8 +1,8 @@
 # G29 Deploy Prep Revision Full Content Contract
 
 Document status: G29-R2 implementation contract
-Primary external source: `D:\AGAME1\Base Docs\出发探索界面与出勤准备规则策划修正案.md`
-Boundary: repository summary only; Base Docs remains read-only and is not copied into this repo.
+Primary registered original: `sources/base/原始策划案/出发探索界面与出勤准备规则策划修正案.md`
+Boundary: repository summary only; the registered original remains byte-exact and is not copied into repo docs.
 
 ## 1. Stage Position
 

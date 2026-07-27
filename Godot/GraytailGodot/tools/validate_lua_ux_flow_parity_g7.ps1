@@ -197,6 +197,9 @@ if ($RunSceneText -match 'FileAccess|ResourceSaver|DirAccess|MetaProgress|user:/
 if ($RunSceneText -match '_add_menu_button\([^\r\n]*"Start Tutorial 5x5"') {
     Add-Failure 'formal main menu still displays graybox Start Tutorial button'
 }
+if ($RunSceneText -match '_add_debug_button\([^\r\n]*"Tutorial Run"|_start_tutorial_from_ui|debug_tutorial_map') {
+    Add-Failure 'run scene still exposes a dedicated tutorial debug interface'
+}
 if ($RunSceneText -match '_add_button\([^\r\n]*"Start Standard 10x10"') {
     Add-Failure 'formal deploy shell still displays graybox Start Standard button'
 }

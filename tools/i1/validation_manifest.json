@@ -101,6 +101,10 @@
     "I2_MAIN_MENU_TRANSITION_FALLBACK",
     "I2_DEPLOY_MAP_PROJECTION",
     "I2_DEPLOY_META_ACTION_TRANSACTION",
+    "I3R_WAREHOUSE_BATCH_SALE",
+    "I3R_TALENT_SYSTEM",
+    "I3R_OUT_OF_RUN_PLAYER_ARCHIVE",
+    "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY",
     "ART22_DEPLOY_PREP_RUNTIME",
     "ART22_DEPLOY_PREP_MAIN_ROUTE",
     "ART23_LONG_TERM_RUNTIME",
@@ -140,6 +144,23 @@
     "I3_LONG_TERM_PLAYER_CONTRACT",
     "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
     "I3_RUNTIME_MODAL_LAYOUT_MODEL",
+    "I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY",
+    "I3R_INPUT_MODAL_AUTHORITY",
+    "I3R_COMBAT_ATTACK_CONTRACT",
+    "I3R_COMBAT_ROOM_VISUAL_HIERARCHY",
+    "I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY",
+    "I3R_PLAYER_MOVEMENT_APPEARANCE",
+    "I3R_TUTORIAL_MAP_MODE",
+    "I3R_TUTORIAL_PLAYER_JOURNEY",
+    "I3R_TUTORIAL_RESPONSIVE_LAYOUT",
+    "I3R_FONT_SURFACE_COVERAGE",
+    "I3R_FONT_RASTER_POLICY",
+    "I3R_PLAYER_COPY_LEAKAGE",
+    "I3R_UI_COMPOSITION_CONTRACT",
+    "I3R_UI_MATERIAL_SAFE_ZONE",
+    "I3R_PLAYER_FEEDBACK_AUDIO",
+    "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT",
+    "I3R_RUN_FOCUS_LAYOUT",
     "I3_PRODUCTION_INPUT_JOURNEY",
     "I3_PRODUCTION_FULL_BAG_REPLACEMENT",
     "I3_PRODUCTION_TERMINAL_BRANCHES"
@@ -175,6 +196,9 @@
         "I2_MAIN_MENU_TRANSITION_FALLBACK",
         "I2_DEPLOY_MAP_PROJECTION",
         "I2_DEPLOY_META_ACTION_TRANSACTION",
+        "I3R_WAREHOUSE_BATCH_SALE",
+        "I3R_TALENT_SYSTEM",
+        "I3R_OUT_OF_RUN_PLAYER_ARCHIVE",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_MAIN_ROUTE",
         "I2_LONG_TERM_TASK_ARCHIVE",
@@ -204,7 +228,23 @@
         "I3_HUD_ITEM_INPUT_CHARACTER",
         "I3_LONG_TERM_PLAYER_CONTRACT",
         "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
-        "I3_RUNTIME_MODAL_LAYOUT_MODEL"
+        "I3_RUNTIME_MODAL_LAYOUT_MODEL",
+        "I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY",
+        "I3R_INPUT_MODAL_AUTHORITY",
+        "I3R_COMBAT_ATTACK_CONTRACT",
+        "I3R_COMBAT_ROOM_VISUAL_HIERARCHY",
+        "I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY",
+        "I3R_PLAYER_MOVEMENT_APPEARANCE",
+        "I3R_TUTORIAL_MAP_MODE",
+        "I3R_TUTORIAL_RESPONSIVE_LAYOUT",
+        "I3R_FONT_SURFACE_COVERAGE",
+        "I3R_FONT_RASTER_POLICY",
+        "I3R_PLAYER_COPY_LEAKAGE",
+        "I3R_UI_COMPOSITION_CONTRACT",
+        "I3R_UI_MATERIAL_SAFE_ZONE",
+        "I3R_PLAYER_FEEDBACK_AUDIO",
+        "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT",
+        "I3R_RUN_FOCUS_LAYOUT"
       ]
     },
     "core": {
@@ -238,6 +278,9 @@
         "I1_COMMAND_MODULE",
         "I1_PROJECT_METADATA",
         "I2_DEPLOY_META_ACTION_TRANSACTION",
+        "I3R_WAREHOUSE_BATCH_SALE",
+        "I3R_TALENT_SYSTEM",
+        "I3R_OUT_OF_RUN_PLAYER_ARCHIVE",
         "I2_LONG_TERM_TASK_ARCHIVE",
         "I2_ROUTE_AUTHORITY_LIFECYCLE",
         "I2_SETTINGS_TRANSACTION",
@@ -246,7 +289,17 @@
         "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
         "I2_TERMINAL_RESULT_AUTHORITY",
         "I2_TERMINAL_COMMIT_RECOVERY",
-        "I3_COMBAT_SPECIAL_RESULT_RUNTIME"
+        "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
+        "I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY",
+        "I3R_INPUT_MODAL_AUTHORITY",
+        "I3R_COMBAT_ATTACK_CONTRACT",
+        "I3R_COMBAT_ROOM_VISUAL_HIERARCHY",
+        "I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY",
+        "I3R_PLAYER_MOVEMENT_APPEARANCE",
+        "I3R_TUTORIAL_MAP_MODE",
+        "I3R_PLAYER_FEEDBACK_AUDIO",
+        "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT",
+        "I3R_RUN_FOCUS_LAYOUT"
       ]
     },
     "ui": {
@@ -269,6 +322,10 @@
         "I2_MAIN_MENU_TRANSITION_FALLBACK",
         "I2_DEPLOY_MAP_PROJECTION",
         "I2_DEPLOY_META_ACTION_TRANSACTION",
+        "I3R_WAREHOUSE_BATCH_SALE",
+        "I3R_TALENT_SYSTEM",
+        "I3R_OUT_OF_RUN_PLAYER_ARCHIVE",
+        "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY",
         "ART22_DEPLOY_PREP_RUNTIME",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_RUNTIME",
@@ -305,7 +362,23 @@
         "I3_HUD_ITEM_INPUT_CHARACTER",
         "I3_LONG_TERM_PLAYER_CONTRACT",
         "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
-        "I3_RUNTIME_MODAL_LAYOUT_MODEL"
+        "I3_RUNTIME_MODAL_LAYOUT_MODEL",
+        "I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY",
+        "I3R_INPUT_MODAL_AUTHORITY",
+        "I3R_COMBAT_ROOM_VISUAL_HIERARCHY",
+        "I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY",
+        "I3R_PLAYER_MOVEMENT_APPEARANCE",
+        "I3R_TUTORIAL_MAP_MODE",
+        "I3R_TUTORIAL_PLAYER_JOURNEY",
+        "I3R_TUTORIAL_RESPONSIVE_LAYOUT",
+        "I3R_FONT_SURFACE_COVERAGE",
+        "I3R_FONT_RASTER_POLICY",
+        "I3R_PLAYER_COPY_LEAKAGE",
+        "I3R_UI_COMPOSITION_CONTRACT",
+        "I3R_UI_MATERIAL_SAFE_ZONE",
+        "I3R_PLAYER_FEEDBACK_AUDIO",
+        "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT",
+        "I3R_RUN_FOCUS_LAYOUT"
       ]
     },
     "performance": {
@@ -350,6 +423,10 @@
         "I2_MAIN_MENU_TRANSITION_FALLBACK",
         "I2_DEPLOY_MAP_PROJECTION",
         "I2_DEPLOY_META_ACTION_TRANSACTION",
+        "I3R_WAREHOUSE_BATCH_SALE",
+        "I3R_TALENT_SYSTEM",
+        "I3R_OUT_OF_RUN_PLAYER_ARCHIVE",
+        "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY",
         "ART22_DEPLOY_PREP_RUNTIME",
         "ART22_DEPLOY_PREP_MAIN_ROUTE",
         "ART23_LONG_TERM_RUNTIME",
@@ -389,6 +466,23 @@
         "I3_LONG_TERM_PLAYER_CONTRACT",
         "I3_COMBAT_SPECIAL_RESULT_RUNTIME",
         "I3_RUNTIME_MODAL_LAYOUT_MODEL",
+        "I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY",
+        "I3R_INPUT_MODAL_AUTHORITY",
+        "I3R_COMBAT_ATTACK_CONTRACT",
+        "I3R_COMBAT_ROOM_VISUAL_HIERARCHY",
+        "I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY",
+        "I3R_PLAYER_MOVEMENT_APPEARANCE",
+        "I3R_TUTORIAL_MAP_MODE",
+        "I3R_TUTORIAL_PLAYER_JOURNEY",
+        "I3R_TUTORIAL_RESPONSIVE_LAYOUT",
+        "I3R_FONT_SURFACE_COVERAGE",
+        "I3R_FONT_RASTER_POLICY",
+        "I3R_PLAYER_COPY_LEAKAGE",
+        "I3R_UI_COMPOSITION_CONTRACT",
+        "I3R_UI_MATERIAL_SAFE_ZONE",
+        "I3R_PLAYER_FEEDBACK_AUDIO",
+        "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT",
+        "I3R_RUN_FOCUS_LAYOUT",
         "I3_PRODUCTION_INPUT_JOURNEY",
         "I3_PRODUCTION_FULL_BAG_REPLACEMENT",
         "I3_PRODUCTION_TERMINAL_BRANCHES"
@@ -486,6 +580,13 @@
       "category": "capture",
       "disposition": "EXCLUDED_NON_SLICE",
       "reason": "Visibility capture requires human image review and must not be reported as automated PASS."
+    },
+    {
+      "id": "I3R_UI_FONT_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_ui_font_capture_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Captures production UI font and overlap evidence for human review; successful image generation is not automated visual acceptance."
     },
     {
       "id": "I1_PERFORMANCE_BASELINE",
@@ -609,7 +710,7 @@
     {
       "id": "M7_CONTENT_RUNTIME",
       "relative_path": "Godot/GraytailGodot/tests/m7_content_runtime_runner.gd",
-      "pass_marker": "M7_CONTENT_RUNTIME:PASS maps=8 seeds_per_map=100 transactions=PASS progression=PASS",
+      "pass_marker": "M7_CONTENT_RUNTIME:PASS maps=9 seeds_per_map=100 tutorial=fixed_5x5 transactions=PASS progression=PASS",
       "fail_marker": "M7_CONTENT_RUNTIME:FAIL",
       "timeout_seconds": 300,
       "coverage": ["content", "transactions", "progression"]
@@ -730,49 +831,79 @@
     {
       "id": "I2_DEPLOY_MAP_PROJECTION",
       "relative_path": "Godot/GraytailGodot/tests/i2_deploy_map_projection_runner.gd",
-      "pass_marker": "I2_DEPLOY_MAP_PROJECTION=PASS maps=8 scales=3 round_trip=8 route_pages=1 fallback=fail_closed",
+      "pass_marker": "I2_DEPLOY_MAP_PROJECTION=PASS maps=9 scales=4 round_trip=9 route_pages=1 tutorial=map_mode route_pages=1 fallback=fail_closed",
       "fail_marker": "I2_DEPLOY_MAP_PROJECTION=FAIL",
       "coverage": ["deploy_prep", "map_projection", "exact_lookup", "route_round_trip", "fail_closed"]
     },
     {
       "id": "I2_DEPLOY_META_ACTION_TRANSACTION",
       "relative_path": "Godot/GraytailGodot/tests/i2_deploy_meta_action_transaction_runner.gd",
-      "pass_marker": "I2_DEPLOY_META_ACTION_TRANSACTION=PASS actions=5 duplicate=cached conflict=fail_closed cache=session authority=adapter",
+      "pass_marker": "I2_DEPLOY_META_ACTION_TRANSACTION=PASS actions=5 duplicate=persisted conflict=fail_closed receipts=bounded512 request_ids=128bit guards=dynamic terminal=retry_or_explicit_discard authority=adapter",
       "fail_marker": "I2_DEPLOY_META_ACTION_TRANSACTION=FAIL",
-      "coverage": ["deploy_prep", "meta", "transactions", "idempotency", "authority", "fail_closed"]
+      "coverage": ["deploy_prep", "meta", "transactions", "idempotency", "authority", "fail_closed", "persisted_receipts", "bounded_retention", "high_entropy_request_id", "dynamic_runtime_guards", "terminal_retry", "explicit_unsaved_discard"]
+    },
+    {
+      "id": "I3R_WAREHOUSE_BATCH_SALE",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_warehouse_batch_sale_runner.gd",
+      "pass_marker": "I3R_WAREHOUSE_BATCH_SALE=PASS atomic=all_or_nothing idempotency=request_id rollback=save_failure reasons=configured,unique UI=multi_select,strong_confirm,synchronized",
+      "fail_marker": "I3R_WAREHOUSE_BATCH_SALE=FAIL",
+      "coverage": ["deploy_prep", "warehouse", "batch_sale", "atomic_transaction", "idempotency", "save_rollback", "strong_confirmation", "loadout_sync"]
+    },
+    {
+      "id": "I3R_TALENT_SYSTEM",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_talent_system_runner.gd",
+      "pass_marker": "I3R_TALENT_SYSTEM=PASS schema4=topup,preserve levels=1-5 nodes=6 branches=3 envelope=idempotent,conflict rollback=save_failure run_start=6 deploy=recalc_snapshot tutorial=zero_pollution long_term=talent_tree",
+      "fail_marker": "I3R_TALENT_SYSTEM=FAIL",
+      "coverage": ["talent", "schema_migration", "level_budget", "prerequisite", "meta_action", "idempotency", "save_rollback", "run_start_config", "deploy_recalculation", "snapshot_isolation", "tutorial", "long_term"]
+    },
+    {
+      "id": "I3R_OUT_OF_RUN_PLAYER_ARCHIVE",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_out_of_run_player_archive_runner.gd",
+      "pass_marker": "I3R_OUT_OF_RUN_PLAYER_ARCHIVE=PASS persistence=terminal_reason+item_flow+currency profile=rate+history_count archive=player_facts",
+      "fail_marker": "I3R_OUT_OF_RUN_PLAYER_ARCHIVE=FAIL",
+      "coverage": ["out_of_run", "result_archive", "terminal_reason", "item_flow", "currency", "profile_summary", "extraction_rate", "history_count", "read_only_archive"]
+    },
+    {
+      "id": "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_out_of_run_production_journey_runner.gd",
+      "pass_marker": "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY=PASS",
+      "pass_line_regex": "^I3R_OUT_OF_RUN_PRODUCTION_JOURNEY=PASS production=main\\.tscn checkpoints=22 screenshots=[0-9]+ inputs=[0-9]+ settings=apply,cancel,display_revert deploy=map\\+warehouse\\+claim\\+objective\\+loadout batch=cancel_then_confirm long_term=task\\+talent\\+archive escape=secondary,primary,main evidence=.+ csv=.+$",
+      "fail_marker": "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY=FAIL",
+      "timeout_seconds": 180,
+      "coverage": ["production_main_scene", "real_input", "out_of_run", "settings_apply", "settings_cancel", "dangerous_display_revert", "main_menu_transition", "deploy_prep", "single_page_map_difficulty", "warehouse", "batch_sale_cancel", "batch_sale_confirm", "claim", "objective", "loadout", "summary", "long_term", "task_archive", "talent_tree", "character_archive", "staged_escape_focus", "isolated_authoritative_fixture", "evidence_capture"]
     },
     {
       "id": "ART22_DEPLOY_PREP_RUNTIME",
       "relative_path": "Godot/GraytailGodot/tests/art22_deploy_prep_runtime_runner.gd",
-      "pass_marker": "ART22_DEPLOY_PREP_RUNTIME=PASS tabs=5 map_page=single map_scales=3 map_difficulties=2,3,3 exact_maps=8 split=selection_detail explicit_actions=local,meta summary=overview,config,effect,objective card_height=76 active_run=locked input=focus,escape,reduced_motion",
+      "pass_marker": "ART22_DEPLOY_PREP_RUNTIME=PASS tabs=5 map_page=single map_scales=3 map_difficulties=2,3,3 exact_maps=8 tutorial_scale=5x5 tutorial_map=tutorial_5x5 split=selection_detail explicit_actions=local,meta summary=overview,config,effect,objective card_height=76 active_run=locked input=focus,escape,reduced_motion",
       "fail_marker": "ART22_DEPLOY_PREP_RUNTIME=FAIL",
       "coverage": ["deploy_prep", "single_page_map", "selection_detail", "explicit_actions", "summary", "focus", "reduced_motion"]
     },
     {
       "id": "ART22_DEPLOY_PREP_MAIN_ROUTE",
       "relative_path": "Godot/GraytailGodot/tests/art22_deploy_prep_main_route_runner.gd",
-      "pass_marker": "ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=3 meta=purchase,sell",
+      "pass_marker": "ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=4 tutorial=same_page meta=purchase,sell",
       "fail_marker": "ART22_DEPLOY_PREP_MAIN_ROUTE=FAIL",
       "coverage": ["main_route", "deploy_prep"]
     },
     {
       "id": "ART23_LONG_TERM_RUNTIME",
       "relative_path": "Godot/GraytailGodot/tests/art23_long_term_runtime_runner.gd",
-      "pass_marker": "ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive workspace=scrollable states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING",
+      "pass_marker": "ART23_LONG_TERM_RUNTIME=PASS primary_modules=6 secondary_pages=25 canonical=task_archive workspace=scrollable states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING",
       "fail_marker": "ART23_LONG_TERM_RUNTIME=FAIL",
       "coverage": ["long_term", "layout", "state", "task_archive", "route_alias", "asset_reuse", "red_dot"]
     },
     {
       "id": "ART23_LONG_TERM_MAIN_ROUTE",
       "relative_path": "Godot/GraytailGodot/tests/art23_long_term_main_route_runner.gd",
-      "pass_marker": "ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=5 canonical=task_archive",
+      "pass_marker": "ART23_LONG_TERM_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_long_term shell=LongTermShell modules=6 canonical=task_archive",
       "fail_marker": "ART23_LONG_TERM_MAIN_ROUTE=FAIL",
       "coverage": ["main_route", "long_term"]
     },
     {
       "id": "I2_LONG_TERM_TASK_ARCHIVE",
       "relative_path": "Godot/GraytailGodot/tests/i2_long_term_task_archive_runner.gd",
-      "pass_marker": "I2_LONG_TERM_TASK_ARCHIVE=PASS canonical=task_archive aliases=goals,tasks,overview modules=5 commission_records=12 pages=4 authority=read_only",
+      "pass_marker": "I2_LONG_TERM_TASK_ARCHIVE=PASS canonical=task_archive aliases=goals,tasks,overview modules=6 commission_records=12 pages=4 authority=read_only",
       "fail_marker": "I2_LONG_TERM_TASK_ARCHIVE=FAIL",
       "coverage": ["long_term", "task_archive", "migration", "alias", "goal_authority", "commission_history", "pagination"]
     },
@@ -793,7 +924,7 @@
     {
       "id": "I2_PLAYER_MOTION_PROJECTION",
       "relative_path": "Godot/GraytailGodot/tests/i2_player_motion_projection_runner.gd",
-      "pass_marker": "I2_PLAYER_MOTION_PROJECTION=PASS phases=4 sample_hz=30,60,144 reduced_motion=fixed_pose_zero_bob authority=presentation_only displacement=unchanged",
+      "pass_marker": "I2_PLAYER_MOTION_PROJECTION=PASS phases=4 sample_hz=30,60,144 held_travel=stable reduced_motion=fixed_pose_zero_bob authority=presentation_only displacement=unchanged",
       "fail_marker": "I2_PLAYER_MOTION_PROJECTION=FAIL",
       "coverage": ["in_run", "player_motion", "animation_phase", "frame_rate", "reduced_motion", "displacement_authority"]
     },
@@ -807,23 +938,23 @@
     {
       "id": "I2_ITEM_RARITY_PRESENTATION",
       "relative_path": "Godot/GraytailGodot/tests/i2_item_rarity_presentation_runner.gd",
-      "pass_marker": "I2_ITEM_RARITY_PRESENTATION=PASS formal_items=43 tiers=6 aliases=common,uncommon,rare,epic,legendary,mythic consumers=deploy,result,world unique=locked",
+      "pass_marker": "I2_ITEM_RARITY_PRESENTATION=PASS formal_items=43 tiers=6 aliases=common,uncommon,rare,epic,legendary,mythic consumers=deploy,result,world unique=locked collectible_level=deploy,result,world rarity_marker=independent",
       "fail_marker": "I2_ITEM_RARITY_PRESENTATION=FAIL",
-      "coverage": ["items", "rarity", "non_color_semantics", "deploy", "result", "world_context"]
+      "coverage": ["items", "rarity", "non_color_semantics", "deploy", "result", "world_context", "collectible_level", "independent_rarity_marker"]
     },
     {
       "id": "I2_INVENTORY_HOVER_FOCUS",
       "relative_path": "Godot/GraytailGodot/tests/i2_inventory_hover_focus_runner.gd",
-      "pass_marker": "I2_INVENTORY_HOVER_FOCUS=PASS surfaces=2 hover_commands=0 focus_commands=0 actions=4 snapshot_focus=stable_item_action fallback=preferred",
+      "pass_marker": "I2_INVENTORY_HOVER_FOCUS=PASS surfaces=2 hover_commands=0 focus_commands=0 actions=4 snapshot_focus=stable_item_action fallback=preferred rarity_marker=independent collectible_level=authoritative",
       "fail_marker": "I2_INVENTORY_HOVER_FOCUS=FAIL",
-      "coverage": ["in_run", "inventory", "ground_loot", "hover", "focus", "explicit_actions", "stable_focus_restore"]
+      "coverage": ["in_run", "inventory", "ground_loot", "hover", "focus", "explicit_actions", "stable_focus_restore", "collectible_level", "independent_rarity_marker"]
     },
     {
       "id": "I2_RUN_INFORMATION_SURFACE",
       "relative_path": "Godot/GraytailGodot/tests/i2_run_information_surface_runner.gd",
-      "pass_marker": "I2_RUN_INFORMATION_SURFACE=PASS quick_bag=0,1,4,5,8 scroll=all_items hover_focus=display_only mine_risk=unknown,0-8 protocol=levels_1-5",
+      "pass_marker": "I2_RUN_INFORMATION_SURFACE=PASS quick_bag=0,1,4,5,8 scroll=all_items hover_focus=display_only mine_risk=unknown,0-8 protocol=levels_1-5 rarity_marker=independent collectible_level=authoritative",
       "fail_marker": "I2_RUN_INFORMATION_SURFACE=FAIL",
-      "coverage": ["in_run", "quick_bag", "mine_risk", "protocol", "scroll", "focus", "read_only"]
+      "coverage": ["in_run", "quick_bag", "mine_risk", "protocol", "scroll", "focus", "read_only", "collectible_level", "independent_rarity_marker"]
     },
     {
       "id": "I2_MAP_PUBLIC_INFORMATION_INPUT",
@@ -835,9 +966,9 @@
     {
       "id": "I2_RUNTIME_MODAL_PRIORITY",
       "relative_path": "Godot/GraytailGodot/tests/i2_runtime_modal_priority_runner.gd",
-      "pass_marker": "I2_RUNTIME_MODAL_PRIORITY=PASS stack=top_only nested=map_over_inventory shield=immediate_top_sibling settings=shared map_open_commands=3 map_actions=toggle_flag:1,fast_return:1 lower_layers=blocked real_input=M,Q,Esc map_focus=map_pos inventory_actions=use:1,drop:1 inventory_focus=preferred abandon_commands=1 failure_focus=use,drop,flag",
+      "pass_marker": "I2_RUNTIME_MODAL_PRIORITY=PASS stack=top_only nested=map_over_inventory tutorial_map=hide_refresh_restore blocking_tutorial=modal shield=immediate_top_sibling settings=shared map_open_commands=4 map_actions=toggle_flag:1,fast_return:1 lower_layers=blocked real_input=M,Q,Esc map_focus=map_pos inventory_actions=use:1,drop:1 inventory_focus=preferred abandon_commands=1 failure_focus=use,drop,flag extract_items=actual,scroll,rarity,collectible_level",
       "fail_marker": "I2_RUNTIME_MODAL_PRIORITY=FAIL",
-      "coverage": ["in_run", "modal", "focus", "escape", "settings", "map", "map_progress", "map_actions", "inventory_actions", "failure_focus", "lower_layer_guard", "event", "extract", "result", "stale_callback", "real_input", "abandon", "exactly_once"]
+      "coverage": ["in_run", "modal", "focus", "escape", "settings", "map", "map_progress", "map_actions", "inventory_actions", "failure_focus", "lower_layer_guard", "event", "extract", "extract_item_preview", "collectible_level", "rarity", "scroll", "result", "stale_callback", "real_input", "abandon", "exactly_once"]
     },
     {
       "id": "ART24_IN_RUN_RUNTIME",
@@ -858,16 +989,16 @@
       "id": "ART24_WORLD_CONTEXT_POPUP_LAYOUT",
       "relative_path": "Godot/GraytailGodot/tests/art24_world_context_popup_layout_probe.gd",
       "pass_marker": "ART24_WORLD_CONTEXT_POPUP_LAYOUT=PASS",
-      "pass_line_regex": "^ART24_WORLD_CONTEXT_POPUP_LAYOUT=PASS closed_chest=\\([^\\r\\n]+\\) ground_loot_target_clear$",
+      "pass_line_regex": "^ART24_WORLD_CONTEXT_POPUP_LAYOUT=PASS closed_chest_compact opened_chest_focus_clear ground_loot_target_clear$",
       "fail_marker": "ART24_WORLD_CONTEXT_POPUP_LAYOUT=FAIL",
-      "coverage": ["layout", "world_context", "safe_area"]
+      "coverage": ["layout", "world_context", "safe_area", "opened_chest", "feedback_lane"]
     },
     {
       "id": "ART24_MAP_OVERLAY_LAYOUT",
       "relative_path": "Godot/GraytailGodot/tests/art24_map_overlay_layout_probe.gd",
-      "pass_marker": "ART24_MAP_OVERLAY_LAYOUT=PASS resolutions=5 cells=100 safe_bottom=reserved",
+      "pass_marker": "ART24_MAP_OVERLAY_LAYOUT=PASS resolutions=5 grids=5,7,10,13 ui_scale=1280,1920@100,125,150 host=tight_transparent grid=dominant outside_click=wide",
       "fail_marker": "ART24_MAP_OVERLAY_LAYOUT=FAIL",
-      "coverage": ["layout", "map_overlay", "resolution_matrix"]
+      "coverage": ["layout", "map_overlay", "resolution_matrix", "grid_scaling", "outside_click"]
     },
     {
       "id": "ART24_CONTEXT_ANCHOR_INTEGRATION",
@@ -886,16 +1017,16 @@
     {
       "id": "ART24_MAP_OVERLAY_SCENE",
       "relative_path": "Godot/GraytailGodot/tests/art24_map_overlay_scene_probe.gd",
-      "pass_marker": "ART24_MAP_OVERLAY_SCENE=PASS resolutions=5 states=overview,selected detail=visible controls=inside_panel toggle=m_close",
+      "pass_marker": "ART24_MAP_OVERLAY_SCENE=PASS resolutions=5 grids=5x5,7x7,10x10,13x13 ui_scale=1280,1920@100,125,150 hierarchy=title,grid,detail,action,footer host=transparent tiles=pixel text=single_line toggle=m_close",
       "fail_marker": "ART24_MAP_OVERLAY_SCENE=FAIL",
-      "coverage": ["layout", "map_overlay", "interaction"]
+      "coverage": ["layout", "map_overlay", "interaction", "transparent_host", "single_line_text"]
     },
     {
       "id": "ART24_RESULT_PANEL_SCENE",
       "relative_path": "Godot/GraytailGodot/tests/art24_result_panel_scene_probe.gd",
-      "pass_marker": "ART24_RESULT_PANEL_SCENE=PASS resolutions=5 states=success,failure_empty,failure_pending,failure_selected,failure_capacity_blocked,failure_final,abandon,save_failed focus=visible danger=preserved item_sections=whole",
+      "pass_marker": "ART24_RESULT_PANEL_SCENE=PASS resolutions=5 states=success,success_empty,failure_empty,failure_pending,failure_selected,failure_capacity_blocked,failure_final,failure_final_empty,abandon,abandon_empty,save_failed ui_scale=1280,1920@100,125,150 banner=416x96,aspect_live_title content=compact_empty,scroll_items,scroll_salvage focus=visible danger=preserved item_identity=rarity_marker,collectible_level",
       "fail_marker": "ART24_RESULT_PANEL_SCENE=FAIL",
-      "coverage": ["layout", "result_panel", "state_matrix", "focus_visibility", "danger_action", "whole_item_sections"]
+      "coverage": ["layout", "result_panel", "state_matrix", "banner_aspect_ratio", "live_title_hierarchy", "result_tone", "content_driven_height", "compact_empty_result", "compact_empty_salvage", "scrolling_item_sections", "scrolling_salvage_candidates", "focus_visibility", "danger_action", "collectible_level", "independent_rarity_marker"]
     },
     {
       "id": "I2_ROUTE_AUTHORITY_LIFECYCLE",
@@ -942,7 +1073,7 @@
     {
       "id": "I2_ASSET_BINDING",
       "relative_path": "Godot/GraytailGodot/tests/i2_asset_binding_runner.gd",
-      "pass_marker": "I2_ASSET_BINDING=PASS result_states=3 protocol_levels=5 item_bindings=43 verified_hashes=56",
+      "pass_marker": "I2_ASSET_BINDING=PASS result_states=3 protocol_levels=5 protocol_scales=100,150 protocol_frame=single_horizontal_safe item_bindings=43 verified_hashes=56",
       "fail_marker": "I2_ASSET_BINDING=FAIL",
       "coverage": ["assets", "manifest", "item_binding", "result_panel", "protocol"]
     },
@@ -956,23 +1087,23 @@
     {
       "id": "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE",
       "relative_path": "Godot/GraytailGodot/tests/i2_special_room_player_experience_runner.gd",
-      "pass_marker": "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE=PASS event=structured,proximity_gated,room_entry_scrub,stage_feedback,token_scrub world=proximity_only mine=entry_result monster=0.18s exit=public_summary,proximity_gated",
+      "pass_marker": "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE=PASS event=structured,proximity_gated,room_entry_scrub,stage_feedback,token_scrub world=proximity_only mine=entry_result monster=0.32s exit=public_summary,proximity_gated",
       "fail_marker": "I2_SPECIAL_ROOM_PLAYER_EXPERIENCE=FAIL",
       "coverage": ["in_run", "special_rooms", "event", "mine", "monster", "exit", "player_information", "proximity_authority", "structured_feedback", "event_room_entry_copy", "engineering_token_scrub"]
     },
     {
       "id": "I2_TERMINAL_RESULT_AUTHORITY",
       "relative_path": "Godot/GraytailGodot/tests/i2_terminal_result_authority_runner.gd",
-      "pass_marker": "I2_TERMINAL_RESULT_AUTHORITY=PASS outcomes=success,failure_pending,failure_finalized,abandon reason=lifecycle_event items=authoritative_arrays floor_loss=visible pending_meta_writes=0",
+      "pass_marker": "I2_TERMINAL_RESULT_AUTHORITY=PASS outcomes=success,failure_pending,failure_finalized,abandon reason=lifecycle_event items=authoritative_arrays floor_loss=visible pending_meta_writes=0 collectible_level=preserved,not_fabricated",
       "fail_marker": "I2_TERMINAL_RESULT_AUTHORITY=FAIL",
-      "coverage": ["terminal_state", "result_panel", "lifecycle_reason", "item_authority", "floor_loss", "no_ui_commit"]
+      "coverage": ["terminal_state", "result_panel", "lifecycle_reason", "item_authority", "floor_loss", "no_ui_commit", "collectible_level"]
     },
     {
       "id": "I2_TERMINAL_COMMIT_RECOVERY",
       "relative_path": "Godot/GraytailGodot/tests/i2_terminal_commit_recovery_runner.gd",
-      "pass_marker": "I2_TERMINAL_COMMIT_RECOVERY=PASS nonce=128bit legacy_ids=compatible save_failure=rollback retry=same_snapshot duplicate=idempotent result_signals=unchanged exits=guarded discard_confirmations=2",
+      "pass_marker": "I2_TERMINAL_COMMIT_RECOVERY=PASS nonce=128bit legacy_ids=compatible save_failure=rollback retry=same_snapshot result_body=frozen_across_retry duplicate=idempotent result_signals=unchanged exits=guarded discard=core_confirmed_unlock",
       "fail_marker": "I2_TERMINAL_COMMIT_RECOVERY=FAIL",
-      "coverage": ["terminal_state", "persistence", "retry", "idempotency", "route_guard", "discard_confirmation", "legacy_compatibility"]
+      "coverage": ["terminal_state", "persistence", "retry", "frozen_result_body", "idempotency", "route_guard", "discard_confirmation", "discard_core_authority", "instance_unlock", "legacy_compatibility"]
     },
     {
       "id": "I2_COMBAT_FRAME_BASELINE",
@@ -985,21 +1116,21 @@
     {
       "id": "I3_MAP_LOCAL_CONTEXT_INTERACTION",
       "relative_path": "Godot/GraytailGodot/tests/i3_map_local_context_interaction_runner.gd",
-      "pass_marker": "I3_MAP_LOCAL_CONTEXT_INTERACTION=PASS sizes=7,10,13 minimap=5x5 semantics=monster,mine selection=separate confirmation=explicit known_map=sealed input=focus,accept,outside_click",
+      "pass_marker": "I3_MAP_LOCAL_CONTEXT_INTERACTION=PASS sizes=7,10,13 minimap=5x5 semantics=monster,mine,flag,fast_return activation=pointer,ui_accept exactly_once=PASS focus=selection_only authority=signal_boundary known_map=sealed close=outside_click",
       "fail_marker": "I3_MAP_LOCAL_CONTEXT_INTERACTION=FAIL",
-      "coverage": ["in_run", "minimap", "map_overlay", "known_map", "public_information", "selection_confirmation", "input", "focus_restoration"]
+      "coverage": ["in_run", "minimap", "map_overlay", "known_map", "public_information", "single_activation", "pointer_input", "semantic_input", "exactly_once", "focus_restoration"]
     },
     {
       "id": "I3_HUD_ITEM_INPUT_CHARACTER",
       "relative_path": "Godot/GraytailGodot/tests/i3_hud_item_input_character_runner.gd",
-      "pass_marker": "I3_HUD_ITEM_INPUT_CHARACTER=PASS hud=primary_action,mine_risk actions=7,context_order items=shared_descriptor,scroll input=single_path,gamepad_propagated character=appearance,animation_set reduced_motion=preserved",
+      "pass_marker": "I3_HUD_ITEM_INPUT_CHARACTER=PASS hud=primary_action,mine_risk actions=7,context_order items=shared_descriptor,scroll replacement=two_line,no_clip,authoritative_level input=single_path,gamepad_propagated character=appearance,animation_set reduced_motion=preserved",
       "fail_marker": "I3_HUD_ITEM_INPUT_CHARACTER=FAIL",
-      "coverage": ["in_run", "hud", "context_actions", "item_presentation", "inventory", "ground_loot", "input", "gamepad", "character_presentation", "reduced_motion"]
+      "coverage": ["in_run", "hud", "context_actions", "item_presentation", "inventory", "ground_loot", "replacement_candidate_layout", "collectible_level", "no_text_clipping", "input", "gamepad", "character_presentation", "reduced_motion"]
     },
     {
       "id": "I3_LONG_TERM_PLAYER_CONTRACT",
       "relative_path": "Godot/GraytailGodot/tests/i3_long_term_player_contract_runner.gd",
-      "pass_marker": "I3_LONG_TERM_PLAYER_CONTRACT=PASS source=m7_research_prerequisite talent_rules=0 tree_nodes=3 player_copy=clean",
+      "pass_marker": "I3_LONG_TERM_PLAYER_CONTRACT=PASS source=m7_research_prerequisite talent_rules=6 tree_nodes=3 player_copy=clean",
       "fail_marker": "I3_LONG_TERM_PLAYER_CONTRACT=FAIL",
       "coverage": ["long_term", "research_unlock_tree", "m7_prerequisites", "player_copy", "task_archive", "transaction_boundary"]
     },
@@ -1018,13 +1149,142 @@
       "coverage": ["in_run", "modal_layout", "safe_area", "responsive_layout", "run_scene_responsibility"]
     },
     {
+      "id": "I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_run_scene_architecture_boundary_runner.gd",
+      "pass_marker": "I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY=PASS",
+      "pass_line_regex": "^I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY=PASS lines=[0-9]+ functions=[0-9]+ runtime=RunRuntimeController lifecycle=RunStateMachine modal=RunSceneModalController wiring=production_main forbidden=0$",
+      "fail_marker": "I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY=FAIL",
+      "coverage": ["architecture", "production_main_scene", "run_scene_responsibility_budget", "runtime_authority", "lifecycle_authority", "result_authority", "persistence_boundary", "modal_coordination", "source_budget"]
+    },
+    {
+      "id": "I3R_INPUT_MODAL_AUTHORITY",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_input_modal_authority_runner.gd",
+      "pass_marker": "I3R_INPUT_MODAL_AUTHORITY=PASS input=input_map_only hints=descriptor_v1 devices=keyboard,virtual_gamepad modal=lifo,priority,focus pause=blocked shell=delegated destructive=explicit",
+      "fail_marker": "I3R_INPUT_MODAL_AUTHORITY=FAIL",
+      "coverage": ["input_map", "action_hint_descriptor", "keyboard_mouse", "pointer_attack", "ui_input_deferral", "virtual_gamepad", "modal_priority", "escape", "focus_restore", "pause_blocking", "deploy", "warehouse", "map", "settings", "result"]
+    },
+    {
+      "id": "I3R_COMBAT_ATTACK_CONTRACT",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_combat_attack_contract_runner.gd",
+      "pass_marker": "I3R_COMBAT_ATTACK_CONTRACT=PASS encounter=single_mother_stable power=mine_linked hp_damage=profiled split=0.45 arrival=0.45s melee_cadence=1.10,0.75,0.28,0.55 buffer=late_only interruption=explicit phases=ordered active_hit=impact_aligned settlement=once attack=frozen windup_active=locked recovery=mobile visual=authoritative feedback=perceptible hurt=timed max_delta=debt_free circle_sector=radius_aware enemy_warning=exact projectile=swept_visible laser=bounded_visible schedules=30,60,144,hitch",
+      "fail_marker": "I3R_COMBAT_ATTACK_CONTRACT=FAIL",
+      "coverage": ["combat", "encounter_profile", "mine_linked_power", "hp_damage_profile", "split_arrival_timing", "melee_cadence", "input_buffer", "late_input_buffer", "explicit_interruption", "pointer_facing_intent", "frozen_attack_origin", "frozen_attack_direction", "windup_active_lock", "recovery_movement", "impact_frame_alignment", "single_settlement", "circle_sector_intersection", "enemy_warning", "melee_navigation", "attack_visual_occlusion", "projectile_sweep", "laser_geometry", "frame_schedule"]
+    },
+    {
+      "id": "I3R_COMBAT_ROOM_VISUAL_HIERARCHY",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_combat_room_visual_hierarchy_runner.gd",
+      "pass_marker": "I3R_COMBAT_ROOM_VISUAL_HIERARCHY=PASS room=production monster hierarchy=door_occluded,prompt_clear,authored_lock occluders=altar,warning enemy_hud=name,power,readable_hp attack_cooldown=existing_button_only fx=slash,bolt debug_primitives=none",
+      "fail_marker": "I3R_COMBAT_ROOM_VISUAL_HIERARCHY=FAIL",
+      "timeout_seconds": 120,
+      "coverage": ["combat", "production_main_scene", "door_depth", "prompt_clearance", "authored_lock_texture", "altar_foreground_occlusion", "enemy_warning_occlusion", "enemy_hud_readability", "attack_cooldown_surface", "authored_slash", "projectile_texture", "debug_placeholder_absence"]
+    },
+    {
+      "id": "I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_production_combat_obstacle_journey_runner.gd",
+      "pass_marker": "I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY=PASS",
+      "pass_line_regex": "^I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY=PASS seed=13 input=parsed movement=blocked recovery=mobile melee_navigation=progressing door_hold=single_dispatch warning=visible facing=locked_then_released cooldown=early_rejected_no_turn,late_buffered attack=occluded_visual_clipped,hit settlement=cleared leave=normal inputs=[0-9]+$",
+      "fail_marker": "I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY=FAIL",
+      "timeout_seconds": 120,
+      "coverage": ["combat", "production_main_scene", "real_input", "visible_obstacle", "player_movement", "attack_recovery_movement", "melee_navigation", "held_transition_gate", "enemy_warning", "authoritative_facing", "pointer_cooldown_rejection", "late_attack_buffer", "player_attack_visual_occlusion", "player_attack_hit", "combat_settlement", "room_leave"]
+    },
+    {
+      "id": "I3R_PLAYER_MOVEMENT_APPEARANCE",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_player_movement_appearance_runner.gd",
+      "pass_marker": "I3R_PLAYER_MOVEMENT_APPEARANCE=PASS",
+      "pass_line_regex": "^I3R_PLAYER_MOVEMENT_APPEARANCE=PASS default=.*\"selection\": \"graytail\\.base\".* field_coat=.*\"selection\": \"graytail\\.field_coat\".* blocked=\\(0\\.055, 0\\.5\\)->\\(0\\.055, 0\\.5\\) unowned=fail_closed unknown_catalog=fail_closed hurt=profile_composed$",
+      "fail_marker": "I3R_PLAYER_MOVEMENT_APPEARANCE=FAIL",
+      "timeout_seconds": 120,
+      "coverage": ["player", "production_main_scene", "input_map", "continuous_movement", "blocked_transition", "appearance_selection", "sprite_modulate", "unowned_fail_closed", "unknown_catalog_fail_closed", "hurt_profile_composition", "run_start_snapshot"]
+    },
+    {
+      "id": "I3R_TUTORIAL_MAP_MODE",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_tutorial_map_mode_runner.gd",
+      "pass_marker": "I3R_TUTORIAL_MAP_MODE=PASS deploy=same_page route=standard dedicated_interface=retired authority=meta map=tutorial_5x5 content=13 persistence=completion_only replay=PASS",
+      "fail_marker": "I3R_TUTORIAL_MAP_MODE=FAIL",
+      "coverage": ["tutorial", "deploy_same_page", "standard_run_route", "dedicated_interface_retired", "meta_run_start_authority", "fixed_5x5", "ue_content_baseline", "completion_only_persistence", "replay", "zero_growth_pollution"]
+    },
+    {
+      "id": "I3R_TUTORIAL_PLAYER_JOURNEY",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_tutorial_player_journey_runner.gd",
+      "pass_marker": "I3R_TUTORIAL_PLAYER_JOURNEY=PASS",
+      "pass_line_regex": "^I3R_TUTORIAL_PLAYER_JOURNEY=PASS host=main\\.tscn route=deploy_catalog_to_standard_run cycles=completion,replay input=parsed zero_pollution=true return=main evidence=.+$",
+      "fail_marker": "I3R_TUTORIAL_PLAYER_JOURNEY=FAIL",
+      "timeout_seconds": 600,
+      "coverage": ["tutorial", "production_main_scene", "real_input", "deploy_same_page", "standard_run_route", "fixed_5x5", "blocking_popup_focus", "movement", "mine", "event", "combat_flee", "map", "exit", "completion", "replay", "zero_growth_pollution", "save_reload", "return_routes"]
+    },
+    {
+      "id": "I3R_TUTORIAL_RESPONSIVE_LAYOUT",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_tutorial_responsive_layout_runner.gd",
+      "pass_marker": "I3R_TUTORIAL_RESPONSIVE_LAYOUT=PASS cases=1280x720@100,125,150;1920x1080@100,125,150 route=deploy_standard safe_zones=left_hud,room,protocol,footer text=wrapped_scroll footer=mine_risk,hotbar_compact feedback=transient",
+      "fail_marker": "I3R_TUTORIAL_RESPONSIVE_LAYOUT=FAIL",
+      "coverage": ["tutorial", "deploy_standard_route", "responsive_layout", "ui_scale", "safe_zones", "text_wrap", "scroll", "mine_risk", "footer"]
+    },
+    {
+      "id": "I3R_FONT_SURFACE_COVERAGE",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_font_surface_coverage_runner.gd",
+      "pass_marker": "I3R_FONT_SURFACE_COVERAGE=PASS",
+      "pass_line_regex": "^I3R_FONT_SURFACE_COVERAGE=PASS controls=[1-9][0-9]* visible_controls=[1-9][0-9]* tooltips=[1-9][0-9]* settings_popups=8 surfaces=\\[\"ui_root\", \"main\", \"deploy\", \"long_term\", \"settings\", \"runtime_settings\", \"run\", \"inventory\", \"map\", \"result\", \"tutorial\", \"loot_result\", \"world_popup\"\\] primary=FusionPixel fallback=Noto$",
+      "fail_marker": "I3R_FONT_SURFACE_COVERAGE=FAIL",
+      "coverage": ["ui", "font_roles", "production_main_scene", "dynamic_controls", "tooltip", "popup_menu", "settings", "world_prompts", "FusionPixel", "Noto_fallback"]
+    },
+    {
+      "id": "I3R_FONT_RASTER_POLICY",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_font_raster_policy_runner.gd",
+      "pass_marker": "I3R_FONT_RASTER_POLICY=PASS antialiasing=0 subpixel=0 system_fallback=false primary=FusionPixel fallback=Noto theme_types=6",
+      "fail_marker": "I3R_FONT_RASTER_POLICY=FAIL",
+      "coverage": ["ui", "font_raster_policy", "antialiasing", "subpixel_positioning", "system_fallback", "manifest_hash", "theme_fonts"]
+    },
+    {
+      "id": "I3R_PLAYER_COPY_LEAKAGE",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_player_copy_leakage_runner.gd",
+      "pass_marker": "I3R_PLAYER_COPY_LEAKAGE=PASS",
+      "pass_line_regex": "^I3R_PLAYER_COPY_LEAKAGE=PASS states=[1-9][0-9]* fragments=[1-9][0-9]* dev_only_excluded=3 leaks=0$",
+      "fail_marker": "I3R_PLAYER_COPY_LEAKAGE=FAIL",
+      "coverage": ["ui", "player_copy", "production_main_scene", "dynamic_states", "engineering_token_scrub", "combat_state_label", "dev_only_exclusion"]
+    },
+    {
+      "id": "I3R_UI_COMPOSITION_CONTRACT",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_ui_composition_contract_runner.gd",
+      "pass_marker": "I3R_UI_COMPOSITION_CONTRACT=PASS font=FusionPixel fallback=Noto surfaces=settings,tooltip,item,world,option_popup,result texture_safe=5 license=upstream_ofl",
+      "fail_marker": "I3R_UI_COMPOSITION_CONTRACT=FAIL",
+      "coverage": ["ui", "font_roles", "composition", "texture_safe_zone", "asset_license"]
+    },
+    {
+      "id": "I3R_UI_MATERIAL_SAFE_ZONE",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_ui_material_safe_zone_runner.gd",
+      "pass_marker": "I3R_UI_MATERIAL_SAFE_ZONE=PASS resolutions=1280x720,1920x1080 scales=100,125,150 controls=option,popup,slider,check,button",
+      "fail_marker": "I3R_UI_MATERIAL_SAFE_ZONE=FAIL",
+      "coverage": ["ui", "texture_materials", "nine_patch_safe_zone", "settings", "ui_scale", "inventory", "ground_loot", "bottom_action_bar", "responsive_layout"]
+    },
+    {
+      "id": "I3R_PLAYER_FEEDBACK_AUDIO",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_player_feedback_audio_runner.gd",
+      "pass_marker": "I3R_PLAYER_FEEDBACK_AUDIO=PASS cues=13 assets=9 settings=schema3,transaction,rollback volume=master,effects haptics=device,no_device,reduced_motion dedupe=domain_event",
+      "fail_marker": "I3R_PLAYER_FEEDBACK_AUDIO=FAIL",
+      "coverage": ["player_feedback", "audio", "haptics", "settings", "schema_migration", "transaction", "rollback", "duplicate_suppression", "no_device", "reduced_motion", "search", "combat", "result"]
+    },
+    {
+      "id": "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_world_object_presentation_contract_runner.gd",
+      "pass_marker": "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT=PASS descriptor=v1 chest=center,baseline,subject_width,uniform_scale,open,revisit mine=floor,descriptor,player_above,fx_transient,resolved_distinct doors=4,state,texture,pivot,player_geometry,proximity,overlay resolutions=1280x720,1920x1080,1366x768,1024x768 legacy_prop=inert manifest=bound",
+      "fail_marker": "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT=FAIL",
+      "coverage": ["in_run", "world_object_presentation", "chest", "chest_subject_framing", "uniform_sprite_scale", "mine_floor_depth", "mine_descriptor_geometry", "mine_player_overlap", "transient_mine_fx", "resolved_mine_visual", "door_state", "door_texture", "pivot_alignment", "player_door_geometry", "responsive_layout", "collision_alignment", "proximity", "asset_manifest"]
+    },
+    {
+      "id": "I3R_RUN_FOCUS_LAYOUT",
+      "relative_path": "Godot/GraytailGodot/tests/i3r_run_focus_layout_runner.gd",
+      "pass_marker": "I3R_RUN_FOCUS_LAYOUT=PASS resolutions=1280x720,1366x768,1600x900,1920x1080 mine_risk=unknown,0,1,3,8 footer=steady_compact toast=success_suppressed,rejection_unframed_transient hud=single_frame_interior_bands quick_bag=long_detail_safe_gap encounter=basic_deduplicated,event_modal_only,non_event_preserved popup=peripheral_textured_focus_clear",
+      "fail_marker": "I3R_RUN_FOCUS_LAYOUT=FAIL",
+      "coverage": ["in_run", "mine_risk", "eight_neighbor_count", "footer_layout", "frame_overlap", "single_frame_hud", "interior_bands", "successful_feedback_suppression", "unframed_rejection", "world_context", "focus_clearance", "pixel_frame", "resolution_matrix"]
+    },
+    {
       "id": "I3_PRODUCTION_INPUT_JOURNEY",
       "relative_path": "Godot/GraytailGodot/tests/i3_production_input_journey_runner.gd",
       "pass_marker": "I3_PRODUCTION_INPUT_JOURNEY=PASS",
-      "pass_line_regex": "^I3_PRODUCTION_INPUT_JOURNEY=PASS seed=13 checkpoints=19 screenshots=[0-9]+ inputs=[0-9]+ result=Extracted save_retry=real return=main evidence=.+ csv=.+$",
+      "pass_line_regex": "^I3_PRODUCTION_INPUT_JOURNEY=PASS seed=13 checkpoints=20 screenshots=[0-9]+ inputs=[0-9]+ result=Extracted save_retry=real return=main evidence=.+ csv=.+$",
       "fail_marker": "I3_PRODUCTION_INPUT_JOURNEY=FAIL",
       "timeout_seconds": 600,
-      "coverage": ["production_main_scene", "real_input", "main_menu_transition", "deploy", "movement", "map", "search", "chest", "ground_loot", "event", "mine", "combat_flee", "exit", "success", "save_retry", "return_main", "evidence_capture"]
+      "coverage": ["production_main_scene", "real_input", "main_menu_transition", "deploy", "movement", "map", "revisited_map", "multi_room_exploration", "current_and_exit_markers", "adjacent_mine_numbers", "production_tile_metadata", "search", "chest", "ground_loot", "event", "mine", "combat_flee", "exit", "success", "save_retry", "return_main", "evidence_capture"]
     },
     {
       "id": "I3_PRODUCTION_FULL_BAG_REPLACEMENT",
@@ -1033,7 +1293,7 @@
       "pass_line_regex": "^I3_PRODUCTION_FULL_BAG_REPLACEMENT=PASS seed=13 searched_rooms=[0-9]+ capacity=[0-9]+ replacement=real_input screenshots=[0-9]+ inputs=[0-9]+ evidence=.+ csv=.+$",
       "fail_marker": "I3_PRODUCTION_FULL_BAG_REPLACEMENT=FAIL",
       "timeout_seconds": 600,
-      "coverage": ["production_main_scene", "real_input", "fixed_seed", "chest", "search", "ground_loot", "full_bag", "item_replacement", "evidence_capture"]
+      "coverage": ["production_main_scene", "real_input", "fixed_seed", "chest", "search", "ground_loot", "full_bag", "item_replacement", "replacement_two_line", "collectible_level", "no_text_clipping", "scroll", "evidence_capture"]
     },
     {
       "id": "I3_PRODUCTION_TERMINAL_BRANCHES",
@@ -1141,6 +1401,13 @@
       "I2_MAIN_MENU_TRANSITION_FALLBACK": [],
       "I2_DEPLOY_MAP_PROJECTION": [],
       "I2_DEPLOY_META_ACTION_TRANSACTION": [],
+      "I3R_WAREHOUSE_BATCH_SALE": [],
+      "I3R_TALENT_SYSTEM": [],
+      "I3R_OUT_OF_RUN_PLAYER_ARCHIVE": [],
+      "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
       "ART22_DEPLOY_PREP_RUNTIME": [],
       "ART22_DEPLOY_PREP_MAIN_ROUTE": [
         "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
@@ -1213,6 +1480,50 @@
         "ERROR: 18 resources still in use at exit (run with --verbose for details)."
       ],
       "I3_RUNTIME_MODAL_LAYOUT_MODEL": [],
+      "I3R_RUN_SCENE_ARCHITECTURE_BOUNDARY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3R_INPUT_MODAL_AUTHORITY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3R_COMBAT_ATTACK_CONTRACT": [],
+      "I3R_COMBAT_ROOM_VISUAL_HIERARCHY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 20 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3R_PRODUCTION_COMBAT_OBSTACLE_JOURNEY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3R_PLAYER_MOVEMENT_APPEARANCE": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3R_TUTORIAL_MAP_MODE": [],
+      "I3R_TUTORIAL_PLAYER_JOURNEY": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 18 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3R_TUTORIAL_RESPONSIVE_LAYOUT": [],
+      "I3R_FONT_SURFACE_COVERAGE": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3R_FONT_RASTER_POLICY": [],
+      "I3R_PLAYER_COPY_LEAKAGE": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3R_UI_COMPOSITION_CONTRACT": [],
+      "I3R_UI_MATERIAL_SAFE_ZONE": [],
+      "I3R_PLAYER_FEEDBACK_AUDIO": [
+        "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+        "ERROR: 10 resources still in use at exit (run with --verbose for details)."
+      ],
+      "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT": [],
+      "I3R_RUN_FOCUS_LAYOUT": [],
       "I3_PRODUCTION_INPUT_JOURNEY": [
         "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
         "ERROR: 18 resources still in use at exit (run with --verbose for details)."

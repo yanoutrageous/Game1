@@ -12,6 +12,7 @@ const SLOT_CLAIMABLE := &"claimable_preview_slot"
 const SLOT_RED_DOT := &"red_dot_preview_slot"
 const SLOT_CODEX_UNLOCK := &"codex_unlock_preview_slot"
 const SLOT_RESEARCH_UNLOCK := &"research_unlock_preview_slot"
+const SLOT_TALENT_UNLOCK := &"talent_unlock_slot"
 const SLOT_COLLECTION_DISPLAY := &"collection_display_preview_slot"
 const SLOT_COSMETIC := &"cosmetic_preview_slot"
 const SLOT_UNIQUE_COLLECTIBLE := &"unique_collectible_preview_slot"
@@ -28,6 +29,7 @@ static func build_all_preview_slots() -> Array:
 		red_dot_preview_slot(),
 		codex_unlock_preview_slot(),
 		research_unlock_preview_slot(),
+		talent_unlock_slot(),
 		collection_display_preview_slot(),
 		cosmetic_preview_slot(),
 		unique_collectible_preview_slot(),
@@ -57,6 +59,11 @@ static func build_slots_for_module(module_id: StringName) -> Array:
 			return _clone_slots([
 				research_unlock_preview_slot(),
 				asset_event_preview_slot(),
+				red_dot_preview_slot(),
+			])
+		&"talent":
+			return _clone_slots([
+				talent_unlock_slot(),
 				red_dot_preview_slot(),
 			])
 		&"profile":
@@ -136,6 +143,15 @@ static func research_unlock_preview_slot() -> Dictionary:
 		&"research_unlock",
 		"研究解锁接口 preview",
 		"预留研究节点和条件展示；不解锁研究，不消耗资源。"
+	)
+
+
+static func talent_unlock_slot() -> Dictionary:
+	return _slot(
+		SLOT_TALENT_UNLOCK,
+		&"talent_unlock",
+		"天赋解锁事务",
+		"通过明确确认提交天赋点与节点旗标；成功保存后只影响之后生成的新局配置。"
 	)
 
 

@@ -16,7 +16,7 @@ func _init() -> void:
 	_validate_abandon_breakdown()
 	_cleanup()
 	if failures.is_empty():
-		print("I2_TERMINAL_RESULT_AUTHORITY=PASS outcomes=success,failure_pending,failure_finalized,abandon reason=lifecycle_event items=authoritative_arrays floor_loss=visible pending_meta_writes=0")
+		print("I2_TERMINAL_RESULT_AUTHORITY=PASS outcomes=success,failure_pending,failure_finalized,abandon reason=lifecycle_event items=authoritative_arrays floor_loss=visible pending_meta_writes=0 collectible_level=preserved,not_fabricated")
 		quit(0)
 		return
 	for failure in failures:
@@ -56,8 +56,10 @@ func _validate_success_breakdown() -> void:
 	var floor_model := _first_section_item(model, &"room_floor_lost_items")
 	_require(StringName((floor_model.get("rarity", {}) as Dictionary).get("normalized_key", &"")) == &"tier_2", "success floor rarity was not projected")
 	_require(int(floor_model.get("weight", -1)) == 1, "success floor weight was not projected")
+	_require(int(floor_model.get("collectible_level", 0)) == 3 and String(floor_model.get("collectible_level_text", "")) == "收藏等级 3", "success floor collectible level was not projected")
 	var legacy_item_model := _section_item_by_instance(model, &"warehouse_items", "success_legacy_raw")
 	_require(not String(legacy_item_model.get("display_name", "")).contains("RAW_INTERNAL_ITEM_ID"), "success result player copy exposed a raw item_id")
+	_require(int(legacy_item_model.get("collectible_level", 0)) == 0 and String(legacy_item_model.get("collectible_level_text", "")).is_empty(), "success result fabricated a collectible level for absent source data")
 	_require(bool(model.get("normal_exit_allowed", false)), "committed success did not allow normal exit")
 
 
@@ -134,6 +136,7 @@ func _item(instance_id: String, display_name: String, rarity: StringName, weight
 		"short_description": "局终权威夹具物资。",
 		"item_type": &"collectible",
 		"rarity": rarity,
+		"collectible_level": 3,
 		"weight": weight,
 		"base_value": 20,
 		"can_store": true,
@@ -144,6 +147,7 @@ func _consumable(instance_id: String, display_name: String, rarity: StringName, 
 	var item := _item(instance_id, display_name, rarity, weight)
 	item["item_type"] = &"consumable"
 	item["can_consume"] = true
+	item.erase("collectible_level")
 	return item
 
 

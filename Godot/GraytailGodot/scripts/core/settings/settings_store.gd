@@ -1,21 +1,27 @@
 extends RefCounted
 
-const CURRENT_SCHEMA_VERSION := 2
+const CURRENT_SCHEMA_VERSION := 4
 const DEFAULT_PATH := "user://settings.cfg"
 
 const KEY_WINDOW_MODE := "window_mode"
 const KEY_RESOLUTION_ID := "resolution_id"
 const KEY_VSYNC_MODE := "vsync_mode"
 const KEY_FRAME_LIMIT := "frame_limit"
+const KEY_UI_SCALE_PERCENT := "ui_scale_percent"
 const KEY_MASTER_VOLUME := "master_volume"
+const KEY_EFFECTS_VOLUME := "effects_volume"
+const KEY_HAPTICS_ENABLED := "haptics_enabled"
 const KEY_REDUCE_MOTION := "reduce_motion"
 
 const WINDOW_MODES := ["windowed", "borderless", "exclusive"]
 const RESOLUTION_IDS := ["auto", "1280x720", "1366x768", "1600x900", "1920x1080", "2560x1440"]
 const VSYNC_MODES := ["enabled", "disabled", "adaptive"]
 const FRAME_LIMITS := [0, 60, 120, 144]
+const UI_SCALE_PERCENT_VALUES := [100, 125, 150]
 const MASTER_VOLUME_MIN := 0
 const MASTER_VOLUME_MAX := 100
+const EFFECTS_VOLUME_MIN := 0
+const EFFECTS_VOLUME_MAX := 100
 
 const META_SECTION := "meta"
 const DISPLAY_SECTION := "display"
@@ -36,7 +42,10 @@ static func default_settings() -> Dictionary:
 		KEY_RESOLUTION_ID: "auto",
 		KEY_VSYNC_MODE: "enabled",
 		KEY_FRAME_LIMIT: 0,
+		KEY_UI_SCALE_PERCENT: 100,
 		KEY_MASTER_VOLUME: 80,
+		KEY_EFFECTS_VOLUME: 80,
+		KEY_HAPTICS_ENABLED: true,
 		KEY_REDUCE_MOTION: false,
 	}
 
@@ -47,7 +56,10 @@ static func field_names() -> PackedStringArray:
 		KEY_RESOLUTION_ID,
 		KEY_VSYNC_MODE,
 		KEY_FRAME_LIMIT,
+		KEY_UI_SCALE_PERCENT,
 		KEY_MASTER_VOLUME,
+		KEY_EFFECTS_VOLUME,
+		KEY_HAPTICS_ENABLED,
 		KEY_REDUCE_MOTION,
 	])
 
@@ -66,9 +78,13 @@ static func is_valid_field_value(field_name: String, value: Variant) -> bool:
 			return typeof(value) in [TYPE_STRING, TYPE_STRING_NAME] and VSYNC_MODES.has(String(value))
 		KEY_FRAME_LIMIT:
 			return typeof(value) == TYPE_INT and FRAME_LIMITS.has(int(value))
+		KEY_UI_SCALE_PERCENT:
+			return typeof(value) == TYPE_INT and UI_SCALE_PERCENT_VALUES.has(int(value))
 		KEY_MASTER_VOLUME:
 			return typeof(value) == TYPE_INT and int(value) >= MASTER_VOLUME_MIN and int(value) <= MASTER_VOLUME_MAX
-		KEY_REDUCE_MOTION:
+		KEY_EFFECTS_VOLUME:
+			return typeof(value) == TYPE_INT and int(value) >= EFFECTS_VOLUME_MIN and int(value) <= EFFECTS_VOLUME_MAX
+		KEY_HAPTICS_ENABLED, KEY_REDUCE_MOTION:
 			return typeof(value) == TYPE_BOOL
 	return false
 
@@ -94,9 +110,9 @@ static func _canonical_value(field_name: String, value: Variant) -> Variant:
 	match field_name:
 		KEY_WINDOW_MODE, KEY_RESOLUTION_ID, KEY_VSYNC_MODE:
 			return String(value)
-		KEY_FRAME_LIMIT, KEY_MASTER_VOLUME:
+		KEY_FRAME_LIMIT, KEY_UI_SCALE_PERCENT, KEY_MASTER_VOLUME, KEY_EFFECTS_VOLUME:
 			return int(value)
-		KEY_REDUCE_MOTION:
+		KEY_HAPTICS_ENABLED, KEY_REDUCE_MOTION:
 			return bool(value)
 	return value
 
@@ -259,10 +275,25 @@ func _read_file(path: String) -> Dictionary:
 		KEY_RESOLUTION_ID: config.get_value(DISPLAY_SECTION, KEY_RESOLUTION_ID, null),
 		KEY_VSYNC_MODE: config.get_value(DISPLAY_SECTION, KEY_VSYNC_MODE, null),
 		KEY_FRAME_LIMIT: config.get_value(DISPLAY_SECTION, KEY_FRAME_LIMIT, null),
+		KEY_UI_SCALE_PERCENT: (
+			_config_value_or_null(config, ACCESSIBILITY_SECTION, KEY_UI_SCALE_PERCENT)
+			if schema_version >= 4
+			else default_settings()[KEY_UI_SCALE_PERCENT]
+		),
 		KEY_MASTER_VOLUME: (
 			config.get_value(AUDIO_SECTION, KEY_MASTER_VOLUME, null)
 			if schema_version >= 2
 			else default_settings()[KEY_MASTER_VOLUME]
+		),
+		KEY_EFFECTS_VOLUME: (
+			_config_value_or_null(config, AUDIO_SECTION, KEY_EFFECTS_VOLUME)
+			if schema_version >= 3
+			else default_settings()[KEY_EFFECTS_VOLUME]
+		),
+		KEY_HAPTICS_ENABLED: (
+			_config_value_or_null(config, ACCESSIBILITY_SECTION, KEY_HAPTICS_ENABLED)
+			if schema_version >= 3
+			else default_settings()[KEY_HAPTICS_ENABLED]
 		),
 		KEY_REDUCE_MOTION: config.get_value(ACCESSIBILITY_SECTION, KEY_REDUCE_MOTION, null),
 	}
@@ -277,6 +308,12 @@ func _read_file(path: String) -> Dictionary:
 	}
 
 
+static func _config_value_or_null(config: ConfigFile, section: String, key: String) -> Variant:
+	if not config.has_section_key(section, key):
+		return null
+	return config.get_value(section, key)
+
+
 func _encode_config(settings: Dictionary) -> ConfigFile:
 	var config := ConfigFile.new()
 	config.set_value(META_SECTION, SCHEMA_KEY, CURRENT_SCHEMA_VERSION)
@@ -284,7 +321,10 @@ func _encode_config(settings: Dictionary) -> ConfigFile:
 	config.set_value(DISPLAY_SECTION, KEY_RESOLUTION_ID, String(settings[KEY_RESOLUTION_ID]))
 	config.set_value(DISPLAY_SECTION, KEY_VSYNC_MODE, String(settings[KEY_VSYNC_MODE]))
 	config.set_value(DISPLAY_SECTION, KEY_FRAME_LIMIT, int(settings[KEY_FRAME_LIMIT]))
+	config.set_value(ACCESSIBILITY_SECTION, KEY_UI_SCALE_PERCENT, int(settings[KEY_UI_SCALE_PERCENT]))
 	config.set_value(AUDIO_SECTION, KEY_MASTER_VOLUME, int(settings[KEY_MASTER_VOLUME]))
+	config.set_value(AUDIO_SECTION, KEY_EFFECTS_VOLUME, int(settings[KEY_EFFECTS_VOLUME]))
+	config.set_value(ACCESSIBILITY_SECTION, KEY_HAPTICS_ENABLED, bool(settings[KEY_HAPTICS_ENABLED]))
 	config.set_value(ACCESSIBILITY_SECTION, KEY_REDUCE_MOTION, bool(settings[KEY_REDUCE_MOTION]))
 	return config
 

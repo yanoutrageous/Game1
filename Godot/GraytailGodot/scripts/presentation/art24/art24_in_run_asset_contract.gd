@@ -23,6 +23,49 @@ const PROP_PATHS := {
 	"extract_active": "res://assets/props/art07/02_cheli_zhuangzhi_liang.png",
 }
 
+# The admitted chest pair shares a 160x160 canvas, but not the same subject
+# framing: the closed chest occupies 158 source pixels horizontally while the
+# opened chest occupies only 122. Calibrate by subject width with one uniform
+# scale per texture. This keeps the permanent chest body the same size without
+# distorting the opened perspective; the raised lid is allowed to become taller.
+const CHEST_REFERENCE_SUBJECT_WIDTH_PX := 158.0
+const CHEST_REFERENCE_DISPLAY_WIDTH_PX := 80.0
+const CHEST_FX_FOOTPRINT_LOCAL := Vector2(80.0 / 560.0, 80.0 / 560.0)
+
+const WORLD_PRESENTATION := {
+	"visual.art24.prop.chest_closed": {
+		"pivot_normalized": Vector2(0.5, 1.0),
+		"source_subject_rect_px": Rect2(1.0, 0.0, 158.0, 160.0),
+		"source_base_rect_px": Rect2(1.0, 72.0, 158.0, 88.0),
+		"display_size_local": Vector2.ONE * (CHEST_REFERENCE_DISPLAY_WIDTH_PX / 560.0),
+		"fx_footprint_local": CHEST_FX_FOOTPRINT_LOCAL,
+	},
+	"visual.art24.prop.chest_open": {
+		"pivot_normalized": Vector2(0.5, 1.0),
+		"source_subject_rect_px": Rect2(19.0, 0.0, 122.0, 160.0),
+		"source_base_rect_px": Rect2(19.0, 88.0, 122.0, 72.0),
+		"display_size_local": Vector2.ONE * (
+			CHEST_REFERENCE_DISPLAY_WIDTH_PX
+			* CHEST_REFERENCE_SUBJECT_WIDTH_PX
+			/ 122.0
+			/ 560.0
+		),
+		"fx_footprint_local": CHEST_FX_FOOTPRINT_LOCAL,
+	},
+	"visual.art24.prop.chest_open_state": {
+		"pivot_normalized": Vector2(0.5, 1.0),
+		"source_subject_rect_px": Rect2(19.0, 0.0, 122.0, 160.0),
+		"source_base_rect_px": Rect2(19.0, 88.0, 122.0, 72.0),
+		"display_size_local": Vector2.ONE * (
+			CHEST_REFERENCE_DISPLAY_WIDTH_PX
+			* CHEST_REFERENCE_SUBJECT_WIDTH_PX
+			/ 122.0
+			/ 560.0
+		),
+		"fx_footprint_local": CHEST_FX_FOOTPRINT_LOCAL,
+	},
+}
+
 const PLAYER_MOTIONS := [&"idle_a", &"idle_b", &"walk_a", &"walk_b", &"hit", &"interact", &"attack_windup", &"attack_swing", &"attack_impact", &"attack_recover"]
 const PLAYER_FACINGS := [&"down", &"left", &"right", &"up"]
 const MONSTER_STATES := [&"idle_a", &"idle_b", &"appear", &"attack_windup", &"attack_impact", &"hit", &"defeated", &"remains"]
@@ -38,6 +81,10 @@ static func texture(visual_key: StringName) -> Texture2D:
 	return load(path) as Texture2D
 
 
+static func world_presentation_for(visual_key: StringName) -> Dictionary:
+	return (WORLD_PRESENTATION.get(String(visual_key), {}) as Dictionary).duplicate(true)
+
+
 static func path_for(visual_key: StringName) -> String:
 	var key := String(visual_key)
 	if not key.begins_with(PREFIX):
@@ -45,6 +92,12 @@ static func path_for(visual_key: StringName) -> String:
 	var tail := key.trim_prefix(PREFIX)
 	if tail.begins_with("room."):
 		return String(ROOM_PATHS.get(tail.get_slice(".", 1), ROOM_PATHS["normal"]))
+	if tail.begins_with("door."):
+		# The admitted room plates contain the canonical four-way door art.
+		# Door descriptors select a normalized region from the matching plate;
+		# no separate in-run door texture exists in the governed asset set.
+		var room_token := tail.get_slice(".", 1)
+		return String(ROOM_PATHS.get(room_token, ROOM_PATHS["normal"]))
 	if tail.begins_with("prop."):
 		return String(PROP_PATHS.get(tail.get_slice(".", 1), ""))
 	if tail.begins_with("actor.player."):

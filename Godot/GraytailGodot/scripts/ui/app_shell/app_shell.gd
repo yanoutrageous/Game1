@@ -13,16 +13,20 @@ const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const SettingsManagerScript := preload("res://scripts/core/settings/settings_manager.gd")
 const SettingsPanelScript := preload("res://scripts/ui/settings/settings_panel.gd")
+const ModalFocusStackScript := preload("res://scripts/ui/shell/modal_focus_stack.gd")
+const MetaActionRequestIdScript := preload("res://scripts/core/progression/meta_action_request_id.gd")
 
 signal host_route_requested(intent: Dictionary)
 signal page_changed(page_id: StringName, payload: Dictionary)
 signal meta_action_requested(action: Dictionary)
+signal ui_scale_changed(factor: float)
 
 var main_menu_shell: Control
 var deploy_page: Control
 var long_term_page: Control
 var settings_page: Control
 var settings_panel: PanelContainer
+var settings_modal_art: TextureRect
 var settings_close_button: Button
 var exit_confirm_panel: Control
 var exit_confirm_body: Label
@@ -35,7 +39,9 @@ var _meta_request_sequence := 0
 var _last_meta_result_delivery: Dictionary = {}
 var _current_page_id: StringName = PageRouterScript.PAGE_MAIN_MENU
 var _shell_active := true
+var _ui_scale_factor := 1.0
 var _navigation_transition_coordinator: RefCounted
+var modal_focus_stack = ModalFocusStackScript.new()
 var _page_snapshot_revisions: Dictionary = {
 	PageRouterScript.PAGE_MAIN_MENU: -1,
 	PageRouterScript.PAGE_DEPLOY_PREP: -1,
@@ -50,9 +56,12 @@ var _snapshot_refresh_counts: Dictionary = {
 
 func build() -> void:
 	_cancel_active_navigation_transition(&"shell_rebuilt", false)
+	modal_focus_stack.clear(false)
 	_navigation_transition_coordinator = NavigationTransitionCoordinatorScript.new()
 	_last_meta_result_delivery.clear()
 	_clear_children()
+	_ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
+	Art10UISkinKitScript.apply_player_ui_theme(self)
 	_reset_page_snapshot_revisions()
 	if not visibility_changed.is_connected(_on_shell_visibility_changed):
 		visibility_changed.connect(_on_shell_visibility_changed)
@@ -64,8 +73,32 @@ func build() -> void:
 	_build_exit_confirm_layer()
 	_ensure_settings_manager_bound()
 	_apply_bound_runtime_settings()
+	_apply_ui_scale_to_pages()
 	_shell_active = is_visible_in_tree()
 	show_main()
+
+
+func set_ui_scale_factor(value: float) -> bool:
+	_ui_scale_factor = Art10UISkinKitScript.set_runtime_ui_scale_factor(value)
+	Art10UISkinKitScript.apply_player_ui_theme(self)
+	_apply_ui_scale_to_pages()
+	_layout_settings_overlay()
+	return is_equal_approx(_ui_scale_factor, Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value))
+
+
+func get_ui_scale_factor() -> float:
+	return _ui_scale_factor
+
+
+func _apply_ui_scale_to_pages() -> void:
+	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+		if page != null and page.has_method("set_ui_scale_factor"):
+			page.call("set_ui_scale_factor", _ui_scale_factor)
+	if settings_panel != null:
+		if settings_panel.has_method("set_ui_scale_factor"):
+			settings_panel.call("set_ui_scale_factor", _ui_scale_factor)
+		else:
+			settings_panel.set_meta("runtime_ui_scale_factor", _ui_scale_factor)
 
 
 func apply_snapshot(snapshot: Dictionary) -> void:
@@ -131,12 +164,25 @@ func show_settings() -> bool:
 
 
 func _show_settings_internal() -> bool:
+	if modal_focus_stack.top_modal_id() == &"settings":
+		return true
 	_current_page_id = PageRouterScript.PAGE_SETTINGS_PLACEHOLDER
 	if settings_page != null:
 		settings_page.visible = true
 	_hide_exit_confirm(false)
 	_set_page_visible(main_menu_shell)
 	if settings_panel == null or not bool(settings_panel.call("open_panel")):
+		_show_main_internal()
+		_restore_main_menu_focus()
+		return false
+	var preferred_focus := settings_panel.call("preferred_focus_control") as Control
+	if not modal_focus_stack.push(
+		&"settings",
+		settings_page,
+		preferred_focus,
+		Callable(self, "_cancel_settings_modal")
+	):
+		settings_panel.call("close_panel", false)
 		_show_main_internal()
 		_restore_main_menu_focus()
 		return false
@@ -180,6 +226,34 @@ func get_navigation_transition_snapshot() -> Dictionary:
 
 func get_settings_panel() -> PanelContainer:
 	return settings_panel
+
+
+func handle_cancel_event(event: InputEvent) -> bool:
+	if (
+		event == null
+		or event.is_echo()
+		or not _shell_active
+		or not is_visible_in_tree()
+		or not event.is_action_pressed("cancel")
+	):
+		return false
+	if modal_focus_stack.handle_cancel_event(event):
+		return true
+	var active_page: Control = null
+	match _current_page_id:
+		PageRouterScript.PAGE_DEPLOY_PREP:
+			active_page = deploy_page
+		PageRouterScript.PAGE_LONG_TERM:
+			active_page = long_term_page
+		PageRouterScript.PAGE_MAIN_MENU:
+			active_page = main_menu_shell
+	if active_page != null and active_page.has_method("handle_cancel_event"):
+		return bool(active_page.call("handle_cancel_event", event))
+	return false
+
+
+func modal_policy_snapshot() -> Dictionary:
+	return modal_focus_stack.snapshot()
 
 
 func bind_settings_manager(manager: Node) -> void:
@@ -290,6 +364,12 @@ func _on_runtime_settings_reverted(runtime_settings: Dictionary, _reason: String
 
 
 func _apply_runtime_settings_to_pages(runtime_settings: Dictionary) -> void:
+	var requested_ui_scale := float(int(runtime_settings.get("ui_scale_percent", 100))) / 100.0
+	var normalized_ui_scale := Art10UISkinKitScript.normalize_runtime_ui_scale_factor(requested_ui_scale)
+	var ui_scale_did_change := not is_equal_approx(_ui_scale_factor, normalized_ui_scale)
+	set_ui_scale_factor(normalized_ui_scale)
+	if ui_scale_did_change:
+		ui_scale_changed.emit(_ui_scale_factor)
 	var reduce_motion := bool(runtime_settings.get("reduce_motion", false))
 	if _navigation_transition_coordinator != null and bool(_navigation_transition_coordinator.call("is_busy")):
 		var active_token := int(_navigation_transition_coordinator.call("active_token"))
@@ -352,7 +432,7 @@ func _forward_meta_action(action: Dictionary, source_page: StringName = &"") -> 
 	forwarded["source_page"] = source_page
 	if str(forwarded.get("request_id", "")).is_empty():
 		_meta_request_sequence += 1
-		forwarded["request_id"] = "app:%d:%d" % [get_instance_id(), _meta_request_sequence]
+		forwarded["request_id"] = MetaActionRequestIdScript.generate(&"app")
 	if deploy_page != null and deploy_page.has_method("get_selected_instance_ids"):
 		var selected: Dictionary = deploy_page.call("get_selected_instance_ids")
 		forwarded["selected_equipment_ids"] = (selected.get("selected_equipment_ids", []) as Array).duplicate()
@@ -414,23 +494,68 @@ func _build_settings_overlay() -> void:
 	add_child(settings_page)
 	var dim := _add_color_rect(settings_page, "SettingsOverlayDim", Rect2(0, 0, 1280, 720), Color(0.015, 0.025, 0.03, 0.72))
 	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	_add_art21_texture(settings_page, "SettingsModalPanel", Rect2(232, 58, 816, 604), &"main_menu.scene.menu.modal.panel")
+	settings_modal_art = _add_art21_texture(
+		settings_page,
+		"SettingsModalPanel",
+		Rect2(232, 58, 816, 604),
+		&"main_menu.scene.menu.modal.panel"
+	)
 	settings_panel = SettingsPanelScript.new() as PanelContainer
 	settings_panel.name = "SettingsPanel"
 	settings_panel.position = Vector2(340, 96)
 	settings_panel.size = Vector2(600, 462)
 	settings_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	settings_page.add_child(settings_panel)
+	settings_panel.call("set_external_cancel_authority", true)
 	settings_panel.connect("close_requested", _close_settings_to_main)
 	settings_close_button = settings_panel.get("close_button") as Button
 	if settings_close_button != null:
-		var actions := settings_close_button.get_parent()
-		actions.remove_child(settings_close_button)
+		var action_row := settings_close_button.get_parent()
+		action_row.remove_child(settings_close_button)
+		var close_reserve := Control.new()
+		close_reserve.name = "SettingsExternalCloseReserve"
+		close_reserve.custom_minimum_size = Vector2(98.0, 32.0)
+		action_row.add_child(close_reserve)
 		settings_page.add_child(settings_close_button)
 		settings_close_button.name = "SettingsCloseButton"
-		_add_art21_texture(settings_page, "SettingsCloseButtonTexture", Rect2(796, 584, 190, 58), &"main_menu.scene.menu.modal.button")
 		settings_page.move_child(settings_close_button, settings_page.get_child_count() - 1)
-		_style_art21_modal_button(settings_close_button, Rect2(796, 584, 190, 58))
+	_layout_settings_overlay()
+	var viewport := get_viewport()
+	if viewport != null:
+		var layout_callback := Callable(self, "_layout_settings_overlay")
+		if not viewport.size_changed.is_connected(layout_callback):
+			viewport.size_changed.connect(layout_callback)
+
+
+func _layout_settings_overlay() -> void:
+	if settings_page == null or settings_panel == null or settings_modal_art == null:
+		return
+	var viewport_size := get_viewport_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
+	var safe := Vector2(20.0, 16.0)
+	var modal_size := Vector2(
+		minf(816.0, maxf(640.0, viewport_size.x - safe.x * 2.0)),
+		minf(604.0, maxf(420.0, viewport_size.y - safe.y * 2.0))
+	)
+	modal_size.x = minf(modal_size.x, viewport_size.x - safe.x * 2.0)
+	modal_size.y = minf(modal_size.y, viewport_size.y - safe.y * 2.0)
+	var modal_rect := Rect2((viewport_size - modal_size) * 0.5, modal_size)
+	Art10UISkinKitScript.set_rect(settings_modal_art, modal_rect)
+	var inner_rect := Rect2(
+		modal_rect.position + Vector2(48.0, 50.0),
+		modal_rect.size - Vector2(96.0, 122.0)
+	)
+	Art10UISkinKitScript.set_rect(settings_panel, inner_rect)
+	if settings_close_button != null:
+		var close_size := Art10UISkinKitScript.scaled_control_minimum(
+			Vector2(90.0, 32.0),
+			minf(_ui_scale_factor, 1.25)
+		)
+		Art10UISkinKitScript.set_rect(
+			settings_close_button,
+			Rect2(inner_rect.end - Vector2(close_size.x, close_size.y + 2.0), close_size)
+		)
 
 
 func _build_exit_confirm_layer() -> void:
@@ -578,8 +703,6 @@ func _commit_navigation_intent(intent: Dictionary) -> Dictionary:
 			else:
 				var deploy_payload := page_payload
 				_show_deploy_internal(StringName(deploy_payload.get("tab", &"overview")))
-				if deploy_page.has_method("apply_route_payload"):
-					deploy_page.call("apply_route_payload", deploy_payload)
 		PageRouterScript.PAGE_LONG_TERM:
 			if long_term_page == null:
 				committed = false
@@ -720,7 +843,8 @@ func _sync_page_lifecycle() -> void:
 			continue
 		var page_active := page == active_page
 		if page.has_method("set_page_active"):
-			page.call("set_page_active", page_active)
+			if not page.has_method("is_page_active") or bool(page.call("is_page_active")) != page_active:
+				page.call("set_page_active", page_active)
 		else:
 			page.process_mode = Node.PROCESS_MODE_INHERIT if page_active else Node.PROCESS_MODE_DISABLED
 	if settings_page != null:
@@ -778,37 +902,64 @@ func _reset_page_snapshot_revisions() -> void:
 
 
 func _show_exit_confirm() -> void:
+	if modal_focus_stack.top_modal_id() == &"exit_confirm":
+		return
 	_refresh_exit_confirm_text()
 	_hide_settings(false)
 	if exit_confirm_panel != null:
-		exit_confirm_panel.visible = true
-		_sync_page_lifecycle()
 		var cancel_button := exit_confirm_panel.get_node_or_null("ExitConfirmCancel") as Button
-		if _shell_active and cancel_button != null:
-			cancel_button.grab_focus()
+		if not modal_focus_stack.push(
+			&"exit_confirm",
+			exit_confirm_panel,
+			cancel_button,
+			Callable(self, "_cancel_exit_confirm_modal")
+		):
+			exit_confirm_panel.visible = false
+			_sync_page_lifecycle()
+			return
+		_sync_page_lifecycle()
 
 
 func _hide_exit_confirm(restore_focus: bool = true) -> void:
-	if exit_confirm_panel != null:
+	var restored_by_stack := false
+	if modal_focus_stack.top_modal_id() == &"exit_confirm":
+		restored_by_stack = modal_focus_stack.pop(&"exit_confirm", restore_focus)
+	elif exit_confirm_panel != null:
 		exit_confirm_panel.visible = false
 	_sync_page_lifecycle()
-	if restore_focus:
+	if restore_focus and not restored_by_stack:
 		_restore_main_menu_focus()
 
 
 func _hide_settings(restore_focus: bool = true) -> void:
 	if settings_panel != null:
 		settings_panel.call("close_panel", false)
-	if settings_page != null:
+	var restored_by_stack := false
+	if modal_focus_stack.top_modal_id() == &"settings":
+		restored_by_stack = modal_focus_stack.pop(&"settings", restore_focus)
+	elif settings_page != null:
 		settings_page.visible = false
 	_sync_page_lifecycle()
-	if restore_focus:
+	if restore_focus and not restored_by_stack:
 		_restore_main_menu_focus()
 
 
+func _cancel_exit_confirm_modal(_reason: StringName = &"cancel") -> void:
+	_hide_exit_confirm(true)
+
+
+func _cancel_settings_modal(_reason: StringName = &"cancel") -> void:
+	_close_settings_to_main()
+
+
 func _close_settings_to_main() -> void:
-	show_main()
-	_restore_main_menu_focus()
+	_current_page_id = PageRouterScript.PAGE_MAIN_MENU
+	_set_page_visible(main_menu_shell)
+	var had_modal_focus := modal_focus_stack.top_modal_id() == &"settings"
+	_hide_settings(true)
+	_hide_exit_confirm(false)
+	if not had_modal_focus:
+		_restore_main_menu_focus()
 	page_changed.emit(PageRouterScript.PAGE_MAIN_MENU, {"source_page": PageRouterScript.PAGE_SETTINGS_PLACEHOLDER})
 
 
@@ -878,7 +1029,8 @@ func _add_overlay_label(parent: Control, node_name: String, rect: Rect2, text: S
 	label.add_theme_color_override("font_shadow_color", Color(0.05, 0.03, 0.02, 0.82))
 	label.add_theme_constant_override("shadow_offset_x", 2)
 	label.add_theme_constant_override("shadow_offset_y", 2)
-	Art10UISkinKitScript.apply_label(label, font_size, color)
+	var composition_role := &"title" if node_name.ends_with("Title") else &"body"
+	Art10UISkinKitScript.apply_composition_label(label, composition_role, font_size, color)
 	parent.add_child(label)
 	return label
 
@@ -919,10 +1071,9 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.offset_top = rect.position.y
 	label.offset_right = rect.position.x + rect.size.x
 	label.offset_bottom = rect.position.y + rect.size.y
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var composition_role := &"title" if node_name.ends_with("Title") else &"body"
+	Art10UISkinKitScript.apply_composition_label(label, composition_role, font_size, color)
 	label.clip_text = true
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", font_size)
 	parent.add_child(label)
 	return label
 

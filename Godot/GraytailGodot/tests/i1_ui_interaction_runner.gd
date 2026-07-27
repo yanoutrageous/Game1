@@ -118,8 +118,9 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 		"action_hint": "撤离暂不可用：尚未到达撤离点",
 		"action_buttons": action_fixture,
 		"encounter_section": {
-			"title": "旅商",
-			"body": "选择本次交易。",
+			"encounter_type": &"rule_modifier",
+			"title": "规则终端",
+			"body": "选择本次规则处理方式。",
 			"result_summary": "等待选择",
 			"options": [
 				{"id": &"sell_best_item", "title": "出售物资", "summary": "所得计入安全收益。", "disabled": false, "requires_confirm": false, "command_payload": {"option_id": &"sell_best_item"}},
@@ -135,35 +136,18 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 	var feedback := run_surface.get("command_feedback_label") as Label
 	var hint := run_surface.get("action_hint_label") as Label
 	var feedback_panel := run_surface.get("command_feedback_art") as Control
+	var encounter_panel := run_surface.get("encounter_backdrop") as Control
 	var action_buttons: Dictionary = run_surface.get("action_buttons")
 	var encounter_grid := run_surface.get("encounter_options_box") as GridContainer
 	var encounter_buttons: Array = run_surface.get("encounter_option_buttons")
-	_require(feedback != null and feedback.visible and feedback.text.strip_edges() != "", "%s non-empty command feedback is hidden" % resolution_id)
-	_require(hint != null and hint.visible and hint.text.contains("查看背包、装备与负重详情"), "%s default guidance did not select the first executable action" % resolution_id)
+	_require(feedback != null and not feedback.visible, "%s model refresh recreated permanent command feedback" % resolution_id)
+	_require(hint != null and not hint.visible and hint.text.contains("查看背包、装备与负重详情"), "%s hidden guidance state did not retain the first executable action" % resolution_id)
 	if feedback != null:
-		_assert_inside_viewport(feedback, viewport_size, "%s RunCommandFeedback" % resolution_id)
 		_assert_font(feedback, "%s RunCommandFeedback" % resolution_id)
-		_assert_single_line_fits(feedback, "%s RunCommandFeedback" % resolution_id)
 	if hint != null:
-		_assert_inside_viewport(hint, viewport_size, "%s RunActionHint" % resolution_id)
 		_assert_font(hint, "%s RunActionHint" % resolution_id)
-		_assert_single_line_fits(hint, "%s RunActionHint" % resolution_id)
-	if feedback != null and hint != null:
-		_require(not feedback.get_global_rect().intersects(hint.get_global_rect()), "%s command feedback overlaps action hint" % resolution_id)
-	if feedback_panel != null and feedback != null and hint != null:
-		var panel_rect := feedback_panel.get_global_rect()
-		var feedback_rect := feedback.get_global_rect()
-		var hint_rect := hint.get_global_rect()
-		_require(panel_rect.encloses(feedback_rect), "%s command feedback escapes its bottom status panel: panel=%s label=%s" % [resolution_id, panel_rect, feedback_rect])
-		_require(panel_rect.encloses(hint_rect), "%s action hint escapes its bottom status panel: panel=%s label=%s" % [resolution_id, panel_rect, hint_rect])
-		_require(feedback_rect.position.y - panel_rect.position.y >= 6.0, "%s command feedback enters the top frame border: panel=%s label=%s" % [resolution_id, panel_rect, feedback_rect])
-		_require(panel_rect.end.y - hint_rect.end.y >= 6.0, "%s action hint enters the bottom frame border: panel=%s label=%s" % [resolution_id, panel_rect, hint_rect])
-		_require(feedback_rect.size.y >= 22.0 and hint_rect.size.y >= 22.0, "%s bottom status labels lack readable line height" % resolution_id)
-		var bottom_overlay := run_surface.get("bottom_overlay_art") as NinePatchRect
-		if bottom_overlay != null and feedback_panel is TextureRect:
-			_require((feedback_panel as TextureRect).texture != bottom_overlay.texture, "%s guidance panel still reuses the painted empty action-slot strip" % resolution_id)
-	_require(encounter_buttons.size() == 5, "%s complete five-option merchant layout is incomplete" % resolution_id)
-	_require(encounter_grid != null and encounter_grid.columns == 3, "%s five-option merchant does not wrap through a three-column grid" % resolution_id)
+	_require(encounter_buttons.size() == 5, "%s compatible five-option non-event layout is incomplete" % resolution_id)
+	_require(encounter_grid != null and encounter_grid.columns == 3, "%s five-option non-event encounter does not wrap through a three-column grid" % resolution_id)
 	for raw_encounter_button in encounter_buttons:
 		var encounter_button := raw_encounter_button as Button
 		if encounter_button == null:
@@ -171,12 +155,16 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 		_assert_inside_viewport(encounter_button, viewport_size, "%s encounter option" % resolution_id)
 		_assert_font(encounter_button, "%s encounter option" % resolution_id)
 		_require(encounter_button.focus_mode == Control.FOCUS_ALL, "%s encounter option is not focusable" % resolution_id)
-		if feedback != null:
+		if feedback != null and feedback.visible:
 			_require(not encounter_button.get_global_rect().intersects(feedback.get_global_rect()), "%s encounter option overlaps command feedback" % resolution_id)
-		if hint != null:
+		if hint != null and hint.visible:
 			_require(not encounter_button.get_global_rect().intersects(hint.get_global_rect()), "%s encounter option overlaps action hint" % resolution_id)
-		if feedback_panel != null:
-			_require(feedback_panel.get_global_rect().encloses(encounter_button.get_global_rect()), "%s encounter option escapes the bottom guidance panel" % resolution_id)
+		if encounter_panel != null:
+			_require(
+				encounter_panel.get_global_rect().encloses(encounter_button.get_global_rect()),
+				"%s encounter option escapes its encounter panel: panel=%s button=%s"
+				% [resolution_id, encounter_panel.get_global_rect(), encounter_button.get_global_rect()]
+			)
 	_assert_left_status_spacing(run_surface, resolution_id)
 	var default_hint := hint.text if hint != null else ""
 	for action_data in action_fixture:
@@ -189,15 +177,14 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 		_require(not guided_button.tooltip_text.is_empty() and guided_button.tooltip_text.contains(expected_detail), "%s run action %s has no complete tooltip guidance" % [resolution_id, action_id])
 		guided_button.mouse_entered.emit()
 		await process_frame
-		_require(hint.text.contains(expected_detail), "%s hover guidance does not describe run action %s: %s" % [resolution_id, action_id, hint.text])
-		_assert_single_line_fits(hint, "%s hover guidance %s" % [resolution_id, action_id])
+		_require(not hint.visible and hint.text.contains(expected_detail), "%s hidden hover guidance state does not describe run action %s: %s" % [resolution_id, action_id, hint.text])
 		guided_button.mouse_exited.emit()
 		await process_frame
 		_require(hint.text == default_hint, "%s leaving run action %s did not restore default guidance" % [resolution_id, action_id])
 		if not guided_button.disabled:
 			guided_button.grab_focus()
 			await process_frame
-			_require(root.gui_get_focus_owner() == guided_button and hint.text.contains(expected_detail), "%s keyboard focus does not describe run action %s" % [resolution_id, action_id])
+			_require(root.gui_get_focus_owner() == guided_button and not hint.visible and hint.text.contains(expected_detail), "%s keyboard focus does not preserve hidden guidance for run action %s" % [resolution_id, action_id])
 			guided_button.release_focus()
 			await process_frame
 			_require(hint.text == default_hint, "%s leaving keyboard focus on %s did not restore default guidance" % [resolution_id, action_id])
@@ -212,26 +199,31 @@ func _assert_run_surface(run_surface: Control, profile: Dictionary, viewport_siz
 	run_surface.call("show_command_feedback", {"ok": true, "accepted": true})
 	_require(feedback != null and not feedback.visible and not feedback.text.contains("已确认"), "%s generic accepted acknowledgement leaked into player guidance" % resolution_id)
 	run_surface.call("show_command_feedback", {"ok": true, "accepted": true, "message": "已拾取应急药剂。"})
-	_require(feedback != null and feedback.visible and feedback.text.contains("应急药剂"), "%s meaningful accepted feedback was hidden" % resolution_id)
-	if feedback != null:
-		_assert_single_line_fits(feedback, "%s meaningful RunCommandFeedback" % resolution_id)
+	_require(feedback != null and not feedback.visible, "%s successful action duplicated its authoritative presentation in global feedback" % resolution_id)
+	run_surface.call("show_command_feedback", {"ok": false, "accepted": false, "message": "请靠近物资后再拾取。"})
+	_require(feedback != null and feedback.visible and feedback.text.contains("靠近物资"), "%s rejected action lacks player-facing feedback" % resolution_id)
+	if feedback != null and feedback_panel != null:
+		_require(not feedback_panel.visible, "%s rejected action recreated the retired full-width feedback frame" % resolution_id)
+		_assert_inside_viewport(feedback, viewport_size, "%s unframed RunCommandFeedback" % resolution_id)
+		_assert_single_line_fits(feedback, "%s rejected RunCommandFeedback" % resolution_id)
+	run_surface.call("advance_command_feedback", 3.0)
+	_require(feedback != null and not feedback.visible, "%s transient command feedback did not expire" % resolution_id)
 
 
 func _assert_left_status_spacing(run_surface: Control, resolution_id: StringName) -> void:
 	var legend := run_surface.get("scanner_legend_label") as Label
-	var status := run_surface.get("resource_label") as Label
+	var legacy_status := run_surface.get("resource_label") as Label
 	var bag_title := run_surface.get("scanner_detail_label") as Label
 	var status_backdrop := run_surface.get("resource_backdrop") as Control
 	var bag_backdrop := run_surface.get("scanner_text_mask") as Control
-	_require(legend != null and status != null and bag_title != null, "%s left status labels are missing" % resolution_id)
-	if legend == null or status == null or bag_title == null:
+	_require(legend != null and legacy_status != null and bag_title != null, "%s left status labels are missing" % resolution_id)
+	if legend == null or legacy_status == null or bag_title == null:
 		return
-	_require(not legend.get_global_rect().intersects(status.get_global_rect()), "%s left summary overlaps status" % resolution_id)
-	_require(not status.get_global_rect().intersects(bag_title.get_global_rect()), "%s left status overlaps bag title" % resolution_id)
-	_require(status.autowrap_mode == TextServer.AUTOWRAP_OFF and status.clip_text, "%s left status can wrap across its boundary" % resolution_id)
+	_require(not legend.get_global_rect().intersects(bag_title.get_global_rect()), "%s left status overlaps bag title" % resolution_id)
+	_require(legend.visible and not legend.text.strip_edges().is_empty(), "%s left status is not readable" % resolution_id)
+	_require(not legacy_status.visible, "%s retired duplicate resource label is visible" % resolution_id)
 	if status_backdrop != null:
-		_require(status_backdrop.get_global_rect().encloses(legend.get_global_rect()), "%s left summary escapes status panel" % resolution_id)
-		_require(status_backdrop.get_global_rect().encloses(status.get_global_rect()), "%s left status escapes status panel" % resolution_id)
+		_require(status_backdrop.get_global_rect().encloses(legend.get_global_rect()), "%s left status escapes status panel" % resolution_id)
 	if bag_backdrop != null:
 		_require(bag_backdrop.get_global_rect().encloses(bag_title.get_global_rect()), "%s bag title escapes bag panel" % resolution_id)
 
@@ -398,7 +390,7 @@ func _require(condition: bool, message: String) -> void:
 func _finish() -> void:
 	if failures.is_empty():
 		print(PASS_MARKER)
-		print("I1_UI_INTERACTION_DETAILS production=main resolutions=1280x720,1600x900,1920x1080 focus=PASS fonts=PASS feedback=PASS disabled_reason=PASS")
+		print("I1_UI_INTERACTION_DETAILS production=main resolutions=1280x720,1600x900,1920x1080 focus=PASS fonts=PASS feedback=transient disabled_reason=PASS")
 		quit(0)
 		return
 	for failure in failures:

@@ -16,7 +16,10 @@ const EXPECTED_FIELDS := [
 	"resolution_id",
 	"vsync_mode",
 	"frame_limit",
+	"ui_scale_percent",
 	"master_volume",
+	"effects_volume",
+	"haptics_enabled",
 	"reduce_motion",
 ]
 
@@ -148,7 +151,7 @@ func _check_production_default_panel(
 	long_term: Control
 ) -> void:
 	_require(panel.get("settings_manager") == owner, "production SettingsPanel was not bound to the default owner")
-	_require(panel.call("field_control_names") == PackedStringArray(EXPECTED_FIELDS), "production SettingsPanel field scope expanded beyond I2.1C")
+	_require(panel.call("field_control_names") == PackedStringArray(EXPECTED_FIELDS), "production SettingsPanel field scope does not match the I3R settings contract")
 	shell.show_settings()
 	await _frames(3)
 	_require(shell.get_visible_page_id() == &"settings_placeholder", "show_settings did not expose the production settings route")
@@ -162,6 +165,20 @@ func _check_production_default_panel(
 		_require(shell.get_node_or_null("SettingsOverlay/%s" % fake_name) == null, "fake settings control remained mounted: %s" % fake_name)
 	var focus := root.gui_get_focus_owner()
 	_require(focus == panel.get("window_mode_option"), "show_settings did not focus the first real field")
+	panel.call("set_ui_scale_factor", 1.5)
+	await _frames(2)
+	var ui_scale_option := panel.get("ui_scale_option") as OptionButton
+	_require(is_equal_approx(float(panel.call("get_ui_scale_factor")), 1.5), "SettingsPanel rejected 150% UI scale")
+	_require(
+		ui_scale_option != null and ui_scale_option.get_theme_font_size("font_size") == 24,
+		"SettingsPanel option typography did not scale from its 16px baseline"
+	)
+	_require(
+		ui_scale_option != null and ui_scale_option.custom_minimum_size.y == 45.0,
+		"SettingsPanel hit target did not scale from its 30px baseline"
+	)
+	panel.call("set_ui_scale_factor", 1.0)
+	await _frames(2)
 	if settings_close != null:
 		settings_close.pressed.emit()
 	await _frames(3)
@@ -182,19 +199,50 @@ func _check_real_panel_timeout_rollback(
 	deploy: Control,
 	long_term: Control
 ) -> void:
+	var observed_ui_scales: Array[float] = []
+	shell.ui_scale_changed.connect(func(factor: float) -> void: observed_ui_scales.append(factor))
 	shell.show_settings()
 	await _frames(3)
 	_require(root.gui_get_focus_owner() == panel.get("window_mode_option"), "injected SettingsPanel did not restore first-field focus")
 	panel.get("reduce_motion_check").button_pressed = true
 	panel.get("master_volume_slider").value = 55.0
 	panel.get("resolution_option").select(3)
+	panel.get("ui_scale_option").select(2)
 	panel.call("_on_apply_pressed")
 	await _frames(2)
 	_require(bool(manager.call("is_confirmation_pending")), "real SettingsPanel skipped dangerous display confirmation")
 	_require_equal(manager.call("get_applied_settings").get("resolution_id"), "1600x900", "dangerous preview resolution")
 	_require_equal(manager.call("get_applied_settings").get("master_volume"), 55, "dangerous preview master volume")
 	_require_equal(manager.call("get_applied_settings").get("reduce_motion"), true, "dangerous preview reduce-motion")
-	_require(panel.get("confirmation_box").visible, "real SettingsPanel did not expose the dangerous confirmation controls")
+	_require_equal(manager.call("get_applied_settings").get("ui_scale_percent"), 150, "dangerous preview UI scale")
+	_require(is_equal_approx(float(shell.call("get_ui_scale_factor")), 1.5), "applied UI scale did not reach AppShell")
+	_require(is_equal_approx(float(deploy.call("get_ui_scale_factor")), 1.5), "applied UI scale did not reach DeployPrep")
+	_require(not observed_ui_scales.is_empty() and is_equal_approx(observed_ui_scales.back(), 1.5), "AppShell did not notify the active run host about 150% UI scale")
+	var confirmation_box := panel.get("confirmation_box") as VBoxContainer
+	var confirmation_label := panel.get("confirmation_label") as Label
+	var confirmation_actions := confirmation_box.get_node_or_null("DisplayConfirmationActions") as HBoxContainer
+	var confirm_button := panel.get("confirm_button") as Button
+	var revert_button := panel.get("revert_button") as Button
+	_require(confirmation_box.visible, "real SettingsPanel did not expose the dangerous confirmation controls")
+	_require(confirmation_actions != null, "dangerous confirmation action group is missing")
+	_require(confirmation_box.size.y >= panel.size.y * 0.55, "dangerous confirmation did not occupy the available content area")
+	if confirmation_actions != null:
+		var confirmation_content_center := (
+			confirmation_label.position.y
+			+ confirmation_actions.position.y
+			+ confirmation_actions.size.y
+		) * 0.5
+		_require(
+			absf(confirmation_content_center - confirmation_box.size.y * 0.5) <= 8.0,
+			"dangerous confirmation copy and actions are not vertically centered"
+		)
+	_require(root.gui_get_focus_owner() == confirm_button, "dangerous confirmation did not initially focus keep-display")
+	if revert_button != null:
+		revert_button.grab_focus()
+	clock.now = 2000
+	manager.call("_process", 0.0)
+	await _frames(2)
+	_require(root.gui_get_focus_owner() == revert_button, "confirmation countdown stole the player's moved focus")
 	_require(not bool(main.call("is_page_active")) and not bool(deploy.call("is_page_active")) and not bool(long_term.call("is_page_active")), "dangerous preview revived a page behind the overlay")
 	clock.now = 16001
 	manager.call("_process", 0.0)
@@ -203,6 +251,10 @@ func _check_real_panel_timeout_rollback(
 	_require_equal(manager.call("get_applied_settings").get("resolution_id"), "auto", "timeout resolution rollback")
 	_require_equal(manager.call("get_applied_settings").get("master_volume"), 80, "timeout master-volume rollback")
 	_require_equal(manager.call("get_applied_settings").get("reduce_motion"), false, "timeout reduce-motion rollback")
+	_require_equal(manager.call("get_applied_settings").get("ui_scale_percent"), 100, "timeout UI-scale rollback")
+	_require(is_equal_approx(float(shell.call("get_ui_scale_factor")), 1.0), "UI-scale rollback did not reach AppShell")
+	_require(is_equal_approx(float(deploy.call("get_ui_scale_factor")), 1.0), "UI-scale rollback did not reach DeployPrep")
+	_require(not observed_ui_scales.is_empty() and is_equal_approx(observed_ui_scales.back(), 1.0), "AppShell did not notify the active run host about UI-scale rollback")
 	_require(not panel.get("confirmation_box").visible, "real SettingsPanel kept stale confirmation controls after rollback")
 	_require(not bool(main.call("is_page_active")) and not bool(deploy.call("is_page_active")) and not bool(long_term.call("is_page_active")), "timeout rollback activated a page behind the overlay")
 	var settings_close := shell.get_node_or_null("SettingsOverlay/SettingsCloseButton") as Button

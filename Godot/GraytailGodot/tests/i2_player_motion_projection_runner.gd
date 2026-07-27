@@ -30,10 +30,11 @@ func _run() -> void:
 
 func _check_four_phase_walk_catalog() -> void:
 	_check(RuntimeAnimationCatalog.player_frame_count(&"move") == 4, "move cycle does not expose four phases")
+	var move_frame_seconds := RuntimeAnimationCatalog.player_frame_duration(&"move")
 	_check(is_zero_approx(RuntimeAnimationCatalog.player_walk_bob_offset(0.0, false)), "walk_a contact pose is not grounded")
-	_check(is_equal_approx(RuntimeAnimationCatalog.player_walk_bob_offset(0.05, false), -RuntimeAnimationCatalog.PLAYER_MOVE_BOB_AMPLITUDE), "idle_a passing pose lost its fixed lift amplitude")
-	_check(is_zero_approx(RuntimeAnimationCatalog.player_walk_bob_offset(0.10, false)), "walk_b contact pose is not grounded")
-	_check(is_equal_approx(RuntimeAnimationCatalog.player_walk_bob_offset(0.15, false), -RuntimeAnimationCatalog.PLAYER_MOVE_BOB_AMPLITUDE), "idle_b passing pose lost its fixed lift amplitude")
+	_check(is_equal_approx(RuntimeAnimationCatalog.player_walk_bob_offset(move_frame_seconds, false), -RuntimeAnimationCatalog.PLAYER_MOVE_BOB_AMPLITUDE), "idle_a passing pose lost its fixed lift amplitude")
+	_check(is_zero_approx(RuntimeAnimationCatalog.player_walk_bob_offset(move_frame_seconds * 2.0, false)), "walk_b contact pose is not grounded")
+	_check(is_equal_approx(RuntimeAnimationCatalog.player_walk_bob_offset(move_frame_seconds * 3.0, false), -RuntimeAnimationCatalog.PLAYER_MOVE_BOB_AMPLITUDE), "idle_b passing pose lost its fixed lift amplitude")
 	for frame_index in range(EXPECTED_MOVE_PHASES.size()):
 		var motion: StringName = RuntimeAnimationCatalog.player_motion(&"move", frame_index, false)
 		_check(motion == EXPECTED_MOVE_PHASES[frame_index], "move phase %d mapped to %s" % [frame_index, String(motion)])
@@ -81,6 +82,7 @@ func _check_presentation_does_not_change_displacement() -> void:
 	_check(is_equal_approx(PlayerControllerScript.LOCAL_MOVE_SPEED, 0.74), "logical move speed changed")
 	_check(is_equal_approx(PlayerControllerScript.LOCAL_ACCELERATION, 8.0), "logical acceleration changed")
 	_check(is_equal_approx(PlayerControllerScript.LOCAL_DECELERATION, 12.0), "logical deceleration changed")
+	var held_endpoints: Dictionary = {}
 	for sample_rate in SAMPLE_RATES:
 		var logic_only = _new_player()
 		var with_projection = _new_player()
@@ -91,8 +93,19 @@ func _check_presentation_does_not_change_displacement() -> void:
 			with_projection.call("_process", delta)
 		_check(logic_only.get_local_position().is_equal_approx(with_projection.get_local_position()), "%d Hz presentation changed logical displacement" % sample_rate)
 		_check(logic_only.local_velocity.is_equal_approx(with_projection.local_velocity), "%d Hz presentation changed logical velocity" % sample_rate)
+		held_endpoints[sample_rate] = logic_only.get_local_position()
 		logic_only.free()
 		with_projection.free()
+	var reference_endpoint: Vector2 = held_endpoints.get(SAMPLE_RATES[0], Vector2.ZERO)
+	for sample_rate in SAMPLE_RATES:
+		var endpoint: Vector2 = held_endpoints.get(sample_rate, Vector2.ZERO)
+		_check(
+			endpoint.distance_to(reference_endpoint) <= 0.00001,
+			"%d Hz held-input travel drifted from the 30 Hz reference by %.7f" % [
+				sample_rate,
+				endpoint.distance_to(reference_endpoint),
+			]
+		)
 
 
 func _check_collision_and_door_contract() -> void:
@@ -145,7 +158,7 @@ func _restore_reduce_motion_setting() -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("I2_PLAYER_MOTION_PROJECTION=PASS phases=4 sample_hz=30,60,144 reduced_motion=fixed_pose_zero_bob authority=presentation_only displacement=unchanged")
+		print("I2_PLAYER_MOTION_PROJECTION=PASS phases=4 sample_hz=30,60,144 held_travel=stable reduced_motion=fixed_pose_zero_bob authority=presentation_only displacement=unchanged")
 		quit(0)
 		return
 	for failure in failures:

@@ -11,6 +11,7 @@ const DEFAULT_ACTOR_ID := &"player"
 const REJECTION_EVENT_OPTION_UNAVAILABLE := "event_option_unavailable"
 const REJECTION_CANNOT_EXTRACT := "cannot_extract"
 const REJECTION_NO_EXTRACT_REQUEST := "no_extract_request"
+const REJECTION_ABANDON_CONFIRMATION_REQUIRED := "abandon_confirmation_required"
 const REJECTION_RESTART_CONFIRMATION_REQUIRED := "restart_confirmation_required"
 const EncounterContractScript := preload("res://scripts/core/run/encounter/encounter_contract.gd")
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
@@ -45,8 +46,6 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 	match command_name:
 		&"start_demo_run":
 			action_result = start_demo_run()
-		&"start_tutorial_run":
-			action_result = start_tutorial_run()
 		&"start_standard_run":
 			action_result = start_standard_run(command_payload)
 		&"move_by":
@@ -92,11 +91,20 @@ func dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 		&"unequip_item":
 			action_result = unequip_item(String(command_payload.get("instance_id", "")))
 		&"abandon_run":
-			action_result = abandon_run(String(command_payload.get("reason", "player_abandoned")))
+			var explicit_confirmation: Variant = command_payload.get("confirmed", false)
+			action_result = abandon_run(
+				String(command_payload.get("reason", "player_abandoned")),
+				explicit_confirmation is bool and bool(explicit_confirmation)
+			)
 		&"confirm_failure_salvage":
 			action_result = confirm_failure_salvage(command_payload.get("selected_instance_ids", []))
 		&"retry_terminal_commit":
 			action_result = retry_terminal_commit()
+		&"discard_unsaved_terminal_commit":
+			var explicit_confirmation: Variant = command_payload.get("confirmed", false)
+			action_result = discard_unsaved_terminal_commit(
+				explicit_confirmation is bool and bool(explicit_confirmation)
+			)
 		&"request_extract":
 			action_result = request_extract()
 		&"confirm_extract":
@@ -167,14 +175,6 @@ func start_demo_run() -> Dictionary:
 	if runtime_controller == null:
 		return _blocked(&"not_ready", "runtime_controller_missing")
 	var result: Dictionary = runtime_controller.start_demo_run(room_resolver)
-	_emit_state()
-	return result
-
-
-func start_tutorial_run() -> Dictionary:
-	if runtime_controller == null:
-		return _blocked(&"not_ready", "runtime_controller_missing")
-	var result: Dictionary = runtime_controller.start_tutorial_run(room_resolver)
 	_emit_state()
 	return result
 
@@ -403,7 +403,9 @@ func _execute_item_command(action: StringName, payload: Dictionary) -> Dictionar
 	return result
 
 
-func abandon_run(reason: String = "player_abandoned") -> Dictionary:
+func abandon_run(reason: String = "player_abandoned", confirmed: bool = false) -> Dictionary:
+	if not confirmed:
+		return _blocked(&"abandon_confirmation_required", REJECTION_ABANDON_CONFIRMATION_REQUIRED)
 	if runtime_controller == null:
 		return _blocked(&"not_ready", "runtime_controller_missing")
 	var result: Dictionary = runtime_controller.abandon_run(reason)
@@ -429,6 +431,16 @@ func retry_terminal_commit() -> Dictionary:
 	# This retries persistence of the same immutable terminal snapshot. It does
 	# not re-emit result_available and therefore cannot run settlement twice.
 	var result: Dictionary = runtime_controller.retry_terminal_commit()
+	_emit_state()
+	return result
+
+
+func discard_unsaved_terminal_commit(confirmed: bool = false) -> Dictionary:
+	if runtime_controller == null:
+		return _blocked(&"not_ready", "runtime_controller_missing")
+	# This command records that the player explicitly abandoned an unpersisted
+	# terminal result. It never emits result_available or marks progress saved.
+	var result: Dictionary = runtime_controller.discard_unsaved_terminal_commit(confirmed)
 	_emit_state()
 	return result
 

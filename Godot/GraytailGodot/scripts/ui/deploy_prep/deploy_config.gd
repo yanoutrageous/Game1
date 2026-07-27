@@ -58,10 +58,13 @@ const ACTIVE_RUN_CANONICAL_FIELDS := [
 static func default_config(sequence: int = 1, meta_summary: Dictionary = {}) -> Dictionary:
 	var m3r_fields: Dictionary = M3RItemUsabilityModelScript.build_run_start_fields(meta_summary)
 	var unlocked_maps: Array = _array_copy(meta_summary.get("unlocked_map_ids", M7ContentCatalogScript.DEFAULT_UNLOCKED_MAPS))
+	if not unlocked_maps.has("tutorial_5x5"):
+		unlocked_maps.push_front("tutorial_5x5")
 	var default_map_id := _default_map_id(unlocked_maps)
 	var map_definition := M7ContentCatalogScript.map_definition_exact(default_map_id)
-	var candidate_seed := maxi(1, sequence * 1009 + int(meta_summary.get("run_count", 0)) * 97 + int(meta_summary.get("gold", 0)) * 13)
-	var commission_candidates := M7ContentCatalogScript.commission_candidates(default_map_id, candidate_seed)
+	var run_count := int(meta_summary.get("run_count", 0))
+	var candidate_seed := M7ContentCatalogScript.commission_offer_seed(default_map_id, run_count)
+	var commission_candidates := M7ContentCatalogScript.commission_offer_candidates(default_map_id, run_count)
 	var selected_commission: Dictionary = commission_candidates[0] if not commission_candidates.is_empty() else M7ContentCatalogScript.commission_definition("commission_recover_supply")
 	var config := {
 		"config_id": "deploy_m3r_%04d" % maxi(sequence, 1),
@@ -84,6 +87,7 @@ static func default_config(sequence: int = 1, meta_summary: Dictionary = {}) -> 
 		"commission_candidates": commission_candidates,
 		"commission_candidate_seed": candidate_seed,
 		"unlocked_map_ids": unlocked_maps,
+		"tutorial_completed": bool(meta_summary.get("tutorial_completed", false)),
 		"meta_progress_summary": meta_summary.duplicate(true),
 		"enabled_services": [],
 		"enabled_work_permits": [],
@@ -173,7 +177,6 @@ static func with_active_run_config(config: Dictionary, run_start_config: Diction
 static func refresh_from_meta(config: Dictionary, meta_summary: Dictionary, has_active_run: bool = false) -> Dictionary:
 	var sequence := maxi(1, int(config.get("created_at_or_sequence", 1)))
 	var refreshed := default_config(sequence, meta_summary)
-	refreshed["commission_candidate_seed"] = int(config.get("commission_candidate_seed", refreshed.get("commission_candidate_seed", 1)))
 	var previous_map_id := str(config.get("map_config_id", "classic_7x7_simple"))
 	if (refreshed.get("unlocked_map_ids", []) as Array).has(previous_map_id):
 		refreshed = _dictionary_copy(select_map(refreshed, previous_map_id).get("config", refreshed))
@@ -262,15 +265,28 @@ static func select_map(config: Dictionary, map_id: String) -> Dictionary:
 	result["difficulty"] = definition.get("difficulty", &"normal")
 	result["difficulty_label"] = str(definition.get("difficulty_label", "普通"))
 	result["selected_difficulty"] = result["difficulty"]
-	result["selected_map_summary"] = "%s；地图真相在确认出发后生成。" % str(definition.get("display_name", map_id))
-	var candidate_seed := int(result.get("commission_candidate_seed", 1)) + map_id.hash()
-	var candidates := M7ContentCatalogScript.commission_candidates(map_id, candidate_seed)
+	result["map_mode"] = StringName(definition.get("map_mode", MAP_MODE_CLASSIC_PREVIEW))
+	result["map_mode_label"] = "固定教学演练" if bool(definition.get("tutorial_map", false)) else "常规扫雷"
+	result["selected_map_summary"] = (
+		"%s；固定布局，可重复演练，不写入正式探索记录。" % str(definition.get("display_name", map_id))
+		if bool(definition.get("tutorial_map", false))
+		else "%s；地图真相在确认出发后生成。" % str(definition.get("display_name", map_id))
+	)
+	var meta_summary := _dictionary_copy(result.get("meta_progress_summary", {}))
+	var run_count := int(meta_summary.get("run_count", 0))
+	var candidate_seed := M7ContentCatalogScript.commission_offer_seed(map_id, run_count)
+	var candidates := M7ContentCatalogScript.commission_offer_candidates(map_id, run_count)
+	result["commission_candidate_seed"] = candidate_seed
 	result["commission_candidates"] = candidates
 	if not candidates.is_empty():
 		var selected: Dictionary = candidates[0]
 		result["selected_objective_id"] = StringName(selected.get("id", "commission_recover_supply"))
 		result["selected_objective_label"] = str(selected.get("display_name", "回收补给箱"))
 		result["selected_objective_summary"] = "%s：%s" % [str(selected.get("display_name", "")), str(selected.get("description", ""))]
+	else:
+		result["selected_objective_id"] = &""
+		result["selected_objective_label"] = "教学目标"
+		result["selected_objective_summary"] = "完成固定 5×5 演练并从信标撤离。"
 	result["config_validity_preview"] = _config_validity_for(result)
 	result["right_summary_preview"] = right_summary_preview(result)
 	return {
@@ -392,8 +408,8 @@ static func _recalculate_loadout(config: Dictionary, equipment: Array, consumabl
 	var salvage_capacity := int(profile.get("failure_salvage_capacity", M3RItemUsabilityModelScript.BASE_FAILURE_SALVAGE_CAPACITY))
 	var mine_dmg_reduce := int(profile.get("mine_dmg_reduce", 0))
 	var pressure_reduce := int(profile.get("protocol_pressure_reduce", 0))
-	var search_reward_bonus := 0
-	var scan_hint_bonus := 0
+	var search_reward_bonus := int(profile.get("search_reward_bonus", 0))
+	var scan_hint_bonus := int(profile.get("scan_hint_bonus", 0))
 	var effects := M3RItemUsabilityModelScript.build_equipment_effects(equipment)
 	for raw_effect in effects:
 		var effect := _dictionary_copy(raw_effect)
@@ -463,7 +479,7 @@ static func _instance_ids(items: Array) -> Array[String]:
 
 static func build_run_start_config(config: Dictionary) -> Dictionary:
 	var source := config.duplicate(true)
-	return {
+	var result := {
 		"config_id": str(source.get("config_id", "")),
 		"config_version": int(source.get("config_version", CONFIG_VERSION)),
 		"map_config_id": str(source.get("map_config_id", "classic_7x7_simple")),
@@ -543,10 +559,29 @@ static func build_run_start_config(config: Dictionary) -> Dictionary:
 		"history_metadata": history_metadata_for(source),
 		"profile_snapshot_ref": source.get("profile_snapshot_ref", &"m3r_profile_minimal"),
 		"unlock_snapshot_ref": source.get("unlock_snapshot_ref", &"m3r_unlock_minimal"),
+		"tutorial_completed": bool(source.get("tutorial_completed", false)),
 		"preview": false,
 		"display_only": false,
 		"read_only": false,
 	}
+	var map_definition := M7ContentCatalogScript.map_definition_exact(str(result.get("map_config_id", "")))
+	var tutorial_map := bool(map_definition.get("tutorial_map", false))
+	result["tutorial_map"] = tutorial_map
+	result["persistence_policy"] = &"tutorial_completion_only" if tutorial_map else &"standard_settlement"
+	if tutorial_map:
+		result["seed_value"] = 777
+		result["selected_loadout"] = []
+		result["carried_consumables"] = []
+		result["selected_equipment_items"] = []
+		result["selected_consumable_items"] = []
+		result["selected_equipment_ids"] = []
+		result["selected_consumable_ids"] = []
+		result["commission_candidates"] = []
+		result["equipment_effects"] = []
+		result["selected_objective_id"] = &""
+		result["selected_objective_label"] = "教学目标"
+		result["bag_used"] = 0
+	return result
 
 
 static func build_preview_lines(config: Dictionary) -> Dictionary:

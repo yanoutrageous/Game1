@@ -8,6 +8,8 @@ const RuntimeActorViewScript := preload("res://scripts/gameplay/runtime/g41_runt
 const ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
 const ItemVisualCatalogScript := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const PlayerControllerScript := preload("res://scripts/gameplay/player/player_controller.gd")
+const CombatState := preload("res://scripts/core/run/combat_state.gd")
+const RunContextScript := preload("res://scripts/core/run/run_context.gd")
 
 var failures: Array[String] = []
 var integration_context
@@ -275,6 +277,12 @@ func _check_invulnerability_defeat_and_swept_projectile() -> void:
 		"player_max_hp": 50,
 		"monster_types": [&"slime", &"slime"],
 	})
+	for enemy_index in range(invulnerability_simulation.enemies.size()):
+		var enemy: Dictionary = invulnerability_simulation.enemies[enemy_index]
+		enemy["entry_grace_remaining"] = 0.0
+		enemy["state"] = &"warning"
+		enemy["state_timer"] = 0.01
+		invulnerability_simulation.enemies[enemy_index] = enemy
 	_advance_exact(invulnerability_simulation, [1.0 / 60.0], 1.10)
 	var damage_event_count := 0
 	for event in invulnerability_simulation.drain_events():
@@ -290,6 +298,11 @@ func _check_invulnerability_defeat_and_swept_projectile() -> void:
 		"player_max_hp": 1,
 		"monster_types": [&"slime"],
 	})
+	var defeat_enemy: Dictionary = defeat_simulation.enemies[0]
+	defeat_enemy["entry_grace_remaining"] = 0.0
+	defeat_enemy["state"] = &"warning"
+	defeat_enemy["state_timer"] = 0.01
+	defeat_simulation.enemies[0] = defeat_enemy
 	_advance_exact(defeat_simulation, [1.0 / 60.0], 1.20)
 	var defeat_event_types: Array[StringName] = []
 	for event in defeat_simulation.drain_events():
@@ -444,6 +457,24 @@ func _check_integrated_combat_reward_and_flee() -> void:
 	_enter_test_room(controller, Vector2i(1, 5))
 	controller.in_run_runtime.sync_room(Vector2(0.50, 0.50))
 	_check(controller.in_run_runtime.has_active_combat(), "Monster room did not create an active fixed-step simulation")
+	var mother_profile_before: Dictionary = (
+		controller.in_run_runtime.build_read_only_snapshot().get("encounter_profile", {})
+	)
+	var defeated_before := int(context.run_stats.get("monsters_defeated", 0))
+	var power_bonus_before := int(context.run_stats.get("monster_power_bonus", 0))
+	var player_power_before: int = int(context.power)
+	_check(
+		not mother_profile_before.is_empty()
+		and int(mother_profile_before.get("enemy_power", 0)) > 0
+		and String(mother_profile_before.get("enemy_name", "")) != "",
+		"Production combat did not receive the cell's stable mother-enemy profile"
+	)
+	_check(
+		int(context.enemy_state.get("enemy_power", -1)) == int(mother_profile_before.get("enemy_power", -2))
+		and String(context.enemy_state.get("enemy_name", "")) == String(mother_profile_before.get("enemy_name", "__missing__")),
+		"Room context and live simulation disagreed on the mother-enemy identity"
+	)
+	var completed_simulation = controller.in_run_runtime.simulation
 	var view_rebuild_snapshot: Dictionary = controller.in_run_runtime.build_read_only_snapshot()
 	var tick_before_view_rebuild := int(view_rebuild_snapshot.get("tick", 0))
 	var first_combat_view = RoomRuntimeViewScript.new()
@@ -477,6 +508,26 @@ func _check_integrated_combat_reward_and_flee() -> void:
 		controller.in_run_runtime.advance_frame(1.0 / 60.0, move, aim)
 		step_count += 1
 	_check(context.truth_map.is_cleared(Vector2i(1, 5)), "Combat clear did not commit the room-cleared effect")
+	_check(completed_simulation != null and completed_simulation.reward_emitted, "Resolved combat did not mark the emitting simulation reward as committed")
+	_check(
+		int(context.run_stats.get("monsters_defeated", 0)) == defeated_before + 1,
+		"Runtime combat clear did not advance the authoritative monster-clear count"
+	)
+	_check(
+		int(context.run_stats.get("monster_power_bonus", 0)) == power_bonus_before + 1
+		and context.power == player_power_before + 1,
+		"Runtime combat clear did not grant the one-point capped run power growth"
+	)
+	_check(
+		int(context.last_reward.get("reward_gold", -1))
+		== CombatState.reward_gold_for_enemy_power(int(mother_profile_before.get("enemy_power", 0))),
+		"Runtime combat reward was not derived from the mother enemy's power"
+	)
+	_check(
+		int(context.enemy_state.get("enemy_power", -1)) == int(mother_profile_before.get("enemy_power", -2))
+		and context.enemy_state.has("combat_snapshot"),
+		"Runtime combat resolution discarded the stable enemy profile"
+	)
 	var combat_fact_found := false
 	for raw_event in context.run_event_log.snapshot():
 		var event: Dictionary = raw_event if raw_event is Dictionary else {}
@@ -495,9 +546,30 @@ func _check_integrated_combat_reward_and_flee() -> void:
 	_check(_ground_projection(reward_view.build_read_only_snapshot()).size() == combat_floor_items.size(), "Combat reward ledger entries did not become world entities")
 	reward_view.free()
 	var floor_count_before_duplicate: int = combat_floor_items.size()
+	var defeated_before_duplicate := int(context.run_stats.get("monsters_defeated", 0))
+	var power_before_duplicate: int = int(context.power)
 	var resolved_snapshot: Dictionary = controller.in_run_runtime.build_read_only_snapshot()
 	bus.dispatch(&"resolve_runtime_combat", {"source": "g41_combat_simulation", "combat_snapshot": resolved_snapshot, "combat_seed": resolved_snapshot.get("seed", 0)})
 	_check(context.asset_ledger.get_room_floor_items(Vector2i(1, 5)).size() == floor_count_before_duplicate, "Combat reward was committed more than once")
+	_check(
+		int(context.run_stats.get("monsters_defeated", 0)) == defeated_before_duplicate
+		and context.power == power_before_duplicate,
+		"Duplicate runtime combat resolution repeated progression growth"
+	)
+
+	var capped_context := RunContextScript.new()
+	capped_context.power = 20
+	capped_context.run_stats = {
+		"monsters_defeated": 4,
+		"monster_power_bonus": CombatState.MONSTER_POWER_GAIN_CAP,
+	}
+	var capped_gain := CombatState.grant_monster_clear_progress(capped_context)
+	_check(
+		capped_gain == 0
+		and capped_context.power == 20
+		and int(capped_context.run_stats.get("monsters_defeated", 0)) == 5,
+		"Monster clear progression exceeded its power cap or stopped counting clears"
+	)
 
 	var flee_room := Vector2i(0, 0)
 	context.truth_map.set_room_type(flee_room, &"Monster")

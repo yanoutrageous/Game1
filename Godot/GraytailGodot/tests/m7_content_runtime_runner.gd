@@ -12,7 +12,7 @@ func _initialize() -> void:
 	_test_map_matrix()
 	_test_meta_transactions_and_progression()
 	if failures.is_empty():
-		print("M7_CONTENT_RUNTIME:PASS maps=8 seeds_per_map=100 transactions=PASS progression=PASS")
+		print("M7_CONTENT_RUNTIME:PASS maps=9 seeds_per_map=100 tutorial=fixed_5x5 transactions=PASS progression=PASS")
 		quit(0)
 	else:
 		for failure in failures:
@@ -22,7 +22,7 @@ func _initialize() -> void:
 
 func _test_map_matrix() -> void:
 	var maps := M7ContentCatalogScript.map_definitions()
-	_check(maps.size() == 8, "map_count_expected_8")
+	_check(maps.size() == 9, "map_count_expected_9")
 	for definition in maps:
 		var map_id := str(definition.get("id", ""))
 		for seed_value in range(1, 101):
@@ -34,9 +34,9 @@ func _test_map_matrix() -> void:
 			_check(bool(truth.validate_map().get("valid", false)), "%s_seed_%d_invalid" % [map_id, seed_value])
 			_check(truth.width == int(definition.get("width", 0)) and truth.height == int(definition.get("height", 0)), "%s_seed_%d_dimensions" % [map_id, seed_value])
 			_check(int(counts.get("mine", -1)) == int(definition.get("mine_count", 0)), "%s_seed_%d_mines" % [map_id, seed_value])
-			_check(int(counts.get("event", -1)) == int(definition.get("content_room_count", 0)), "%s_seed_%d_events" % [map_id, seed_value])
-			_check(int(counts.get("chest", -1)) == int(definition.get("content_room_count", 0)), "%s_seed_%d_chests" % [map_id, seed_value])
-			_check(int(counts.get("monster", -1)) == int(definition.get("content_room_count", 0)), "%s_seed_%d_monsters" % [map_id, seed_value])
+			_check(int(counts.get("event", -1)) == int(definition.get("event_room_count", definition.get("content_room_count", 0))), "%s_seed_%d_events" % [map_id, seed_value])
+			_check(int(counts.get("chest", -1)) == int(definition.get("chest_room_count", definition.get("content_room_count", 0))), "%s_seed_%d_chests" % [map_id, seed_value])
+			_check(int(counts.get("monster", -1)) == int(definition.get("monster_room_count", definition.get("content_room_count", 0))), "%s_seed_%d_monsters" % [map_id, seed_value])
 			var exit_count := int(definition.get("visible_exit_count", 0)) + int(definition.get("hidden_exit_count", 0))
 			_check(int(counts.get("exit", -1)) == exit_count, "%s_seed_%d_exits" % [map_id, seed_value])
 			var duplicate_truth := TruthMapScript.new()

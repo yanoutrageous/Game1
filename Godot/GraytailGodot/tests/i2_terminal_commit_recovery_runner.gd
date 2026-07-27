@@ -4,6 +4,7 @@ const MetaProgressAdapterScript := preload("res://scripts/core/save/meta_progres
 const ResultPanelScene := preload("res://scenes/ui/result/result_panel.tscn")
 const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
 const RunSceneResultControllerScript := preload("res://scripts/core/run/run_scene_result_controller.gd")
+const ResultPresentationModelScript := preload("res://scripts/ui/result/result_presentation_model.gd")
 
 var failures: Array[String] = []
 var blocker_path := "user://i2_terminal_commit_recovery/not_a_directory"
@@ -12,6 +13,7 @@ var result_signal_count: int = 0
 var retry_request_count: int = 0
 var discard_request_count: int = 0
 var production_retry_command_count: int = 0
+var production_discard_command_count: int = 0
 var production_result_signal_count: int = 0
 
 
@@ -28,7 +30,7 @@ func _run() -> void:
 	await _validate_production_run_scene_guards(recovery_fixture)
 	_cleanup()
 	if failures.is_empty():
-		print("I2_TERMINAL_COMMIT_RECOVERY=PASS nonce=128bit legacy_ids=compatible save_failure=rollback retry=same_snapshot duplicate=idempotent result_signals=unchanged exits=guarded discard_confirmations=2")
+		print("I2_TERMINAL_COMMIT_RECOVERY=PASS nonce=128bit legacy_ids=compatible save_failure=rollback retry=same_snapshot result_body=frozen_across_retry duplicate=idempotent result_signals=unchanged exits=guarded discard=core_confirmed_unlock")
 		quit(0)
 		return
 	for failure in failures:
@@ -171,6 +173,22 @@ func _validate_result_panel_guards(fixture: Dictionary) -> void:
 	_require(panel.return_deploy_button.focus_mode == Control.FOCUS_ALL and panel.return_main_button.focus_mode == Control.FOCUS_ALL, "committed result exit actions are not keyboard focusable")
 	_require(not panel.retry_save_button.visible and panel.retry_save_button.disabled, "committed result retained retry action")
 	_require(not panel.discard_unsaved_button.visible and panel.discard_unsaved_button.disabled, "committed result retained discard action")
+	var discarded_display := RunSceneResultControllerScript.build_result_display_snapshot(
+		snapshot,
+		fixture.get("summary", {}),
+		{"ok": false, "status": &"discarded_unsaved", "committed": false, "discarded": true}
+	)
+	var discarded_model := ResultPresentationModelScript.build(discarded_display)
+	_require(
+		bool(discarded_model.get("normal_exit_allowed", false))
+		and not bool(discarded_model.get("retry_save_allowed", true))
+		and not bool(discarded_model.get("discard_unsaved_allowed", true)),
+		"explicit unsaved discard did not project one-way normal exit"
+	)
+	_require(
+		String(discarded_model.get("persistence_text", "")).contains("不会写入档案"),
+		"explicit unsaved discard retained misleading retry copy"
+	)
 	panel.return_deploy_button.grab_focus()
 	await process_frame
 	_require(root.gui_get_focus_owner() == panel.return_deploy_button, "committed result primary exit could not take focus")
@@ -221,9 +239,11 @@ func _validate_production_run_scene_guards(fixture: Dictionary) -> void:
 	_require(bool(run_scene.call("_show_run_screen")), "production RunScene could not enter the run surface")
 	var run_screen: StringName = StringName(run_scene.get("screen_state"))
 	run_scene.call("_on_result_available", terminal_snapshot)
-	await process_frame
+	await create_timer(0.20).timeout
 	_require(bool(run_scene.call("_runtime_modal_is_top", &"result")), "production result modal was not registered as stack top")
 	_require(not panel.normal_exit_allowed(), "production result panel allowed exit after save failure")
+	var frozen_result_body := _capture_result_body(panel)
+	_require_result_body_unchanged(panel, frozen_result_body, "initial save failure")
 
 	# All ordinary routes, including the stack cancel used by Esc, must remain
 	# locked while the authoritative settlement has not been persisted.
@@ -240,6 +260,7 @@ func _validate_production_run_scene_guards(fixture: Dictionary) -> void:
 	_require(production_result_signal_count == 0, "failed production retry re-emitted result_available")
 	_require(not panel.normal_exit_allowed() and bool(run_scene.call("_runtime_modal_is_top", &"result")), "failed production retry unlocked or dismissed the result")
 	_require(root.gui_get_focus_owner() == panel.retry_save_button, "failed production retry did not restore focus to retry")
+	_require_result_body_unchanged(panel, frozen_result_body, "blocked retry")
 	_require(DirAccess.remove_absolute(ProjectSettings.globalize_path(blocker_path)) == OK, "could not release production save blocker")
 	run_scene.call("_retry_terminal_commit_from_result")
 	await process_frame
@@ -247,24 +268,36 @@ func _validate_production_run_scene_guards(fixture: Dictionary) -> void:
 	_require(production_result_signal_count == 0, "successful production retry re-emitted result_available")
 	_require(panel.normal_exit_allowed(), "successful production retry did not restore normal exits")
 	_require(root.gui_get_focus_owner() == panel.return_deploy_button, "successful production retry did not move focus to the primary exit")
+	_require_result_body_unchanged(panel, frozen_result_body, "committed retry")
 	run_scene.call("_return_from_result_to_deploy")
 	_require(StringName(run_scene.get("screen_state")) == &"deploy_shell" and not bool(run_scene.call("_runtime_modal_is_top", &"result")), "saved production result did not return through Deploy authority")
 
-	# Re-open an explicitly unsaved presentation and exercise the wired two-step
-	# escape hatch. It must route only after the second confirmation and submit
-	# no domain command.
+	# Re-open a distinct explicitly unsaved presentation and exercise the wired
+	# two-step escape hatch. Only the second confirmation may cross the core
+	# discard authority and release the result route.
+	var discard_snapshot := terminal_snapshot.duplicate(true)
+	discard_snapshot["result_id"] = "%s:discard" % String(terminal_snapshot.get("result_id", "terminal"))
+	run_context.result_snapshot = discard_snapshot.duplicate(true)
 	runtime_controller.last_meta_commit = {"ok": false, "status": &"save_failed", "committed": false}
 	run_scene.set("screen_state", &"run")
-	run_scene.call("_on_result_available", terminal_snapshot)
+	run_scene.call("_on_result_available", discard_snapshot)
 	await process_frame
 	_require(StringName(run_scene.get("screen_state")) == &"run", "unsaved result setup did not begin from the production run route")
 	panel.call("_request_discard_unsaved_result")
 	_require(bool(run_scene.call("_runtime_modal_is_top", &"result")), "first production discard confirmation escaped the result")
 	_require(StringName(run_scene.get("screen_state")) == &"run", "first production discard confirmation changed route")
+	_require(production_discard_command_count == 0, "first production discard confirmation reached core authority")
 	panel.call("_request_discard_unsaved_result")
 	_require(not bool(run_scene.call("_runtime_modal_is_top", &"result")), "second production discard confirmation did not release the result")
 	_require(StringName(run_scene.get("screen_state")) == &"deploy_shell", "production discard did not return to Deploy")
-	_require(production_retry_command_count == 2, "production discard submitted a domain command")
+	_require(production_discard_command_count == 1, "production discard did not submit exactly one core command")
+	_require(production_retry_command_count == 2, "production discard submitted an unexpected save retry")
+	_require(production_result_signal_count == 0, "production discard re-emitted result_available")
+	_require(
+		StringName(runtime_controller.last_meta_commit.get("status", &"")) == &"discarded_unsaved"
+		and bool(runtime_controller.last_meta_commit.get("discarded", false)),
+		"production discard did not leave the explicit unsaved-discard authority state"
+	)
 
 	if command_bus.command_requested.is_connected(_on_production_command_requested):
 		command_bus.command_requested.disconnect(_on_production_command_requested)
@@ -278,6 +311,8 @@ func _validate_production_run_scene_guards(fixture: Dictionary) -> void:
 func _on_production_command_requested(command_name: StringName, _payload: Dictionary) -> void:
 	if command_name == &"retry_terminal_commit":
 		production_retry_command_count += 1
+	elif command_name == &"discard_unsaved_terminal_commit":
+		production_discard_command_count += 1
 
 
 func _on_production_result_available(_snapshot: Dictionary) -> void:
@@ -290,6 +325,94 @@ func _warehouse_has(items: Variant, instance_id: String) -> bool:
 			if raw_item is Dictionary and String(raw_item.get("instance_id", "")) == instance_id:
 				return true
 	return false
+
+
+func _capture_result_body(panel) -> Dictionary:
+	var title := panel.get_node_or_null("ResultTitle") as Label
+	var summary := panel.get_node_or_null("ResultSummary") as Label
+	var metric_row := panel.get("result_metrics_row") as HBoxContainer
+	var metric_titles: Array = panel.get("result_metric_title_labels")
+	var metric_values: Array = panel.get("result_metric_value_labels")
+	var items_scroll := panel.get("result_items_scroll") as ScrollContainer
+	var sections_box := panel.get("result_item_sections_box") as VBoxContainer
+	var first_section: Control
+	if sections_box != null and sections_box.get_child_count() > 0:
+		first_section = sections_box.get_child(0) as Control
+	return {
+		"title_id": title.get_instance_id() if title != null else 0,
+		"title_text": title.text if title != null else "",
+		"summary_id": summary.get_instance_id() if summary != null else 0,
+		"summary_text": summary.text if summary != null else "",
+		"metric_row_id": metric_row.get_instance_id() if metric_row != null else 0,
+		"metric_title_ids": _control_instance_ids(metric_titles),
+		"metric_title_texts": _label_texts(metric_titles),
+		"metric_value_ids": _control_instance_ids(metric_values),
+		"metric_value_texts": _label_texts(metric_values),
+		"items_scroll_id": items_scroll.get_instance_id() if items_scroll != null else 0,
+		"first_section_id": first_section.get_instance_id() if first_section != null else 0,
+		"first_section_texts": _descendant_label_texts(first_section),
+		"panel_alpha": panel.modulate.a,
+	}
+
+
+func _require_result_body_unchanged(panel, before: Dictionary, phase: String) -> void:
+	var after := _capture_result_body(panel)
+	var title := panel.get_node_or_null("ResultTitle") as Label
+	var summary := panel.get_node_or_null("ResultSummary") as Label
+	var metric_row := panel.get("result_metrics_row") as HBoxContainer
+	var items_scroll := panel.get("result_items_scroll") as ScrollContainer
+	var sections_box := panel.get("result_item_sections_box") as VBoxContainer
+	var first_section: Control
+	if sections_box != null and sections_box.get_child_count() > 0:
+		first_section = sections_box.get_child(0) as Control
+	_require(title != null and title.is_visible_in_tree(), "%s hid the frozen result title" % phase)
+	_require(summary != null and summary.is_visible_in_tree(), "%s hid the frozen result summary" % phase)
+	_require(metric_row != null and metric_row.is_visible_in_tree(), "%s hid the frozen result metrics" % phase)
+	_require(items_scroll != null and items_scroll.is_visible_in_tree(), "%s hid the frozen result item section" % phase)
+	_require(first_section != null and first_section.is_visible_in_tree(), "%s removed the frozen result item section" % phase)
+	for key in [
+		"title_id",
+		"title_text",
+		"summary_id",
+		"summary_text",
+		"metric_row_id",
+		"metric_title_ids",
+		"metric_title_texts",
+		"metric_value_ids",
+		"metric_value_texts",
+		"items_scroll_id",
+		"first_section_id",
+		"first_section_texts",
+	]:
+		_require(after.get(key) == before.get(key), "%s changed frozen result body field %s" % [phase, key])
+	_require(float(after.get("panel_alpha", 0.0)) >= 0.99, "%s replayed the result entrance fade" % phase)
+
+
+func _control_instance_ids(controls: Array) -> Array[int]:
+	var ids: Array[int] = []
+	for raw_control in controls:
+		var control := raw_control as Control
+		ids.append(control.get_instance_id() if control != null else 0)
+	return ids
+
+
+func _label_texts(labels: Array) -> Array[String]:
+	var texts: Array[String] = []
+	for raw_label in labels:
+		var label := raw_label as Label
+		texts.append(label.text if label != null else "")
+	return texts
+
+
+func _descendant_label_texts(root_control: Control) -> Array[String]:
+	var texts: Array[String] = []
+	if root_control == null:
+		return texts
+	for raw_node in root_control.find_children("*", "Label", true, false):
+		var label := raw_node as Label
+		if label != null:
+			texts.append(label.text)
+	return texts
 
 
 func _is_lower_hex(value: String) -> bool:

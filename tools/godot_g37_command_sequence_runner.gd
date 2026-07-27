@@ -1,13 +1,19 @@
 extends SceneTree
 
 const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
+const RunStartConfigScript := preload("res://scripts/core/run/run_start_config.gd")
 
 
 func _init() -> void:
 	var controller = RunRuntimeControllerScript.new()
 	var bus = controller.command_bus
-	var start_result: Dictionary = bus.dispatch(&"start_tutorial_run")
-	_require_ok(start_result, "start_tutorial_run")
+	var tutorial_start := RunStartConfigScript.default_config()
+	tutorial_start["map_config_id"] = "tutorial_5x5"
+	var start_result: Dictionary = bus.dispatch(
+		&"start_standard_run",
+		{"run_start_config": tutorial_start}
+	)
+	_require_ok(start_result, "start_standard_run:tutorial_5x5")
 	_clear_tutorial_popup(controller, bus)
 	_require_ok(bus.dispatch(&"move_by", {"delta": Vector2i(1, 0)}), "move_by")
 	_clear_tutorial_popup(controller, bus)

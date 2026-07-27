@@ -8,11 +8,24 @@ Current authority:
 active_repo = <git-worktree-root>
 godot_project = <git-worktree-root>\Godot\GraytailGodot
 docs_entry = <git-worktree-root>\docs
+active_stage = I3R / ACTIVE
+latest_closed_non_art_baseline = I2 / CLOSED / PASS_WITH_NOTES
 ```
 
 The active root must be resolved with `git rev-parse --show-toplevel` (or from the
 current script location). Never select an active repository by matching a drive
 letter or another computer's absolute path.
+
+Read current stage facts in this order:
+
+1. `docs/50_stages/active/STAGE_INDEX.md`
+2. `docs/10_current/CURRENT_STATE.md`
+3. `docs/10_current/NEXT_ACTION.md`
+4. `docs/20_product/I3R_PLAYER_EXPERIENCE_REWORK_CONTRACT.md`
+5. `docs/00_governance/I3R_EXECUTION_LEDGER.md`
+6. `docs/00_governance/I3R_REQUIREMENT_MATRIX.md`
+7. `docs/40_validation/VALIDATION_INDEX.md`
+8. `tools/i3r/README.md`
 
 Historical G40 source roots:
 
@@ -39,5 +52,9 @@ Rules:
 - ART21 main-menu scene reconstruction is the latest closed art stage. The
   earlier ART21 and ART21R1 branches remain preliminary slices of that stage;
   do not infer or start ART22 without an explicit new requirement.
-- I2 is the latest closed non-art project stage. I1, M5 and G40 remain historical
-  baselines and must not be presented as the latest overall project progress.
+- I2 is the latest effective closed non-art project baseline. I3 retains
+  conditional closeout evidence, but its own validation and handoff require
+  exact-head/full plus push/remote-SHA proof before closed-baseline authority
+  can take effect.
+- I3R is the current active rework stage. It is not closed and does not
+  automatically authorize I4, a new art stage, or any other successor.

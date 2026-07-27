@@ -1,5 +1,7 @@
 # AUDIT_G4_PLAYABLE_GRAYBOX_V0_1
 
+> **Superseded tutorial entry (I3R, 2026-07-24):** This is a historical G4 audit. I3R retired the dedicated tutorial entry described below. The current production route is `Deploy map catalog -> tutorial_5x5 -> standard_run`; the historical body is retained unchanged and is not current operating guidance.
+
 ## Scope
 
 Audit of G3.5 runtime repair and G4 playable graybox v0.1 on branch `godot/lua-parity-p0`.

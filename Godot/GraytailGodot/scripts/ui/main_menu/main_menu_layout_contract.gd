@@ -38,25 +38,25 @@ const ENTRY_ANCHORS := {
 const ENTRY_COMPONENT_LOCAL_RECTS := {
 	&"deploy": {
 		&"board": Rect2(0, 0, 370, 146),
-		&"text": Rect2(60, 34, 256, 70),
+		&"text": Rect2(54, 24, 268, 98),
 		&"hit": Rect2(-14, -13, 395, 171),
 		&"focus": Rect2(-6, -6, 382, 158),
 	},
 	&"long_term": {
 		&"board": Rect2(0, 0, 249, 96),
-		&"text": Rect2(34, 20, 181, 56),
+		&"text": Rect2(28, 10, 193, 76),
 		&"hit": Rect2(-13, -11, 274, 119),
 		&"focus": Rect2(-4, -4, 257, 104),
 	},
 	&"settings": {
 		&"board": Rect2(0, 0, 221, 84),
-		&"text": Rect2(28, 14, 165, 54),
+		&"text": Rect2(23, 8, 175, 70),
 		&"hit": Rect2(-12, -10, 245, 105),
 		&"focus": Rect2(-4, -4, 229, 92),
 	},
 	&"exit_game": {
 		&"board": Rect2(0, 0, 211, 75),
-		&"text": Rect2(22, 11, 167, 52),
+		&"text": Rect2(16, 3, 179, 69),
 		&"hit": Rect2(-13, -10, 236, 96),
 		&"focus": Rect2(-4, -4, 219, 83),
 	},
@@ -67,14 +67,14 @@ const NOTICE_COMPONENT_LOCAL_RECTS := {
 	&"panel": Rect2(0, 0, 220, 250),
 	&"heading": Rect2(18, 30, 146, 34),
 	&"title": Rect2(30, 80, 136, 30),
-	&"description": Rect2(30, 115, 136, 100),
+	&"description": Rect2(30, 115, 154, 112),
 }
 
 const ENTRY_TEXT_RULES := {
-	&"deploy": {"preferred_font_size": 38, "min_font_size": 18, "max_lines": 2, "line_height_ratio": 1.12},
-	&"long_term": {"preferred_font_size": 30, "min_font_size": 18, "max_lines": 2, "line_height_ratio": 1.12},
-	&"settings": {"preferred_font_size": 28, "min_font_size": 18, "max_lines": 2, "line_height_ratio": 1.12},
-	&"exit_game": {"preferred_font_size": 27, "min_font_size": 18, "max_lines": 2, "line_height_ratio": 1.12},
+	&"deploy": {"preferred_font_size": 38, "min_font_size": 18, "max_lines": 2, "line_height_ratio": 1.12, "padding": Vector2(8, 5)},
+	&"long_term": {"preferred_font_size": 30, "min_font_size": 18, "max_lines": 2, "line_height_ratio": 1.12, "padding": Vector2(6, 4)},
+	&"settings": {"preferred_font_size": 28, "min_font_size": 18, "max_lines": 2, "line_height_ratio": 1.12, "padding": Vector2(8, 4)},
+	&"exit_game": {"preferred_font_size": 27, "min_font_size": 18, "max_lines": 2, "line_height_ratio": 1.12, "padding": Vector2(6, 4)},
 }
 
 const NOTICE_TITLE_RULE := {
@@ -84,10 +84,11 @@ const NOTICE_TITLE_RULE := {
 	"line_height_ratio": 1.15,
 }
 const NOTICE_DESCRIPTION_RULE := {
-	"preferred_font_size": 14,
-	"min_font_size": 12,
-	"max_lines": 7,
-	"line_height_ratio": 1.15,
+	"preferred_font_size": 13,
+	"min_font_size": 10,
+	"max_lines": 5,
+	"line_height_ratio": 1.5,
+	"padding": Vector2(2, 2),
 }
 
 
@@ -172,8 +173,10 @@ static func entry_text_profile(entry_id: StringName) -> Dictionary:
 	return (ENTRY_TEXT_RULES[entry_id] as Dictionary).duplicate(true)
 
 
-static func text_fit(text: String, logical_bounds: Rect2, rule: Dictionary) -> Dictionary:
-	var preferred_font_size := maxi(1, int(rule.get("preferred_font_size", 18)))
+static func text_fit(text: String, logical_bounds: Rect2, rule: Dictionary, ui_scale_factor: float = 1.0) -> Dictionary:
+	var normalized_ui_scale := clampf(ui_scale_factor, 1.0, 1.5)
+	var base_preferred_font_size := maxi(1, int(rule.get("preferred_font_size", 18)))
+	var preferred_font_size := maxi(1, int(round(float(base_preferred_font_size) * normalized_ui_scale)))
 	var min_font_size := clampi(int(rule.get("min_font_size", preferred_font_size)), 1, preferred_font_size)
 	var max_lines := maxi(1, int(rule.get("max_lines", 1)))
 	var line_height_ratio := maxf(1.0, float(rule.get("line_height_ratio", 1.12)))
@@ -198,6 +201,8 @@ static func text_fit(text: String, logical_bounds: Rect2, rule: Dictionary) -> D
 				"measured_height": metrics.get("height", 0.0),
 				"available_width": available_width,
 				"available_height": available_height,
+				"padding": padding,
+				"ui_scale_factor": normalized_ui_scale,
 			}
 	var fallback_lines := _wrap_text(text, available_width, min_font_size)
 	var fallback_metrics := _line_metrics(fallback_lines, min_font_size, line_height_ratio)
@@ -214,17 +219,24 @@ static func text_fit(text: String, logical_bounds: Rect2, rule: Dictionary) -> D
 		"measured_height": fallback_metrics.get("height", 0.0),
 		"available_width": available_width,
 		"available_height": available_height,
+		"padding": padding,
+		"ui_scale_factor": normalized_ui_scale,
 	}
 
 
-static func fit_entry_text(entry_id: StringName, text: String) -> Dictionary:
-	return text_fit(text, logical_rect(StringName("entry.%s.text" % String(entry_id))), entry_text_profile(entry_id))
+static func fit_entry_text(entry_id: StringName, text: String, ui_scale_factor: float = 1.0) -> Dictionary:
+	return text_fit(
+		text,
+		logical_rect(StringName("entry.%s.text" % String(entry_id))),
+		entry_text_profile(entry_id),
+		ui_scale_factor
+	)
 
 
-static func fit_notice(title: String, description: String) -> Dictionary:
+static func fit_notice(title: String, description: String, ui_scale_factor: float = 1.0) -> Dictionary:
 	return {
-		"title": text_fit(title, logical_rect(&"notice.title"), NOTICE_TITLE_RULE),
-		"description": text_fit(description, logical_rect(&"notice.description"), NOTICE_DESCRIPTION_RULE),
+		"title": text_fit(title, logical_rect(&"notice.title"), NOTICE_TITLE_RULE, ui_scale_factor),
+		"description": text_fit(description, logical_rect(&"notice.description"), NOTICE_DESCRIPTION_RULE, ui_scale_factor),
 	}
 
 

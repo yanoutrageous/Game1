@@ -9,7 +9,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_tutorial_popup_script")
 
-[node name="Panel" type="PanelContainer" parent="."]
+[node name="Panel" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -20,19 +20,28 @@ offset_left = -220.0
 offset_top = -100.0
 offset_right = 220.0
 offset_bottom = 100.0
+clip_contents = true
 
-[node name="Content" type="VBoxContainer" parent="Panel"]
-layout_mode = 2
+[node name="Content" type="Control" parent="Panel"]
+layout_mode = 0
 
 [node name="Title" type="Label" parent="Panel/Content"]
-layout_mode = 2
+layout_mode = 0
 text = "Tutorial"
+autowrap_mode = 3
 
-[node name="Message" type="Label" parent="Panel/Content"]
-layout_mode = 2
+[node name="Message" type="RichTextLabel" parent="Panel/Content"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 0
+bbcode_enabled = false
+fit_content = false
+scroll_active = true
+scroll_following = false
 autowrap_mode = 3
 text = "Tutorial message"
 
 [node name="ConfirmButton" type="Button" parent="Panel/Content"]
-layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 0
 text = "Confirm"
+clip_text = true

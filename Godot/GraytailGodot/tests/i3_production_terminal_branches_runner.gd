@@ -183,15 +183,62 @@ func _exercise_failure_branch() -> void:
 	_require(await _transition_room(Vector2i.RIGHT, Vector2i(3, 6), &"Chest"), "failure branch could not traverse the chest route")
 	_require(await _transition_room(Vector2i.UP, Vector2i(3, 5), &"Event"), "failure branch could not traverse the event route")
 	_require(await _transition_room(Vector2i.UP, Vector2i(3, 4), &"Normal"), "failure branch could not traverse the normal route")
-	_require(await _transition_room(Vector2i.LEFT, Vector2i(2, 4), &"Monster"), "failure branch could not enter the monster room")
+	# Seed 13's audited combat room contains one bat. At full health its genuine
+	# production damage cadence cannot defeat the player inside this journey's
+	# bounded terminal window. Prepare the failure through three real, one-shot
+	# mine entries on the production map, then let combat deliver the terminal
+	# hit. No health, result or context field is written by this runner.
+	var context = run_scene.get("run_context")
+	var hp_before_mines := int(context.get("hp")) if context != null else -1
+	_require(await _transition_room(Vector2i.RIGHT, Vector2i(4, 4), &"Mine"), "failure branch could not enter the first audited mine")
+	_require(await _transition_room(Vector2i.RIGHT, Vector2i(5, 4), &"Mine"), "failure branch could not enter the second audited mine")
+	_require(await _transition_room(Vector2i.LEFT, Vector2i(4, 4), &"Mine"), "failure branch could not leave the second audited mine")
+	_require(await _transition_room(Vector2i.LEFT, Vector2i(3, 4), &"Normal"), "failure branch could not return to the audited route")
+	_require(await _transition_room(Vector2i.UP, Vector2i(3, 3), &"Chest"), "failure branch could not reach the north chest route")
+	_require(await _transition_room(Vector2i.LEFT, Vector2i(2, 3), &"Mine"), "failure branch could not enter the third audited mine")
+	var hp_after_mines := int(context.get("hp")) if context != null else -1
+	_require(hp_before_mines > 0 and hp_after_mines > 0 and hp_after_mines < hp_before_mines, "real mine entries did not prepare a survivable combat-failure state")
+	_record_failure_observation("failure.mine_preparation", {
+		"hp_before": hp_before_mines,
+		"hp_after": hp_after_mines,
+		"damage_source": "production_mine_entry",
+		"mine_entries": 3,
+	})
+	_require(await _transition_room(Vector2i.DOWN, Vector2i(2, 4), &"Monster"), "failure branch could not enter the monster room")
 	_require(await _wait_until(func() -> bool: return _combat_active(), 3.0), "failure branch did not start combat")
 	await _checkpoint("failure_02_combat", "combat threat active before defeat")
-	# Move into the room through real held input, then allow the production enemy
-	# simulation to defeat the player. No health/result/context fixture is written.
-	await _move_axis(&"x", 0.52)
-	await _move_axis(&"y", 0.50)
+	var hp_before_combat_damage := int(context.get("hp")) if context != null else -1
+	# Choose an exposed corner lane from the authoritative read-only enemy
+	# snapshot. Moving on the enemy's side of the altar prevents solid cover
+	# from invalidating the natural ranged-damage proof.
+	var combat_before := _combat_read_only_snapshot()
+	var enemies: Array = combat_before.get("enemies", [])
+	_require(not enemies.is_empty(), "failure combat exposed no authoritative enemy snapshot")
+	var enemy: Dictionary = enemies[0] if not enemies.is_empty() else {}
+	var enemy_pos := Vector2(enemy.get("simulation_pos", enemy.get("pos", Vector2(0.70, 0.50))))
+	var exposure_target := Vector2(
+		0.82 if enemy_pos.x >= 0.50 else 0.18,
+		0.20 if enemy_pos.y <= 0.50 else 0.80
+	)
+	await _move_axis(&"x", exposure_target.x)
+	await _move_axis(&"y", exposure_target.y)
+	_record_failure_observation("failure.combat_exposure", {
+		"enemy_id": String(enemy.get("enemy_id", "")),
+		"monster_type": String(enemy.get("monster_type", &"")),
+		"enemy_position": enemy_pos,
+		"player_target": exposure_target,
+		"player_position": _player_local_pos(),
+		"snapshot_authority": String(combat_before.get("authority", &"")),
+	})
 	var result_panel := run_scene.get("result_panel") as Control
-	_require(await _wait_until(func() -> bool: return result_panel != null and result_panel.visible, 22.0), "production combat did not naturally reach a failure result")
+	var saw_natural_combat_damage := context != null and int(context.get("hp")) < hp_before_combat_damage
+	var combat_deadline := Time.get_ticks_msec() + 14000
+	while Time.get_ticks_msec() <= combat_deadline and (result_panel == null or not result_panel.visible):
+		if context != null and int(context.get("hp")) < hp_before_combat_damage:
+			saw_natural_combat_damage = true
+		await create_timer(FRAME_STEP).timeout
+	_require(saw_natural_combat_damage, "exposed production combat applied no natural player damage")
+	_require(result_panel != null and result_panel.visible, "production combat did not naturally reach a failure result")
 	if result_panel == null or not result_panel.visible:
 		return
 	var result_snapshot: Dictionary = run_scene.get("run_context").get("result_snapshot")
@@ -214,6 +261,18 @@ func _exercise_failure_branch() -> void:
 		await _click_control(return_main, "failure.return_main")
 		_require(await _wait_screen(&"main_menu", 4.0), "failure result did not return outside the run")
 		await _checkpoint("failure_04_return_main", "failure branch closed outside")
+
+
+func _combat_read_only_snapshot() -> Dictionary:
+	var runtime = run_scene.get("in_run_runtime") if run_scene != null else null
+	return runtime.call("build_read_only_snapshot") as Dictionary if runtime != null else {}
+
+
+func _record_failure_observation(action: String, observation: Dictionary) -> void:
+	var row := _evidence_snapshot(action, "measurement")
+	row["input"] = observation.duplicate(true)
+	row["visible_feedback"] = "read-only production damage-path observation"
+	evidence_rows.append(row)
 
 
 func _dispose_main() -> void:

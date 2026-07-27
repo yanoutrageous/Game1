@@ -2,6 +2,7 @@ extends SceneTree
 
 const CharacterPresentationCatalogScript := preload("res://scripts/presentation/character/character_presentation_catalog.gd")
 const MainMenuLayoutContractScript := preload("res://scripts/ui/main_menu/main_menu_layout_contract.gd")
+const Art23LongTermAssetContractScript := preload("res://scripts/presentation/art23_long_term_asset_contract.gd")
 const DESCEND_CHECKPOINT_MIN_OFFSET := 48.0
 
 var failures: Array[String] = []
@@ -75,6 +76,31 @@ func _run() -> void:
 	_check(main.get_node_or_null("MainContentRoot/MainMenuActionDeck") == null, "Legacy action deck is still mounted")
 	_check_texture_size(main, "BackgroundRoot/MainMenuSceneCleanPlate", Vector2(1280, 720))
 	_check(main.get_node_or_null("OverlayRoot/MainMenuSceneTransition") is ColorRect, "Prototype transition texture still creates a pasted rectangular mask")
+	var transition_fallback := main.get_node_or_null("MainMenuFixedTransitionFallback") as ColorRect
+	var transition_underlay := main.get_node_or_null("MainMenuFixedTransitionUnderlay") as TextureRect
+	var expected_long_term_background := Art23LongTermAssetContractScript.texture(&"long_term.scene.background.clean_plate")
+	_check(transition_fallback != null, "Descend transition is missing its dark safety fallback")
+	_check(
+		transition_fallback == null or (
+			transition_fallback.color.r < 0.08
+			and transition_fallback.color.g < 0.08
+			and transition_fallback.color.b < 0.08
+		),
+		"Descend transition fallback is not a neutral dark safety color"
+	)
+	_check(transition_underlay != null, "Descend transition does not reveal the long-term clean plate")
+	_check(expected_long_term_background != null, "ART23 long-term clean plate did not resolve")
+	_check(
+		transition_underlay == null or transition_underlay.texture == expected_long_term_background,
+		"Descend transition underlay is not the ART23 long-term clean plate"
+	)
+	_check(
+		transition_underlay == null
+		or transition_underlay.texture == null
+		or transition_underlay.texture.resource_path == "res://assets/ui/art23/long_term/background/scene_clean_plate.png",
+		"Descend transition underlay resolved a fallback instead of the ART23 clean plate"
+	)
+	_check_texture_size(main, "MainMenuFixedTransitionUnderlay", Vector2(1280, 720))
 
 	var ambient_groups := main.get("animated_groups") as Array
 	_check(ambient_groups.size() == 10, "Clean-plate scene should mount seven persistent and three ambient motion groups")

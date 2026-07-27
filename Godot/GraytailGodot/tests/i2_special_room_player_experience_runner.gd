@@ -98,6 +98,10 @@ func _check_event_room_entry_copy() -> void:
 			var snapshot: Dictionary = context.get_status_snapshot()
 			var model: Dictionary = RunSurfaceModelScript.build(snapshot, null, {}, {})
 			var encounter: Dictionary = model.get("encounter_section", {})
+			_check(
+				StringName(encounter.get("encounter_type", &"none")) == event_type,
+				"Real %s room lost its encounter type before presentation routing" % event_type
+			)
 			var hud = HUDViewModelScript.build_from_snapshot(snapshot)
 			var visible_copy := "%s\n%s\n%s\n%s\n%s\n%s" % [
 				model.get("command_feedback", ""),
@@ -398,23 +402,53 @@ func _check_production_proximity_authority() -> void:
 	player.set_local_position(Vector2(0.05, 0.05))
 	run_scene.call("_apply_full_view_models")
 	await process_frame
-	var event_button: Button = null
-	for raw_button in (run_surface.get("encounter_option_buttons") as Array):
-		if raw_button is Button and String((raw_button as Button).name).ends_with("leave"):
-			event_button = raw_button as Button
-			break
-	_check(event_button != null and not event_button.disabled, "Legacy RunSurface exposed no legal Event leave option")
-	if event_button != null and not event_button.disabled:
-		event_button.pressed.emit()
-	_check(_production_count(&"select_encounter_option") == 0 and _production_count(&"select_event_option") == 0, "Far legacy Event option submitted a domain command")
+	_check(
+		(run_surface.get("encounter_option_buttons") as Array).is_empty()
+		and not (run_surface.get("encounter_backdrop") as Control).visible,
+		"Event decision was duplicated in the steady RunSurface"
+	)
 	# A stale world-card callback is another UI entry and must revalidate range.
 	run_scene.call("_on_world_context_action_requested", &"event_open", {})
 	_check(not bool(run_scene.call("_runtime_modal_is_top", &"event")), "Far stale Event world action opened the option modal")
+	_check(_production_count(&"select_encounter_option") == 0 and _production_count(&"select_event_option") == 0, "Far Event action submitted a domain command")
 
 	player.set_local_position(ProjectionScript.EVENT_LOCAL_POS)
-	if event_button != null and not event_button.disabled:
-		event_button.pressed.emit()
-	_check(_production_count(&"select_encounter_option") == 1, "Near legacy Event option did not submit exactly one legal command")
+	room_view.advance(0.0, player.get_local_position(), {})
+	await process_frame
+	var event_popup = room_view.get("context_popup")
+	_check(
+		event_popup != null and event_popup.visible and event_popup.context_kind == &"event",
+		"Near Event did not expose its world-context entry"
+	)
+	var event_opened := bool(event_popup.activate_primary()) if event_popup != null else false
+	await process_frame
+	_check(event_opened and bool(run_scene.call("_runtime_modal_is_top", &"event")), "Near Event world context did not open its focused modal")
+	_check(_production_count(&"select_encounter_option") == 0 and _production_count(&"select_event_option") == 0, "Opening Event modal submitted a decision")
+	var event_options_box = run_scene.get("event_options_box") as Control
+	var event_modal_buttons: Array[Button] = []
+	if event_options_box != null:
+		for child in event_options_box.get_children():
+			if child is Button:
+				event_modal_buttons.append(child as Button)
+	var expected_event_options: Array = (context.event_state as Dictionary).get("options", [])
+	_check(
+		event_modal_buttons.size() == expected_event_options.size(),
+		"Event modal did not preserve all authoritative options: expected=%d actual=%d"
+		% [expected_event_options.size(), event_modal_buttons.size()]
+	)
+	var leave_button: Button = event_modal_buttons.back() if not event_modal_buttons.is_empty() else null
+	_check(
+		leave_button != null and not leave_button.disabled and String(leave_button.text).contains("离开"),
+		"Event modal did not retain its legal leave decision"
+	)
+	if leave_button != null and not leave_button.disabled:
+		leave_button.pressed.emit()
+	await process_frame
+	_check(
+		_production_count(&"select_event_option") == 1
+		and _production_count(&"select_encounter_option") == 0,
+		"Near Event modal did not submit exactly one authoritative event command"
+	)
 
 	var exit_positions: Array[Vector2i] = context.truth_map.get_exits()
 	_check(not exit_positions.is_empty(), "Production proximity fixture contains no governed Exit")
@@ -453,6 +487,33 @@ func _check_production_proximity_authority() -> void:
 	await process_frame
 	_check(StringName(context.phase) == &"running", "Exit proximity fixture did not return to running after cancellation")
 	_check(production_exit_popup != null and production_exit_popup.visible and production_exit_prompt != null and not production_exit_prompt.visible, "Closing production extraction confirmation did not restore the context card as the sole Exit guidance")
+	var exit_focus_margin_position := ProjectionScript.EXIT_LOCAL_POS + Vector2(0.212, 0.0)
+	player.set_local_position(exit_focus_margin_position)
+	room_view.advance(0.0, player.get_local_position(), {})
+	await process_frame
+	_check(
+		production_exit_popup != null and production_exit_popup.visible and production_exit_popup.context_kind == &"exit",
+		"Exit context card did not remain visible inside its focus margin"
+	)
+	_check(
+		not bool(room_view.request_nearest_interaction(player.get_local_position()).get("accepted", false)),
+		"Strict Exit domain query accepted a player outside the interaction radius"
+	)
+	run_scene.call("_handle_interact_pressed")
+	await process_frame
+	_check(
+		_production_count(&"request_extract") == 2 and StringName(context.phase) == &"confirm_extract",
+		"Keyboard Exit interaction lost its already-authorized visible-focus grace"
+	)
+	run_scene.call("_cancel_extract_from_ui")
+	await process_frame
+	player.set_local_position(exit_focus_margin_position)
+	room_view.advance(0.0, player.get_local_position(), {})
+	run_scene.call("_request_extract_from_ui")
+	_check(
+		_production_count(&"request_extract") == 2 and StringName(context.phase) == &"running",
+		"Legacy/UI Exit entry inherited keyboard-only focus grace"
+	)
 
 	if bus.command_requested.is_connected(_on_production_command_requested):
 		bus.command_requested.disconnect(_on_production_command_requested)
@@ -485,14 +546,14 @@ func _check_monster_appearance_envelope() -> void:
 	actor.configure(&"slime", snapshot)
 	var first: Dictionary = actor.appearance_snapshot()
 	var sprite := actor.get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
-	_check(float(first.get("duration", 0.0)) >= 0.15 and float(first.get("duration", 1.0)) <= 0.20, "Monster appearance is outside the 0.15-0.20s envelope")
+	_check(float(first.get("duration", 0.0)) >= 0.30 and float(first.get("duration", 1.0)) <= 0.34, "Monster appearance is outside the 0.30-0.34s readable envelope")
 	_check(float(first.get("progress", -1.0)) == 0.0, "Monster appearance did not start at the first presentation frame")
 	_check(sprite != null and sprite.modulate.a >= 0.70, "Monster first presentation frame is invisible")
-	actor._process(0.09)
+	actor._process(0.16)
 	var middle: Dictionary = actor.appearance_snapshot()
 	_check(float(middle.get("progress", 0.0)) > 0.0 and float(middle.get("progress", 1.0)) < 1.0, "Monster appearance skipped its presentation envelope")
-	actor._process(0.12)
-	_check(is_equal_approx(float(actor.appearance_snapshot().get("progress", 0.0)), 1.0), "Monster appearance did not finish by 0.20s")
+	actor._process(0.18)
+	_check(is_equal_approx(float(actor.appearance_snapshot().get("progress", 0.0)), 1.0), "Monster appearance did not finish by 0.34s")
 	_check(snapshot == unchanged, "Monster presentation mutated its authoritative snapshot")
 	actor.free()
 
@@ -743,7 +804,7 @@ func _frames(count: int) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("I2_SPECIAL_ROOM_PLAYER_EXPERIENCE=PASS event=structured,proximity_gated,room_entry_scrub,stage_feedback,token_scrub world=proximity_only mine=entry_result monster=0.18s exit=public_summary,proximity_gated")
+		print("I2_SPECIAL_ROOM_PLAYER_EXPERIENCE=PASS event=structured,proximity_gated,room_entry_scrub,stage_feedback,token_scrub world=proximity_only mine=entry_result monster=0.32s exit=public_summary,proximity_gated")
 		quit(0)
 		return
 	for failure in failures:

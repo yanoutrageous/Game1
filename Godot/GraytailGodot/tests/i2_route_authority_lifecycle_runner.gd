@@ -236,6 +236,26 @@ func _expect_shell_return_and_hidden_page_lifecycle(failures: Array[String]) -> 
 	_expect(shell.get_visible_page_id() == PageRouterScript.PAGE_MAIN_MENU, "AppShell must start on main", failures)
 	_expect(bool(main.call("is_page_active")), "main must be active on entry", failures)
 	_expect(not bool(deploy.call("is_page_active")) and not bool(long_term.call("is_page_active")), "hidden pages must start inactive", failures)
+	var long_term_cards_before: Array = long_term.get("long_term_card_buttons")
+	_expect(not long_term_cards_before.is_empty(), "inactive long-term page must retain its built card projection", failures)
+	var long_term_card_instance_before := (
+		(long_term_cards_before[0] as Control).get_instance_id()
+		if not long_term_cards_before.is_empty() and long_term_cards_before[0] is Control
+		else 0
+	)
+	shell.call("_sync_page_lifecycle")
+	shell.call("_sync_page_lifecycle")
+	var long_term_cards_after: Array = long_term.get("long_term_card_buttons")
+	var long_term_card_instance_after := (
+		(long_term_cards_after[0] as Control).get_instance_id()
+		if not long_term_cards_after.is_empty() and long_term_cards_after[0] is Control
+		else 0
+	)
+	_expect(
+		long_term_card_instance_before > 0 and long_term_card_instance_after == long_term_card_instance_before,
+		"same-state lifecycle sync must not rebuild an already inactive long-term page",
+		failures
+	)
 	_expect(PageRouterScript.screen_state_for_page(shell.get_visible_page_id()) == PageRouterScript.SCREEN_MAIN_MENU, "main page must map to RunScene main state", failures)
 	main.call("_grab_default_focus")
 	await _frames(1)

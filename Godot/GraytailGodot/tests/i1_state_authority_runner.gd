@@ -21,7 +21,7 @@ func _init() -> void:
 func _test_legal_lifecycle_paths() -> void:
 	var state_machine := RunStateMachineScript.new()
 	var extraction_context := RunContextScript.new()
-	var start_result: Dictionary = state_machine.start_tutorial_run(extraction_context)
+	var start_result: Dictionary = state_machine.start_standard_run(extraction_context, {"map_config_id": "tutorial_5x5"})
 	_require(bool(start_result.get("ok", false)), "tutorial start was rejected")
 	_require_equal(extraction_context.phase, &"running", "start phase")
 	var original_run_id: StringName = extraction_context.run_id
@@ -46,7 +46,7 @@ func _test_legal_lifecycle_paths() -> void:
 	_require_equal(StringName(extracted_state.get("phase", &"")), &"extracted", "extracted result snapshot phase")
 
 	var failure_context := RunContextScript.new()
-	state_machine.start_tutorial_run(failure_context)
+	state_machine.start_standard_run(failure_context, {"map_config_id": "classic_7x7_simple", "seed_value": 13})
 	var failure_result: Dictionary = state_machine.fail_run(failure_context, "i1_state_authority")
 	_require(bool(failure_result.get("ok", false)), "failure transition was rejected")
 	_require_equal(failure_context.phase, &"failure_salvage", "failure salvage phase")
@@ -61,7 +61,7 @@ func _test_legal_lifecycle_paths() -> void:
 func _test_illegal_transition_rejected() -> void:
 	var state_machine := RunStateMachineScript.new()
 	var context := RunContextScript.new()
-	state_machine.start_tutorial_run(context)
+	state_machine.start_standard_run(context, {"map_config_id": "tutorial_5x5"})
 	var no_request_result: Dictionary = state_machine.confirm_extract(context, true)
 	_require(not bool(no_request_result.get("ok", true)), "confirm without request unexpectedly succeeded")
 	_require_equal(StringName(no_request_result.get("status", &"")), &"no_extract_request", "confirm without request status")
@@ -82,7 +82,7 @@ func _test_illegal_transition_rejected() -> void:
 
 func _test_context_compatibility_routes_through_authority() -> void:
 	var context := RunContextScript.new()
-	context.start_tutorial_run()
+	context.start_standard_run()
 	_require_equal(context.phase, &"running", "RunContext compatibility start phase")
 	context.reset()
 	_require_equal(context.phase, &"idle", "RunContext compatibility reset phase")

@@ -2,11 +2,14 @@ extends RefCounted
 class_name M7ProgressionService
 
 const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
+const M7TalentCatalogScript := preload("res://scripts/core/progression/m7_talent_catalog.gd")
+const PlayerAppearanceConfigScript := preload("res://scripts/core/content/player_appearance_config.gd")
 
 
 static func default_meta_fields() -> Dictionary:
 	return {
 		"unlocked_map_ids": M7ContentCatalogScript.DEFAULT_UNLOCKED_MAPS.duplicate(),
+		"tutorial_completed": false,
 		"map_success_counts": {},
 		"commission_history": [],
 		"task_states": _default_task_states(),
@@ -26,6 +29,7 @@ static func default_meta_fields() -> Dictionary:
 		"badges": [],
 		"transaction_sequence": 0,
 		"red_dot_state": {},
+		"player_appearance": PlayerAppearanceConfigScript.default_config(),
 	}
 
 
@@ -36,6 +40,7 @@ static func normalize_meta(data: Dictionary) -> Dictionary:
 		if not result.has(key):
 			result[key] = defaults[key].duplicate(true) if defaults[key] is Array or defaults[key] is Dictionary else defaults[key]
 	result["unlocked_map_ids"] = _unique_strings(_array(result.get("unlocked_map_ids", [])), M7ContentCatalogScript.DEFAULT_UNLOCKED_MAPS)
+	result["tutorial_completed"] = bool(result.get("tutorial_completed", false))
 	result["map_success_counts"] = _dictionary(result.get("map_success_counts", {}))
 	result["commission_history"] = _array(result.get("commission_history", []))
 	result["task_states"] = _normalize_goal_states(_dictionary(result.get("task_states", {})), M7ContentCatalogScript.task_definitions(), true)
@@ -47,21 +52,23 @@ static func normalize_meta(data: Dictionary) -> Dictionary:
 	for key in ["research_completed_ids", "codex_discoveries", "unread_codex_ids", "collection_discoveries", "completed_collection_set_ids", "unread_collection_set_ids", "unread_history_ids", "purchased_instance_ids", "claimed_reward_ids", "granted_reward_ids", "titles", "badges"]:
 		result[key] = _unique_strings(_array(result.get(key, [])))
 	result["event_completion_counts"] = _dictionary(result.get("event_completion_counts", {}))
+	result["player_appearance"] = PlayerAppearanceConfigScript.normalize(result.get("player_appearance", {}))
 	for event_id in ["trader", "dice", "altar", "trap"]:
 		(result["event_completion_counts"] as Dictionary)[event_id] = maxi(0, int((result["event_completion_counts"] as Dictionary).get(event_id, 0)))
 	result["transaction_sequence"] = maxi(0, int(result.get("transaction_sequence", 0)))
 	result["profile_exp"] = maxi(0, int(result.get("profile_exp", 0)))
 	result["profile_level"] = M7ContentCatalogScript.profile_level_for_exp(int(result["profile_exp"]))
+	M7TalentCatalogScript.sync_progress(result, not result.has("talent_budget_granted"))
 	_refresh_profile_awards(result)
 	_refresh_red_dots(result)
 	return result
 
 
 static func apply_settlement(data: Dictionary, result_snapshot: Dictionary) -> Dictionary:
-	if str(result_snapshot.get("mode", "")) == "tutorial":
-		return {"skipped": true, "reason": "legacy_tutorial_fixture"}
-	var result_id := str(result_snapshot.get("result_id", ""))
 	var run_start := _dictionary(result_snapshot.get("run_start_config", {}))
+	if str(result_snapshot.get("mode", "")) == "tutorial" or str(run_start.get("map_config_id", "")) == "tutorial_5x5":
+		return {"skipped": true, "reason": "tutorial_completion_owned_by_meta_adapter"}
+	var result_id := str(result_snapshot.get("result_id", ""))
 	var map_id := str(run_start.get("map_config_id", run_start.get("config_id", "classic_10x10_standard")))
 	if not map_id.begins_with("classic_"):
 		map_id = "classic_10x10_standard"
@@ -455,6 +462,7 @@ static func _grant_reward_payload(data: Dictionary, reward: Dictionary, source: 
 static func _add_exp(data: Dictionary, amount: int) -> void:
 	data["profile_exp"] = maxi(0, int(data.get("profile_exp", 0)) + maxi(0, amount))
 	data["profile_level"] = M7ContentCatalogScript.profile_level_for_exp(int(data["profile_exp"]))
+	M7TalentCatalogScript.sync_progress(data, not data.has("talent_budget_granted"))
 
 
 static func _refresh_profile_awards(data: Dictionary) -> void:
@@ -477,10 +485,15 @@ static func _refresh_red_dots(data: Dictionary) -> void:
 	for definition in M7ContentCatalogScript.research_definitions():
 		if _research_can_complete(data, definition):
 			research_available += 1
+	var talent_available := 0
+	for node in M7TalentCatalogScript.projection(data):
+		if bool(node.get("available", false)):
+			talent_available += 1
 	data["red_dot_state"] = {
 		"claimable_rewards": task_claimable + achievement_claimable,
 		"new_codex": _array(data.get("unread_codex_ids", [])).size(),
 		"research_available": research_available,
+		"talent_available": talent_available,
 		"new_history": _array(data.get("unread_history_ids", [])).size(),
 		"collection_completed": _array(data.get("unread_collection_set_ids", [])).size(),
 	}

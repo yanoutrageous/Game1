@@ -1,7 +1,7 @@
 # Source Registry
 
-文档状态：I3 当前来源注册表。
-最后更新：2026-07-23
+文档状态：I3 不可变来源 + I3R 当前语义/运行时覆盖层。
+最后更新：2026-07-24
 
 ## 当前仓库权威
 
@@ -11,7 +11,9 @@ godot_project: <active_repo>/Godot/GraytailGodot
 docs_entry: <active_repo>/docs
 ```
 
-当前机器观测 repo 为 `E:\AGAME1`，但该盘符不是跨机器权威。代码、资源、manifest 和当前 docs 事实必须从解析后的 worktree root 定位。
+当前 I3R 运行由 `git rev-parse --show-toplevel` 解析到独立 worktree；`E:\AGAME1`
+只是本机 workspace 容器观测，不是 active repo 或跨机器权威。代码、资源、manifest
+和当前 docs 必须从解析后的 worktree root 定位。
 
 ## I3 用户注入来源与仓库内 Base
 
@@ -34,6 +36,20 @@ Base 入库也不等于运行时准入；当前所有 Base art 初始状态均�
 - `sources/base/manifests/BASE_ART_ALIAS_MANIFEST.csv`
 - `sources/base/manifests/SOURCE_ARCHIVE_INVENTORY.csv`
 - `sources/base/manifests/BASE_IMPORT_SUMMARY.json`
+
+## I3R 当前治理覆盖层
+
+I3 的 Base manifest 继续保持来源初始值，不在原表中伪造批量审核。I3R 通过独立、
+可重算的覆盖层解决“只有象征性分类、运行时同字节对象无人裁决”的问题：
+
+- `docs/00_governance/I3R_BASE_SEMANTIC_OBJECT_REGISTRY.csv`
+- `docs/00_governance/I3R_BASE_RUNTIME_CROSSWALK.csv`
+- `docs/00_governance/I3R_BASE_SEMANTIC_AND_RUNTIME_GATE.md`
+- `tools/i3r/build_base_governance_overlay.py`
+
+语义表覆盖全部 1012 个唯一对象并明确区分图片、表格、metadata、文档和视频；运行时
+交叉账覆盖全部 Base/runtime 精确 SHA 匹配。显式 promotion 必须继续通过
+`I3_RUNTIME_ASSET_PROMOTION_REGISTRY.csv`，不能因 exact hash 自动获准。
 
 ## G40 历史外部来源
 

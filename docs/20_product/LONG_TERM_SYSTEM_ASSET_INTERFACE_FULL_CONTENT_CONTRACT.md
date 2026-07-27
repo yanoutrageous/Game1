@@ -11,15 +11,15 @@ Status: G30-R2 implementation contract.
 
 Primary read-only planning source:
 
-- `D:\AGAME1\Base Docs\长期系统整合与资产接口规则策划案.md`
+- `sources/base/原始策划案/长期系统整合与资产接口规则策划案.md`
 
 Supplemental read-only planning sources:
 
-- `D:\AGAME1\Base Docs\长期系统内容补全策划案.md`
-- `D:\AGAME1\Base Docs\物品资产模型与内容映射规则策划案.md`
-- `D:\AGAME1\Base Docs\本局结算报告与历史战绩系统.md`
-- `D:\AGAME1\Base Docs\出发探索界面与出勤准备规则策划修正案.md`
-- `D:\AGAME1\Base Docs\未来规划策划案.txt`
+- `sources/base/原始策划案/长期系统内容补全策划案.md`
+- `sources/base/原始策划案/物品资产模型与内容映射规则策划案.md`
+- `sources/base/原始策划案/本局结算报告与历史战绩系统.md`
+- `sources/base/原始策划案/出发探索界面与出勤准备规则策划修正案.md`
+- `sources/base/原始策划案/未来规划策划案.txt`
 
 G30 implements the LongTerm product/content contract and a Godot display-only consumer layer. It does not implement a real LongTerm backend, persistence, reward delivery, gacha roll/result delivery, objective progress, asset writes, SaveManager, AssetLedger mutation, or CommandBus mutation.
 

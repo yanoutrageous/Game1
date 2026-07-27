@@ -9,7 +9,7 @@ G33 记录房间类型、标签与遭遇通用规则的 preview / display-only �
 
 Stage: G33-R2 Room Type / Tag / Encounter Common Rule Full Content Implementation.
 
-Primary source: `D:\AGAME1\Base Docs\房间类型、标签与遭遇通用规则策划案.md`
+Primary registered original: `sources/base/原始策划案/房间类型、标签与遭遇通用规则策划案.md`
 
 ## Positioning
 

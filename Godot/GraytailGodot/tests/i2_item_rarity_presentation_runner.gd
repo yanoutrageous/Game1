@@ -146,6 +146,9 @@ func _check_deploy_consumers() -> void:
 		_check(StringName(row.get("rarity", &"")) == descriptor.get("normalized_key"), "Deploy did not normalize %s" % item.get("item_id", ""))
 		_check(String(row.get("rarity_display_text", "")) == descriptor.get("display_text"), "Deploy display text drifted for %s" % item.get("item_id", ""))
 		_check(String(row.get("summary", "")).contains(String(descriptor.get("badge", ""))) and String(row.get("summary", "")).contains(String(descriptor.get("label", ""))), "Deploy summary lacks badge + label for %s" % item.get("item_id", ""))
+		var collectible_level := int(item.get("collectible_level", 0))
+		_check(collectible_level > 0 and int(row.get("collectible_level", 0)) == collectible_level, "Deploy did not project the authoritative collectible level for %s" % item.get("item_id", ""))
+		_check(String(row.get("summary", "")).contains("收藏 Lv.%d" % collectible_level), "Deploy summary omitted the collectible level for %s" % item.get("item_id", ""))
 		_check(not String(row.get("summary", "")).contains("tier_"), "Deploy summary leaked raw rarity for %s" % item.get("item_id", ""))
 		_check(row.get("rarity_border_token") == descriptor.get("border_token"), "Deploy border token drifted for %s" % item.get("item_id", ""))
 
@@ -158,9 +161,12 @@ func _check_deploy_consumers() -> void:
 	card.setup(tier_6_row, &"warehouse", true)
 	await process_frame
 	var chip := card.get_node_or_null("CardModeChipLabel") as Label
+	var category_chip := card.get_node_or_null("CardCategoryChipLabel") as Label
 	var edge := card.get_node_or_null("CardRarityEdge") as ColorRect
 	var tier_6_descriptor: Dictionary = ItemRarityDescriptor.describe(&"tier_6")
+	var tier_6_collectible_level := int(tier_6.get("collectible_level", 0))
 	_check(chip != null and chip.text.contains("T6") and chip.text.contains("秘藏"), "Deploy card did not render the T6 non-color badge + label")
+	_check(category_chip != null and category_chip.text == "藏品 Lv.%d" % tier_6_collectible_level, "Deploy card did not render the authoritative collectible level")
 	_check(edge != null and edge.color == tier_6_descriptor.get("color"), "Deploy card did not consume the shared T6 color")
 	_check(edge != null and edge.get_meta("rarity_border_token", &"") == tier_6_descriptor.get("border_token"), "Deploy card did not consume the shared T6 border token")
 	canvas.queue_free()
@@ -177,11 +183,16 @@ func _check_loot_result_consumer() -> void:
 	await _frames(2)
 	var meta := panel.find_child("LootResultRarityMeta", true, false) as Label
 	var edge := panel.find_child("LootResultRarityEdge", true, false) as ColorRect
+	var card := panel.find_child("LootResultItemCard", true, false) as PanelContainer
 	var descriptor: Dictionary = ItemRarityDescriptor.describe_item(tier_6)
+	var collectible_level := int(tier_6.get("collectible_level", 0))
 	_check(meta != null and meta.text.contains("[T6] 秘藏"), "Loot result downgraded or omitted T6")
+	_check(collectible_level > 0 and meta != null and meta.text.contains("收藏等级 %d" % collectible_level), "Loot result omitted the authoritative collectible level")
 	_check(meta != null and not meta.text.contains("tier_6"), "Loot result leaked raw tier_6")
 	_check(edge != null and edge.color == descriptor.get("color"), "Loot result did not consume the shared T6 color")
 	_check(edge != null and edge.get_meta("rarity_border_token", &"") == descriptor.get("border_token"), "Loot result did not consume the shared T6 border token")
+	var card_style := card.get_theme_stylebox("panel") as StyleBoxTexture if card != null else null
+	_check(card_style != null and card_style.texture != null and card_style.texture.resource_path.ends_with("item_row_normal.png"), "Loot result still turns high rarity into a full selected border")
 	panel.queue_free()
 	await _frames(2)
 
@@ -195,10 +206,17 @@ func _check_world_popup_consumer() -> void:
 	popup.apply_context(_ground_context(tier_6))
 	await _frames(2)
 	var info := popup.find_child("ContextItemInfo", true, false) as Button
+	var marker := popup.find_child("WorldContextItemRarityMarker", true, false) as ColorRect
 	var descriptor: Dictionary = ItemRarityDescriptor.describe_item(tier_6)
+	var collectible_level := int(tier_6.get("collectible_level", 0))
 	_check(info != null and info.text.contains("[T6] 秘藏"), "World popup downgraded or omitted T6")
+	_check(collectible_level > 0 and info != null and info.text.contains("收藏等级 %d" % collectible_level), "World popup omitted the authoritative collectible level")
 	_check(info != null and not info.text.contains("tier_6"), "World popup leaked raw tier_6")
 	_check(info != null and info.get_meta("rarity_border_token", &"") == descriptor.get("border_token"), "World popup did not consume the shared T6 border token")
+	_check(marker != null and marker.color == descriptor.get("color"), "World popup independent rarity marker color drifted")
+	_check(marker != null and marker.mouse_filter == Control.MOUSE_FILTER_IGNORE, "World popup rarity marker intercepted item input")
+	var normal_style := info.get_theme_stylebox("normal") as StyleBoxFlat if info != null else null
+	_check(normal_style != null and not normal_style.border_color.is_equal_approx(Color(descriptor.get("color"))), "World popup still paints the full item border with rarity color")
 	popup.show_command_result({"ok": true, "accepted": true, "message": "Picked up floor item: raw_internal_item_id", "reason": "操作完成"})
 	var status := popup.find_child("ContextStatus", true, false) as Label
 	_check(status != null and not status.visible and status.text.is_empty(), "World popup retained redundant success command copy")
@@ -261,7 +279,7 @@ func _frames(count: int) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("I2_ITEM_RARITY_PRESENTATION=PASS formal_items=43 tiers=6 aliases=common,uncommon,rare,epic,legendary,mythic consumers=deploy,result,world unique=locked")
+		print("I2_ITEM_RARITY_PRESENTATION=PASS formal_items=43 tiers=6 aliases=common,uncommon,rare,epic,legendary,mythic consumers=deploy,result,world unique=locked collectible_level=deploy,result,world rarity_marker=independent")
 		quit(0)
 		return
 	for failure in failures:

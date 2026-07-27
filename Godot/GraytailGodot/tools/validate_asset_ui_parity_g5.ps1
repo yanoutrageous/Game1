@@ -68,7 +68,9 @@ Test-FileContains 'scripts/presentation/presentation_mapping.gd' @('class_name P
 Test-FileContains 'scripts/presentation/presentation_theme.gd' @('class_name PresentationTheme', 'func color_for_key', 'func risk_key')
 Test-FileContains 'scripts/core/intel/intel_map.gd' @('PresentationMapping assigns asset ids', 'func build_public_cell', '"state": &"hidden"', 'random_exit', 'exit_id')
 Test-FileContains 'scripts/ui/minimap/minimap_view_model.gd' @('PresentationMapping.minimap_marker_from_cell', 'intel_map.get_visible_map')
-Test-FileContains 'scripts/core/run/run_scene.gd' @('MapOverlayScene', 'TutorialPopupScene', 'Start Tutorial 5x5', 'Start Standard 10x10', 'Controls: W/A/S/D or arrows move')
+Test-FileContains 'scripts/core/run/run_scene.gd' @('MapOverlayScene', 'TutorialPopupScene', '_show_deploy_shell', 'deploy_shell_panel.call("_on_primary_action_pressed")')
+Test-FileContains 'scripts/core/content/m7_content_catalog.gd' @('"tutorial_5x5"', '"classic_7x7_simple"')
+Test-FileContains 'scripts/ui/deploy_prep/deploy_map_projection.gd' @('map_id == "tutorial_5x5"', 'const SCALE_IDS := [&"5x5", &"7x7", &"10x10", &"13x13"]')
 
 $ManifestPath = Resolve-ProjectPath 'data/assets/asset_manifest.csv'
 if ([System.IO.File]::Exists($ManifestPath)) {

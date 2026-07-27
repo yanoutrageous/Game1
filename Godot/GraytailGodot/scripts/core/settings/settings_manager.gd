@@ -20,10 +20,14 @@ const KEY_RESOLUTION_ID := "resolution_id"
 const KEY_VSYNC_MODE := "vsync_mode"
 const KEY_FRAME_LIMIT := "frame_limit"
 const KEY_MASTER_VOLUME := "master_volume"
+const KEY_EFFECTS_VOLUME := "effects_volume"
+const KEY_HAPTICS_ENABLED := "haptics_enabled"
 const KEY_REDUCE_MOTION := "reduce_motion"
 const DISPLAY_RESOLUTION_KEY := &"display.resolution_id"
 const DISPLAY_RESOLUTION_SOURCE_KEY := &"display.resolution_source"
 const REDUCE_MOTION_PROJECT_KEY := "accessibility/reduce_motion"
+const HAPTICS_ENABLED_PROJECT_KEY := "accessibility/haptics_enabled"
+const EFFECTS_BUS_NAME := &"Effects"
 
 const STATE_IDLE := &"idle"
 const STATE_EDITING := &"editing"
@@ -68,6 +72,7 @@ class RuntimeDisplayAdapter:
 	func apply_settings(settings: Dictionary, resolution_size: Vector2i) -> Dictionary:
 		Engine.max_fps = int(settings.get(KEY_FRAME_LIMIT, 0))
 		_apply_master_volume(int(settings.get(KEY_MASTER_VOLUME, 80)))
+		_apply_effects_volume(int(settings.get(KEY_EFFECTS_VOLUME, 80)))
 		if not DisplayServer.window_can_draw():
 			return {"ok": true}
 		var vsync_mode := DisplayServer.VSYNC_ENABLED
@@ -96,9 +101,23 @@ class RuntimeDisplayAdapter:
 	func _apply_master_volume(percent: int) -> void:
 		if AudioServer.get_bus_count() <= 0:
 			return
+		_apply_bus_volume(0, percent)
+
+	func _apply_effects_volume(percent: int) -> void:
+		var bus_index := AudioServer.get_bus_index(EFFECTS_BUS_NAME)
+		if bus_index < 0:
+			AudioServer.add_bus()
+			bus_index = AudioServer.get_bus_count() - 1
+			AudioServer.set_bus_name(bus_index, EFFECTS_BUS_NAME)
+			AudioServer.set_bus_send(bus_index, &"Master")
+		_apply_bus_volume(bus_index, percent)
+
+	func _apply_bus_volume(bus_index: int, percent: int) -> void:
+		if bus_index < 0 or bus_index >= AudioServer.get_bus_count():
+			return
 		var linear := clampf(float(percent) / 100.0, 0.0, 1.0)
-		AudioServer.set_bus_mute(0, linear <= 0.0)
-		AudioServer.set_bus_volume_db(0, linear_to_db(maxf(linear, 0.0001)))
+		AudioServer.set_bus_mute(bus_index, linear <= 0.0)
+		AudioServer.set_bus_volume_db(bus_index, linear_to_db(maxf(linear, 0.0001)))
 
 	func _largest_resolution() -> Vector2i:
 		var entry: Dictionary = SUPPORTED_RESOLUTIONS[SUPPORTED_RESOLUTIONS.size() - 1]
@@ -386,6 +405,7 @@ func _apply_runtime_settings(settings: Dictionary) -> bool:
 	if not adapter_ok:
 		return false
 	ProjectSettings.set_setting(REDUCE_MOTION_PROJECT_KEY, bool(settings.get(KEY_REDUCE_MOTION, false)))
+	ProjectSettings.set_setting(HAPTICS_ENABLED_PROJECT_KEY, bool(settings.get(KEY_HAPTICS_ENABLED, true)))
 	return true
 
 
@@ -554,6 +574,10 @@ func _field_name_for_legacy_key(key: StringName) -> String:
 			return KEY_FRAME_LIMIT
 		"master_volume", "audio.master_volume":
 			return KEY_MASTER_VOLUME
+		"effects_volume", "audio.effects_volume":
+			return KEY_EFFECTS_VOLUME
+		"haptics_enabled", "accessibility.haptics_enabled":
+			return KEY_HAPTICS_ENABLED
 		"reduce_motion", "accessibility.reduce_motion":
 			return KEY_REDUCE_MOTION
 	return ""

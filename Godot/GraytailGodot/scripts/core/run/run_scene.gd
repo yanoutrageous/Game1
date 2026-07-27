@@ -19,6 +19,7 @@ const LootResultPanelScript := preload("res://scripts/ui/loot_result/loot_result
 const DevDiagnosticsPanelScript := preload("res://scripts/ui/dev/dev_diagnostics_panel.gd")
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const G10ArtSmokeRegistry := preload("res://scripts/presentation/g10_art_smoke_registry.gd")
 const RunSurfaceScript := preload("res://scripts/ui/run_surface/run_surface.gd")
 const RunSurfaceModel := preload("res://scripts/ui/run_surface/run_surface_model.gd")
@@ -27,7 +28,7 @@ const MetaProgressAdapterScript := preload("res://scripts/core/save/meta_progres
 const SaveManagerScript := preload("res://scripts/core/save/save_manager.gd")
 const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
 const Art21R2RunSmokeSeederScript := preload("res://scripts/core/run/art21r2_run_smoke_seeder.gd")
-const RunSceneDebugBridgeScript := preload("res://scripts/core/run/run_scene_debug_bridge.gd")
+const RunSceneDebugPanelControllerScript := preload("res://scripts/core/run/run_scene_debug_panel_controller.gd")
 const RunSceneUIBridgeScript := preload("res://scripts/core/run/run_scene_ui_bridge.gd")
 const RunStartRouteAdapterScript := preload("res://scripts/core/run/run_start_route_adapter.gd")
 const RunSceneInputRouterScript := preload("res://scripts/core/run/run_scene_input_router.gd")
@@ -37,13 +38,18 @@ const RunSceneResultControllerScript := preload("res://scripts/core/run/run_scen
 const RunSceneResponsibilityBudgetScript := preload("res://scripts/core/run/run_scene_responsibility_budget.gd")
 const RunSceneRefreshControllerScript := preload("res://scripts/core/run/run_scene_refresh_controller.gd")
 const RunRuntimeControllerScript := preload("res://scripts/core/run/run_runtime_controller.gd")
-const ModalFocusStackScript := preload("res://scripts/ui/shell/modal_focus_stack.gd")
+const PlayerAppearanceConfigScript := preload("res://scripts/core/content/player_appearance_config.gd")
+const RunSceneModalControllerScript := preload("res://scripts/core/run/run_scene_modal_controller.gd")
 const SettingsPanelScript := preload("res://scripts/ui/settings/settings_panel.gd")
 const G41RoomRuntimeViewScript := preload("res://scripts/gameplay/runtime/g41_room_runtime_view.gd")
+const G41RuntimeLayoutScript := preload("res://scripts/gameplay/runtime/g41_runtime_layout.gd")
 const Art25GameplayBackdropScript := preload("res://scripts/presentation/art25_gameplay_backdrop.gd")
 const RuntimeTextureCacheScript := preload("res://scripts/presentation/runtime_texture_cache.gd")
 const Art24RuntimeAnimationCatalogScript := preload("res://scripts/presentation/art24/art24_runtime_animation_catalog.gd")
 const Art24EnemyVisualCatalogScript := preload("res://scripts/presentation/art24/art24_enemy_visual_catalog.gd")
+const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
+const RuntimeInputProfileScript := preload("res://scripts/core/input/runtime_input_profile.gd")
+const PlayerFeedbackServiceScript := preload("res://scripts/presentation/player_feedback_service.gd")
 
 const SCREEN_MAIN_MENU := &"main_menu"
 const SCREEN_DEPLOY := &"deploy_shell"
@@ -52,8 +58,10 @@ const SCREEN_SETTINGS := &"settings_shell"
 const SCREEN_RUN := &"run"
 const COMBAT_FLEE_EDGE_DISTANCE := 0.15
 const COMBAT_FLEE_DOOR_ALIGN_HALF := 0.18
+const COMBAT_FACING_LOCK_STATES := [&"attack_windup", &"attack_active", &"attack_recovery"]
+const TRANSITION_REJECTION_COOLDOWN_SECONDS := 0.35
+const TRANSITION_REJECTION_RELEASE_THRESHOLD := 0.20
 
-const LEGACY_GRAYBOX_VALIDATION_MARKERS := ["Start Tutorial 5x5", "Start Standard 10x10", "Controls: W/A/S/D or arrows move"]
 const G9_UI_NODE_VALIDATION_MARKERS := [
 	"MainMenuPanel",
 	"ModeEntryPanel",
@@ -119,6 +127,8 @@ var loot_panel: Control
 var extract_panel: PanelContainer
 var extract_title_label: Label
 var extract_body_label: Label
+var extract_items_scroll: ScrollContainer
+var extract_items_box: VBoxContainer
 var extract_confirm_button: Button
 var extract_cancel_button: Button
 var inventory_panel: Control
@@ -137,7 +147,8 @@ var current_layout_profile_id: StringName = &"desktop"
 var last_command_result: Dictionary = {}
 var m1_debug_panel_enabled: bool = false
 var pause_exit_confirm_pending: bool = false
-var modal_focus_stack: RefCounted
+var modal_controller
+var debug_panel_controller
 var abandon_dispatch_in_flight: bool = false
 var refresh_controller
 var last_combat_texture_prewarm_report: Dictionary = {}
@@ -145,12 +156,28 @@ var last_combat_texture_preflight_report: Dictionary = {}
 var combat_texture_prewarm_degraded: bool = false
 var extract_modal_mode: StringName = &"extract"
 var pending_combat_flee_direction := Vector2i.ZERO
+var pending_exit_interaction_id := ""
+var pending_exit_interaction_position := Vector2.ZERO
+var pending_exit_interaction_authorized := false
+var player_feedback_service
+var _processed_combat_feedback_events: Dictionary = {}
+var _ui_scale_factor := 1.0
+var _transition_rejection_direction := Vector2i.ZERO
+var _transition_rejection_cooldown_remaining := 0.0
+var _transition_rejection_awaiting_release := false
 
 
 func _ready() -> void:
+	_ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
 	m1_debug_panel_enabled = DebugGateScript.is_debug_tools_enabled()
-	modal_focus_stack = ModalFocusStackScript.new()
-	modal_focus_stack.stack_changed.connect(_on_runtime_modal_stack_changed)
+	player_feedback_service = PlayerFeedbackServiceScript.new()
+	player_feedback_service.name = "PlayerFeedbackService"
+	add_child(player_feedback_service)
+	var feedback_settings_manager := get_node_or_null("/root/SettingsManager")
+	if feedback_settings_manager != null:
+		player_feedback_service.bind_settings_manager(feedback_settings_manager)
+	modal_controller = RunSceneModalControllerScript.new()
+	debug_panel_controller = RunSceneDebugPanelControllerScript.new()
 	refresh_controller = RunSceneRefreshControllerScript.new()
 	save_manager = SaveManagerScript.new()
 	save_manager.load_manifest()
@@ -165,6 +192,25 @@ func _ready() -> void:
 	command_bus.result_available.connect(_on_result_available)
 	_build_playfield_visuals()
 	_build_accessible_ui()
+	debug_panel_controller.bind_targets(
+		m1_debug_panel_enabled,
+		run_context,
+		meta_progress_adapter,
+		player_controller,
+		debug_panel,
+		debug_x_spin,
+		debug_y_spin,
+		debug_log,
+		ui_shell,
+		Callable(self, "_dispatch_command"),
+		Callable(self, "_show_command_feedback"),
+		Callable(self, "_shell_snapshot"),
+		Callable(self, "_show_loot_panel"),
+		Callable(self, "_runtime_modal_is_top"),
+		Callable(self, "_pop_runtime_modal"),
+		func() -> void: get_viewport().gui_release_focus()
+	)
+	_bind_runtime_modal_controller()
 	refresh_controller.bind_targets(
 		run_context,
 		in_run_runtime,
@@ -179,12 +225,41 @@ func _ready() -> void:
 	_show_main_menu()
 
 
+func set_ui_scale_factor(value: float) -> bool:
+	_ui_scale_factor = Art10UISkinKitScript.set_runtime_ui_scale_factor(value)
+	_apply_ui_scale_to_runtime_controls(true)
+	if run_context != null and refresh_controller != null:
+		_refresh_view_models()
+	return is_equal_approx(_ui_scale_factor, Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value))
+
+
+func get_ui_scale_factor() -> float:
+	return _ui_scale_factor
+
+
+func _apply_ui_scale_to_runtime_controls(sync_shell: bool) -> void:
+	var targets: Array[Node] = [run_surface, tutorial_popup_panel, map_overlay_panel, result_panel, inventory_panel, ground_loot_panel, loot_panel, runtime_settings_panel]
+	if sync_shell:
+		targets.push_front(ui_shell)
+	for target in targets:
+		if target != null and target.has_method("set_ui_scale_factor"):
+			target.call("set_ui_scale_factor", _ui_scale_factor)
+
+
+func _on_app_shell_ui_scale_changed(value: float) -> void:
+	_ui_scale_factor = Art10UISkinKitScript.set_runtime_ui_scale_factor(value)
+	_apply_ui_scale_to_runtime_controls(false)
+	if run_context != null and refresh_controller != null:
+		_refresh_view_models()
+
+
 func _process(delta: float) -> void:
 	if screen_state != SCREEN_RUN:
 		return
 	if player_controller == null or command_bus == null or run_context == null:
 		return
 	var runtime_paused := _is_runtime_modal_open() or (map_overlay_panel != null and map_overlay_panel.visible) or run_context.has_blocking_tutorial_popup()
+	_sync_player_input_enabled()
 	if room_runtime_view != null:
 		room_runtime_view.set_context_ui_suppressed(runtime_paused)
 	if in_run_runtime != null:
@@ -195,19 +270,30 @@ func _process(delta: float) -> void:
 			room_runtime_view.advance(0.0, player_controller.get_local_position(), in_run_runtime.build_read_only_snapshot() if in_run_runtime != null else {})
 		return
 	var move_vector := player_controller.get_move_vector()
+	_advance_transition_rejection_debounce(delta, move_vector)
 	if in_run_runtime != null and in_run_runtime.has_active_combat():
 		var combat_aim := move_vector if move_vector.length_squared() > 0.0001 else player_controller.get_facing_vector()
 		var combat_snapshot: Dictionary = in_run_runtime.advance_frame(delta, move_vector, combat_aim)
+		_route_combat_domain_feedback(combat_snapshot)
+		if run_surface != null and run_surface.has_method("apply_combat_attack_state"):
+			run_surface.call("apply_combat_attack_state", combat_snapshot.get("attack_input", {}))
 		player_controller.set_local_position(in_run_runtime.get_player_local_position(player_controller.get_local_position()))
 		var combat_player: Dictionary = combat_snapshot.get("player", {})
-		player_controller.set_facing_vector(Vector2(combat_player.get("facing", combat_aim)))
-		player_controller.set_runtime_visual_state(StringName(combat_player.get("state", &"idle")))
+		var combat_player_state := StringName(combat_player.get("state", &"idle"))
+		player_controller.sync_authoritative_combat_facing(
+			Vector2(combat_player.get("facing", combat_aim)),
+			combat_player_state in COMBAT_FACING_LOCK_STATES
+		)
+		player_controller.set_runtime_visual_state(combat_player_state)
 		if room_runtime_view != null:
 			room_runtime_view.advance(delta, player_controller.get_local_position(), combat_snapshot)
 		var combat_transition := player_controller.requested_transition(move_vector)
 		if combat_transition != Vector2i.ZERO:
 			_attempt_room_transition(combat_transition)
 		return
+	if run_surface != null and run_surface.has_method("apply_combat_attack_state"):
+		run_surface.call("apply_combat_attack_state", {})
+	player_controller.release_authoritative_combat_facing()
 	var local_result := player_controller.move_local(move_vector, delta)
 	if StringName(local_result.get("status", &"")) == &"transition":
 		_attempt_room_transition(local_result.get("direction", Vector2i.ZERO))
@@ -216,15 +302,33 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if RuntimeInputProfileScript.observe_input_event(event):
+		call_deferred("_refresh_input_device_hints")
+	if player_feedback_service != null and (event is InputEventJoypadButton or event is InputEventJoypadMotion):
+		player_feedback_service.set_active_joypad_device(event.device)
 	if _handle_cancel_input(event):
 		get_viewport().set_input_as_handled()
 		return
-	if _handle_run_action_input(event):
-		get_viewport().set_input_as_handled()
+
+
+func _refresh_input_device_hints() -> void:
+	if run_context != null and refresh_controller != null:
+		_refresh_view_models()
+	if get_tree() != null:
+		get_tree().call_group(
+			RuntimeInputProfileScript.HINT_CONSUMER_GROUP,
+			&"refresh_input_hints"
+		)
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _handle_cancel_input(event):
+		get_viewport().set_input_as_handled()
+		return
+	# Gameplay actions run only after Controls have had the chance to consume
+	# their keyboard, pointer, or gamepad activation. This prevents a focused
+	# button from also interacting with the world underneath it.
+	if _handle_run_action_input(event):
 		get_viewport().set_input_as_handled()
 		return
 
@@ -232,8 +336,15 @@ func _unhandled_input(event: InputEvent) -> void:
 func _handle_cancel_input(event: InputEvent) -> bool:
 	if RunSceneInputRouterScript.cancel_action(event) != RunSceneInputRouterScript.ACTION_CANCEL:
 		return false
+	# A blocking tutorial prompt owns the current input context. Escape/Back
+	# must not open another modal above the teaching decision.
+	if screen_state == SCREEN_RUN and run_context != null and run_context.has_blocking_tutorial_popup():
+		return true
 	if _close_top_runtime_modal():
 		return true
+	if ui_shell != null and ui_shell.visible and ui_shell.has_method("handle_cancel_event"):
+		if bool(ui_shell.call("handle_cancel_event", event)):
+			return true
 	if screen_state in [SCREEN_DEPLOY, SCREEN_LONG_TERM, SCREEN_SETTINGS]:
 		_show_main_menu()
 		return true
@@ -265,12 +376,9 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 		return false
 	if map_overlay_panel != null and map_overlay_panel.visible:
 		return false
-	var step_direction := _direction_from_key_event(event)
+	var step_direction := _direction_from_input_event(event)
 	if step_direction != Vector2.ZERO and player_controller != null:
 		player_controller.play_step(step_direction)
-		var step_result := player_controller.move_local(step_direction, 0.06)
-		if StringName(step_result.get("status", &"")) == &"transition":
-			_attempt_room_transition(step_result.get("direction", Vector2i.ZERO))
 		return true
 
 	match run_action:
@@ -278,7 +386,14 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 			_handle_interact_pressed()
 			return true
 		RunSceneInputRouterScript.ACTION_FIGHT:
-			_fight_and_show_result()
+			if event is InputEventMouseButton:
+				if in_run_runtime == null or not in_run_runtime.has_active_combat():
+					return false
+				if not _pointer_targets_playfield(event as InputEventMouseButton):
+					return false
+				_fight_and_show_result(_pointer_attack_aim(event as InputEventMouseButton))
+			else:
+				_fight_and_show_result()
 			return true
 		RunSceneInputRouterScript.ACTION_FLAG_CURRENT:
 			_dispatch_command(&"flag_current_cell")
@@ -302,45 +417,52 @@ func _handle_run_action_input(event: InputEvent) -> bool:
 			return false
 
 
+func _is_primary_pointer_attack(event: InputEvent) -> bool:
+	return (
+		event is InputEventMouseButton
+		and RuntimeInputProfileScript.event_pressed(event, RuntimeInputProfileScript.ACTION_ATTACK)
+	)
+
+
+func _pointer_targets_playfield(event: InputEventMouseButton) -> bool:
+	if room_runtime_view == null:
+		return false
+	var world_context_popup := room_runtime_view.get("context_popup") as Control
+	if (
+		world_context_popup != null
+		and world_context_popup.visible
+		and world_context_popup.get_global_rect().has_point(event.position)
+	):
+		return false
+	if run_surface != null and run_surface.has_method("blocks_world_pointer"):
+		if bool(run_surface.call("blocks_world_pointer", event.position)):
+			return false
+	if tutorial_popup_panel != null and tutorial_popup_panel.has_method("blocks_world_pointer"):
+		if bool(tutorial_popup_panel.call("blocks_world_pointer", event.position)):
+			return false
+	var room_local: Vector2 = room_runtime_view.to_local(event.position)
+	return G41RuntimeLayoutScript.ROOM_RECT.has_point(room_local)
+
+
+func _pointer_attack_aim(event: InputEventMouseButton) -> Vector2:
+	if room_runtime_view == null or player_controller == null:
+		return Vector2.ZERO
+	var pointer_local: Vector2 = room_runtime_view.to_local(event.position)
+	var player_local: Vector2 = room_runtime_view.to_local(player_controller.global_position)
+	var aim: Vector2 = pointer_local - player_local
+	if aim.length_squared() > 0.0001:
+		return aim.normalized()
+	return player_controller.get_facing_vector()
+
+
+func _direction_from_input_event(event: InputEvent) -> Vector2:
+	return RunSceneInputRouterScript.movement_direction(event)
+
+
+# Characterization runners may still call the historical helper name. It is an
+# alias only; the implementation remains InputMap-owned.
 func _direction_from_key_event(event: InputEvent) -> Vector2:
-	if not (event is InputEventKey):
-		return Vector2.ZERO
-	var key_event := event as InputEventKey
-	if not key_event.pressed or key_event.echo:
-		return Vector2.ZERO
-	if event.is_action_pressed("move_left"):
-		return Vector2.LEFT
-	if event.is_action_pressed("move_right"):
-		return Vector2.RIGHT
-	if event.is_action_pressed("move_up"):
-		return Vector2.UP
-	if event.is_action_pressed("move_down"):
-		return Vector2.DOWN
-	var resolved_keycode := key_event.physical_keycode
-	if resolved_keycode == KEY_NONE:
-		resolved_keycode = key_event.keycode
-	match resolved_keycode:
-		KEY_A, KEY_LEFT:
-			return Vector2.LEFT
-		KEY_D, KEY_RIGHT:
-			return Vector2.RIGHT
-		KEY_W, KEY_UP:
-			return Vector2.UP
-		KEY_S, KEY_DOWN:
-			return Vector2.DOWN
-		_:
-			var character := String.chr(key_event.unicode).to_lower()
-			match character:
-				"a":
-					return Vector2.LEFT
-				"d":
-					return Vector2.RIGHT
-				"w":
-					return Vector2.UP
-				"s":
-					return Vector2.DOWN
-				_:
-					return Vector2.ZERO
+	return _direction_from_input_event(event)
 
 
 func _build_playfield_visuals() -> void:
@@ -366,10 +488,15 @@ func _build_accessible_ui() -> void:
 	ui_root = Control.new()
 	ui_root.name = "G9FinalUIRoot"
 	ui_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Structural UI roots must never consume an otherwise unobstructed
+	# playfield click. Interactive descendants keep their own STOP/PASS filters.
+	ui_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Art10UISkinKitScript.apply_player_ui_theme(ui_root)
 	ui_layer.add_child(ui_root)
 	_build_shell_pages()
 	_build_run_overlay()
 	_build_runtime_modals()
+	_apply_ui_scale_to_runtime_controls(false)
 
 
 func _build_shell_pages() -> void:
@@ -380,6 +507,7 @@ func _build_shell_pages() -> void:
 	ui_shell.connect("host_route_requested", _on_app_shell_host_route_requested)
 	ui_shell.connect("page_changed", _on_app_shell_page_changed)
 	ui_shell.connect("meta_action_requested", _on_m7_meta_action_requested)
+	ui_shell.connect("ui_scale_changed", _on_app_shell_ui_scale_changed)
 	main_menu_panel = ui_shell.call("get_main_page") as Control
 	deploy_shell_panel = ui_shell.call("get_deploy_page") as Control
 	long_term_shell_panel = ui_shell.call("get_long_term_page") as Control
@@ -389,6 +517,7 @@ func _build_run_overlay() -> void:
 	run_overlay_root = Control.new()
 	run_overlay_root.name = "RunOverlayRoot"
 	run_overlay_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	run_overlay_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui_root.add_child(run_overlay_root)
 
 	run_surface = RunSurfaceScript.new()
@@ -435,7 +564,7 @@ func _build_run_overlay() -> void:
 	debug_title.text = "M1 Debug Cheats"
 	debug_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	debug_header.add_child(debug_title)
-	_add_debug_button(debug_header, "Close", func() -> void: _close_debug_panel())
+	RunSceneDebugPanelControllerScript.add_button(debug_header, "Close", func() -> void: debug_panel_controller.close_panel())
 	var debug_note := Label.new()
 	debug_note.text = "dev_only=true | commands go through CommandBus / MetaProgressAdapter"
 	debug_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -470,44 +599,43 @@ func _build_run_overlay() -> void:
 	debug_content.name = "DebugOperationButtons"
 	debug_content.add_theme_constant_override("separation", 6)
 	debug_scroll.add_child(debug_content)
-	_add_debug_section(debug_content, "Run Debug")
-	_add_debug_button(debug_content, "Tutorial Run", func() -> void: _start_tutorial_from_ui())
-	_add_debug_button(debug_content, "Standard Run", func() -> void: _start_standard_from_ui())
-	_add_debug_button(debug_content, "Teleport Exit", func() -> void: _debug_teleport_to_exit())
-	_add_debug_button(debug_content, "Nearest Chest", func() -> void: _debug_teleport_to_room_type(&"Chest"))
-	_add_debug_button(debug_content, "Nearest Event", func() -> void: _debug_teleport_to_room_type(&"Event"))
-	_add_debug_button(debug_content, "Nearest Monster", func() -> void: _debug_teleport_to_room_type(&"Monster"))
-	_add_debug_button(debug_content, "Nearest Mine", func() -> void: _debug_teleport_to_room_type(&"Mine"))
-	_add_debug_button(debug_content, "Move XY no trigger", func() -> void: _debug_teleport_xy(false))
-	_add_debug_button(debug_content, "Enter XY trigger", func() -> void: _debug_teleport_xy(true))
-	_add_debug_button(debug_content, "+100 Run Black Coin", func() -> void: _dispatch_command(&"debug_add_run_black_coin", {"amount": 100, "source": "debug"}))
-	_add_debug_button(debug_content, "Reveal Full Map", func() -> void: _dispatch_command(&"debug_reveal_full_map", {"source": "debug"}))
-	_add_debug_button(debug_content, "Spawn Floor Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_floor", {"source": "debug"}))
-	_add_debug_button(debug_content, "Spawn Backpack Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_backpack", {"source": "debug"}))
-	_add_debug_button(debug_content, "Full HP", func() -> void: _dispatch_command(&"debug_heal_full", {"source": "debug"}))
-	_add_debug_button(debug_content, "Toggle Reduced Motion", func() -> void: _debug_toggle_reduced_motion())
-	_add_debug_button(debug_content, "Force Extract Success", func() -> void: _dispatch_command(&"debug_force_extract", {"source": "debug"}))
-	_add_debug_button(debug_content, "Force Fail", func() -> void: _dispatch_command(&"debug_force_fail", {"reason": "debug_forced_failure", "source": "debug"}))
-	_add_debug_section(debug_content, "Run Utility")
-	_add_debug_button(debug_content, "Grid Up", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, -1), "source": "debug"}))
-	_add_debug_button(debug_content, "Grid Down", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, 1), "source": "debug"}))
-	_add_debug_button(debug_content, "Grid Left", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(-1, 0), "source": "debug"}))
-	_add_debug_button(debug_content, "Grid Right", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(1, 0), "source": "debug"}))
-	_add_debug_button(debug_content, "Flag Current", func() -> void: _dispatch_command(&"flag_current_cell", {"source": "debug"}))
-	_add_debug_button(debug_content, "Search Current", func() -> void: _debug_search_and_show_loot())
-	_add_debug_button(debug_content, "Pickup Floor", func() -> void: _pickup_floor_from_ui())
-	_add_debug_button(debug_content, "Drop Item", func() -> void: _drop_inventory_from_ui())
-	_add_debug_button(debug_content, "Request Extract", func() -> void: _request_extract_from_ui())
-	_add_debug_button(debug_content, "Confirm Extract", func() -> void: _dispatch_command(&"confirm_extract", {"source": "debug"}))
-	_add_debug_section(debug_content, "Meta Debug")
-	_add_debug_button(debug_content, "+1000 Meta Gold", func() -> void: _debug_meta_add_gold())
-	_add_debug_button(debug_content, "Set Meta Gold 0", func() -> void: _debug_meta_set_gold(0))
-	_add_debug_button(debug_content, "Clear Meta Gold", func() -> void: _debug_meta_clear_gold())
-	_add_debug_button(debug_content, "Add Warehouse Test Item", func() -> void: _debug_meta_add_warehouse_item())
-	_add_debug_button(debug_content, "Clear Warehouse", func() -> void: _debug_meta_clear_warehouse())
-	_add_debug_button(debug_content, "Save Meta Now", func() -> void: _debug_meta_save())
-	_add_debug_button(debug_content, "Clear Save", func() -> void: _debug_meta_clear_save())
-	_add_debug_button(debug_content, "Read Save Summary", func() -> void: _debug_meta_summary())
+	RunSceneDebugPanelControllerScript.add_section(debug_content, "Run Debug")
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Standard Run", func() -> void: _start_standard_from_ui())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Teleport Exit", func() -> void: debug_panel_controller.teleport_to_exit())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Nearest Chest", func() -> void: _debug_teleport_to_room_type(&"Chest"))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Nearest Event", func() -> void: _debug_teleport_to_room_type(&"Event"))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Nearest Monster", func() -> void: _debug_teleport_to_room_type(&"Monster"))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Nearest Mine", func() -> void: _debug_teleport_to_room_type(&"Mine"))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Move XY no trigger", func() -> void: debug_panel_controller.teleport_xy(false))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Enter XY trigger", func() -> void: debug_panel_controller.teleport_xy(true))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "+100 Run Black Coin", func() -> void: _dispatch_command(&"debug_add_run_black_coin", {"amount": 100, "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Reveal Full Map", func() -> void: _dispatch_command(&"debug_reveal_full_map", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Spawn Floor Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_floor", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Spawn Backpack Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_backpack", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Full HP", func() -> void: _dispatch_command(&"debug_heal_full", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Toggle Reduced Motion", func() -> void: debug_panel_controller.toggle_reduced_motion())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Force Extract Success", func() -> void: _dispatch_command(&"debug_force_extract", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Force Fail", func() -> void: _dispatch_command(&"debug_force_fail", {"reason": "debug_forced_failure", "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_section(debug_content, "Run Utility")
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Grid Up", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, -1), "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Grid Down", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, 1), "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Grid Left", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(-1, 0), "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Grid Right", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(1, 0), "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Flag Current", func() -> void: _dispatch_command(&"flag_current_cell", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Search Current", func() -> void: debug_panel_controller.search_and_show_loot())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Pickup Floor", func() -> void: _pickup_floor_from_ui())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Drop Item", func() -> void: _drop_inventory_from_ui())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Request Extract", func() -> void: _request_extract_from_ui())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Confirm Extract", func() -> void: _dispatch_command(&"confirm_extract", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_section(debug_content, "Meta Debug")
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "+1000 Meta Gold", func() -> void: debug_panel_controller.meta_add_gold())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Set Meta Gold 0", func() -> void: debug_panel_controller.meta_set_gold(0))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Clear Meta Gold", func() -> void: debug_panel_controller.meta_clear_gold())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Add Warehouse Test Item", func() -> void: debug_panel_controller.meta_add_warehouse_item())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Clear Warehouse", func() -> void: debug_panel_controller.meta_clear_warehouse())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Save Meta Now", func() -> void: debug_panel_controller.meta_save())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Clear Save", func() -> void: debug_panel_controller.meta_clear_save())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Read Save Summary", func() -> void: debug_panel_controller.meta_summary())
 	debug_log = Label.new()
 	debug_log.name = "DebugLastMessage"
 	debug_log.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -599,8 +727,20 @@ func _build_runtime_modals() -> void:
 	extract_content.add_child(extract_title_label)
 	extract_body_label = Label.new()
 	extract_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	extract_body_label.custom_minimum_size = Vector2(250, 120)
+	extract_body_label.custom_minimum_size = Vector2(250, 66)
 	extract_content.add_child(extract_body_label)
+	extract_items_scroll = ScrollContainer.new()
+	extract_items_scroll.name = "ExtractCarriedItemsScroll"
+	extract_items_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	extract_items_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	extract_items_scroll.custom_minimum_size = Vector2(0, 78)
+	extract_items_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	extract_content.add_child(extract_items_scroll)
+	extract_items_box = VBoxContainer.new()
+	extract_items_box.name = "ExtractCarriedItems"
+	extract_items_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	extract_items_box.add_theme_constant_override("separation", 4)
+	extract_items_scroll.add_child(extract_items_box)
 	var extract_buttons := HBoxContainer.new()
 	extract_content.add_child(extract_buttons)
 	extract_confirm_button = _add_menu_button(extract_buttons, "确认", func() -> void: _confirm_extract_from_ui())
@@ -627,7 +767,7 @@ func _build_runtime_modals() -> void:
 	pause_content.add_child(pause_status_label)
 	var diagnostics_button: Button
 	if m1_debug_panel_enabled:
-		diagnostics_button = _add_menu_button(pause_content, "诊断面板", func() -> void: _open_debug_panel_from_pause())
+		diagnostics_button = _add_menu_button(pause_content, "诊断面板", func() -> void: debug_panel_controller.open_from_pause())
 	pause_continue_button = _add_menu_button(pause_content, "继续探索", func() -> void: _continue_from_pause())
 	pause_settings_button = _add_menu_button(pause_content, "设置", func() -> void: _open_settings_from_pause())
 	var deploy_button := _add_menu_button(pause_content, "返回出发", func() -> void: _return_from_pause_to_deploy())
@@ -687,6 +827,26 @@ func _build_runtime_modals() -> void:
 		run_surface.apply_legacy_button_style(abandon_confirm_cancel_button, &"secondary")
 		run_surface.apply_legacy_button_style(abandon_confirm_button, &"danger")
 	_apply_runtime_modal_layout(_current_layout_profile())
+
+
+func _bind_runtime_modal_controller() -> void:
+	modal_controller.bind_views(
+		runtime_modal_input_shield,
+		run_surface,
+		{
+			&"event": event_panel,
+			&"loot_result": loot_panel,
+			&"extract_confirm": extract_panel,
+			&"combat_flee_confirm": extract_panel,
+			&"result": result_panel,
+			&"pause": pause_panel,
+			&"settings": runtime_settings_panel,
+			&"abandon_confirm": abandon_confirm_panel,
+			&"inventory": inventory_panel,
+			&"map": map_overlay_panel,
+		},
+		Callable(self, "_sync_player_input_enabled")
+	)
 
 
 func _new_modal_panel(node_name: String, rect: Rect2) -> PanelContainer:
@@ -783,8 +943,6 @@ func _show_run_screen() -> bool:
 	run_overlay_root.visible = true
 	get_viewport().gui_release_focus()
 	_hide_runtime_popups()
-	if debug_panel != null:
-		debug_panel.visible = false
 	_refresh_view_models()
 	return true
 
@@ -841,6 +999,10 @@ func _set_gameplay_visible(visible: bool) -> void:
 		ui_shell.visible = not visible
 		if ui_shell.has_method("set_shell_active"):
 			ui_shell.call("set_shell_active", not visible)
+	if not visible and player_controller != null:
+		player_controller.set_input_enabled(false)
+	else:
+		_sync_player_input_enabled()
 
 
 func _show_pause_panel() -> void:
@@ -861,7 +1023,7 @@ func _show_pause_panel() -> void:
 
 func _open_settings_from_pause() -> void:
 	pause_exit_confirm_pending = false
-	if runtime_settings_panel == null or modal_focus_stack == null or modal_focus_stack.top_modal_id() != &"pause":
+	if runtime_settings_panel == null or not _runtime_modal_is_top(&"pause"):
 		return
 	runtime_settings_panel.call("bind_settings_manager", ui_shell.call("get_bound_settings_manager"))
 	if not bool(runtime_settings_panel.call("open_panel")):
@@ -911,7 +1073,7 @@ func _request_abandon_from_pause() -> void:
 		if pause_status_label != null:
 			pause_status_label.text = "当前没有可放弃的探索，可直接返回出发页或主菜单。"
 		return
-	if modal_focus_stack == null or modal_focus_stack.top_modal_id() != &"pause":
+	if not _runtime_modal_is_top(&"pause"):
 		return
 	pause_exit_confirm_pending = true
 	var pushed := _push_runtime_modal(
@@ -935,13 +1097,18 @@ func _cancel_abandon_modal(_reason: StringName = &"cancel") -> void:
 
 
 func _confirm_abandon_from_pause() -> void:
-	if abandon_dispatch_in_flight or modal_focus_stack == null or modal_focus_stack.top_modal_id() != &"abandon_confirm":
+	if abandon_dispatch_in_flight or not _runtime_modal_is_top(&"abandon_confirm"):
 		return
 	abandon_dispatch_in_flight = true
 	pause_exit_confirm_pending = false
 	_pop_runtime_modal(&"abandon_confirm", false)
 	_pop_runtime_modal(&"pause", false)
-	var result := _dispatch_command(&"abandon_run", {"reason": "player_pause_exit_current_run", "source": "pause_panel"})
+	var result := _dispatch_command(
+		&"abandon_run",
+		{"reason": "player_pause_exit_current_run", "source": "pause_panel", "confirmed": true},
+		true,
+		false
+	)
 	abandon_dispatch_in_flight = false
 	if bool(result.get("ok", false)) and result_panel != null and not result_panel.visible and run_context != null:
 		if not run_context.result_snapshot.is_empty():
@@ -968,72 +1135,24 @@ func _push_runtime_modal(
 	preferred_focus: Control = null,
 	cancel_handler: Callable = Callable()
 ) -> bool:
-	if modal_focus_stack == null or modal_root == null:
+	if modal_controller == null:
 		return false
-	return bool(modal_focus_stack.push(modal_id, modal_root, preferred_focus, cancel_handler))
+	return bool(modal_controller.push(modal_id, modal_root, preferred_focus, cancel_handler))
 
 
 func _runtime_modal_is_top(modal_id: StringName) -> bool:
-	return modal_focus_stack != null and modal_focus_stack.top_modal_id() == modal_id
-
-
-func _on_runtime_modal_stack_changed(_depth: int, top_modal_id: StringName) -> void:
-	if runtime_modal_input_shield == null:
-		return
-	var top_root := _runtime_modal_root(top_modal_id)
-	if top_root == null or top_root.get_parent() == null:
-		runtime_modal_input_shield.hide()
-		return
-	var desired_parent := top_root.get_parent() as Control
-	if desired_parent == null:
-		runtime_modal_input_shield.hide()
-		return
-	if runtime_modal_input_shield.get_parent() != desired_parent:
-		runtime_modal_input_shield.reparent(desired_parent, false)
-		runtime_modal_input_shield.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var parent := runtime_modal_input_shield.get_parent()
-	var target_index := top_root.get_index()
-	if runtime_modal_input_shield.get_index() < target_index:
-		target_index -= 1
-	parent.move_child(runtime_modal_input_shield, target_index)
-	runtime_modal_input_shield.show()
-
-
-func _runtime_modal_root(modal_id: StringName) -> Control:
-	match modal_id:
-		&"event":
-			return event_panel
-		&"loot_result":
-			return loot_panel
-		&"extract_confirm":
-			return extract_panel
-		&"combat_flee_confirm":
-			return extract_panel
-		&"result":
-			return result_panel
-		&"pause":
-			return pause_panel
-		&"settings":
-			return runtime_settings_panel
-		&"abandon_confirm":
-			return abandon_confirm_panel
-		&"inventory":
-			return inventory_panel
-		&"map":
-			return map_overlay_panel
-		_:
-			return null
+	return modal_controller != null and modal_controller.is_top(modal_id)
 
 
 func _pop_runtime_modal(modal_id: StringName, restore_focus: bool = true, hide_modal: bool = true) -> bool:
-	if modal_focus_stack == null:
+	if modal_controller == null:
 		return false
-	return bool(modal_focus_stack.pop(modal_id, restore_focus, hide_modal))
+	return bool(modal_controller.pop(modal_id, restore_focus, hide_modal))
 
 
 func _clear_runtime_modal_stack(restore_focus: bool = true) -> void:
-	if modal_focus_stack != null:
-		modal_focus_stack.clear(restore_focus)
+	if modal_controller != null:
+		modal_controller.clear(restore_focus)
 
 
 func _cancel_pause_modal(_reason: StringName = &"cancel") -> void:
@@ -1052,9 +1171,8 @@ func _on_runtime_settings_close_requested() -> void:
 
 
 func _close_inventory_modal() -> void:
-	if modal_focus_stack != null:
-		if modal_focus_stack.top_modal_id() == &"inventory":
-			_pop_runtime_modal(&"inventory")
+	if _runtime_modal_is_top(&"inventory"):
+		_pop_runtime_modal(&"inventory")
 		return
 	if inventory_panel != null:
 		inventory_panel.call("hide_panel")
@@ -1067,42 +1185,25 @@ func _cancel_inventory_modal(_reason: StringName = &"cancel") -> void:
 func _cancel_map_modal(_reason: StringName = &"cancel") -> void:
 	if map_overlay_panel != null and map_overlay_panel.visible:
 		map_overlay_panel.hide_overlay()
-	if modal_focus_stack != null and modal_focus_stack.top_modal_id() == &"map":
+	if _runtime_modal_is_top(&"map"):
 		_pop_runtime_modal(&"map", true, false)
 
 
 func _on_map_overlay_visibility_changed() -> void:
-	if map_overlay_panel == null or map_overlay_panel.visible or modal_focus_stack == null:
+	if map_overlay_panel == null:
 		return
-	if modal_focus_stack.top_modal_id() == &"map":
+	if tutorial_popup_panel != null:
+		tutorial_popup_panel.set_presentation_occluded(map_overlay_panel.visible)
+	if map_overlay_panel.visible:
+		return
+	if _runtime_modal_is_top(&"map"):
 		_pop_runtime_modal(&"map", true, false)
 
 
 func _preferred_modal_focus(modal_root: Control) -> Control:
-	if modal_root == null:
+	if modal_controller == null:
 		return null
-	if modal_root.has_method("preferred_focus_control"):
-		return modal_root.call("preferred_focus_control") as Control
-	return _first_focusable_descendant(modal_root)
-
-
-func _first_focusable_descendant(root_control: Control) -> Control:
-	for child in root_control.get_children():
-		var control := child as Control
-		if control == null:
-			continue
-		var disabled_button := control is BaseButton and (control as BaseButton).disabled
-		if (
-			control.focus_mode != Control.FOCUS_NONE
-			and control.visible
-			and not disabled_button
-			and not control.is_queued_for_deletion()
-		):
-			return control
-		var nested := _first_focusable_descendant(control)
-		if nested != null:
-			return nested
-	return null
+	return modal_controller.preferred_focus(modal_root)
 
 
 func _return_from_result_to_main() -> void:
@@ -1202,13 +1303,40 @@ func _handle_interact_pressed() -> void:
 	if command_bus == null or run_context == null or _is_runtime_modal_open():
 		return
 	if room_runtime_view != null and player_controller != null:
-		var world_request: Dictionary = room_runtime_view.request_nearest_interaction(player_controller.get_local_position())
+		var world_request: Dictionary = room_runtime_view.request_nearest_interaction(
+			player_controller.get_local_position(),
+			true
+		)
 		if bool(world_request.get("accepted", false)):
 			match StringName(world_request.get("interaction_kind", &"none")):
 				&"ground_loot":
 					var payload: Dictionary = world_request.get("payload", {})
 					var instance_id := String(payload.get("instance_id", ""))
-					var pickup_result := _dispatch_command(&"pickup_ground_item", {"source": "g41_world_interaction", "instance_id": instance_id})
+					var pickup_result := _dispatch_command(
+						&"pickup_ground_item",
+						{"source": "g41_world_interaction", "instance_id": instance_id},
+						true,
+						false
+					)
+					var pickup_cue := (
+						PlayerFeedbackServiceScript.CUE_PICKUP
+						if bool(pickup_result.get("ok", false))
+						else PlayerFeedbackServiceScript.CUE_UI_REJECT
+					)
+					if bool(pickup_result.get("ok", false)):
+						_emit_feedback_for_result(
+							pickup_result,
+							pickup_cue,
+							_feedback_event_id("world_pickup", pickup_result)
+						)
+						if run_surface != null:
+							run_surface.clear_command_feedback()
+					else:
+						_show_command_feedback(
+							pickup_result,
+							pickup_cue,
+							_feedback_event_id("world_pickup", pickup_result)
+						)
 					room_runtime_view.show_pickup_result(instance_id, bool(pickup_result.get("ok", false)))
 					if not bool(pickup_result.get("ok", false)):
 						room_runtime_view.show_context_result(pickup_result)
@@ -1218,7 +1346,31 @@ func _handle_interact_pressed() -> void:
 					if intent == &"search_current_room":
 						# The explicit input owns the command submission.  Animation and
 						# later view advances only observe the authoritative result.
-						var chest_result := _dispatch_command(&"search_current_room", {"source": "g41_world_interaction"})
+						var chest_result := _dispatch_command(
+							&"search_current_room",
+							{"source": "g41_world_interaction"},
+							true,
+							false
+						)
+						var chest_cue := (
+							PlayerFeedbackServiceScript.CUE_CHEST_OPEN
+							if bool(chest_result.get("ok", false))
+							else PlayerFeedbackServiceScript.CUE_UI_REJECT
+						)
+						if bool(chest_result.get("ok", false)):
+							_emit_feedback_for_result(
+								chest_result,
+								chest_cue,
+								_feedback_event_id("chest_open", chest_result)
+							)
+							if run_surface != null:
+								run_surface.clear_command_feedback()
+						else:
+							_show_command_feedback(
+								chest_result,
+								chest_cue,
+								_feedback_event_id("chest_open", chest_result)
+							)
 						var chest_snapshot := run_context.get_status_snapshot()
 						room_runtime_view.apply_chest_search_result(chest_result, chest_snapshot)
 						if not bool(chest_result.get("ok", false)):
@@ -1235,7 +1387,10 @@ func _handle_interact_pressed() -> void:
 						_show_command_feedback({"ok": false, "reason": &"event_completed", "message": "这里的事件已经处理完毕。"})
 					return
 				&"exit":
-					_request_extract_from_ui()
+					# The keyboard path already passed the governed world request,
+					# including its visible-focus grace contract. Do not replace
+					# that result with a second strict-radius query.
+					_request_extract_from_ui(true)
 					return
 				&"mine":
 					_show_command_feedback({"ok": true, "status": &"mine_inspected", "message": String((world_request.get("payload", {}) as Dictionary).get("summary", "机关状态已显示。"))})
@@ -1263,22 +1418,37 @@ func _handle_interact_pressed() -> void:
 
 
 func _search_and_show_loot() -> void:
-	var result := _dispatch_command(&"search_current_room")
+	var result := _dispatch_command(&"search_current_room", {}, true, false)
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
 		_show_world_reward_feedback(result, reward, &"search")
+	else:
+		_show_command_feedback(
+			result,
+			PlayerFeedbackServiceScript.CUE_SEARCH_REVEAL if bool(result.get("ok", false)) else PlayerFeedbackServiceScript.CUE_UI_REJECT,
+			_feedback_event_id("search", result)
+		)
 
 
-func _fight_and_show_result() -> void:
+func _fight_and_show_result(requested_facing: Vector2 = Vector2.ZERO) -> void:
 	if _is_runtime_modal_open():
 		return
 	if in_run_runtime != null and in_run_runtime.has_active_combat():
-		var attack_result: Dictionary = in_run_runtime.request_attack()
+		var attack_result: Dictionary = in_run_runtime.request_attack(requested_facing)
 		last_command_result = attack_result.duplicate(true)
+		if bool(attack_result.get("ok", false)) and requested_facing.length_squared() > 0.0001:
+			player_controller.set_facing_vector(requested_facing)
+		if StringName(attack_result.get("status", &"")) == &"attack_cooling_down":
+			if run_surface != null and run_surface.has_method("apply_combat_attack_state"):
+				run_surface.call(
+					"apply_combat_attack_state",
+					in_run_runtime.build_read_only_snapshot().get("attack_input", {})
+				)
+			return
 		_show_command_feedback(attack_result)
 		return
-	var result := _dispatch_command(&"fight_current_enemy")
+	var result := _dispatch_command(&"fight_current_enemy", {}, true, false)
 	var snapshot := run_context.get_status_snapshot()
 	var reward: Dictionary = snapshot.get("last_reward", {})
 	if not reward.is_empty():
@@ -1289,14 +1459,20 @@ func _pickup_floor_from_ui(instance_id: String = "") -> void:
 	var payload: Dictionary = {"source": "ui"}
 	if instance_id != "":
 		payload["instance_id"] = instance_id
-	var result := _dispatch_command(&"pickup_ground_item", payload, false)
+	var refresh_count_before := _full_refresh_count()
+	var result := _dispatch_command(&"pickup_ground_item", payload, false, false)
+	_refresh_if_dispatch_was_unsignaled(refresh_count_before)
+	_emit_feedback_for_result(
+		result,
+		PlayerFeedbackServiceScript.CUE_PICKUP if bool(result.get("ok", false)) else PlayerFeedbackServiceScript.CUE_UI_REJECT,
+		_feedback_event_id("pickup", result)
+	)
 	if room_runtime_view != null and not bool(result.get("ok", false)):
 		room_runtime_view.show_context_result(result)
 	if ground_loot_panel != null:
 		ground_loot_panel.call("show_command_result", result)
 	if inventory_panel != null:
 		inventory_panel.call("show_command_result", result)
-	_refresh_view_models()
 
 
 func _replace_floor_from_ui(instance_id: String = "", drop_instance_id: String = "") -> void:
@@ -1305,38 +1481,56 @@ func _replace_floor_from_ui(instance_id: String = "", drop_instance_id: String =
 		payload["ground_instance_id"] = instance_id
 	if drop_instance_id != "":
 		payload["drop_instance_id"] = drop_instance_id
-	var result := _dispatch_command(&"replace_ground_item", payload, false)
+	var refresh_count_before := _full_refresh_count()
+	var result := _dispatch_command(&"replace_ground_item", payload, false, false)
+	_refresh_if_dispatch_was_unsignaled(refresh_count_before)
+	_emit_feedback_for_result(
+		result,
+		PlayerFeedbackServiceScript.CUE_PICKUP if bool(result.get("ok", false)) else PlayerFeedbackServiceScript.CUE_UI_REJECT,
+		_feedback_event_id("replace_pickup", result)
+	)
 	if room_runtime_view != null and not bool(result.get("ok", false)):
 		room_runtime_view.show_context_result(result)
 	if ground_loot_panel != null:
 		ground_loot_panel.call("show_command_result", result)
 	if inventory_panel != null:
 		inventory_panel.call("show_command_result", result)
-	_refresh_view_models()
 
 
 func _drop_inventory_from_ui(instance_id: String = "") -> void:
 	var payload: Dictionary = {"source": "ui"}
 	if instance_id != "":
 		payload["instance_id"] = instance_id
-	var result := _dispatch_command(&"drop_inventory_item", payload, false)
+	var refresh_count_before := _full_refresh_count()
+	var result := _dispatch_command(&"drop_inventory_item", payload, false, false)
+	_refresh_if_dispatch_was_unsignaled(refresh_count_before)
+	_emit_feedback_for_result(
+		result,
+		PlayerFeedbackServiceScript.CUE_UI_CONFIRM if bool(result.get("ok", false)) else PlayerFeedbackServiceScript.CUE_UI_REJECT,
+		_feedback_event_id("drop_item", result)
+	)
 	if inventory_panel != null:
 		inventory_panel.call("show_command_result", result)
 	if ground_loot_panel != null:
 		ground_loot_panel.call("show_command_result", result)
-	_refresh_view_models()
 
 
 func _use_inventory_item_from_ui(instance_id: String = "") -> void:
 	var payload: Dictionary = {"source": "ui"}
 	if instance_id != "":
 		payload["instance_id"] = instance_id
-	var result := _dispatch_command(&"use_item", payload, false)
+	var refresh_count_before := _full_refresh_count()
+	var result := _dispatch_command(&"use_item", payload, false, false)
+	_refresh_if_dispatch_was_unsignaled(refresh_count_before)
+	_emit_feedback_for_result(
+		result,
+		PlayerFeedbackServiceScript.CUE_ITEM_RECOVERY if bool(result.get("ok", false)) else PlayerFeedbackServiceScript.CUE_UI_REJECT,
+		_feedback_event_id("use_item", result)
+	)
 	if inventory_panel != null:
 		inventory_panel.call("show_command_result", result)
 	if ground_loot_panel != null:
 		ground_loot_panel.call("show_command_result", result)
-	_refresh_view_models()
 
 
 func _show_inventory_panel() -> void:
@@ -1477,7 +1671,12 @@ func _select_event_option(option_id: StringName) -> void:
 	if not _require_world_interaction(&"event"):
 		return
 	_pop_runtime_modal(&"event")
-	var result := _dispatch_command(&"select_event_option", {"option_id": option_id, "source": "ui"})
+	var result := _dispatch_command(
+		&"select_event_option",
+		{"option_id": option_id, "source": "ui"},
+		true,
+		false
+	)
 	var action_result: Dictionary = result.get("action_result", {})
 	_show_world_reward_feedback(result, action_result, &"event")
 
@@ -1504,12 +1703,12 @@ func _on_encounter_option_selected(_option_id: StringName, command_payload: Dict
 		})
 		return
 	payload["source"] = "ui"
-	var result := _dispatch_command(&"select_encounter_option", payload)
+	var result := _dispatch_command(&"select_encounter_option", payload, true, false)
 	var action_result: Dictionary = result.get("action_result", {})
 	_show_world_reward_feedback(result, action_result, &"encounter")
 
 
-func _request_extract_from_ui() -> void:
+func _request_extract_from_ui(prevalidated_world_interaction: bool = false) -> void:
 	if _is_runtime_modal_open():
 		return
 	if in_run_runtime != null and in_run_runtime.has_active_combat():
@@ -1518,6 +1717,7 @@ func _request_extract_from_ui() -> void:
 	if in_run_runtime != null and bool(in_run_runtime.flee_authorized):
 		var retry_direction := _combat_flee_direction_for_player()
 		if retry_direction != Vector2i.ZERO:
+			_reset_transition_rejection_debounce()
 			_attempt_room_transition(retry_direction)
 		else:
 			_show_command_feedback({
@@ -1527,12 +1727,14 @@ func _request_extract_from_ui() -> void:
 				"message": "逃离代价已结算；请回到刚才的有效门边再次通过，不会重复扣除。",
 			})
 		return
-	if not _require_world_interaction(&"exit"):
+	if not prevalidated_world_interaction and not _require_world_interaction(&"exit"):
 		return
+	_capture_exit_interaction_authorization()
 	var result := _dispatch_command(&"request_extract")
 	if bool(result.get("ok", false)):
 		_show_extract_panel(run_context.get_status_snapshot())
 	else:
+		_clear_exit_interaction_authorization()
 		_show_command_feedback(result)
 
 
@@ -1544,6 +1746,7 @@ func _show_extract_panel(snapshot: Dictionary) -> void:
 	var risky := int(snapshot.get("protocol_level", 5)) <= 1
 	extract_title_label.text = "高危撤离确认" if risky else "确认撤离"
 	extract_body_label.text = RunSurfaceModel.extract_modal_text(snapshot)
+	_apply_extract_item_preview(RunSurfaceModel.extract_carried_item_models(snapshot))
 	extract_confirm_button.text = "确认撤离"
 	extract_cancel_button.text = "继续探索"
 	if run_surface != null:
@@ -1563,6 +1766,7 @@ func _show_extract_panel(snapshot: Dictionary) -> void:
 	)
 	if not pushed:
 		extract_panel.hide()
+		_clear_exit_interaction_authorization()
 
 
 func _confirm_extract_from_ui() -> void:
@@ -1571,10 +1775,14 @@ func _confirm_extract_from_ui() -> void:
 		return
 	if not _runtime_modal_is_top(&"extract_confirm"):
 		return
-	if not _require_world_interaction(&"exit"):
+	var has_opening_authorization := _exit_interaction_authorization_matches()
+	if pending_exit_interaction_authorized and not has_opening_authorization:
+		_clear_exit_interaction_authorization()
+	if not has_opening_authorization and not _require_world_interaction(&"exit"):
 		return
+	_clear_exit_interaction_authorization()
 	_pop_runtime_modal(&"extract_confirm")
-	_dispatch_command(&"confirm_extract")
+	_dispatch_command(&"confirm_extract", {}, true, false)
 
 
 func _cancel_extract_from_ui() -> void:
@@ -1587,8 +1795,35 @@ func _cancel_extract_from_ui() -> void:
 func _cancel_extract_modal(_reason: StringName = &"cancel") -> void:
 	if not _runtime_modal_is_top(&"extract_confirm"):
 		return
+	_clear_exit_interaction_authorization()
 	_pop_runtime_modal(&"extract_confirm")
 	_dispatch_command(&"cancel_extract")
+
+
+func _capture_exit_interaction_authorization() -> void:
+	if room_runtime_view == null or player_controller == null:
+		_clear_exit_interaction_authorization()
+		return
+	var room_snapshot: Dictionary = room_runtime_view.build_read_only_snapshot()
+	pending_exit_interaction_id = String(room_snapshot.get("focused_interaction_id", ""))
+	pending_exit_interaction_position = player_controller.get_local_position()
+	pending_exit_interaction_authorized = not pending_exit_interaction_id.is_empty()
+
+
+func _exit_interaction_authorization_matches() -> bool:
+	if not pending_exit_interaction_authorized or room_runtime_view == null or player_controller == null:
+		return false
+	var room_snapshot: Dictionary = room_runtime_view.build_read_only_snapshot()
+	return (
+		String(room_snapshot.get("focused_interaction_id", "")) == pending_exit_interaction_id
+		and player_controller.get_local_position().distance_to(pending_exit_interaction_position) <= 0.001
+	)
+
+
+func _clear_exit_interaction_authorization() -> void:
+	pending_exit_interaction_id = ""
+	pending_exit_interaction_position = Vector2.ZERO
+	pending_exit_interaction_authorized = false
 
 
 func _request_combat_flee_from_ui() -> void:
@@ -1600,7 +1835,7 @@ func _request_combat_flee_from_ui() -> void:
 			"ok": false,
 			"accepted": false,
 			"reason": &"combat_flee_door_required",
-			"message": "请先靠近一处可通行的门，再按 T 撤离战斗。",
+			"message": "请先靠近一处可通行的门，再使用 %s 撤离战斗。" % SemanticActionHintScript.display_label(&"request_extract"),
 		})
 		return
 	_show_combat_flee_panel(direction)
@@ -1613,6 +1848,7 @@ func _show_combat_flee_panel(direction: Vector2i) -> void:
 	pending_combat_flee_direction = direction
 	extract_title_label.text = "确认逃离战斗"
 	extract_body_label.text = "逃离会失去当前楼层黑资的 10%。部分 T1 非消耗品可能遗留在本房间；具体结果以确认后的结算为准。"
+	_clear_extract_item_preview()
 	extract_confirm_button.text = "确认逃离"
 	extract_cancel_button.text = "继续战斗"
 	if run_surface != null:
@@ -1630,6 +1866,100 @@ func _show_combat_flee_panel(direction: Vector2i) -> void:
 	if not pushed:
 		extract_panel.hide()
 		pending_combat_flee_direction = Vector2i.ZERO
+
+
+func _apply_extract_item_preview(item_models: Array[Dictionary]) -> void:
+	if extract_items_scroll == null or extract_items_box == null:
+		return
+	_clear_extract_item_preview()
+	extract_items_scroll.visible = true
+	if item_models.is_empty():
+		var empty_label := Label.new()
+		empty_label.name = "ExtractCarriedItemsEmpty"
+		empty_label.text = "没有随身物资可带回。"
+		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_label.add_theme_font_size_override("font_size", 13)
+		empty_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.muted"))
+		extract_items_box.add_child(empty_label)
+		return
+	var heading := Label.new()
+	heading.name = "ExtractCarriedItemsHeading"
+	heading.text = "本次带回物资 · %d 件" % item_models.size()
+	heading.add_theme_font_size_override("font_size", 13)
+	heading.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
+	extract_items_box.add_child(heading)
+	for index in range(item_models.size()):
+		var item_row := _build_extract_item_row(item_models[index])
+		item_row.name = "ExtractCarriedItemRow%d" % index
+		extract_items_box.add_child(item_row)
+
+
+func _clear_extract_item_preview() -> void:
+	if extract_items_box != null:
+		for child in extract_items_box.get_children():
+			extract_items_box.remove_child(child)
+			child.queue_free()
+	if extract_items_scroll != null:
+		extract_items_scroll.visible = false
+
+
+func _build_extract_item_row(item_model: Dictionary) -> Control:
+	var row := PanelContainer.new()
+	row.name = "ExtractCarriedItemRow"
+	row.custom_minimum_size = Vector2(0, 46)
+	row.tooltip_text = String(item_model.get("detail_text", ""))
+	row.set_meta("instance_id", String(item_model.get("instance_id", "")))
+	row.set_meta("collectible_level", int(item_model.get("collectible_level", 0)))
+	var rarity: Dictionary = item_model.get("rarity", {}) if item_model.get("rarity", {}) is Dictionary else {}
+	row.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.012, 0.028, 0.031, 0.92)
+	style.border_color = Color(0.20, 0.50, 0.46, 0.56)
+	style.set_border_width_all(1)
+	style.content_margin_left = 6
+	style.content_margin_top = 4
+	style.content_margin_right = 6
+	style.content_margin_bottom = 4
+	row.add_theme_stylebox_override("panel", style)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 7)
+	row.add_child(line)
+	var marker := ColorRect.new()
+	marker.name = "ExtractItemRarityMarker"
+	marker.custom_minimum_size = Vector2(4, 36)
+	marker.color = Color(rarity.get("color", PresentationTheme.color_for_key(&"ui.muted")))
+	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	marker.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+	line.add_child(marker)
+	var copy := VBoxContainer.new()
+	copy.name = "ExtractItemCopy"
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.add_theme_constant_override("separation", 0)
+	line.add_child(copy)
+	var name_label := Label.new()
+	name_label.name = "ExtractItemName"
+	name_label.text = "%s ×%d" % [
+		String(item_model.get("display_name", "未命名物资")),
+		int(item_model.get("quantity", 1)),
+	]
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_label.add_theme_font_size_override("font_size", 13)
+	name_label.add_theme_color_override("font_color", PresentationTheme.text_color())
+	copy.add_child(name_label)
+	var item_meta: Array[String] = [String(item_model.get("rarity_text", "[?] 未鉴定"))]
+	var collectible_level_text := String(item_model.get("collectible_level_text", ""))
+	if collectible_level_text != "":
+		item_meta.append(collectible_level_text)
+	item_meta.append("重 %d" % int(item_model.get("weight", 0)))
+	var meta_label := Label.new()
+	meta_label.name = "ExtractItemMeta"
+	meta_label.text = " · ".join(item_meta)
+	meta_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	meta_label.add_theme_font_size_override("font_size", 12)
+	meta_label.add_theme_color_override("font_color", marker.color)
+	copy.add_child(meta_label)
+	return row
 
 
 func _confirm_combat_flee_from_ui() -> void:
@@ -1654,6 +1984,7 @@ func _confirm_combat_flee_from_ui() -> void:
 		_pop_runtime_modal(&"combat_flee_confirm")
 		return
 	_pop_runtime_modal(&"combat_flee_confirm", false)
+	_reset_transition_rejection_debounce()
 	_attempt_room_transition(direction)
 
 
@@ -1746,7 +2077,19 @@ func _show_world_reward_feedback(result: Dictionary, reward: Dictionary, source:
 	else:
 		feedback["message"] = "搜索完成，未发现新的可回收物。"
 	feedback["ok"] = bool(result.get("ok", true))
-	_show_command_feedback(feedback)
+	var cue := PlayerFeedbackServiceScript.CUE_UI_CONFIRM
+	if not bool(feedback.get("ok", false)):
+		cue = PlayerFeedbackServiceScript.CUE_UI_REJECT
+	elif source == &"search":
+		cue = PlayerFeedbackServiceScript.CUE_SEARCH_REVEAL
+	elif source == &"combat":
+		cue = PlayerFeedbackServiceScript.CUE_ENEMY_DEATH
+	if source == &"search" and bool(feedback.get("ok", false)):
+		_emit_feedback_for_result(feedback, cue, _feedback_event_id(String(source), result))
+		if run_surface != null:
+			run_surface.clear_command_feedback()
+		return
+	_show_command_feedback(feedback, cue, _feedback_event_id(String(source), result))
 
 
 func _reward_array_size(reward: Dictionary, key: String) -> int:
@@ -1794,7 +2137,7 @@ func _run_room_label(room_type: StringName) -> String:
 
 func _is_runtime_modal_open() -> bool:
 	return (
-		(modal_focus_stack != null and modal_focus_stack.depth() > 0)
+		(modal_controller != null and modal_controller.blocks_gameplay_input())
 		or (event_panel != null and event_panel.visible)
 		or (loot_panel != null and loot_panel.visible)
 		or (extract_panel != null and extract_panel.visible)
@@ -1805,11 +2148,24 @@ func _is_runtime_modal_open() -> bool:
 	)
 
 
+func _sync_player_input_enabled() -> void:
+	if player_controller == null:
+		return
+	var gameplay_input_enabled := (
+		screen_state == SCREEN_RUN
+		and run_context != null
+		and not _is_runtime_modal_open()
+		and (map_overlay_panel == null or not map_overlay_panel.visible)
+		and not run_context.has_blocking_tutorial_popup()
+	)
+	player_controller.set_input_enabled(gameplay_input_enabled)
+
+
 func _close_top_runtime_modal() -> bool:
-	if modal_focus_stack != null and modal_focus_stack.depth() > 0:
-		return bool(modal_focus_stack.request_cancel_top(&"input_cancel"))
+	if modal_controller != null and modal_controller.depth() > 0:
+		return bool(modal_controller.request_cancel_top(&"input_cancel"))
 	if debug_panel != null and debug_panel.visible:
-		_close_debug_panel()
+		debug_panel_controller.close_panel()
 		return true
 	if ground_loot_panel != null and ground_loot_panel.visible:
 		ground_loot_panel.call("hide_panel")
@@ -1825,6 +2181,7 @@ func _hide_runtime_popups() -> void:
 	_clear_runtime_modal_stack(false)
 	extract_modal_mode = &"extract"
 	pending_combat_flee_direction = Vector2i.ZERO
+	_clear_exit_interaction_authorization()
 	if event_panel != null:
 		event_panel.visible = false
 	if loot_panel != null:
@@ -1841,17 +2198,32 @@ func _hide_runtime_popups() -> void:
 		pause_panel.visible = false
 	if dev_diagnostics_panel != null:
 		dev_diagnostics_panel.call("hide_panel")
-	if debug_panel != null:
-		debug_panel.visible = false
+	if debug_panel_controller != null:
+		debug_panel_controller.hide_panel(false)
 	if map_overlay_panel != null:
 		map_overlay_panel.hide_overlay()
 
 
 func _on_state_changed(snapshot: Dictionary) -> void:
 	refresh_controller.route_state_change(snapshot, Callable(self, "_apply_full_view_models"))
+	_sync_player_input_enabled()
 
 
 func _on_result_available(snapshot: Dictionary) -> void:
+	screen_state = SCREEN_RUN
+	_set_gameplay_visible(true)
+	run_overlay_root.show()
+	var outcome := String(snapshot.get("outcome", ""))
+	var result_cue := (
+		PlayerFeedbackServiceScript.CUE_EXTRACTION_SUCCESS
+		if outcome in ["Extracted", "Training Complete"]
+		else PlayerFeedbackServiceScript.CUE_EXTRACTION_FAILURE
+	)
+	_emit_feedback_cue(
+		result_cue,
+		"result:%s" % String(snapshot.get("result_id", "%s:%s" % [String(run_context.run_id), outcome])),
+		{"outcome": outcome, "terminal_reason_code": snapshot.get("terminal_reason_code", &"")}
+	)
 	var display_snapshot := _build_result_display_snapshot(snapshot)
 	_refresh_view_models()
 	_hide_runtime_popups()
@@ -1889,15 +2261,26 @@ func _retry_terminal_commit_from_result() -> void:
 	if not _runtime_modal_is_top(&"result") or result_panel == null or not result_panel.retry_save_allowed():
 		return
 	_dispatch_command(&"retry_terminal_commit", {"source": "result_panel"}, false, false)
-	result_panel.show_summary(_build_result_display_snapshot(run_context.result_snapshot))
+	result_panel.update_persistence_state(_build_result_display_snapshot(run_context.result_snapshot))
 	result_panel.mark_retry_complete()
 
 
 func _discard_unsaved_result_from_result() -> void:
 	if not _runtime_modal_is_top(&"result") or result_panel == null or not result_panel.discard_unsaved_allowed():
 		return
-	# The panel owns the explicit two-step confirmation. This escape path only
-	# releases the UI lock; it never marks the terminal result as persisted.
+	# The panel owns the first/second confirmation interaction. The second
+	# confirmation must still cross the runtime authority before the UI leaves,
+	# otherwise carry-in instances would remain protected behind a hidden
+	# save-failure result.
+	var discard_result := _dispatch_command(
+		&"discard_unsaved_terminal_commit",
+		{"confirmed": true, "source": "result_panel"},
+		false,
+		false
+	)
+	if not bool(discard_result.get("ok", false)):
+		result_panel.show_summary(_build_result_display_snapshot(run_context.result_snapshot))
+		return
 	_pop_runtime_modal(&"result", false)
 	get_viewport().gui_release_focus()
 	_show_deploy_shell(&"config")
@@ -1914,6 +2297,19 @@ func get_refresh_metrics() -> Dictionary:
 
 func reset_refresh_metrics() -> void:
 	refresh_controller.reset_metrics()
+
+
+func _full_refresh_count() -> int:
+	if refresh_controller == null:
+		return 0
+	return int(refresh_controller.get_metrics().get("full_count", 0))
+
+
+func _refresh_if_dispatch_was_unsignaled(refresh_count_before: int) -> void:
+	if refresh_controller == null:
+		return
+	if _full_refresh_count() <= refresh_count_before:
+		_refresh_view_models()
 
 
 func _refresh_view_models() -> void:
@@ -1955,8 +2351,7 @@ func _apply_full_view_models() -> void:
 		]
 	if room_controller != null:
 		room_controller.configure(PresentationMapping.room_visual_from_snapshot(snapshot))
-	if player_controller != null:
-		player_controller.set_visual_asset(&"sprite.player.default")
+	_apply_player_presentation()
 	if in_run_runtime != null and player_controller != null:
 		in_run_runtime.sync_room(player_controller.get_local_position())
 	if room_runtime_view != null:
@@ -1964,6 +2359,7 @@ func _apply_full_view_models() -> void:
 		room_runtime_view.apply_combat_snapshot(in_run_runtime.build_read_only_snapshot() if in_run_runtime != null else {})
 		if player_controller != null:
 			player_controller.set_logical_obstacles(room_runtime_view.get_logical_obstacles())
+			player_controller.set_door_projections(room_runtime_view.get_door_projections())
 	_suppress_runtime_scene_labels()
 	if hud != null:
 		hud.apply_layout_profile(layout_profile)
@@ -1977,6 +2373,8 @@ func _apply_full_view_models() -> void:
 	if run_surface == null and layout_profile_label != null:
 		layout_profile_label.text = "Layout: %s" % current_layout_profile_id
 	if tutorial_popup_panel != null:
+		tutorial_popup_panel.set_presentation_occluded(map_overlay_panel != null and map_overlay_panel.visible)
+		tutorial_popup_panel.apply_layout_profile(layout_profile)
 		tutorial_popup_panel.apply_popup(snapshot.get("tutorial_popup", {}))
 	if inventory_panel != null:
 		inventory_panel.call("apply_layout_profile", layout_profile)
@@ -1991,9 +2389,54 @@ func _apply_full_view_models() -> void:
 	if debug_log != null:
 		debug_log.text = String(snapshot.get("last_message", ""))
 	if debug_panel != null and debug_panel.visible:
-		_sync_debug_coordinates()
+		debug_panel_controller.sync_coordinates()
 	if result_panel != null and bool(snapshot.get("run_active", false)):
 		result_panel.hide_result()
+
+
+func _apply_player_presentation() -> void:
+	if player_controller == null:
+		return
+	var appearance_config: Variant = {}
+	if run_context != null:
+		appearance_config = run_context.run_start_config.get("player_appearance", {})
+	var presentation := PlayerAppearanceConfigScript.runtime_presentation(appearance_config)
+	var selection_id := StringName(presentation.get(
+		"selection_id",
+		PlayerAppearanceConfigScript.DEFAULT_SELECTION_ID
+	))
+	var appearance_id := StringName(presentation.get(
+		"appearance_id",
+		PlayerAppearanceConfigScript.DEFAULT_APPEARANCE_ID
+	))
+	var animation_set_id := StringName(presentation.get(
+		"animation_set_id",
+		PlayerAppearanceConfigScript.DEFAULT_ANIMATION_SET_ID
+	))
+	var visual_modulate: Color = presentation.get(
+		"visual_modulate",
+		PlayerAppearanceConfigScript.DEFAULT_VISUAL_MODULATE
+	)
+	var current := player_controller.presentation_snapshot()
+	var current_visual_modulate: Color = current.get("visual_modulate", Color.WHITE)
+	if (
+		StringName(current.get("selection_id", &"")) == selection_id
+		and StringName(current.get("appearance_id", &"")) == appearance_id
+		and StringName(current.get("animation_set_id", &"")) == animation_set_id
+		and current_visual_modulate.is_equal_approx(visual_modulate)
+	):
+		return
+	var registered_sets: Dictionary = {}
+	var animation_set: Variant = presentation.get("animation_set", {})
+	if animation_set is Dictionary and not (animation_set as Dictionary).is_empty():
+		registered_sets[animation_set_id] = (animation_set as Dictionary).duplicate(true)
+	player_controller.set_presentation_profile(
+		appearance_id,
+		animation_set_id,
+		registered_sets,
+		selection_id,
+		visual_modulate
+	)
 
 
 func _build_hud_view_model(snapshot: Dictionary) -> HUDViewModel:
@@ -2020,16 +2463,27 @@ func _apply_game_stage_layout(layout_profile: Dictionary) -> void:
 			room_visual_center = background_sprite.position
 			if background_sprite.texture != null:
 				room_visual_size = background_sprite.texture.get_size() * background_sprite.scale.abs()
-	# UE's room view uses ScaleToFit.  The former max() behaved like Cover:
-	# it filled the wide gameplay lane by cropping the top and bottom of the
-	# square room, making the floor look like wallpaper and shrinking every
-	# actor perceptually.  Reserve only the real hotbar band and fit the entire
-	# room plate inside the remaining area.
-	var bottom_overlay_budget: float = maxf(64.0, height * 0.09)
-	var target_height: float = maxf(1.0, height - bottom_overlay_budget - 16.0)
-	var scale_value: float = minf(gameplay_width / maxf(1.0, room_visual_size.x), target_height / maxf(1.0, room_visual_size.y))
-	scale_value = clampf(scale_value, 0.90, 1.82)
-	var gameplay_center := Vector2(left_width + gameplay_width * 0.50, target_height * 0.50 + 8.0)
+	# The room, UE-aligned mine-risk plate, contextual information band and key
+	# dock are four distinct vertical regions. The former hotbar-only budget let
+	# the room extend underneath the other two frames and obscured its lower door.
+	var footer_geometry := UILayerContractScript.run_footer_geometry(layout_profile)
+	var room_top := 8.0
+	var room_bottom := float(footer_geometry.get("room_bottom", height - 160.0))
+	var stage_rect := Rect2(left_width, room_top, gameplay_width, maxf(1.0, room_bottom - room_top))
+	if run_context != null and not run_context.tutorial_popup.is_empty():
+		var blocking := bool(run_context.tutorial_popup.get("blocking", false))
+		stage_rect = UILayerContractScript.run_tutorial_geometry(layout_profile, blocking).get(
+			"room_stage_rect",
+			stage_rect
+		)
+	var scale_value: float = minf(
+		stage_rect.size.x / maxf(1.0, room_visual_size.x),
+		stage_rect.size.y / maxf(1.0, room_visual_size.y)
+	)
+	# Tutorial copy owns a real safe zone beside the room. A 0.90 lower clamp
+	# ignored that contract and let the room spill back underneath the modal.
+	scale_value = clampf(scale_value, 0.32, 1.82)
+	var gameplay_center := stage_rect.get_center()
 	var origin := gameplay_center - room_visual_center * scale_value
 	room_layer.position = origin
 	player_layer.position = origin
@@ -2067,6 +2521,7 @@ func _current_layout_profile() -> Dictionary:
 	var profile: Dictionary = UILayoutProfileScript.profile_for_size(viewport_size)
 	profile["actual_viewport_size"] = Vector2i(int(viewport_size.x), int(viewport_size.y))
 	profile["requested_resolution_size"] = requested_resolution_size
+	profile["ui_scale_factor"] = _ui_scale_factor
 	current_layout_profile_id = StringName(profile.get("profile_id", &"desktop"))
 	return profile
 
@@ -2122,7 +2577,12 @@ func _dispatch_command(
 	return result
 
 
-func _show_command_feedback(result: Dictionary) -> void:
+func _show_command_feedback(
+	result: Dictionary,
+	cue_override: StringName = &"",
+	event_id: String = ""
+) -> void:
+	_emit_feedback_for_result(result, cue_override, event_id)
 	RunSceneCommandFeedbackScript.apply_feedback(
 		result,
 		run_surface,
@@ -2131,6 +2591,66 @@ func _show_command_feedback(result: Dictionary) -> void:
 		ground_loot_panel,
 		Callable(self, "_flash_blocked_reason")
 	)
+
+
+func _emit_feedback_for_result(
+	result: Dictionary,
+	cue_override: StringName = &"",
+	event_id: String = ""
+) -> void:
+	if player_feedback_service == null or result.is_empty():
+		return
+	var resolved_event_id := event_id
+	if resolved_event_id.is_empty():
+		resolved_event_id = _feedback_event_id("command", result)
+	player_feedback_service.emit_command_result(result, cue_override, resolved_event_id)
+
+
+func _emit_feedback_cue(
+	cue_id: StringName,
+	event_id: String,
+	metadata: Dictionary = {}
+) -> void:
+	if player_feedback_service != null:
+		player_feedback_service.emit_cue(cue_id, event_id, metadata)
+
+
+func _feedback_event_id(prefix: String, result: Dictionary) -> String:
+	var request_id := String(result.get(
+		"rule_request_id",
+		result.get("request_id", result.get("command_request_id", ""))
+	))
+	if request_id.is_empty():
+		return ""
+	var command_id := String(result.get("command_id", ""))
+	var status := String(result.get("status", result.get("reason", result.get("blocked_reason", ""))))
+	return "%s:%s:%s:%s" % [prefix, command_id, request_id, status]
+
+
+func _route_combat_domain_feedback(combat_snapshot: Dictionary) -> void:
+	var room_key := String(combat_snapshot.get("room_key", ""))
+	var seed := int(combat_snapshot.get("seed", 0))
+	for raw_event in combat_snapshot.get("recent_events", []):
+		if not raw_event is Dictionary:
+			continue
+		var event: Dictionary = raw_event
+		var event_index := int(event.get("event_index", -1))
+		var event_id := "combat:%s:%d:%d" % [room_key, seed, event_index]
+		if _processed_combat_feedback_events.has(event_id):
+			continue
+		_processed_combat_feedback_events[event_id] = true
+		var event_type := StringName(event.get("event_type", &""))
+		match event_type:
+			&"player_attack_started":
+				_emit_feedback_cue(PlayerFeedbackServiceScript.CUE_ATTACK, event_id, event)
+			&"player_attack_resolved":
+				RunSceneCommandFeedbackScript.route_combat_attack_resolution(event, event_id, PlayerFeedbackServiceScript.CUE_HIT, Callable(self, "_emit_feedback_cue"), Callable(self, "_show_command_feedback"))
+			&"player_damaged":
+				if not bool(combat_snapshot.get("defeated", false)):
+					_emit_feedback_cue(PlayerFeedbackServiceScript.CUE_PLAYER_HURT, event_id, event)
+			&"enemy_defeated":
+				_emit_feedback_cue(PlayerFeedbackServiceScript.CUE_ENEMY_DEATH, event_id, event)
+
 
 func _flash_blocked_reason() -> void:
 	if command_result_label == null:
@@ -2148,7 +2668,7 @@ func _open_map_from_ui(source: StringName = &"button") -> void:
 		# Closing belongs to the overlay's own close/outside-click/Esc paths.
 		# A shielded RunSurface signal must not be able to dismiss the top modal.
 		return
-	var top_modal: StringName = modal_focus_stack.top_modal_id() if modal_focus_stack != null else &""
+	var top_modal: StringName = modal_controller.top_modal_id() if modal_controller != null else &""
 	if top_modal not in [&"", &"inventory"]:
 		return
 	# A shielded RunSurface cannot legitimately click through the inventory.
@@ -2172,265 +2692,28 @@ func _open_map_from_ui(source: StringName = &"button") -> void:
 
 
 func _toggle_debug_panel() -> void:
-	if debug_panel == null:
-		return
-	if not _can_use_debug_tools():
-		debug_panel.visible = false
-		_show_debug_disabled_feedback()
-		get_viewport().gui_release_focus()
-		return
-	debug_panel.visible = not debug_panel.visible
-	get_viewport().gui_release_focus()
-
-
-func _open_debug_panel_from_pause() -> void:
-	if not _runtime_modal_is_top(&"pause"):
-		return
-	_pop_runtime_modal(&"pause", false)
-	_open_debug_panel()
+	debug_panel_controller.toggle_panel()
 
 
 func _open_debug_panel() -> void:
-	if debug_panel == null:
-		return
-	if not _can_use_debug_tools():
-		debug_panel.visible = false
-		_show_debug_disabled_feedback()
-		get_viewport().gui_release_focus()
-		return
-	debug_panel.visible = true
-	get_viewport().gui_release_focus()
-
-
-func _close_debug_panel() -> void:
-	if debug_panel != null:
-		debug_panel.visible = false
-	get_viewport().gui_release_focus()
-
-
-func _can_use_debug_tools() -> bool:
-	return m1_debug_panel_enabled and RunSceneDebugBridgeScript.can_use_debug_tools()
-
-
-func _show_debug_disabled_feedback() -> void:
-	_show_command_feedback(RunSceneDebugBridgeScript.disabled_feedback())
-
-
-func _sync_debug_coordinates() -> void:
-	if run_context == null:
-		return
-	if debug_x_spin != null:
-		debug_x_spin.max_value = maxi(0, run_context.width - 1)
-		debug_x_spin.value = clampi(run_context.get_current_pos().x, 0, maxi(0, run_context.width - 1))
-	if debug_y_spin != null:
-		debug_y_spin.max_value = maxi(0, run_context.height - 1)
-		debug_y_spin.value = clampi(run_context.get_current_pos().y, 0, maxi(0, run_context.height - 1))
-
-
-func _debug_target_pos() -> Vector2i:
-	var x := 0
-	var y := 0
-	if debug_x_spin != null:
-		x = int(debug_x_spin.value)
-	if debug_y_spin != null:
-		y = int(debug_y_spin.value)
-	return Vector2i(x, y)
-
-
-func _debug_teleport_to_exit() -> void:
-	var result := _dispatch_command(&"debug_teleport_to_exit", {"source": "debug"})
-	if bool(result.get("ok", false)) and player_controller != null:
-		player_controller.reset_local_position()
-	_sync_debug_coordinates()
+	debug_panel_controller.open_panel()
 
 
 func _debug_teleport_to_room_type(room_type: StringName) -> void:
-	if run_context == null or run_context.truth_map == null:
-		_show_command_feedback({"ok": false, "accepted": false, "reason_code": &"not_ready", "command_id": &"debug_find_room"})
-		return
-	var target := _nearest_room_of_type(room_type)
-	if target.x < 0:
-		_show_command_feedback({"ok": false, "accepted": false, "reason_code": &"debug_target_missing", "command_id": &"debug_find_room"})
-		return
-	var result := _dispatch_command(&"debug_teleport_to", {"pos": target, "enter_room": true, "source": "debug", "target_room_type": room_type})
-	if bool(result.get("ok", false)) and player_controller != null:
-		# Acceptance helpers seed a real room snapshot, then put the avatar at a
-		# deterministic *walkable* inspection point.  Chest verification must land
-		# inside the production interaction radius so open/close/reopen can be
-		# exercised through the same E/click interfaces used by players.
-		if room_type == &"Chest":
-			player_controller.set_local_position(Vector2(0.56, 0.53))
-		else:
-			player_controller.reset_local_position()
-	_sync_debug_coordinates()
-
-
-func _nearest_room_of_type(room_type: StringName) -> Vector2i:
-	return RunSceneDebugBridgeScript.nearest_room_of_type(run_context, room_type)
-
-
-func _debug_teleport_xy(enter_room: bool) -> void:
-	var result := _dispatch_command(&"debug_teleport_to", {"pos": _debug_target_pos(), "enter_room": enter_room, "source": "debug"})
-	if bool(result.get("ok", false)) and player_controller != null:
-		player_controller.reset_local_position()
-	_sync_debug_coordinates()
-
-
-func _debug_search_and_show_loot() -> void:
-	var result := _dispatch_command(&"search_current_room", {"source": "debug"})
-	var snapshot := run_context.get_status_snapshot()
-	var reward: Dictionary = snapshot.get("last_reward", {})
-	if not reward.is_empty():
-		_close_debug_panel()
-		_show_loot_panel("Debug Search Result", reward)
-	else:
-		_show_command_feedback(result)
-
-
-func _debug_toggle_reduced_motion() -> void:
-	var enabled := not bool(ProjectSettings.get_setting("accessibility/reduce_motion", false))
-	ProjectSettings.set_setting("accessibility/reduce_motion", enabled)
-	_show_command_feedback({
-		"ok": true,
-		"message": "减弱动态已开启：动画冻结在可辨识姿态。" if enabled else "完整动态已开启：恢复循环动画与脉冲反馈。",
-	})
-
-
-func _debug_meta_add_gold() -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
-	if meta_progress_adapter == null:
-		return
-	var summary := RunSceneDebugBridgeScript.debug_add_gold(meta_progress_adapter, 1000, "m1_debug_panel")
-	if debug_log != null:
-		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: +1000 gold.", summary)
-	if ui_shell != null:
-		ui_shell.call("apply_snapshot", _shell_snapshot())
-
-
-func _debug_meta_set_gold(amount: int) -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
-	if meta_progress_adapter == null:
-		return
-	var summary := RunSceneDebugBridgeScript.debug_set_gold(meta_progress_adapter, amount, "m1_debug_panel")
-	if debug_log != null:
-		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: set gold.", summary)
-	if ui_shell != null:
-		ui_shell.call("apply_snapshot", _shell_snapshot())
-
-
-func _debug_meta_clear_gold() -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
-	if meta_progress_adapter == null:
-		return
-	var summary := RunSceneDebugBridgeScript.debug_clear_gold(meta_progress_adapter)
-	if debug_log != null:
-		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: cleared gold.", summary)
-	if ui_shell != null:
-		ui_shell.call("apply_snapshot", _shell_snapshot())
-
-
-func _debug_meta_add_warehouse_item() -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
-	if meta_progress_adapter == null:
-		return
-	var summary := RunSceneDebugBridgeScript.debug_add_warehouse_item(meta_progress_adapter, {
-		"instance_id": "m1_debug_warehouse_item_%d" % Time.get_ticks_msec(),
-		"item_id": "m1_debug_warehouse_item",
-		"display_name": "M1 Debug Warehouse Item",
-		"rarity": "rare",
-		"base_value": 50,
-		"source": "m1_debug_panel",
-	})
-	if debug_log != null:
-		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: warehouse item added.", summary)
-	if ui_shell != null:
-		ui_shell.call("apply_snapshot", _shell_snapshot())
-
-
-func _debug_meta_clear_warehouse() -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
-	if meta_progress_adapter == null:
-		return
-	var summary := RunSceneDebugBridgeScript.debug_clear_warehouse(meta_progress_adapter, "m1_debug_panel")
-	if debug_log != null:
-		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: warehouse cleared.", summary)
-	if ui_shell != null:
-		ui_shell.call("apply_snapshot", _shell_snapshot())
-
-
-func _debug_meta_save() -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
-	if meta_progress_adapter == null:
-		return
-	var result := RunSceneDebugBridgeScript.debug_mark_and_save(meta_progress_adapter, "meta_save", {"source": "m1_debug_panel"})
-	var summary: Dictionary = result.get("summary", {})
-	var saved := bool(result.get("saved", false))
-	if debug_log != null:
-		debug_log.text = "Meta debug: save=%s gold=%s items=%s" % [saved, summary.get("gold", 0), summary.get("warehouse_items_count", 0)]
-	if ui_shell != null:
-		ui_shell.call("apply_snapshot", _shell_snapshot())
-
-
-func _debug_meta_clear_save() -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
-	if meta_progress_adapter == null:
-		return
-	var summary := RunSceneDebugBridgeScript.debug_clear_save(meta_progress_adapter, "m1_debug_panel")
-	if debug_log != null:
-		debug_log.text = RunSceneDebugBridgeScript.debug_result_message("Meta debug: save cleared.", summary)
-	if ui_shell != null:
-		ui_shell.call("apply_snapshot", _shell_snapshot())
-
-
-func _debug_meta_summary() -> void:
-	if not _can_use_debug_tools():
-		_show_debug_disabled_feedback()
-		return
-	if meta_progress_adapter == null:
-		return
-	var summary := RunSceneDebugBridgeScript.debug_read_summary(meta_progress_adapter, "m1_debug_panel")
-	if debug_log != null:
-		debug_log.text = "Meta summary: gold=%s runs=%s extracts=%s fails=%s items=%s" % [
-			summary.get("gold", 0),
-			summary.get("run_count", 0),
-			summary.get("extract_count", 0),
-			summary.get("fail_count", 0),
-			summary.get("warehouse_items_count", 0),
-		]
-	if ui_shell != null:
-		ui_shell.call("apply_snapshot", _shell_snapshot())
+	debug_panel_controller.teleport_to_room_type(room_type)
 
 
 func _on_tutorial_popup_confirmed() -> void:
 	_dispatch_command(&"confirm_tutorial_popup")
 
 
-func _start_tutorial_from_ui() -> void:
-	_start_run_from_route(NavigationIntentScript.make_run(
-		&"run_scene_debug",
-		{"route_mode": &"tutorial_run", "entry_id": &"debug_tutorial_run", "uses_existing_route": true}
-	))
-
-
 func _start_standard_from_ui() -> void:
-	_start_run_from_route(NavigationIntentScript.make_run(
-		&"run_scene_debug",
-		{"route_mode": &"standard_run", "entry_id": &"debug_standard_run", "uses_existing_route": true}
-	))
+	# Debug starts must exercise the same Deploy configuration and meta-progress
+	# authorization as a player start. An empty route preview can drift from the
+	# selected map difficulty or commission offer and is correctly rejected.
+	_show_deploy_shell(&"config")
+	if deploy_shell_panel != null and deploy_shell_panel.has_method("_on_primary_action_pressed"):
+		deploy_shell_panel.call("_on_primary_action_pressed")
 
 
 func _start_run_from_route(intent: Dictionary) -> void:
@@ -2444,9 +2727,12 @@ func _start_run_from_route(intent: Dictionary) -> void:
 			_show_command_feedback(last_command_result)
 		return
 	if bool(payload.get("abandon_active_run", false)):
-		var abandon_result := _dispatch_command(&"abandon_run", {"reason": String(payload.get("reason", "player_deploy_abandon")), "source": "deploy_prep"})
+		var abandon_payload := {"reason": String(payload.get("reason", "player_deploy_abandon")), "source": "deploy_prep", "confirmed": payload.get("confirmed", false)}
+		var abandon_result := _dispatch_command(&"abandon_run", abandon_payload)
 		if not bool(abandon_result.get("ok", false)):
 			_show_deploy_shell(&"config")
+			var abandon_feedback := "请在放弃确认窗口中再次确认；当前探索保持不变。" if StringName(abandon_result.get("status", &"")) == &"abandon_confirmation_required" else "放弃未完成，当前探索保持不变。"
+			deploy_shell_panel.call("show_action_message", abandon_feedback)
 		return
 	var route_result := RunSceneRouteControllerScript.start_from_intent(
 		intent,
@@ -2466,18 +2752,24 @@ func _start_run_from_route(intent: Dictionary) -> void:
 	if bool(route_result.get("player_reset_requested", false)) and player_controller != null:
 		player_controller.reset_local_position()
 	if bool(route_result.get("ok", false)):
+		_processed_combat_feedback_events.clear()
+		_reset_transition_rejection_debounce()
+		if player_feedback_service != null:
+			player_feedback_service.clear_history_and_deduplication()
 		Art21R2RunSmokeSeederScript.seed_if_requested(command_result, command_bus, run_context)
 	if bool(route_result.get("run_screen_requested", false)):
 		_show_run_screen()
 
 
 func _attempt_room_transition(direction: Vector2i) -> void:
+	if RunSceneRouteControllerScript.transition_attempt_is_suppressed(direction, _transition_rejection_direction, _transition_rejection_cooldown_remaining, _transition_rejection_awaiting_release):
+		return
 	if in_run_runtime != null and in_run_runtime.has_active_combat():
 		var transition_check := _g41_transition_precheck(direction)
 		if not bool(transition_check.get("ok", false)):
 			pending_combat_flee_direction = Vector2i.ZERO
 			last_command_result = transition_check.duplicate(true)
-			_show_command_feedback(transition_check)
+			_present_transition_rejection(direction, transition_check)
 			player_controller.block_transition(direction)
 			return
 		pending_combat_flee_direction = direction
@@ -2485,24 +2777,67 @@ func _attempt_room_transition(direction: Vector2i) -> void:
 			"ok": false,
 			"accepted": false,
 			"reason": &"combat_door_locked",
-			"message": "战斗封锁中。停在有效门边后按 T，确认代价再撤离。",
+			"message": "战斗封锁中。停在有效门边后使用 %s，确认代价再撤离。" % SemanticActionHintScript.display_label(&"request_extract"),
 			"direction": direction,
 		}
 		last_command_result = combat_blocked.duplicate(true)
-		_show_command_feedback(combat_blocked)
+		_present_transition_rejection(direction, combat_blocked)
 		player_controller.block_transition(direction)
 		return
 	var before := run_context.get_current_pos()
 	var result: Dictionary = command_bus.dispatch(&"attempt_room_transition", {"direction": direction})
 	last_command_result = result.duplicate(true)
 	_apply_room_entry_result(result)
-	_show_command_feedback(result)
 	var moved: bool = bool(result.get("ok", false)) and run_context.get_current_pos() != before
 	if moved:
+		_show_command_feedback(result)
 		pending_combat_flee_direction = Vector2i.ZERO
-		player_controller.place_from_entry(direction)
+		_reset_transition_rejection_debounce()
+		var entry_position := player_controller.place_from_entry(direction)
+		if in_run_runtime != null and in_run_runtime.has_active_combat():
+			var combat_entry_result: Dictionary = in_run_runtime.place_player_from_room_entry(
+				entry_position,
+				direction
+			)
+			if bool(combat_entry_result.get("applied", false)):
+				player_controller.set_local_position(Vector2(
+					combat_entry_result.get("position", entry_position)
+				))
 	else:
+		_present_transition_rejection(direction, result)
 		player_controller.block_transition(direction)
+
+
+func _advance_transition_rejection_debounce(delta: float, move_vector: Vector2) -> void:
+	_transition_rejection_cooldown_remaining = maxf(
+		0.0,
+		_transition_rejection_cooldown_remaining - maxf(0.0, delta)
+	)
+	if not _transition_rejection_awaiting_release or _transition_rejection_direction == Vector2i.ZERO:
+		return
+	var held_alignment := move_vector.dot(Vector2(_transition_rejection_direction))
+	if held_alignment <= TRANSITION_REJECTION_RELEASE_THRESHOLD:
+		_transition_rejection_awaiting_release = false
+
+
+func _present_transition_rejection(direction: Vector2i, result: Dictionary) -> bool:
+	var same_edge := direction == _transition_rejection_direction
+	if same_edge and (
+		_transition_rejection_awaiting_release
+		or _transition_rejection_cooldown_remaining > 0.0
+	):
+		return false
+	_transition_rejection_direction = direction
+	_transition_rejection_cooldown_remaining = TRANSITION_REJECTION_COOLDOWN_SECONDS
+	_transition_rejection_awaiting_release = true
+	_show_command_feedback(result)
+	return true
+
+
+func _reset_transition_rejection_debounce() -> void:
+	_transition_rejection_direction = Vector2i.ZERO
+	_transition_rejection_cooldown_remaining = 0.0
+	_transition_rejection_awaiting_release = false
 
 
 func _apply_room_entry_result(command_result: Dictionary) -> void:
@@ -2512,6 +2847,20 @@ func _apply_room_entry_result(command_result: Dictionary) -> void:
 		entry_result = action_result.get("room_entry_result", {})
 	if entry_result.is_empty():
 		return
+	if (
+		StringName(entry_result.get("cause", &"")) == &"mine_triggered"
+		and bool(entry_result.get("first_trigger", false))
+	):
+		var mine_position: Vector2i = entry_result.get("position", Vector2i.ZERO)
+		_emit_feedback_cue(
+			PlayerFeedbackServiceScript.CUE_MINE_EXPLOSION,
+			"mine:%s:%d,%d" % [String(run_context.run_id), mine_position.x, mine_position.y],
+			{
+				"hp_delta": int(entry_result.get("hp_delta", 0)),
+				"pressure_delta": int(entry_result.get("pressure_delta", 0)),
+				"fatal": bool(entry_result.get("fatal", false)),
+			}
+		)
 	if StringName(entry_result.get("room_type", &"Unknown")) == &"Exit" and bool(entry_result.get("first_explore", false)):
 		# The resolver owns first-discovery authority. Presentation only replaces
 		# the generic move acknowledgement with a non-blocking player notice.
@@ -2606,8 +2955,6 @@ func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, 
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
-
-
 func _set_control_rect(control: Control, rect: Rect2) -> void:
 	if control == null:
 		return
@@ -2621,25 +2968,6 @@ func _add_menu_button(parent: Control, label: String, callback: Callable) -> But
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(110, 34)
-	button.focus_mode = Control.FOCUS_ALL
-	button.pressed.connect(callback)
-	parent.add_child(button)
-	return button
-
-
-func _add_debug_section(parent: Control, label: String) -> Label:
-	var section := Label.new()
-	section.text = label
-	section.add_theme_font_size_override("font_size", 15)
-	section.custom_minimum_size = Vector2(200, 24)
-	parent.add_child(section)
-	return section
-
-
-func _add_debug_button(parent: Control, label: String, callback: Callable) -> Button:
-	var button := Button.new()
-	button.text = label
-	button.custom_minimum_size = Vector2(180, 28)
 	button.focus_mode = Control.FOCUS_ALL
 	button.pressed.connect(callback)
 	parent.add_child(button)

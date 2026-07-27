@@ -19,17 +19,35 @@ var summary_label: Label
 var state_label: Label
 var state_panel: Panel
 var state_hint_label: Label
+var batch_selection_active := false
+var batch_checked := false
+var batch_eligible := false
+var batch_reason := ""
+var ui_scale_factor := 1.0
 
 
 func setup(card: Dictionary, tab_id: StringName, is_selected: bool) -> void:
 	card_data = card.duplicate(true)
 	card_id = StringName(card_data.get("id", &""))
 	selected = is_selected
+	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
 	custom_minimum_size = Vector2(232, 76)
 	size = custom_minimum_size
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	_build_nodes(tab_id)
 	apply_selected(is_selected)
+	_refresh_ui_scale_metrics()
+
+
+func set_ui_scale_factor(value: float) -> void:
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	_refresh_ui_scale_metrics()
+
+
+func get_ui_scale_factor() -> float:
+	return ui_scale_factor
 
 
 func apply_selected(value: bool) -> void:
@@ -43,12 +61,26 @@ func apply_selected(value: bool) -> void:
 	button.add_theme_stylebox_override("focus", _style(&"focused"))
 	button.add_theme_stylebox_override("pressed", _style(&"pressed"))
 	button.add_theme_stylebox_override("hover_pressed", _style(&"pressed"))
+	button.tooltip_text = Art10UISkinKitScript.sanitize_player_copy(String(card_data.get("detail", card_data.get("description", ""))))
 	if title_label != null:
 		title_label.modulate = Color(1.08, 1.03, 0.90, 1.0) if selected else Color.WHITE
 	if state_label != null:
 		state_label.text = _display_state(state)
 	if state_hint_label != null:
 		state_hint_label.text = _state_hint()
+	if batch_selection_active:
+		_apply_batch_selection_visual()
+
+
+func apply_batch_selection(active: bool, checked: bool, eligible: bool, reason: String = "") -> void:
+	batch_selection_active = active
+	batch_checked = checked
+	batch_eligible = eligible
+	batch_reason = reason
+	if not batch_selection_active:
+		apply_selected(selected)
+		return
+	_apply_batch_selection_visual()
 
 
 func grab_card_focus() -> void:
@@ -58,6 +90,22 @@ func grab_card_focus() -> void:
 
 func focus_button() -> Button:
 	return button
+
+
+func _apply_batch_selection_visual() -> void:
+	if button == null:
+		return
+	var surface := &"selected" if batch_checked else (&"normal" if batch_eligible else &"locked")
+	button.add_theme_stylebox_override("normal", _style(surface))
+	button.add_theme_stylebox_override("hover", _style(&"focused"))
+	button.add_theme_stylebox_override("focus", _style(&"focused"))
+	button.add_theme_stylebox_override("pressed", _style(&"pressed"))
+	button.add_theme_stylebox_override("hover_pressed", _style(&"pressed"))
+	button.tooltip_text = "点击取消勾选" if batch_checked else ("点击加入批量售卖" if batch_eligible else batch_reason)
+	if title_label != null:
+		title_label.modulate = Color(1.10, 1.04, 0.78, 1.0) if batch_checked else Color.WHITE
+	if state_label != null:
+		state_label.text = "✓ 已勾选" if batch_checked else ("□ 可售" if batch_eligible else "不可售")
 
 
 func _build_nodes(tab_id: StringName) -> void:
@@ -141,6 +189,9 @@ func _mode_chip_text() -> String:
 
 func _category_chip_text() -> String:
 	var category := String(card_data.get("category", "项目")).strip_edges()
+	var collectible_level := maxi(0, int(card_data.get("collectible_level", 0)))
+	if collectible_level > 0:
+		return "藏品 Lv.%d" % collectible_level
 	match category.to_lower():
 		"warehouse": return "仓库"
 		"loadout": return "出勤配置"
@@ -213,10 +264,38 @@ func _add_label(node_name: String, rect: Rect2, text: String, font_size: int, co
 	label.horizontal_alignment = alignment
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	Art10UISkinKitScript.apply_label(label, font_size, color)
+	var composition_role := &"body"
+	if node_name == "CardTitle":
+		composition_role = &"title"
+	elif node_name != "CardSummary":
+		composition_role = &"status"
+	Art10UISkinKitScript.apply_composition_label(label, composition_role, font_size, color)
+	label.set_meta("deploy_card_base_font_size", font_size)
+	label.set_meta("deploy_card_composition_role", composition_role)
+	label.set_meta("deploy_card_max_font_size", maxi(font_size, int(floor(rect.size.y - 2.0))))
+	_apply_scaled_label_font(label)
 	_set_rect(label, rect)
 	add_child(label)
 	return label
+
+
+func _refresh_ui_scale_metrics() -> void:
+	for child in get_children():
+		if child is Label and child.has_meta("deploy_card_base_font_size"):
+			_apply_scaled_label_font(child as Label)
+
+
+func _apply_scaled_label_font(label: Label) -> void:
+	if label == null or not label.has_meta("deploy_card_base_font_size"):
+		return
+	var base_font_size := int(label.get_meta("deploy_card_base_font_size", 0))
+	var scaled_font_size := Art10UISkinKitScript.scaled_font_size(base_font_size, ui_scale_factor)
+	scaled_font_size = mini(
+		scaled_font_size,
+		int(label.get_meta("deploy_card_max_font_size", scaled_font_size))
+	)
+	label.add_theme_font_size_override("font_size", scaled_font_size)
+	label.set_meta("runtime_ui_scale_factor", ui_scale_factor)
 
 
 func _add_chip(node_name: String, rect: Rect2, text: String) -> void:

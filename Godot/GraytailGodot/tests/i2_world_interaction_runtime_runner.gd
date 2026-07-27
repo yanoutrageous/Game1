@@ -174,8 +174,25 @@ func _check_projection_consumers_and_proximity() -> void:
 		_check(String(locked_request.get("interaction_id", "")) == "focus-a", "Explicit pickup input diverged from the stable focused target")
 		view.advance(0.01, Vector2(0.54, 0.50), {"door_locked": false})
 		_check(view.focused_interaction_id == "focus-b", "Focus did not switch after residence and a clear distance advantage")
+		var hysteresis_point := Vector2(0.70, 0.50)
+		view.advance(0.01, hysteresis_point, {"door_locked": false})
+		_check(view.focused_interaction_id == "focus-b" and view.context_popup.visible, "Visible focus did not remain stable inside the exit margin")
+		var strict_hysteresis_request: Dictionary = view.request_nearest_interaction(hysteresis_point)
+		_check(not bool(strict_hysteresis_request.get("accepted", false)), "Strict domain proximity query inherited keyboard focus grace")
+		var hysteresis_request: Dictionary = view.request_nearest_interaction(hysteresis_point, true)
+		_check(
+			bool(hysteresis_request.get("accepted", false)) and String(hysteresis_request.get("interaction_id", "")) == "focus-b",
+			"Keyboard interaction rejected the actionable context card inside its visible exit margin"
+		)
 		view.advance(0.04, Vector2(0.90, 0.90), {"door_locked": false})
 		_check(view.focused_interaction_id == "focus-b" and view.context_popup.visible, "Ground focus did not survive a brief boundary excursion")
+		var strict_grace_request: Dictionary = view.request_nearest_interaction(Vector2(0.90, 0.90))
+		_check(not bool(strict_grace_request.get("accepted", false)), "Strict domain proximity query inherited lost-target grace")
+		var grace_request: Dictionary = view.request_nearest_interaction(Vector2(0.90, 0.90), true)
+		_check(
+			bool(grace_request.get("accepted", false)) and String(grace_request.get("interaction_id", "")) == "focus-b",
+			"Keyboard interaction rejected the actionable context card during its visible lost-target grace"
+		)
 		view.advance(0.08, Vector2(0.90, 0.90), {"door_locked": false})
 		_check(view.focused_interaction_id.is_empty() and not view.context_popup.visible, "Ground focus survived beyond its lost-target grace window")
 
@@ -220,6 +237,9 @@ func _check_production_run_scene() -> void:
 	var context = run_scene.get("run_context")
 	var bus = run_scene.get("command_bus")
 	_check(room_controller != null and room_view != null and player != null and context != null and bus != null, "Production Chest composition is incomplete")
+	var feedback_service = run_scene.get("player_feedback_service")
+	if feedback_service != null:
+		feedback_service.set_test_adapters(Callable(), Callable(self, "_ignore_audio_playback"))
 	if room_controller != null:
 		var background := room_controller.get_node_or_null("Background/BackgroundSprite") as Sprite2D
 		var legacy_prop := room_controller.get_node_or_null("Interactables/PropSprite") as Sprite2D
@@ -280,6 +300,7 @@ func _check_production_run_scene() -> void:
 	_check(not run_source.contains("interaction_commit_requested") and not run_source.contains("_on_g41_interaction_commit_requested"), "RunScene still accepts an animation-driven Chest commit")
 	_check(not capture_source.contains("chest_view.chest.mark_opened()"), "Production capture still cheats the opened Chest state")
 	main.free()
+	await _frames(4)
 
 
 func _public_snapshot(room_type: StringName, position: Vector2i, searched: bool) -> Dictionary:
@@ -343,6 +364,10 @@ func _door_state(doors: Array, direction: Vector2i) -> StringName:
 func _frames(count: int) -> void:
 	for _index in range(count):
 		await process_frame
+
+
+func _ignore_audio_playback(_report: Dictionary) -> void:
+	pass
 
 
 func _finish() -> void:

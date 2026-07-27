@@ -3,6 +3,7 @@ class_name G41InRunRuntime
 
 const CombatSimulationScript := preload("res://scripts/gameplay/combat/g41_combat_simulation.gd")
 const DeterministicRngScript := preload("res://scripts/gameplay/combat/g41_deterministic_rng.gd")
+const MonsterCatalogScript := preload("res://scripts/gameplay/combat/g41_monster_catalog.gd")
 
 var runtime_controller
 var context: RunContext
@@ -73,13 +74,30 @@ func advance_frame(delta: float, move_input: Vector2, aim_input: Vector2) -> Dic
 	return build_read_only_snapshot()
 
 
-func request_attack() -> Dictionary:
+func request_attack(requested_facing: Vector2 = Vector2.ZERO) -> Dictionary:
 	if simulation == null or not simulation.active:
 		return {"ok": false, "reason": &"combat_not_active"}
-	var queued := simulation.queue_player_attack()
+	var player_state := StringName(simulation.player.get("state", &"idle"))
+	var cooldown_before := float(simulation.player.get("attack_cooldown", 0.0))
+	var immediate := player_state in [&"idle", &"move"] and cooldown_before <= simulation.EPSILON
+	var buffer_window_open := (
+		cooldown_before > simulation.EPSILON
+		and cooldown_before <= simulation.PLAYER_ATTACK_BUFFER_SECONDS + simulation.EPSILON
+	)
+	var queued := simulation.queue_player_attack(requested_facing)
+	var status := &"attack_blocked"
+	if queued:
+		status = &"attack_queued" if immediate else &"attack_buffered"
+	elif (
+		player_state not in [&"hurt", &"dead"]
+		and cooldown_before > simulation.PLAYER_ATTACK_BUFFER_SECONDS + simulation.EPSILON
+	):
+		status = &"attack_cooling_down"
 	return {
 		"ok": queued,
-		"status": &"attack_queued" if queued else &"attack_blocked",
+		"status": status,
+		"retry_after_seconds": maxf(0.0, cooldown_before - simulation.PLAYER_ATTACK_BUFFER_SECONDS),
+		"buffer_window_open": buffer_window_open,
 		"authority": &"G41CombatSimulation",
 	}
 
@@ -112,6 +130,19 @@ func get_player_local_position(fallback: Vector2) -> Vector2:
 	return Vector2(simulation.player.get("pos", fallback))
 
 
+func place_player_from_room_entry(player_local_pos: Vector2, entry_direction: Vector2i) -> Dictionary:
+	if simulation == null or not simulation.active:
+		return {
+			"applied": false,
+			"reason": &"combat_not_active",
+			"position": player_local_pos,
+		}
+	return simulation.place_player_from_room_entry(
+		player_local_pos,
+		Vector2(entry_direction)
+	)
+
+
 func build_read_only_snapshot() -> Dictionary:
 	var combat: Dictionary = {
 		"active": false,
@@ -139,6 +170,23 @@ func _start_current_encounter(player_local_pos: Vector2) -> void:
 	encounter_ordinals[current_room_key] = ordinal
 	var room_pos := context.get_current_pos()
 	var seed := DeterministicRngScript.derive_seed(context.seed_value, room_pos, ordinal)
+	var monster_types := _encounter_types(
+		context.seed_value,
+		room_pos,
+		context.current_adjacent_mines
+	)
+	var identity := CombatState.build_enemy_state(
+		context,
+		room_pos,
+		context.current_adjacent_mines
+	)
+	var mother_profile := MonsterCatalogScript.runtime_profile(
+		monster_types[0],
+		int(identity.get("enemy_power", 0)),
+		String(identity.get("enemy_name", "异常体"))
+	)
+	mother_profile.merge(identity, true)
+	context.enemy_state = mother_profile.duplicate(true)
 	simulation = CombatSimulationScript.new() as G41CombatSimulation
 	simulation.start({
 		"seed": seed,
@@ -147,22 +195,20 @@ func _start_current_encounter(player_local_pos: Vector2) -> void:
 		"player_hp": context.hp,
 		"player_max_hp": context.max_hp,
 		"player_power": context.power,
-		"monster_types": _encounter_types(seed),
+		"monster_types": monster_types,
+		"enemy_profiles": [mother_profile],
+		"arena_obstacles": CombatSimulationScript.production_arena_obstacles(),
 	})
 	simulation.set_paused(paused)
 	_consume_domain_events(simulation.drain_events())
 
 
-func _encounter_types(seed: int) -> Array[StringName]:
-	match absi(seed) % 4:
-		0:
-			return [&"slime"]
-		1:
-			return [&"slime", &"bat"]
-		2:
-			return [&"bat", &"drone"]
-		_:
-			return [&"slime", &"bat", &"drone"]
+func _encounter_types(
+	run_seed: int,
+	room_pos: Vector2i = Vector2i.ZERO,
+	adjacent_mines: int = 0
+) -> Array[StringName]:
+	return [MonsterCatalogScript.pick_type_for_cell(run_seed, room_pos, adjacent_mines)]
 
 
 func _consume_domain_events(events: Array[Dictionary]) -> void:
@@ -193,16 +239,20 @@ func _commit_damage_event(event: Dictionary) -> void:
 
 
 func _commit_combat_cleared(event: Dictionary) -> void:
-	if command_bus == null or simulation == null or simulation.reward_emitted:
+	var completed_simulation := simulation
+	if command_bus == null or completed_simulation == null or completed_simulation.reward_emitted:
 		return
 	var result: Dictionary = command_bus.dispatch(&"resolve_runtime_combat", {
 		"source": "g41_combat_simulation",
-		"combat_tick": int(event.get("tick", simulation.tick_index)),
-		"combat_seed": simulation.encounter_seed,
-		"combat_snapshot": simulation.build_snapshot(),
+		"combat_tick": int(event.get("tick", completed_simulation.tick_index)),
+		"combat_seed": completed_simulation.encounter_seed,
+		"combat_snapshot": completed_simulation.build_snapshot(),
 	})
 	if bool(result.get("ok", false)):
-		simulation.mark_reward_committed()
+		# Resolving the room synchronously refreshes the run context and may clear
+		# the runtime's current simulation. Commit against the encounter that
+		# emitted the event instead of dereferencing the refreshed field.
+		completed_simulation.mark_reward_committed()
 
 
 func _commit_player_defeated(event: Dictionary) -> void:

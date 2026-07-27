@@ -172,16 +172,18 @@ static func style_box_for_visual_key(visual_key: StringName, fallback_asset_id: 
 	var texture := texture_for_visual_key(visual_key, fallback_asset_id)
 	if texture == null:
 		return null
+	var slice_margin := maxi(texture_margin, 0)
+	var content_inset := maxi(maxi(padding, 0), slice_margin)
 	var style := StyleBoxTexture.new()
 	style.texture = texture
-	style.texture_margin_left = texture_margin
-	style.texture_margin_top = texture_margin
-	style.texture_margin_right = texture_margin
-	style.texture_margin_bottom = texture_margin
-	style.content_margin_left = padding
-	style.content_margin_top = padding
-	style.content_margin_right = padding
-	style.content_margin_bottom = padding
+	style.texture_margin_left = slice_margin
+	style.texture_margin_top = slice_margin
+	style.texture_margin_right = slice_margin
+	style.texture_margin_bottom = slice_margin
+	style.content_margin_left = content_inset
+	style.content_margin_top = content_inset
+	style.content_margin_right = content_inset
+	style.content_margin_bottom = content_inset
 	style.draw_center = true
 	return style
 

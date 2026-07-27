@@ -1,5 +1,7 @@
 # HANDOFF_TWO_PC_GODOT_PLAYABLE_GRAYBOX
 
+> **Superseded tutorial entry (I3R, 2026-07-24):** This is a historical G4 handoff. I3R retired the dedicated tutorial entry described below. The current production route is `Deploy map catalog -> tutorial_5x5 -> standard_run`; the historical body is retained unchanged and must not be used as current handoff guidance.
+
 ## Branch
 
 Continue from:

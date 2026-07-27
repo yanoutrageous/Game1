@@ -1,7 +1,7 @@
 # Current Execution Environment
 
-文档状态：I1 关闭后继续适用的当前执行环境契约。
-最后更新：2026-07-21
+文档状态：I3R 活动阶段继续适用的当前执行环境契约。
+最后更新：2026-07-24
 
 ## 路径解析
 
@@ -14,7 +14,8 @@ i1_report: <i1_run_root>/report.json
 i1_preview: <i1_run_root>/previews
 ```
 
-当前机器观测到的 repo 是 `E:\AGAME1`，但仓库脚本和文档必须动态解析，不能用盘符匹配选择 active repo。
+当前 I3R 验证解析的是独立 Git worktree；`E:\AGAME1` 仅是本机 workspace 容器。
+仓库脚本和文档必须动态解析，不能用盘符匹配选择 active repo。
 
 ## 本机 Godot 观测
 

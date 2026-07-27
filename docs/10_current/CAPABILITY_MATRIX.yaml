@@ -1,11 +1,12 @@
 document_status: current_capability_matrix
-updated: "2026-07-23"
-updated_by: "I3_closeout_pass_with_notes"
+updated: "2026-07-27"
+updated_by: "I3R_final_machine_gate_and_space_reclose_writeback"
 
 repository:
   workspace_resolution: "git rev-parse --show-toplevel"
   godot_project: "<git-worktree-root>/Godot/GraytailGodot"
-  observed_branch: "codex/i3-player-experience-calibration"
+  observed_branch: "codex/i3r-player-experience-rework"
+  i3_historical_branch: "codex/i3-player-experience-calibration"
   source_head_before_i1: "2212992337aeef7cda412dbaaa191c3ad6cbb81a"
   implementation_commit: "6a4f207d743583c7342655488c2d9a652b9ab05c"
   closure_fix_commit: "492d74fcdc94cb75e47401c203defd49dac11ae9"
@@ -15,14 +16,17 @@ repository:
   i2_implementation_tree: "7b04e81882961f65a516e192c33093ec98162667"
   i3_entry_validated_head: "09aaafe283aa2e4c2f30708c5f88b89ebf7753eb"
   i3_entry_validated_tree: "a077da34237dce5e4a6081d833efd939098b4641"
+  i3r_entry_validated_head: "35189aaf524157761d1ab9cdddc39e76baa0d7ca"
+  i3r_entry_validated_tree: "82f100059add24ecb2c12e7fca0bfb17f3a95c50"
   i3_base_commit: "506955ec26f866707c4821b21d1969d211bc8cd8"
   i3_base_tree: "0cf56aa44aadda254c107fae579fd4e093568c10"
   i3_runtime_commit: "4da77decfe2b7aa813f80edaa44cdd99096163ae"
   i3_runtime_tree: "69283b632c5717c0546e207f9003ec683122fe4d"
   i2_observed_base_ref: "origin/main_at_b77132b9de655b36f71c930a35a191c383b55522"
-  observed_base_ref: "i3_entry_at_09aaafe283aa2e4c2f30708c5f88b89ebf7753eb"
-  current_stage: "no_active_successor_i3_closed_pass_with_notes"
-  latest_closed_non_art_baseline: "I3"
+  observed_base_ref: "i3r_entry_at_35189aaf524157761d1ab9cdddc39e76baa0d7ca"
+  current_stage: "I3R_active_external_acceptance_pending"
+  active_non_art_stage: "I3R"
+  latest_closed_non_art_baseline: "I2"
   latest_closed_art_stage: "ART21"
   later_accepted_page_ui_evidence: "ART23"
   failed_historical_art_attempt: "ART24R2_24_of_61_pass"
@@ -64,6 +68,11 @@ runtime_capabilities:
   i3_main_menu_spatial_transition_and_real_master_volume: validated_scoped
   i3_long_term_research_projection: validated_scoped_talent_rules_zero
   i3_base_original_planning_and_art_dedup: governed_source_baseline_not_runtime_admission
+  i3r_warehouse_atomic_batch_sale: playable_and_persistent
+  i3r_talent_tree_three_branches_six_nodes: playable_and_persistent
+  i3r_tutorial_deploy_map_mode: playable_via_standard_run
+  i3r_production_state_gallery: generated_11_of_11_visual_review_required
+  i3r_production_preview_matrix: generated_132_of_132_visual_review_required
 
 i1_implementation:
   restart_confirmation_and_debug_gate: validated_closed
@@ -118,8 +127,106 @@ i3_closeout:
   final_validation: "docs/validation/I3_PLAYER_PERCEPTION_AND_BASELINE_CALIBRATION_VALIDATION.md"
   final_handoff: "docs/handoff/HANDOFF_I3_PLAYER_PERCEPTION_AND_BASELINE_CALIBRATION.md"
 
+i3r_current:
+  stage_status: active_external_acceptance_pending
+  delivery_branch: "codex/i3r-player-experience-rework"
+  historical_entry: I3_conditional_closeout_pass_with_notes
+  entry_head: "35189aaf524157761d1ab9cdddc39e76baa0d7ca"
+  entry_tree: "82f100059add24ecb2c12e7fca0bfb17f3a95c50"
+  implementation_target: godot
+  tutorial_route: deploy_map_catalog_tutorial_5x5_to_standard_run
+  dedicated_tutorial_interface: retired
+  quick_worktree: pass
+  production_state_gallery: final_generated_12_of_12_codex_static_review_complete
+  production_preview_matrix: final_generated_132_of_132_codex_static_review_complete
+  long_term_matrix: final_generated_125_of_125_codex_static_review_complete
+  final_static_visual_review: pass_269_of_269
+  canonical_implementation_full: pass_89_of_89
+  canonical_implementation_full_applicability: superseded_by_space_governance_and_later_combat_map_fixes
+  final_post_governance_worktree_full: pass_96_of_96
+  exact_head_full: external_final_delivery_record
+  real_device_controller_audio: pending
+  target_gpu_long_run: pending
+  dynamic_player_and_visual_signoff: pending
+  commit_push_remote_sha: external_final_delivery_record
+  successor_authorized: false
+
+storage_governance:
+  stage_relation: I3R_in_scope
+  initial_project_size_gib: 113.296
+  archived_snapshot_count: 123
+  archived_i3r_snapshot_count: 60
+  snapshot_file_record_count: 543197
+  snapshot_logical_bytes: 81804420162
+  cas_object_count: 6489
+  cas_payload_bytes: 735449033
+  archive_index_sha256: "16974A206B007F737CB4CC45163720F3D10AF1170A657EC1DD477B26DE61AEAE"
+  independent_restore_proof_v2: pass
+  final_full_restore_manifest_sha256: "0D22EF6641CE54A536A230E43DE9006F997FE1FBF9B8BA7EE29380AAE2B54764"
+  final_full_restore_proof_sha256: "ACE86F8E3614CBA2BB8E0A52EC82B1E3A320609422CF20FD17AC274F1D483195"
+  root_i1_source_worktrees_removed_with_receipts: 19
+  i2_source_worktrees_removed_with_receipts: 40
+  i3_source_worktrees_removed_with_receipts: 3
+  i3r_source_worktrees_removed_with_receipts: 18
+  total_source_worktrees_removed_with_receipts: 80
+  i3_baseline_validation_mirror_preexisting_absence: 1
+  current_pruned_snapshot_worktrees_with_receipts: 38
+  remaining_snapshot_worktree_mirrors: 0
+  remaining_snapshot_tombstones: 0
+  final_archive_verifier: pass
+  final_cleanup_project_size_gib: 9.1937
+  final_cleanup_project_file_count: 56331
+  e_drive_free_bytes_after_cleanup: 112984649728
+  e_drive_free_gib_after_cleanup: 105.2252
+  e_drive_free_bytes_increase_current_reclose: 32890380288
+  transient_targets_removed: 76
+  orphan_restore_staging_bytes_removed: 752427027
+  final_proof_sha256: "A9B1286576B9E877642F9B2D0FACC7FE90F22C06D40C14856A1C7C7D97A377C4"
+  protected_original_sources_zip_base_planning_and_runtime_assets: retain_not_cache
+  stage_git_worktrees: not_snapshot_cache_i2_modified_i3_and_i3_baseline_task_binding_preserved
+  validation_mirror_retention: at_most_one_active
+  post_candidate_cleanup_order: archive_verify_v2_restore_transaction_prune
+  wildcard_or_manual_prune: forbidden
+  final_post_governance_worktree_full: pass_before_document_only_terminal_writeback
+
 validation:
-  latest_stage: I3
+  latest_stage: I3R
+  i3r_quick_worktree: pass
+  i3r_quick_cleanup_runner_count: 24
+  i3r_quick_cleanup_diagnostic_total: 48
+  i3r_production_state_gallery: final_generated_12_of_12
+  i3r_production_state_gallery_visual_acceptance: codex_static_review_complete_player_pending
+  i3r_production_preview_matrix: final_generated_132_of_132
+  i3r_production_preview_matrix_visual_acceptance: codex_static_review_complete_player_pending
+  i3r_long_term_matrix: final_generated_125_of_125
+  i3r_long_term_matrix_visual_acceptance: codex_static_review_complete_player_pending
+  i3r_final_static_visual_review: pass_269_of_269
+  i3r_canonical_implementation_full: pass_89_of_89
+  i3r_canonical_implementation_full_duration_ms: 833956
+  i3r_canonical_implementation_full_plain_pass_runner_count: 52
+  i3r_canonical_implementation_full_cleanup_runner_count: 37
+  i3r_canonical_implementation_full_cleanup_diagnostic_total: 74
+  i3r_canonical_implementation_full_blocking_diagnostic_count: 0
+  i3r_canonical_implementation_full_manifest_sha256: "8D7DE29F024C7EDD23A7C851D1A1DEA35ED0292E257712D97127D8CCFB264811"
+  i3r_canonical_implementation_full_report_sha256: "AB793F0920D88CB4BBE530A5BEFF30748E9D5ABCCF2C25959560CA061715C0EC"
+  i3r_canonical_implementation_full_business_file_count: 2302
+  i3r_canonical_implementation_full_business_fingerprint_sha256: "B85932E120CFD1EEF785ABD7408B753EFA6BF5BEF16C4F41EAC38525D908A60B"
+  i3r_canonical_implementation_full_applicability: superseded_not_final
+  i3r_final_post_governance_worktree_full: pass_96_of_96
+  i3r_final_worktree_full_duration_ms: 1053141
+  i3r_final_worktree_full_plain_pass_runner_count: 53
+  i3r_final_worktree_full_cleanup_runner_count: 43
+  i3r_final_worktree_full_hard_failure_count: 0
+  i3r_final_worktree_full_manifest_sha256: "11B32B377A244B9DDF98637020CC9F263ABCDEB488472FA624F11F5A0A575406"
+  i3r_final_worktree_full_report_sha256: "3CDF02791EC61CD580B78489A4C5B2581EF7E974AADEEA897AF06FEBD1494BC4"
+  i3r_final_worktree_full_business_file_count: 2333
+  i3r_final_worktree_full_business_fingerprint_sha256: "E7ACAA39576A6DFEEB8B22EA18C41B0914A008F84F33348637183B1541C25A1F"
+  i3r_final_worktree_full_document_writeback_boundary: docs_only_separately_verified
+  i3r_exact_head_full: external_final_delivery_record
+  i3r_real_device_controller_audio: not_run
+  i3r_target_device_gpu_long_run: not_run
+  i3r_dynamic_player_visual_signoff: not_run
+  i3r_commit_push_remote_sha: external_final_delivery_record
   i3_static_final: pass
   i3_base_import_verify: pass_files_1041_planning_25_art_members_1407_art_unique_1012_aliases_395
   i3_base_committed_verify: pass_files_1041_planning_25_art_members_1407_art_unique_1012_aliases_395

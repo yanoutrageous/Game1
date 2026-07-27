@@ -12,7 +12,7 @@ const Art23LongTermAssetContractScript := preload("res://scripts/presentation/ar
 const Art25ContentAssetContractScript := preload("res://scripts/presentation/art25_content_asset_contract.gd")
 const LongTermContentCardViewScript := preload("res://scripts/ui/long_term/long_term_content_card_view.gd")
 const CharacterPresentationCatalogScript := preload("res://scripts/presentation/character/character_presentation_catalog.gd")
-const LongTermReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
+const MetaActionRequestIdScript := preload("res://scripts/core/progression/meta_action_request_id.gd")
 
 signal navigation_intent_requested(intent: Dictionary)
 signal meta_action_requested(action: Dictionary)
@@ -24,12 +24,13 @@ const STATE_CLOSING := &"CLOSING"
 const STATE_SWITCHING := &"SWITCHING"
 
 const MODULE_IDS: Array[StringName] = [
-	&"task_archive", &"codex", &"research", &"profile", &"collection_appearance",
+	&"task_archive", &"codex", &"research", &"talent", &"profile", &"collection_appearance",
 ]
 const MODULE_LABELS := {
 	&"task_archive": "任务档案",
 	&"codex": "图鉴",
 	&"research": "研究解锁",
+	&"talent": "天赋",
 	&"profile": "角色",
 	&"collection_appearance": "收藏外观",
 }
@@ -52,6 +53,7 @@ const PAGE_COPY := {
 	"codex/lore": "保存世界背景与文本线索；未知条目维持未发现状态。",
 	"research/unlock_interface": "沿前置关系逐项研究；节点使用现有课题条件和完成效果。",
 	"research/research_entry": "查看课题条件后明确确认；材料若正在出勤配置中则不会被消耗。",
+	"talent/tree": "沿整备、安全与勘探三条分支解锁；精确效果只进入之后确认出发的新一局。",
 	"profile/qualification_level": "展示真实资历等级与绝对经验值；没有阈值时不伪造百分比。",
 	"profile/history": "回看已经完成的探索记录；浏览不会改变历史。",
 	"profile/statistics": "汇总探索、撤离、失败和长期金币等已存在统计。",
@@ -153,11 +155,15 @@ var last_cancel_press_msec := -CANCEL_DEBOUNCE_MSEC
 var warm_glow: ColorRect
 var blue_glow: ColorRect
 var ambient_particles: Array[CPUParticles2D] = []
+var ui_scale_factor := 1.0
 
 
 func build(model: Dictionary = {}) -> void:
 	_clear_children()
+	Art10UISkinKitScript.apply_player_ui_theme(self)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
 	current_model = model.duplicate(true) if not model.is_empty() else LongTermModelScript.build(selected_module_id)
 	selected_module_id = _normalize_module_id(StringName(current_model.get("selected_module_id", selected_module_id)))
 	displayed_module_id = selected_module_id
@@ -175,6 +181,16 @@ func build(model: Dictionary = {}) -> void:
 	_refresh_profile()
 	set_page_active(true)
 	call_deferred("_grab_long_term_initial_focus")
+
+
+func set_ui_scale_factor(value: float) -> void:
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	_refresh_ui_scaled_copy()
+
+
+func get_ui_scale_factor() -> float:
+	return ui_scale_factor
 
 
 func apply_snapshot(snapshot: Dictionary) -> void:
@@ -398,16 +414,26 @@ func _process(delta: float) -> void:
 		blue_glow.modulate.a = 0.42 + sin(ambient_elapsed * 1.35 + 1.7) * 0.08
 
 
-func _input(event: InputEvent) -> void:
-	if not page_active or not is_visible_in_tree() or not event.is_action_pressed("ui_cancel"):
-		return
+func handle_cancel_event(event: InputEvent) -> bool:
+	if (
+		event == null
+		or event.is_echo()
+		or not page_active
+		or not is_visible_in_tree()
+		or not (event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel"))
+	):
+		return false
 	# A single Windows Escape gesture can surface as multiple pressed events.
 	# Keep it to one staged navigation step: expand -> secondary -> primary -> main.
 	if _cancel_press_is_debounced(Time.get_ticks_msec()):
-		get_viewport().set_input_as_handled()
-		return
+		return true
 	_handle_cancel_focus_step()
-	get_viewport().set_input_as_handled()
+	return true
+
+
+func _input(event: InputEvent) -> void:
+	if handle_cancel_event(event):
+		get_viewport().set_input_as_handled()
 
 
 func _cancel_press_is_debounced(now_msec: int) -> bool:
@@ -510,7 +536,7 @@ func _build_module_group() -> void:
 	# The audited parchment is the workspace surface here, not a thumbnail. Fill
 	# the expanded contract rect so its readable region covers both list/detail.
 	content_panel_texture.stretch_mode = TextureRect.STRETCH_SCALE
-	content_detail_title_label = _add_label(module_group, "LongTermContentDetailTitle", LongTermLayoutContractScript.CONTENT_TITLE, "", 21, Color(0.26, 0.12, 0.05), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
+	content_detail_title_label = _add_label(module_group, "LongTermContentDetailTitle", LongTermLayoutContractScript.CONTENT_TITLE, "", 18, Color(0.26, 0.12, 0.05), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
 	content_detail_body_label = _add_label(module_group, "LongTermContentDetailBody", LongTermLayoutContractScript.CONTENT_SUMMARY, "", 16, Color(0.23, 0.14, 0.08), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
 	content_detail_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content_detail_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
@@ -597,7 +623,7 @@ func _build_profile_column() -> void:
 	_add_label(self, "LongTermProfileExpLabel", LongTermLayoutContractScript.PROFILE_EXP_LABEL, "经验", 14, Color(0.78, 0.68, 0.51), HORIZONTAL_ALIGNMENT_LEFT, &"readable")
 	profile_exp_value_label = _add_label(self, "LongTermProfileExpValue", LongTermLayoutContractScript.PROFILE_EXP_VALUE, "0", 14, Color(0.88, 0.81, 0.66), HORIZONTAL_ALIGNMENT_RIGHT, &"readable")
 	profile_stat_labels.clear()
-	var stat_names := ["探索", "撤离", "失败", "长期金币"]
+	var stat_names := ["探索", "撤离率", "档案", "长期金币"]
 	for index in range(stat_names.size()):
 		var rect := Rect2(
 			LongTermLayoutContractScript.PROFILE_STAT_ORIGIN + Vector2(0, index * (LongTermLayoutContractScript.PROFILE_STAT_SIZE.y + LongTermLayoutContractScript.PROFILE_STAT_GAP)),
@@ -690,7 +716,7 @@ func _apply_module_content(module_id: StringName) -> void:
 	current_model = LongTermModelScript.build_from_snapshot(displayed_module_id, current_app_snapshot, &"app_shell_snapshot")
 	furniture_texture.position = LongTermLayoutContractScript.furniture_rect(displayed_module_id).position
 	furniture_texture.size = LongTermLayoutContractScript.furniture_rect(displayed_module_id).size
-	furniture_texture.texture = Art23LongTermAssetContractScript.texture(StringName("long_term.furniture.%s" % String(displayed_module_id)))
+	furniture_texture.texture = Art23LongTermAssetContractScript.furniture_texture(displayed_module_id)
 	_rebuild_secondary_buttons()
 	_refresh_content()
 	_refresh_module_buttons()
@@ -735,18 +761,31 @@ func _refresh_content() -> void:
 	content_detail_title_label.text = "%s · %s" % [module_label, String(group.get("title", "档案"))]
 	content_detail_body_label.text = str(current_workspace.get("summary", "当前档案只读展示。"))
 	current_record_count = int(current_workspace.get("record_count", 0))
-	if StringName(current_workspace.get("kind", &"")) == &"research_unlock_tree":
+	var workspace_kind := StringName(current_workspace.get("kind", &""))
+	if workspace_kind == &"research_unlock_tree":
 		var completed_count := 0
 		for raw_card in current_workspace.get("records", []):
 			if raw_card is Dictionary and str((raw_card as Dictionary).get("state", "")) == "已完成":
 				completed_count += 1
 		content_detail_meta_label.text = "节点 %d · 已完成 %d" % [current_record_count, completed_count]
+	elif workspace_kind == &"talent_unlock_tree":
+		var tree_contract: Dictionary = current_workspace.get("tree_contract", {})
+		var unlocked_count := 0
+		for raw_card in current_workspace.get("records", []):
+			if raw_card is Dictionary and bool((raw_card as Dictionary).get("unlocked", false)):
+				unlocked_count += 1
+		content_detail_meta_label.text = "可用 %d 点 · 已解锁 %d / %d" % [
+			int(tree_contract.get("points_available", 0)),
+			unlocked_count,
+			current_record_count,
+		]
 	else:
 		content_detail_meta_label.text = "记录 %d" % current_record_count
 	content_list_header_label.text = str(current_workspace.get("list_label", "档案条目"))
 	content_detail_header_label.text = str(current_workspace.get("detail_label", "档案详情"))
 	_rebuild_content_cards(group)
 	_refresh_secondary_buttons()
+	_refresh_ui_scaled_copy()
 
 
 func _rebuild_content_cards(group: Dictionary) -> void:
@@ -772,6 +811,7 @@ func _rebuild_content_cards(group: Dictionary) -> void:
 		button.focus_entered.connect(Callable(self, "_preview_long_term_card").bind(index))
 		button.mouse_entered.connect(Callable(self, "_preview_long_term_card").bind(index))
 		_apply_card_surface(button, &"locked" if LOCKED_MODULES.has(displayed_module_id) else (&"selected" if index == selected_content_card_index else &"normal"))
+		button.call("set_ui_scale_factor", ui_scale_factor)
 		card_grid_container.add_child(button)
 		long_term_card_buttons.append(button)
 	if not current_content_cards.is_empty():
@@ -803,7 +843,11 @@ func _attach_content_visual_keys(cards: Array[Dictionary], group_key: String) ->
 	for raw_card in cards:
 		var card := raw_card.duplicate(true)
 		card["visual_key"] = &"art25.long_term.unknown" if card.get("known", true) == false else Art25ContentAssetContractScript.long_term_visual_key(group_key, card)
-		card["tree_view"] = group_key == "research/unlock_interface" and StringName(card.get("presentation_kind", &"")) == &"research_unlock_node"
+		var presentation_kind := StringName(card.get("presentation_kind", &""))
+		card["tree_view"] = (
+			(group_key == "research/unlock_interface" and presentation_kind == &"research_unlock_node")
+			or (group_key == "talent/tree" and presentation_kind == &"talent_unlock_node")
+		)
 		result.append(card)
 	return result
 
@@ -823,17 +867,24 @@ func _refresh_profile() -> void:
 	var runtime: Dictionary = current_model.get("profile_runtime_panel", {})
 	profile_level_label.text = "等级 %02d" % maxi(1, int(runtime.get("profile_level", 1)))
 	var titles := runtime.get("titles", []) as Array
-	profile_role_label.text = str(titles[titles.size() - 1]) if not titles.is_empty() else "回收员"
+	profile_role_label.text = str(runtime.get("current_title", titles[titles.size() - 1] if not titles.is_empty() else "回收员"))
 	profile_exp_value_label.text = str(maxi(0, int(runtime.get("profile_exp", 0))))
+	var next_level_exp := int(runtime.get("next_level_exp", -1))
+	profile_exp_value_label.tooltip_text = (
+		"距离下一等级还需 %d 经验" % int(runtime.get("exp_to_next_level", 0))
+		if next_level_exp >= 0
+		else "已达到当前资历上限"
+	)
 	var values := [
-		int(runtime.get("run_count", 0)),
-		int(runtime.get("extract_count", 0)),
-		int(runtime.get("fail_count", 0)),
-		int(runtime.get("long_term_gold", runtime.get("gold", 0))),
+		_format_number(int(runtime.get("run_count", 0))),
+		"%d%%" % int(runtime.get("extract_rate_percent", 0)),
+		_format_number(int(runtime.get("history_record_count", 0))),
+		_format_number(int(runtime.get("long_term_gold", runtime.get("gold", 0)))),
 	]
-	var names := ["探索", "撤离", "失败", "长期金币"]
+	var names := ["探索", "撤离率", "档案", "长期金币"]
 	for index in range(mini(profile_stat_labels.size(), values.size())):
-		profile_stat_labels[index].text = "%s  %s" % [names[index], _format_number(values[index])]
+		profile_stat_labels[index].text = "%s  %s" % [names[index], values[index]]
+	_refresh_ui_scaled_copy()
 
 
 func _refresh_module_buttons() -> void:
@@ -1150,7 +1201,7 @@ func _on_content_action_pressed() -> void:
 func _prepare_meta_action(action: Dictionary) -> Dictionary:
 	var request := action.duplicate(true)
 	meta_request_sequence += 1
-	request["request_id"] = "long_term:%d:%d" % [get_instance_id(), meta_request_sequence]
+	request["request_id"] = MetaActionRequestIdScript.generate(&"long_term")
 	request["source_page"] = &"long_term"
 	return request
 
@@ -1167,6 +1218,7 @@ func _meta_request_identity(request: Dictionary) -> Dictionary:
 func _meta_action_target_id(action: Dictionary) -> String:
 	match StringName(action.get("action", &"")):
 		&"complete_research": return str(action.get("research_id", ""))
+		&"unlock_talent": return str(action.get("talent_id", ""))
 		&"claim_goal": return "%s:%s" % [str(action.get("goal_kind", "")), str(action.get("goal_id", ""))]
 		&"mark_viewed": return str(action.get("view_kind", ""))
 	return ""
@@ -1191,13 +1243,18 @@ func _meta_result_player_message(envelope: Dictionary) -> String:
 		match status:
 			&"claimed": return "奖励已领取并存入基地档案。"
 			&"completed": return "研究完成，相关内容已经开放。"
+			&"talent_unlocked": return "天赋已解锁，将从之后确认出发的新一局生效。"
+			&"talent_already_unlocked": return "该天赋已经解锁，无需重复提交。"
 			&"duplicate_ignored": return "该项操作已经完成，无需重复提交。"
 		return "档案操作已完成。"
 	match status:
 		&"not_claimable": return "当前尚未满足领取条件。"
 		&"unknown_goal": return "该任务档案暂不可用。"
 		&"unknown_research": return "该研究课题暂不可用。"
-		&"prerequisite_missing": return "请先完成前置研究。"
+		&"unknown_talent": return "该天赋节点不在当前权威目录中。"
+		&"prerequisite_missing":
+			return "请先解锁前置天赋。" if StringName(envelope.get("action", &"")) == &"unlock_talent" else "请先完成前置研究。"
+		&"insufficient_talent_points": return "天赋点不足，本次解锁未发生。"
 		&"insufficient_gold": return "金币不足，研究未开始。"
 		&"material_missing_or_configured": return "所需材料不足，或正在出勤配置中。"
 		&"write_blocked": return "当前档案不可写，本次操作未发生。"
@@ -1239,6 +1296,7 @@ func _module_has_red_dot(module_id: StringName, red_dots: Dictionary) -> bool:
 		&"task_archive": return int(red_dots.get("claimable_rewards", 0)) > 0
 		&"codex": return int(red_dots.get("new_codex", 0)) > 0
 		&"research": return int(red_dots.get("research_available", 0)) > 0
+		&"talent": return int(red_dots.get("talent_available", 0)) > 0
 		&"profile": return int(red_dots.get("new_history", 0)) > 0
 		&"collection_appearance": return int(red_dots.get("collection_completed", 0)) > 0
 	return false
@@ -1287,9 +1345,7 @@ func _apply_module_button_surface(button: Button, module_id: StringName, selecte
 	var pressed_state := &"selected" if selected else &"pressed"
 	_apply_texture_style(button, Art23LongTermAssetContractScript.texture(StringName("long_term.control.module.%s.%s" % [String(module_id), String(pressed_state)])), "pressed")
 	var text_color := Color(0.44, 1.0, 0.96) if selected else Color(0.98, 0.80, 0.39)
-	_apply_button_text(button, 16, text_color)
-	if selected:
-		_apply_selected_text_colors(button, text_color)
+	_apply_module_button_copy(button, text_color)
 
 
 func _apply_generic_button_surface(button: Button, control_id: StringName, state: StringName, font_size: int) -> void:
@@ -1339,13 +1395,54 @@ func _apply_button_text(button: Button, font_size: int, color: Color) -> void:
 	var font := _pixel_font_safe()
 	if font is Font:
 		button.add_theme_font_override("font", font as Font)
-	button.add_theme_font_size_override("font_size", font_size)
+	button.set_meta("long_term_base_font_size", font_size)
+	_apply_scaled_button_font(button)
 	button.add_theme_color_override("font_color", color)
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.68))
 	button.add_theme_color_override("font_focus_color", Color(0.46, 1.0, 0.96))
 	button.add_theme_color_override("font_pressed_color", Color(0.80, 0.61, 0.31))
 	button.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.92))
 	button.add_theme_constant_override("outline_size", 1)
+
+
+func _apply_module_button_copy(button: Button, color: Color) -> void:
+	var label := button.get_node_or_null("LongTermModuleButtonLabel") as Label
+	if label == null:
+		var copy_band := Panel.new()
+		copy_band.name = "LongTermModuleCopyBand"
+		copy_band.position = Vector2(4, 56)
+		copy_band.size = Vector2(118, 28)
+		copy_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var band_style := StyleBoxFlat.new()
+		band_style.bg_color = Color(0.025, 0.055, 0.05, 0.84)
+		band_style.border_color = Color(0.65, 0.43, 0.15, 0.56)
+		band_style.set_border_width_all(1)
+		copy_band.add_theme_stylebox_override("panel", band_style)
+		button.add_child(copy_band)
+		label = Label.new()
+		label.name = "LongTermModuleButtonLabel"
+		label.position = Vector2(6, 58)
+		label.size = Vector2(114, 24)
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.clip_text = true
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var font := _pixel_font_safe()
+		if font is Font:
+			label.add_theme_font_override("font", font as Font)
+		label.set_meta("long_term_base_font_size", 16)
+		label.set_meta("long_term_max_font_size", 18)
+		label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 0.94))
+		label.add_theme_constant_override("outline_size", 1)
+		button.add_child(label)
+	label.text = button.text
+	label.add_theme_color_override("font_color", color)
+	_apply_scaled_label_font(label)
+	button.remove_meta("long_term_base_font_size")
+	button.remove_meta("runtime_text_fit")
+	button.add_theme_font_size_override("font_size", 1)
+	for color_name in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color", "font_hover_pressed_color", "font_disabled_color"]:
+		button.add_theme_color_override(color_name, Color(1, 1, 1, 0))
 
 
 func _apply_selected_text_colors(button: Button, color: Color) -> void:
@@ -1375,7 +1472,7 @@ func _add_texture(parent: Control, node_name: String, rect: Rect2, texture: Text
 	return texture_rect
 
 
-func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color, alignment: HorizontalAlignment, font_role: StringName = &"display") -> Label:
+func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color, alignment: HorizontalAlignment, _font_role: StringName = &"display") -> Label:
 	var label := Label.new()
 	label.name = node_name
 	label.text = text
@@ -1385,18 +1482,91 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.clip_text = true
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var font: Font = LongTermReadableFont if font_role == &"readable" else _pixel_font_safe()
-	if font == null:
-		font = _pixel_font_safe()
+	var font: Font = _pixel_font_safe()
 	if font is Font:
 		label.add_theme_font_override("font", font as Font)
-	label.add_theme_font_size_override("font_size", font_size)
+	label.set_meta("long_term_base_font_size", font_size)
+	match node_name:
+		"LongTermContentDetailTitle":
+			label.set_meta("long_term_max_font_size", 20)
+		"LongTermContentDetailBody":
+			label.set_meta("long_term_max_font_size", 16)
+		"LongTermContentDetailMeta":
+			label.set_meta("long_term_max_font_size", 12)
+		"LongTermProfileRole":
+			label.set_meta("long_term_max_font_size", 18)
+	_apply_scaled_label_font(label)
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_shadow_color", Color(0.04, 0.02, 0.01, 0.68))
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
 	parent.add_child(label)
 	return label
+
+
+func _refresh_ui_scaled_copy() -> void:
+	for child in _control_descendants(self):
+		if child == self:
+			continue
+		if child.has_method("set_ui_scale_factor") and child is LongTermContentCardView:
+			child.call("set_ui_scale_factor", ui_scale_factor)
+			continue
+		if child is Label and child.has_meta("long_term_base_font_size"):
+			_apply_scaled_label_font(child as Label)
+		elif child is Button and child.has_meta("long_term_base_font_size"):
+			_apply_scaled_button_font(child as Button)
+
+
+func _control_descendants(root_control: Control) -> Array[Control]:
+	var result: Array[Control] = [root_control]
+	var cursor := 0
+	while cursor < result.size():
+		var parent := result[cursor]
+		cursor += 1
+		for child in parent.get_children():
+			if child is Control:
+				result.append(child as Control)
+	return result
+
+
+func _apply_scaled_button_font(button: Button) -> void:
+	if button == null or not button.has_meta("long_term_base_font_size"):
+		return
+	var base_font_size := int(button.get_meta("long_term_base_font_size"))
+	var fit := LongTermLayoutContractScript.fit_text(
+		button.text,
+		button.get_theme_font("font"),
+		button.size,
+		base_font_size,
+		ui_scale_factor,
+		false,
+		button.alignment,
+		Vector2(8, 4)
+	)
+	button.add_theme_font_size_override("font_size", int(fit.get("font_size", base_font_size)))
+	button.clip_text = true
+	button.set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	button.set_meta("runtime_text_fit", fit)
+
+
+func _apply_scaled_label_font(label: Label) -> void:
+	if label == null or not label.has_meta("long_term_base_font_size"):
+		return
+	var base_font_size := int(label.get_meta("long_term_base_font_size"))
+	var fit := LongTermLayoutContractScript.fit_text(
+		label.text,
+		label.get_theme_font("font"),
+		label.size,
+		base_font_size,
+		ui_scale_factor,
+		label.autowrap_mode != TextServer.AUTOWRAP_OFF,
+		label.horizontal_alignment,
+		Vector2(2, 2),
+		int(label.get_meta("long_term_max_font_size", -1))
+	)
+	label.add_theme_font_size_override("font_size", int(fit.get("font_size", base_font_size)))
+	label.set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	label.set_meta("runtime_text_fit", fit)
 
 
 func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Color) -> ColorRect:
@@ -1447,7 +1617,7 @@ func _texture(visual_key: StringName) -> Texture2D:
 
 
 func _pixel_font_safe() -> Font:
-	if get_node_or_null("/root/AssetCatalog") == null:
+	if get_node_or_null("/root/ContentDB") == null:
 		return null
 	return Art10UISkinKitScript.pixel_font()
 

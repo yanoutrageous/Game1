@@ -13,10 +13,26 @@ const Art21UIPlacementContractScript := preload("res://scripts/presentation/art2
 const Art24ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const ItemRarityDescriptor := preload("res://scripts/presentation/item_rarity_descriptor.gd")
 const RunSurfaceModelScript := preload("res://scripts/ui/run_surface/run_surface_model.gd")
-const BODY_FONT := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
+const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
 const PROTOCOL_LEVEL_ASSET_PREFIX := "ui.art24.ui.protocol.level_"
 const PROTOCOL_LEVEL_FALLBACK_ASSET := &"ui.art24.ui.protocol.level_5"
 const PROTOCOL_PRESSURE_MAX := 100.0
+const COMMAND_FEEDBACK_TOAST_SECONDS := 2.2
+const STATUS_CARD_FRAME_PATH := "res://assets/ui/art21r2/run_hud/ui_art21r2_run_status_card_frame.png"
+const REDUNDANT_ENCOUNTER_OPTION_IDS := [&"search", &"open_chest", &"attack_basic"]
+const EVENT_MODAL_ENCOUNTER_TYPES := [&"trader", &"dice", &"altar", &"trap"]
+const FOCUSED_MODAL_IDS := [
+	&"event",
+	&"loot_result",
+	&"extract_confirm",
+	&"combat_flee_confirm",
+	&"pause",
+	&"settings",
+	&"abandon_confirm",
+	&"inventory",
+	&"map",
+	&"result",
+]
 const PROTOCOL_LEVEL_COLORS := {
 	1: Color(0.94, 0.22, 0.18, 0.96),
 	2: Color(0.96, 0.44, 0.18, 0.96),
@@ -74,6 +90,7 @@ var right_game_fill_layer: ColorRect
 var left_rail_art: NinePatchRect
 var status_card_art: NinePatchRect
 var bottom_overlay_art: NinePatchRect
+var mine_risk_tag_art: TextureRect
 var player_sprite_layer: TextureRect
 var scanner_title_label: Label
 var scanner_summary_label: Label
@@ -92,6 +109,7 @@ var encounter_title_label: Label
 var encounter_body_label: Label
 var encounter_result_label: Label
 var resource_label: Label
+var mine_risk_label: Label
 var right_title_label: Label
 var right_body_label: Label
 var event_label: Label
@@ -103,14 +121,19 @@ var action_hint_label: Label
 var encounter_options_box: GridContainer
 var action_bar: HBoxContainer
 var action_buttons: Dictionary = {}
+var active_modal_visibility_policy: StringName = &""
 var encounter_option_buttons: Array[Button] = []
 var action_guidance_data: Dictionary = {}
 var default_action_guidance := ""
 var active_guidance_action: StringName = &""
+var encounter_option_base_rect := Rect2()
 var last_backpack_signature := "__uninitialized__"
 var current_protocol_level := 5
 var current_protocol_pressure := 0.0
+var command_feedback_time_remaining := 0.0
 var built := false
+var current_layout_profile: Dictionary = {}
+var ui_scale_factor := 1.0
 
 const LAYER_ROOM_BACKGROUND := 0
 const LAYER_SCENE_TINT := 10
@@ -129,6 +152,8 @@ func build() -> void:
 		return
 	built = true
 	name = "RunSurface"
+	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
+	Art10UISkinKitScript.apply_player_ui_theme(self)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	z_as_relative = false
@@ -149,7 +174,7 @@ func build() -> void:
 	right_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.68), PresentationTheme.color_for_key(&"ui.warning"), 2))
 	Art10UISkinKitScript.apply_panel(right_backdrop, &"summary")
 	status_card_art = _add_nine_patch_from_ref("Art21RunStatusCard", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"top_right_status_card", &"ui.art19.panel.deploy_summary"), 0.94, 12)
-	_apply_art24_frame(status_card_art, "res://assets/art24/ui/ue/ui_panel_protocol.png", 24)
+	_apply_art24_frame(status_card_art, STATUS_CARD_FRAME_PATH, 12)
 	protocol_level_plate = _add_texture_rect_from_ref("RunProtocolLevelPlate", _protocol_level_ref(5), 0.48)
 	protocol_level_plate.stretch_mode = TextureRect.STRETCH_SCALE
 	protocol_level_plate.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -160,10 +185,22 @@ func build() -> void:
 	Art10UISkinKitScript.apply_panel(bottom_backdrop, &"summary")
 	bottom_overlay_art = _add_nine_patch_from_ref("Art21RunBottomOverlay", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.96, 12)
 	_apply_art24_frame(bottom_overlay_art, "res://assets/art24/ui/ue/ui_bottom_bar.png", 20)
+	mine_risk_tag_art = _add_texture_rect_from_ref(
+		"RunMineRiskTagArt",
+		Art09ManifestAssetMappingScript.asset_ref(
+			&"ui.art24.ui.ue.ui_mine_risk_tag",
+			&"ui.hud.mine_risk_tag",
+			&"mine_risk_tag",
+			&"known"
+		),
+		1.0
+	)
+	mine_risk_tag_art.stretch_mode = TextureRect.STRETCH_SCALE
+	mine_risk_tag_art.visible = false
 	resource_backdrop = _add_panel("RunResourcePocket", Color(0.035, 0.055, 0.055, 0.92), PresentationTheme.color_for_key(&"mini.chest"))
-	resource_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.60), PresentationTheme.color_for_key(&"mini.chest"), 2))
-	Art10UISkinKitScript.apply_panel(resource_backdrop, &"card")
+	resource_backdrop.add_theme_stylebox_override("panel", _interior_band_style(Color(0.006, 0.014, 0.016, 0.44)))
 	scanner_text_mask = _add_panel("RunScannerTextMask", Color(0.012, 0.026, 0.030, 0.72), PresentationTheme.color_for_key(&"ui.accent"))
+	scanner_text_mask.add_theme_stylebox_override("panel", _interior_band_style(Color(0.006, 0.014, 0.016, 0.34)))
 	room_text_mask = _add_panel("RunRoomTextMask", Color(0.012, 0.026, 0.030, 0.82), PresentationTheme.color_for_key(&"mini.normal"))
 	threat_mask = _add_panel("RunThreatMask", Color(0.040, 0.046, 0.042, 0.74), PresentationTheme.color_for_key(&"ui.warning"))
 	event_mask = _add_panel("RunEventMask", Color(0.026, 0.042, 0.046, 0.68), PresentationTheme.color_for_key(&"ui.accent"))
@@ -181,6 +218,10 @@ func build() -> void:
 		player_sprite_layer.visible = false
 
 	scanner_title_label = _add_label("RunScannerTitle", "小地图", 18, PresentationTheme.color_for_key(&"ui.accent"))
+	scanner_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	scanner_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	scanner_title_label.add_theme_color_override("font_outline_color", Color(0.005, 0.01, 0.012, 0.98))
+	scanner_title_label.add_theme_constant_override("outline_size", 2)
 	scanner_summary_label = _add_label("RunScannerSummary", "", 13, PresentationTheme.text_color())
 	scanner_legend_label = _add_label("RunScannerLegend", "P 当前 | ? 未知 | F 标记 | X 撤离", 13, PresentationTheme.color_for_key(&"ui.muted"))
 
@@ -216,6 +257,7 @@ func build() -> void:
 	backpack_detail_label.clip_text = true
 	backpack_capacity_label = _add_label("RunBackpackCapacity", "0 / 0", 13, PresentationTheme.color_for_key(&"ui.muted"))
 	backpack_capacity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	backpack_capacity_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 	minimap_panel = MiniMapScene.instantiate() as MiniMapPanel
 	minimap_panel.name = "RunScannerMiniMap"
@@ -225,13 +267,21 @@ func build() -> void:
 
 	room_title_label = _add_label("RunRoomTitle", "当前房间", 22, PresentationTheme.color_for_key(&"ui.accent"))
 	room_body_label = _add_label("RunRoomBody", "等待探索快照。", 13, PresentationTheme.text_color())
+	room_body_label.visible = false
 	objective_label = _add_label("RunObjectiveLine", "目标：等待输入。", 13, PresentationTheme.color_for_key(&"ui.warning"))
 	objective_label.visible = false
 	player_tag_label = _add_label("RunPlayerTag", "回收员", 12, PresentationTheme.color_for_key(&"ui.accent"))
+	player_tag_label.visible = false
 
 	encounter_title_label = _add_label("RunEncounterTitle", "遭遇提示", 18, PresentationTheme.color_for_key(&"ui.warning"))
 	encounter_body_label = _add_label("RunEncounterBody", "当前没有可处理的目标。", 13, PresentationTheme.text_color())
 	encounter_result_label = _add_label("RunEncounterResult", "最近结果：暂无遭遇结果。", 12, PresentationTheme.color_for_key(&"ui.muted"))
+	# These labels are retained as compatibility probes only. Encounter choices
+	# now live in a bounded option strip or focused world modal; a zero-width
+	# visible label wraps one glyph per line and can leak at the viewport edge.
+	encounter_title_label.visible = false
+	encounter_body_label.visible = false
+	encounter_result_label.visible = false
 	encounter_options_box = GridContainer.new()
 	encounter_options_box.name = "RunEncounterOptions"
 	encounter_options_box.columns = 1
@@ -241,6 +291,16 @@ func build() -> void:
 	add_child(encounter_options_box)
 
 	resource_label = _add_label("RunResourceSummary", "资源：等待数据", 13, PresentationTheme.text_color())
+	# Keep the historical resource_label property as a read-only compatibility
+	# probe, but present the authoritative count in the UE-aligned plate below
+	# the room. The left rail must not duplicate the same risk signal.
+	resource_label.visible = false
+	mine_risk_label = _add_label("RunMineRiskText", "", 16, Color(0.91, 0.87, 0.78, 1.0))
+	mine_risk_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	mine_risk_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	mine_risk_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	mine_risk_label.clip_text = false
+	mine_risk_label.visible = false
 
 	right_title_label = _add_label("RunProtocolTitle", "协议状态", 18, PresentationTheme.color_for_key(&"ui.warning"))
 	right_body_label = _add_label("RunProtocolBody", "协议：--\n压力：--\n危险：--", 13, PresentationTheme.text_color())
@@ -253,17 +313,24 @@ func build() -> void:
 	# information band uses the approved continuous modal section instead.
 	command_feedback_art = _add_texture_rect_from_ref("RunCommandFeedbackArt", Art21UIPlacementContractScript.component_ref(&"art21r2.modal.section.panel", &"ui.art19.bar.summary_dark"), 0.94)
 	command_feedback_art.stretch_mode = TextureRect.STRETCH_SCALE
-	command_feedback_label = _add_label("RunCommandFeedback", "操作反馈：等待输入。", 13, PresentationTheme.color_for_key(&"ui.accent"))
+	command_feedback_label = _add_label("RunCommandFeedback", "等待行动。", 13, PresentationTheme.color_for_key(&"ui.accent"))
 	command_feedback_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	command_feedback_label.clip_text = true
 	command_feedback_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	command_feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	command_feedback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	command_feedback_label.add_theme_color_override("font_outline_color", Color(0.005, 0.01, 0.012, 0.98))
+	command_feedback_label.add_theme_constant_override("outline_size", 3)
+	command_feedback_art.visible = false
+	command_feedback_label.visible = false
 	layout_label = _add_label("RunLayoutProfileStatus", "", 11, PresentationTheme.color_for_key(&"ui.muted"))
 	layout_label.visible = false
 
-	action_hint_label = _add_label("RunActionHint", "E 搜索  Q 背包  G 拾取  M 地图  Spc 清理  Esc 暂停", 13, PresentationTheme.color_for_key(&"ui.muted"))
+	action_hint_label = _add_label("RunActionHint", _default_action_hint_text(), 13, PresentationTheme.color_for_key(&"ui.muted"))
 	action_hint_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	action_hint_label.clip_text = true
 	action_hint_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	action_hint_label.visible = false
 
 	action_bar = HBoxContainer.new()
 	action_bar.name = "RunBottomActionButtons"
@@ -273,7 +340,7 @@ func build() -> void:
 	_add_action_button(&"inventory", "背包", func() -> void: inventory_requested.emit())
 	_add_action_button(&"ground_loot", "拾取", func() -> void: ground_loot_requested.emit())
 	_add_action_button(&"map", "地图", func() -> void: map_requested.emit(&"surface_button"))
-	_add_action_button(&"combat", "清理", func() -> void: combat_requested.emit())
+	_add_action_button(&"combat", "攻击", func() -> void: combat_requested.emit())
 	_add_action_button(&"extract", "撤离", func() -> void: extract_requested.emit())
 	_add_action_button(&"pause", "暂停", func() -> void: pause_requested.emit())
 
@@ -289,12 +356,16 @@ func build() -> void:
 	_update_protocol_presentation(5, 0)
 
 
+func _process(delta: float) -> void:
+	advance_command_feedback(delta)
+
+
 func apply_surface_model(model: Dictionary) -> void:
 	if not built:
 		build()
 	scanner_title_label.text = "区域扫描图"
 	scanner_legend_label.text = _resource_lines(String(model.get("resource_summary", "")))
-	scanner_detail_label.text = "作业包  [Q] 展开"
+	scanner_detail_label.text = "作业包  %s 展开" % SemanticActionHintScript.current_binding_label(&"open_inventory")
 	_refresh_backpack_strip(model.get("backpack_items", []))
 	backpack_capacity_label.text = "负重 %s / %s" % [model.get("backpack_used", 0), model.get("backpack_capacity", 0)]
 	scanner_summary_label.text = ""
@@ -305,20 +376,18 @@ func apply_surface_model(model: Dictionary) -> void:
 	room_background_layer.visible = false
 	player_sprite_layer.visible = false
 	var mine_risk := _dict_variant(model.get("mine_risk", {}))
-	resource_label.text = String(mine_risk.get("display_text", "周围雷险 ? · 未知"))
+	_update_mine_risk_presentation(mine_risk.get("count", -1))
 	var protocol_level := clampi(int(model.get("protocol_level", 5)), 1, 5)
 	var protocol_title := String(model.get("protocol_title", RunSurfaceModelScript.protocol_title_for_level(protocol_level)))
-	right_title_label.text = "协议 %s · %s" % [protocol_level, protocol_title]
-	right_body_label.text = "压力 %s/100" % model.get("pressure", "--")
+	right_title_label.text = "协议 %s" % protocol_level
+	right_body_label.text = "%s · 压力 %s/100" % [protocol_title, model.get("pressure", "--")]
 	_update_protocol_presentation(model.get("protocol_level", 5), model.get("pressure", 0))
 	event_label.text = ""
 	event_label.visible = false
 	reward_label.text = "奖励\n%s" % _compact_line(String(model.get("reward_summary", "等待记录。")), 14)
-	var command_feedback := String(model.get("command_feedback", "")).strip_edges()
-	var feedback_copy := _feedback_copy(command_feedback)
-	command_feedback_label.text = feedback_copy
-	command_feedback_art.visible = feedback_copy != ""
-	command_feedback_label.visible = feedback_copy != ""
+	if command_feedback_time_remaining <= 0.0:
+		command_feedback_art.visible = false
+		command_feedback_label.visible = false
 
 	var status_text := _lines_text(model.get("status_lines", []), "", 3, 18)
 	right_body_label.tooltip_text = status_text
@@ -330,8 +399,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	var action_data: Variant = model.get("action_buttons", [])
 	default_action_guidance = _player_action_hint(String(model.get("action_hint", "")), action_data)
 	action_hint_label.text = default_action_guidance
-	action_hint_label.visible = action_hint_label.text != ""
-	command_feedback_art.visible = command_feedback_label.visible or action_hint_label.visible
+	action_hint_label.visible = false
 
 	var profile: Dictionary = model.get("layout_profile", {})
 	layout_label.text = ""
@@ -348,36 +416,152 @@ func apply_surface_model(model: Dictionary) -> void:
 func apply_combat_snapshot(snapshot: Dictionary) -> void:
 	if not built:
 		return
+	scanner_legend_label.text = _resource_lines(
+		"生命 %s/%s | 作业强度 %s | 待结算黑币 %s | 安全金币 %s" % [
+			snapshot.get("hp", 0),
+			snapshot.get("max_hp", 0),
+			snapshot.get("power", 0),
+			snapshot.get("black_coin", 0),
+			snapshot.get("gold_coin", 0),
+		]
+	)
 	var combat_runtime: Dictionary = snapshot.get("combat_runtime", {})
 	var alive_enemies := 0
 	for raw_enemy in (combat_runtime.get("enemies", []) as Array):
 		if raw_enemy is Dictionary and int((raw_enemy as Dictionary).get("hp", 0)) > 0:
 			alive_enemies += 1
 	var protocol_level := clampi(int(snapshot.get("protocol_level", 5)), 1, 5)
-	right_title_label.text = "协议 %s · %s" % [protocol_level, RunSurfaceModelScript.protocol_title_for_level(protocol_level)]
-	right_body_label.text = "生命 %s/%s\n威胁 %d | 压力 %s/100" % [
+	right_title_label.text = "协议 %s" % protocol_level
+	right_body_label.text = "%s · 压力 %s/100" % [
+		RunSurfaceModelScript.protocol_title_for_level(protocol_level),
+		snapshot.get("pressure", 0),
+	]
+	right_body_label.tooltip_text = "当前威胁：%d · 生命 %s/%s" % [
+		alive_enemies,
 		snapshot.get("hp", 0),
 		snapshot.get("max_hp", 0),
-		alive_enemies,
-		snapshot.get("pressure", 0),
 	]
 	_update_protocol_presentation(snapshot.get("protocol_level", 5), snapshot.get("pressure", 0))
 	var adjacent := int(snapshot.get("adjacent_mines", -1)) if snapshot.has("adjacent_mines") else -1
-	resource_label.text = String(RunSurfaceModelScript.mine_risk_descriptor(adjacent).get("display_text", "周围雷险 ? · 未知"))
+	_update_mine_risk_presentation(adjacent)
+
+
+func apply_combat_attack_state(attack_input: Dictionary) -> void:
+	var combat_button := action_buttons.get(&"combat") as Button
+	if combat_button == null:
+		return
+	if attack_input.is_empty():
+		combat_button.modulate = Color.WHITE
+		combat_button.remove_meta("attack_cooldown_remaining")
+		return
+	var ready := bool(attack_input.get("ready", false))
+	var buffer_window_open := bool(attack_input.get("buffer_window_open", false))
+	var cooldown_remaining := maxf(
+		0.0,
+		float(attack_input.get("cooldown_remaining_seconds", 0.0))
+	)
+	combat_button.set_meta("attack_cooldown_remaining", cooldown_remaining)
+	combat_button.set_meta("attack_ready", ready)
+	combat_button.set_meta("attack_buffer_window_open", buffer_window_open)
+	combat_button.modulate = (
+		Color.WHITE
+		if ready or buffer_window_open
+		else Color(0.52, 0.56, 0.52, 0.86)
+	)
+	if cooldown_remaining > 0.0:
+		combat_button.tooltip_text = "攻击冷却 %.1f 秒" % cooldown_remaining
+
+
+func _update_mine_risk_presentation(adjacent_value: Variant) -> void:
+	var descriptor := RunSurfaceModelScript.mine_risk_descriptor(adjacent_value)
+	var adjacent := int(descriptor.get("count", -1))
+	var known := bool(descriptor.get("known", false)) and adjacent >= 0 and adjacent <= 8
+	# Historical runners inspect this property; keeping it synchronized does not
+	# make the duplicate left-rail copy visible.
+	if resource_label != null:
+		resource_label.text = String(descriptor.get("display_text", "周围雷险 ? · 未知"))
+		resource_label.visible = false
+	if mine_risk_label != null:
+		mine_risk_label.text = "周围雷险：%d" % adjacent if known else ""
+		mine_risk_label.tooltip_text = "数字表示当前区域周围八格中的雷险数量；斜向区域也会计入。"
+		mine_risk_label.visible = known
+		mine_risk_label.set_meta("adjacent_mine_count", adjacent)
+	if mine_risk_tag_art != null:
+		mine_risk_tag_art.visible = known
+		mine_risk_tag_art.set_meta("adjacent_mine_count", adjacent)
+
+
+func set_ui_scale_factor(value: float) -> void:
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	Art10UISkinKitScript.apply_player_ui_theme(self)
+	if not current_layout_profile.is_empty():
+		current_layout_profile["ui_scale_factor"] = ui_scale_factor
+		apply_layout_profile(current_layout_profile)
+	_refresh_action_button_visibility()
+
+
+func apply_modal_visibility_policy(modal_id: StringName) -> void:
+	active_modal_visibility_policy = modal_id
+	var suppress_footer := modal_id in FOCUSED_MODAL_IDS
+	var suppress_all_hud := modal_id == &"result"
+	if suppress_footer:
+		clear_command_feedback()
+	if run_floating_info_root != null:
+		run_floating_info_root.visible = not suppress_footer
+	if run_interaction_prompt_root != null:
+		run_interaction_prompt_root.visible = not suppress_footer
+	if run_action_overlay_root != null:
+		run_action_overlay_root.visible = not suppress_footer
+	if run_left_info_rail_root != null:
+		run_left_info_rail_root.visible = not suppress_all_hud
+	if run_top_right_status_root != null:
+		run_top_right_status_root.visible = not suppress_all_hud
+	# Keep the concrete frame/decorations synchronized as well. Some production
+	# capture fixtures re-apply layout after the layer roots are established;
+	# explicit visibility prevents a re-shown status-card shell from surviving
+	# underneath a terminal result modal.
+	for status_node in [
+		status_card_art,
+		protocol_pressure_track,
+		protocol_pressure_fill,
+		protocol_glow_layer,
+		right_title_label,
+		right_body_label,
+	]:
+		if status_node is CanvasItem:
+			(status_node as CanvasItem).visible = not suppress_all_hud
+
+
+func modal_visibility_snapshot() -> Dictionary:
+	return {
+		"modal_id": active_modal_visibility_policy,
+		"left_rail_visible": run_left_info_rail_root == null or run_left_info_rail_root.visible,
+		"status_visible": run_top_right_status_root == null or run_top_right_status_root.visible,
+		"status_card_art_visible": status_card_art == null or status_card_art.visible,
+		"protocol_decoration_visible": protocol_glow_layer == null or protocol_glow_layer.visible,
+		"floating_info_visible": run_floating_info_root == null or run_floating_info_root.visible,
+		"interaction_prompt_visible": run_interaction_prompt_root == null or run_interaction_prompt_root.visible,
+		"action_bar_visible": run_action_overlay_root == null or run_action_overlay_root.visible,
+	}
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
 	if not built:
 		build()
-	var supported_size: Vector2i = profile.get("supported_size", Vector2i(1280, 720))
-	if supported_size.x <= 0 or supported_size.y <= 0:
-		supported_size = Vector2i(1280, 720)
+	current_layout_profile = profile.duplicate(true)
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(
+		float(current_layout_profile.get("ui_scale_factor", ui_scale_factor))
+	)
+	current_layout_profile["ui_scale_factor"] = ui_scale_factor
+	profile = current_layout_profile
+	var viewport_size := UILayerContractScript.viewport_size_from_profile(profile)
 	var is_low: bool = bool(profile.get("is_low_resolution", false))
 	var is_high: bool = bool(profile.get("is_high_resolution", false))
 	if hud != null:
 		hud.visible = false
-	var width: float = float(supported_size.x)
-	var height: float = float(supported_size.y)
+	var width: float = maxf(1.0, viewport_size.x)
+	var height: float = maxf(1.0, viewport_size.y)
+	var ui_scale_step := (ui_scale_factor - 1.0) / 0.5
 	# UE widget constants are authored against a 1920x1080 presentation. Scale
 	# those HUD-only dimensions to the active viewport instead of copying 720 px
 	# widths verbatim into the 1280x720 Godot target.
@@ -389,42 +573,43 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var gameplay_width: float = max(1.0, width - gameplay_left)
 	var rail_content_left: float = margin + 12.0
 	var rail_content_width: float = max(220.0, left_width - rail_content_left - margin)
-	var right_card_width: float = clampf(204.0 * ue_reference_scale, 152.0 if is_low else 164.0, 274.0)
-	var right_card_height: float = clampf(122.0 * ue_reference_scale, 104.0 if is_low else 112.0, 164.0)
-	# The production encounter set can contain more than one decision. Reserve two
-	# compact rows so a larger set wraps inside this band instead of entering the
-	# key dock.
-	var bottom_info_height: float = 84.0
-	var bottom_key_height: float = 40.0 if is_low else (48.0 if is_high else 44.0)
+	var right_card_size := UILayerContractScript.run_status_card_size(profile)
+	var right_card_width: float = right_card_size.x
+	var right_card_height: float = right_card_size.y
+	# The stable footer contains only the mine-risk plate and the action dock.
+	# Command feedback is a short overlay toast and must not reserve a third band.
+	var footer_geometry := UILayerContractScript.run_footer_geometry(profile)
+	var bottom_key_height: float = float(footer_geometry.get("key_height", 40.0))
 	var center_left: float = gameplay_left
 	var center_width: float = gameplay_width
 	var right_left: float = width - right_card_width - margin
 	var right_content_left: float = right_left + margin
 	var right_content_width: float = right_card_width - margin * 2.0
-	var scanner_map_top: float = margin + 40.0
+	var scanner_title_height := 28.0 + 14.0 * ui_scale_step
+	var scanner_title_top := 24.0 + 4.0 * ui_scale_step
+	var scanner_map_top: float = scanner_title_top + scanner_title_height + 8.0
 	var scanner_map_height: float = minf(rail_content_width, 300.0 * ue_reference_scale)
 	var scanner_stats_top: float = scanner_map_top + scanner_map_height + 10.0
-	var stats_height: float = 84.0 if is_low else 94.0
+	var stats_height: float = (84.0 if is_low else 94.0) + 10.0 * ui_scale_step
 	var backpack_top: float = scanner_stats_top + stats_height + 10.0
 	var backpack_panel_height: float = maxf(192.0, height - backpack_top - 28.0)
 	# The quick bag is a true scroll surface. Reserve stable detail and burden
 	# bands, then let every real item remain reachable inside the remaining rail.
-	var backpack_scroll_height: float = maxf(56.0, backpack_panel_height - 128.0)
-	var bottom_key_width: float = minf(720.0 * ue_reference_scale, gameplay_width - margin * 3.0)
-	bottom_key_width = maxf(456.0 if is_low else 520.0, bottom_key_width)
+	var backpack_scroll_height: float = maxf(56.0, backpack_panel_height - 136.0 - 20.0 * ui_scale_step)
+	var preferred_key_width := (620.0 if is_low else 720.0) + 80.0 * ui_scale_step
+	var bottom_key_width: float = minf(preferred_key_width, gameplay_width - margin * 3.0)
+	bottom_key_width = maxf(minf(520.0, gameplay_width - margin * 3.0), bottom_key_width)
 	var bottom_key_left: float = gameplay_left + (gameplay_width - bottom_key_width) * 0.5
-	var bottom_key_top: float = height - bottom_key_height - 8.0
-	var bottom_info_top: float = bottom_key_top - bottom_info_height - 6.0
-	# Guidance shares this band with an encounter action. Keep enough real text
-	# width at every supported production resolution for a complete condition;
-	# the former 72% key-bar width left only ~160 px at 1280x720.
-	var preferred_info_width := 960.0 if is_low else (1200.0 if is_high else 1080.0)
-	var bottom_info_width: float = minf(gameplay_width - margin * 4.0, preferred_info_width)
-	var bottom_info_left: float = gameplay_left + gameplay_width * 0.5 - bottom_info_width * 0.5
-	var encounter_width: float = 400.0 if is_low else (480.0 if is_high else 440.0)
+	var bottom_key_top: float = float(footer_geometry.get("key_top", height - bottom_key_height - 8.0))
+	var mine_risk_height: float = float(footer_geometry.get("mine_risk_height", 40.0))
+	var mine_risk_top: float = float(footer_geometry.get("mine_risk_top", bottom_key_top - mine_risk_height - 4.0))
+	var mine_risk_width: float = (220.0 if is_low else (258.0 if is_high else 236.0)) + 24.0 * ui_scale_step
+	var mine_risk_left: float = gameplay_left + (gameplay_width - mine_risk_width) * 0.5
+	var preferred_encounter_width: float = 400.0 if is_low else (480.0 if is_high else 440.0)
+	var encounter_width: float = minf(preferred_encounter_width, maxf(220.0, gameplay_width * 0.38))
 	var encounter_height: float = 70.0
 	var encounter_left: float = clampf(gameplay_left + gameplay_width * 0.58, gameplay_left + margin, width - encounter_width - margin)
-	var encounter_top: float = clampf(height * 0.52 - encounter_height * 0.5, margin + 110.0, bottom_info_top - encounter_height - 12.0)
+	var encounter_top: float = clampf(height * 0.52 - encounter_height * 0.5, margin + 110.0, mine_risk_top - encounter_height - 12.0)
 	var gameplay_square_size: float = min(gameplay_width - margin * 2.0, height - margin * 2.0)
 	gameplay_square_size = max(320.0 if is_low else 420.0, gameplay_square_size)
 	var gameplay_square_left: float = gameplay_left + max(margin, (gameplay_width - gameplay_square_size) * 0.5)
@@ -439,8 +624,18 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(left_rail_art, Rect2(0, 0, left_width, height))
 	_set_rect(right_backdrop, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(status_card_art, Rect2(right_left, margin, right_card_width, right_card_height))
-	_set_rect(protocol_level_plate, Rect2(right_content_left, margin + 30.0, right_content_width, right_card_height - 42.0))
-	var protocol_track_rect := Rect2(right_content_left + 8.0, margin + right_card_height - 16.0, right_content_width - 16.0, 6.0)
+	_set_rect(protocol_level_plate, Rect2())
+	var protocol_left_padding := maxf(18.0, right_card_width * 0.18)
+	var protocol_right_padding := maxf(14.0, right_card_width * 0.07)
+	var protocol_bottom_padding := maxf(18.0, right_card_height * 0.18)
+	var protocol_copy_left := right_left + protocol_left_padding
+	var protocol_copy_width := maxf(1.0, right_card_width - protocol_left_padding - protocol_right_padding)
+	var protocol_track_rect := Rect2(
+		protocol_copy_left,
+		margin + right_card_height - protocol_bottom_padding - 6.0,
+		protocol_copy_width,
+		6.0
+	)
 	_set_rect(protocol_pressure_track, protocol_track_rect)
 	_set_rect(protocol_pressure_fill, Rect2(protocol_track_rect.position, Vector2(protocol_track_rect.size.x * current_protocol_pressure / PROTOCOL_PRESSURE_MAX, protocol_track_rect.size.y)))
 	_set_rect(center_backdrop, Rect2(0, 0, 0, 0))
@@ -448,6 +643,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(encounter_backdrop, Rect2(encounter_left, encounter_top, encounter_width, encounter_height))
 	_set_rect(bottom_backdrop, Rect2(bottom_key_left, bottom_key_top, bottom_key_width, bottom_key_height))
 	_set_rect(bottom_overlay_art, Rect2(bottom_key_left, bottom_key_top, bottom_key_width, bottom_key_height))
+	_set_rect(mine_risk_tag_art, Rect2(mine_risk_left, mine_risk_top, mine_risk_width, mine_risk_height))
 	_set_rect(resource_backdrop, Rect2(rail_content_left, scanner_stats_top, rail_content_width, stats_height))
 	_set_rect(scanner_text_mask, Rect2(rail_content_left, backpack_top, rail_content_width, backpack_panel_height))
 	_set_rect(room_text_mask, Rect2(0, 0, 0, 0))
@@ -466,7 +662,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	left_rail_art.visible = true
 	right_backdrop.visible = false
 	status_card_art.visible = true
-	protocol_level_plate.visible = true
+	# The generated level plate is a second framed rectangle. Layering it inside
+	# the audited protocol panel caused the double/plastic border reported by the
+	# player; keep its asset binding for governance tests but do not render it.
+	protocol_level_plate.visible = false
 	protocol_pressure_track.visible = true
 	protocol_pressure_fill.visible = true
 	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.008, 0.024, 0.027, 0.98), Color(0.58, 0.39, 0.16, 0.96), 2))
@@ -488,18 +687,27 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	bottom_key_glow_layer.visible = false
 	right_game_fill_layer.visible = false
 
-	_set_rect(scanner_title_label, Rect2(rail_content_left, margin, rail_content_width, 28))
+	_set_rect(scanner_title_label, Rect2(rail_content_left + 2.0, scanner_title_top, rail_content_width - 4.0, scanner_title_height))
 	_set_rect(scanner_summary_label, Rect2(0, 0, 0, 0))
 	_set_rect(minimap_panel, Rect2(rail_content_left, scanner_map_top, rail_content_width, scanner_map_height))
 	minimap_panel.apply_layout_profile(profile)
-	_set_rect(scanner_legend_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 8.0, rail_content_width - 20.0, 42.0))
-	_set_rect(scanner_detail_label, Rect2(rail_content_left + 10.0, backpack_top + 10.0, rail_content_width - 20.0, 20.0))
+	_set_rect(scanner_legend_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 8.0, rail_content_width - 20.0, stats_height - 16.0))
+	_set_rect(scanner_detail_label, Rect2(rail_content_left + 10.0, backpack_top + 10.0, rail_content_width - 20.0, 20.0 + 6.0 * ui_scale_step))
 	var backpack_scroll_rect := Rect2(rail_content_left + 10.0, backpack_top + 40.0, rail_content_width - 20.0, backpack_scroll_height)
 	_set_rect(backpack_scroll, backpack_scroll_rect)
 	backpack_strip.custom_minimum_size = Vector2(maxf(80.0, backpack_scroll_rect.size.x - 12.0), 0.0)
 	_set_rect(backpack_empty_watermark, Rect2(backpack_scroll_rect.position + Vector2(10.0, 4.0), backpack_scroll_rect.size - Vector2(20.0, 8.0)))
 	_set_rect(backpack_detail_label, Rect2(rail_content_left + 10.0, backpack_scroll_rect.end.y + 6.0, rail_content_width - 20.0, 52.0))
-	_set_rect(backpack_capacity_label, Rect2(rail_content_left + 10.0, backpack_top + backpack_panel_height - 24.0, rail_content_width - 20.0, 20.0))
+	var backpack_capacity_height := 20.0 + 10.0 * ui_scale_step
+	_set_rect(
+		backpack_capacity_label,
+		Rect2(
+			rail_content_left + 10.0,
+			backpack_top + backpack_panel_height - backpack_capacity_height - 10.0,
+			rail_content_width - 20.0,
+			backpack_capacity_height
+		)
+	)
 
 	_set_rect(room_title_label, Rect2(gameplay_square_left + 26.0, gameplay_square_top + 22.0, room_info_width - 28.0, 24.0))
 	_set_rect(room_body_label, Rect2(0, 0, 0, 0))
@@ -507,65 +715,118 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(player_tag_label, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_title_label, Rect2(0, 0, 0, 0))
 	_set_rect(encounter_body_label, Rect2(0, 0, 0, 0))
-	var encounter_option_rect := Rect2(
-		bottom_info_left + bottom_info_width - encounter_width - 5.0,
-		bottom_info_top + 5.0,
-		encounter_width,
-		bottom_info_height - 10.0
-	)
+	var encounter_option_rect := Rect2(encounter_left, encounter_top, encounter_width, encounter_height)
+	encounter_option_base_rect = encounter_option_rect
 	_set_rect(encounter_backdrop, encounter_option_rect)
 	_set_rect(encounter_options_box, Rect2(
 		encounter_option_rect.position + Vector2(5.0, 5.0),
 		encounter_option_rect.size - Vector2(10.0, 10.0)
 	))
 	_set_rect(encounter_result_label, Rect2(0, 0, 0, 0))
-	_set_rect(resource_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 56.0, rail_content_width - 20.0, 20.0))
+	_set_rect(resource_label, Rect2())
+	resource_label.visible = false
+	var mine_icon_reserve := mine_risk_width * 0.27
+	_set_rect(
+		mine_risk_label,
+		Rect2(
+			mine_risk_left + mine_icon_reserve,
+			mine_risk_top + 2.0,
+			mine_risk_width - mine_icon_reserve - 10.0,
+			mine_risk_height - 4.0
+		)
+	)
 
-	_set_rect(right_title_label, Rect2(right_content_left, margin, right_content_width, 26))
-	_set_rect(right_body_label, Rect2(right_content_left + 8.0, margin + 34.0, right_content_width - 16.0, maxf(42.0, right_card_height - 60.0)))
+	var right_title_height := 24.0 + 18.0 * ui_scale_step
+	var right_title_top := margin + maxf(12.0, right_card_height * 0.10)
+	var protocol_copy_bottom := protocol_track_rect.position.y - 4.0
+	_set_rect(right_title_label, Rect2(protocol_copy_left, right_title_top, protocol_copy_width, right_title_height))
+	_set_rect(
+		right_body_label,
+		Rect2(
+			protocol_copy_left,
+			right_title_top + right_title_height + 2.0,
+			protocol_copy_width,
+			maxf(1.0, protocol_copy_bottom - (right_title_top + right_title_height + 2.0))
+		)
+	)
 	_set_rect(event_label, Rect2(0, 0, 0, 0))
 	event_label.visible = false
 	_set_rect(reward_label, Rect2(0, 0, 0, 0))
-	_set_rect(command_feedback_art, Rect2(bottom_info_left, bottom_info_top, bottom_info_width, bottom_info_height))
-	var bottom_info_text_width: float = maxf(120.0, encounter_option_rect.position.x - 8.0 - (bottom_info_left + 18.0))
-	_set_rect(command_feedback_label, Rect2(bottom_info_left + 18.0, bottom_info_top + 6.0, bottom_info_text_width, 22.0))
+	var toast_height := 36.0 + 8.0 * ui_scale_step
+	var toast_width := minf(gameplay_width - margin * 4.0, 520.0 + 80.0 * ui_scale_step)
+	var toast_left := gameplay_left + (gameplay_width - toast_width) * 0.5
+	var toast_top := mine_risk_top - toast_height - 8.0
+	_set_rect(command_feedback_art, Rect2(toast_left, toast_top, toast_width, toast_height))
+	_set_rect(command_feedback_label, Rect2(toast_left + 18.0, toast_top + 4.0, toast_width - 36.0, toast_height - 8.0))
 	_set_rect(layout_label, Rect2(right_content_left, height - 46.0, right_content_width, 24))
 	layout_label.visible = false
 
-	_set_rect(action_hint_label, Rect2(bottom_info_left + 18.0, bottom_info_top + 31.0, bottom_info_text_width, 22.0))
-	action_hint_label.visible = action_hint_label.text.strip_edges() != ""
-	_set_rect(action_bar, Rect2(bottom_key_left + 12.0, bottom_key_top + 8.0, bottom_key_width - 24.0, bottom_key_height - 16.0))
+	_set_rect(action_hint_label, Rect2())
+	action_hint_label.visible = false
+	_set_rect(action_bar, Rect2(bottom_key_left + 12.0, bottom_key_top + 4.0, bottom_key_width - 24.0, bottom_key_height - 8.0))
+	var action_count := maxi(1, action_buttons.size())
+	var action_button_width := maxf(0.0, (action_bar.size.x - float(action_count - 1) * 4.0) / float(action_count))
+	for button_value in action_buttons.values():
+		var action_button := button_value as Button
+		if action_button != null:
+			action_button.custom_minimum_size = Vector2(action_button_width, maxf(28.0, action_bar.size.y))
+	_refresh_action_button_visibility()
 	action_bar.z_as_relative = true
 	action_bar.z_index = 20
 	_set_rect(feedback_slot, Rect2(0, 0, width, height))
 	_set_rect(overlay_slot, Rect2(0, 0, width, height))
 	_set_rect(modal_slot, Rect2(0, 0, width, height))
+	if active_modal_visibility_policy != &"":
+		apply_modal_visibility_policy(active_modal_visibility_policy)
 
 
 func show_command_feedback(result: Dictionary) -> void:
 	if command_feedback_label == null or result.is_empty():
 		return
 	var accepted := bool(result.get("accepted", result.get("ok", false)))
-	command_feedback_art.visible = true
-	command_feedback_label.visible = true
+	var successful := accepted and bool(result.get("ok", accepted))
+	# A successful action already changes an authoritative player-facing
+	# consumer: the world object, context card, inventory/result panel, or combat
+	# state. Repeating it in a HUD strip competes with the room and mine-risk
+	# focus. Keep its audio/haptic cue and reserve this fallback for rejection.
+	if successful:
+		clear_command_feedback()
+		return
 	var text := RunUIViewModel.command_result_text(result)
 	if text == "":
 		text = "" if accepted else "当前条件不足，请查看下方行动条件。"
 	var feedback_copy := _feedback_copy(text)
 	command_feedback_label.text = feedback_copy
 	command_feedback_label.visible = feedback_copy != ""
-	command_feedback_art.visible = command_feedback_label.visible or (action_hint_label != null and action_hint_label.visible)
+	# The former full-width framed "action completed" bar is intentionally
+	# retired. A short unframed rejection remains readable without becoming a
+	# second permanent HUD layer.
+	command_feedback_art.visible = false
 	if not command_feedback_label.visible:
+		command_feedback_time_remaining = 0.0
 		return
-	var feedback_state := &"neutral"
-	if not accepted:
-		feedback_state = &"warning"
-	_apply_texture_ref(command_feedback_art, Art21UIPlacementContractScript.component_ref(&"art21r2.modal.section.panel", &"ui.art19.bar.summary_dark"), 0.82)
-	var pulse_state := &"ready"
-	if not accepted:
-		pulse_state = &"warning"
-	Art10UISkinKitScript.play_feedback_pulse(command_feedback_label, pulse_state)
-	Art10UISkinKitScript.play_feedback_pulse(command_feedback_art, pulse_state, 0.42)
+	command_feedback_time_remaining = COMMAND_FEEDBACK_TOAST_SECONDS
+	Art10UISkinKitScript.play_feedback_pulse(command_feedback_label, &"warning")
+
+
+func clear_command_feedback() -> void:
+	command_feedback_time_remaining = 0.0
+	if command_feedback_art != null:
+		command_feedback_art.visible = false
+	if command_feedback_label != null:
+		command_feedback_label.visible = false
+
+
+func advance_command_feedback(delta: float) -> void:
+	if command_feedback_time_remaining <= 0.0:
+		return
+	command_feedback_time_remaining = maxf(0.0, command_feedback_time_remaining - maxf(0.0, delta))
+	if command_feedback_time_remaining > 0.0:
+		return
+	if command_feedback_art != null:
+		command_feedback_art.visible = false
+	if command_feedback_label != null:
+		command_feedback_label.visible = false
 
 
 func _refresh_backpack_strip(items_variant: Variant) -> void:
@@ -580,12 +841,13 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		if item_variant is Dictionary:
 			var item: Dictionary = item_variant
 			var presentation := RunUIViewModel.item_presentation(item)
-			signature_parts.append("%s:%s:%s:%s:%s:%s" % [
+			signature_parts.append("%s:%s:%s:%s:%s:%s:%s" % [
 				item.get("instance_id", ""),
 				presentation.get("display_name", "未命名物资"),
 				presentation.get("quantity", 1),
 				presentation.get("weight", 0),
 				presentation.get("rarity_text", "[?] 未鉴定"),
+				presentation.get("collectible_level", 0),
 				presentation.get("short_description", ""),
 			])
 	var signature := ",".join(signature_parts)
@@ -610,18 +872,21 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		var presentation := RunUIViewModel.item_presentation(item)
 		var rarity: Dictionary = presentation.get("rarity", {})
 		var rarity_color: Color = rarity.get("color", PresentationTheme.color_for_key(&"ui.muted"))
-		var border_width := 2 if int(rarity.get("tier", 0)) >= 4 or bool(rarity.get("locked", false)) else 1
+		var item_meta: Array[String] = [String(presentation.get("rarity_text", "[?] 未鉴定"))]
+		var collectible_level_text := String(presentation.get("collectible_level_text", ""))
+		if collectible_level_text != "":
+			item_meta.append(collectible_level_text)
+		item_meta.append("%s重" % presentation.get("weight", 0))
 		var slot := Button.new()
 		slot.name = "BackpackItem%d" % index
 		slot.custom_minimum_size = Vector2(0, 50)
 		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slot.focus_mode = Control.FOCUS_ALL
 		slot.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		slot.text = "%s ×%d\n%s · %s重" % [
+		slot.text = "%s ×%d\n%s" % [
 			_compact_line(String(presentation.get("display_name", "未命名物资")), 8),
 			int(presentation.get("quantity", 1)),
-			String(presentation.get("rarity_text", "[?] 未鉴定")),
-			presentation.get("weight", 0),
+			" · ".join(item_meta),
 		]
 		slot.tooltip_text = String(presentation.get("detail_text", "尚未选择物品。"))
 		slot.icon = Art24ItemVisualCatalog.texture_for(item)
@@ -632,12 +897,25 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		slot.add_theme_color_override("font_color", PresentationTheme.text_color())
 		slot.add_theme_color_override("font_hover_color", PresentationTheme.text_color())
 		slot.add_theme_color_override("font_focus_color", PresentationTheme.text_color())
-		slot.add_theme_stylebox_override("normal", _panel_style(Color(0.012, 0.022, 0.026, 0.94), rarity_color, border_width))
-		slot.add_theme_stylebox_override("hover", _panel_style(Color(0.024, 0.044, 0.048, 0.98), rarity_color.lightened(0.12), maxi(2, border_width)))
-		slot.add_theme_stylebox_override("focus", _panel_style(Color(0.024, 0.044, 0.048, 0.98), rarity_color.lightened(0.18), maxi(2, border_width)))
-		slot.add_theme_stylebox_override("pressed", _panel_style(Color(0.018, 0.034, 0.038, 0.98), rarity_color, maxi(2, border_width)))
+		var neutral_border := Color(0.20, 0.50, 0.46, 0.58)
+		slot.add_theme_stylebox_override("normal", _panel_style(Color(0.012, 0.022, 0.026, 0.94), neutral_border, 1))
+		slot.add_theme_stylebox_override("hover", _panel_style(Color(0.024, 0.044, 0.048, 0.98), neutral_border.lightened(0.12), 1))
+		slot.add_theme_stylebox_override("focus", _panel_style(Color(0.024, 0.044, 0.048, 0.98), PresentationTheme.color_for_key(&"ui.accent"), 2))
+		slot.add_theme_stylebox_override("pressed", _panel_style(Color(0.018, 0.034, 0.038, 0.98), neutral_border, 1))
 		slot.set_meta("item_instance_id", String(item.get("instance_id", "")))
 		slot.set_meta("rarity_border_token", StringName(rarity.get("border_token", &"rarity.border.unknown")))
+		slot.set_meta("collectible_level", int(presentation.get("collectible_level", 0)))
+		var rarity_marker := ColorRect.new()
+		rarity_marker.name = "BackpackItemRarityMarker"
+		rarity_marker.color = rarity_color
+		rarity_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rarity_marker.anchor_bottom = 1.0
+		rarity_marker.offset_left = 3.0
+		rarity_marker.offset_top = 5.0
+		rarity_marker.offset_right = 7.0
+		rarity_marker.offset_bottom = -5.0
+		rarity_marker.set_meta("rarity_border_token", StringName(rarity.get("border_token", &"rarity.border.unknown")))
+		slot.add_child(rarity_marker)
 		slot.mouse_entered.connect(_show_backpack_item_detail.bind(item))
 		slot.focus_entered.connect(_show_backpack_item_detail.bind(item))
 		backpack_strip.add_child(slot)
@@ -686,9 +964,22 @@ func get_feedback_slot() -> Control:
 func apply_legacy_modal_style(panel: PanelContainer, theme_key: StringName = &"ui.accent") -> void:
 	if panel == null:
 		return
-	var accent := PresentationTheme.color_for_key(theme_key, PresentationTheme.color_for_key(&"ui.accent"))
-	panel.add_theme_stylebox_override("panel", _panel_style(Color(0.015, 0.028, 0.032, 0.96), accent, 2))
-	_style_modal_children(panel)
+	var panel_style := Art10UISkinKitScript.style_box_from_asset_ref_with_insets(
+		Art21UIPlacementContractScript.component_ref(
+			&"shared.panel.modal.normal",
+			&"ui.art19.panel.terminal_main",
+			&"runtime_modal"
+		),
+		Art10UISkinKitScript.POPUP_CONTENT_INSETS,
+		Art10UISkinKitScript.POPUP_SLICE_INSETS
+	)
+	if panel_style != null:
+		panel_style.set_meta("runtime_modal_theme_key", theme_key)
+		panel.add_theme_stylebox_override("panel", panel_style)
+	else:
+		Art10UISkinKitScript.apply_panel(panel, &"deep")
+	panel.set_meta("runtime_modal_theme_key", theme_key)
+	_style_modal_children(panel, theme_key)
 
 
 func _apply_layer_order() -> void:
@@ -803,7 +1094,7 @@ func _set_layer(item: Variant, layer: int) -> void:
 func apply_legacy_button_style(button: Button, tone: StringName = &"secondary") -> void:
 	if button == null:
 		return
-	_apply_action_button_style(button, tone, not button.disabled)
+	_apply_runtime_modal_button_style(button, tone)
 
 
 func _add_panel(node_name: String, color: Color, border_color: Color) -> PanelContainer:
@@ -906,7 +1197,6 @@ func _add_action_button(action_id: StringName, label: String, callback: Callable
 	copy.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	copy.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	copy.add_theme_font_override("font", BODY_FONT)
 	copy.add_theme_font_size_override("font_size", 13)
 	copy.add_theme_color_override("font_color", Color(0.98, 0.91, 0.70, 1.0))
 	copy.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.88))
@@ -943,6 +1233,7 @@ func _apply_actions(actions: Variant) -> void:
 	action_guidance_data.clear()
 	if not (actions is Array):
 		_restore_default_action_guidance()
+		_refresh_action_button_visibility()
 		return
 	var ordered_index := 0
 	for action in actions:
@@ -953,7 +1244,7 @@ func _apply_actions(actions: Variant) -> void:
 		if not action_buttons.has(action_id):
 			continue
 		var button: Button = action_buttons[action_id]
-		var display_text := "%s %s" % [_key_label_for_action(action_id), _short_action_label(action_id, String(action_data.get("label", "")))]
+		var display_text := _action_button_text(action_id, String(action_data.get("label", "")))
 		button.text = display_text
 		var action_copy := button.get_node_or_null("ActionCopy") as Label
 		if action_copy != null:
@@ -974,11 +1265,54 @@ func _apply_actions(actions: Variant) -> void:
 		_apply_key_prompt_icon(button, action_id)
 		action_bar.move_child(button, ordered_index)
 		ordered_index += 1
+	_refresh_action_button_visibility()
 	if active_guidance_action != "":
 		var active_button := action_buttons.get(active_guidance_action) as Button
 		if active_button == null or active_button.disabled:
 			active_guidance_action = &""
 	_refresh_active_action_guidance()
+
+
+func _refresh_action_button_visibility() -> void:
+	var compact_mode := ui_scale_factor >= 1.49
+	for action_id_variant in action_buttons.keys():
+		var action_id := StringName(action_id_variant)
+		var button := action_buttons.get(action_id) as Button
+		if button == null:
+			continue
+		button.visible = not (compact_mode and button.disabled)
+		button.text = _action_button_text(action_id, _short_action_label(action_id, button.text))
+
+
+func _action_button_text(action_id: StringName, fallback: String) -> String:
+	var key_label := _key_label_for_action(action_id)
+	if action_id == &"combat" and key_label == "鼠标左键":
+		key_label = "左键"
+	return "%s %s" % [key_label, _short_action_label(action_id, fallback)]
+
+
+func blocks_world_pointer(viewport_position: Vector2) -> bool:
+	# These surfaces can overlap the room plate while remaining presentation
+	# overlays. Treat their visible pixels as UI so a click cannot attack an
+	# obscured target underneath.
+	for control in [
+		left_backdrop,
+		status_card_art,
+		bottom_backdrop,
+		bottom_overlay_art,
+		mine_risk_tag_art,
+		encounter_backdrop,
+		command_feedback_art,
+		action_bar,
+	]:
+		if (
+			control != null
+			and is_instance_valid(control)
+			and control.is_visible_in_tree()
+			and control.get_global_rect().has_point(viewport_position)
+		):
+			return true
+	return false
 
 
 func _show_action_guidance(action_id: StringName) -> void:
@@ -987,9 +1321,7 @@ func _show_action_guidance(action_id: StringName) -> void:
 		return
 	active_guidance_action = action_id
 	action_hint_label.text = _action_guidance_text(action_data)
-	action_hint_label.visible = not action_hint_label.text.is_empty()
-	if command_feedback_art != null:
-		command_feedback_art.visible = command_feedback_label.visible or action_hint_label.visible
+	action_hint_label.visible = false
 
 
 func _restore_action_guidance(action_id: StringName) -> void:
@@ -1013,9 +1345,7 @@ func _restore_default_action_guidance() -> void:
 	if action_hint_label == null:
 		return
 	action_hint_label.text = default_action_guidance
-	action_hint_label.visible = not default_action_guidance.is_empty()
-	if command_feedback_art != null:
-		command_feedback_art.visible = command_feedback_label.visible or action_hint_label.visible
+	action_hint_label.visible = false
 
 
 func _action_guidance_text(action_data: Dictionary) -> String:
@@ -1038,23 +1368,49 @@ func _action_guidance_text(action_data: Dictionary) -> String:
 
 
 func _key_label_for_action(action_id: StringName) -> String:
+	var input_action := _input_action_for_surface_action(action_id)
+	if input_action == &"":
+		return ""
+	return SemanticActionHintScript.current_binding_label(input_action)
+
+
+func _input_action_for_surface_action(action_id: StringName) -> StringName:
 	match action_id:
 		&"interact":
-			return "E"
+			return &"interact"
 		&"inventory":
-			return "Q"
+			return &"open_inventory"
 		&"ground_loot":
-			return "G"
+			return &"open_ground_loot"
 		&"map":
-			return "M"
+			return &"open_map"
 		&"combat":
-			return "Spc"
+			return &"attack"
 		&"extract":
-			return "T"
+			return &"request_extract"
 		&"pause":
-			return "Esc"
+			return &"pause"
 		_:
-			return ""
+			return &""
+
+
+func _default_action_hint_text() -> String:
+	var parts: Array[String] = []
+	for fixture in [
+		{"action_id": &"interact", "label": "交互"},
+		{"action_id": &"open_inventory", "label": "背包"},
+		{"action_id": &"open_ground_loot", "label": "拾取"},
+		{"action_id": &"open_map", "label": "地图"},
+		{"action_id": &"attack", "label": "攻击"},
+		{"action_id": &"pause", "label": "暂停"},
+	]:
+		var key_label := SemanticActionHintScript.current_binding_label(StringName(fixture["action_id"]))
+		parts.append(
+			"%s %s" % [key_label, String(fixture["label"])]
+			if not key_label.is_empty()
+			else String(fixture["label"])
+		)
+	return "  ".join(parts)
 
 
 func _short_action_label(action_id: StringName, fallback: String) -> String:
@@ -1068,7 +1424,7 @@ func _short_action_label(action_id: StringName, fallback: String) -> String:
 		&"map":
 			return "地图"
 		&"combat":
-			return "清理"
+			return "攻击"
 		&"extract":
 			return "撤离"
 		&"pause":
@@ -1083,13 +1439,23 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 	encounter_body_label.text = _compact_line(String(section.get("body", "当前没有可处理的目标。")), 22)
 	encounter_result_label.text = "结果  %s" % _compact_line(String(section.get("result_summary", "暂无结果。")), 18)
 	_clear_encounter_option_buttons()
+	# Event decisions have one player-facing route: approach the world marker,
+	# open its focused modal, then submit through RunScene/CommandBus. Keeping
+	# these options in the steady HUD duplicated that route (including "leave")
+	# and allowed the strip to compete with the world-context card.
+	if _encounter_uses_event_modal(section):
+		encounter_backdrop.visible = false
+		encounter_options_box.visible = false
+		return
 	var options := _array_variant(section.get("options", []))
 	for option_variant in options:
 		if not (option_variant is Dictionary):
 			continue
 		var option: Dictionary = option_variant
-		var button := Button.new()
 		var option_id := StringName(option.get("id", &""))
+		if REDUNDANT_ENCOUNTER_OPTION_IDS.has(option_id):
+			continue
+		var button := Button.new()
 		var disabled := bool(option.get("disabled", false))
 		var requires_confirm := bool(option.get("requires_confirm", false))
 		var title := _encounter_option_title(option_id, String(option.get("title", String(option_id))))
@@ -1114,6 +1480,16 @@ func _apply_encounter_section(section_variant: Variant) -> void:
 	encounter_options_box.columns = clampi(encounter_option_buttons.size(), 1, 3)
 	encounter_backdrop.visible = not encounter_option_buttons.is_empty()
 	encounter_options_box.visible = not encounter_option_buttons.is_empty()
+
+
+func _encounter_uses_event_modal(section: Dictionary) -> bool:
+	var encounter_type := StringName(section.get("encounter_type", &"none"))
+	if encounter_type in EVENT_MODAL_ENCOUNTER_TYPES:
+		return true
+	for raw_tag in _array_variant(section.get("encounter_tags", [])):
+		if StringName(raw_tag) == &"event_like":
+			return true
+	return false
 
 
 func _encounter_option_title(option_id: StringName, fallback: String) -> String:
@@ -1186,13 +1562,38 @@ func _apply_art10_text_refresh() -> void:
 	]:
 		if label is Label:
 			Art10UISkinKitScript.apply_label_token(label, &"hud_small", &"text")
+			label.add_theme_font_size_override(
+				"font_size",
+				Art10UISkinKitScript.scaled_font_size(
+					Art10UISkinKitScript.font_size(&"hud_small"),
+					ui_scale_factor
+				)
+			)
 			label.clip_text = true
 			label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for title_label in [scanner_title_label, room_title_label, encounter_title_label, right_title_label]:
 		if title_label is Label:
-			Art10UISkinKitScript.apply_label_token(title_label, &"hud", &"accent")
+			Art10UISkinKitScript.apply_composition_label(
+				title_label,
+				&"status",
+				Art10UISkinKitScript.scaled_font_size(
+					Art10UISkinKitScript.font_size(&"hud"),
+					ui_scale_factor
+				),
+				Art10UISkinKitScript.color(&"accent")
+			)
 			title_label.clip_text = true
 			title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	if mine_risk_label is Label:
+		Art10UISkinKitScript.apply_composition_label(
+			mine_risk_label,
+			&"status",
+			Art10UISkinKitScript.scaled_font_size(16, ui_scale_factor),
+			Color(0.91, 0.87, 0.78, 1.0)
+		)
+		mine_risk_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		mine_risk_label.clip_text = false
+		mine_risk_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	if command_feedback_label is Label:
 		command_feedback_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		command_feedback_label.clip_text = true
@@ -1213,7 +1614,13 @@ func _apply_art10_text_refresh() -> void:
 			left_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for action_id in action_buttons.keys():
 		var action_button := action_buttons[action_id] as Button
-		action_button.custom_minimum_size = Vector2(86, 36)
+		action_button.custom_minimum_size = Vector2(
+			0.0,
+			Art10UISkinKitScript.scaled_control_minimum(
+				Vector2(0.0, 30.0),
+				minf(ui_scale_factor, 1.25)
+			).y
+		)
 		var tone := StringName(action_button.get_meta("context_tone", &"secondary"))
 		var is_primary := bool(action_button.get_meta("context_primary", false)) and not action_button.disabled
 		var visual_tone := &"danger" if is_primary and tone == &"danger" else (&"primary" if is_primary else tone)
@@ -1221,7 +1628,50 @@ func _apply_art10_text_refresh() -> void:
 		action_button.focus_mode = Control.FOCUS_NONE if action_button.disabled else Control.FOCUS_ALL
 		_apply_key_prompt_icon(action_button, StringName(action_id))
 	for button in encounter_option_buttons:
-		Art10UISkinKitScript.apply_transparent_button(button, &"primary" if button != null and not button.disabled else &"secondary", 13, &"key", 0)
+		Art10UISkinKitScript.apply_transparent_button(
+			button,
+			&"primary" if button != null and not button.disabled else &"secondary",
+			Art10UISkinKitScript.scaled_font_size(13, ui_scale_factor),
+			&"key",
+			0
+		)
+	_fit_encounter_option_geometry()
+
+
+func _fit_encounter_option_geometry() -> void:
+	if encounter_backdrop == null or encounter_options_box == null:
+		return
+	var panel_rect := encounter_option_base_rect
+	if panel_rect.size.x <= 0.0 or panel_rect.size.y <= 0.0:
+		return
+	if encounter_option_buttons.is_empty():
+		_set_rect(encounter_backdrop, panel_rect)
+		_set_rect(
+			encounter_options_box,
+			Rect2(panel_rect.position + Vector2(5.0, 5.0), panel_rect.size - Vector2(10.0, 10.0))
+		)
+		return
+	var columns := maxi(1, encounter_options_box.columns)
+	var rows := ceili(float(encounter_option_buttons.size()) / float(columns))
+	var row_height := 0.0
+	for button in encounter_option_buttons:
+		if button == null:
+			continue
+		row_height = maxf(
+			row_height,
+			maxf(button.custom_minimum_size.y, button.get_combined_minimum_size().y)
+		)
+	var vertical_separation := float(encounter_options_box.get_theme_constant("v_separation"))
+	var required_height := 10.0 + float(rows) * row_height + float(maxi(0, rows - 1)) * vertical_separation
+	if required_height > panel_rect.size.y:
+		var preserved_bottom := panel_rect.end.y
+		panel_rect.size.y = required_height
+		panel_rect.position.y = preserved_bottom - required_height
+	_set_rect(encounter_backdrop, panel_rect)
+	_set_rect(
+		encounter_options_box,
+		Rect2(panel_rect.position + Vector2(5.0, 5.0), panel_rect.size - Vector2(10.0, 10.0))
+	)
 
 
 func _array_variant(raw: Variant) -> Array:
@@ -1251,10 +1701,30 @@ func _panel_style(color: Color, border_color: Color, border_width: int) -> Style
 	return style
 
 
+func _interior_band_style(color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	# The authored rail already supplies the only complete frame. Interior
+	# sections are quiet tonal bands so they cannot read as stacked plastic
+	# panels or put another outline through their headings.
+	style.border_width_left = 0
+	style.border_width_top = 0
+	style.border_width_right = 0
+	style.border_width_bottom = 0
+	return style
+
+
 func _apply_action_button_style(button: Button, tone: StringName, enabled: bool) -> void:
-	Art10UISkinKitScript.apply_transparent_button(button, tone, 13, &"key", 0)
-	button.add_theme_font_override("font", BODY_FONT)
-	button.clip_text = false
+	Art10UISkinKitScript.apply_transparent_button(
+		button,
+		tone,
+		Art10UISkinKitScript.scaled_font_size(13, ui_scale_factor),
+		&"key",
+		0,
+		&"readable"
+	)
+	button.clip_text = true
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var normal_style := _art24_keycap_style("normal", tone)
 	var pressed_style := _art24_keycap_style("pressed", tone)
 	var disabled_style := _art24_keycap_style("disabled", tone)
@@ -1326,15 +1796,69 @@ func _tone_color(tone: StringName) -> Color:
 			return PresentationTheme.color_for_key(&"ui.muted")
 
 
-func _style_modal_children(node: Node) -> void:
+func _apply_runtime_modal_button_style(button: Button, tone: StringName) -> void:
+	var visual_tone := &"danger" if tone == &"danger" else (&"primary" if tone == &"primary" else &"secondary")
+	Art10UISkinKitScript.apply_button(
+		button,
+		visual_tone,
+		Art10UISkinKitScript.scaled_font_size(13, ui_scale_factor),
+		&"button",
+		&"display"
+	)
+	var active_tone := &"danger" if visual_tone == &"danger" else &"primary"
+	button.add_theme_stylebox_override("normal", Art10UISkinKitScript.registered_control_style(visual_tone))
+	button.add_theme_stylebox_override("hover", Art10UISkinKitScript.registered_control_style(active_tone))
+	button.add_theme_stylebox_override("pressed", Art10UISkinKitScript.registered_control_style(active_tone))
+	button.add_theme_stylebox_override("disabled", Art10UISkinKitScript.registered_control_style(&"disabled"))
+	button.add_theme_stylebox_override("focus", Art10UISkinKitScript.registered_control_style(&"focus"))
+	button.clip_text = true
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var semantic_key := _runtime_modal_theme_key_for(button)
+	if visual_tone == &"danger":
+		semantic_key = &"ui.danger"
+	var semantic_color := PresentationTheme.color_for_key(
+		semantic_key,
+		PresentationTheme.color_for_key(&"ui.accent")
+	)
+	if visual_tone != &"secondary":
+		button.add_theme_color_override("font_color", semantic_color.lightened(0.12))
+		button.add_theme_color_override("font_pressed_color", semantic_color)
+	button.add_theme_color_override("font_hover_color", semantic_color.lightened(0.20))
+	button.add_theme_color_override("font_focus_color", semantic_color.lightened(0.20))
+	button.set_meta("runtime_modal_button_tone", visual_tone)
+
+
+func _runtime_modal_theme_key_for(node: Node) -> StringName:
+	var current := node
+	while current != null:
+		if current.has_meta("runtime_modal_theme_key"):
+			return StringName(current.get_meta("runtime_modal_theme_key", &"ui.accent"))
+		current = current.get_parent()
+	return &"ui.accent"
+
+
+func _style_modal_children(node: Node, theme_key: StringName) -> void:
 	if node is Label:
 		var label := node as Label
-		label.add_theme_color_override("font_color", PresentationTheme.text_color())
+		var title_like := (
+			String(label.name).to_lower().contains("title")
+			or label.get_theme_font_size("font_size") >= 18
+		)
+		var label_color := PresentationTheme.color_for_key(
+			theme_key,
+			PresentationTheme.color_for_key(&"ui.accent")
+		) if title_like else PresentationTheme.text_color()
+		Art10UISkinKitScript.apply_composition_label(
+			label,
+			&"title" if title_like else &"body",
+			label.get_theme_font_size("font_size"),
+			label_color
+		)
 	elif node is Button:
 		var button := node as Button
-		_apply_action_button_style(button, &"secondary", not button.disabled)
+		_apply_runtime_modal_button_style(button, &"secondary")
 	for child in node.get_children():
-		_style_modal_children(child)
+		_style_modal_children(child, theme_key)
 
 
 func _lines_text(lines: Variant, fallback: String, max_lines: int = 4, max_chars: int = 24) -> String:
@@ -1396,10 +1920,46 @@ func _resource_copy(model: Dictionary) -> String:
 func _resource_lines(text: String) -> String:
 	var parts := text.split(" | ", false)
 	if parts.size() >= 4:
-		return "%s    %s\n%s    %s" % [parts[0], parts[1], parts[2], parts[3]]
+		return "生命 %s    强度 %s\n黑币 %s    金币 %s" % [
+			_compact_stat_token(_resource_field_value(parts[0])),
+			_compact_stat_token(_resource_field_value(parts[1])),
+			_compact_stat_token(_resource_field_value(parts[2])),
+			_compact_stat_token(_resource_field_value(parts[3])),
+		]
 	if text.strip_edges() == "":
 		return "生命 --/--    战力 --\n待结算 --    安全收益 --"
 	return text.replace(" | ", "\n")
+
+
+func _resource_field_value(field: String) -> String:
+	var separator := field.find(" ")
+	if separator < 0:
+		return field.strip_edges()
+	return field.substr(separator + 1).strip_edges()
+
+
+func _compact_stat_token(token: String) -> String:
+	if token.contains("/"):
+		var ratio := token.split("/", false, 1)
+		if ratio.size() == 2:
+			return "%s/%s" % [_compact_stat_number(ratio[0]), _compact_stat_number(ratio[1])]
+	return _compact_stat_number(token)
+
+
+func _compact_stat_number(token: String) -> String:
+	var normalized := token.strip_edges()
+	if not normalized.is_valid_int():
+		return normalized
+	var value := normalized.to_int()
+	var magnitude := absi(value)
+	if magnitude < 10000:
+		return str(value)
+	var divisor := 100000000.0 if magnitude >= 100000000 else 10000.0
+	var suffix := "亿" if magnitude >= 100000000 else "万"
+	var compact := "%.1f" % (float(value) / divisor)
+	if compact.ends_with(".0"):
+		compact = compact.left(-2)
+	return compact + suffix
 
 
 func _apply_ue_readability_tokens(profile: Dictionary = {}) -> void:
@@ -1413,22 +1973,48 @@ func _apply_ue_readability_tokens(profile: Dictionary = {}) -> void:
 	resource_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	resource_label.clip_text = true
 	resource_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	var body_size := 13 if is_low else (16 if is_high else 14)
+	var body_size := Art10UISkinKitScript.scaled_font_size(
+		13 if is_low else (16 if is_high else 14),
+		ui_scale_factor
+	)
 	for label in [scanner_legend_label, scanner_detail_label, right_body_label]:
 		label.add_theme_font_size_override("font_size", body_size)
-		label.add_theme_constant_override("line_spacing", 2 if is_low else 3)
+		label.add_theme_constant_override(
+			"line_spacing",
+			maxi(2, int(round(float(2 if is_low else 3) * ui_scale_factor)))
+		)
 		label.add_theme_color_override("font_color", Color(0.91, 0.94, 0.88, 1.0))
-	resource_label.add_theme_font_size_override("font_size", 13 if is_low else (15 if is_high else 13))
+	resource_label.add_theme_font_size_override(
+		"font_size",
+		Art10UISkinKitScript.scaled_font_size(13 if is_low else (15 if is_high else 13), ui_scale_factor)
+	)
 	resource_label.add_theme_constant_override("line_spacing", 1)
 	resource_label.add_theme_color_override("font_color", Color(0.91, 0.94, 0.88, 1.0))
-	scanner_title_label.add_theme_font_size_override("font_size", 16 if is_low else (20 if is_high else 18))
-	right_title_label.add_theme_font_size_override("font_size", 16 if is_low else (20 if is_high else 18))
-	event_label.add_theme_font_size_override("font_size", 12 if is_low else 13)
+	mine_risk_label.add_theme_font_size_override(
+		"font_size",
+		Art10UISkinKitScript.scaled_font_size(15 if is_low else (18 if is_high else 16), ui_scale_factor)
+	)
+	mine_risk_label.add_theme_color_override("font_color", Color(0.91, 0.87, 0.78, 1.0))
+	scanner_title_label.add_theme_font_size_override(
+		"font_size",
+		Art10UISkinKitScript.scaled_font_size(16 if is_low else (20 if is_high else 18), ui_scale_factor)
+	)
+	right_title_label.add_theme_font_size_override(
+		"font_size",
+		Art10UISkinKitScript.scaled_font_size(16 if is_low else (20 if is_high else 18), ui_scale_factor)
+	)
+	event_label.add_theme_font_size_override(
+		"font_size",
+		Art10UISkinKitScript.scaled_font_size(12 if is_low else 13, ui_scale_factor)
+	)
 	event_label.add_theme_color_override("font_color", Color(0.82, 0.90, 0.82, 1.0))
 	for button_value in action_buttons.values():
 		var button := button_value as Button
 		if button != null:
-			button.add_theme_font_size_override("font_size", 13)
+			button.add_theme_font_size_override(
+				"font_size",
+				Art10UISkinKitScript.scaled_font_size(13, ui_scale_factor)
+			)
 
 
 func _protocol_level_ref(level: int) -> Dictionary:

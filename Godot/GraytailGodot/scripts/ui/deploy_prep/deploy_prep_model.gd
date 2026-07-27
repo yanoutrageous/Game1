@@ -213,6 +213,8 @@ static func _map_rows(config: Dictionary, selected_filter: StringName, map_proje
 				continue
 			var map_id := str(map_data.get("map_config_id", ""))
 			var selected := map_id == selected_map_id
+			var tutorial_map := bool(map_data.get("tutorial_map", false))
+			var completion_label := str(map_data.get("completion_label", "未完成"))
 			var domain_action := _dictionary_from(map_data.get("select_action", {}))
 			var action_enabled := bool(domain_action.get("enabled", false)) and not selected
 			var reason_code := StringName(domain_action.get("reason_code", &"map_locked"))
@@ -233,7 +235,11 @@ static func _map_rows(config: Dictionary, selected_filter: StringName, map_proje
 				"title": str(map_data.get("display_name", map_id)),
 				"category": "地图",
 				"state": "selected" if selected else ("ready" if unlocked else "locked"),
-				"summary": "%s · %s · %s" % [str(map_data.get("scale_label", "")), str(map_data.get("difficulty_label", "")), "已解锁" if unlocked else "未解锁"],
+				"summary": (
+					"%s · %s · %s" % [str(map_data.get("scale_label", "")), str(map_data.get("difficulty_label", "")), completion_label]
+					if tutorial_map
+					else "%s · %s · %s" % [str(map_data.get("scale_label", "")), str(map_data.get("difficulty_label", "")), "已解锁" if unlocked else "未解锁"]
+				),
 				"detail": str(map_data.get("role", "")),
 				"map_config_id": map_id,
 				"scale_id": StringName(map_data.get("scale_id", &"")),
@@ -242,13 +248,16 @@ static func _map_rows(config: Dictionary, selected_filter: StringName, map_proje
 				"difficulty_label": str(map_data.get("difficulty_label", "")),
 				"unlocked": unlocked,
 				"selected": selected,
+				"tutorial_map": tutorial_map,
+				"tutorial_completed": bool(map_data.get("tutorial_completed", false)),
+				"completion_label": completion_label,
 				"mine_count": int(map_data.get("mine_count", 0)),
 				"content_room_count": int(map_data.get("content_room_count", 0)),
 				"facts": [
 					_fact("规模", str(map_data.get("scale_label", "—"))),
 					_fact("难度", str(map_data.get("difficulty_label", "—"))),
 					_fact("定位", str(map_data.get("role", "—"))),
-					_fact("状态", "已解锁" if unlocked else "未解锁", &"positive" if unlocked else &"muted"),
+					_fact("状态", completion_label if tutorial_map else ("已解锁" if unlocked else "未解锁"), &"positive" if unlocked else &"muted"),
 				],
 				"actions": [action],
 				"select_action": action.duplicate(true),
@@ -302,7 +311,21 @@ static func _warehouse_item_row(
 	var deployed_count := _count_selected_item(config, item_id)
 	var rarity_descriptor := ItemRarityDescriptorScript.describe_item(item)
 	var rarity := StringName(rarity_descriptor.get("normalized_key", &"unknown"))
+	var collectible_level := maxi(0, int(item.get("collectible_level", 0)))
+	var collectible_level_text := "收藏 Lv.%d" % collectible_level if collectible_level > 0 else ""
 	var active_locked := bool(config.get("active_run_locked", false))
+	var can_sell := bool(item.get("can_sell", false))
+	var is_unique := bool(item.get("is_unique", false))
+	var batch_sell_reason := &"ok"
+	if active_locked:
+		batch_sell_reason = &"active_run_locked"
+	elif selected:
+		batch_sell_reason = &"configured_item_blocked"
+	elif is_unique:
+		batch_sell_reason = &"unique_item"
+	elif item_type != &"collectible" or not can_sell:
+		batch_sell_reason = &"item_not_sellable"
+	var batch_sell_eligible := batch_sell_reason == &"ok"
 	var actions := []
 	if bool(item.get("can_equip", false)) or bool(item.get("can_consume", false)):
 		var toggle_id := &"toggle_attendance" if bool(item.get("can_equip", false)) else &"toggle_carry"
@@ -310,23 +333,39 @@ static func _warehouse_item_row(
 		actions.append(_action(toggle_id, toggle_label, not active_locked, false, false, &"active_run_locked" if active_locked else &"ok", {"instance_id": instance_id}))
 	if bool(item.get("can_consume", false)):
 		actions.append(_action(&"use", "局内使用", false, false, false, &"only_available_in_run", {"instance_id": instance_id}))
-	if bool(item.get("can_sell", false)):
-		var sell_enabled := not active_locked and not selected
-		var sell_reason := &"ok"
-		if active_locked:
-			sell_reason = &"active_run_locked"
-		elif selected:
+	if can_sell:
+		var sell_enabled := batch_sell_eligible
+		var sell_reason := batch_sell_reason
+		if sell_reason == &"configured_item_blocked":
 			sell_reason = &"remove_from_attendance_first"
 		var sell_pending := str(config.get("sell_confirm_pending_instance_id", "")) == instance_id
 		var sell_label := "确认出售" if sell_pending and sell_enabled else "出售"
 		actions.append(_action(&"sell", sell_label, sell_enabled, true, not sell_pending, sell_reason, {"instance_id": instance_id, "item_id": item_id}))
+	var summary_parts := [
+		String(rarity_descriptor.get("display_text", "[?] 未鉴定")),
+		"拥有 %d" % owned_count,
+		"出勤 %d" % deployed_count,
+	]
+	if not collectible_level_text.is_empty():
+		summary_parts.insert(1, collectible_level_text)
+	var facts := [
+		_fact("品质", String(rarity_descriptor.get("display_text", "[?] 未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
+	]
+	if collectible_level > 0:
+		facts.append(_fact("收藏等级", "Lv.%d" % collectible_level, &"positive"))
+	facts.append(_fact("拥有 / 出勤", "%d / %d" % [owned_count, deployed_count]))
+	if collectible_level > 0:
+		facts.append(_fact("重量 / 价值", "%d / %d 金币" % [int(item.get("weight", 0)), int(item.get("base_value", 0))], &"positive" if batch_sell_eligible else &"muted"))
+	else:
+		facts.append(_fact("重量", str(int(item.get("weight", 0)))))
+		facts.append(_fact("价值", "%d 金币" % int(item.get("base_value", 0)), &"positive" if batch_sell_eligible else &"muted"))
 	return {
 		"id": StringName("m3r_%s" % instance_id),
 		"filter_id": filter_id,
 		"title": str(item.get("display_name", item_id)),
 		"category": group_label,
 		"state": "selected" if selected else "owned",
-		"summary": "%s · 拥有 %d · 出勤 %d" % [String(rarity_descriptor.get("display_text", "[?] 未鉴定")), owned_count, deployed_count],
+		"summary": " · ".join(summary_parts),
 		"detail": str(item.get("short_description", "")),
 		"detail_kind": &"warehouse_item",
 		"instance_id": instance_id,
@@ -339,25 +378,39 @@ static func _warehouse_item_row(
 		"rarity_border_token": StringName(rarity_descriptor.get("border_token", &"rarity.border.unknown")),
 		"rarity_color": Color(rarity_descriptor.get("color", Color.WHITE)),
 		"rarity_locked": bool(rarity_descriptor.get("locked", false)),
+		"collectible_level": collectible_level,
+		"collectible_level_text": collectible_level_text,
 		"owned_count": owned_count,
 		"deployed_count": deployed_count,
 		"selected": selected,
+		"batch_sell_eligible": batch_sell_eligible,
+		"batch_sell_reason_code": batch_sell_reason,
+		"batch_sell_reason": _warehouse_sell_reason_text(batch_sell_reason),
 		"weight": int(item.get("weight", 0)),
 		"value": int(item.get("base_value", 0)),
 		"description": str(item.get("short_description", "")),
 		"source_label": str(item.get("source_label", item.get("source", "仓库"))),
-		"facts": [
-			_fact("品质", String(rarity_descriptor.get("display_text", "[?] 未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
-			_fact("拥有 / 出勤", "%d / %d" % [owned_count, deployed_count]),
-			_fact("重量", str(int(item.get("weight", 0)))),
-			_fact("价值", "%d 金币" % int(item.get("base_value", 0))),
-		],
+		"facts": facts,
 		"actions": actions,
 		"raw_item": item.duplicate(true),
 		"preview": false,
 		"display_only": false,
 		"read_only": true,
 	}
+
+
+static func _warehouse_sell_reason_text(reason_code: StringName) -> String:
+	match reason_code:
+		&"ok":
+			return "可加入批量售卖"
+		&"configured_item_blocked":
+			return "当前正在出勤配置中，请先移出出勤"
+		&"active_run_locked":
+			return "探索进行中，仓库交易暂不可用"
+		&"unique_item":
+			return "唯一物品不可出售"
+		_:
+			return "该物品不可出售"
 
 
 static func _claim_rows(config: Dictionary, selected_filter: StringName) -> Array:
@@ -585,13 +638,28 @@ static func _loadout_item_row(item: Dictionary, category: String, prefix: String
 	var instance_id := str(item.get("instance_id", item.get("item_id", "item")))
 	var rarity_descriptor := ItemRarityDescriptorScript.describe_item(item)
 	var rarity := StringName(rarity_descriptor.get("normalized_key", &"unknown"))
+	var collectible_level := maxi(0, int(item.get("collectible_level", 0)))
+	var collectible_level_text := "收藏 Lv.%d" % collectible_level if collectible_level > 0 else ""
+	var summary_parts := [
+		String(rarity_descriptor.get("display_text", "[?] 未鉴定")),
+		"重量 %d" % int(item.get("weight", 0)),
+	]
+	if not collectible_level_text.is_empty():
+		summary_parts.insert(1, collectible_level_text)
+	var facts := [
+		_fact("类型", category),
+		_fact("品质", String(rarity_descriptor.get("display_text", "[?] 未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
+	]
+	if collectible_level > 0:
+		facts.append(_fact("收藏等级", "Lv.%d" % collectible_level, &"positive"))
+	facts.append(_fact("重量", str(int(item.get("weight", 0)))))
 	return {
 		"id": StringName("%s:%s" % [String(prefix), instance_id]),
 		"filter_id": DeployTabModelScript.FILTER_ALL,
 		"title": str(item.get("display_name", item.get("item_id", "物品"))),
 		"category": category,
 		"state": "selected",
-		"summary": "%s · 重量 %d" % [String(rarity_descriptor.get("display_text", "[?] 未鉴定")), int(item.get("weight", 0))],
+		"summary": " · ".join(summary_parts),
 		"detail": str(item.get("short_description", "")),
 		"detail_kind": &"loadout_item",
 		"item_id": str(item.get("item_id", "")),
@@ -603,12 +671,10 @@ static func _loadout_item_row(item: Dictionary, category: String, prefix: String
 		"rarity_border_token": StringName(rarity_descriptor.get("border_token", &"rarity.border.unknown")),
 		"rarity_color": Color(rarity_descriptor.get("color", Color.WHITE)),
 		"rarity_locked": bool(rarity_descriptor.get("locked", false)),
+		"collectible_level": collectible_level,
+		"collectible_level_text": collectible_level_text,
 		"weight": int(item.get("weight", 0)),
-		"facts": [
-			_fact("类型", category),
-			_fact("品质", String(rarity_descriptor.get("display_text", "[?] 未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
-			_fact("重量", str(int(item.get("weight", 0)))),
-		],
+		"facts": facts,
 		"actions": [_action(&"remove_from_loadout", "移出携带", not active_locked, false, false, &"active_run_locked" if active_locked else &"ok", {"instance_id": instance_id})],
 		"preview": false,
 		"display_only": false,
@@ -641,8 +707,11 @@ static func _detail_projection(active_tab: StringName, selected_row: Dictionary)
 	}
 	for key in [
 		"map_config_id", "scale_id", "scale_label", "difficulty", "difficulty_label", "unlocked",
+		"mode", "map_mode", "tutorial_map", "tutorial_completed", "completion_label",
 		"instance_id", "item_id", "item_type", "rarity", "rarity_label", "rarity_badge", "rarity_display_text",
-		"rarity_border_token", "rarity_color", "rarity_locked", "owned_count", "deployed_count", "weight", "value",
+		"rarity_border_token", "rarity_color", "rarity_locked", "collectible_level", "collectible_level_text",
+		"owned_count", "deployed_count", "weight", "value",
+		"batch_sell_eligible", "batch_sell_reason_code", "batch_sell_reason",
 		"price", "balance", "balance_display", "affordable", "unlock_text", "claimed",
 		"commission_id", "condition", "metric", "target", "reward", "reward_text", "used", "limit"
 	]:
@@ -653,6 +722,7 @@ static func _detail_projection(active_tab: StringName, selected_row: Dictionary)
 
 static func _summary_projection(config: Dictionary, map_projection: Dictionary) -> Dictionary:
 	var selected_map := _dictionary_from(map_projection.get("selected_detail", {}))
+	var tutorial_map := bool(selected_map.get("tutorial_map", false))
 	var map_name := str(config.get("map_display_name", selected_map.get("display_name", "未选择地图")))
 	var scale_label := str(selected_map.get("scale_label", "—"))
 	var difficulty_label := str(config.get("difficulty_label", selected_map.get("difficulty_label", "—")))
@@ -667,6 +737,32 @@ static func _summary_projection(config: Dictionary, map_projection: Dictionary) 
 	var used := int(config.get("bag_used", 0))
 	var limit := int(config.get("bag_limit", config.get("backpack_capacity", 10)))
 	var map_summary := _map_summary_text(map_name, scale_label, difficulty_label)
+	if tutorial_map:
+		var completion_label := str(selected_map.get("completion_label", "未完成"))
+		var tutorial_overview := [
+			map_summary,
+			"固定 5×5 教学演练",
+			"状态：%s" % completion_label,
+			"训练装备与收益不写入正式档案",
+		]
+		var tutorial_config_lines := ["地图：%s" % map_summary, "固定种子：777", "训练配置：独立"]
+		var tutorial_effect_lines := ["不消耗仓库物品", "不结算金币与回收物", "仅记录教程完成状态"]
+		var tutorial_objective_lines := ["教学目标：完成固定路线并从信标撤离", "可随时从地图页重播"]
+		return {
+			"page_ids": [&"overview", &"config", &"effect", &"objective"],
+			"active_page": &"overview",
+			"pages": {
+				"overview": tutorial_overview,
+				"config": tutorial_config_lines,
+				"effect": tutorial_effect_lines,
+				"objective": tutorial_objective_lines,
+			},
+			"overview": tutorial_overview.duplicate(true),
+			"config": tutorial_config_lines.duplicate(true),
+			"effect": tutorial_effect_lines.duplicate(true),
+			"objective": tutorial_objective_lines.duplicate(true),
+			"read_only": true,
+		}
 	var overview := [
 		map_summary,
 		"委托：%s" % objective_name,

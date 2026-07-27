@@ -12,7 +12,10 @@ const ROW_HEIGHT := 44.0
 const ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const SpecialRoomPresentationModelScript := preload("res://scripts/gameplay/interaction/i3_special_room_presentation_model.gd")
-const ReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
+const RuntimeInputProfileScript := preload("res://scripts/core/input/runtime_input_profile.gd")
+const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
 
 var title_label: Label
 var hint_label: Label
@@ -27,14 +30,27 @@ var anchor_world := Vector2.ZERO
 var player_world := Vector2.ZERO
 var has_player_world: bool = false
 var room_bounds := Rect2(Vector2.ZERO, Vector2(1280, 720))
+var gameplay_focus_rect := Rect2()
+var reserved_rects: Array[Rect2] = []
 var last_signature := ""
 var current_context: Dictionary = {}
 var replacement_ground_id := ""
 
 
 func _ready() -> void:
+	add_to_group(RuntimeInputProfileScript.HINT_CONSUMER_GROUP)
 	_build()
 	set_process(true)
+
+
+func refresh_input_hints() -> void:
+	if (
+		hint_label != null
+		and context_kind == &"chest"
+		and not current_context.is_empty()
+		and not bool(current_context.get("container_open", false))
+	):
+		hint_label.text = "使用 %s 打开" % SemanticActionHintScript.current_display_label(&"interact")
 
 
 func apply_context(context: Dictionary) -> void:
@@ -46,6 +62,8 @@ func apply_context(context: Dictionary) -> void:
 	has_player_world = context.has("player_world_pos")
 	player_world = Vector2(context.get("player_world_pos", anchor_world))
 	room_bounds = Rect2(context.get("room_bounds", room_bounds))
+	gameplay_focus_rect = Rect2(context.get("gameplay_focus_rect", Rect2()))
+	reserved_rects = _rect_array(context.get("reserved_rects", []))
 	context_items = _dictionary_array(context.get("items", []))
 	inventory_items = _dictionary_array(context.get("inventory_items", []))
 	current_context = context.duplicate(true)
@@ -66,6 +84,8 @@ func clear_context() -> void:
 	inventory_items.clear()
 	current_context.clear()
 	has_player_world = false
+	gameplay_focus_rect = Rect2()
+	reserved_rects.clear()
 	replacement_ground_id = ""
 	last_signature = ""
 	if status_label != null:
@@ -135,20 +155,28 @@ func _process(_delta: float) -> void:
 
 func _build() -> void:
 	name = "WorldContextPopup"
+	Art10UISkinKitScript.apply_player_ui_theme(self)
 	visible = false
 	z_index = 80
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	custom_minimum_size = Vector2(POPUP_WIDTH, 0)
-	var frame := StyleBoxFlat.new()
-	frame.bg_color = Color(0.012, 0.025, 0.028, 0.965)
-	frame.border_color = Color(0.72, 0.51, 0.20, 0.95)
-	frame.set_border_width_all(2)
-	frame.set_corner_radius_all(4)
-	frame.content_margin_left = 12
-	frame.content_margin_top = 10
-	frame.content_margin_right = 12
-	frame.content_margin_bottom = 10
-	add_theme_stylebox_override("panel", frame)
+	var frame := Art10UISkinKitScript.style_box_from_asset_ref(
+		Art21UIPlacementContractScript.panel_ref(&"tooltip"),
+		12,
+		12
+	)
+	if frame != null:
+		add_theme_stylebox_override("panel", frame)
+	else:
+		var fallback_frame := StyleBoxFlat.new()
+		fallback_frame.bg_color = Color(0.012, 0.025, 0.028, 0.98)
+		fallback_frame.border_color = Color(0.72, 0.51, 0.20, 0.95)
+		fallback_frame.set_border_width_all(2)
+		fallback_frame.content_margin_left = 12
+		fallback_frame.content_margin_top = 10
+		fallback_frame.content_margin_right = 12
+		fallback_frame.content_margin_bottom = 10
+		add_theme_stylebox_override("panel", fallback_frame)
 
 	var root := VBoxContainer.new()
 	root.name = "ContextContent"
@@ -162,7 +190,6 @@ func _build() -> void:
 	hint_label = Label.new()
 	hint_label.name = "ContextHint"
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint_label.add_theme_font_override("font", ReadableFont)
 	hint_label.add_theme_font_size_override("font_size", 13)
 	hint_label.add_theme_color_override("font_color", Color(0.70, 0.80, 0.76, 1.0))
 	root.add_child(hint_label)
@@ -186,7 +213,6 @@ func _build() -> void:
 	status_label = Label.new()
 	status_label.name = "ContextStatus"
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status_label.add_theme_font_override("font", ReadableFont)
 	status_label.add_theme_font_size_override("font_size", 13)
 	status_label.add_theme_color_override("font_color", Color(0.66, 0.76, 0.72, 1.0))
 	status_label.visible = false
@@ -210,7 +236,7 @@ func _rebuild(context: Dictionary) -> void:
 			primary_button.visible = false
 			_build_item_rows(context_items, backpack_remaining)
 		else:
-			hint_label.text = "按 E 打开"
+			hint_label.text = "使用 %s 打开" % SemanticActionHintScript.current_display_label(&"interact")
 			hint_label.visible = true
 			primary_button.text = "打开物资箱"
 			primary_button.visible = true
@@ -281,7 +307,6 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty.custom_minimum_size = Vector2(0, ROW_HEIGHT)
 		empty.add_theme_font_size_override("font_size", 13)
-		empty.add_theme_font_override("font", ReadableFont)
 		empty.add_theme_color_override("font_color", Color(0.88, 0.48, 0.34, 1.0))
 		item_list.add_child(empty)
 		return
@@ -297,14 +322,11 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		item_button.name = "ReplacementCandidateInfo"
 		item_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		item_button.custom_minimum_size = Vector2(156, ROW_HEIGHT)
-		item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		item_button.clip_text = true
-		item_button.text = String(presentation.get("summary_text", "暂无物资"))
+		item_button.text = ""
 		item_button.tooltip_text = String(presentation.get("detail_text", "尚未选择物品。"))
-		_apply_item_icon(item_button, item)
 		_style_button(item_button, &"secondary", 13)
 		_apply_rarity_style(item_button, rarity)
-		item_button.add_theme_font_override("font", ReadableFont)
+		_build_replacement_candidate_content(item_button, item, presentation, rarity)
 		row.add_child(item_button)
 		var candidate_id := String(item.get("instance_id", ""))
 		var candidate_weight := int(presentation.get("weight", 0))
@@ -312,10 +334,10 @@ func _build_replacement_rows(incoming: Dictionary, backpack_remaining: int) -> v
 		var choose := Button.new()
 		choose.name = "ReplacementCandidateButton"
 		choose.text = "放下" if eligible else "容量不足"
-		choose.custom_minimum_size = Vector2(72, ROW_HEIGHT)
+		choose.custom_minimum_size = Vector2(56, ROW_HEIGHT)
 		choose.disabled = not eligible
 		choose.tooltip_text = "放下该物品并拾取地面物。" if eligible else "即使放下该物品，背包容量仍不足。"
-		_style_button(choose, &"warning" if eligible else &"secondary", 13)
+		_style_button(choose, &"warning" if eligible else &"secondary", 12)
 		choose.pressed.connect(func() -> void: replace_requested.emit(replacement_ground_id, candidate_id))
 		row.add_child(choose)
 
@@ -327,7 +349,6 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		empty.custom_minimum_size = Vector2(0, ROW_HEIGHT)
 		empty.add_theme_font_size_override("font_size", 13)
-		empty.add_theme_font_override("font", ReadableFont)
 		empty.add_theme_color_override("font_color", Color(0.62, 0.68, 0.65, 1.0))
 		item_list.add_child(empty)
 		return
@@ -344,12 +365,11 @@ func _build_item_rows(items: Array[Dictionary], backpack_remaining: int) -> void
 		item_button.custom_minimum_size = Vector2(156, ROW_HEIGHT)
 		item_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		item_button.clip_text = true
-		item_button.text = String(presentation.get("summary_text", "暂无物资"))
+		item_button.text = _context_item_text(presentation)
 		item_button.tooltip_text = String(presentation.get("detail_text", "尚未选择物品。"))
 		_apply_item_icon(item_button, item)
 		_style_button(item_button, &"secondary", 13)
 		_apply_rarity_style(item_button, rarity)
-		item_button.add_theme_font_override("font", ReadableFont)
 		row.add_child(item_button)
 		var instance_id := String(item.get("instance_id", ""))
 		var action_allowed := _pickup_allowed(item)
@@ -417,110 +437,230 @@ func _style_button(button: Button, tone: StringName, font_size: int) -> void:
 func _apply_rarity_style(button: Button, rarity: Dictionary) -> void:
 	var rarity_color := Color(rarity.get("color", Color(0.66, 0.70, 0.68, 1.0)))
 	button.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
-	button.add_theme_color_override("font_color", rarity_color)
-	for state in [&"normal", &"hover", &"pressed", &"focus"]:
-		var base := button.get_theme_stylebox(StringName(state))
-		if not (base is StyleBoxFlat):
-			continue
-		var styled := (base as StyleBoxFlat).duplicate() as StyleBoxFlat
-		styled.border_color = rarity_color
-		styled.border_width_left = 3
-		button.add_theme_stylebox_override(StringName(state), styled)
+	var marker := ColorRect.new()
+	marker.name = "WorldContextItemRarityMarker"
+	marker.color = rarity_color
+	marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	marker.anchor_bottom = 1.0
+	marker.offset_left = 3.0
+	marker.offset_top = 5.0
+	marker.offset_right = 7.0
+	marker.offset_bottom = -5.0
+	marker.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+	button.add_child(marker)
+
+
+func _build_replacement_candidate_content(
+	button: Button,
+	item: Dictionary,
+	presentation: Dictionary,
+	rarity: Dictionary
+) -> void:
+	var collectible_level := maxi(0, int(presentation.get("collectible_level", 0)))
+	button.set_meta("replacement_layout", &"two_line")
+	button.set_meta("item_instance_id", String(item.get("instance_id", "")))
+	button.set_meta("collectible_level", collectible_level)
+
+	var content := HBoxContainer.new()
+	content.name = "ReplacementCandidateContent"
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	content.offset_left = 10.0
+	content.offset_top = 4.0
+	content.offset_right = -4.0
+	content.offset_bottom = -4.0
+	content.add_theme_constant_override("separation", 4)
+	button.add_child(content)
+
+	var texture := ItemVisualCatalog.texture_for(item)
+	if texture != null:
+		var icon := TextureRect.new()
+		icon.name = "ReplacementCandidateIcon"
+		icon.custom_minimum_size = Vector2(26, 26)
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture = texture
+		content.add_child(icon)
+
+	var text_stack := VBoxContainer.new()
+	text_stack.name = "ReplacementCandidateTextStack"
+	text_stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_stack.add_theme_constant_override("separation", -2)
+	content.add_child(text_stack)
+
+	var name_line := Label.new()
+	name_line.name = "ReplacementCandidateName"
+	name_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_line.add_theme_font_size_override("font_size", 12)
+	name_line.add_theme_color_override("font_color", Color(0.92, 0.94, 0.86, 1.0))
+	name_line.text = "%s ×%d" % [
+		String(presentation.get("display_name", "未命名物资")),
+		int(presentation.get("quantity", 1)),
+	]
+	text_stack.add_child(name_line)
+
+	var meta_line := Label.new()
+	meta_line.name = "ReplacementCandidateMeta"
+	meta_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	meta_line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	meta_line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	meta_line.add_theme_font_size_override("font_size", 11)
+	meta_line.add_theme_color_override(
+		"font_color",
+		Color(rarity.get("color", Color(0.70, 0.80, 0.76, 1.0)))
+	)
+	meta_line.text = _replacement_candidate_meta_text(presentation)
+	meta_line.set_meta("collectible_level", collectible_level)
+	text_stack.add_child(meta_line)
+
+
+func _replacement_candidate_meta_text(presentation: Dictionary) -> String:
+	var rarity_text := String(presentation.get("rarity_text", "[?] 未鉴定")).replace("] ", "]")
+	var item_meta: Array[String] = [rarity_text]
+	var collectible_level_text := String(presentation.get("collectible_level_text", "")).replace(" ", "")
+	if collectible_level_text != "":
+		item_meta.append(collectible_level_text)
+	item_meta.append("重%s" % presentation.get("weight", 0))
+	return "·".join(item_meta)
+
+
+func _context_item_text(presentation: Dictionary) -> String:
+	var item_meta: Array[String] = [String(presentation.get("rarity_text", "[?] 未鉴定"))]
+	var collectible_level_text := String(presentation.get("collectible_level_text", ""))
+	if collectible_level_text != "":
+		item_meta.append(collectible_level_text)
+	item_meta.append("重%s" % presentation.get("weight", 0))
+	return "%s ×%d\n%s" % [
+		String(presentation.get("display_name", "未命名物资")),
+		int(presentation.get("quantity", 1)),
+		" · ".join(item_meta),
+	]
 
 
 func _place_near_anchor() -> void:
 	var popup_size := get_combined_minimum_size()
 	if popup_size.x <= 0.0:
 		popup_size.x = POPUP_WIDTH
-	# The room world is scaled to fill the gameplay viewport. Cancel only that
-	# presentation scale so the contextual UI keeps a stable readable pixel size.
 	var parent_scale := Vector2.ONE
 	var parent_canvas := get_parent() as CanvasItem
 	if parent_canvas != null:
 		parent_scale = parent_canvas.get_global_transform().get_scale().abs()
 	scale = Vector2(1.0 / maxf(parent_scale.x, 0.001), 1.0 / maxf(parent_scale.y, 0.001))
 	var effective_size := popup_size * scale
-	# Clearance is measured from the interaction anchor at the visual centre.
-	# Keep enough room for the sprite/animation, but preserve the gun-game-style
-	# relationship between a world object and its temporary interaction card.
-	var clearance_screen := 72.0 if context_kind == &"chest" else 36.0
-	var horizontal_gap := clearance_screen * scale.x
 	var safe_left := room_bounds.position.x + 8.0
 	var safe_right := room_bounds.end.x - 8.0
-	var right_x := anchor_world.x + horizontal_gap
-	var left_x := anchor_world.x - effective_size.x - horizontal_gap
-	var right_fits := right_x + effective_size.x <= safe_right
-	var left_fits := left_x >= safe_left
-	var x := right_x
-	var y := anchor_world.y - effective_size.y * 0.55
-	var player_clearance := Rect2()
+	var safe_top := room_bounds.position.y + 8.0
+	var safe_bottom := room_bounds.end.y - 8.0
+	var max_x := maxf(safe_left, safe_right - effective_size.x)
+	var max_y := maxf(safe_top, safe_bottom - effective_size.y)
+
+	# Keep both the interacted object and the player inside a hard visual-focus
+	# exclusion zone, then prefer a nearby contextual placement. Edge docks are
+	# retained only as fallbacks for crowded corners.
+	var object_half_extent := Vector2(70.0, 64.0) if context_kind == &"chest" else Vector2(48.0, 48.0)
+	var object_clearance := Rect2(
+		anchor_world - object_half_extent * scale,
+		object_half_extent * 2.0 * scale
+	)
+	var player_clearance := Rect2(
+		player_world - Vector2(48.0, 66.0) * scale,
+		Vector2(96.0, 132.0) * scale
+	)
+	var avoid_rects: Array[Rect2] = [object_clearance]
 	if has_player_world:
-		player_clearance = Rect2(
-			player_world - Vector2(44.0, 64.0) * scale,
-			Vector2(88.0, 128.0) * scale
+		avoid_rects.append(player_clearance)
+	var near_y := clampf(anchor_world.y - effective_size.y * 0.5, safe_top, max_y)
+	var context_gap := 14.0
+	var candidates: Array[Vector2] = [
+		Vector2(
+			anchor_world.x + object_half_extent.x * scale.x + context_gap,
+			anchor_world.y - effective_size.y * 0.5
+		),
+		Vector2(
+			anchor_world.x - object_half_extent.x * scale.x - context_gap - effective_size.x,
+			anchor_world.y - effective_size.y * 0.5
+		),
+		Vector2(
+			anchor_world.x - effective_size.x * 0.5,
+			anchor_world.y - object_half_extent.y * scale.y - context_gap - effective_size.y
+		),
+		Vector2(
+			anchor_world.x - effective_size.x * 0.5,
+			anchor_world.y + object_half_extent.y * scale.y + context_gap
+		),
+		Vector2(safe_left, near_y),
+		Vector2(max_x, near_y),
+		Vector2(safe_left, safe_top),
+		Vector2(max_x, safe_top),
+		Vector2(safe_left, max_y),
+		Vector2(max_x, max_y),
+	]
+	var gameplay_rect := gameplay_focus_rect if gameplay_focus_rect.has_area() else room_bounds
+	var focal_rect := Rect2(
+		gameplay_rect.position + gameplay_rect.size * Vector2(0.22, 0.18),
+		gameplay_rect.size * Vector2(0.56, 0.64)
+	)
+	var best_position := candidates[0]
+	var best_score := INF
+	for candidate in candidates:
+		var clamped_candidate := Vector2(
+			clampf(candidate.x, safe_left, max_x),
+			clampf(candidate.y, safe_top, max_y)
 		)
-	if right_fits and left_fits:
-		var right_avoids_player := true
-		var left_avoids_player := true
-		if has_player_world:
-			right_avoids_player = not Rect2(Vector2(right_x, y), effective_size).intersects(player_clearance)
-			left_avoids_player = not Rect2(Vector2(left_x, y), effective_size).intersects(player_clearance)
-		if right_avoids_player != left_avoids_player:
-			x = right_x if right_avoids_player else left_x
-		else:
-			var right_margin := safe_right - (right_x + effective_size.x)
-			var left_margin := left_x - safe_left
-			x = right_x if right_margin >= left_margin else left_x
-	elif left_fits:
-		x = left_x
-	elif not right_fits and context_kind == &"ground_loot":
-		# A centered floor item can leave too little room for a readable 308 px
-		# card on either side of the scaled room. In that case a clamped side card
-		# would cover the very entity the player is inspecting. Fall back above or
-		# below the entity, keeping a real screen-space gap around the target.
-		x = anchor_world.x - effective_size.x * 0.5
-		var vertical_gap := 30.0 * scale.y
-		var above_y := anchor_world.y - effective_size.y - vertical_gap
-		var below_y := anchor_world.y + vertical_gap
-		var top_safe := room_bounds.position.y + 8.0
-		var bottom_safe := room_bounds.end.y - 8.0
-		var above_fits := above_y >= top_safe
-		var below_fits := below_y + effective_size.y <= bottom_safe
-		if above_fits and below_fits:
-			var above_margin := above_y - top_safe
-			var below_margin := bottom_safe - (below_y + effective_size.y)
-			y = above_y if above_margin >= below_margin else below_y
-		elif above_fits:
-			y = above_y
-		else:
-			y = below_y
-	if has_player_world and Rect2(Vector2(x, y), effective_size).intersects(player_clearance):
-		# If the only horizontal side covers the nearby character, prefer a true
-		# above/below card. This keeps both the player and the projected object
-		# readable instead of treating screen-edge clamping as successful layout.
-		var vertical_gap := (46.0 if context_kind == &"chest" else 30.0) * scale.y
-		var vertical_x := clampf(anchor_world.x - effective_size.x * 0.5, safe_left, safe_right - effective_size.x)
-		var above_y := anchor_world.y - effective_size.y - vertical_gap
-		var below_y := anchor_world.y + vertical_gap
-		var top_safe := room_bounds.position.y + 8.0
-		var bottom_safe := room_bounds.end.y - 8.0
-		var above_rect := Rect2(Vector2(vertical_x, above_y), effective_size)
-		var below_rect := Rect2(Vector2(vertical_x, below_y), effective_size)
-		var above_clear := above_y >= top_safe and not above_rect.intersects(player_clearance)
-		var below_clear := below_y + effective_size.y <= bottom_safe and not below_rect.intersects(player_clearance)
-		if above_clear or below_clear:
-			x = vertical_x
-			if above_clear and below_clear:
-				y = above_y if above_y - top_safe >= bottom_safe - (below_y + effective_size.y) else below_y
-			else:
-				y = above_y if above_clear else below_y
-	x = clampf(x, safe_left, safe_right - effective_size.x)
-	y = clampf(y, room_bounds.position.y + 8.0, room_bounds.end.y - effective_size.y - 8.0)
-	position = Vector2(x, y)
-	# A Control positioned directly under the room Node2D can retain its former
-	# right/bottom offsets when moved. Reassert the fitted content size after the
-	# move so those offsets never stretch the panel down to the action bar.
+		var candidate_rect := Rect2(clamped_candidate, effective_size)
+		var score := _placement_score(candidate_rect, avoid_rects, reserved_rects, gameplay_rect, focal_rect, anchor_world)
+		if score < best_score:
+			best_score = score
+			best_position = clamped_candidate
+	position = Vector2(
+		clampf(best_position.x, safe_left, max_x),
+		clampf(best_position.y, safe_top, max_y)
+	)
 	size = popup_size
+	set_meta("placement_mode", &"contextual_anchor")
+	set_meta("placement_rect", Rect2(position, effective_size))
+	set_meta("placement_safe_rect", room_bounds)
+	set_meta("gameplay_focus_rect", gameplay_rect)
+	set_meta("reserved_rects", reserved_rects.duplicate())
+	set_meta("object_clearance_rect", object_clearance)
+	set_meta("player_clearance_rect", player_clearance if has_player_world else Rect2())
+
+
+func _placement_score(
+	candidate_rect: Rect2,
+	avoid_rects: Array[Rect2],
+	exclusion_rects: Array[Rect2],
+	gameplay_rect: Rect2,
+	focal_rect: Rect2,
+	anchor: Vector2
+) -> float:
+	var score := candidate_rect.get_center().distance_to(anchor) * 2.0
+	for avoid_rect in avoid_rects:
+		if candidate_rect.intersects(avoid_rect):
+			score += 10000000.0 + candidate_rect.intersection(avoid_rect).get_area() * 10000.0
+	for exclusion_rect in exclusion_rects:
+		if candidate_rect.intersects(exclusion_rect):
+			score += 10000000.0 + candidate_rect.intersection(exclusion_rect).get_area() * 10000.0
+	if candidate_rect.intersects(gameplay_rect):
+		score += candidate_rect.intersection(gameplay_rect).get_area() * 0.02
+	if candidate_rect.intersects(focal_rect):
+		score += candidate_rect.intersection(focal_rect).get_area() * 0.08
+	return score
+
+
+func _rect_array(value: Variant) -> Array[Rect2]:
+	var result: Array[Rect2] = []
+	if not (value is Array):
+		return result
+	for entry in value as Array:
+		if entry is Rect2:
+			result.append(entry as Rect2)
+	return result
 
 
 func _context_signature(context: Dictionary) -> String:

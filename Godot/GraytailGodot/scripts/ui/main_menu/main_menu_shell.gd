@@ -8,6 +8,7 @@ const MainMenuTransitionPresenterScript := preload("res://scripts/ui/main_menu/m
 const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
+const Art23LongTermAssetContractScript := preload("res://scripts/presentation/art23_long_term_asset_contract.gd")
 const CharacterPresentationCatalogScript := preload("res://scripts/presentation/character/character_presentation_catalog.gd")
 
 signal navigation_intent_requested(intent: Dictionary)
@@ -105,11 +106,14 @@ var transition_character_base_state: Dictionary = {}
 var transition_presenter = MainMenuTransitionPresenterScript.new()
 var reduced_motion := false
 var page_active := true
+var ui_scale_factor := 1.0
 
 
 func build(model: Dictionary = {}) -> void:
 	_clear_children()
+	Art10UISkinKitScript.apply_player_ui_theme(self)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
 	current_model = model.duplicate(true) if not model.is_empty() else MainMenuModelScript.build()
 	reduced_motion = Art10UISkinKitScript.reduce_motion_enabled()
 	_create_layer_roots()
@@ -126,6 +130,16 @@ func build(model: Dictionary = {}) -> void:
 	_set_focus_state(&"deploy")
 	set_page_active(true)
 	call_deferred("_grab_default_focus")
+
+
+func set_ui_scale_factor(value: float) -> void:
+	var resolved := Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	if is_equal_approx(ui_scale_factor, resolved):
+		set_meta("runtime_ui_scale_factor", resolved)
+		return
+	ui_scale_factor = resolved
+	set_meta("runtime_ui_scale_factor", resolved)
+	_refresh_ui_scaled_copy()
 
 
 func apply_snapshot(snapshot: Dictionary) -> void:
@@ -268,9 +282,18 @@ func _root(root_name: StringName) -> Control:
 
 
 func _build_background_scene() -> void:
-	var fixed_underlay := _add_color_rect(self, "MainMenuFixedTransitionUnderlay", Rect2(0, 0, 1280, 720), Color(0.055, 0.34, 0.64, 1.0))
-	fixed_underlay.z_as_relative = false
-	fixed_underlay.z_index = UILayerContractScript.BACKGROUND - 1
+	var fixed_fallback := _add_color_rect(self, "MainMenuFixedTransitionFallback", Rect2(0, 0, 1280, 720), Color(0.012, 0.014, 0.018, 1.0))
+	fixed_fallback.z_as_relative = false
+	fixed_fallback.z_index = UILayerContractScript.BACKGROUND - 2
+	var fixed_underlay := _add_texture_from_texture(
+		self,
+		"MainMenuFixedTransitionUnderlay",
+		Rect2(0, 0, 1280, 720),
+		Art23LongTermAssetContractScript.texture(&"long_term.scene.background.clean_plate"),
+		UILayerContractScript.BACKGROUND - 1
+	)
+	if fixed_underlay != null:
+		fixed_underlay.z_as_relative = false
 	var background_root := _root(&"BackgroundRoot")
 	_add_color_rect(background_root, "MainMenuSceneBackdrop", Rect2(0, 0, 1280, 720), Color(0.035, 0.12, 0.20, 1.0))
 	_add_texture(background_root, "MainMenuSceneCleanPlate", Rect2(0, 0, 1280, 720), &"main_menu.scene.background.scene_clean_plate", 1)
@@ -361,10 +384,11 @@ func _build_notice_board() -> void:
 	var notice: Dictionary = _dictionary_from(current_model.get("notice", {}))
 	var title_text := String(notice.get("title", "回收站简报"))
 	var body_text := String(notice.get("body", ""))
-	var text_fit: Dictionary = MainMenuLayoutContractScript.fit_notice(title_text, body_text)
+	var text_fit: Dictionary = MainMenuLayoutContractScript.fit_notice(title_text, body_text, ui_scale_factor)
 	var title_fit: Dictionary = _dictionary_from(text_fit.get("title", {}))
 	var body_fit: Dictionary = _dictionary_from(text_fit.get("description", {}))
-	_add_scene_label(notice_root, "MainMenuNoticeHeading", _layout_rect(&"notice.heading"), "公告", 22, Color(0.95, 0.75, 0.35), 2, 2)
+	var heading_size := mini(28, Art10UISkinKitScript.scaled_font_size(22, ui_scale_factor))
+	_add_scene_label(notice_root, "MainMenuNoticeHeading", _layout_rect(&"notice.heading"), "公告", heading_size, Color(0.95, 0.75, 0.35), 2, 2)
 	var title := _add_scene_label(
 		notice_root,
 		"MainMenuNoticeTitle",
@@ -391,7 +415,7 @@ func _build_notice_board() -> void:
 		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		body.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 		body.autowrap_mode = TextServer.AUTOWRAP_OFF
-		body.add_theme_constant_override("line_spacing", 4)
+		body.add_theme_constant_override("line_spacing", 0)
 
 
 func _build_menu_signpost() -> void:
@@ -421,7 +445,7 @@ func _build_entry(parent: Control, entry: Dictionary) -> void:
 		return
 	var board_name := String(ENTRY_BOARD_NAMES[entry_id])
 	var label_text := String(entry.get("label", ""))
-	var text_fit: Dictionary = MainMenuLayoutContractScript.fit_entry_text(entry_id, label_text)
+	var text_fit: Dictionary = MainMenuLayoutContractScript.fit_entry_text(entry_id, label_text, ui_scale_factor)
 	var board_rect := _entry_component_rect(entry_id, &"board")
 	var text_rect := _entry_component_rect(entry_id, &"text")
 	var hit_rect := _entry_component_rect(entry_id, &"hit")
@@ -450,6 +474,7 @@ func _build_entry(parent: Control, entry: Dictionary) -> void:
 	button.button_down.connect(func() -> void: _set_entry_visual_state(entry_id, &"pressed"))
 	button.button_up.connect(func() -> void: _set_entry_visual_state(entry_id, &"focused"))
 	button.pressed.connect(func() -> void: _activate_entry(entry))
+	button.set_meta("runtime_ui_scale_factor", ui_scale_factor)
 	parent.add_child(button)
 	entry_nodes[entry_id] = {
 		"board": board,
@@ -460,6 +485,70 @@ func _build_entry(parent: Control, entry: Dictionary) -> void:
 		"base_hit_rect": hit_rect,
 		"board_name": board_name,
 	}
+
+
+func _refresh_ui_scaled_copy() -> void:
+	var notice: Dictionary = _dictionary_from(current_model.get("notice", {}))
+	var notice_title_text := String(notice.get("title", "回收站简报"))
+	var notice_body_text := String(notice.get("body", ""))
+	var notice_fit: Dictionary = MainMenuLayoutContractScript.fit_notice(
+		notice_title_text,
+		notice_body_text,
+		ui_scale_factor
+	)
+	var title_fit := _dictionary_from(notice_fit.get("title", {}))
+	var body_fit := _dictionary_from(notice_fit.get("description", {}))
+	var notice_heading := get_node_or_null("SideStatusRoot/MainMenuNoticeHeading") as Label
+	var notice_title := get_node_or_null("SideStatusRoot/MainMenuNoticeTitle") as Label
+	var notice_body := get_node_or_null("SideStatusRoot/MainMenuNoticeText") as Label
+	_apply_scaled_copy_label(
+		notice_heading,
+		&"title",
+		mini(28, Art10UISkinKitScript.scaled_font_size(22, ui_scale_factor)),
+		notice_heading.text if notice_heading != null else "公告"
+	)
+	_apply_scaled_copy_label(
+		notice_title,
+		&"title",
+		int(title_fit.get("font_size", 20)),
+		String(title_fit.get("display_text", notice_title_text))
+	)
+	_apply_scaled_copy_label(
+		notice_body,
+		&"body",
+		int(body_fit.get("font_size", 16)),
+		String(body_fit.get("display_text", notice_body_text))
+	)
+	if notice_body != null:
+		notice_body.autowrap_mode = TextServer.AUTOWRAP_OFF
+		notice_body.add_theme_constant_override("line_spacing", 0)
+	for entry_id in entry_nodes:
+		var nodes := _dictionary_from(entry_nodes[entry_id])
+		var entry := _dictionary_from(entry_by_id.get(entry_id, {}))
+		var label_text := String(entry.get("label", ""))
+		var text_fit := MainMenuLayoutContractScript.fit_entry_text(
+			StringName(entry_id),
+			label_text,
+			ui_scale_factor
+		)
+		var label := nodes.get("label") as Label
+		_apply_scaled_copy_label(
+			label,
+			&"button",
+			int(text_fit.get("font_size", 24)),
+			String(text_fit.get("display_text", label_text))
+		)
+		var button := nodes.get("button") as Button
+		if button != null:
+			button.set_meta("runtime_ui_scale_factor", ui_scale_factor)
+
+
+func _apply_scaled_copy_label(label: Label, role: StringName, font_size_value: int, text: String) -> void:
+	if label == null:
+		return
+	label.text = text
+	Art10UISkinKitScript.apply_composition_label(label, role, font_size_value)
+	label.set_meta("runtime_ui_scale_factor", ui_scale_factor)
 
 
 func _build_ambient_fx() -> void:
@@ -918,29 +1007,31 @@ func _update_transition(delta: float) -> void:
 		_finish_navigation_transition()
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func handle_cancel_event(event: InputEvent) -> bool:
 	if not page_active or not is_visible_in_tree():
-		return
+		return false
 	if transition_active:
-		if event.is_action_pressed("ui_cancel"):
+		if event.is_action_pressed("cancel") or event.is_action_pressed("ui_cancel"):
 			var active_token := transition_token
 			navigation_transition_cancel_requested.emit(active_token, &"user_cancel")
 			if transition_token == active_token:
 				cancel_navigation_transition(active_token, true)
+			return true
+	return false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if handle_cancel_event(event):
+		get_viewport().set_input_as_handled()
+		return
+	if not page_active or not is_visible_in_tree() or transition_active or transition_token > 0 or event.is_echo():
+		return
+	if event.is_action_pressed("menu_shortcut_primary"):
+		if _emit_shortcut_index(0):
 			get_viewport().set_input_as_handled()
-		return
-	if transition_token > 0 or not (event is InputEventKey):
-		return
-	var key_event := event as InputEventKey
-	if not key_event.pressed or key_event.echo:
-		return
-	match key_event.keycode:
-		KEY_F1:
-			if _emit_shortcut_index(0):
-				get_viewport().set_input_as_handled()
-		KEY_F2:
-			if _emit_shortcut_index(1):
-				get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("menu_shortcut_secondary"):
+		if _emit_shortcut_index(1):
+			get_viewport().set_input_as_handled()
 
 
 func _emit_shortcut_index(index: int) -> bool:
@@ -1058,10 +1149,16 @@ func _add_scene_label(parent: Control, node_name: String, rect: Rect2, text: Str
 	label.add_theme_color_override("font_shadow_color", Color(0.06, 0.035, 0.02, 0.82))
 	label.add_theme_constant_override("shadow_offset_x", 2)
 	label.add_theme_constant_override("shadow_offset_y", 2)
-	Art10UISkinKitScript.apply_label(label, font_size, color)
+	var composition_role := &"body"
+	if node_name in ["MainMenuTitle", "MainMenuNoticeHeading", "MainMenuNoticeTitle"]:
+		composition_role = &"title"
+	elif node_name.begins_with("MainMenuBoardLabel_"):
+		composition_role = &"button"
+	Art10UISkinKitScript.apply_composition_label(label, composition_role, font_size, color)
 	if outline_size > 0:
 		label.add_theme_color_override("font_outline_color", Color(0.10, 0.055, 0.025, 0.92))
 		label.add_theme_constant_override("outline_size", outline_size)
+	label.set_meta("runtime_ui_scale_factor", ui_scale_factor)
 	_set_rect(label, rect)
 	parent.add_child(label)
 	return label

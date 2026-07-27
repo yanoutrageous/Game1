@@ -2,6 +2,7 @@ extends SceneTree
 
 const InventoryPanelScript := preload("res://scripts/ui/inventory/inventory_panel.gd")
 const GroundLootPanelScript := preload("res://scripts/ui/ground_loot/ground_loot_panel.gd")
+const ItemRarityDescriptorScript := preload("res://scripts/presentation/item_rarity_descriptor.gd")
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
 
 const PASS_MARKER := "I2_INVENTORY_HOVER_FOCUS=PASS"
@@ -48,6 +49,7 @@ func _run() -> void:
 		_require(inventory_drop_count == 0 and inventory_use_count == 0, "inventory focus emitted an action")
 		_require(String(inventory_item.get_meta("rarity_display_text", "")) == "[T6] 秘藏", "inventory rarity metadata drifted")
 		_require(String(inventory_item.get_meta("rarity_border_token", "")) != "", "inventory rarity border token is missing")
+		_assert_rarity_marker(inventory_item, "InventoryItemRarityMarker", item, "inventory")
 	if inventory_use != null:
 		inventory_use.grab_focus()
 		inventory.apply_snapshot(_inventory_snapshot([item]))
@@ -101,6 +103,7 @@ func _run() -> void:
 		await process_frame
 		_assert_detail(ground.get("tooltip_label") as Label, "ground focus")
 		_require(ground_pickup_count == 0 and ground_replace_count == 0, "ground hover/focus emitted an action")
+		_assert_rarity_marker(ground_item, "GroundLootItemRarityMarker", item, "ground")
 	if pickup != null:
 		pickup.pressed.emit()
 	if replace != null:
@@ -125,6 +128,7 @@ func _sample_item() -> Dictionary:
 		"rarity": &"tier_6",
 		"weight": 4,
 		"quantity": 3,
+		"collectible_level": 6,
 		"short_description": "指针会记录穿过的回廊与回声。".repeat(10),
 		"can_consume": true,
 	}
@@ -152,8 +156,23 @@ func _assert_detail(label: Label, context: String) -> void:
 	var text := label.text
 	for expected: String in ["沉星罗盘", "[T6] 秘藏", "重量：4", "数量：3", "指针会记录"]:
 		_require(text.contains(expected), "%s detail is missing %s" % [context, expected])
+	var first_lines := text.split("\n").slice(0, 3)
+	_require("\n".join(first_lines).contains("收藏等级：6"), "%s first three detail lines omitted collectible level" % context)
 	for forbidden: String in ["tier_6", "raw_internal_item_id", "选择物品", "操作完成"]:
 		_require(not text.contains(forbidden), "%s leaked %s" % [context, forbidden])
+
+
+func _assert_rarity_marker(button: Button, marker_name: String, item: Dictionary, context: String) -> void:
+	_require(button.get_theme_stylebox(&"normal") is StyleBoxTexture, "%s fixture did not exercise the production texture-backed row" % context)
+	var marker := button.find_child(marker_name, false, false) as ColorRect
+	_require(marker != null, "%s texture-backed row omitted its independent rarity marker" % context)
+	if marker == null:
+		return
+	var expected_color: Color = ItemRarityDescriptorScript.describe_item(item).get("color", Color.TRANSPARENT)
+	_require(marker.color.is_equal_approx(expected_color), "%s rarity marker color drifted from the shared descriptor" % context)
+	_require(marker.mouse_filter == Control.MOUSE_FILTER_IGNORE, "%s rarity marker intercepted item input" % context)
+	_require(marker.anchor_bottom == 1.0 and marker.offset_right - marker.offset_left >= 4.0, "%s rarity marker is not a visible vertical strip" % context)
+	_require(marker.is_visible_in_tree() and marker.size.x >= 4.0 and marker.size.y >= 16.0, "%s rarity marker has no visible runtime footprint" % context)
 
 
 func _assert_detail_scroll(scroll: ScrollContainer, label: Label, context: String) -> void:
@@ -199,7 +218,7 @@ func _require(condition: bool, message: String) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("%s surfaces=2 hover_commands=0 focus_commands=0 actions=4 snapshot_focus=stable_item_action fallback=preferred" % PASS_MARKER)
+		print("%s surfaces=2 hover_commands=0 focus_commands=0 actions=4 snapshot_focus=stable_item_action fallback=preferred rarity_marker=independent collectible_level=authoritative" % PASS_MARKER)
 		quit(0)
 		return
 	for failure in failures:

@@ -22,7 +22,14 @@ const DIRECT_SOURCE_STATUSES := [
 	"art24_generated",
 	"art24_ue_audited_import",
 	"art25_generated_audited_reuse",
+	"art21r2_generated_contract_component",
 ]
+const PROTOCOL_UI_SCALES := [1.0, 1.5]
+const PROTOCOL_MIN_SOURCE_ASPECT := 2.0
+const PROTOCOL_MIN_RUNTIME_ASPECT := 2.0
+const PROTOCOL_MAX_ASPECT_DRIFT_RATIO := 0.20
+const PROTOCOL_COPY_PRESSURE_GAP := 2.0
+const RECT_EPSILON := 0.5
 
 var manifest_by_path: Dictionary = {}
 var checked_paths: Dictionary = {}
@@ -41,7 +48,7 @@ func _run() -> void:
 	await _check_result_runtime(failures)
 	await _check_protocol_runtime(failures)
 	if failures.is_empty():
-		print("I2_ASSET_BINDING=PASS result_states=3 protocol_levels=5 item_bindings=43 verified_hashes=%d" % verified_hash_count)
+		print("I2_ASSET_BINDING=PASS result_states=3 protocol_levels=5 protocol_scales=100,150 protocol_frame=single_horizontal_safe item_bindings=43 verified_hashes=%d" % verified_hash_count)
 		quit(0)
 		return
 	for failure in failures:
@@ -78,7 +85,6 @@ func _check_manifest_assets(failures: Array[String]) -> void:
 		_check_registered_path(String(path_value), failures)
 	for level in range(1, 6):
 		_check_registered_path("res://assets/art24/ui/protocol/level_%d.png" % level, failures)
-	_check_registered_path("res://assets/art24/ui/ue/ui_panel_protocol.png", failures)
 
 
 func _check_item_bindings(failures: Array[String]) -> void:
@@ -155,44 +161,198 @@ func _check_protocol_runtime(failures: Array[String]) -> void:
 	var surface := RunSurfaceScript.new() as RunSurface
 	root.add_child(surface)
 	surface.build()
-	var profile: Dictionary = UILayoutProfileScript.profile_for_resolution(&"1280x720")
-	profile["actual_viewport_size"] = Vector2i(1280, 720)
-	surface.apply_layout_profile(profile)
-	await _frames(2)
-	if surface.status_card_art.texture == null or surface.status_card_art.texture.resource_path != "res://assets/art24/ui/ue/ui_panel_protocol.png":
-		failures.append("protocol_outer_frame_not_audited_art24_ue_binding")
-	var seen_pressure_colors: Dictionary = {}
-	for level in range(1, 6):
-		var pressure := (5 - level) * 25
-		surface.apply_surface_model({
-			"protocol_level": level,
-			"pressure": pressure,
-			"danger_theme_key": &"ui.warning",
-			"danger_label": "I2 pressure state",
-			"resource_summary": "",
-			"backpack_items": [],
-			"backpack_used": 0,
-			"backpack_capacity": 0,
-			"layout_profile": profile,
-			"action_buttons": [],
-			"encounter_section": {},
-		})
-		await _frames(1)
-		var expected_path := "res://assets/art24/ui/protocol/level_%d.png" % level
-		if surface.protocol_level_plate.texture == null or surface.protocol_level_plate.texture.resource_path != expected_path:
-			failures.append("protocol_level_%d=%s_expected=%s" % [level, "<null>" if surface.protocol_level_plate.texture == null else surface.protocol_level_plate.texture.resource_path, expected_path])
-		if surface.right_title_label.text.find(str(level)) < 0 or surface.right_body_label.text.find(str(pressure)) < 0:
-			failures.append("protocol_text_redundancy_missing=level_%d_pressure_%d" % [level, pressure])
-		var expected_width := surface.protocol_pressure_track.size.x * float(pressure) / 100.0
-		if not is_equal_approx(surface.protocol_pressure_fill.size.x, expected_width):
-			failures.append("protocol_progress_%d=%s_expected=%s" % [pressure, surface.protocol_pressure_fill.size.x, expected_width])
-		if not surface.protocol_glow_layer.visible:
-			failures.append("protocol_color_redundancy_hidden=level_%d" % level)
-		seen_pressure_colors[surface.protocol_pressure_fill.color] = true
-	if seen_pressure_colors.size() < 3:
-		failures.append("protocol_pressure_color_bands=%d_expected_at_least_3" % seen_pressure_colors.size())
+	var base_profile: Dictionary = UILayoutProfileScript.profile_for_resolution(&"1280x720")
+	base_profile["actual_viewport_size"] = Vector2i(1280, 720)
+	for ui_scale in PROTOCOL_UI_SCALES:
+		var profile := base_profile.duplicate(true)
+		profile["ui_scale_factor"] = ui_scale
+		surface.set_ui_scale_factor(ui_scale)
+		surface.apply_layout_profile(profile)
+		await _frames(2)
+		var seen_pressure_colors: Dictionary = {}
+		for level in range(1, 6):
+			var pressure := (5 - level) * 25
+			surface.apply_surface_model({
+				"protocol_level": level,
+				"pressure": pressure,
+				"danger_theme_key": &"ui.warning",
+				"danger_label": "I2 pressure state",
+				"resource_summary": "",
+				"backpack_items": [],
+				"backpack_used": 0,
+				"backpack_capacity": 0,
+				"layout_profile": profile,
+				"action_buttons": [],
+				"encounter_section": {},
+			})
+			await _frames(1)
+			var expected_path := "res://assets/art24/ui/protocol/level_%d.png" % level
+			if surface.protocol_level_plate.texture == null or surface.protocol_level_plate.texture.resource_path != expected_path:
+				failures.append("protocol_level_%d_scale_%d=%s_expected=%s" % [
+					level,
+					int(round(ui_scale * 100.0)),
+					"<null>" if surface.protocol_level_plate.texture == null else surface.protocol_level_plate.texture.resource_path,
+					expected_path,
+				])
+			if surface.right_title_label.text.find(str(level)) < 0 or surface.right_body_label.text.find(str(pressure)) < 0:
+				failures.append("protocol_text_redundancy_missing=level_%d_pressure_%d_scale_%d" % [
+					level,
+					pressure,
+					int(round(ui_scale * 100.0)),
+				])
+			var expected_width := surface.protocol_pressure_track.size.x * float(pressure) / 100.0
+			if not is_equal_approx(surface.protocol_pressure_fill.size.x, expected_width):
+				failures.append("protocol_progress_%d_scale_%d=%s_expected=%s" % [
+					pressure,
+					int(round(ui_scale * 100.0)),
+					surface.protocol_pressure_fill.size.x,
+					expected_width,
+				])
+			if not surface.protocol_glow_layer.visible:
+				failures.append("protocol_color_redundancy_hidden=level_%d_scale_%d" % [
+					level,
+					int(round(ui_scale * 100.0)),
+				])
+			seen_pressure_colors[surface.protocol_pressure_fill.color] = true
+		if seen_pressure_colors.size() < 3:
+			failures.append("protocol_pressure_color_bands_scale_%d=%d_expected_at_least_3" % [
+				int(round(ui_scale * 100.0)),
+				seen_pressure_colors.size(),
+			])
+		_check_protocol_main_frame(surface, profile, ui_scale, failures)
 	surface.queue_free()
 	await _frames(2)
+
+
+func _check_protocol_main_frame(
+	surface: RunSurface,
+	profile: Dictionary,
+	ui_scale: float,
+	failures: Array[String]
+) -> void:
+	var scale_percent := int(round(ui_scale * 100.0))
+	var visible_frames := _visible_protocol_frames(surface)
+	if visible_frames.size() != 1:
+		failures.append("protocol_main_frame_count_scale_%d=%d_expected=1" % [
+			scale_percent,
+			visible_frames.size(),
+		])
+		return
+	var frame := visible_frames[0]
+	var texture := _control_texture(frame)
+	if texture == null:
+		failures.append("protocol_main_frame_texture_missing_scale_%d" % scale_percent)
+		return
+	if texture.resource_path.is_empty():
+		failures.append("protocol_main_frame_resource_path_missing_scale_%d" % scale_percent)
+	else:
+		_check_registered_path(texture.resource_path, failures)
+	var source_size := texture.get_size()
+	var source_aspect := source_size.x / maxf(1.0, source_size.y)
+	if source_aspect < PROTOCOL_MIN_SOURCE_ASPECT:
+		failures.append("protocol_main_frame_source_aspect_scale_%d=%.3f_expected_at_least_%.3f" % [
+			scale_percent,
+			source_aspect,
+			PROTOCOL_MIN_SOURCE_ASPECT,
+		])
+	var frame_rect := frame.get_global_rect()
+	var runtime_aspect := frame_rect.size.x / maxf(1.0, frame_rect.size.y)
+	if runtime_aspect < PROTOCOL_MIN_RUNTIME_ASPECT:
+		failures.append("protocol_main_frame_runtime_aspect_scale_%d=%.3f_expected_at_least_%.3f" % [
+			scale_percent,
+			runtime_aspect,
+			PROTOCOL_MIN_RUNTIME_ASPECT,
+		])
+	var aspect_drift_ratio := absf(runtime_aspect - source_aspect) / maxf(0.001, source_aspect)
+	if aspect_drift_ratio > PROTOCOL_MAX_ASPECT_DRIFT_RATIO:
+		failures.append("protocol_main_frame_aspect_drift_scale_%d=%.3f_expected_at_most_%.3f" % [
+			scale_percent,
+			aspect_drift_ratio,
+			PROTOCOL_MAX_ASPECT_DRIFT_RATIO,
+		])
+	var viewport_size := Vector2(profile.get("actual_viewport_size", Vector2i(1280, 720)))
+	if not _contains_with_epsilon(Rect2(Vector2.ZERO, viewport_size), frame_rect):
+		failures.append("protocol_main_frame_outside_viewport_scale_%d=%s" % [
+			scale_percent,
+			frame_rect,
+		])
+	var safe_rect := _protocol_safe_rect(frame, profile)
+	var title_rect := surface.right_title_label.get_global_rect()
+	var body_rect := surface.right_body_label.get_global_rect()
+	var copy_rect := title_rect.merge(body_rect)
+	if not _contains_with_epsilon(safe_rect, copy_rect):
+		failures.append("protocol_copy_unsafe_scale_%d=copy:%s_safe:%s_frame:%s" % [
+			scale_percent,
+			copy_rect,
+			safe_rect,
+			frame_rect,
+		])
+	if title_rect.intersects(body_rect):
+		failures.append("protocol_title_body_overlap_scale_%d=title:%s_body:%s" % [
+			scale_percent,
+			title_rect,
+			body_rect,
+		])
+	var pressure_rect := surface.protocol_pressure_track.get_global_rect()
+	if not _contains_with_epsilon(safe_rect, pressure_rect):
+		failures.append("protocol_pressure_unsafe_scale_%d=pressure:%s_safe:%s_frame:%s" % [
+			scale_percent,
+			pressure_rect,
+			safe_rect,
+			frame_rect,
+		])
+	if copy_rect.end.y + PROTOCOL_COPY_PRESSURE_GAP > pressure_rect.position.y + RECT_EPSILON:
+		failures.append("protocol_copy_pressure_gap_scale_%d=copy_end:%.2f_pressure_top:%.2f_expected_gap:%.2f" % [
+			scale_percent,
+			copy_rect.end.y,
+			pressure_rect.position.y,
+			PROTOCOL_COPY_PRESSURE_GAP,
+		])
+
+
+func _visible_protocol_frames(surface: RunSurface) -> Array[Control]:
+	var frames: Array[Control] = []
+	for candidate in [surface.status_card_art, surface.protocol_level_plate]:
+		if not (candidate is Control):
+			continue
+		var control := candidate as Control
+		if control.visible and control.get_global_rect().get_area() > 0.0:
+			frames.append(control)
+	return frames
+
+
+func _control_texture(control: Control) -> Texture2D:
+	if control is NinePatchRect:
+		return (control as NinePatchRect).texture
+	if control is TextureRect:
+		return (control as TextureRect).texture
+	return null
+
+
+func _protocol_safe_rect(frame: Control, profile: Dictionary) -> Rect2:
+	var frame_rect := frame.get_global_rect()
+	var text_padding: Vector2 = profile.get("text_safe_padding", Vector2(10.0, 7.0))
+	var left := text_padding.x
+	var top := text_padding.y
+	var right := text_padding.x
+	var bottom := text_padding.y
+	if frame is NinePatchRect:
+		var nine_patch := frame as NinePatchRect
+		left = maxf(left, float(nine_patch.get_patch_margin(SIDE_LEFT)))
+		top = maxf(top, float(nine_patch.get_patch_margin(SIDE_TOP)))
+		right = maxf(right, float(nine_patch.get_patch_margin(SIDE_RIGHT)))
+		bottom = maxf(bottom, float(nine_patch.get_patch_margin(SIDE_BOTTOM)))
+	return Rect2(
+		frame_rect.position + Vector2(left, top),
+		Vector2(
+			maxf(0.0, frame_rect.size.x - left - right),
+			maxf(0.0, frame_rect.size.y - top - bottom)
+		)
+	)
+
+
+func _contains_with_epsilon(outer: Rect2, inner: Rect2) -> bool:
+	return outer.grow(RECT_EPSILON).encloses(inner)
 
 
 func _check_registered_path(path: String, failures: Array[String]) -> void:

@@ -10,7 +10,14 @@ static func build_result_display_snapshot(result_snapshot: Dictionary, meta_prog
 	else:
 		display_snapshot["meta_progress_commit"] = meta_progress_commit.duplicate(true)
 	var persistence_state := _persistence_state(awaiting_salvage, display_snapshot.get("meta_progress_commit", {}))
-	var normal_exit_allowed := persistence_state in [&"committed", &"duplicate_ignored"]
+	var normal_exit_allowed := persistence_state in [
+		&"committed",
+		&"duplicate_ignored",
+		&"tutorial_completed",
+		&"tutorial_replay_complete",
+		&"tutorial_incomplete_no_write",
+		&"discarded_unsaved",
+	]
 	display_snapshot["persistence_state"] = persistence_state
 	display_snapshot["normal_exit_allowed"] = normal_exit_allowed
 	display_snapshot["retry_save_allowed"] = not awaiting_salvage and not normal_exit_allowed
@@ -28,7 +35,9 @@ static func _persistence_state(awaiting_salvage: bool, commit_variant: Variant) 
 	var commit: Dictionary = commit_variant if commit_variant is Dictionary else {}
 	var status := StringName(commit.get("status", &""))
 	match status:
-		&"committed", &"duplicate_ignored", &"save_failed", &"write_blocked", &"meta_progress_adapter_missing":
+		&"committed", &"duplicate_ignored", &"save_failed", &"write_blocked", &"meta_progress_adapter_missing", &"discarded_unsaved":
+			return status
+		&"tutorial_completed", &"tutorial_replay_complete", &"tutorial_incomplete_no_write":
 			return status
 		&"awaiting_salvage_selection", &"awaiting_salvage_confirmation":
 			return &"awaiting_salvage_confirmation"

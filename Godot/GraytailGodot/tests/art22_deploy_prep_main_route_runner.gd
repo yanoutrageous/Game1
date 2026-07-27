@@ -87,7 +87,14 @@ func _run() -> void:
 	var projection := model.get("map_projection", {}) as Dictionary
 	_check(StringName(model.get("active_tab", &"")) == &"map", "Actual Deploy route does not land on the map tab")
 	_check(StringName(projection.get("page_id", &"")) == &"deploy_prep" and StringName(projection.get("route_page_id", &"")) == &"deploy_prep", "Actual map route introduced an intermediate page")
-	_check((projection.get("scale_options", []) as Array).size() == 3, "Actual Deploy route does not expose three map scales")
+	var scale_options := projection.get("scale_options", []) as Array
+	var scale_ids: Array[StringName] = []
+	for raw_scale in scale_options:
+		scale_ids.append(StringName((raw_scale as Dictionary).get("scale_id", &"")))
+	_check(
+		scale_ids == [&"5x5", &"7x7", &"10x10", &"13x13"],
+		"Actual Deploy route does not expose the tutorial map plus all three standard map scales"
+	)
 	var map_view := deploy_page.get("map_split_view") as Control
 	_check(map_view != null and int((map_view.call("projection_snapshot") as Dictionary).get("difficulty_count", 0)) == 2, "Actual default scale does not expose its two difficulties")
 	if map_view != null:
@@ -220,7 +227,7 @@ func _on_page_changed(page_id: StringName, _payload: Dictionary) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=3 meta=purchase,sell")
+		print("ART22_DEPLOY_PREP_MAIN_ROUTE=PASS host=main.tscn route=main_menu_to_deploy commit=once map_page=single scales=4 tutorial=same_page meta=purchase,sell")
 		quit(0)
 		return
 	for failure in failures:

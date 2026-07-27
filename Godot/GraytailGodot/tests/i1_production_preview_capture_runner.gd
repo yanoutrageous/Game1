@@ -32,6 +32,7 @@ func _capture() -> void:
 	var options := _parse_options(OS.get_cmdline_user_args())
 	var scene_id := StringName(String(options.get("scene", "run")))
 	var viewport_size := Vector2i(int(options.get("width", 1280)), int(options.get("height", 720)))
+	var ui_scale_percent := int(options.get("ui-scale", 100))
 	var output_argument := String(options.get("output", ""))
 	if not ALLOWED_SCENES.has(scene_id):
 		_fail("unsupported scene=%s" % String(scene_id))
@@ -58,6 +59,8 @@ func _capture() -> void:
 	if run_scene == null:
 		_fail("production RunScene is missing")
 		return
+	if run_scene.has_method("set_ui_scale_factor"):
+		run_scene.call("set_ui_scale_factor", float(ui_scale_percent) / 100.0)
 	var scene_applied: bool = await _apply_scene(run_scene, scene_id)
 	if not scene_applied:
 		return
@@ -104,7 +107,11 @@ func _apply_scene(run_scene: Node, scene_id: StringName) -> bool:
 					if result_panel == null:
 						_fail("production ResultPanel is missing")
 						return false
-					result_panel.show_summary(_result_snapshot(scene_id))
+					var result_snapshot := _result_snapshot(scene_id)
+					var runtime_controller = run_scene.get("runtime_controller")
+					if runtime_controller != null:
+						runtime_controller.set("last_meta_commit", result_snapshot.get("meta_progress_commit", {}))
+					run_scene.call("_on_result_available", result_snapshot)
 				&"combat":
 					if not _activate_combat(run_scene):
 						return false

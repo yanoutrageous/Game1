@@ -109,7 +109,7 @@ func _check_presentation_does_not_own_content_policy() -> void:
 
 func _check_combat_flee_rarity_candidates() -> void:
 	var context = RunContextScript.new()
-	context.start_tutorial_run()
+	context.start_standard_run()
 	context.seed_value = 0
 	context.asset_ledger.backpack_capacity = 64
 	var flee_pos := Vector2i.ZERO

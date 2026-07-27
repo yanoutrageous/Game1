@@ -22,6 +22,10 @@ const FILTER_SCROLL_WITH_NAV := Rect2(307, 104, 198, 38)
 const FILTER_PREVIOUS := Rect2(282, 106, 22, 32)
 const FILTER_NEXT := Rect2(508, 106, 22, 32)
 const CARD_SCROLL := Rect2(286, 150, 240, 500)
+const WAREHOUSE_CARD_SCROLL := Rect2(286, 194, 240, 456)
+const WAREHOUSE_BATCH_ENTRY := Rect2(286, 150, 240, 36)
+const WAREHOUSE_BATCH_SELECT_ALL := Rect2(286, 150, 116, 36)
+const WAREHOUSE_BATCH_CLEAR := Rect2(410, 150, 116, 36)
 const RESULT_HINT := Rect2(292, 606, 228, 34)
 const DETAIL_PANE := Rect2(542, 104, 372, 554)
 const DETAIL_HEADING := Rect2(550, 108, 178, 36)
@@ -33,18 +37,18 @@ const DETAIL_ART_FRAME := Rect2(562, 158, 78, 96)
 const DETAIL_ART := Rect2(568, 164, 66, 84)
 const DETAIL_TITLE := Rect2(650, 158, 244, 44)
 const DETAIL_BADGE := Rect2(650, 204, 244, 50)
-const DETAIL_BODY_PANEL := Rect2(550, 274, 356, 292)
-const DETAIL_DESCRIPTION := Rect2(562, 286, 332, 78)
+const DETAIL_BODY_PANEL := Rect2(550, 274, 356, 252)
+const DETAIL_DESCRIPTION := Rect2(562, 286, 332, 66)
 const DETAIL_FACT_RECTS := [
-	Rect2(562, 372, 332, 38),
-	Rect2(562, 414, 332, 38),
-	Rect2(562, 456, 332, 38),
-	Rect2(562, 498, 332, 56),
+	Rect2(562, 356, 332, 34),
+	Rect2(562, 394, 332, 34),
+	Rect2(562, 432, 332, 34),
+	Rect2(562, 470, 332, 50),
 ]
-const DETAIL_FEEDBACK := Rect2(550, 572, 356, 32)
-const DETAIL_PRIMARY_ACTION := Rect2(550, 610, 222, 42)
-const DETAIL_SECONDARY_ACTION := Rect2(780, 610, 126, 42)
-const COLLAPSE_HANDLE := Rect2(520, 666, 156, 40)
+const DETAIL_FEEDBACK := Rect2(550, 530, 356, 28)
+const DETAIL_PRIMARY_ACTION := Rect2(550, 566, 222, 40)
+const DETAIL_SECONDARY_ACTION := Rect2(780, 566, 126, 40)
+const COLLAPSE_HANDLE := Rect2(520, 670, 156, 32)
 const COLLAPSED_OFFSET := Vector2(0, -706)
 
 # The map tab keeps scale, difficulty and detail inside the existing center
@@ -54,11 +58,12 @@ const MAP_SCALE_COLUMN := Rect2(282, 104, 198, 554)
 const MAP_SCALE_TITLE := Rect2(298, 118, 166, 28)
 const MAP_SCALE_CAPTION := Rect2(298, 148, 166, 34)
 const MAP_SCALE_BUTTON_RECTS := [
-	Rect2(298, 190, 166, 96),
-	Rect2(298, 296, 166, 96),
-	Rect2(298, 402, 166, 96),
+	Rect2(298, 190, 166, 70),
+	Rect2(298, 268, 166, 70),
+	Rect2(298, 346, 166, 70),
+	Rect2(298, 424, 166, 70),
 ]
-const MAP_SCALE_STATUS := Rect2(298, 512, 166, 126)
+const MAP_SCALE_STATUS := Rect2(298, 504, 166, 134)
 
 const MAP_DETAIL_COLUMN := Rect2(490, 104, 424, 554)
 const MAP_DETAIL_TITLE := Rect2(508, 118, 216, 30)
@@ -106,6 +111,76 @@ const CARD_HEIGHT := 76.0
 const CARD_GAP := 8
 
 
+static func fit_text(
+	text: String,
+	font: Font,
+	bounds: Vector2,
+	base_font_size: int,
+	ui_scale_factor: float,
+	multiline: bool,
+	alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT,
+	padding: Vector2 = Vector2(4, 2),
+	max_font_size: int = -1
+) -> Dictionary:
+	var normalized_scale := clampf(ui_scale_factor, 1.0, 1.5)
+	var minimum_size := maxi(1, base_font_size)
+	var requested_size := maxi(minimum_size, int(round(float(minimum_size) * normalized_scale)))
+	if max_font_size > 0:
+		requested_size = mini(requested_size, maxi(minimum_size, max_font_size))
+	var available := Vector2(
+		maxf(1.0, bounds.x - padding.x * 2.0),
+		maxf(1.0, bounds.y - padding.y * 2.0)
+	)
+	for candidate in range(requested_size, minimum_size - 1, -1):
+		var measured := _measure_text(text, font, available.x, candidate, multiline, alignment)
+		if measured.x <= available.x + 0.01 and measured.y <= available.y + 0.01:
+			return {
+				"fits": true,
+				"font_size": candidate,
+				"base_font_size": minimum_size,
+				"requested_font_size": requested_size,
+				"ui_scale_factor": normalized_scale,
+				"measured_size": measured,
+				"available_size": available,
+			}
+	var fallback_measured := _measure_text(text, font, available.x, minimum_size, multiline, alignment)
+	return {
+		"fits": fallback_measured.x <= available.x + 0.01 and fallback_measured.y <= available.y + 0.01,
+		"font_size": minimum_size,
+		"base_font_size": minimum_size,
+		"requested_font_size": requested_size,
+		"ui_scale_factor": normalized_scale,
+		"measured_size": fallback_measured,
+		"available_size": available,
+	}
+
+
+static func _measure_text(
+	text: String,
+	font: Font,
+	available_width: float,
+	font_size: int,
+	multiline: bool,
+	alignment: HorizontalAlignment
+) -> Vector2:
+	if font == null:
+		var line_count := maxi(1, text.count("\n") + 1)
+		return Vector2(
+			mini(available_width, float(text.length()) * float(font_size)),
+			float(line_count * font_size)
+		)
+	if multiline or text.contains("\n"):
+		return font.get_multiline_string_size(
+			text,
+			alignment,
+			available_width,
+			font_size,
+			-1,
+			TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND | TextServer.BREAK_ADAPTIVE
+		)
+	return font.get_string_size(text, alignment, -1.0, font_size)
+
+
 static func map_difficulty_button_rect(index: int, option_count: int) -> Rect2:
 	var count := maxi(1, option_count)
 	var gap_width := MAP_DIFFICULTY_GAP * float(count - 1)
@@ -128,6 +203,8 @@ static func rect(key: StringName) -> Rect2:
 		&"selection_pane": return SELECTION_PANE
 		&"filter_scroll": return FILTER_SCROLL
 		&"card_scroll": return CARD_SCROLL
+		&"warehouse_card_scroll": return WAREHOUSE_CARD_SCROLL
+		&"warehouse_batch_entry": return WAREHOUSE_BATCH_ENTRY
 		&"detail_pane": return DETAIL_PANE
 		&"detail_gold_panel": return DETAIL_GOLD_PANEL
 		&"detail_header": return DETAIL_HEADER

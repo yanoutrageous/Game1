@@ -15,7 +15,7 @@ func _initialize() -> void:
 	_test_goal_authority_is_read_only()
 	_test_complete_commission_projection()
 	if failures.is_empty():
-		print("I2_LONG_TERM_TASK_ARCHIVE=PASS canonical=task_archive aliases=goals,tasks,overview modules=5 commission_records=12 pages=4 authority=read_only")
+		print("I2_LONG_TERM_TASK_ARCHIVE=PASS canonical=task_archive aliases=goals,tasks,overview modules=6 commission_records=12 pages=4 authority=read_only")
 		quit(0)
 		return
 	for failure in failures:
@@ -27,16 +27,16 @@ func _initialize() -> void:
 func _test_canonical_module_and_aliases() -> void:
 	var tab_modules: Array = LongTermTabModelScript.build_modules()
 	var framework_modules: Array = LongTermContentFrameworkScript.build_modules()
-	_check(_module_ids(tab_modules) == [&"task_archive", &"codex", &"research", &"profile", &"collection_appearance"], "tab_modules_not_canonical")
-	_check(_module_ids(framework_modules) == [&"task_archive", &"codex", &"research", &"profile", &"collection_appearance"], "framework_modules_not_canonical")
+	_check(_module_ids(tab_modules) == [&"task_archive", &"codex", &"research", &"talent", &"profile", &"collection_appearance"], "tab_modules_not_canonical")
+	_check(_module_ids(framework_modules) == [&"task_archive", &"codex", &"research", &"talent", &"profile", &"collection_appearance"], "framework_modules_not_canonical")
 	_check(not _module_ids(tab_modules).has(&"gacha"), "gacha_exposed_by_tab_model")
 	_check(not _module_ids(framework_modules).has(&"gacha"), "gacha_exposed_by_content_framework")
-	_check(not _module_ids(tab_modules).has(&"talent"), "talent_was_fabricated")
+	_check(_module_ids(tab_modules).has(&"talent"), "authoritative_talent_module_missing")
 
 	var canonical_model: Dictionary = LongTermModelScript.build(&"task_archive", &"i2_task_archive_test")
 	var snapshot: Dictionary = canonical_model.get("snapshot_preview", {})
 	var interface_preview: Dictionary = snapshot.get("long_term_asset_interface_full_content_preview", {})
-	_check((interface_preview.get("modules", []) as Array).size() == 5, "snapshot_module_count_not_five")
+	_check((interface_preview.get("modules", []) as Array).size() == 6, "snapshot_module_count_not_six")
 	_check(not (interface_preview.get("modules", []) as Array).has("抽奖"), "gacha_exposed_by_snapshot")
 	for alias_id in [&"goals", &"tasks", &"overview", &"task_archive"]:
 		var alias_model: Dictionary = LongTermModelScript.build(alias_id, &"i2_task_archive_test")

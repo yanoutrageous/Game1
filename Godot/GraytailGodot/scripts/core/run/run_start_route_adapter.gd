@@ -37,8 +37,6 @@ static func payload_from_deploy_preview(run_start_config_preview: Dictionary, so
 static func route_command_from_payload(payload: Dictionary) -> StringName:
 	var normalized := RunStartConfigScript.normalize(payload)
 	match StringName(normalized.get("route_mode", &"standard_run")):
-		&"tutorial_run":
-			return &"start_tutorial_run"
 		&"demo_run":
 			return &"start_demo_run"
 		_:

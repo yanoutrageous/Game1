@@ -48,12 +48,16 @@ func _run() -> void:
 	root.add_child(panel)
 	panel.bind_settings_manager(manager)
 	_require(panel.open_panel(), "settings panel did not open a transaction")
-	var expected_fields := ["frame_limit", "master_volume", "reduce_motion", "resolution_id", "vsync_mode", "window_mode"]
+	var expected_fields := ["effects_volume", "frame_limit", "haptics_enabled", "master_volume", "reduce_motion", "resolution_id", "ui_scale_percent", "vsync_mode", "window_mode"]
 	var actual_fields := Array(panel.field_control_names())
 	actual_fields.sort()
 	_require_equal(actual_fields, expected_fields, "settings panel field contract")
 	var master_volume_slider := panel.get("master_volume_slider") as HSlider
 	var master_volume_value_label := panel.get("master_volume_value_label") as Label
+	var effects_volume_slider := panel.get("effects_volume_slider") as HSlider
+	var effects_volume_value_label := panel.get("effects_volume_value_label") as Label
+	var haptics_enabled_check := panel.get("haptics_enabled_check") as CheckButton
+	var ui_scale_option := panel.get("ui_scale_option") as OptionButton
 	_require(master_volume_slider != null, "supported master-volume slider was not exposed")
 	_require(master_volume_value_label != null, "supported master-volume value was not exposed")
 	if master_volume_slider != null:
@@ -63,17 +67,29 @@ func _run() -> void:
 		_require_equal(int(round(master_volume_slider.value)), 80, "master-volume initial value")
 	if master_volume_value_label != null:
 		_require_equal(master_volume_value_label.text, "80%", "master-volume player value")
+	_require(effects_volume_slider != null, "supported effects-volume slider was not exposed")
+	_require(effects_volume_value_label != null, "supported effects-volume value was not exposed")
+	_require(haptics_enabled_check != null, "supported haptics toggle was not exposed")
+	_require(ui_scale_option != null, "supported UI-scale option was not exposed")
+	if effects_volume_slider != null:
+		_require_equal(effects_volume_slider.min_value, 0.0, "effects-volume minimum")
+		_require_equal(effects_volume_slider.max_value, 100.0, "effects-volume maximum")
+		_require_equal(effects_volume_slider.step, 5.0, "effects-volume step")
+		_require_equal(int(round(effects_volume_slider.value)), 80, "effects-volume initial value")
+	if effects_volume_value_label != null:
+		_require_equal(effects_volume_value_label.text, "80%", "effects-volume player value")
+	if haptics_enabled_check != null:
+		_require(haptics_enabled_check.button_pressed, "haptics default was not enabled")
 	var visible_copy := _collect_control_copy(panel).to_lower()
 	_require(visible_copy.contains("主音量"), "supported master-volume copy was not exposed")
+	_require(visible_copy.contains("效果音量"), "supported effects-volume copy was not exposed")
+	_require(visible_copy.contains("手柄震动反馈"), "supported haptics copy was not exposed")
+	_require(visible_copy.contains("界面缩放"), "supported UI-scale copy was not exposed")
 	for forbidden_text in [
 		"music volume",
-		"sound effect volume",
-		"ui scale",
 		"screen shake",
 		"high contrast",
 		"音乐音量",
-		"音效音量",
-		"界面缩放",
 		"屏幕震动",
 		"高对比",
 		"色盲",
@@ -82,14 +98,20 @@ func _run() -> void:
 
 	_require(manager.set_draft_value(&"reduce_motion", false), "dirty close fixture")
 	_require(manager.set_draft_value(&"master_volume", 35), "dirty master-volume close fixture")
+	_require(manager.set_draft_value(&"effects_volume", 25), "dirty effects-volume close fixture")
+	_require(manager.set_draft_value(&"haptics_enabled", false), "dirty haptics close fixture")
 	panel.close_panel()
 	_require_equal(manager.get_applied_settings()["reduce_motion"], true, "closing panel committed an unapplied draft")
 	_require_equal(manager.get_applied_settings()["master_volume"], 80, "closing panel committed unapplied master volume")
+	_require_equal(manager.get_applied_settings()["effects_volume"], 80, "closing panel committed unapplied effects volume")
+	_require_equal(manager.get_applied_settings()["haptics_enabled"], true, "closing panel committed unapplied haptics")
 	_require_equal(ProjectSettings.get_setting(REDUCE_MOTION_KEY, false), true, "closing panel changed applied accessibility")
 
 	_require(panel.open_panel(), "settings panel did not reopen")
 	_require(manager.set_draft_value(&"resolution_id", "1600x900"), "dangerous close fixture")
 	_require(manager.set_draft_value(&"master_volume", 55), "combined master-volume close fixture")
+	_require(manager.set_draft_value(&"effects_volume", 45), "combined effects-volume close fixture")
+	_require(manager.set_draft_value(&"haptics_enabled", false), "combined haptics close fixture")
 	_require(manager.set_draft_value(&"reduce_motion", false), "combined close fixture")
 	_require(manager.apply_draft(), "dangerous close preview")
 	_require(manager.is_confirmation_pending(), "dangerous panel change skipped confirmation")
@@ -97,6 +119,8 @@ func _run() -> void:
 	panel.close_panel()
 	_require_equal(manager.get_applied_settings()["resolution_id"], "auto", "panel close did not restore resolution")
 	_require_equal(manager.get_applied_settings()["master_volume"], 80, "panel close did not restore master volume")
+	_require_equal(manager.get_applied_settings()["effects_volume"], 80, "panel close did not restore effects volume")
+	_require_equal(manager.get_applied_settings()["haptics_enabled"], true, "panel close did not restore haptics")
 	_require_equal(manager.get_applied_settings()["reduce_motion"], true, "panel close did not restore complete rollback")
 	_require_equal(ProjectSettings.get_setting(REDUCE_MOTION_KEY, false), true, "runtime accessibility rollback")
 	_require(adapter.calls.size() >= 4, "display adapter did not observe apply/rollback lifecycle")

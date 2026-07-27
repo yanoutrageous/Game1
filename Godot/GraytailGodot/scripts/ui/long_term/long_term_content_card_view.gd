@@ -3,7 +3,8 @@ class_name LongTermContentCardView
 
 const Art23LongTermAssetContractScript := preload("res://scripts/presentation/art23_long_term_asset_contract.gd")
 const Art25ContentAssetContractScript := preload("res://scripts/presentation/art25_content_asset_contract.gd")
-const ReadableFont := preload("res://assets/fonts/NotoSansCJKsc-Regular.otf")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const LongTermLayoutContractScript := preload("res://scripts/ui/long_term/long_term_layout_contract.gd")
 
 var card_data: Dictionary = {}
 var artwork: TextureRect
@@ -13,10 +14,12 @@ var status_bar: ColorRect
 var art_frame: Panel
 var tree_node: Panel
 var tree_edges: Array[ColorRect] = []
+var ui_scale_factor := 1.0
 
 
 func setup(card: Dictionary, locked: bool, selected: bool) -> void:
 	card_data = card.duplicate(true)
+	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
 	# Keep the localized semantic text on the actual Button for accessibility,
 	# focus diagnostics and compatibility tests. Child labels own the rendering.
 	text = "%s\n%s" % [String(card_data.get("title", "档案条目")), String(card_data.get("state", "已登记"))]
@@ -28,6 +31,21 @@ func setup(card: Dictionary, locked: bool, selected: bool) -> void:
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_build_content()
 	apply_visual_state(&"locked" if locked else (&"selected" if selected else &"normal"))
+	set_ui_scale_factor(ui_scale_factor)
+
+
+func set_ui_scale_factor(value: float) -> void:
+	ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	_apply_scaled_label(title_label)
+	_apply_scaled_label(state_label)
+	# The Button keeps semantic text for accessibility while the two child
+	# labels own every visible glyph.
+	add_theme_font_size_override("font_size", 1)
+
+
+func get_ui_scale_factor() -> float:
+	return ui_scale_factor
 
 
 func apply_visual_state(state: StringName) -> void:
@@ -109,8 +127,8 @@ func _build_content() -> void:
 	artwork.offset_bottom = -3.0
 
 	var title_x := artwork_x + 51.0
-	title_label = _label("ContentTitle", Rect2(title_x, 5, 218.0 - title_x, 46), String(card_data.get("title", "档案条目")), 13)
-	title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title_label = _label("ContentTitle", Rect2(title_x, 5, 212.0 - title_x, 46), String(card_data.get("title", "档案条目")), 13)
+	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	state_label = _label("ContentState", Rect2(222, 8, 72, 40), String(card_data.get("state", "已登记")), 11)
 	state_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -166,12 +184,34 @@ func _label(node_name: String, rect: Rect2, value: String, font_size: int) -> La
 	label.position = rect.position
 	label.size = rect.size
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_font_override("font", ReadableFont)
-	label.add_theme_font_size_override("font_size", font_size)
+	label.set_meta("long_term_base_font_size", font_size)
+	label.set_meta("long_term_max_font_size", 16 if node_name == "ContentTitle" else 13)
 	label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.92))
 	label.add_theme_constant_override("outline_size", 1)
 	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.78))
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
 	add_child(label)
+	_apply_scaled_label(label)
 	return label
+
+
+func _apply_scaled_label(label: Label) -> void:
+	if label == null or not label.has_meta("long_term_base_font_size"):
+		return
+	var base_font_size := int(label.get_meta("long_term_base_font_size"))
+	var font := label.get_theme_font("font")
+	var fit := LongTermLayoutContractScript.fit_text(
+		label.text,
+		font,
+		label.size,
+		base_font_size,
+		ui_scale_factor,
+		label.autowrap_mode != TextServer.AUTOWRAP_OFF,
+		label.horizontal_alignment,
+		Vector2(2, 2),
+		int(label.get_meta("long_term_max_font_size", -1))
+	)
+	label.add_theme_font_size_override("font_size", int(fit.get("font_size", base_font_size)))
+	label.set_meta("runtime_ui_scale_factor", ui_scale_factor)
+	label.set_meta("runtime_text_fit", fit)

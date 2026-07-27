@@ -22,9 +22,10 @@ GODOT_ROOT = ROOT / "Godot/GraytailGodot"
 ART24_FRAGMENT = ROOT / "docs/art/validation/art24/art24_asset_manifest_fragment.csv"
 ART10_SKIN = GODOT_ROOT / "scripts/presentation/art10_ui_skin_kit.gd"
 NOTO_LICENSE = GODOT_ROOT / "assets/licenses/NotoSansCJK-OFL.txt"
+FUSION_LICENSE = GODOT_ROOT / "assets/licenses/FusionPixel-OFL.txt"
 
-PRODUCTION_FONT_ASSET_ID = "ui.art23.long_term.font.body"
-QUARANTINED_FONT_ASSET_ID = "ui.font.fusion_pixel"
+READABLE_FONT_ASSET_ID = "ui.art23.long_term.font.body"
+DISPLAY_FONT_ASSET_ID = "ui.font.fusion_pixel"
 PRODUCTION_LICENSE_STATUSES = {
     "internal_generated",
     "internal_generated_from_audited_sources",
@@ -85,7 +86,16 @@ def validate_production_lifecycle(errors: list[str], row: dict[str, str], label:
 
 def main() -> int:
     errors: list[str] = []
-    for required in [REPORT_CSV, REPORT_JSON, MANIFEST, ASSET_ROOT, ART24_FRAGMENT, ART10_SKIN, NOTO_LICENSE]:
+    for required in [
+        REPORT_CSV,
+        REPORT_JSON,
+        MANIFEST,
+        ASSET_ROOT,
+        ART24_FRAGMENT,
+        ART10_SKIN,
+        NOTO_LICENSE,
+        FUSION_LICENSE,
+    ]:
         if not required.exists():
             fail(errors, f"missing={required.relative_to(ROOT)}")
     if errors:
@@ -220,42 +230,41 @@ def main() -> int:
         validate_production_lifecycle(errors, manifest_row, row["asset_id"])
 
     skin_text = ART10_SKIN.read_text(encoding="utf-8")
-    expected_font_declaration = f'const FONT_ASSET_ID := &"{PRODUCTION_FONT_ASSET_ID}"'
-    if expected_font_declaration not in skin_text:
-        fail(errors, f"production_font_binding={PRODUCTION_FONT_ASSET_ID}")
-    production_font = all_manifest_by_id.get(PRODUCTION_FONT_ASSET_ID)
-    if production_font is None:
-        fail(errors, f"production_font_manifest={PRODUCTION_FONT_ASSET_ID}")
-    else:
-        validate_production_lifecycle(errors, production_font, PRODUCTION_FONT_ASSET_ID)
+    expected_font_declarations = {
+        READABLE_FONT_ASSET_ID: f'const READABLE_FONT_ASSET_ID := &"{READABLE_FONT_ASSET_ID}"',
+        DISPLAY_FONT_ASSET_ID: f'const DISPLAY_FONT_ASSET_ID := &"{DISPLAY_FONT_ASSET_ID}"',
+    }
+    font_licenses = {
+        READABLE_FONT_ASSET_ID: ("res://assets/licenses/NotoSansCJK-OFL.txt", NOTO_LICENSE),
+        DISPLAY_FONT_ASSET_ID: ("res://assets/licenses/FusionPixel-OFL.txt", FUSION_LICENSE),
+    }
+    for asset_id, declaration in expected_font_declarations.items():
+        if declaration not in skin_text:
+            fail(errors, f"production_font_binding={asset_id}")
+        production_font = all_manifest_by_id.get(asset_id)
+        if production_font is None:
+            fail(errors, f"production_font_manifest={asset_id}")
+            continue
+        validate_production_lifecycle(errors, production_font, asset_id)
         if production_font.get("license_status") != "verified_ofl_1_1":
-            fail(errors, f"production_font_license={production_font.get('license_status', '')}")
-        if "res://assets/licenses/NotoSansCJK-OFL.txt" not in production_font.get("note", ""):
-            fail(errors, "production_font_license_evidence")
+            fail(errors, f"production_font_license={asset_id}:{production_font.get('license_status', '')}")
+        license_path, license_file = font_licenses[asset_id]
+        if license_path not in production_font.get("note", ""):
+            fail(errors, f"production_font_license_evidence={asset_id}")
         font_runtime = GODOT_ROOT / production_font.get("godot_path", "").removeprefix("res://")
         font_source = resolve_declared_source(production_font.get("source_repo_path", ""))
         if not font_runtime.is_file():
-            fail(errors, f"production_font_runtime={production_font.get('godot_path', '')}")
+            fail(errors, f"production_font_runtime={asset_id}:{production_font.get('godot_path', '')}")
         if font_source is None or not font_source.is_file():
-            fail(errors, f"production_font_source={production_font.get('source_repo_path', '')}")
-        license_text = NOTO_LICENSE.read_text(encoding="utf-8", errors="replace")
+            fail(errors, f"production_font_source={asset_id}:{production_font.get('source_repo_path', '')}")
+        license_text = license_file.read_text(encoding="utf-8", errors="replace")
         if "SIL OPEN FONT LICENSE" not in license_text or "Version 1.1" not in license_text:
-            fail(errors, "production_font_license_content")
-    quarantined_font = all_manifest_by_id.get(QUARANTINED_FONT_ASSET_ID)
-    if quarantined_font is None:
-        fail(errors, f"quarantined_font_manifest={QUARANTINED_FONT_ASSET_ID}")
-    else:
-        if quarantined_font.get("replacement_needed", "").lower() != "true":
-            fail(errors, "quarantined_font_replacement_needed")
-        if "quarantin" not in quarantined_font.get("source_status", "").lower():
-            fail(errors, "quarantined_font_source_status")
-    fusion_consumers = []
-    for script in (GODOT_ROOT / "scripts").rglob("*.gd"):
-        script_text = script.read_text(encoding="utf-8", errors="replace")
-        if QUARANTINED_FONT_ASSET_ID in script_text or "FusionPixel.otf" in script_text:
-            fusion_consumers.append(script.relative_to(ROOT).as_posix())
-    if fusion_consumers:
-        fail(errors, "quarantined_font_consumers=" + ",".join(fusion_consumers))
+            fail(errors, f"production_font_license_content={asset_id}")
+    fusion_row = all_manifest_by_id.get(DISPLAY_FONT_ASSET_ID)
+    if fusion_row is not None and fusion_row.get("source_status") != "verified_upstream_ofl_with_font_identity":
+        fail(errors, f"display_font_evidence_source={fusion_row.get('source_status', '')}")
+    if "pixel_font()" not in skin_text or "readable_font()" not in skin_text:
+        fail(errors, "production_font_role_accessors")
 
     disk_pngs = sorted(ASSET_ROOT.rglob("*.png"))
     if len(disk_pngs) != 107:
@@ -272,9 +281,13 @@ def main() -> int:
         fail(errors, "deploy_binding_missing")
     if "LongTermContentCardViewScript.new()" not in long_term_shell:
         fail(errors, "long_term_component_missing")
-    for token in ["ReadableFont", "clip_contents = true", "PRESET_FULL_RECT"]:
+    for token in ["clip_contents = true", "PRESET_FULL_RECT"]:
         if token not in long_term_card:
             fail(errors, f"long_term_card_contract={token}")
+    if "ReadableFont" in long_term_card or "NotoSansCJKsc-Regular.otf" in long_term_card:
+        fail(errors, "long_term_card_bypasses_player_ui_font_stack")
+    if "apply_player_ui_theme(self)" not in long_term_shell:
+        fail(errors, "long_term_shell_player_ui_theme_missing")
 
     git = subprocess.run(
         ["git", "status", "--porcelain"], cwd=ROOT, check=True, capture_output=True, text=True, encoding="utf-8"

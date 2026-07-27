@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build deterministic ART23 LongTerm runtime art from audited modular sources."""
+"""Build current I3R LongTerm runtime art from frozen ART23 source material."""
 
 from __future__ import annotations
 
@@ -16,11 +16,34 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = ROOT / "docs/art/validation/art23/sources"
 ART22_UI_ROOT = ROOT / "Godot/GraytailGodot/assets/ui/art22/deploy_prep"
 RUNTIME_ROOT = ROOT / "Godot/GraytailGodot/assets/ui/art23/long_term"
-VALIDATION_ROOT = ROOT / "docs/art/validation/art23"
+CURRENT_VALIDATION_ROOT = ROOT / "docs/40_validation/i3r_long_term_current"
+CURRENT_SOURCE_ROOT = CURRENT_VALIDATION_ROOT / "sources"
 MANIFEST_PATH = ROOT / "Godot/GraytailGodot/data/assets/asset_manifest.csv"
-REPORT_CSV_PATH = VALIDATION_ROOT / "long_term_runtime_asset_report.csv"
-REPORT_JSON_PATH = VALIDATION_ROOT / "long_term_runtime_asset_report.json"
-CONTRACT_PATH = VALIDATION_ROOT / "long_term_runtime_asset_contract.csv"
+REPORT_CSV_PATH = CURRENT_VALIDATION_ROOT / "long_term_runtime_asset_report.csv"
+REPORT_JSON_PATH = CURRENT_VALIDATION_ROOT / "long_term_runtime_asset_report.json"
+CONTRACT_PATH = CURRENT_VALIDATION_ROOT / "long_term_runtime_asset_contract.csv"
+
+# Current production exposes task_archive through the audited "goals" visual
+# alias. Gacha remains frozen ART23 evidence and is deliberately absent here.
+CURRENT_MODULE_TABLE = (
+    ("task_archive", "goals"),
+    ("codex", "codex"),
+    ("research", "research"),
+    ("talent", "talent"),
+    ("profile", "profile"),
+    ("collection_appearance", "collection_appearance"),
+)
+CURRENT_MODULE_ASSET_IDS = tuple(asset_id for _, asset_id in CURRENT_MODULE_TABLE)
+TALENT_FURNITURE_SOURCE_RELATIVE = "docs/40_validation/i3r_long_term_current/sources/talent_furniture_alpha_source.png"
+TALENT_FURNITURE_SOURCE_SHA256 = "bb341cbeb85cba1606fdbe9abe731cfc8a8730e2236f5b0d831d009ba54e9336"
+RETIRED_GACHA_RUNTIME_PATHS = (
+    "furniture/gacha.png",
+    "controls/module_gacha_normal.png",
+    "controls/module_gacha_focused.png",
+    "controls/module_gacha_pressed.png",
+    "controls/module_gacha_selected.png",
+    "controls/module_gacha_locked.png",
+)
 
 MAGENTA = (255, 0, 255)
 WOOD = (50, 27, 14, 255)
@@ -75,6 +98,20 @@ def open_project_rgba(relative_path: str) -> Image.Image:
     if not path.is_file():
         raise FileNotFoundError(path)
     return Image.open(path).convert("RGBA")
+
+
+def load_talent_furniture_source() -> Image.Image:
+    source_path = ROOT / TALENT_FURNITURE_SOURCE_RELATIVE
+    if sha256(source_path) != TALENT_FURNITURE_SOURCE_SHA256:
+        raise ValueError("dedicated talent furniture source SHA256 mismatch")
+    with Image.open(source_path) as source:
+        if source.mode != "RGBA":
+            raise ValueError(f"dedicated talent furniture source must be RGBA, got {source.mode}")
+        rgba = source.copy()
+    alpha_min, alpha_max = rgba.getchannel("A").getextrema()
+    if alpha_min != 0 or alpha_max != 255:
+        raise ValueError("dedicated talent furniture source must contain transparent and opaque pixels")
+    return rgba
 
 
 def trim_alpha(image: Image.Image) -> Image.Image:
@@ -243,14 +280,31 @@ def draw_icon(image: Image.Image, icon_id: str, selected: bool = False) -> None:
         draw.line((cx + 3, cy - 17, cx + 3, cy - 2), fill=color, width=3)
         draw.polygon([(cx - 3, cy - 3), (cx - 17, cy + 17), (cx + 17, cy + 17), (cx + 3, cy - 3)], fill=(23, 98, 101), outline=color)
         draw.ellipse((cx - 5, cy + 3, cx + 2, cy + 10), fill=color)
+    elif icon_id == "talent":
+        # A three-branch progression tree: unlike the research flask or the
+        # retired gacha machine, each node has an explicit parent relation.
+        branches = [
+            (cx, cy + 17, cx, cy - 1),
+            (cx, cy - 1, cx - 17, cy - 12),
+            (cx, cy - 1, cx, cy - 20),
+            (cx, cy - 1, cx + 17, cy - 12),
+        ]
+        for branch in branches:
+            draw.line(branch, fill=shadow, width=7)
+            draw.line(branch, fill=color, width=3)
+        for node_x, node_y in ((cx - 17, cy - 12), (cx, cy - 20), (cx + 17, cy - 12)):
+            draw.rectangle((node_x - 5, node_y - 5, node_x + 5, node_y + 5), fill=WOOD_DARK, outline=shadow, width=3)
+            draw.rectangle((node_x - 3, node_y - 3, node_x + 3, node_y + 3), fill=color)
+        draw.polygon(
+            [(cx, cy + 9), (cx + 7, cy + 17), (cx + 3, cy + 17), (cx + 10, cy + 23),
+             (cx, cy + 19), (cx - 10, cy + 23), (cx - 3, cy + 17), (cx - 7, cy + 17)],
+            fill=color,
+            outline=shadow,
+        )
     elif icon_id == "profile":
         draw.ellipse((cx - 11, cy, cx + 11, cy + 18), fill=color, outline=shadow)
         for dx, dy in ((-17, -10), (-6, -16), (6, -16), (17, -10)):
             draw.ellipse((cx + dx - 5, cy + dy - 5, cx + dx + 5, cy + dy + 5), fill=color, outline=shadow)
-    elif icon_id == "gacha":
-        draw.rounded_rectangle((cx - 22, cy - 10, cx + 22, cy + 15), radius=4, fill=(83, 46, 23), outline=color, width=3)
-        draw.arc((cx - 22, cy - 22, cx + 22, cy + 6), 180, 360, fill=color, width=4)
-        draw.ellipse((cx - 6, cy - 4, cx + 6, cy + 8), fill=BRASS, outline=shadow)
     elif icon_id == "collection_appearance":
         draw.rectangle((cx - 20, cy - 18, cx + 20, cy + 18), fill=(72, 39, 20), outline=color, width=3)
         draw.line((cx, cy - 16, cx, cy + 16), fill=color, width=2)
@@ -272,7 +326,7 @@ def module_button(icon_id: str, state: str) -> Image.Image:
     draw_icon(image, icon_id, state == "selected")
     draw = ImageDraw.Draw(image)
     draw.line((18, 59, 108, 59), fill=TEAL if state == "selected" else (84, 87, 82, 255), width=2)
-    if icon_id in {"research", "gacha"}:
+    if icon_id == "research":
         draw.ellipse((100, 9, 116, 25), fill=WOOD_DARK, outline=BRASS, width=2)
         draw.rectangle((104, 16, 112, 24), fill=BRASS_DARK, outline=BRASS)
     return image
@@ -325,16 +379,23 @@ def lever(expanded: bool) -> Image.Image:
     base = nine_slice_resize(art22_ui("controls/nav_normal.png"), (152, 36), (18, 12, 18, 12))
     image.alpha_composite(base, (0, 62))
     draw = ImageDraw.Draw(image)
-    draw.line((65, 68, 65, 91), fill=(32, 35, 35, 255), width=2)
-    draw.ellipse((24, 54, 54, 84), fill=(28, 32, 31, 255), outline=(119, 130, 123, 255), width=3)
+    # A compact archive drawer and direction arrow reads as “fold/unfold the
+    # dossier”; the former long rod plus round knob resembled a magnifying glass.
+    draw.rectangle((10, 10, 64, 59), fill=WOOD_DARK, outline=BRASS_DARK, width=3)
+    draw.rectangle((15, 15, 59, 33), fill=(72, 39, 20, 255), outline=BRASS, width=2)
+    draw.rectangle((15, 36, 59, 54), fill=(72, 39, 20, 255), outline=BRASS, width=2)
+    draw.rectangle((31, 22, 43, 25), fill=BRASS_LIGHT, outline=BRASS_DARK, width=1)
+    draw.rectangle((31, 43, 43, 46), fill=BRASS_LIGHT, outline=BRASS_DARK, width=1)
+    arrow_shadow = (23, 38, 38, 255)
+    arrow_color = TEAL
     if expanded:
-        draw.line((39, 66, 91, 24), fill=(27, 31, 31, 255), width=12)
-        draw.line((39, 66, 91, 24), fill=(151, 160, 150, 255), width=5)
-        draw.ellipse((81, 11, 106, 36), fill=(12, 93, 91), outline=TEAL, width=3)
+        shadow_points = [(82, 19), (126, 19), (104, 57)]
+        points = [(88, 23), (120, 23), (104, 51)]
     else:
-        draw.line((39, 66, 39, 17), fill=(27, 31, 31, 255), width=12)
-        draw.line((39, 66, 39, 17), fill=(151, 160, 150, 255), width=5)
-        draw.ellipse((26, 3, 52, 29), fill=(12, 93, 91), outline=TEAL, width=3)
+        shadow_points = [(104, 10), (126, 48), (82, 48)]
+        points = [(104, 16), (120, 44), (88, 44)]
+    draw.polygon(shadow_points, fill=arrow_shadow, outline=BRASS_DARK)
+    draw.polygon(points, fill=arrow_color, outline=BRASS_LIGHT)
     return image
 
 
@@ -366,20 +427,36 @@ def build_assets() -> list[RuntimeAsset]:
     room = ImageOps.fit(open_rgba("long_term_room_unified_source.png"), (1280, 720), Image.Resampling.LANCZOS)
     add("long_term.scene.background.clean_plate", "background/scene_clean_plate.png", room, "long_term_room_unified_source.png", "full->1280x720", "background", "clean_plate", "normal", "long_term_default", True)
 
+    script_source = "tools/art23_build_long_term_runtime.py"
     furniture_specs = {
         "goals": ("goals_furniture_chroma_source.png", (820, 536), 8),
         "codex": ("codex_furniture_chroma_source.png", (820, 526), 8),
         "research": ("research_furniture_chroma_source.png", (820, 526), 8),
         "profile": ("profile_furniture_chroma_source.png", (820, 526), 8),
-        "gacha": ("gacha_furniture_chroma_source.png", (720, 420), 8),
         "collection_appearance": ("collection_appearance_furniture_chroma_source.png", (820, 526), 8),
     }
-    for module_id, (source, size, padding) in furniture_specs.items():
-        extracted = chroma_alpha(open_rgba(source))
-        image = contain(extracted, size, padding)
-        add(f"long_term.furniture.{module_id}", f"furniture/{module_id}.png", image, source, "chroma_alpha_bbox", "content", "module_furniture", "open", f"long_term_{module_id}", False)
+    for module_id in CURRENT_MODULE_ASSET_IDS:
+        if module_id == "talent":
+            source = TALENT_FURNITURE_SOURCE_RELATIVE
+            image = contain(trim_alpha(load_talent_furniture_source()), (820, 526), 8)
+            source_rect = "alpha_bbox+contain_centered_padding8->820x526"
+        else:
+            source, size, padding = furniture_specs[module_id]
+            image = contain(chroma_alpha(open_rgba(source)), size, padding)
+            source_rect = "chroma_alpha_bbox"
+        add(
+            f"long_term.furniture.{module_id}",
+            f"furniture/{module_id}.png",
+            image,
+            source,
+            source_rect,
+            "content",
+            "module_furniture",
+            "open",
+            f"long_term_{module_id}",
+            False,
+        )
 
-    script_source = "tools/art23_build_long_term_runtime.py"
     add("long_term.decoration.rail", "decoration/module_rail.png", rail(), script_source, "generated", "decoration", "module_rail", "normal", "long_term_default", True)
     art22_chain_source = art22_path("decoration/chain_vertical.png")
     add("long_term.decoration.chain", "decoration/chain_vertical.png", nine_slice_resize(art22_ui("decoration/chain_vertical.png"), (20, 70), (4, 10, 4, 10)), art22_chain_source, "nine_slice->20x70", "decoration", "chain", "normal", "long_term_default", True)
@@ -397,7 +474,7 @@ def build_assets() -> list[RuntimeAsset]:
         add(f"long_term.control.nav.{state}", f"controls/nav_{state}.png", nav_image, nav_source, "nine_slice->142x50", "control", "navigation", state, "long_term_default", True)
         add(f"long_term.control.secondary.{state}", f"controls/secondary_{state}.png", secondary_image, secondary_source, "nine_slice->112x36", "control", "secondary_tab", state, "long_term_default", True)
         add(f"long_term.control.card.{state}", f"controls/card_{state}.png", card_image, card_source, "nine_slice->260x86", "control", "content_card", state, "long_term_default", True)
-        for module_id in furniture_specs:
+        for module_id in CURRENT_MODULE_ASSET_IDS:
             module_source_state = "normal" if state == "selected" else ("disabled" if state == "locked" else state)
             module_source = art22_path(f"controls/nav_{module_source_state}.png")
             add(
@@ -428,7 +505,16 @@ def write_assets(assets: list[RuntimeAsset]) -> list[dict[str, str]]:
     for asset in assets:
         output = RUNTIME_ROOT / asset.relative_path
         output.parent.mkdir(parents=True, exist_ok=True)
-        asset.image.save(output, "PNG", optimize=True)
+        should_write = True
+        if output.is_file():
+            with Image.open(output) as existing:
+                existing_rgba = existing.convert("RGBA")
+                should_write = (
+                    existing_rgba.size != asset.image.size
+                    or ImageChops.difference(existing_rgba, asset.image).getbbox() is not None
+                )
+        if should_write:
+            asset.image.save(output, "PNG", optimize=True)
         source_path = ROOT / asset.source_name if asset.source_name.startswith(("tools/", "Godot/", "docs/")) else SOURCE_ROOT / asset.source_name
         rows.append({
             "screen": "long_term",
@@ -446,11 +532,11 @@ def write_assets(assets: list[RuntimeAsset]) -> list[dict[str, str]]:
             "anchor": "top_left",
             "pivot": "0,0",
             "z_layer": asset.layer,
-            "runtime_status": "live_or_interaction_reachable",
+            "runtime_status": "current_production_reachable",
             "load_group": asset.load_group,
             "default_load": str(asset.default_load).lower(),
             "decoded_bytes": str(asset.image.width * asset.image.height * 4),
-            "source_status": "art23_generated_audited",
+            "source_status": "i3r_current_generated_from_audited_source",
             "source_sha256": sha256(source_path),
             "runtime_sha256": sha256(output),
             "width": str(asset.image.width),
@@ -460,7 +546,7 @@ def write_assets(assets: list[RuntimeAsset]) -> list[dict[str, str]]:
 
 
 def write_reports(rows: list[dict[str, str]]) -> None:
-    VALIDATION_ROOT.mkdir(parents=True, exist_ok=True)
+    CURRENT_VALIDATION_ROOT.mkdir(parents=True, exist_ok=True)
     for path in (CONTRACT_PATH, REPORT_CSV_PATH):
         with path.open("w", encoding="utf-8", newline="") as stream:
             writer = csv.DictWriter(stream, fieldnames=FIELDS)
@@ -469,8 +555,11 @@ def write_reports(rows: list[dict[str, str]]) -> None:
     total = sum(int(row["decoded_bytes"]) for row in rows)
     default = sum(int(row["decoded_bytes"]) for row in rows if row["default_load"] == "true")
     report = {
-        "stage": "ART23",
+        "stage": "I3R",
         "screen": "long_term",
+        "authority": "current_production",
+        "primary_modules": 6,
+        "secondary_pages": 25,
         "runtime_assets": len(rows),
         "default_assets": sum(1 for row in rows if row["default_load"] == "true"),
         "total_decoded_bytes": total,
@@ -483,11 +572,35 @@ def write_reports(rows: list[dict[str, str]]) -> None:
     REPORT_JSON_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def verify_talent_furniture_output(rows: list[dict[str, str]]) -> None:
+    matches = [row for row in rows if row["asset_id"] == "ui.art23.long_term.furniture.talent"]
+    if len(matches) != 1:
+        raise ValueError(f"expected one dedicated talent furniture row, got {len(matches)}")
+    row = matches[0]
+    if row["source_candidate"] != TALENT_FURNITURE_SOURCE_RELATIVE:
+        raise ValueError("dedicated talent furniture source path drifted")
+    if row["source_sha256"] != TALENT_FURNITURE_SOURCE_SHA256:
+        raise ValueError("dedicated talent furniture row source hash drifted")
+    output_path = RUNTIME_ROOT / "furniture/talent.png"
+    with Image.open(output_path) as output:
+        if output.mode != "RGBA" or output.size != (820, 526):
+            raise ValueError(f"dedicated talent furniture output must be RGBA 820x526, got {output.mode} {output.size}")
+        alpha = output.getchannel("A")
+        alpha_min, alpha_max = alpha.getextrema()
+        alpha_bbox = alpha.getbbox()
+    if alpha_min != 0 or alpha_max != 255 or alpha_bbox is None:
+        raise ValueError("dedicated talent furniture output lost its transparent/opaque composition")
+    if alpha_bbox[0] <= 0 or alpha_bbox[1] <= 0 or alpha_bbox[2] >= 820 or alpha_bbox[3] >= 526:
+        raise ValueError(f"dedicated talent furniture output lost centered transparent margins: {alpha_bbox}")
+    if sha256(output_path) != row["runtime_sha256"]:
+        raise ValueError("dedicated talent furniture output hash drifted after write")
+
+
 def update_manifest(rows: list[dict[str, str]]) -> None:
     with MANIFEST_PATH.open("r", encoding="utf-8-sig", newline="") as stream:
         reader = csv.DictReader(stream)
         fieldnames = list(reader.fieldnames or [])
-        existing = [row for row in reader if not row.get("asset_id", "").startswith("ui.art23.long_term.")]
+        existing = list(reader)
     additions = []
     for row in rows:
         additions.append({
@@ -496,13 +609,13 @@ def update_manifest(rows: list[dict[str, str]]) -> None:
             "godot_path": row["runtime_asset"],
             "type": "texture",
             "category": "ui_art",
-            "usage": f"ART23 LongTerm {row['slot']} {row['state']}",
+            "usage": f"I3R current LongTerm {row['slot']} {row['state']}",
             "import_preset": "pixel_ui",
             "license_status": "internal_generated",
             "replacement_needed": "false",
             "linked_scene": "scripts/ui/long_term/long_term_shell.gd",
             "linked_data": "LongTermModel",
-            "note": f"ART23 audited modular source; sha256={row['runtime_sha256']}",
+            "note": f"I3R current runtime generated from audited source; sha256={row['runtime_sha256']}",
             "theme_key": row["visual_key"],
             "presentation_role": row["slot"],
             "state": row["state"],
@@ -515,31 +628,44 @@ def update_manifest(rows: list[dict[str, str]]) -> None:
         "godot_path": "res://assets/fonts/NotoSansCJKsc-Regular.otf",
         "type": "font",
         "category": "ui_font",
-        "usage": "ART23 LongTerm readable Chinese body, metadata, and profile statistics",
+        "usage": "Glyph fallback behind the FusionPixel player UI font stack",
         "import_preset": "font_default",
         "license_status": "verified_ofl_1_1",
         "replacement_needed": "false",
-        "linked_scene": "scripts/ui/long_term/long_term_shell.gd",
-        "linked_data": "LongTermModel",
-        "note": "Noto Sans CJK SC Regular; SIL Open Font License 1.1; license at res://assets/licenses/NotoSansCJK-OFL.txt",
+        "linked_scene": "scripts/presentation/art10_ui_skin_kit.gd",
+        "linked_data": "Art10UISkinKit",
+        "note": "Noto Sans CJK SC Regular; glyph fallback only; SIL Open Font License 1.1; license at res://assets/licenses/NotoSansCJK-OFL.txt",
         "theme_key": "long_term.font.body",
-        "presentation_role": "readable_body_font",
+        "presentation_role": "glyph_fallback_font",
         "state": "normal",
         "variant": "long_term_default",
         "source_status": "verified_upstream_open_font",
     })
+    merged = [row for row in existing if not row.get("asset_id", "").startswith("ui.art23.long_term.")]
+    art22_indices = [
+        index for index, row in enumerate(merged)
+        if row.get("asset_id", "").startswith("ui.art22.")
+    ]
+    insert_at = art22_indices[-1] + 1 if art22_indices else len(merged)
+    merged[insert_at:insert_at] = additions
     with MANIFEST_PATH.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fieldnames)
         writer.writeheader()
-        writer.writerows(existing + additions)
+        writer.writerows(merged)
 
 
 def main() -> int:
+    retired_paths = [RUNTIME_ROOT / relative_path for relative_path in RETIRED_GACHA_RUNTIME_PATHS]
+    remaining_retired = [path for path in retired_paths if path.exists()]
+    if remaining_retired:
+        names = ", ".join(path.relative_to(ROOT).as_posix() for path in remaining_retired)
+        raise RuntimeError(f"Retired gacha runtime assets require audited removal before generation: {names}")
     assets = build_assets()
     rows = write_assets(assets)
+    verify_talent_furniture_output(rows)
     write_reports(rows)
     update_manifest(rows)
-    print(f"ART23_LONG_TERM_ASSETS={len(rows)}")
+    print(f"I3R_LONG_TERM_CURRENT_ASSETS={len(rows)}")
     print(REPORT_JSON_PATH.read_text(encoding="utf-8").strip())
     return 0
 

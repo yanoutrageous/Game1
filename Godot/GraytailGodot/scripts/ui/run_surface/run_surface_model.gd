@@ -3,6 +3,7 @@ class_name RunSurfaceModel
 
 const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 const PresentationTheme := preload("res://scripts/presentation/presentation_theme.gd")
+const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
 
 
 static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, layout_profile: Dictionary, last_command_result: Dictionary) -> Dictionary:
@@ -21,9 +22,6 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 	var encounter_section := _encounter_section(snapshot)
 	var last_message := String(snapshot.get("last_message", ""))
 	var visible_last_message := event_result_feedback_text(reward) if _is_event_result(reward) else RunUIViewModel.player_message(last_message, event_state)
-	var command_feedback := RunUIViewModel.command_result_text(last_command_result)
-	if command_feedback == "":
-		command_feedback = _player_message(visible_last_message)
 	var action_data := _action_buttons(snapshot, search_data, event_state, room_type)
 	var status_lines := _status_lines(snapshot, room_type, adjacent_mines, search_data, current_room_detail, return_eligibility, run_flow_snapshot, rule_effect_summary, content_delivery_summary)
 	var commission_line := _commission_progress_line(snapshot)
@@ -51,7 +49,10 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"backpack_capacity": snapshot.get("backpack_capacity", 0),
 		"resource_summary": _resource_summary(snapshot),
 		"mine_risk": mine_risk_descriptor(adjacent_mines),
-		"command_feedback": command_feedback,
+		# Command results are transient presentation events. Rehydrating the last
+		# result on every model refresh recreated the permanent strip beneath the
+		# mine-risk plate.
+		"command_feedback": "",
 		"encounter_section": encounter_section,
 		"scanner_summary": _scanner_summary(minimap_view_model, position),
 		"scanner_legend_lines": _scanner_legend_lines(minimap_view_model),
@@ -116,6 +117,7 @@ static func _encounter_section(snapshot: Dictionary) -> Dictionary:
 		result_summary = _dict_variant(view_model.get("result_summary", {}))
 	var state: Dictionary = _dict_variant(view_model.get("state", {}))
 	var encounter_type := StringName(view_model.get("encounter_type", state.get("encounter_type", &"none")))
+	var encounter_tags := _array_variant(state.get("tags", []))
 	var state_id := StringName(state.get("state", &"unavailable"))
 	var title := _encounter_title(String(state.get("title", "遭遇槽")))
 	var description := _encounter_description(String(state.get("description", "当前没有可处理的目标。")))
@@ -130,6 +132,8 @@ static func _encounter_section(snapshot: Dictionary) -> Dictionary:
 	if options.is_empty():
 		body_lines.append(_encounter_empty_options_text(encounter_type, state_id))
 	return {
+		"encounter_type": encounter_type,
+		"encounter_tags": encounter_tags,
 		"title": title,
 		"body": _join_lines(body_lines),
 		"options": options,
@@ -532,14 +536,16 @@ static func _action_buttons(snapshot: Dictionary, search_data: Dictionary, event
 	var has_event := not event_state.is_empty()
 	var can_search := bool(search_data.get("can_search", false))
 	var floor_count := int(snapshot.get("room_floor_item_count", 0))
+	var interact_hint := SemanticActionHintScript.current_display_label(&"interact")
+	var extract_hint := SemanticActionHintScript.current_display_label(&"request_extract")
 	var actions: Array[Dictionary] = [
-		_action(&"interact", "E 搜索/交互", run_active and (can_search or has_event or room_type == &"Exit"), _interact_hint(room_type, search_data, has_event)),
+		_action(&"interact", "搜索/交互", run_active and (can_search or has_event or room_type == &"Exit"), _interact_hint(room_type, search_data, has_event)),
 		_action(&"inventory", "背包", run_active, "查看背包和装备摘要。"),
 		_action(&"ground_loot", "地面物品", run_active and floor_count > 0, "查看当前房间地面物品。"),
-		_action(&"map", "M/Tab 扫描图", run_active, "打开大地图扫描视图。"),
-		_action(&"combat", "Space/J 清理", run_active and room_type == &"Monster", "当前房间存在可清理威胁时可用。"),
-		_action(&"extract", "撤离", run_active and (room_type == &"Exit" or phase == &"confirm_extract" or combat_flee_available), "靠近可通行的门后按 T 或点击此处，确认逃离战斗。" if combat_flee_available else "在撤离点请求或确认撤离；也可按 E 通过搜索/交互进入确认。"),
-		_action(&"pause", "Esc 暂停", run_active, "打开暂停和设置入口。"),
+		_action(&"map", "扫描图", run_active, "打开大地图扫描视图。"),
+		_action(&"combat", "攻击", run_active and room_type == &"Monster", "当前房间存在可攻击目标时可用。"),
+		_action(&"extract", "撤离", run_active and (room_type == &"Exit" or phase == &"confirm_extract" or combat_flee_available), "靠近可通行的门后使用 %s 或点击此处，确认逃离战斗。" % extract_hint if combat_flee_available else "在撤离点请求或确认撤离；也可使用 %s 通过搜索/交互进入确认。" % interact_hint),
+		_action(&"pause", "暂停", run_active, "打开暂停和设置入口。"),
 	]
 	return _context_order_actions(actions)
 
@@ -662,17 +668,50 @@ static func loot_modal_text(reward: Dictionary, last_message: String = "") -> St
 static func extract_modal_text(snapshot: Dictionary) -> String:
 	var lines: Array[String] = []
 	var risky := int(snapshot.get("protocol_level", 5)) <= 1
-	lines.append("当前状态 · 极端危险，确认前请核对带回内容。" if risky else "当前状态 · 可撤离")
-	lines.append("预计带回 · 黑资 %s · 已锁定收益 %s" % [
+	lines.append("撤离状态 · 极端危险" if risky else "撤离状态 · 可撤离")
+	lines.append("收益 · 黑资 %s · 已锁定 %s" % [
 		snapshot.get("black_coin", snapshot.get("pending_gold", 0)),
 		snapshot.get("safe_yield", snapshot.get("gold_coin", snapshot.get("safe_gold", 0))),
 	])
-	lines.append("随身物资 · 负重 %s/%s" % [snapshot.get("backpack_used", 0), snapshot.get("backpack_capacity", 0)])
 	var floor_count := int(snapshot.get("room_floor_item_count", 0))
-	lines.append("现场遗留 · %s 件" % floor_count)
+	lines.append("负重 · %s/%s　现场遗留 · %s 件" % [
+		snapshot.get("backpack_used", 0),
+		snapshot.get("backpack_capacity", 0),
+		floor_count,
+	])
 	lines.append("目标 · %s" % _extract_objective_summary(snapshot))
-	lines.append("确认撤离将结束本局；取消可继续探索。")
 	return _join_lines(lines)
+
+
+static func extract_carried_item_models(snapshot: Dictionary) -> Array[Dictionary]:
+	var models: Array[Dictionary] = []
+	var seen_instance_ids: Dictionary = {}
+	for source_key in ["inventory_items", "equipped_items"]:
+		var source_items: Array = _array_from(snapshot, source_key)
+		for raw_item in source_items:
+			if not (raw_item is Dictionary):
+				continue
+			var item: Dictionary = raw_item
+			var instance_id := String(item.get("instance_id", ""))
+			if instance_id != "" and seen_instance_ids.has(instance_id):
+				continue
+			if instance_id != "":
+				seen_instance_ids[instance_id] = true
+			var presentation := RunUIViewModel.item_presentation(item)
+			models.append({
+				"instance_id": instance_id,
+				"display_name": String(presentation.get("display_name", "未命名物资")),
+				"quantity": maxi(1, int(presentation.get("quantity", 1))),
+				"weight": maxi(0, int(presentation.get("weight", 0))),
+				"rarity": (presentation.get("rarity", {}) as Dictionary).duplicate(true),
+				"rarity_text": String(presentation.get("rarity_text", "[?] 未鉴定")),
+				"collectible_level": maxi(0, int(presentation.get("collectible_level", 0))),
+				"collectible_level_text": String(presentation.get("collectible_level_text", "")),
+				"detail_text": String(presentation.get("detail_text", "")),
+				"source": source_key,
+				"read_only": true,
+			})
+	return models
 
 
 static func _extract_objective_summary(snapshot: Dictionary) -> String:
@@ -903,13 +942,23 @@ static func _scanner_detail(minimap_view_model: MiniMapViewModel, run_map_snapsh
 
 
 static func _action_hint(actions: Array[Dictionary]) -> String:
-	var keyboard_hint := "键盘：WASD/方向键移动；E搜索/交互；Space/J清理；M/Tab地图；F标记；Esc暂停。"
+	var fallback_hint := "移动 %s/%s/%s/%s；交互 %s；攻击 %s；地图 %s；标记 %s；暂停 %s。" % [
+		SemanticActionHintScript.current_display_label(&"move_up"),
+		SemanticActionHintScript.current_display_label(&"move_left"),
+		SemanticActionHintScript.current_display_label(&"move_down"),
+		SemanticActionHintScript.current_display_label(&"move_right"),
+		SemanticActionHintScript.current_display_label(&"interact"),
+		SemanticActionHintScript.current_display_label(&"attack"),
+		SemanticActionHintScript.current_display_label(&"open_map"),
+		SemanticActionHintScript.current_display_label(&"flag_cell"),
+		SemanticActionHintScript.current_display_label(&"pause"),
+	]
 	for action in actions:
 		if not bool(action.get("enabled", false)):
 			continue
 		var description := String(action.get("description", "")).strip_edges()
-		return "%s：%s" % [String(action.get("label", "行动")), description] if description != "" else String(action.get("label", keyboard_hint))
-	return keyboard_hint
+		return "%s：%s" % [String(action.get("label", "行动")), description] if description != "" else String(action.get("label", fallback_hint))
+	return fallback_hint
 
 
 static func _scanner_summary(minimap_view_model: MiniMapViewModel, position: Vector2i) -> String:
@@ -1167,8 +1216,8 @@ static func _room_label(room_type: StringName) -> String:
 static func _player_message(message: String) -> String:
 	var text := message.strip_edges()
 	if text == "":
-		return "操作反馈：等待输入。"
-	return "操作反馈：%s" % RunUIViewModel.player_message(text)
+		return "等待行动。"
+	return RunUIViewModel.player_message(text)
 
 
 static func _array_from(source: Dictionary, key: String) -> Array:

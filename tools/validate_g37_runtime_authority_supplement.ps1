@@ -108,7 +108,7 @@ if ($failViolations.Count -gt 0) {
     throw "G37S validation failed: context.fail_run calls outside authority: $($failViolations -join ', ')"
 }
 
-foreach ($pattern in @('start_tutorial_run', 'move_by', 'search_current_room', 'request_extract', 'confirm_extract')) {
+foreach ($pattern in @('start_standard_run', 'tutorial_5x5', 'move_by', 'search_current_room', 'request_extract', 'confirm_extract')) {
     Require-Text "command sequence runner covers $pattern" $sequenceRunner $pattern
 }
 Require-Text "validation doc records force fail coverage" $validationDoc "force failure"

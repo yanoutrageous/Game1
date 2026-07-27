@@ -102,7 +102,6 @@ Test-ProjectFileContains 'scripts/ui/shell/g9_shell_panel.gd' @(
     'ModeEntryPanel',
     'LongTermSystemPanel',
     'SettingsShellPanel',
-    'StartTutorialButton',
     'StartStandard10x10Button',
     'DeployShellTabs',
     '&"warehouse"',

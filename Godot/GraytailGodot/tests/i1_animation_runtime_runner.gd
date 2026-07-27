@@ -2,6 +2,7 @@ extends SceneTree
 
 const PlayerControllerScript := preload("res://scripts/gameplay/player/player_controller.gd")
 const RuntimeActorViewScript := preload("res://scripts/gameplay/runtime/g41_runtime_actor_view.gd")
+const RuntimeAnimationCatalog := preload("res://scripts/presentation/art24/art24_runtime_animation_catalog.gd")
 const TextureCache := preload("res://scripts/presentation/runtime_texture_cache.gd")
 
 const PASS_MARKER := "I1_ANIMATION_RUNTIME=PASS"
@@ -66,7 +67,7 @@ func _check_player_state_frames_and_timing() -> void:
 	player.set_runtime_visual_state(&"move")
 	player.call("_process", 0.0)
 	_require_path(player.last_texture_path, "down_walk_a.png", "player move frame 0")
-	player.call("_process", 0.101)
+	player.call("_process", RuntimeAnimationCatalog.player_frame_duration(&"move") * 2.0 + 0.001)
 	_require_path(player.last_texture_path, "down_walk_b.png", "player move frame 1")
 
 	player.set_runtime_visual_state(&"attack_windup")

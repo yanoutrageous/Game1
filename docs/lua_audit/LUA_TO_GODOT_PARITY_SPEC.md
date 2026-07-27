@@ -20,7 +20,7 @@ P0 systems for first Lua parity pass:
 3. `IntelMap`: support visible/public cell state equivalent to `Minefield:_PublicCell()`.
 4. `RunContext`: hold run phase, turn, player, stats, inventory, combat, protocol, and settlement state.
 5. `MinefieldService`: implement 1-step cardinal movement support, 8-neighbor mine count, random placement, hidden exits, reveal/flag/explore/clear.
-6. `CommandBus`: expose start tutorial, start standard, move, flag, search, interact, attack/fight, extract confirm/cancel, open map, teleport to explored.
+6. `CommandBus`: use `start_standard_run` for both formal maps and `map_config_id=tutorial_5x5`; expose move, flag, search, interact, attack/fight, extract confirm/cancel, open map, and teleport to explored. The earlier dedicated tutorial command is retired.
 7. `RoomResolver`: apply enter/search/event/combat/mine/extract rules.
 8. `RunInventory`: pending/safe gold, carried items, search rewards, chest rewards, failure salvage, extraction reward.
 9. `ProtocolService`: 0..100 pressure and levels 5..1.
@@ -230,8 +230,8 @@ Add P0/P1 commands:
 
 | Command | Purpose |
 |---|---|
-| `start_tutorial_run` | Start 5x5 fixed tutorial mode. |
-| `start_standard_run` | Start 10x10 generated standard mode. |
+| `start_standard_run` + `map_config_id=tutorial_5x5` | Start the fixed 5×5 tutorial as a normal Deploy map mode. I3R retired the earlier dedicated `start_tutorial_run` interface. |
+| `start_standard_run` + formal map id | Start a generated formal run through the same route. |
 | `move_by(delta)` | Keep exact cardinal/blocked/reveal/mine/exit result semantics. |
 | `toggle_flag_cell(pos=current)` | Allow current cell or target cell, for MapOverlay. |
 | `search_current_room` | Search normal/chest rooms. |

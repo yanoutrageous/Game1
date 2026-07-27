@@ -1,5 +1,11 @@
 # G40 Full Project Cleanup / Repository Remediation / Validation Stabilization Contract
 
+> Historical frozen contract (2026-07-26 clarification): this file preserves
+> the G40 machine layout and closeout-era wording. Its `D:\AGAME1` paths and
+> “in progress” status are not current authority. Resolve the active repository
+> with `git rev-parse --show-toplevel`; use `docs/10_current/CURRENT_STATE.md`
+> and the stage indexes for current status.
+
 Status: in progress / PASS_WITH_NOTES after G40 Slice 12.
 
 Chinese summary: G40 is the project cleanup and validation-stabilization stage. It reorganizes current entrypoints, documents source boundaries, records duplicate and dirty-state policy, and prepares reliable validation gates. The G40 branch has been committed and pushed, and Slice 12 restored `project.godot` to HEAD. G40 remains PASS_WITH_NOTES because residual duplicate/manual/reference decisions and optional runtime validations remain unresolved.

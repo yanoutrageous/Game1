@@ -5,7 +5,9 @@ const PresentationTheme := preload("res://scripts/presentation/presentation_them
 const PresentationMapping := preload("res://scripts/presentation/presentation_mapping.gd")
 const Art24ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
 const Art09ManifestAssetMapping := preload("res://scripts/presentation/art09_manifest_asset_mapping.gd")
-const ItemRarityDescriptor := preload("res://scripts/presentation/item_rarity_descriptor.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
+const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 
 signal close_requested
 
@@ -18,9 +20,12 @@ var item_list: VBoxContainer
 var footer_label: Label
 var close_button: Button
 var built := false
+var _ui_scale_factor := 1.0
+var _last_layout_profile: Dictionary = {}
 
 
 func _ready() -> void:
+	_ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
 	build()
 
 
@@ -29,6 +34,7 @@ func build() -> void:
 		return
 	built = true
 	name = "LootResultPanel"
+	Art10UISkinKitScript.apply_player_ui_theme(self)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
@@ -115,16 +121,39 @@ func build() -> void:
 
 	footer_label = Label.new()
 	footer_label.name = "LootResultFooter"
-	footer_label.text = "Enter / F / Esc  确认并返回探索"
+	footer_label.text = "%s / %s  确认并返回探索" % [
+		SemanticActionHintScript.display_label(&"ui_accept"),
+		SemanticActionHintScript.display_label(&"cancel"),
+	]
 	footer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	footer_label.add_theme_font_size_override("font_size", 13)
 	footer_label.add_theme_color_override("font_color", Color("a8b4b0"))
 	root.add_child(footer_label)
+	_refresh_ui_scale_metrics()
+
+
+func set_ui_scale_factor(value: float) -> bool:
+	_ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value)
+	if not _last_layout_profile.is_empty():
+		var profile := _last_layout_profile.duplicate(true)
+		profile["ui_scale_factor"] = _ui_scale_factor
+		apply_layout_profile(profile)
+	else:
+		_refresh_ui_scale_metrics()
+	return is_equal_approx(_ui_scale_factor, Art10UISkinKitScript.normalize_runtime_ui_scale_factor(value))
+
+
+func get_ui_scale_factor() -> float:
+	return _ui_scale_factor
 
 
 func apply_layout_profile(profile: Dictionary) -> void:
 	if not built:
 		build()
+	_last_layout_profile = profile.duplicate(true)
+	_ui_scale_factor = Art10UISkinKitScript.normalize_runtime_ui_scale_factor(
+		float(profile.get("ui_scale_factor", _ui_scale_factor))
+	)
 	var raw_size: Variant = profile.get("actual_viewport_size", profile.get("supported_size", Vector2i(1280, 720)))
 	var viewport_size := Vector2(float(raw_size.x), float(raw_size.y))
 	var width := maxf(1.0, viewport_size.x)
@@ -139,6 +168,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var panel_x := gameplay_left + (gameplay_width - panel_width) * 0.5
 	var panel_y := (height - panel_height) * 0.46
 	_set_rect(result_panel, Rect2(panel_x, panel_y, panel_width, panel_height))
+	_refresh_ui_scale_metrics()
 
 
 func show_result(title: String, reward: Dictionary, last_message: String = "") -> void:
@@ -161,7 +191,7 @@ func show_result(title: String, reward: Dictionary, last_message: String = "") -
 		empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		empty.custom_minimum_size = Vector2(0, 88)
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		empty.add_theme_font_size_override("font_size", 15)
+		_set_scaled_font(empty, 15)
 		empty.add_theme_color_override("font_color", Color("c4ccc8"))
 		item_list.add_child(empty)
 	else:
@@ -177,25 +207,23 @@ func hide_panel() -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not visible or not (event is InputEventKey):
+	if not visible or event == null or event.is_echo():
 		return
-	var key_event := event as InputEventKey
-	if not key_event.pressed or key_event.echo:
-		return
-	if key_event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_F, KEY_ESCAPE]:
+	if event.is_action_pressed("ui_accept") or event.is_action_pressed("cancel"):
 		close_requested.emit()
 		get_viewport().set_input_as_handled()
 
 
 func _add_item_card(item: Dictionary) -> void:
-	var rarity := ItemRarityDescriptor.describe_item(item)
+	var presentation := RunUIViewModel.item_presentation(item)
+	var rarity: Dictionary = presentation.get("rarity", {})
 	var row_texture := "res://assets/art24/ui/item_row_normal.png"
-	if int(rarity.get("tier", 0)) >= 3 or bool(rarity.get("locked", false)):
-		row_texture = "res://assets/art24/ui/item_row_selected.png"
 	var card := PanelContainer.new()
 	card.name = "LootResultItemCard"
-	card.custom_minimum_size = Vector2(0, 88)
+	_set_scaled_minimum(card, Vector2(0, 88))
 	card.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
+	card.set_meta("collectible_level", int(presentation.get("collectible_level", 0)))
+	card.tooltip_text = String(presentation.get("detail_text", ""))
 	card.add_theme_stylebox_override("panel", _textured_style(row_texture, 15, 12))
 	item_list.add_child(card)
 
@@ -205,7 +233,7 @@ func _add_item_card(item: Dictionary) -> void:
 
 	var rarity_edge := ColorRect.new()
 	rarity_edge.name = "LootResultRarityEdge"
-	rarity_edge.custom_minimum_size = Vector2(4, 62)
+	_set_scaled_minimum(rarity_edge, Vector2(4, 62))
 	rarity_edge.color = Color(rarity.get("color", Color("a9b0ad")))
 	rarity_edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	rarity_edge.set_meta("rarity_border_token", rarity.get("border_token", &"rarity.border.unknown"))
@@ -224,15 +252,25 @@ func _add_item_card(item: Dictionary) -> void:
 	row.add_child(copy)
 
 	var name_label := Label.new()
-	name_label.text = "%s  ×%d" % [String(item.get("display_name", item.get("item_id", "未知物资"))), maxi(1, int(item.get("count", 1)))]
-	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.text = "%s  ×%d" % [
+		String(presentation.get("display_name", "未知物资")),
+		maxi(1, int(presentation.get("quantity", 1))),
+	]
+	_set_scaled_font(name_label, 18)
 	name_label.add_theme_color_override("font_color", Color(rarity.get("color", Color("a9b0ad"))))
 	copy.add_child(name_label)
 
 	var meta_label := Label.new()
 	meta_label.name = "LootResultRarityMeta"
-	meta_label.text = "%s  ·  %s%s" % [_item_type_label(String(item.get("item_type", item.get("main_type", "collectible")))), String(rarity.get("display_text", "[?] 未鉴定")), _effect_copy(item)]
-	meta_label.add_theme_font_size_override("font_size", 13)
+	var meta_parts: Array[String] = [
+		String(presentation.get("type_label", _item_type_label(String(item.get("item_type", item.get("main_type", "collectible")))))),
+		String(rarity.get("display_text", "[?] 未鉴定")),
+	]
+	var collectible_level_text := String(presentation.get("collectible_level_text", ""))
+	if collectible_level_text != "":
+		meta_parts.append(collectible_level_text)
+	meta_label.text = "  ·  ".join(meta_parts) + _effect_copy(item)
+	_set_scaled_font(meta_label, 13)
 	meta_label.add_theme_color_override("font_color", Color("b7c4c0"))
 	copy.add_child(meta_label)
 
@@ -240,7 +278,7 @@ func _add_item_card(item: Dictionary) -> void:
 	description.text = String(item.get("short_description", "可回收物资。撤离成功后按结算规则入库。"))
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description.max_lines_visible = 2
-	description.add_theme_font_size_override("font_size", 13)
+	_set_scaled_font(description, 13)
 	description.add_theme_color_override("font_color", Color("919d99"))
 	copy.add_child(description)
 
@@ -248,8 +286,8 @@ func _add_item_card(item: Dictionary) -> void:
 	value_label.text = "估值\n%d" % maxi(0, int(item.get("base_value", item.get("value", 0))))
 	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	value_label.custom_minimum_size = Vector2(70, 62)
-	value_label.add_theme_font_size_override("font_size", 14)
+	_set_scaled_minimum(value_label, Vector2(70, 62))
+	_set_scaled_font(value_label, 14)
 	value_label.add_theme_color_override("font_color", Color("f0c96c"))
 	row.add_child(value_label)
 
@@ -368,8 +406,49 @@ func _apply_button_style(button: Button) -> void:
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", hover)
 	button.add_theme_stylebox_override("focus", hover)
-	button.add_theme_font_size_override("font_size", 15)
+	_set_scaled_font(button, 15)
+	_set_scaled_minimum(button, Vector2(92, 38))
 	button.add_theme_color_override("font_color", Color("f0d58e"))
+
+
+func _set_scaled_font(control: Control, base_size: int) -> void:
+	control.set_meta("ui_scale_base_font_size", base_size)
+	control.add_theme_font_size_override(
+		"font_size",
+		Art10UISkinKitScript.scaled_font_size(base_size, _ui_scale_factor)
+	)
+
+
+func _set_scaled_minimum(control: Control, base_size: Vector2) -> void:
+	control.set_meta("ui_scale_base_minimum_size", base_size)
+	control.custom_minimum_size = Art10UISkinKitScript.scaled_control_minimum(
+		base_size,
+		minf(_ui_scale_factor, 1.25)
+	)
+
+
+func _refresh_ui_scale_metrics(node: Node = self) -> void:
+	if node is Control:
+		var control := node as Control
+		if control.has_meta("ui_scale_base_font_size"):
+			_set_scaled_font(control, int(control.get_meta("ui_scale_base_font_size")))
+		if control.has_meta("ui_scale_base_minimum_size"):
+			var base_minimum: Vector2 = control.get_meta("ui_scale_base_minimum_size")
+			_set_scaled_minimum(control, base_minimum)
+	if node == self:
+		if title_label != null:
+			_set_scaled_font(title_label, 24)
+		if source_label != null:
+			_set_scaled_font(source_label, 13)
+		if summary_label != null:
+			_set_scaled_font(summary_label, 16)
+		if footer_label != null:
+			_set_scaled_font(footer_label, 13)
+		if close_button != null:
+			_set_scaled_font(close_button, 15)
+			_set_scaled_minimum(close_button, Vector2(92, 38))
+	for child in node.get_children():
+		_refresh_ui_scale_metrics(child)
 
 
 func _set_rect(control: Control, rect: Rect2) -> void:

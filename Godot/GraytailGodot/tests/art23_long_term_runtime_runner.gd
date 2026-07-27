@@ -1,5 +1,8 @@
 extends SceneTree
 
+const SkinKit := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const ContentDBAccessScript := preload("res://scripts/core/content/content_db_access.gd")
+
 var failures: Array[String] = []
 var route_intents: Array[Dictionary] = []
 var deploy_route_intents: Array[Dictionary] = []
@@ -36,7 +39,7 @@ func _run() -> void:
 	shell.call("build")
 	await _frames(20)
 
-	_check((shell.get("tab_buttons") as Dictionary).size() == 5, "Production primary module count must be five")
+	_check((shell.get("tab_buttons") as Dictionary).size() == 6, "Production primary module count must be six")
 	_check(not (shell.get("tab_buttons") as Dictionary).has(&"gacha"), "Unauthorised gacha module is still exposed")
 	_check((shell.get("tab_buttons") as Dictionary).has(&"task_archive"), "Canonical task archive module is missing")
 	_check(not (shell.get("character_frames") as Array).is_empty(), "Profile character presentation did not resolve a usable clip")
@@ -49,9 +52,9 @@ func _run() -> void:
 	_check(shell.get_node_or_null("LongTermModuleGroup/LongTermContentDetailBlock") is TextureRect, "Compatibility content detail block is missing")
 	_check(shell.get_node_or_null("LongTermModuleGroup/LongTermContentListScroll") is ScrollContainer, "Scrollable module record list is missing")
 	_check(shell.get("content_detail_title_label") is Label, "Compatibility content title label is missing")
-	var readable_font := load("res://assets/fonts/NotoSansCJKsc-Regular.otf") as Font
-	_check(readable_font != null, "Readable CJK body font is missing")
-	_check((shell.get("content_detail_body_label") as Label).get_theme_font("font") == readable_font, "Body copy still uses the display pixel font")
+	var player_ui_font := SkinKit.player_ui_font()
+	_check(player_ui_font != null, "Shared player UI font stack is missing")
+	_check((shell.get("content_detail_body_label") as Label).get_theme_font("font") == player_ui_font, "Body copy does not inherit the FusionPixel player UI font stack")
 	shell.call("_apply_module_immediately", &"codex")
 	shell.call("show_secondary", &"monster")
 	await _frames(3)
@@ -84,6 +87,7 @@ func _run() -> void:
 		&"task_archive": [&"task", &"achievement", &"commission_record"],
 		&"codex": [&"map", &"monster", &"collectible", &"equipment", &"consumable", &"event", &"rule", &"lore"],
 		&"research": [&"unlock_interface", &"research_entry"],
+		&"talent": [&"tree"],
 		&"profile": [&"qualification_level", &"history", &"statistics", &"milestone", &"title", &"badge"],
 		&"collection_appearance": [&"unique_display", &"appearance_config", &"display_content", &"badge_title", &"settlement_display"],
 	}
@@ -117,7 +121,7 @@ func _run() -> void:
 			var body_label := shell.get("content_detail_body_label") as Label
 			_check(not title_label.text.strip_edges().is_empty(), "Secondary title is empty: %s/%s" % [String(module_id), String(group_id)])
 			_check(not body_label.text.strip_edges().is_empty(), "Secondary body is empty: %s/%s" % [String(module_id), String(group_id)])
-	_check(secondary_page_count == 24, "Expected 24 production secondary pages, got %d" % secondary_page_count)
+	_check(secondary_page_count == 25, "Expected 25 production secondary pages, got %d" % secondary_page_count)
 
 	shell.call("apply_snapshot", {
 		"meta_progress_summary": {
@@ -150,6 +154,14 @@ func _run() -> void:
 	_check(meta_actions.is_empty(), "Opening task archive emitted mark_viewed and could clear claimable rewards")
 
 	var art23_contract := load("res://scripts/presentation/art23_long_term_asset_contract.gd")
+	var current_module_ids: Array[StringName] = art23_contract.current_module_ids()
+	_check(
+		current_module_ids == [
+			&"task_archive", &"codex", &"research", &"talent", &"profile", &"collection_appearance",
+		],
+		"ART23 asset contract current module table drifted from the production six"
+	)
+	_check(not bool(art23_contract.is_current_module(&"gacha")), "Gacha remains a current asset-contract module")
 	_check(
 		StringName(art23_contract.asset_id(&"long_term.furniture.task_archive")) == &"ui.art23.long_term.furniture.goals",
 		"Task archive furniture did not explicitly reuse the audited goals asset"
@@ -158,6 +170,65 @@ func _run() -> void:
 		StringName(art23_contract.asset_id(&"long_term.control.module.task_archive.selected")) == &"ui.art23.long_term.control.module.goals.selected",
 		"Task archive module control did not explicitly reuse the audited goals asset"
 	)
+	_check(
+		StringName(art23_contract.asset_id(&"long_term.control.module.talent.selected")) == &"ui.art23.long_term.control.module.talent.selected",
+		"Talent module control does not resolve to its dedicated audited asset"
+	)
+	var talent_selected_texture := art23_contract.texture(&"long_term.control.module.talent.selected") as Texture2D
+	var talent_selected_source := ""
+	if talent_selected_texture != null:
+		talent_selected_source = talent_selected_texture.resource_path
+		if talent_selected_source.is_empty():
+			talent_selected_source = talent_selected_texture.resource_name
+	_check(
+		talent_selected_texture != null
+			and talent_selected_source == "res://assets/ui/art23/long_term/controls/module_talent_selected.png",
+		"Talent module selected state fell back instead of resolving its dedicated texture"
+	)
+	_check(
+		StringName(art23_contract.asset_id(&"long_term.furniture.talent")) == &"ui.art23.long_term.furniture.talent",
+		"Talent furniture does not resolve to its dedicated current asset id"
+	)
+	var talent_furniture_texture := art23_contract.furniture_texture(&"talent") as Texture2D
+	_check(
+		talent_furniture_texture != null
+			and _texture_source_path(talent_furniture_texture) == "res://assets/ui/art23/long_term/furniture/talent.png",
+		"Talent furniture fell back instead of resolving its dedicated current texture"
+	)
+	_check(
+		ContentDBAccessScript.has_asset(&"ui.art23.long_term.furniture.talent"),
+		"Dedicated talent furniture is absent from the current manifest-backed catalog"
+	)
+	_check(
+		StringName(art23_contract.asset_id(&"long_term.furniture.gacha")) == &""
+			and art23_contract.furniture_texture(&"gacha") == null,
+		"Gacha furniture is still reachable through the current asset contract"
+	)
+	var retired_gacha_assets := [
+		"furniture/gacha.png",
+		"controls/module_gacha_normal.png",
+		"controls/module_gacha_focused.png",
+		"controls/module_gacha_pressed.png",
+		"controls/module_gacha_selected.png",
+		"controls/module_gacha_locked.png",
+	]
+	for retired_relative_path in retired_gacha_assets:
+		_check(
+			not FileAccess.file_exists("res://assets/ui/art23/long_term/%s" % retired_relative_path),
+			"Retired gacha runtime file still exists: %s" % retired_relative_path
+		)
+	for retired_asset_id in [
+		&"ui.art23.long_term.furniture.gacha",
+		&"ui.art23.long_term.control.module.gacha.normal",
+		&"ui.art23.long_term.control.module.gacha.focused",
+		&"ui.art23.long_term.control.module.gacha.pressed",
+		&"ui.art23.long_term.control.module.gacha.selected",
+		&"ui.art23.long_term.control.module.gacha.locked",
+	]:
+		_check(
+			not ContentDBAccessScript.has_asset(retired_asset_id),
+			"Retired gacha asset remains in the current manifest: %s" % String(retired_asset_id)
+		)
 	var art25_contract := load("res://scripts/presentation/art25_content_asset_contract.gd")
 	var sample_card := {"id": "task_daily_first_steps"}
 	_check(
@@ -227,9 +298,17 @@ func _frames(count: int) -> void:
 		await process_frame
 
 
+func _texture_source_path(candidate: Texture2D) -> String:
+	if candidate == null:
+		return ""
+	if not candidate.resource_path.is_empty():
+		return candidate.resource_path
+	return candidate.resource_name
+
+
 func _finish() -> void:
 	if failures.is_empty():
-		print("ART23_LONG_TERM_RUNTIME=PASS primary_modules=5 secondary_pages=24 canonical=task_archive workspace=scrollable states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING")
+		print("ART23_LONG_TERM_RUNTIME=PASS primary_modules=6 secondary_pages=25 canonical=task_archive workspace=scrollable states=OPEN,CLOSED,OPENING,CLOSING,SWITCHING")
 		quit(0)
 		return
 	for failure in failures:

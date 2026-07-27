@@ -181,15 +181,15 @@ static func _action_for_cell(is_current: bool, flagged: bool, revealed: bool, ex
 		return {"id": &"toggle_flag", "label": "取消标记", "enabled": true, "reason": ""}
 	if not revealed:
 		if scanned:
-			return {"id": &"inspect", "label": "已扫描，需探索", "enabled": false, "reason": "scanned_not_explored"}
-		return {"id": &"toggle_flag", "label": "标记风险", "enabled": true, "reason": ""}
+			return {"id": &"inspect", "label": "需探索", "enabled": false, "reason": "scanned_not_explored"}
+		return {"id": &"toggle_flag", "label": "标记雷险", "enabled": true, "reason": ""}
 	if explored and bool(return_eligibility.get("eligible", return_eligibility.get("fast_return", false))):
-		return {"id": &"fast_return", "label": "回传到此房间", "enabled": true, "reason": ""}
+		return {"id": &"fast_return", "label": "回传", "enabled": true, "reason": ""}
 	if explored and room_type == &"Mine":
-		return {"id": &"inspect", "label": "雷险房仅查看", "enabled": false, "reason": "mine_not_fast_return"}
+		return {"id": &"inspect", "label": "雷险房", "enabled": false, "reason": "mine_not_fast_return"}
 	if distance == 1:
-		return {"id": &"inspect", "label": "相邻格，移动探索", "enabled": false, "reason": "use_movement_to_explore"}
-	return {"id": &"inspect", "label": "查看详情", "enabled": false, "reason": String(return_eligibility.get("reason_code", "not_fast_return_target"))}
+		return {"id": &"inspect", "label": "移动探索", "enabled": false, "reason": "use_movement_to_explore"}
+	return {"id": &"inspect", "label": "仅查看", "enabled": false, "reason": String(return_eligibility.get("reason_code", "not_fast_return_target"))}
 
 
 static func _detail_text(marker: Dictionary, action: Dictionary) -> String:
@@ -198,27 +198,21 @@ static func _detail_text(marker: Dictionary, action: Dictionary) -> String:
 	var room_type := String(marker.get("room_type", "Unknown"))
 	var adjacent := int(marker.get("adjacent_mines", -1))
 	var distance := int(marker.get("distance_to_player", -1))
-	var action_label := String(action.get("label", "查看"))
-	var reason := String(action.get("reason", ""))
-	# The expanded map has one compact status band above a large 10x10 grid.
-	# Keep the player-facing summary to two lines instead of forwarding the old
-	# four-line diagnostic dump, which both leaked raw enum values and crushed
-	# the type hierarchy at 1280x720.
-	var lines: Array[String] = [
-		"格子 (%d,%d) · %s · %s · 距离 %s" % [pos.x, pos.y, _known_state_label(state), _room_type_label(room_type), str(distance) if distance >= 0 else "未知"],
-		"周边雷险 %s · %s%s" % [str(adjacent) if adjacent >= 0 else "未知", action_label, "" if reason == "" else "（%s）" % _reason_label(reason)],
+	var parts: Array[String] = [
+		"(%d,%d)" % [pos.x, pos.y],
+		_known_state_label(state),
+		_room_type_label(room_type),
 	]
+	if distance >= 0:
+		parts.append("距离 %d" % distance)
+	parts.append("周围雷险 %s" % (str(adjacent) if adjacent >= 0 else "未知"))
 	if bool(marker.get("flagged", false)):
-		lines[1] += " · 已标记疑似危险，再次点击取消"
-	elif not bool(marker.get("revealed", false)):
-		lines[1] += " · 未知格需移动探索"
-	elif bool(marker.get("scanned", false)) and not bool(marker.get("explored", false)):
-		lines[1] += " · 尚不可回传"
-	elif bool(marker.get("explored", false)) and StringName(action.get("id", &"inspect")) == &"fast_return":
-		lines[1] += " · 可回传"
-	elif bool(marker.get("explored", false)):
-		lines[1] += " · 已公开，当前仅查看"
-	return _join_lines(lines)
+		parts.append("已标记")
+	if not bool(action.get("enabled", false)):
+		var reason := String(action.get("reason", ""))
+		if not reason.is_empty():
+			parts.append(_reason_label(reason))
+	return " · ".join(parts)
 
 
 static func _known_state_label(state: String) -> String:
@@ -260,30 +254,23 @@ static func _room_type_label(room_type: String) -> String:
 static func _reason_label(reason: String) -> String:
 	match reason:
 		"current_room":
-			return "当前所在房间"
+			return "当前位置"
 		"scanned_not_explored":
-			return "已扫描但未探索"
+			return "需先探索"
 		"mine_not_fast_return":
-			return "雷险房不可回传"
+			return "不可回传"
 		"use_movement_to_explore":
-			return "使用移动进入探索"
+			return "移动进入"
 		"blocked_unknown":
-			return "未知房间不可回传"
+			return "未知房不可回传"
 		"blocked_scanned_only":
 			return "仅扫描不可回传"
 		"not_fast_return_target":
-			return "不是可回传目标"
+			return "仅查看"
 		_:
 			return reason
 
 
-static func _join_lines(lines: Array[String]) -> String:
-	var text := ""
-	for index in range(lines.size()):
-		if index > 0:
-			text += "\n"
-		text += lines[index]
-	return text
 
 
 static func _label_for_known_state(state: StringName) -> String:

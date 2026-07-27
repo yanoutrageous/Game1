@@ -49,6 +49,8 @@ static func item_presentation(item: Dictionary) -> Dictionary:
 			"display_name": "未命名物资",
 			"rarity": ItemRarityDescriptorScript.describe(&"unknown"),
 			"rarity_text": "[?] 未鉴定",
+			"collectible_level": 0,
+			"collectible_level_text": "",
 			"quantity": 0,
 			"weight": 0,
 			"base_value": 0,
@@ -68,25 +70,30 @@ static func item_presentation(item: Dictionary) -> Dictionary:
 	var weight: Variant = item.get("weight", 1)
 	var base_value: Variant = item.get("base_value", 0)
 	var short_description := String(item.get("short_description", item.get("description", ""))).strip_edges()
-	var summary_text := "%s  %s  ×%d  重%s" % [display_name, rarity_text, quantity, weight]
+	var collectible_level := maxi(0, int(item.get("collectible_level", 0)))
+	var collectible_level_text := "收藏等级 %d" % collectible_level if collectible_level > 0 else ""
+	var collection_summary := "  %s" % collectible_level_text if collectible_level_text != "" else ""
+	var summary_text := "%s  %s%s  ×%d  重%s" % [display_name, rarity_text, collection_summary, quantity, weight]
 	var quantity_text := "  ×%d" % quantity if quantity > 1 else ""
-	var display_line := "%s  %s  %s%s  重%s  值%s" % [
+	var display_line := "%s  %s  %s%s%s  重%s  值%s" % [
 		display_name,
 		type_label,
 		rarity_text,
+		collection_summary,
 		quantity_text,
 		weight,
 		base_value,
 	]
+	var rarity_line := "品质：%s" % rarity_text
+	if collectible_level > 0:
+		rarity_line += "　收藏等级：%d" % collectible_level
 	var detail_lines: Array[String] = [
 		display_name,
-		"品质：%s" % rarity_text,
+		rarity_line,
 		"重量：%s　数量：%d" % [weight, quantity],
 	]
 	if short_description != "":
 		detail_lines.append(short_description)
-	if int(item.get("collectible_level", 0)) > 0:
-		detail_lines.append("收藏等级：%s" % item.get("collectible_level", 0))
 	if bool(item.get("can_consume", false)):
 		detail_lines.append("可使用：%s %s" % [_effect_kind_label(String(item.get("effect_kind", ""))), item.get("effect_amount", 0)])
 	if bool(item.get("can_equip", false)):
@@ -95,6 +102,8 @@ static func item_presentation(item: Dictionary) -> Dictionary:
 		"display_name": display_name,
 		"rarity": rarity.duplicate(true),
 		"rarity_text": rarity_text,
+		"collectible_level": collectible_level,
+		"collectible_level_text": collectible_level_text,
 		"quantity": quantity,
 		"weight": weight,
 		"base_value": base_value,
@@ -217,6 +226,9 @@ static func command_result_text(result: Dictionary) -> String:
 		if not item.is_empty():
 			return "已更新：%s。" % item_name
 		return ""
+	var blocked_message := String(detail.get("message", result.get("message", "")))
+	if blocked_message != "":
+		return _player_message(blocked_message)
 	return "操作受阻：%s" % reason_label(reason)
 
 
@@ -375,6 +387,9 @@ static func result_item_model(item: Dictionary) -> Dictionary:
 		"short_description": String(presentation.get("short_description", "")),
 		"weight": maxi(0, int(presentation.get("weight", 1))),
 		"rarity": (presentation.get("rarity", {}) as Dictionary).duplicate(true),
+		"collectible_level": maxi(0, int(presentation.get("collectible_level", 0))),
+		"collectible_level_text": String(presentation.get("collectible_level_text", "")),
+		"detail_text": String(presentation.get("detail_text", "")),
 		"source_item": item.duplicate(true),
 	}
 
@@ -580,6 +595,22 @@ static func _player_message(message: String, event_state: Dictionary = {}) -> St
 	var text := message.strip_edges()
 	if text == "":
 		return ""
+	if text.begins_with("Run started:"):
+		return "探索已开始。"
+	if text.begins_with("Run failed:"):
+		return "本次探索失败。请在结算页选择要保全的物资。"
+	if text.begins_with("Run abandoned:"):
+		return "已结束本次探索。"
+	if text.begins_with("Salvage selection blocked:"):
+		var salvage_reason := text.trim_prefix("Salvage selection blocked:").trim_suffix(".").strip_edges()
+		return "无法确认保全选择：%s" % reason_label(salvage_reason)
+	if text.begins_with("Return blocked:"):
+		var return_reason := text.trim_prefix("Return blocked:").trim_suffix(".").strip_edges()
+		return "暂时无法返回：%s" % reason_label(return_reason)
+	for blocked_prefix in ["Pickup blocked:", "Replace blocked:", "Drop blocked:", "Use blocked:", "Equip blocked:", "Unequip blocked:"]:
+		if text.begins_with(blocked_prefix):
+			var blocked_reason := text.trim_prefix(blocked_prefix).trim_suffix(".").strip_edges()
+			return "操作受阻：%s" % reason_label(blocked_reason)
 	# Legacy room-entry messages carry raw event enums. The enum in that string
 	# is never presentation authority: use the structured EventService projection
 	# when available, and a generic player-safe fallback otherwise.
@@ -590,7 +621,69 @@ static func _player_message(message: String, event_state: Dictionary = {}) -> St
 		# visible overlay and focus transfer are already the complete feedback;
 		# surfacing the legacy placeholder creates a redundant engineering toast.
 		return ""
+	match text:
+		"Exit room ready. Request extraction.", "Exit ready. Request extraction.":
+			return "已抵达撤离点，可确认撤离。"
+		"Monster present. Fight is available.", "Monster requires fight command.":
+			return "发现异常体，可开始清理。"
+		"Chest can be searched.":
+			return "发现物资箱，靠近后可查看内容。"
+		"This room was already searched.":
+			return "当前房间已搜索。"
+		"Cannot search unrevealed room.":
+			return "请先探明当前房间。"
+		"This room cannot be searched.", "Current room cannot be searched.":
+			return "当前位置不可搜索。"
+		"Spawn cannot be searched.", "Spawn room cannot be searched.":
+			return "出发点无需搜索。"
+		"Mine room has no safe interaction.":
+			return "雷险房间没有可安全执行的交互。"
+		"Nothing to interact with here.":
+			return "这里暂时没有可交互目标。"
+		"No event option is available here.", "Encounter option unavailable.", "Event option unavailable.":
+			return "当前没有可用的事件选项。"
+		"No monster to fight here.":
+			return "这里没有可清理的异常体。"
+		"Monster already cleared.":
+			return "当前房间的威胁已清理。"
+		"Triggered mine re-entered; no damage.":
+			return "该雷险已触发，本次经过不会再次受伤。"
+		"Event already resolved.", "Event resolved.":
+			return "当前事件已处理。"
+		"Event left unresolved.":
+			return "已离开事件，事件仍未处理。"
+		"Extraction requested. Confirm or cancel.":
+			return "已准备撤离，请确认或取消。"
+		"No extraction request is active.":
+			return "当前没有待确认的撤离请求。"
+		"Extraction cancelled: not on exit.":
+			return "已离开撤离点，本次撤离请求已取消。"
+		"Extraction cancelled.":
+			return "已取消撤离。"
+		"Extraction complete.":
+			return "撤离完成。"
+		"Failure settlement confirmed.":
+			return "失败结算已确认。"
+		"Invalid move: only four-direction movement is allowed.":
+			return "只能向四个方向移动。"
+		"Blocked by map boundary.", "Teleport target is outside the map.":
+			return "目标超出地图范围。"
+		"Blocked by flag.":
+			return "目标已被标记，取消标记后才能进入。"
+		"Blocked: target is not revealed.":
+			return "目标房间尚未探明。"
+		"Item command completed.":
+			return "物品操作已完成。"
+	if text.begins_with("Flag toggled at "):
+		return "已更新房间标记。"
+	if text.begins_with("Teleported to explored room "):
+		return "已回到选定的已探索房间。"
+	if text.begins_with("Equipped item:"):
+		return "已装备：%s" % text.trim_prefix("Equipped item:").strip_edges()
+	if text.begins_with("Unequipped item:"):
+		return "已卸下：%s" % text.trim_prefix("Unequipped item:").strip_edges()
 	text = text.replace("black coin", "本局黑币")
+	text = text.replace("black_coin", "本局黑币")
 	text = text.replace("gold_coin", "安全收益")
 	text = text.replace("gold coin", "安全收益")
 	text = text.replace("on room floor", "留在地面")
@@ -600,8 +693,27 @@ static func _player_message(message: String, event_state: Dictionary = {}) -> St
 	text = text.replace("Replaced floor item: picked", "已收起")
 	text = text.replace(", dropped", "，放下")
 	text = text.replace("Consumable used.", "物品已使用。")
+	text = text.replace("Combat hit:", "受到攻击：")
+	text = text.replace("Fled combat: lost", "已撤出战斗：损失")
+	text = text.replace("pending", "尚未锁定的")
+	text = text.replace("item(s) left on this room floor.", "件物资留在当前房间。")
 	text = text.replace("Monster cleared:", "威胁已清理：")
 	text = text.replace("Mine triggered:", "触发陷阱：")
+	text = text.replace("Altar exchange complete:", "祭坛交换完成：")
+	text = text.replace("Altar stage", "祭坛阶段")
+	text = text.replace("Sequence complete.", "流程已完成。")
+	text = text.replace("Sequence can continue.", "还可继续。")
+	text = text.replace("Trader treatment:", "治疗完成：")
+	text = text.replace("Trader info:", "情报交易完成：")
+	text = text.replace("nearby clue recorded.", "已记录附近线索。")
+	text = text.replace("Mechanism opened:", "机关已开启：")
+	text = text.replace("Mechanism triggered:", "机关触发：")
+	text = text.replace("reward", "获得")
+	text = text.replace("damage", "伤害")
+	text = text.replace("items", "物品")
+	text = text.replace("item", "物品")
+	text = text.replace("pressure", "压力")
+	text = text.replace("HP", "生命")
 	text = text.replace("Extraction requires an exit room.", "只有撤离点可以撤离。")
 	text = text.replace("Current room cannot be searched.", "当前位置不可搜索。")
 	text = text.replace("Spawn room cannot be searched.", "出发点不可搜索。")

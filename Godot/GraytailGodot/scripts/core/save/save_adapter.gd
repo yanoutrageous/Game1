@@ -3,6 +3,7 @@ class_name SaveAdapter
 
 const M3ItemCatalogScript := preload("res://scripts/core/content/m3_item_catalog.gd")
 const M7ProgressionServiceScript := preload("res://scripts/core/progression/m7_progression_service.gd")
+const M7TalentCatalogScript := preload("res://scripts/core/progression/m7_talent_catalog.gd")
 
 const M1_META_PROGRESS_PATH := "user://graytail_m1_meta_progress.json"
 const SAVE_ROOT_DIR := "user://saves"
@@ -51,7 +52,7 @@ func describe_boundary() -> Dictionary:
 
 func default_meta_progress() -> Dictionary:
 	var result := {
-		"schema_version": 3,
+		"schema_version": 5,
 		"gold": 0,
 		"warehouse_items": _starter_warehouse_items(),
 		"starter_grant_version": 1,
@@ -62,6 +63,8 @@ func default_meta_progress() -> Dictionary:
 		"protocol_difficulty": 5,
 		"talent_points": 0,
 		"talent_flags": [],
+		"talent_budget_granted": 0,
+		"talent_catalog_version": M7TalentCatalogScript.CATALOG_VERSION,
 		"run_count": 0,
 		"extract_count": 0,
 		"fail_count": 0,
@@ -69,6 +72,7 @@ func default_meta_progress() -> Dictionary:
 		"debug_used": false,
 		"debug_commands": [],
 		"committed_result_ids": [],
+		"meta_action_receipts": {},
 	}
 	for key in M7ProgressionServiceScript.default_meta_fields().keys():
 		result[key] = M7ProgressionServiceScript.default_meta_fields()[key]
@@ -252,7 +256,7 @@ func _recovered_load_result(data: Dictionary, recovery_path: String, primary_sta
 
 func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Dictionary:
 	var result := fallback.duplicate(true)
-	result["schema_version"] = maxi(int(data.get("schema_version", 1)), int(result.get("schema_version", 3)))
+	result["schema_version"] = maxi(int(data.get("schema_version", 1)), int(result.get("schema_version", 5)))
 	result["gold"] = maxi(0, int(data.get("gold", result.get("gold", 0))))
 	result["warehouse_items"] = _array_from(data.get("warehouse_items", result.get("warehouse_items", [])))
 	var starter_version := maxi(0, int(data.get("starter_grant_version", 0)))
@@ -272,6 +276,9 @@ func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Diction
 	result["protocol_difficulty"] = maxi(1, int(data.get("protocol_difficulty", result.get("protocol_difficulty", 5))))
 	result["talent_points"] = maxi(0, int(data.get("talent_points", result.get("talent_points", 0))))
 	result["talent_flags"] = _array_from(data.get("talent_flags", result.get("talent_flags", [])))
+	result["talent_budget_granted"] = maxi(0, int(data.get("talent_budget_granted", result.get("talent_budget_granted", 0))))
+	result["talent_catalog_version"] = maxi(0, int(data.get("talent_catalog_version", result.get("talent_catalog_version", 0))))
+	M7TalentCatalogScript.sync_progress(result, not data.has("talent_budget_granted"))
 	result["run_count"] = maxi(0, int(data.get("run_count", result.get("run_count", 0))))
 	result["extract_count"] = maxi(0, int(data.get("extract_count", result.get("extract_count", 0))))
 	result["fail_count"] = maxi(0, int(data.get("fail_count", result.get("fail_count", 0))))
@@ -279,6 +286,7 @@ func _normalize_meta_progress(data: Dictionary, fallback: Dictionary) -> Diction
 	result["debug_used"] = bool(data.get("debug_used", result.get("debug_used", false)))
 	result["debug_commands"] = _array_from(data.get("debug_commands", result.get("debug_commands", [])))
 	result["committed_result_ids"] = _array_from(data.get("committed_result_ids", result.get("committed_result_ids", [])))
+	result["meta_action_receipts"] = _dictionary_from(data.get("meta_action_receipts", result.get("meta_action_receipts", {})))
 	for key in M7ProgressionServiceScript.default_meta_fields().keys():
 		if data.has(key):
 			result[key] = data[key]

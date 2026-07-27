@@ -6,7 +6,6 @@ const RunUIViewModel := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 signal main_entry_requested(entry_id: StringName)
 signal deploy_entry_requested(entry_id: StringName)
 signal long_term_entry_requested(entry_id: StringName)
-signal start_tutorial_requested
 signal start_standard_requested
 signal dev_diagnostics_requested
 
@@ -135,7 +134,6 @@ func _build_main_page() -> void:
 	_add_menu_button(mode_panel, "长期系统", func() -> void: main_entry_requested.emit(&"long_term"))
 	_add_menu_button(mode_panel, "设置", func() -> void: main_entry_requested.emit(&"settings"))
 	_add_section_label(mode_panel, "低权重入口")
-	_add_menu_button(mode_panel, "教学局", func() -> void: start_tutorial_requested.emit())
 	_add_menu_button(mode_panel, "继续标准局", func() -> void: start_standard_requested.emit())
 
 	var shortcut_panel := HBoxContainer.new()
@@ -188,8 +186,7 @@ func _build_deploy_page() -> void:
 	deploy_body_label = _add_label(deploy_page, "DeployBody", Rect2(82, 172, 790, 330), "", 16)
 	deploy_summary_label = _add_label(deploy_page, "DeploySummary", Rect2(990, 142, 236, 350), "出勤摘要", 15)
 	_add_button(deploy_page, "ToggleCenterPanelButton", Rect2(782, 558, 126, 36), "收放面板", func() -> void: _toggle_center_panel())
-	_add_button(deploy_page, "StartTutorialButton", Rect2(990, 506, 110, 44), "教学局", func() -> void: start_tutorial_requested.emit())
-	_add_button(deploy_page, "StartStandard10x10Button", Rect2(1110, 506, 118, 44), "标准局", func() -> void: start_standard_requested.emit())
+	_add_button(deploy_page, "StartStandard10x10Button", Rect2(990, 506, 238, 44), "进入地图选择", func() -> void: start_standard_requested.emit())
 	_add_button(deploy_page, "ConfirmDeployButton", Rect2(990, 566, 238, 56), "确认出发", func() -> void: start_standard_requested.emit())
 
 	_add_button(deploy_page, "DeployToLongTermButton", Rect2(990, 630, 238, 34), "长期系统", func() -> void: deploy_entry_requested.emit(&"long_term"))
@@ -367,7 +364,7 @@ func _deploy_tab_body(tab_id: StringName) -> String:
 		&"settings":
 			return "设置\n\n本阶段只保留设置壳层，不写本地持久化，不保存本地偏好。"
 		_:
-			return "出勤配置\n\n可选择教学局或标准局。右侧摘要来自当前 Run snapshot / ViewModel。\n\n正式 UI 只 dispatch command；状态读取走 snapshot。"
+			return "出勤配置\n\n教程与常规作业统一从地图目录选择。右侧摘要来自当前 Run snapshot / ViewModel。\n\n正式 UI 只 dispatch command；状态读取走 snapshot。"
 
 
 func _add_section_label(parent: Control, text: String) -> Label:
