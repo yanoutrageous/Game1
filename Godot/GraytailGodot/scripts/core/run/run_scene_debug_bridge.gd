@@ -34,6 +34,8 @@ static func nearest_room_of_type(context: RunContext, room_type: StringName) -> 
 static func debug_result_message(prefix: String, summary: Dictionary) -> String:
 	if bool(summary.get("write_blocked", false)):
 		return "%s blocked: %s" % [prefix, summary.get("write_block_reason", "write_blocked")]
+	if str(summary.get("last_error", "")).begins_with("debug_sandbox_profile_required"):
+		return "%s blocked: dev_sandbox profile required" % prefix
 	return "%s gold=%s items=%s" % [prefix, summary.get("gold", 0), summary.get("warehouse_items_count", 0)]
 
 

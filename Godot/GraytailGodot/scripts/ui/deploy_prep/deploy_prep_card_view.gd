@@ -8,6 +8,7 @@ const Art25ContentAssetContractScript := preload("res://scripts/presentation/art
 const ItemRarityDescriptorScript := preload("res://scripts/presentation/item_rarity_descriptor.gd")
 
 signal card_pressed(card_id: StringName)
+signal quantity_delta_requested(card_id: StringName, delta: int)
 
 var card_id: StringName = &""
 var card_data: Dictionary = {}
@@ -19,6 +20,9 @@ var summary_label: Label
 var state_label: Label
 var state_panel: Panel
 var state_hint_label: Label
+var quantity_minus_button: Button
+var quantity_plus_button: Button
+var quantity_value_label: Label
 var batch_selection_active := false
 var batch_checked := false
 var batch_eligible := false
@@ -32,7 +36,8 @@ func setup(card: Dictionary, tab_id: StringName, is_selected: bool) -> void:
 	selected = is_selected
 	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
 	set_meta("runtime_ui_scale_factor", ui_scale_factor)
-	custom_minimum_size = Vector2(232, 76)
+	custom_minimum_size = Vector2(294, 76)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size = custom_minimum_size
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	_build_nodes(tab_id)
@@ -68,6 +73,7 @@ func apply_selected(value: bool) -> void:
 		state_label.text = _display_state(state)
 	if state_hint_label != null:
 		state_hint_label.text = _state_hint()
+	_refresh_quantity_projection()
 	if batch_selection_active:
 		_apply_batch_selection_visual()
 
@@ -81,6 +87,22 @@ func apply_batch_selection(active: bool, checked: bool, eligible: bool, reason: 
 		apply_selected(selected)
 		return
 	_apply_batch_selection_visual()
+
+
+func apply_quantity_state(
+	mode: StringName,
+	current: int,
+	limit: int,
+	enabled: bool,
+	category: String = ""
+) -> void:
+	card_data["quantity_mode"] = mode
+	card_data["quantity_current"] = maxi(0, current)
+	card_data["quantity_limit"] = maxi(0, limit)
+	card_data["quantity_enabled"] = enabled
+	if not category.is_empty():
+		card_data["quantity_category"] = category
+	_refresh_quantity_projection()
 
 
 func grab_card_focus() -> void:
@@ -121,7 +143,7 @@ func _build_nodes(tab_id: StringName) -> void:
 
 	var rarity_edge := _add_color_rect("CardRarityEdge", Rect2(2, 5, 3, 66), _rarity_color())
 	rarity_edge.set_meta("rarity_border_token", _rarity_descriptor().get("border_token", &"rarity.border.unknown"))
-	_add_color_rect("CardContentMatte", Rect2(68, 7, 156, 62), Color(0.015, 0.055, 0.060, 0.38))
+	_add_color_rect("CardContentMatte", Rect2(68, 7, 218, 62), Color(0.015, 0.055, 0.060, 0.38))
 	_add_asset_panel("CardArtworkFrame", Rect2(7, 8, 56, 60), &"slot", &"normal")
 	var art_filter_id := StringName(card_data.get("art_filter_id", card_data.get("filter_id", &"")))
 	var art_ref := Art09ManifestAssetMappingScript.inventory_item_icon_ref(card_data) if card_data.has("item_id") else (Art25ContentAssetContractScript.deploy_card_ref(card_id) if Art25ContentAssetContractScript.handles_deploy_card(card_id) else Art22DeployPrepAssetContractScript.card_art_ref(tab_id, card_id, art_filter_id))
@@ -136,18 +158,61 @@ func _build_nodes(tab_id: StringName) -> void:
 	_set_rect(artwork, art_rect)
 	add_child(artwork)
 
-	title_label = _add_label("CardTitle", Rect2(72, 8, 148, 23), _display_title(), 15, Color(0.96, 0.86, 0.63), HORIZONTAL_ALIGNMENT_LEFT)
+	var title_color := _rarity_color() if card_data.has("item_id") else Color(0.96, 0.86, 0.63)
+	title_label = _add_label("CardTitle", Rect2(72, 8, 210, 23), _display_title(), 15, title_color, HORIZONTAL_ALIGNMENT_LEFT)
 	title_label.clip_text = true
-	summary_label = _add_label("CardSummary", Rect2(72, 31, 148, 18), _summary_text(), 11, Color(0.76, 0.82, 0.76), HORIZONTAL_ALIGNMENT_LEFT)
+	if bool(card_data.get("quantity_capable", false)):
+		summary_label = _add_label("CardSummary", Rect2(72, 37, 120, 24), "", 11, Color(0.76, 0.82, 0.76), HORIZONTAL_ALIGNMENT_LEFT)
+		summary_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		summary_label.clip_text = true
+		quantity_minus_button = _add_quantity_button("CardQuantityMinus", Rect2(196, 36, 24, 26), "−", -1)
+		quantity_value_label = _add_label("CardQuantityValue", Rect2(221, 36, 36, 26), "", 11, Color(0.96, 0.86, 0.63), HORIZONTAL_ALIGNMENT_CENTER)
+		quantity_plus_button = _add_quantity_button("CardQuantityPlus", Rect2(258, 36, 24, 26), "+", 1)
+		state_panel = null
+		state_label = null
+		state_hint_label = null
+		_refresh_quantity_projection()
+		return
+	summary_label = _add_label("CardSummary", Rect2(72, 31, 210, 18), _summary_text(), 11, Color(0.76, 0.82, 0.76), HORIZONTAL_ALIGNMENT_LEFT)
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	summary_label.clip_text = true
-	_add_chip("CardCategoryChip", Rect2(72, 51, 70, 18), _category_chip_text())
-	_add_chip("CardModeChip", Rect2(146, 51, 74, 18), _mode_chip_text())
+	_add_chip("CardCategoryChip", Rect2(72, 51, 102, 18), _category_chip_text())
+	_add_chip("CardModeChip", Rect2(178, 51, 104, 18), _mode_chip_text())
 	state_panel = _add_asset_panel("CardStatePanel", Rect2(7, 49, 56, 19), &"slot", &"normal")
 	state_label = _add_label("CardState", Rect2(9, 50, 52, 17), "", 10, Color(0.42, 0.92, 0.86), HORIZONTAL_ALIGNMENT_CENTER)
 	state_label.clip_text = true
 	state_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	state_hint_label = null
+
+
+func _refresh_quantity_projection() -> void:
+	if not bool(card_data.get("quantity_capable", false)) or quantity_value_label == null:
+		return
+	var mode := StringName(card_data.get("quantity_mode", &"none"))
+	var current := maxi(0, int(card_data.get("quantity_current", 0)))
+	var limit := maxi(0, int(card_data.get("quantity_limit", 0)))
+	var enabled := bool(card_data.get("quantity_enabled", true))
+	var category := str(card_data.get("quantity_category", card_data.get("category", "物品")))
+	if summary_label != null:
+		summary_label.text = Art10UISkinKitScript.short_summary(category, 6)
+	var interactive := mode in [&"carry", &"purchase", &"sale"]
+	quantity_minus_button.visible = interactive
+	quantity_plus_button.visible = interactive
+	quantity_minus_button.disabled = not enabled or current <= (1 if mode == &"purchase" else 0)
+	quantity_plus_button.disabled = not enabled or current >= limit
+	match mode:
+		&"carry":
+			quantity_value_label.text = "%d/%d" % [current, limit]
+			quantity_value_label.tooltip_text = "已携带 / 持有"
+		&"purchase":
+			quantity_value_label.text = str(current)
+			quantity_value_label.tooltip_text = "本次购买数量"
+		&"sale":
+			quantity_value_label.text = "%d/%d" % [current, limit]
+			quantity_value_label.tooltip_text = "待出售 / 可出售"
+		_:
+			quantity_value_label.text = "%d 件" % limit
+			quantity_value_label.tooltip_text = "当前持有数量"
 
 
 func _display_title() -> String:
@@ -312,6 +377,26 @@ func _add_chip(node_name: String, rect: Rect2, text: String) -> void:
 	add_child(panel)
 	var label := _add_label(node_name + "Label", Rect2(rect.position + Vector2(4, 1), rect.size - Vector2(8, 2)), text, 10, Color(0.80, 0.75, 0.62), HORIZONTAL_ALIGNMENT_CENTER)
 	label.clip_text = true
+
+
+func _add_quantity_button(
+	node_name: String,
+	rect: Rect2,
+	text: String,
+	delta: int
+) -> Button:
+	var control := Button.new()
+	control.name = node_name
+	control.text = text
+	control.focus_mode = Control.FOCUS_ALL
+	control.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	Art10UISkinKitScript.apply_button(control, &"secondary", 12)
+	_set_rect(control, rect)
+	control.pressed.connect(func() -> void:
+		quantity_delta_requested.emit(card_id, delta)
+	)
+	add_child(control)
+	return control
 
 
 func _add_asset_panel(node_name: String, rect: Rect2, control_id: StringName, state: StringName) -> Panel:

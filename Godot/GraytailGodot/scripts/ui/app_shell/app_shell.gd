@@ -508,6 +508,8 @@ func _build_settings_overlay() -> void:
 	settings_page.add_child(settings_panel)
 	settings_panel.call("set_external_cancel_authority", true)
 	settings_panel.connect("close_requested", _close_settings_to_main)
+	if settings_panel.has_signal("test_room_requested"):
+		settings_panel.connect("test_room_requested", _on_test_room_requested)
 	settings_close_button = settings_panel.get("close_button") as Button
 	if settings_close_button != null:
 		var action_row := settings_close_button.get_parent()
@@ -961,6 +963,25 @@ func _close_settings_to_main() -> void:
 	if not had_modal_focus:
 		_restore_main_menu_focus()
 	page_changed.emit(PageRouterScript.PAGE_MAIN_MENU, {"source_page": PageRouterScript.PAGE_SETTINGS_PLACEHOLDER})
+
+
+func _on_test_room_requested() -> void:
+	_current_page_id = PageRouterScript.PAGE_RUN
+	_hide_settings(false)
+	_hide_exit_confirm(false)
+	var payload := {
+		"entry_id": &"i4_debug_test_room",
+		"entry_label": "隔离测试场",
+		"source_page": PageRouterScript.PAGE_SETTINGS_PLACEHOLDER,
+		"route_mode": &"demo_run",
+		"debug_test_room": true,
+		"scenario_id": &"demo_7x7",
+		"seed_value": 1001,
+		"preview_only": false,
+	}
+	var intent := NavigationIntentScript.make_run(&"settings_test_room", payload)
+	host_route_requested.emit(intent)
+	page_changed.emit(PageRouterScript.PAGE_RUN, payload)
 
 
 func _restore_main_menu_focus() -> void:

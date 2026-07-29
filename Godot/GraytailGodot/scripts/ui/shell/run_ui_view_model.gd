@@ -143,6 +143,121 @@ static func item_quantity(item: Dictionary) -> int:
 	return 1
 
 
+static func aggregate_item_projection(items_variant: Variant) -> Array[Dictionary]:
+	var items: Array = items_variant if items_variant is Array else []
+	var stack_order: Array[String] = []
+	var stacks: Dictionary = {}
+	for raw_item in items:
+		if not (raw_item is Dictionary):
+			continue
+		var item := (raw_item as Dictionary).duplicate(true)
+		if item.is_empty():
+			continue
+		var stack_key := item_stack_key(item)
+		if not stacks.has(stack_key):
+			var first_ids := _item_instance_ids(item)
+			var first_quantity := item_quantity(item)
+			item["stack_key"] = stack_key
+			item["instance_ids"] = first_ids
+			item["instance_id"] = first_ids[0] if not first_ids.is_empty() else String(item.get("instance_id", ""))
+			item["quantity"] = first_quantity
+			item["stack_count"] = first_quantity
+			item["exact_instance_count"] = first_ids.size()
+			item["unit_weight"] = maxi(0, int(item.get("weight", 0)))
+			item["total_weight"] = maxi(0, int(item.get("weight", 0))) * first_quantity
+			stacks[stack_key] = item
+			stack_order.append(stack_key)
+			continue
+		var stack := (stacks[stack_key] as Dictionary).duplicate(true)
+		var next_ids: Array[String] = []
+		for raw_instance_id in stack.get("instance_ids", []):
+			var existing_id := String(raw_instance_id)
+			if existing_id != "" and not next_ids.has(existing_id):
+				next_ids.append(existing_id)
+		for next_id in _item_instance_ids(item):
+			if next_id != "" and not next_ids.has(next_id):
+				next_ids.append(next_id)
+		next_ids.sort()
+		var next_quantity := int(stack.get("quantity", 0)) + item_quantity(item)
+		stack["instance_ids"] = next_ids
+		stack["instance_id"] = next_ids[0] if not next_ids.is_empty() else String(stack.get("instance_id", ""))
+		stack["quantity"] = next_quantity
+		stack["stack_count"] = next_quantity
+		stack["exact_instance_count"] = next_ids.size()
+		stack["total_weight"] = maxi(0, int(stack.get("unit_weight", stack.get("weight", 0)))) * next_quantity
+		stacks[stack_key] = stack
+	var result: Array[Dictionary] = []
+	for stack_key in stack_order:
+		var stack := (stacks[stack_key] as Dictionary).duplicate(true)
+		var sorted_ids: Array[String] = []
+		for raw_instance_id in stack.get("instance_ids", []):
+			var instance_id := String(raw_instance_id)
+			if instance_id != "" and not sorted_ids.has(instance_id):
+				sorted_ids.append(instance_id)
+		sorted_ids.sort()
+		stack["instance_ids"] = sorted_ids
+		stack["instance_id"] = sorted_ids[0] if not sorted_ids.is_empty() else String(stack.get("instance_id", ""))
+		stack["exact_instance_count"] = sorted_ids.size()
+		result.append(stack)
+	return result
+
+
+static func item_stack_key(item: Dictionary) -> String:
+	var semantic_item := item.duplicate(true)
+	for transient_key in [
+		"instance_id",
+		"instance_ids",
+		"quantity",
+		"stack_count",
+		"count",
+		"exact_instance_count",
+		"total_weight",
+		"stack_key",
+		"room_pos",
+	]:
+		semantic_item.erase(transient_key)
+	var key := _stable_variant_text(semantic_item)
+	if bool(item.get("is_unique", false)):
+		key += "|unique_instance=%s" % String(item.get("instance_id", ""))
+	return key
+
+
+static func _item_instance_ids(item: Dictionary) -> Array[String]:
+	var result: Array[String] = []
+	var raw_ids: Variant = item.get("instance_ids", [])
+	if raw_ids is Array:
+		for raw_id in raw_ids:
+			var instance_id := String(raw_id)
+			if instance_id != "" and not result.has(instance_id):
+				result.append(instance_id)
+	var direct_id := String(item.get("instance_id", ""))
+	if direct_id != "" and not result.has(direct_id):
+		result.append(direct_id)
+	result.sort()
+	return result
+
+
+static func _stable_variant_text(value: Variant) -> String:
+	if value is Dictionary:
+		var dictionary := value as Dictionary
+		var keys: Array[String] = []
+		for raw_key in dictionary.keys():
+			keys.append(String(raw_key))
+		keys.sort()
+		var entries: Array[String] = []
+		for key in keys:
+			entries.append("%s:%s" % [JSON.stringify(key), _stable_variant_text(dictionary.get(key))])
+		return "{%s}" % ",".join(entries)
+	if value is Array:
+		var entries: Array[String] = []
+		for entry in value:
+			entries.append(_stable_variant_text(entry))
+		return "[%s]" % ",".join(entries)
+	if value is StringName:
+		return JSON.stringify(String(value))
+	return JSON.stringify(value)
+
+
 static func _item_type_label(item_type: String) -> String:
 	match item_type:
 		"consumable":

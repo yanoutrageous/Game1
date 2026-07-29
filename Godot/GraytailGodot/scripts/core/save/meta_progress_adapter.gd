@@ -10,6 +10,7 @@ const M7TalentCatalogScript := preload("res://scripts/core/progression/m7_talent
 const META_ACTION_RECEIPTS_KEY := "meta_action_receipts"
 const META_ACTION_RECEIPT_SCHEMA_VERSION := 1
 const META_ACTION_RECEIPT_LIMIT := 512
+const MAX_BATCH_PURCHASE_QUANTITY := 99
 
 var save_adapter: SaveAdapter = SaveAdapterScript.new()
 var data: Dictionary = {}
@@ -43,6 +44,10 @@ func build_settlement_export(result_snapshot: Dictionary) -> Dictionary:
 
 func can_write_persistence() -> bool:
 	return not write_blocked
+
+
+func is_debug_sandbox_profile() -> bool:
+	return active_profile_id == SaveProfileManifestScript.DEBUG_SANDBOX_PROFILE_ID
 
 
 func describe_boundary() -> Dictionary:
@@ -174,6 +179,20 @@ func clear() -> Dictionary:
 func apply_settlement(result_snapshot: Dictionary) -> Dictionary:
 	if data.is_empty():
 		load_or_create_default()
+	if (
+		_result_uses_debug(result_snapshot)
+		and active_profile_id != SaveProfileManifestScript.DEBUG_SANDBOX_PROFILE_ID
+	):
+		last_commit = {
+			"ok": false,
+			"status": "debug_tainted_production_profile_blocked",
+			"reason": "debug_tainted_production_profile_blocked",
+			"result_id": _result_id(result_snapshot),
+			"profile_id": active_profile_id,
+			"required_profile_id": SaveProfileManifestScript.DEBUG_SANDBOX_PROFILE_ID,
+			"summary": get_summary(),
+		}
+		return last_commit.duplicate(true)
 	if not _ensure_writable("apply_settlement"):
 		last_commit = {
 			"ok": false,
@@ -330,32 +349,111 @@ func get_summary() -> Dictionary:
 
 
 func purchase_item(item_id: String, source: String = "m7_base_shop") -> Dictionary:
-	if not _ensure_writable("purchase_item"):
+	var result := purchase_items(item_id, 1, source)
+	if bool(result.get("ok", false)):
+		var items: Array = _array_from(result.get("items", []))
+		result["status"] = "purchased"
+		result["item"] = _dictionary_from(items[0]) if not items.is_empty() else {}
+		result["price"] = int(result.get("unit_price", 0))
+	return result
+
+
+func purchase_items(
+	item_id: String,
+	quantity: int,
+	source: String = "m7_base_shop"
+) -> Dictionary:
+	if not _ensure_writable("purchase_items"):
 		return {"ok": false, "status": "write_blocked", "reason": write_block_reason}
+	if quantity < 1 or quantity > MAX_BATCH_PURCHASE_QUANTITY:
+		return {
+			"ok": false,
+			"status": "invalid_quantity",
+			"item_id": item_id,
+			"quantity": quantity,
+			"minimum": 1,
+			"maximum": MAX_BATCH_PURCHASE_QUANTITY,
+		}
 	data = M7ProgressionServiceScript.normalize_meta(data)
 	var shop := M7ContentCatalogScript.shop_definition(item_id)
 	if shop.is_empty():
 		return {"ok": false, "status": "unknown_shop_item", "item_id": item_id}
 	if not M7ContentCatalogScript.is_shop_unlocked(shop, data):
 		return {"ok": false, "status": "locked", "item_id": item_id}
-	var price := int(shop.get("price", 0))
-	if int(data.get("gold", 0)) < price:
-		return {"ok": false, "status": "insufficient_gold", "item_id": item_id, "price": price}
+	var unit_price := maxi(0, int(shop.get("price", 0)))
+	var total_price := unit_price * quantity
+	var gold_before := int(data.get("gold", 0))
+	if gold_before < total_price:
+		return {
+			"ok": false,
+			"status": "insufficient_gold",
+			"item_id": item_id,
+			"quantity": quantity,
+			"unit_price": unit_price,
+			"total_price": total_price,
+			"gold_before": gold_before,
+		}
 	var previous_data := data.duplicate(true)
-	data["gold"] = int(data.get("gold", 0)) - price
-	var item := M7ProgressionServiceScript.add_item_instance(data, item_id, source)
-	if item.is_empty():
-		data = previous_data
-		return {"ok": false, "status": "item_definition_missing", "item_id": item_id}
+	data["gold"] = gold_before - total_price
 	var purchased: Array = data.get("purchased_instance_ids", [])
-	var instance_id := str(item.get("instance_id", ""))
-	if not purchased.has(instance_id):
-		purchased.append(instance_id)
+	var created_items: Array[Dictionary] = []
+	var created_ids: Array[String] = []
+	for _index in range(quantity):
+		var item := M7ProgressionServiceScript.add_item_instance(data, item_id, source)
+		if item.is_empty():
+			data = previous_data
+			return {
+				"ok": false,
+				"status": "item_definition_missing",
+				"item_id": item_id,
+				"quantity": quantity,
+				"created_count": 0,
+				"rolled_back": true,
+			}
+		var instance_id := str(item.get("instance_id", ""))
+		if instance_id.is_empty() or created_ids.has(instance_id):
+			data = previous_data
+			return {
+				"ok": false,
+				"status": "duplicate_generated_instance_id",
+				"item_id": item_id,
+				"quantity": quantity,
+				"created_count": 0,
+				"rolled_back": true,
+			}
+		created_items.append(item)
+		created_ids.append(instance_id)
+		if not purchased.has(instance_id):
+			purchased.append(instance_id)
+	data["purchased_instance_ids"] = purchased
 	M7ProgressionServiceScript.refresh_red_dots(data)
 	if not save():
 		data = previous_data
-		return {"ok": false, "status": "save_failed", "item_id": item_id, "error": last_error}
-	return {"ok": true, "status": "purchased", "item": item.duplicate(true), "price": price, "summary": get_summary()}
+		return {
+			"ok": false,
+			"status": "save_failed",
+			"item_id": item_id,
+			"quantity": quantity,
+			"created_count": 0,
+			"rolled_back": true,
+			"error": last_error,
+			"summary": get_summary(),
+		}
+	return {
+		"ok": true,
+		"status": "purchased" if quantity == 1 else "batch_purchased",
+		"atomicity": &"all_or_nothing",
+		"item_id": item_id,
+		"quantity": quantity,
+		"created_count": created_items.size(),
+		"items": created_items,
+		"instance_ids": created_ids,
+		"unit_price": unit_price,
+		"total_price": total_price,
+		"gold_before": gold_before,
+		"gold_after": int(data.get("gold", 0)),
+		"summary": get_summary(),
+	}
 
 
 func sell_collectible(instance_id: String, blocked_instance_ids: Array = []) -> Dictionary:
@@ -641,6 +739,8 @@ func _append_codex_discovery(target: Dictionary, discovery_id: String) -> void:
 
 
 func mark_debug_command(command: String, payload: Dictionary = {}) -> Dictionary:
+	if not _ensure_debug_sandbox("mark_debug_command"):
+		return get_summary()
 	if data.is_empty():
 		load_or_create_default()
 	if not _ensure_writable("mark_debug_command"):
@@ -658,6 +758,8 @@ func mark_debug_command(command: String, payload: Dictionary = {}) -> Dictionary
 
 
 func add_gold(amount: int, source: String = "debug") -> Dictionary:
+	if not _ensure_debug_sandbox("add_gold"):
+		return get_summary()
 	if data.is_empty():
 		load_or_create_default()
 	if not _ensure_writable("add_gold"):
@@ -668,6 +770,8 @@ func add_gold(amount: int, source: String = "debug") -> Dictionary:
 
 
 func set_gold(amount: int, source: String = "debug") -> Dictionary:
+	if not _ensure_debug_sandbox("set_gold"):
+		return get_summary()
 	if data.is_empty():
 		load_or_create_default()
 	if not _ensure_writable("set_gold"):
@@ -678,6 +782,8 @@ func set_gold(amount: int, source: String = "debug") -> Dictionary:
 
 
 func clear_gold() -> Dictionary:
+	if not _ensure_debug_sandbox("clear_gold"):
+		return get_summary()
 	if data.is_empty():
 		load_or_create_default()
 	if not _ensure_writable("clear_gold"):
@@ -688,6 +794,8 @@ func clear_gold() -> Dictionary:
 
 
 func add_warehouse_item(item: Dictionary) -> Dictionary:
+	if not _ensure_debug_sandbox("add_warehouse_item"):
+		return get_summary()
 	if data.is_empty():
 		load_or_create_default()
 	if not _ensure_writable("add_warehouse_item"):
@@ -700,6 +808,8 @@ func add_warehouse_item(item: Dictionary) -> Dictionary:
 
 
 func clear_warehouse(source: String = "debug") -> Dictionary:
+	if not _ensure_debug_sandbox("clear_warehouse"):
+		return get_summary()
 	if data.is_empty():
 		load_or_create_default()
 	if not _ensure_writable("clear_warehouse"):
@@ -978,6 +1088,21 @@ func _ensure_writable(operation: String = "write") -> bool:
 		last_error = "%s:%s" % [write_block_reason, operation]
 		return false
 	return true
+
+
+func _ensure_debug_sandbox(operation: String) -> bool:
+	if active_profile_id == SaveProfileManifestScript.DEBUG_SANDBOX_PROFILE_ID:
+		return true
+	last_error = "debug_sandbox_profile_required:%s" % operation
+	return false
+
+
+func _result_uses_debug(result_snapshot: Dictionary) -> bool:
+	return (
+		bool(result_snapshot.get("debug_used", false))
+		or bool(result_snapshot.get("debug_command_used", false))
+		or not _array_from(result_snapshot.get("debug_commands", [])).is_empty()
+	)
 
 
 func _save_now() -> bool:

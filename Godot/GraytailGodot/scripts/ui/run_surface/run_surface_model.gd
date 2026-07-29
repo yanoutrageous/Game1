@@ -44,7 +44,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"search_summary": _search_summary(search_data, String(snapshot.get("search_state", "blocked"))),
 		"reward_summary": RunUIViewModel.reward_text(reward, visible_last_message),
 		"backpack_summary": _backpack_summary(snapshot),
-		"backpack_items": _array_from(snapshot, "inventory_items"),
+		"backpack_items": RunUIViewModel.aggregate_item_projection(_array_from(snapshot, "inventory_items")),
 		"backpack_used": snapshot.get("backpack_used", 0),
 		"backpack_capacity": snapshot.get("backpack_capacity", 0),
 		"resource_summary": _resource_summary(snapshot),
@@ -688,6 +688,7 @@ static func extract_carried_item_models(snapshot: Dictionary) -> Array[Dictionar
 	var seen_instance_ids: Dictionary = {}
 	for source_key in ["inventory_items", "equipped_items"]:
 		var source_items: Array = _array_from(snapshot, source_key)
+		var unique_source_items: Array = []
 		for raw_item in source_items:
 			if not (raw_item is Dictionary):
 				continue
@@ -697,12 +698,17 @@ static func extract_carried_item_models(snapshot: Dictionary) -> Array[Dictionar
 				continue
 			if instance_id != "":
 				seen_instance_ids[instance_id] = true
+			unique_source_items.append(item.duplicate(true))
+		for item in RunUIViewModel.aggregate_item_projection(unique_source_items):
 			var presentation := RunUIViewModel.item_presentation(item)
 			models.append({
-				"instance_id": instance_id,
+				"instance_id": String(item.get("instance_id", "")),
+				"instance_ids": (item.get("instance_ids", []) as Array).duplicate(),
+				"stack_key": String(item.get("stack_key", "")),
 				"display_name": String(presentation.get("display_name", "未命名物资")),
 				"quantity": maxi(1, int(presentation.get("quantity", 1))),
 				"weight": maxi(0, int(presentation.get("weight", 0))),
+				"total_weight": maxi(0, int(item.get("total_weight", presentation.get("weight", 0)))),
 				"rarity": (presentation.get("rarity", {}) as Dictionary).duplicate(true),
 				"rarity_text": String(presentation.get("rarity_text", "[?] 未鉴定")),
 				"collectible_level": maxi(0, int(presentation.get("collectible_level", 0))),

@@ -33,6 +33,7 @@ const SUMMARY_PAGES := [
 const CHARACTER_FIRST_LOOK_SECONDS := 5.0
 const CHARACTER_LOOK_INTERVAL_SECONDS := 10.0
 const META_DETAIL_ACTION_IDS := [&"purchase", &"sell", &"confirm_batch_sell"]
+const SUMMARY_MAX_ROWS := 8
 
 var current_model: Dictionary = {}
 var current_snapshot: Dictionary = {}
@@ -65,6 +66,8 @@ var detail_gold_label: Label
 var detail_artwork: TextureRect
 var detail_title_label: Label
 var detail_badge_label: Label
+var detail_body_scroll: ScrollContainer
+var detail_body_content: VBoxContainer
 var detail_description_label: Label
 var detail_fact_labels: Array[Label] = []
 var detail_feedback_panel: Panel
@@ -83,6 +86,8 @@ var cancel_action_button: Button
 var summary_body_label: Label
 var summary_message_label: Label
 var summary_row_labels: Array[Label] = []
+var summary_scroll: ScrollContainer
+var summary_scroll_content: VBoxContainer
 var modal_layer: Control
 var modal_cancel_button: Button
 var modal_confirm_button: Button
@@ -634,12 +639,30 @@ func _build_detail_panel() -> void:
 	detail_badge_label = _add_label(parchment_group, "DeployDetailBadges", DeployPrepLayoutContractScript.DETAIL_BADGE, "", 13, Color(0.70, 0.83, 0.78), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_TOP, 3)
 	detail_badge_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_add_image_panel(parchment_group, "DeployDetailBodyPanel", DeployPrepLayoutContractScript.DETAIL_BODY_PANEL, &"slot", &"normal", 2)
-	detail_description_label = _add_label(parchment_group, "DeployDetailDescription", DeployPrepLayoutContractScript.DETAIL_DESCRIPTION, "", 14, Color(0.91, 0.86, 0.75), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_TOP, 3)
-	detail_description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail_body_scroll = ScrollContainer.new()
+	detail_body_scroll.name = "DeployDetailBodyScroll"
+	detail_body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	detail_body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	detail_body_scroll.focus_mode = Control.FOCUS_ALL
+	detail_body_scroll.z_index = 3
+	_set_rect(detail_body_scroll, Rect2(620, 282, 278, 236))
+	parchment_group.add_child(detail_body_scroll)
+	detail_body_content = VBoxContainer.new()
+	detail_body_content.name = "DeployDetailBodyContent"
+	detail_body_content.custom_minimum_size = Vector2(270, 0)
+	detail_body_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	detail_body_content.add_theme_constant_override("separation", 6)
+	detail_body_scroll.add_child(detail_body_content)
+	detail_description_label = _add_label(detail_body_content, "DeployDetailDescription", Rect2(0, 0, 270, 64), "", 14, Color(0.91, 0.86, 0.75), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_TOP, 0)
+	detail_description_label.custom_minimum_size = Vector2(270, 64)
+	detail_description_label.set_meta("deploy_scroll_content", true)
+	_apply_label_flow_policy(detail_description_label)
 	for index in range(DeployPrepLayoutContractScript.DETAIL_FACT_RECTS.size()):
 		var rect := DeployPrepLayoutContractScript.DETAIL_FACT_RECTS[index] as Rect2
-		var label := _add_label(parchment_group, "DeployDetailFact%d" % index, rect, "", 13, Color(0.74, 0.72, 0.64), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_CENTER, 3)
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var label := _add_label(detail_body_content, "DeployDetailFact%d" % index, Rect2(0, 0, 270, rect.size.y), "", 13, Color(0.74, 0.72, 0.64), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_CENTER, 0)
+		label.custom_minimum_size = Vector2(270, rect.size.y)
+		label.set_meta("deploy_scroll_content", true)
+		_apply_label_flow_policy(label)
 		detail_fact_labels.append(label)
 	detail_feedback_panel = _add_image_panel(parchment_group, "DeployDetailFeedbackPanel", DeployPrepLayoutContractScript.DETAIL_FEEDBACK, &"slot", &"normal", 2)
 	detail_feedback_label = _add_label(parchment_group, "DeployDetailFeedback", DeployPrepLayoutContractScript.DETAIL_FEEDBACK, "", 12, Color(0.58, 0.86, 0.80), HORIZONTAL_ALIGNMENT_CENTER, VERTICAL_ALIGNMENT_CENTER, 3)
@@ -668,12 +691,37 @@ func _build_summary_board() -> void:
 		button.toggle_mode = true
 		button.button_group = summary_button_group
 		summary_buttons[page_id] = button
-	for index in range(DeployPrepLayoutContractScript.SUMMARY_ROW_RECTS.size()):
-		var row_rect := DeployPrepLayoutContractScript.SUMMARY_ROW_RECTS[index] as Rect2
-		_add_image_panel(root, "DeploySummaryRowPanel%d" % index, row_rect, &"slot", &"normal", 1)
-		var row_label := _add_label(root, "DeploySummaryRow%d" % index, Rect2(row_rect.position + Vector2(12, 8), row_rect.size - Vector2(24, 16)), "", 14, Color(0.94, 0.87, 0.72), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_CENTER, 2)
-		row_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		row_label.clip_text = true
+	summary_scroll = ScrollContainer.new()
+	summary_scroll.name = "DeploySummaryScroll"
+	summary_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	summary_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	summary_scroll.focus_mode = Control.FOCUS_ALL
+	summary_scroll.z_index = 1
+	_set_rect(summary_scroll, DeployPrepLayoutContractScript.SUMMARY_BODY)
+	root.add_child(summary_scroll)
+	summary_scroll_content = VBoxContainer.new()
+	summary_scroll_content.name = "DeploySummaryScrollContent"
+	summary_scroll_content.custom_minimum_size = Vector2(208, 0)
+	summary_scroll_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	summary_scroll_content.add_theme_constant_override("separation", 8)
+	summary_scroll.add_child(summary_scroll_content)
+	for index in range(SUMMARY_MAX_ROWS):
+		var row_panel := PanelContainer.new()
+		row_panel.name = "DeploySummaryRowPanel%d" % index
+		row_panel.custom_minimum_size = Vector2(208, 72)
+		row_panel.add_theme_stylebox_override(
+			"panel",
+			Art10UISkinKitScript.style_box_from_asset_ref(
+				Art22DeployPrepAssetContractScript.control_ref(&"slot", &"normal"),
+				8,
+				12
+			)
+		)
+		summary_scroll_content.add_child(row_panel)
+		var row_label := _add_label(row_panel, "DeploySummaryRow%d" % index, Rect2(0, 0, 184, 56), "", 14, Color(0.94, 0.87, 0.72), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_CENTER, 0)
+		row_label.custom_minimum_size = Vector2(184, 56)
+		row_label.set_meta("deploy_scroll_content", true)
+		_apply_label_flow_policy(row_label)
 		summary_row_labels.append(row_label)
 	_add_image_panel(root, "DeploySummaryMessagePanel", DeployPrepLayoutContractScript.SUMMARY_MESSAGE_PANEL, &"slot", &"normal", 1)
 	summary_message_label = _add_label(root, "DeploySummaryMessage", DeployPrepLayoutContractScript.SUMMARY_MESSAGE, "", 13, Color(0.56, 0.87, 0.83), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_CENTER, 2)
@@ -817,6 +865,7 @@ func _refresh_workspace_visibility(map_active: bool) -> void:
 			detail_panel,
 			get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployDetailBodyPanel"),
 			get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployDetailArtFrame"),
+			detail_body_scroll,
 			detail_artwork,
 			detail_title_label,
 			detail_badge_label,
@@ -827,13 +876,24 @@ func _refresh_workspace_visibility(map_active: bool) -> void:
 		for label in detail_fact_labels:
 			if label != null:
 				label.visible = true
-	# Gold is global Deploy context, including the map tab.
+	var transaction_context := _transaction_context_active()
 	if detail_gold_panel != null:
-		detail_gold_panel.visible = true
+		detail_gold_panel.visible = transaction_context
 	if detail_gold_icon != null:
-		detail_gold_icon.visible = true
+		detail_gold_icon.visible = transaction_context
 	if detail_gold_label != null:
-		detail_gold_label.visible = true
+		detail_gold_label.visible = transaction_context
+
+
+func _transaction_context_active() -> bool:
+	if _active_tab() == DeployTabModelScript.TAB_CLAIM:
+		return true
+	if _active_tab() != DeployTabModelScript.TAB_WAREHOUSE:
+		return false
+	if warehouse_batch_active:
+		return true
+	var row := _dictionary_from(current_model.get("selected_card_detail", {}))
+	return bool(row.get("batch_sell_eligible", false))
 
 
 func _generic_detail_nodes() -> Array[CanvasItem]:
@@ -842,6 +902,7 @@ func _generic_detail_nodes() -> Array[CanvasItem]:
 		detail_panel,
 		get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployDetailBodyPanel"),
 		get_node_or_null("MainContentRoot/DeployParchmentGroup/DeployDetailArtFrame"),
+		detail_body_scroll,
 		detail_artwork,
 		detail_title_label,
 		detail_badge_label,
@@ -928,16 +989,20 @@ func _refresh_detail_projection() -> void:
 			badges.append(text_value)
 	detail_badge_label.text = " · ".join(badges)
 	detail_description_label.text = Art10UISkinKitScript.sanitize_player_copy(str(detail.get("description", "")))
+	_resize_scroll_label(detail_description_label, 64.0, 18)
 	var facts := _array_from(detail, "facts")
 	for index in range(detail_fact_labels.size()):
 		var fact_label := detail_fact_labels[index]
 		if index >= facts.size():
 			fact_label.text = ""
+			fact_label.visible = false
 			continue
+		fact_label.visible = true
 		var fact := _dictionary_from(facts[index])
 		var fact_name := Art10UISkinKitScript.sanitize_player_copy(str(fact.get("label", ""))).strip_edges()
 		var fact_value := Art10UISkinKitScript.sanitize_player_copy(str(fact.get("value", ""))).strip_edges()
 		fact_label.text = "%s  %s" % [fact_name, fact_value] if not fact_name.is_empty() else fact_value
+		_resize_scroll_label(fact_label, 34.0, 20)
 	var projected_actions: Array[Dictionary] = []
 	for raw_action in _array_from(detail, "actions"):
 		var action := _dictionary_from(raw_action)
@@ -974,6 +1039,10 @@ func _refresh_warehouse_batch_detail_projection() -> void:
 	]
 	for index in range(detail_fact_labels.size()):
 		detail_fact_labels[index].text = fact_values[index] if index < fact_values.size() else ""
+		detail_fact_labels[index].visible = index < fact_values.size()
+		if index < fact_values.size():
+			_resize_scroll_label(detail_fact_labels[index], 34.0, 20)
+	_resize_scroll_label(detail_description_label, 64.0, 18)
 	var selected_count := int(projection.get("selected_count", 0))
 	var transaction_pending := not pending_meta_action.is_empty()
 	detail_actions = [
@@ -1024,16 +1093,21 @@ func _warehouse_batch_projection() -> Dictionary:
 	var reason_counts := {}
 	var total_value := 0
 	for row in _all_warehouse_rows():
-		var instance_id := str(row.get("instance_id", ""))
 		var eligible := bool(row.get("batch_sell_eligible", false))
-		if eligible:
-			eligible_ids.append(instance_id)
-		else:
-			var reason_code := StringName(row.get("batch_sell_reason_code", &"item_not_sellable"))
-			reason_counts[reason_code] = int(reason_counts.get(reason_code, 0)) + 1
-		if selected_lookup.has(instance_id):
-			selected_items.append(row.duplicate(true))
-			total_value += maxi(0, int(row.get("value", 0)))
+		var row_instance_ids := _normalized_string_ids(
+			row.get("instance_ids", [row.get("instance_id", "")])
+		)
+		for instance_id in row_instance_ids:
+			if eligible:
+				eligible_ids.append(instance_id)
+			else:
+				var reason_code := StringName(row.get("batch_sell_reason_code", &"item_not_sellable"))
+				reason_counts[reason_code] = int(reason_counts.get(reason_code, 0)) + 1
+			if selected_lookup.has(instance_id):
+				var selected_item := row.duplicate(true)
+				selected_item["instance_id"] = instance_id
+				selected_items.append(selected_item)
+				total_value += maxi(0, int(row.get("value", 0)))
 	eligible_ids.sort()
 	return {
 		"atomicity": &"all_or_nothing",
@@ -1060,7 +1134,17 @@ func _all_warehouse_rows() -> Array[Dictionary]:
 
 func _warehouse_row_for_instance(instance_id: String) -> Dictionary:
 	for row in _all_warehouse_rows():
-		if str(row.get("instance_id", "")) == instance_id:
+		if _normalized_string_ids(
+			row.get("instance_ids", [row.get("instance_id", "")])
+		).has(instance_id):
+			return row
+	return {}
+
+
+func _row_for_card_id(card_id: StringName) -> Dictionary:
+	for raw_row in _array_from(current_model, "selection_rows"):
+		var row := _dictionary_from(raw_row)
+		if StringName(row.get("id", &"")) == card_id:
 			return row
 	return {}
 
@@ -1071,7 +1155,10 @@ func _sanitize_warehouse_batch_selection() -> void:
 	var eligible_lookup := {}
 	for row in _all_warehouse_rows():
 		if bool(row.get("batch_sell_eligible", false)):
-			eligible_lookup[str(row.get("instance_id", ""))] = true
+			for instance_id in _normalized_string_ids(
+				row.get("instance_ids", [row.get("instance_id", "")])
+			):
+				eligible_lookup[instance_id] = true
 	var retained: Array[String] = []
 	for instance_id in warehouse_batch_selected_ids:
 		if eligible_lookup.has(instance_id) and not retained.has(instance_id):
@@ -1086,14 +1173,38 @@ func _apply_warehouse_batch_card_states() -> void:
 		if view == null or not is_instance_valid(view):
 			continue
 		var row := _dictionary_from(view.get("card_data"))
-		var instance_id := str(row.get("instance_id", ""))
+		var instance_ids := _normalized_string_ids(
+			row.get("instance_ids", [row.get("instance_id", "")])
+		)
+		var checked_count := 0
+		for instance_id in instance_ids:
+			if warehouse_batch_selected_ids.has(instance_id):
+				checked_count += 1
 		view.call(
 			"apply_batch_selection",
 			batch_visible,
-			warehouse_batch_selected_ids.has(instance_id),
+			checked_count > 0,
 			bool(row.get("batch_sell_eligible", false)),
 			str(row.get("batch_sell_reason", "该物品不可出售"))
 		)
+		if bool(row.get("quantity_capable", false)):
+			var quantity_enabled := (
+				bool(row.get("batch_sell_eligible", false))
+				if batch_visible
+				else bool(row.get("quantity_enabled", true))
+			)
+			view.call(
+				"apply_quantity_state",
+				&"sale" if batch_visible else StringName(row.get("quantity_mode", &"none")),
+				checked_count if batch_visible else int(row.get("quantity_current", 0)),
+				(
+					instance_ids.size()
+					if batch_visible and bool(row.get("batch_sell_eligible", false))
+					else int(row.get("quantity_limit", instance_ids.size()))
+				),
+				quantity_enabled and pending_meta_action.is_empty(),
+				str(row.get("quantity_category", row.get("category", "物品")))
+			)
 
 
 func _refresh_detail_artwork(empty: bool) -> void:
@@ -1258,6 +1369,7 @@ func _rebuild_cards() -> void:
 		view.call("setup", card, active, card_id == selected_card)
 		view.call("set_ui_scale_factor", ui_scale_factor)
 		view.connect("card_pressed", _on_card_pressed)
+		view.connect("quantity_delta_requested", _on_card_quantity_delta_requested)
 		card_views.append(view)
 	if result_hint_panel != null and result_hint_label != null:
 		var show_hint := card_views.is_empty()
@@ -1286,8 +1398,10 @@ func _refresh_summary() -> void:
 	for index in range(summary_row_labels.size()):
 		var row_label := summary_row_labels[index]
 		var full_text := String(blocks[index]) if index < blocks.size() else ""
-		row_label.text = Art10UISkinKitScript.short_summary(full_text, _summary_character_budget())
+		row_label.text = full_text
 		row_label.tooltip_text = full_text
+		row_label.visible = not full_text.is_empty()
+		_resize_scroll_label(row_label, 56.0, 15)
 		_apply_scaled_control_font(row_label)
 	if summary_message_label != null:
 		var full_message := Art10UISkinKitScript.sanitize_player_copy(String(current_model.get("action_message", ""))).strip_edges()
@@ -1375,6 +1489,66 @@ func _on_card_pressed(card_id: StringName) -> void:
 			break
 	if card_scroll != null:
 		card_scroll.scroll_vertical = scroll_value
+
+
+func _on_card_quantity_delta_requested(card_id: StringName, delta: int) -> void:
+	if delta == 0 or not pending_meta_action.is_empty():
+		return
+	var row := _row_for_card_id(card_id)
+	if row.is_empty():
+		return
+	if warehouse_batch_active and _active_tab() == DeployTabModelScript.TAB_WAREHOUSE:
+		_adjust_warehouse_batch_stack(row, delta)
+		return
+	var result := {}
+	match _active_tab():
+		DeployTabModelScript.TAB_WAREHOUSE:
+			result = DeployConfigScript.adjust_warehouse_stack_quantity(
+				_config(),
+				_array_from(row.get("instance_ids", [row.get("instance_id", "")])),
+				delta
+			)
+		DeployTabModelScript.TAB_CLAIM:
+			if StringName(row.get("quantity_mode", &"")) == &"purchase":
+				result = DeployConfigScript.adjust_purchase_quantity(
+					_config(),
+					str(row.get("item_id", "")),
+					delta
+				)
+	if result.is_empty():
+		return
+	current_model = DeployPrepModelScript.model_with_config(
+		current_model,
+		_dictionary_from(result.get("config", _config())),
+		card_id,
+		str(result.get("message", ""))
+	)
+	_refresh_all(bool(result.get("changed", false)))
+
+
+func _adjust_warehouse_batch_stack(row: Dictionary, delta: int) -> void:
+	var instance_ids := _normalized_string_ids(
+		row.get("instance_ids", [row.get("instance_id", "")])
+	)
+	var target_id := ""
+	if delta > 0:
+		for instance_id in instance_ids:
+			if (
+				bool(row.get("batch_sell_eligible", false))
+				and not warehouse_batch_selected_ids.has(instance_id)
+			):
+				target_id = instance_id
+				break
+	else:
+		for index in range(instance_ids.size() - 1, -1, -1):
+			if warehouse_batch_selected_ids.has(instance_ids[index]):
+				target_id = instance_ids[index]
+				break
+	if target_id.is_empty():
+		warehouse_batch_feedback = "数量已达到当前可售边界。"
+		_refresh_all(false)
+		return
+	_toggle_warehouse_batch_item(target_id)
 
 
 func _enter_warehouse_batch_sell() -> void:
@@ -2401,6 +2575,24 @@ func _refit_detail_controls() -> void:
 			_apply_scaled_control_font(fact_label)
 
 
+func _resize_scroll_label(label: Label, minimum_height: float, characters_per_line: int) -> void:
+	if label == null:
+		return
+	var text := label.text.strip_edges()
+	var estimated_lines := 1
+	if not text.is_empty():
+		estimated_lines = maxi(
+			1,
+			int(ceil(float(text.length()) / float(maxi(1, characters_per_line))))
+			+ text.count("\n")
+		)
+	var font_size := label.get_theme_font_size("font_size")
+	label.custom_minimum_size.y = maxf(
+		minimum_height,
+		float(estimated_lines * (font_size + 7) + 8)
+	)
+
+
 func _label_max_lines(node_name: String) -> int:
 	match node_name:
 		"DeployDetailBadges":
@@ -2417,6 +2609,12 @@ func _label_max_lines(node_name: String) -> int:
 
 func _apply_label_flow_policy(label: Label) -> void:
 	if label == null:
+		return
+	if bool(label.get_meta("deploy_scroll_content", false)):
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.clip_text = false
+		label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+		label.max_lines_visible = -1
 		return
 	var max_lines := int(label.get_meta("deploy_max_lines", 1))
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if max_lines > 1 else TextServer.AUTOWRAP_OFF

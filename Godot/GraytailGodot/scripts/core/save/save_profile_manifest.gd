@@ -5,6 +5,7 @@ const ROOT_DIR := "user://saves"
 const MANIFEST_PATH := "user://saves/manifest.json"
 const PROFILES_DIR := "user://saves/profiles"
 const DEFAULT_PROFILE_ID := "default"
+const DEBUG_SANDBOX_PROFILE_ID := "dev_sandbox"
 const PROFILE_SCHEMA_VERSION := 1
 
 

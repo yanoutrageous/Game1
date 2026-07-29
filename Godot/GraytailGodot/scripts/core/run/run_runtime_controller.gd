@@ -259,6 +259,14 @@ func _normalize_meta_action(source_page: String, action_id: StringName, action: 
 			if target_id.is_empty():
 				return {"ok": false, "status": &"missing_target_id"}
 			payload["item_id"] = target_id
+			var quantity := int(action.get("quantity", 1))
+			if quantity < 1 or quantity > 99:
+				return {
+					"ok": false,
+					"status": &"invalid_quantity",
+					"target_id": target_id,
+				}
+			payload["quantity"] = quantity
 		META_ACTION_SELL:
 			target_id = _exact_meta_id(action.get("instance_id", ""))
 			if target_id.is_empty():
@@ -312,7 +320,20 @@ func _dispatch_meta_action(payload: Dictionary) -> Dictionary:
 	var result: Variant
 	match action_id:
 		META_ACTION_PURCHASE:
-			result = meta_progress_adapter.purchase_item(str(payload.get("item_id", "")))
+			var quantity := int(payload.get("quantity", 1))
+			if meta_progress_adapter.has_method("purchase_items"):
+				result = meta_progress_adapter.purchase_items(
+					str(payload.get("item_id", "")),
+					quantity
+				)
+			elif quantity == 1 and meta_progress_adapter.has_method("purchase_item"):
+				result = meta_progress_adapter.purchase_item(str(payload.get("item_id", "")))
+			else:
+				result = {
+					"ok": false,
+					"status": &"batch_purchase_unsupported",
+					"quantity": quantity,
+				}
 		META_ACTION_SELL:
 			result = meta_progress_adapter.sell_collectible(
 				str(payload.get("instance_id", "")),

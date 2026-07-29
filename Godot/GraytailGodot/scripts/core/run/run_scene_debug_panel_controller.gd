@@ -2,12 +2,19 @@ extends RefCounted
 class_name RunSceneDebugPanelController
 
 const RunSceneDebugBridgeScript := preload("res://scripts/core/run/run_scene_debug_bridge.gd")
+const DebugFailureBundleScript := preload("res://scripts/core/debug/debug_failure_bundle.gd")
+const DebugSandboxSessionScript := preload("res://scripts/core/debug/debug_sandbox_session.gd")
+const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
+const RunSceneRouteControllerScript := preload("res://scripts/core/run/run_scene_route_controller.gd")
 
 var _enabled := false
 var _run_context: Variant
 var _meta_progress_adapter: Variant
+var _save_manager: Variant
+var _command_bus: Variant
 var _player_controller: Variant
 var _debug_panel: PanelContainer
+var _session_banner: Label
 var _debug_x_spin: SpinBox
 var _debug_y_spin: SpinBox
 var _debug_log: Label
@@ -19,13 +26,19 @@ var _show_loot_panel: Callable
 var _runtime_modal_is_top: Callable
 var _pop_runtime_modal: Callable
 var _release_focus: Callable
+var _sandbox_session = DebugSandboxSessionScript.new()
+var _debug_input_index := 0
+var _last_debug_command: Dictionary = {}
 
 
 func bind_targets(
 	enabled: bool,
 	run_context: Variant,
 	meta_progress_adapter: Variant,
+	save_manager: Variant,
+	command_bus: Variant,
 	player_controller: Variant,
+	run_overlay_root: Control,
 	debug_panel: PanelContainer,
 	debug_x_spin: SpinBox,
 	debug_y_spin: SpinBox,
@@ -42,6 +55,8 @@ func bind_targets(
 	_enabled = enabled
 	_run_context = run_context
 	_meta_progress_adapter = meta_progress_adapter
+	_save_manager = save_manager
+	_command_bus = command_bus
 	_player_controller = player_controller
 	_debug_panel = debug_panel
 	_debug_x_spin = debug_x_spin
@@ -55,6 +70,77 @@ func bind_targets(
 	_runtime_modal_is_top = runtime_modal_is_top
 	_pop_runtime_modal = pop_runtime_modal
 	_release_focus = release_focus
+	_ensure_session_banner(run_overlay_root)
+	_update_session_banner()
+
+
+func start_test_room_if_requested(
+	intent: Dictionary,
+	admission_check: Callable,
+	show_run: Callable,
+	show_main: Callable
+) -> bool:
+	var payload := NavigationIntentScript.payload(intent)
+	if not bool(payload.get("debug_test_room", false)):
+		return false
+	if not can_use_debug_tools():
+		_show_debug_disabled_feedback()
+		if show_main.is_valid():
+			show_main.call()
+		return true
+	var began: Dictionary = _sandbox_session.begin(
+		_save_manager,
+		_meta_progress_adapter,
+		_run_context != null and bool(_run_context.get("run_active")),
+		StringName(payload.get("scenario_id", DebugSandboxSessionScript.DEFAULT_SCENARIO_ID)),
+		int(payload.get("seed_value", DebugSandboxSessionScript.DEFAULT_SEED))
+	)
+	if not bool(began.get("ok", false)):
+		_show_feedback(began)
+		if show_main.is_valid():
+			show_main.call()
+		return true
+	var route_result := RunSceneRouteControllerScript.start_from_intent(
+		intent,
+		_command_bus,
+		admission_check
+	)
+	if bool(route_result.get("player_reset_requested", false)) and _player_controller != null:
+		_player_controller.call("reset_local_position")
+	if bool(route_result.get("run_screen_requested", false)) and show_run.is_valid():
+		show_run.call()
+	else:
+		_sandbox_session.end(_save_manager, _meta_progress_adapter, false)
+		_show_feedback(route_result)
+		if show_main.is_valid():
+			show_main.call()
+	_update_session_banner()
+	return true
+
+
+func end_test_room_if_ready() -> Dictionary:
+	if not _sandbox_session.active:
+		return {"ok": true, "status": &"debug_sandbox_not_active"}
+	var active_run := _run_context != null and bool(_run_context.get("run_active"))
+	var result: Dictionary = _sandbox_session.end(
+		_save_manager,
+		_meta_progress_adapter,
+		active_run
+	)
+	_update_session_banner()
+	if not bool(result.get("ok", false)):
+		_show_feedback(result)
+	_refresh_shell()
+	return result
+
+
+func is_test_room_active() -> bool:
+	return _sandbox_session.active
+
+
+func test_room_snapshot() -> Dictionary:
+	_sandbox_session.refresh_taint(_run_context, _meta_progress_adapter)
+	return _sandbox_session.snapshot()
 
 
 func toggle_panel() -> void:
@@ -109,6 +195,7 @@ func can_use_debug_tools() -> bool:
 
 
 func sync_coordinates() -> void:
+	_update_session_banner()
 	if _run_context == null:
 		return
 	if _debug_x_spin != null:
@@ -334,6 +421,32 @@ func meta_summary() -> void:
 	_refresh_shell()
 
 
+func capture_failure_bundle() -> void:
+	if not _meta_debug_ready():
+		return
+	var run_snapshot := {}
+	if _run_context != null and _run_context.has_method("get_status_snapshot"):
+		var snapshot_variant: Variant = _run_context.call("get_status_snapshot")
+		if snapshot_variant is Dictionary:
+			run_snapshot = (snapshot_variant as Dictionary).duplicate(true)
+	var ui_snapshot := {}
+	if _shell_snapshot.is_valid():
+		var shell_variant: Variant = _shell_snapshot.call()
+		if shell_variant is Dictionary:
+			ui_snapshot = (shell_variant as Dictionary).duplicate(true)
+	var result := DebugFailureBundleScript.capture(
+		_debug_panel.get_viewport() if _debug_panel != null else null,
+		test_room_snapshot(),
+		run_snapshot,
+		_last_debug_command,
+		ui_snapshot,
+		_debug_input_index
+	)
+	set_log_text(
+		"Failure bundle: %s" % str(result.get("bundle_path", result.get("status", "failed")))
+	)
+
+
 static func add_section(parent: Control, label: String) -> Label:
 	var section := Label.new()
 	section.text = label
@@ -373,8 +486,16 @@ func _show_debug_disabled_feedback() -> void:
 func _dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary:
 	if not _dispatch_command.is_valid():
 		return {}
+	_debug_input_index += 1
 	var result_variant: Variant = _dispatch_command.call(command_name, payload)
-	return result_variant if result_variant is Dictionary else {}
+	var result: Dictionary = result_variant if result_variant is Dictionary else {}
+	_last_debug_command = {
+		"index": _debug_input_index,
+		"command": command_name,
+		"payload": payload.duplicate(true),
+		"result": result.duplicate(true),
+	}
+	return result
 
 
 func _show_feedback(result: Dictionary) -> void:
@@ -385,8 +506,44 @@ func _show_feedback(result: Dictionary) -> void:
 func _refresh_shell() -> void:
 	if _ui_shell != null and _shell_snapshot.is_valid():
 		_ui_shell.call("apply_snapshot", _shell_snapshot.call())
+	_update_session_banner()
 
 
 func _release_gui_focus() -> void:
 	if _release_focus.is_valid():
 		_release_focus.call()
+
+
+func _ensure_session_banner(parent: Control) -> void:
+	if parent == null or _session_banner != null:
+		return
+	_session_banner = Label.new()
+	_session_banner.name = "DebugSandboxBanner"
+	_session_banner.position = Vector2(280.0, 8.0)
+	_session_banner.size = Vector2(720.0, 34.0)
+	_session_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_session_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_session_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_session_banner.add_theme_color_override("font_color", Color(1.0, 0.82, 0.32, 1.0))
+	_session_banner.add_theme_color_override("font_outline_color", Color(0.08, 0.02, 0.02, 1.0))
+	_session_banner.add_theme_constant_override("outline_size", 6)
+	_session_banner.add_theme_font_size_override("font_size", 16)
+	_session_banner.visible = false
+	parent.add_child(_session_banner)
+
+
+func _update_session_banner() -> void:
+	if _session_banner == null:
+		return
+	_sandbox_session.refresh_taint(_run_context, _meta_progress_adapter)
+	var snapshot := _sandbox_session.snapshot()
+	_session_banner.visible = bool(snapshot.get("active", false))
+	if not _session_banner.visible:
+		return
+	_session_banner.text = "DEBUG %s | profile=%s | scenario=%s | seed=%s | save=%s" % [
+		"TAINTED" if bool(snapshot.get("tainted", false)) else "SANDBOX",
+		snapshot.get("profile_id", ""),
+		snapshot.get("scenario_id", ""),
+		snapshot.get("seed", 0),
+		snapshot.get("save_target", ""),
+	]

@@ -27,6 +27,7 @@ var last_result_label: Label
 var close_button: Button
 var first_item_button: Button
 var item_focus_targets: Dictionary = {}
+var item_stack_focus_targets: Dictionary = {}
 var item_button_minimum_size: Vector2 = Vector2(360, 52)
 var _ui_scale_factor := 1.0
 var _last_layout_profile: Dictionary = {}
@@ -181,13 +182,17 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 	if summary_label == null:
 		build()
 	var focused_instance_id := ""
+	var focused_stack_key := ""
 	var focused_item_action := &""
 	var focus_owner := get_viewport().gui_get_focus_owner()
 	if focus_owner != null and is_ancestor_of(focus_owner):
 		focused_instance_id = String(focus_owner.get_meta("item_instance_id", ""))
+		focused_stack_key = String(focus_owner.get_meta("item_stack_key", ""))
 		focused_item_action = StringName(focus_owner.get_meta("item_action", &""))
 	var inventory_items: Array = _array_from(snapshot, "inventory_items")
 	var equipped_items: Array = _array_from(snapshot, "equipped_items")
+	var inventory_stacks := RunUIViewModel.aggregate_item_projection(inventory_items)
+	var equipped_stacks := RunUIViewModel.aggregate_item_projection(equipped_items)
 	if item_backdrop != null:
 		var visible_item_count := inventory_items.size() + equipped_items.size()
 		item_backdrop.visible = item_backdrop.texture != null and visible_item_count < 6
@@ -207,6 +212,7 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		child.queue_free()
 	first_item_button = null
 	item_focus_targets.clear()
+	item_stack_focus_targets.clear()
 	if inventory_items.is_empty() and equipped_items.is_empty():
 		var empty_label := Label.new()
 		empty_label.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
@@ -221,16 +227,16 @@ func apply_snapshot(snapshot: Dictionary) -> void:
 		_set_scaled_font(empty_label, 15)
 		item_list.add_child(empty_label)
 	else:
-		for item: Dictionary in inventory_items:
+		for item: Dictionary in inventory_stacks:
 			_add_item_row(item, true)
-		for item: Dictionary in equipped_items:
+		for item: Dictionary in equipped_stacks:
 			_add_item_row(item, false)
 	if tooltip_label != null:
 		tooltip_label.text = "聚焦任一物品即可查看名称、品质、重量、数量与说明。"
 		Art10UISkinKitScript.apply_label(tooltip_label, 15, Color(0.75, 0.82, 0.78, 1.0))
 		_set_scaled_font(tooltip_label, 15)
 	if visible and focused_instance_id != "" and focused_item_action != &"":
-		call_deferred("_restore_item_focus", focused_instance_id, focused_item_action)
+		call_deferred("_restore_item_focus", focused_instance_id, focused_stack_key, focused_item_action)
 
 
 func show_command_result(result: Dictionary) -> void:
@@ -360,7 +366,9 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	_apply_art21r2_modal_button(item_button, &"art21r2.modal.item_row.normal", &"secondary", 15, 10, 18)
 	_apply_rarity_row_style(item_button, item)
 	var instance_id: String = String(item.get("instance_id", ""))
-	_register_item_focus_target(item_button, instance_id, &"info")
+	var stack_key := String(item.get("stack_key", RunUIViewModel.item_stack_key(item)))
+	var instance_ids: Array = (item.get("instance_ids", [instance_id]) as Array).duplicate()
+	_register_item_focus_target(item_button, instance_id, instance_ids, stack_key, &"info")
 	var show_detail := func() -> void: _show_item_detail(item)
 	item_button.pressed.connect(show_detail)
 	item_button.mouse_entered.connect(show_detail)
@@ -380,7 +388,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	drop_button.disabled = not can_drop
 	drop_button.tooltip_text = "丢弃到当前房间地面，稍后可从地面物品重新拾取。" if can_drop else "已装备物品暂不可从此面板丢弃。"
 	_apply_art21r2_modal_button(drop_button, &"art21r2.modal.button.danger" if can_drop else &"art21r2.modal.button.secondary", &"danger" if can_drop else &"secondary", 14)
-	_register_item_focus_target(drop_button, instance_id, &"drop")
+	_register_item_focus_target(drop_button, instance_id, instance_ids, stack_key, &"drop")
 	var use_button := Button.new()
 	use_button.name = "InventoryUseButton"
 	use_button.focus_mode = Control.FOCUS_ALL
@@ -393,7 +401,7 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	use_button.disabled = not can_use
 	use_button.tooltip_text = "使用当前消耗品。" if can_use else "只有背包中的消耗品可使用。"
 	_apply_art21r2_modal_button(use_button, &"art21r2.modal.button.primary" if can_use else &"art21r2.modal.button.secondary", &"primary" if can_use else &"secondary", 14)
-	_register_item_focus_target(use_button, instance_id, &"use")
+	_register_item_focus_target(use_button, instance_id, instance_ids, stack_key, &"use")
 	use_button.pressed.connect(func() -> void: use_item_requested.emit(instance_id))
 	use_button.mouse_entered.connect(show_detail)
 	use_button.focus_entered.connect(show_detail)
@@ -404,17 +412,25 @@ func _add_item_row(item: Dictionary, can_drop: bool) -> void:
 	row.add_child(drop_button)
 
 
-func _register_item_focus_target(control: Control, instance_id: String, item_action: StringName) -> void:
+func _register_item_focus_target(control: Control, instance_id: String, instance_ids: Array, stack_key: String, item_action: StringName) -> void:
 	control.set_meta("item_instance_id", instance_id)
+	control.set_meta("item_instance_ids", instance_ids.duplicate())
+	control.set_meta("item_stack_key", stack_key)
 	control.set_meta("item_action", item_action)
 	if instance_id != "":
 		item_focus_targets[_item_focus_key(instance_id, item_action)] = control
+	if stack_key != "":
+		item_stack_focus_targets[_item_focus_key(stack_key, item_action)] = control
 
 
-func _restore_item_focus(instance_id: String, item_action: StringName) -> void:
+func _restore_item_focus(instance_id: String, stack_key: String, item_action: StringName) -> void:
 	if not visible:
 		return
 	var target := item_focus_targets.get(_item_focus_key(instance_id, item_action)) as Control
+	if _can_restore_focus(target):
+		target.grab_focus()
+		return
+	target = item_stack_focus_targets.get(_item_focus_key(stack_key, item_action)) as Control
 	if _can_restore_focus(target):
 		target.grab_focus()
 		return

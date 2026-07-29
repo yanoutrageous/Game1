@@ -43,7 +43,7 @@ func build() -> void:
 
 	var title := Label.new()
 	title.name = "DevDiagnosticsTitle"
-	title.text = "Dev Diagnostics"
+	title.text = "READ-ONLY DIAGNOSTICS"
 	title.add_theme_font_size_override("font_size", 20)
 	header.add_child(title)
 
@@ -65,6 +65,7 @@ func apply_diagnostics(snapshot: Dictionary, last_result: Dictionary, ui_state: 
 		build()
 	var lines: Array[String] = []
 	lines.append("dev_only=true / visible_by_default=false")
+	lines.append("mode=read_only / commands=separate_debug_panel")
 	lines.append("ui_page=%s | panel=%s | layout=%s" % [
 		ui_state.get("page", ""),
 		ui_state.get("panel", ""),

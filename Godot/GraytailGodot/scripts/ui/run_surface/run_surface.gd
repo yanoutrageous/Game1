@@ -842,7 +842,7 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 			var item: Dictionary = item_variant
 			var presentation := RunUIViewModel.item_presentation(item)
 			signature_parts.append("%s:%s:%s:%s:%s:%s:%s" % [
-				item.get("instance_id", ""),
+				str(item.get("instance_ids", [item.get("instance_id", "")])),
 				presentation.get("display_name", "未命名物资"),
 				presentation.get("quantity", 1),
 				presentation.get("weight", 0),
@@ -903,6 +903,8 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		slot.add_theme_stylebox_override("focus", _panel_style(Color(0.024, 0.044, 0.048, 0.98), PresentationTheme.color_for_key(&"ui.accent"), 2))
 		slot.add_theme_stylebox_override("pressed", _panel_style(Color(0.018, 0.034, 0.038, 0.98), neutral_border, 1))
 		slot.set_meta("item_instance_id", String(item.get("instance_id", "")))
+		slot.set_meta("item_instance_ids", (item.get("instance_ids", []) as Array).duplicate())
+		slot.set_meta("item_stack_key", String(item.get("stack_key", "")))
 		slot.set_meta("rarity_border_token", StringName(rarity.get("border_token", &"rarity.border.unknown")))
 		slot.set_meta("collectible_level", int(presentation.get("collectible_level", 0)))
 		var rarity_marker := ColorRect.new()

@@ -82,6 +82,7 @@ static func default_config(sequence: int = 1, meta_summary: Dictionary = {}) -> 
 		"selected_loadout": _array_copy(m3r_fields.get("selected_equipment_ids", [])),
 		"carried_consumables": _array_copy(m3r_fields.get("selected_consumable_ids", [])),
 		"enabled_claims": [],
+		"purchase_quantities": {},
 		"selected_objective_id": StringName(selected_commission.get("id", "commission_recover_supply")),
 		"selected_objective_label": str(selected_commission.get("display_name", "回收补给箱")),
 		"commission_candidates": commission_candidates,
@@ -177,6 +178,9 @@ static func with_active_run_config(config: Dictionary, run_start_config: Diction
 static func refresh_from_meta(config: Dictionary, meta_summary: Dictionary, has_active_run: bool = false) -> Dictionary:
 	var sequence := maxi(1, int(config.get("created_at_or_sequence", 1)))
 	var refreshed := default_config(sequence, meta_summary)
+	refreshed["purchase_quantities"] = _dictionary_copy(
+		config.get("purchase_quantities", {})
+	)
 	var previous_map_id := str(config.get("map_config_id", "classic_7x7_simple"))
 	if (refreshed.get("unlocked_map_ids", []) as Array).has(previous_map_id):
 		refreshed = _dictionary_copy(select_map(refreshed, previous_map_id).get("config", refreshed))
@@ -215,11 +219,16 @@ static func apply_card_action(config: Dictionary, tab_id: StringName, card_id: S
 	if tab_id == &"objective" and String(card_id).begins_with("m7_commission_"):
 		return _select_m7_commission(config, String(card_id).trim_prefix("m7_commission_"))
 	if tab_id == &"claim" and String(card_id).begins_with("m7_shop_"):
+		var item_id := String(card_id).trim_prefix("m7_shop_")
 		return {
 			"config": config.duplicate(true),
 			"changed": false,
 			"message": "正在提交基地购买。",
-			"meta_action": {"action": &"purchase", "item_id": String(card_id).trim_prefix("m7_shop_")},
+			"meta_action": {
+				"action": &"purchase",
+				"item_id": item_id,
+				"quantity": purchase_quantity(config, item_id),
+			},
 		}
 	if tab_id == &"warehouse" and String(card_id).begins_with("m3r_") and card_id != &"m3r_warehouse_status":
 		return _toggle_warehouse_item(config, String(card_id).trim_prefix("m3r_"))
@@ -242,6 +251,89 @@ static func _mutates_active_run_projection(tab_id: StringName, card_id: StringNa
 	if tab_id == &"claim" and (String(card_id).begins_with("m7_shop_") or card_id == &"claim_emergency_ration"):
 		return true
 	return false
+
+
+static func purchase_quantity(config: Dictionary, item_id: String) -> int:
+	var quantities := _dictionary_copy(config.get("purchase_quantities", {}))
+	return clampi(int(quantities.get(item_id, 1)), 1, 99)
+
+
+static func adjust_purchase_quantity(
+	config: Dictionary,
+	item_id: String,
+	delta: int
+) -> Dictionary:
+	if bool(config.get("active_run_locked", false)):
+		return {
+			"config": config.duplicate(true),
+			"changed": false,
+			"message": "探索进行中，基地购买暂不可用。",
+		}
+	var shop := M7ContentCatalogScript.shop_definition(item_id)
+	if shop.is_empty():
+		return {
+			"config": config.duplicate(true),
+			"changed": false,
+			"message": "该购买项目不存在。",
+		}
+	var result := config.duplicate(true)
+	var quantities := _dictionary_copy(result.get("purchase_quantities", {}))
+	var previous := purchase_quantity(result, item_id)
+	var next := clampi(previous + signi(delta), 1, 99)
+	var unit_price := maxi(0, int(shop.get("price", 0)))
+	var meta := _dictionary_copy(result.get("meta_progress_summary", {}))
+	if meta.has("gold") and unit_price > 0:
+		next = mini(next, maxi(1, int(meta.get("gold", 0)) / unit_price))
+	quantities[item_id] = next
+	result["purchase_quantities"] = quantities
+	return {
+		"config": result,
+		"changed": next != previous,
+		"message": "本次购买数量：%d。" % next,
+	}
+
+
+static func adjust_warehouse_stack_quantity(
+	config: Dictionary,
+	instance_ids: Array,
+	delta: int
+) -> Dictionary:
+	var exact_ids: Array[String] = []
+	for raw_id in instance_ids:
+		var instance_id := str(raw_id).strip_edges()
+		if not instance_id.is_empty() and not exact_ids.has(instance_id):
+			exact_ids.append(instance_id)
+	exact_ids.sort()
+	if exact_ids.is_empty() or delta == 0:
+		return {
+			"config": config.duplicate(true),
+			"changed": false,
+			"message": "该物品组没有可调整的实例。",
+		}
+	var selected_lookup := {}
+	for raw_item in (
+		_array_copy(config.get("selected_equipment_items", []))
+		+ _array_copy(config.get("selected_consumable_items", []))
+	):
+		selected_lookup[str(_dictionary_copy(raw_item).get("instance_id", ""))] = true
+	var target_id := ""
+	if delta > 0:
+		for instance_id in exact_ids:
+			if not selected_lookup.has(instance_id):
+				target_id = instance_id
+				break
+	else:
+		for index in range(exact_ids.size() - 1, -1, -1):
+			if selected_lookup.has(exact_ids[index]):
+				target_id = exact_ids[index]
+				break
+	if target_id.is_empty():
+		return {
+			"config": config.duplicate(true),
+			"changed": false,
+			"message": "数量已达到当前可用边界。",
+		}
+	return _toggle_warehouse_item(config, target_id)
 
 
 static func select_map(config: Dictionary, map_id: String) -> Dictionary:

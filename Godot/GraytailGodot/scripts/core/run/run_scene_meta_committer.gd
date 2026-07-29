@@ -47,6 +47,8 @@ static func debug_clear_warehouse(adapter: MetaProgressAdapter, source: String) 
 static func debug_mark_and_save(adapter: MetaProgressAdapter, command: String, payload: Dictionary) -> Dictionary:
 	if adapter == null:
 		return {"summary": {}, "saved": false}
+	if not adapter.is_debug_sandbox_profile():
+		return {"summary": _sandbox_required(adapter), "saved": false}
 	var summary := adapter.mark_debug_command(command, payload)
 	var saved := adapter.save()
 	return {"summary": summary, "saved": saved}
@@ -55,6 +57,8 @@ static func debug_mark_and_save(adapter: MetaProgressAdapter, command: String, p
 static func debug_clear_save(adapter: MetaProgressAdapter, source: String) -> Dictionary:
 	if adapter == null:
 		return {}
+	if not adapter.is_debug_sandbox_profile():
+		return _sandbox_required(adapter)
 	var summary := adapter.clear()
 	if not bool(summary.get("write_blocked", false)):
 		summary = adapter.mark_debug_command("meta_clear_save", {"source": source})
@@ -65,4 +69,15 @@ static func debug_read_summary(adapter: MetaProgressAdapter, source: String) -> 
 	if adapter == null:
 		return {}
 	adapter.load_or_create_default()
-	return adapter.mark_debug_command("meta_read_save", {"source": source})
+	var summary := adapter.get_summary()
+	summary["debug_read_source"] = source
+	summary["read_only_diagnostic"] = true
+	return summary
+
+
+static func _sandbox_required(adapter: MetaProgressAdapter) -> Dictionary:
+	var summary := adapter.get_summary()
+	summary["write_blocked"] = true
+	summary["write_block_reason"] = "debug_sandbox_profile_required"
+	summary["required_profile_id"] = "dev_sandbox"
+	return summary

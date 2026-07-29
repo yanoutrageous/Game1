@@ -196,7 +196,10 @@ func _ready() -> void:
 		m1_debug_panel_enabled,
 		run_context,
 		meta_progress_adapter,
+		save_manager,
+		command_bus,
 		player_controller,
+		run_overlay_root,
 		debug_panel,
 		debug_x_spin,
 		debug_y_spin,
@@ -599,7 +602,7 @@ func _build_run_overlay() -> void:
 	debug_content.name = "DebugOperationButtons"
 	debug_content.add_theme_constant_override("separation", 6)
 	debug_scroll.add_child(debug_content)
-	RunSceneDebugPanelControllerScript.add_section(debug_content, "Run Debug")
+	RunSceneDebugPanelControllerScript.add_section(debug_content, "WRITE COMMANDS · TAINTS SESSION")
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Standard Run", func() -> void: _start_standard_from_ui())
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Teleport Exit", func() -> void: debug_panel_controller.teleport_to_exit())
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Nearest Chest", func() -> void: _debug_teleport_to_room_type(&"Chest"))
@@ -627,7 +630,7 @@ func _build_run_overlay() -> void:
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Drop Item", func() -> void: _drop_inventory_from_ui())
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Request Extract", func() -> void: _request_extract_from_ui())
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Confirm Extract", func() -> void: _dispatch_command(&"confirm_extract", {"source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_section(debug_content, "Meta Debug")
+	RunSceneDebugPanelControllerScript.add_section(debug_content, "WRITE COMMANDS · SANDBOX META")
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "+1000 Meta Gold", func() -> void: debug_panel_controller.meta_add_gold())
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Set Meta Gold 0", func() -> void: debug_panel_controller.meta_set_gold(0))
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Clear Meta Gold", func() -> void: debug_panel_controller.meta_clear_gold())
@@ -635,7 +638,7 @@ func _build_run_overlay() -> void:
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Clear Warehouse", func() -> void: debug_panel_controller.meta_clear_warehouse())
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Save Meta Now", func() -> void: debug_panel_controller.meta_save())
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "Clear Save", func() -> void: debug_panel_controller.meta_clear_save())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Read Save Summary", func() -> void: debug_panel_controller.meta_summary())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "Capture Failure Bundle", func() -> void: debug_panel_controller.capture_failure_bundle())
 	debug_log = Label.new()
 	debug_log.name = "DebugLastMessage"
 	debug_log.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -896,6 +899,7 @@ func _meta_progress_summary() -> Dictionary:
 
 
 func _show_main_menu() -> void:
+	debug_panel_controller.end_test_room_if_ready()
 	screen_state = SCREEN_MAIN_MENU
 	_set_gameplay_visible(false)
 	ui_shell.call("show_main")
@@ -1217,6 +1221,9 @@ func _return_from_result_to_main() -> void:
 
 
 func _return_from_result_to_deploy() -> void:
+	if debug_panel_controller.is_test_room_active():
+		_return_from_result_to_main()
+		return
 	if not _runtime_modal_is_top(&"result"):
 		return
 	if result_panel != null and not result_panel.normal_exit_allowed():
@@ -1237,6 +1244,8 @@ func _normalize_deploy_tab(tab_id: StringName) -> StringName:
 
 
 func _on_app_shell_host_route_requested(intent: Dictionary) -> void:
+	if debug_panel_controller.start_test_room_if_requested(intent, Callable(self, "_run_start_asset_admission"), Callable(self, "_show_run_screen"), Callable(self, "_show_main_menu")):
+		return
 	var target := NavigationIntentScript.target(intent)
 	match target:
 		NavigationIntentScript.TARGET_RUN:
@@ -2708,9 +2717,6 @@ func _on_tutorial_popup_confirmed() -> void:
 
 
 func _start_standard_from_ui() -> void:
-	# Debug starts must exercise the same Deploy configuration and meta-progress
-	# authorization as a player start. An empty route preview can drift from the
-	# selected map difficulty or commission offer and is correctly rejected.
 	_show_deploy_shell(&"config")
 	if deploy_shell_panel != null and deploy_shell_panel.has_method("_on_primary_action_pressed"):
 		deploy_shell_panel.call("_on_primary_action_pressed")

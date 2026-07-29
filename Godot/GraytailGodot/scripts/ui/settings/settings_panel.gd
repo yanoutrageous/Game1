@@ -1,8 +1,10 @@
 extends PanelContainer
 
 signal close_requested
+signal test_room_requested
 
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const DebugGateScript := preload("res://scripts/core/debug/debug_gate.gd")
 
 const FIELD_NAMES := [
 	"window_mode",
@@ -33,6 +35,7 @@ var effects_volume_slider: HSlider
 var effects_volume_value_label: Label
 var haptics_enabled_check: CheckButton
 var reduce_motion_check: CheckButton
+var test_room_button: Button
 var status_label: Label
 var confirmation_box: VBoxContainer
 var confirmation_label: Label
@@ -252,6 +255,13 @@ func _build_once() -> void:
 	reduce_motion_check.name = "ReduceMotion"
 	reduce_motion_check.text = "减少循环动画与位移动效"
 	_add_field_row("减少动态效果", reduce_motion_check)
+	if DebugGateScript.is_debug_tools_enabled():
+		test_room_button = Button.new()
+		test_room_button.name = "EnterDebugTestRoom"
+		test_room_button.text = "进入隔离测试场"
+		test_room_button.tooltip_text = "使用 dev_sandbox 独立存档和固定 7×7 场景。"
+		test_room_button.pressed.connect(_on_test_room_pressed)
+		_add_field_row("开发与测试", test_room_button)
 
 	status_label = Label.new()
 	status_label.name = "Status"
@@ -397,6 +407,15 @@ func _apply_material_and_safe_zones(title: Label) -> void:
 			)
 			action.set_meta("ui_composition_role", &"button")
 			action.set_meta("ui_panel_safe_margin", 22)
+	if test_room_button != null:
+		test_room_button.custom_minimum_size.y = 32.0
+		test_room_button.set_meta("ui_composition_role", &"button")
+		test_room_button.set_meta("ui_panel_safe_margin", 22)
+		_register_scaled_control(
+			test_room_button,
+			Art10UISkinKitScript.font_size(&"button"),
+			test_room_button.custom_minimum_size
+		)
 	var confirmation_actions := confirm_button.get_parent() as HBoxContainer
 	if confirmation_actions != null:
 		confirmation_actions.add_theme_constant_override("separation", 8)
@@ -559,6 +578,16 @@ func _on_reset_pressed() -> void:
 		{"surface": &"settings", "action": &"reset_draft"}
 	)
 	_refresh_from_manager()
+
+
+func _on_test_room_pressed() -> void:
+	if not _opened or not DebugGateScript.is_debug_tools_enabled():
+		return
+	_emit_player_feedback(
+		&"ui_confirm",
+		{"surface": &"settings", "action": &"enter_debug_test_room"}
+	)
+	test_room_requested.emit()
 
 
 func _on_transaction_changed(_snapshot: Dictionary) -> void:

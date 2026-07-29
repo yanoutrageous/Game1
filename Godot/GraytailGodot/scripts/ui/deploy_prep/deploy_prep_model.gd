@@ -286,10 +286,23 @@ static func _warehouse_rows(config: Dictionary, selected_filter: StringName) -> 
 		var filter_id := StringName(definition.get("filter", DeployTabModelScript.FILTER_ALL))
 		if selected_filter != DeployTabModelScript.FILTER_ALL and selected_filter != filter_id:
 			continue
-		for raw_item in _group_items(groups, StringName(definition.get("key", &""))):
-			var item := _dictionary_from(raw_item)
+		for raw_stack in _stack_warehouse_items(
+			_group_items(groups, StringName(definition.get("key", &"")))
+		):
+			var stack := _array_from(raw_stack)
+			if stack.is_empty():
+				continue
+			var item := _dictionary_from(stack[0])
 			if not item.is_empty():
-				result.append(_warehouse_item_row(config, item, str(definition.get("label", "物品")), filter_id, selected_ids, all_items))
+				result.append(_warehouse_item_row(
+					config,
+					item,
+					str(definition.get("label", "物品")),
+					filter_id,
+					selected_ids,
+					all_items,
+					stack
+				))
 	return result
 
 
@@ -299,16 +312,31 @@ static func _warehouse_item_row(
 	group_label: String,
 	filter_id: StringName,
 	selected_ids: Dictionary,
-	all_items: Array
+	all_items: Array,
+	stack_items: Array = []
 ) -> Dictionary:
+	if stack_items.is_empty():
+		stack_items = [item.duplicate(true)]
 	var instance_id := str(item.get("instance_id", ""))
 	var item_id := str(item.get("item_id", instance_id))
 	if instance_id.is_empty():
 		instance_id = item_id
-	var selected := selected_ids.has(instance_id)
+	var instance_ids: Array[String] = []
+	var deployed_count := 0
+	for raw_stack_item in stack_items:
+		var stack_item := _dictionary_from(raw_stack_item)
+		var stack_instance_id := str(stack_item.get("instance_id", "")).strip_edges()
+		if stack_instance_id.is_empty() or instance_ids.has(stack_instance_id):
+			continue
+		instance_ids.append(stack_instance_id)
+		if selected_ids.has(stack_instance_id):
+			deployed_count += 1
+	instance_ids.sort()
+	if not instance_ids.is_empty():
+		instance_id = instance_ids[0]
+	var selected := deployed_count > 0
 	var item_type := StringName(item.get("item_type", &"special"))
-	var owned_count := _count_item_id(all_items, item_id)
-	var deployed_count := _count_selected_item(config, item_id)
+	var owned_count := instance_ids.size()
 	var rarity_descriptor := ItemRarityDescriptorScript.describe_item(item)
 	var rarity := StringName(rarity_descriptor.get("normalized_key", &"unknown"))
 	var collectible_level := maxi(0, int(item.get("collectible_level", 0)))
@@ -342,14 +370,14 @@ static func _warehouse_item_row(
 		var sell_label := "确认出售" if sell_pending and sell_enabled else "出售"
 		actions.append(_action(&"sell", sell_label, sell_enabled, true, not sell_pending, sell_reason, {"instance_id": instance_id, "item_id": item_id}))
 	var summary_parts := [
-		String(rarity_descriptor.get("display_text", "[?] 未鉴定")),
+		String(rarity_descriptor.get("label", "未鉴定")),
 		"拥有 %d" % owned_count,
 		"出勤 %d" % deployed_count,
 	]
 	if not collectible_level_text.is_empty():
 		summary_parts.insert(1, collectible_level_text)
 	var facts := [
-		_fact("品质", String(rarity_descriptor.get("display_text", "[?] 未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
+		_fact("品质", String(rarity_descriptor.get("label", "未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
 	]
 	if collectible_level > 0:
 		facts.append(_fact("收藏等级", "Lv.%d" % collectible_level, &"positive"))
@@ -369,6 +397,8 @@ static func _warehouse_item_row(
 		"detail": str(item.get("short_description", "")),
 		"detail_kind": &"warehouse_item",
 		"instance_id": instance_id,
+		"instance_ids": instance_ids,
+		"stack_key": _warehouse_stack_key(item),
 		"item_id": item_id,
 		"item_type": item_type,
 		"rarity": rarity,
@@ -382,6 +412,12 @@ static func _warehouse_item_row(
 		"collectible_level_text": collectible_level_text,
 		"owned_count": owned_count,
 		"deployed_count": deployed_count,
+		"quantity_capable": bool(item.get("can_carry", false)) or can_sell,
+		"quantity_mode": &"carry" if bool(item.get("can_carry", false)) else &"none",
+		"quantity_current": deployed_count,
+		"quantity_limit": owned_count,
+		"quantity_enabled": not active_locked,
+		"quantity_category": group_label,
 		"selected": selected,
 		"batch_sell_eligible": batch_sell_eligible,
 		"batch_sell_reason_code": batch_sell_reason,
@@ -397,6 +433,42 @@ static func _warehouse_item_row(
 		"display_only": false,
 		"read_only": true,
 	}
+
+
+static func _stack_warehouse_items(items: Array) -> Array:
+	var order: Array[String] = []
+	var stacks := {}
+	for raw_item in items:
+		var item := _dictionary_from(raw_item)
+		if item.is_empty():
+			continue
+		var key := _warehouse_stack_key(item)
+		if not stacks.has(key):
+			stacks[key] = []
+			order.append(key)
+		(stacks[key] as Array).append(item)
+	var result := []
+	for key in order:
+		result.append((stacks[key] as Array).duplicate(true))
+	return result
+
+
+static func _warehouse_stack_key(item: Dictionary) -> String:
+	return "|".join([
+		str(item.get("item_id", "")),
+		str(item.get("item_type", "")),
+		str(item.get("rarity", "")),
+		str(item.get("collectible_level", 0)),
+		str(item.get("weight", 0)),
+		str(item.get("base_value", 0)),
+		str(item.get("can_equip", false)),
+		str(item.get("can_consume", false)),
+		str(item.get("can_sell", false)),
+		str(item.get("is_unique", false)),
+		str(item.get("equipment_slot", "")),
+		str(item.get("effect_kind", "")),
+		str(item.get("effect_amount", 0)),
+	])
 
 
 static func _warehouse_sell_reason_text(reason_code: StringName) -> String:
@@ -469,7 +541,9 @@ static func _claim_rows(config: Dictionary, selected_filter: StringName) -> Arra
 		var item_id := str(shop.get("item_id", ""))
 		var item := M7ContentCatalogScript.item_definition(item_id)
 		var price := int(shop.get("price", 0))
-		var affordable := bool(wallet.get("available", false)) and int(wallet.get("gold", 0)) >= price
+		var purchase_quantity := DeployConfigScript.purchase_quantity(config, item_id)
+		var total_price := price * purchase_quantity
+		var affordable := bool(wallet.get("available", false)) and int(wallet.get("gold", 0)) >= total_price
 		var purchase_enabled := unlocked and affordable and not active_locked
 		var reason_code := &"ok"
 		if active_locked:
@@ -481,28 +555,52 @@ static func _claim_rows(config: Dictionary, selected_filter: StringName) -> Arra
 		elif not affordable:
 			reason_code = &"insufficient_gold"
 		var unlock_text := _claim_unlock_text(shop, unlocked)
-		var action := _action(&"purchase", "购买", purchase_enabled, false, false, reason_code, {"item_id": item_id, "price": price})
+		var action := _action(&"purchase", "确认购买", purchase_enabled, false, false, reason_code, {
+			"item_id": item_id,
+			"price": price,
+			"quantity": purchase_quantity,
+		})
+		var rarity_descriptor := ItemRarityDescriptorScript.describe_item(item)
+		var item_category := _item_category_label(item)
 		result.append({
 			"id": StringName("m7_shop_%s" % item_id),
 			"filter_id": DeployTabModelScript.FILTER_CLAIM_PURCHASE if unlocked else DeployTabModelScript.FILTER_CLAIM_LOCKED,
 			"title": str(shop.get("display_name", item.get("display_name", item_id))),
-			"category": "基地申领",
+			"category": item_category,
 			"state": "ready" if purchase_enabled else ("unaffordable" if unlocked else "locked"),
-			"summary": "%d 金币 · 余额 %s · %s" % [price, str(wallet.get("display", "—")), "已解锁" if unlocked else "未解锁"],
+			"summary": "%s · %d 金币/件" % [item_category, price],
 			"detail": str(item.get("short_description", "购买后进入长期仓库。")),
 			"detail_kind": &"claim",
 			"item_id": item_id,
+			"item_type": StringName(item.get("item_type", &"special")),
+			"rarity": StringName(rarity_descriptor.get("normalized_key", &"unknown")),
+			"rarity_label": String(rarity_descriptor.get("label", "未鉴定")),
+			"rarity_border_token": StringName(rarity_descriptor.get("border_token", &"rarity.border.unknown")),
+			"rarity_color": Color(rarity_descriptor.get("color", Color.WHITE)),
 			"price": price,
+			"unit_price": price,
+			"total_price": total_price,
+			"purchase_quantity": purchase_quantity,
+			"quantity_capable": true,
+			"quantity_mode": &"purchase",
+			"quantity_current": purchase_quantity,
+			"quantity_limit": (
+				mini(99, int(wallet.get("gold", 0)) / maxi(1, price))
+				if bool(wallet.get("available", false)) and price > 0
+				else 99
+			),
+			"quantity_enabled": purchase_enabled or (unlocked and not active_locked),
+			"quantity_category": item_category,
 			"balance": wallet.get("gold", null),
 			"balance_display": str(wallet.get("display", "—")),
 			"unlocked": unlocked,
 			"affordable": affordable,
 			"unlock_text": unlock_text,
 			"facts": [
-				_fact("价格", "%d 金币" % price),
-				_fact("余额", str(wallet.get("display", "—")), &"positive" if affordable else &"warning"),
+				_fact("单价", "%d 金币" % price),
+				_fact("本次购买", "%d 件 / %d 金币" % [purchase_quantity, total_price]),
+				_fact("交易后余额", str(int(wallet.get("gold", 0)) - total_price), &"positive" if affordable else &"warning"),
 				_fact("解锁", unlock_text, &"positive" if unlocked else &"muted"),
-				_fact("发放", "购买后进入仓库"),
 			],
 			"actions": [action],
 			"preview": false,
@@ -711,8 +809,9 @@ static func _detail_projection(active_tab: StringName, selected_row: Dictionary)
 		"instance_id", "item_id", "item_type", "rarity", "rarity_label", "rarity_badge", "rarity_display_text",
 		"rarity_border_token", "rarity_color", "rarity_locked", "collectible_level", "collectible_level_text",
 		"owned_count", "deployed_count", "weight", "value",
+		"instance_ids", "quantity_mode", "quantity_current", "quantity_limit",
 		"batch_sell_eligible", "batch_sell_reason_code", "batch_sell_reason",
-		"price", "balance", "balance_display", "affordable", "unlock_text", "claimed",
+		"price", "unit_price", "total_price", "purchase_quantity", "balance", "balance_display", "affordable", "unlock_text", "claimed",
 		"commission_id", "condition", "metric", "target", "reward", "reward_text", "used", "limit"
 	]:
 		if selected_row.has(key):
@@ -733,7 +832,7 @@ static func _summary_projection(config: Dictionary, map_projection: Dictionary) 
 	var equipment := _array_from(config.get("selected_equipment_items", []))
 	var consumables := _array_from(config.get("selected_consumable_items", []))
 	var equipment_names := _item_names(equipment, "未携带装备")
-	var consumable_names := _item_names(consumables, "未携带补给")
+	var consumable_names := _item_names_with_counts(consumables, "未携带补给")
 	var used := int(config.get("bag_used", 0))
 	var limit := int(config.get("bag_limit", config.get("backpack_capacity", 10)))
 	var map_summary := _map_summary_text(map_name, scale_label, difficulty_label)
@@ -763,24 +862,43 @@ static func _summary_projection(config: Dictionary, map_projection: Dictionary) 
 			"objective": tutorial_objective_lines.duplicate(true),
 			"read_only": true,
 		}
+	var validity := DeployConfigScript.config_validity(config)
 	var overview := [
-		map_summary,
-		"委托：%s" % objective_name,
-		"携带：%s；%s" % [equipment_names, consumable_names],
+		"地图：%s" % map_name,
+		"难度：%s" % difficulty_label,
+		"目标：%s" % objective_name,
 		"容量：%d / %d" % [used, limit],
+		(
+			"出发状态：可以出发"
+			if bool(validity.get("can_start", false))
+			else "出发阻塞：%s" % _validity_reason_text(
+				StringName(validity.get("reason_code", &"unknown"))
+			)
+		),
 	]
 	var config_lines := [
-		"地图：%s" % map_summary,
-		"委托：%s" % objective_name,
 		"装备：%s" % equipment_names,
 		"补给：%s" % consumable_names,
+		"数量：装备 %d 件，补给 %d 件" % [equipment.size(), consumables.size()],
 		"容量：%d / %d" % [used, limit],
 	]
 	var effect_lines := _effect_summary_lines(config, equipment, consumables)
+	effect_lines.append("协议：难度 %d" % int(config.get("protocol_difficulty", 5)))
+	var active_talents := _array_from(config.get("active_talent_effects", []))
+	effect_lines.append(
+		"天赋：%s" % (
+			"无生效天赋"
+			if active_talents.is_empty()
+			else "%d 项生效" % active_talents.size()
+		)
+	)
+	effect_lines.append("补给：%s" % consumable_names)
 	var objective_lines := [
 		"委托：%s" % objective_name,
 		"条件：%s" % condition,
 		"奖励：%s" % reward_text,
+		"进度：出发后按本局行为更新",
+		"适用：%s / %s" % [map_name, difficulty_label],
 	]
 	var pages := {
 		"overview": overview,
@@ -1013,6 +1131,40 @@ static func _item_names(items: Array, empty_text: String) -> String:
 	return empty_text if names.is_empty() else "、".join(names)
 
 
+static func _item_names_with_counts(items: Array, empty_text: String) -> String:
+	var order: Array[String] = []
+	var counts := {}
+	for raw_item in items:
+		var item := _dictionary_from(raw_item)
+		var name := str(item.get("display_name", item.get("item_id", "物品")))
+		if not counts.has(name):
+			order.append(name)
+			counts[name] = 0
+		counts[name] = int(counts[name]) + 1
+	if order.is_empty():
+		return empty_text
+	var labels := PackedStringArray()
+	for name in order:
+		labels.append("%s ×%d" % [name, int(counts[name])])
+	return "、".join(labels)
+
+
+static func _validity_reason_text(reason_code: StringName) -> String:
+	match reason_code:
+		&"no_maps_available":
+			return "没有已解锁地图"
+		&"map_locked":
+			return "地图尚未解锁"
+		&"difficulty_mismatch":
+			return "难度与地图不匹配"
+		&"backpack_overweight":
+			return "携带容量超限"
+		&"unknown_map_id":
+			return "地图配置不存在"
+		_:
+			return "配置尚未完成"
+
+
 static func _effect_text(kind: String, amount: int) -> String:
 	match kind:
 		"backpack_capacity": return "背包容量 +%d" % amount
@@ -1022,6 +1174,18 @@ static func _effect_text(kind: String, amount: int) -> String:
 		"search_reward": return "搜索收益判定 +%d" % amount
 		"scan_hint": return "扫描提示 +%d" % amount
 	return "%s %+d" % [kind, amount]
+
+
+static func _item_category_label(item: Dictionary) -> String:
+	match StringName(item.get("item_type", &"special")):
+		&"equipment":
+			return "装备"
+		&"consumable":
+			return "消耗品"
+		&"collectible":
+			return "藏品"
+		_:
+			return "特殊物"
 
 
 static func _empty_state_for(tab_id: StringName) -> String:
