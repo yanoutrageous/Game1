@@ -8,7 +8,7 @@ Current authority:
 active_repo = <git-worktree-root>
 godot_project = <git-worktree-root>\Godot\GraytailGodot
 docs_entry = <git-worktree-root>\docs
-active_stage = I3R / ACTIVE
+active_stage = I4 / ACTIVE
 latest_closed_non_art_baseline = I2 / CLOSED / PASS_WITH_NOTES
 ```
 
@@ -21,11 +21,11 @@ Read current stage facts in this order:
 1. `docs/50_stages/active/STAGE_INDEX.md`
 2. `docs/10_current/CURRENT_STATE.md`
 3. `docs/10_current/NEXT_ACTION.md`
-4. `docs/20_product/I3R_PLAYER_EXPERIENCE_REWORK_CONTRACT.md`
-5. `docs/00_governance/I3R_EXECUTION_LEDGER.md`
-6. `docs/00_governance/I3R_REQUIREMENT_MATRIX.md`
+4. `docs/20_product/I4_PRODUCTION_INTERACTION_CONVERGENCE_CONTRACT.md`
+5. `docs/00_governance/I4_EXECUTION_LEDGER.md`
+6. `docs/00_governance/I4_REQUIREMENT_MATRIX.md`
 7. `docs/40_validation/VALIDATION_INDEX.md`
-8. `tools/i3r/README.md`
+8. `tools/i4/README.md`
 
 Historical G40 source roots:
 
@@ -56,5 +56,8 @@ Rules:
   conditional closeout evidence, but its own validation and handoff require
   exact-head/full plus push/remote-SHA proof before closed-baseline authority
   can take effect.
-- I3R is the current active rework stage. It is not closed and does not
-  automatically authorize I4, a new art stage, or any other successor.
+- I3R machine evidence remains historical, but its open external player feedback
+  was explicitly superseded into the user-authorized I4 stage on 2026-07-30.
+- I4 is the current active production-interaction convergence stage. It does not
+  automatically authorize a new art stage, content expansion, release, or any
+  other successor.

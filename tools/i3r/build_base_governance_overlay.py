@@ -1426,10 +1426,18 @@ def verify_outputs(
             diagnostics.append(f"OVERLAY_MISSING {path}")
             continue
         actual = path.read_bytes()
-        if actual != expected:
+        # Git may materialize tracked text files with CRLF when the machine has
+        # core.autocrlf enabled.  The generated CSV contract is line based, so
+        # compare canonical LF bytes while still rejecting every semantic byte
+        # change.  Without this normalization an exact-head gate can fail only
+        # because it was checked out on Windows.
+        actual_canonical = actual.replace(b"\r\n", b"\n")
+        expected_canonical = expected.replace(b"\r\n", b"\n")
+        if actual_canonical != expected_canonical:
             diagnostics.append(
-                f"OVERLAY_DRIFT {path} expected_sha={hashlib.sha256(expected).hexdigest().upper()} "
-                f"actual_sha={hashlib.sha256(actual).hexdigest().upper()}"
+                f"OVERLAY_DRIFT {path} "
+                f"expected_sha={hashlib.sha256(expected_canonical).hexdigest().upper()} "
+                f"actual_sha={hashlib.sha256(actual_canonical).hexdigest().upper()}"
             )
     return diagnostics
 

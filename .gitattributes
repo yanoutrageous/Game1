@@ -20,3 +20,9 @@
 /tools/i1/invoke_i1.ps1 text eol=lf
 /tools/i1/invoke_i1_preview.ps1 text eol=lf
 /tools/i0/i0_test_lib.ps1 text eol=lf
+
+# Generated governance overlays are canonical LF text.  The verifier also
+# normalizes checkout line endings so existing Windows worktrees remain valid.
+/docs/00_governance/I3R_BASE_SEMANTIC_OBJECT_REGISTRY.csv text eol=lf
+/docs/00_governance/I3R_BASE_RUNTIME_CROSSWALK.csv text eol=lf
+/docs/00_governance/I3R_BASE_RUNTIME_ALIAS_DEBT.csv text eol=lf

@@ -1,11 +1,14 @@
 # Known Unfinished Systems
 
-文档状态：I3R 活动返工的当前未完成系统清单；I3 保持关闭历史。
-最后更新：2026-07-27
+文档状态：I4 活动阶段的当前未完成系统清单；I3R 事实为入口继承边界。
+最后更新：2026-07-30
 
-本文件阻止 foundation、preview、schema、runner、capture、定向 PASS 或“已生成截图”被扩写为完整产品能力。I3R 当前分支为 `codex/i3r-player-experience-rework`；下列项目只记录当前真实边界，不重新打开 I1、I2 或 I3。
+本文件阻止 foundation、preview、schema、runner、capture、定向 PASS 或“已生成截图”
+被扩写为完整产品能力。I4 当前分支为
+`codex/i4-production-interaction-convergence`；下列 I3R 事实是 I4 入口继承边界，
+不代表 I4 已完成。
 
-| 系统 | I3R 当前事实 | 仍未完成 / 后续门 |
+| 系统 | I4 入口继承事实 | 仍未完成 / 后续门 |
 | --- | --- | --- |
 | `RunScene` 职责 | 弹层 root、输入盾牌、私有 `_focus_stack` 与首选焦点遍历已提取到 `RunSceneModalController`，RunScene 不再暴露 raw stack；生产 `main.tscn` 接线和相邻回归 PASS；冻结树为 2974 行 / 161 函数，低于 2980 / 176 预算 | 仍是大型协调器；继续一次提取一个有特征测试的职责，但继续压缩行数不是 I3R 关闭的独立硬要求 |
 | 弹层与破坏性确认 | Deploy 放弃/批售 stale 与 wrong-top 调用 fail closed；CommandBus 拒绝未确认放弃；Deploy-origin 结果层、焦点、返回和不误开新局已通过真实 `main.tscn` | 真实手柄与动态玩家签收仍未完成 |

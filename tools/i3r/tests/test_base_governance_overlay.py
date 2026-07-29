@@ -14,6 +14,26 @@ SPEC.loader.exec_module(OVERLAY)
 
 
 class BaseGovernanceOverlayTest(unittest.TestCase):
+    def test_verify_outputs_accepts_checkout_newline_materialization(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "overlay.csv"
+            output.write_bytes(b"key,value\r\none,two\r\n")
+
+            diagnostics = OVERLAY.verify_outputs(
+                {output: b"key,value\none,two\n"},
+                [],
+            )
+
+            self.assertEqual([], diagnostics)
+
+            output.write_bytes(b"key,value\r\none,changed\r\n")
+            diagnostics = OVERLAY.verify_outputs(
+                {output: b"key,value\none,two\n"},
+                [],
+            )
+            self.assertEqual(1, len(diagnostics))
+            self.assertIn("OVERLAY_DRIFT", diagnostics[0])
+
     def test_semantic_family_is_independent_from_lifecycle(self) -> None:
         fixtures = {
             "sources/art/05_export_runtime_candidates/map_tile_icon/map_tile_explored.png": "map",

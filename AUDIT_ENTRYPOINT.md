@@ -1,7 +1,7 @@
 # Audit Entrypoint
 
-文档状态：I3 是冻结历史；I3R 是当前 `ACTIVE` 返工阶段。
-最后更新：2026-07-27
+文档状态：I4 是当前 `ACTIVE` 阶段；I3R 保留为被接管前的历史机器证据。
+最后更新：2026-07-30
 
 ## 读取顺序
 
@@ -9,29 +9,30 @@
 2. docs/50_stages/active/STAGE_INDEX.md
 3. docs/10_current/CURRENT_STATE.md
 4. docs/10_current/NEXT_ACTION.md
-5. docs/20_product/I3R_PLAYER_EXPERIENCE_REWORK_CONTRACT.md
-6. docs/00_governance/I3R_EXECUTION_LEDGER.md
-7. docs/00_governance/I3R_REQUIREMENT_MATRIX.md
+5. docs/20_product/I4_PRODUCTION_INTERACTION_CONVERGENCE_CONTRACT.md
+6. docs/00_governance/I4_EXECUTION_LEDGER.md
+7. docs/00_governance/I4_REQUIREMENT_MATRIX.md
 8. docs/40_validation/VALIDATION_INDEX.md
-9. tools/i3r/README.md
+9. tools/i4/README.md
 10. docs/50_stages/closed/STAGE_INDEX.md
 
 ## 当前权威
 
     active_repo: git rev-parse --show-toplevel
-    observed_branch: codex/i3r-player-experience-rework
-    active_stage: I3R / ACTIVE / EXTERNAL_ACCEPTANCE_PENDING
+    observed_branch: codex/i4-production-interaction-convergence
+    active_stage: I4 / ACTIVE / PLAN_AUDIT
     latest_closed_non_art_baseline: I2
     historical_i3_entry: 09aaafe283aa2e4c2f30708c5f88b89ebf7753eb
     i3r_implementation_entry: 35189aaf524157761d1ab9cdddc39e76baa0d7ca
     latest_closed_art_stage: ART21
     later_scoped_page_ui_evidence: ART23
-    successor_authorization: USER_AUTHORIZED_I3R
+    i4_entry: 4127bd27a05b75cb5e3071cf6dc87d9287f679a9
+    successor_authorization: USER_AUTHORIZED_I4_FULL_PROCESS_AND_PUSH
 
 路径必须由 Git 动态解析；上面的分支是本机当前工作快照观测，不是跨机器路径选择规则。
 Godot 是唯一生产实现目标，UE/Lua/旧原型只保留有边界的参考意义。
 
-## 当前 I3R 验证状态
+## I3R 继承验证状态
 
 - 最终工作树 full：96/96 PASS（53 plain、43 cleanup-diagnostic、0 hard failure），
   报告 `.tmp/i1/20260726T171400780Z_6f66cb6f/report.json`，SHA-256 为
@@ -54,10 +55,10 @@ Godot 是唯一生产实现目标，UE/Lua/旧原型只保留有边界的参考�
   validation 与 handoff 原文。首次 quick/full 失败、补救和复验链也只在 validation
   原文中展开，导航不重复长表。
 
-## I3R 外部交付条件
+## I4 外部交付条件
 
-I3R 只有在同一候选提交通过 exact-head/full，随后 push 且远端分支 SHA 与本地一致，
-并完成外部设备与玩家签收时才具备关闭条件。这些结果由最终交付记录提供；worktree
+I4 只有在同一候选提交通过 exact-head/full，随后 push 且远端分支 SHA 与本地一致，
+并完成契约要求的生产、设备与玩家签收时才具备关闭条件。这些结果由最终交付记录提供；worktree
 full 不能替代该门，本文不预写未知提交 SHA。
 用户已于 2026-07-27 授权 commit、push 与 main 快进合并；最终远端 SHA 仍须由实际
 交付结果核对，Git 交付本身不替代外部设备与玩家签收。
@@ -66,7 +67,7 @@ full 不能替代该门，本文不预写未知提交 SHA。
 
 - I3 仅作为已冻结历史入口保留；ART21 仍是项目级最新闭合美术阶段，ART23 仍只是
   较晚的页面/UI 范围证据。
-- I3R 是当前 active stage；I3R 授权不自动授权 I4、新美术阶段或其他后继阶段。
+- I4 是当前 active stage；I4 授权不自动授权新内容、新美术阶段、发布或其他后继阶段。
 - Deploy 地图继续属于出发探索同页双栏，禁止回退为区域到难度的分步页面。
 - Base 入库不等于 runtime admission；原始策划案保持原名、原字节和完整信息。
 - 47 张渲染证据不构成最终审美、动画/音频手感或设备性能验收。

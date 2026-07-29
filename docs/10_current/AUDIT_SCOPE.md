@@ -1,20 +1,22 @@
 # Audit Scope
 
-文档状态：I3R 活动返工的当前审计边界；不是关闭结论。
-最后更新：2026-07-27
+文档状态：I4 活动阶段的当前审计边界；不是关闭结论。
+最后更新：2026-07-30
 
 ## 身份与阶段
 
     active_repo: git rev-parse --show-toplevel
-    active_stage: I3R / ACTIVE / EXTERNAL_ACCEPTANCE_PENDING
-    delivery_branch: codex/i3r-player-experience-rework
+    active_stage: I4 / ACTIVE / PLAN_AUDIT
+    delivery_branch: codex/i4-production-interaction-convergence
+    i4_entry_head: 4127bd27a05b75cb5e3071cf6dc87d9287f679a9
+    i4_entry_tree: e1455ffd8c7a754c63eb2141a47e41f8fe5cdf3a
     i3_historical_head: 09aaafe283aa2e4c2f30708c5f88b89ebf7753eb
     i3_historical_tree: a077da34237dce5e4a6081d833efd939098b4641
     i3r_entry_head: 35189aaf524157761d1ab9cdddc39e76baa0d7ca
     i3r_entry_tree: 82f100059add24ecb2c12e7fca0bfb17f3a95c50
 
-I3 保持 `CLOSED / PASS_WITH_NOTES` 的历史记录。I3R 是当前用户授权的返工阶段；
-最终机器复验、静态视觉复核与空间治理已通过，人工/设备和外部交付门尚未闭合。
+I3 保持历史记录。I3R 的机器复验、静态视觉复核与空间治理保持历史原义；用户后续
+生产反馈未接受其外部体验边界。I4 是当前用户授权的活动阶段并接管这些开放项。
 
 ## 本次纳入
 
@@ -99,5 +101,5 @@ Godot 对 KnownMap、GroundLoot、保存、结算、fixed tick、伤害和容量
 - 目标 GPU/FPS、内存和长局稳定性。
 - 平台导出、打包、商店和 release gate。
 
-上述门全部满足前，I3R 必须保持 `ACTIVE`；不得由旧 full、截图生成、V2 恢复证明
-或空间回收结果推导为阶段关闭，也不得自动启动 I4、ART22 或其他后继阶段。
+上述 I4 契约门全部满足前，I4 必须保持 `ACTIVE`；不得由旧 I3R full、截图生成、
+V2 恢复证明或空间回收结果推导为阶段关闭，也不得自动启动新内容、ART22 或其他后继阶段。

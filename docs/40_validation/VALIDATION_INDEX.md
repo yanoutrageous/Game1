@@ -1,9 +1,27 @@
 # Validation Index
 
-文档状态：I3R 活动验证入口；I3 保持关闭历史。
-最后更新：2026-07-27
+文档状态：I4 活动验证入口；I3R 保持被 I4 接管前的历史机器证据。
+最后更新：2026-07-30
 
-## I3R 活动入口
+## I4 活动入口
+
+- 总契约：`docs/20_product/I4_PRODUCTION_INTERACTION_CONVERGENCE_CONTRACT.md`
+- 执行台账：`docs/00_governance/I4_EXECUTION_LEDGER.md`
+- 需求矩阵：`docs/00_governance/I4_REQUIREMENT_MATRIX.md`
+- 运行手册：`docs/30_engineering/godot/I4_REPRODUCIBLE_PRODUCTION_VALIDATION_RUNBOOK.md`
+- 工具入口：`tools/i4/README.md`
+- entry commit：`4127bd27a05b75cb5e3071cf6dc87d9287f679a9`
+- entry tree：`e1455ffd8c7a754c63eb2141a47e41f8fe5cdf3a`
+
+I4 当前处于计划审计和入口治理。未在 I4 台账登记的 I3R 报告不得作为 I4 PASS。
+当前已完成的定向证据仅有：
+
+| 门 | 当前结果 | 证据与边界 |
+| --- | --- | --- |
+| I4 Base overlay Windows 换行复现 | TARGETED PASS | 入口 exact-head 首次执行复现三份 CSV 仅 CRLF/LF 不同；验证器现只归一化行尾，真实字段变化仍 `OVERLAY_DRIFT`；`tools/i3r/tests/test_base_governance_overlay.py` 新增正反测试。完整 exact-head 尚未执行。 |
+| I4 入口 Git/dirty 审计 | PASS | 本地/远端入口均为 `4127bd2`，ahead/behind 0/0；Godot 生成 metadata 保存至命名 stash，未并入 I4。 |
+
+## I3R 历史入口
 
 - 总契约：docs/20_product/I3R_PLAYER_EXPERIENCE_REWORK_CONTRACT.md
 - 执行台账：docs/00_governance/I3R_EXECUTION_LEDGER.md
@@ -13,8 +31,9 @@
 - I3R entry/base：`35189aaf524157761d1ab9cdddc39e76baa0d7ca` /
   tree `82f100059add24ecb2c12e7fca0bfb17f3a95c50`
 
-I3R 当前只允许按台账记录真实定向、渲染、玩家、性能与全量证据；不得用下方 I3
-历史 75/75 报告宣称 I3R 通过。
+下方 I3R 证据保持历史原义。用户后续生产反馈没有接受字体、遮挡、信息语义、数量
+操作和任务链体验；这些开放项由 I4 接管。不得使用下方 I3R 机器/静态证据宣称 I4
+或动态玩家体验已经通过。
 
 ## I3R 当前证据
 
