@@ -49,8 +49,8 @@
 | I4-R026 | 关键 runner 等待语义状态/信号，不依赖固定帧证明正确性 | `TARGETED_PASS` | 静态门为 `fixed_frame_helpers=0`，重复运行通过 |
 | I4-R027 | 关键场景 10 连过（至少 3 个新进程），局外旅程 3 连过 | `TARGETED_PASS` | worktree 6×10 + 3×旅程已过；最终 exact-head 仍由 I4-R029 关闭 |
 | I4-R028 | 旧档兼容，sandbox 前后默认档语义哈希一致 | `TARGETED_PASS` | save fixture、污染门与局外旅程 |
-| I4-R029 | worktree/full、exact-head/full、远端 SHA 和最终审计一致 | `NOT_STARTED` | 最终报告、commit、push proof |
-| I4-R030 | 最终 diff 无未知 dirty 或未授权 Godot metadata | `IMPLEMENTING` | 当前静态门 `protected_dirty=0`；提交前最终 diff/clean tree 待验 |
+| I4-R029 | worktree/full、exact-head/full、远端 SHA 和最终审计一致 | `IMPLEMENTING` | `f950eef` exact-head/full 与 51 图已过；最终审计提交、push/远端 SHA 待关闭 |
+| I4-R030 | 最终 diff 无未知 dirty 或未授权 Godot metadata | `TARGETED_PASS` | `f950eef` clean exact-head 静态门 `protected_dirty=0`；最终审计提交仍需同门复验 |
 | I4-R031 | `I4-QA-FROZEN-1` 在任何新 PASS 前生效；每条门具备对象、前置、测量、阈值、根因、修复顺序、信息保护和复验范围 | `TARGETED_PASS` | 标准审计、文档链接、模糊词扫描与人工复核；治理测试 12/12 |
 | I4-R032 | 当前生产内容普查覆盖主菜单/设置、Deploy、长期 6/25/58、局内、模态、结果和测试场，且每行有公开路径、fixture、layout class 和风险 | `TARGETED_PASS` | 156 行当前 registry/model 导出与逐行可达性报告 |
 | I4-R033 | 视觉几何按 R/S/G/V/H/F/P 判定；文字/框体遮挡为零，失败必须分类根因并按无损顺序修复 | `VISUAL_CANDIDATE` | 几何/极值/失败注入已过；当前原图已复核，完整矩阵未关门 |
@@ -102,7 +102,16 @@ unified_real_render_sha256=42894CFFFAEDA529367941F5CA8EA1424EF4C89FD8EDFB69E0AF3
 device_inventory=PASS controller=BLOCKED_NOT_RUN
 audio=ROUTE_DETECTED_NOT_FUNCTIONALLY_ACCEPTED
 gpu=MEASURED_NOT_ACCEPTED
-exact_head=NOT_RUN
+exact_head_candidate=f950eefb000ab298344059dfa8afc125aa79ed8a
+exact_head_full=PASS
+exact_head_report=.tmp/i4_exact_head_full_f950eef/evidence/i4_report.json
+exact_head_report_sha256=DAFE502175D30034C210AA664769770AB74420AF42FB1B45BE98F4E15F079E56
+exact_head_static_sha256=C708B0BCC09A436BD23218CC832AF8DEF16E7D7945C2F3987F135E09A9BC8F56
+exact_head_census_sha256=CC31EB553CB0BE106AD93DB75A1C8E653A60D648A06499C3689E84F23E8FBF04
+exact_head_repetition_sha256=5B7805C7BC472CE89E6D2807A9B44E177BA0E91FFBC7D3CB141FC92004C79471
+exact_head_device_sha256=48335E1DB9FB931FCE87F670EBFE4D6CA55A9A4B0B76E7BF699773E87A3C312F
+exact_head_render=PASS images=51 visual_status=VISUAL_CANDIDATE
+exact_head_render_sha256=981126BEFFC89311986262EB78A036DE054911DE2869982BD0F99B49F5F8800E
 push=NOT_RUN
 stage_acceptance=BLOCKED_EXTERNAL_DEVICE_AND_DYNAMIC_ACCEPTANCE
 ```

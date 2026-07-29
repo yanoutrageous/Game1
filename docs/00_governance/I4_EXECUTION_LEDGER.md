@@ -24,7 +24,7 @@ tree `e1455ffd8c7a754c63eb2141a47e41f8fe5cdf3a`
 | I4.5 | `TARGETED_PASS / VISUAL_CANDIDATE` | 精确实例使用/丢弃、紧凑聚合、稳定阻挡 descriptor、可见足迹、纹理 fallback、品质地面光束与全房型定向门已通过 | 全房型×12 组原图和动态玩家验收 |
 | I4.6 | `TARGETED_PASS / VISUAL_CANDIDATE` | 通知直达、显式已读、页面历史与状态恢复 runner 已过；6 模块/25 页面真实矩阵已逐图复核 | 物理手柄和动态玩家验收 |
 | I4.7 | `TARGETED_PASS / VISUAL_CANDIDATE` | readable/display 字体分离、16/8/4/2 边框、地图四层、协议安全区、内容驱动左下高度、统一品质色与纹理 resolver 已接入并完成当前原图复核 | 四分辨率×三比例全状态逐图与动态输入门 |
-| I4.8 | `IMPLEMENTING / EXTERNAL_GATES_BLOCKED` | worktree 预检、6×10+3 重复、156 行内容普查、14 高风险真实捕获和设备边界清点已完成 | exact-head/full、push；物理手柄、功能听音、目标 GPU 长局与动态玩家验收仍待外部条件 |
+| I4.8 | `IMPLEMENTING / EXTERNAL_GATES_BLOCKED` | worktree 预检、6×10+3 重复、156 行内容普查、统一 51 图和设备边界清点已完成；`f950eef` clean exact-head/full 与 exact-head 51 图均通过 | 最终审计提交同门复验、push/远端 SHA；物理手柄、功能听音、目标 GPU 长局与动态玩家验收仍待外部条件 |
 
 ## I4.0 入口审计记录
 
@@ -165,6 +165,29 @@ audio=ROUTE_DETECTED_NOT_FUNCTIONALLY_ACCEPTED
 gpu=MEASURED_NOT_ACCEPTED
 ```
 
+首个候选提交后的 clean exact-head 证据：
+
+```text
+candidate=f950eefb000ab298344059dfa8afc125aa79ed8a
+tree=c19957042fb5ebe424694716c6a7a0af72922024
+exact_head_full=PASS
+stage_acceptance=BLOCKED_EXTERNAL_DEVICE_AND_DYNAMIC_ACCEPTANCE
+report=.tmp/i4_exact_head_full_f950eef/evidence/i4_report.json
+report_sha256=DAFE502175D30034C210AA664769770AB74420AF42FB1B45BE98F4E15F079E56
+static_sha256=C708B0BCC09A436BD23218CC832AF8DEF16E7D7945C2F3987F135E09A9BC8F56
+census_sha256=CC31EB553CB0BE106AD93DB75A1C8E653A60D648A06499C3689E84F23E8FBF04
+repetition=PASS critical=6x10 process_launches=60 unique_pid_values=58 journey=3/3
+repetition_sha256=5B7805C7BC472CE89E6D2807A9B44E177BA0E91FFBC7D3CB141FC92004C79471
+device_sha256=48335E1DB9FB931FCE87F670EBFE4D6CA55A9A4B0B76E7BF699773E87A3C312F
+exact_head_capture=PASS images=51 visual_status=VISUAL_CANDIDATE
+exact_head_capture_manifest=.tmp/i4_exact_head_render_f950eef/evidence/capture_manifest.json
+exact_head_capture_sha256=981126BEFFC89311986262EB78A036DE054911DE2869982BD0F99B49F5F8800E
+push=NOT_RUN
+```
+
+该证据绑定 `f950eef`；本台账回填会形成后续审计提交，因此最终 HEAD 仍必须重新执行
+exact-head/full。不得把上段 SHA 直接贴到后续 HEAD。
+
 上述 `PASS` 都有明确限定词；当前没有任何记录把它们合并推导为 `PRODUCTION_PASS` 或
 `ACCEPTED`。P9 必须先完成候选提交、exact-head/full 和 push；即使这些机器门通过，
 外部设备与动态玩家门仍会阻止 I4 阶段关闭。
@@ -234,7 +257,9 @@ disposition=SUPERSEDED_WITH_REPLACEMENT
 reason=P3/P4 已实施，Deploy 12 状态真实 Windows 原图已逐图复核；继续强制当前行写 FAIL
        会把历史反例状态和当前候选证据混为一体
 replacement=治理测试要求 R036 只能推进到 VISUAL_CANDIDATE；原截图 SHA 必须继续存在；
-            R025/R038/R040/R042 必须保持 IMPLEMENTING，R029 必须保持 NOT_STARTED
+            R025/R038/R040/R042 必须保持 IMPLEMENTING；R029 只有在登记 exact-head 证据后
+            才能从 NOT_STARTED 推进到 IMPLEMENTING，push/远端 SHA 前不得继续提升；
+            R030 必须以 clean/protected-dirty 证据为 TARGETED_PASS
 scope_change=只更新当前候选状态；原反例、全矩阵/动态验收和阶段关闭边界均不放宽
 ```
 

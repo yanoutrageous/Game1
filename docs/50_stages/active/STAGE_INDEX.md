@@ -13,6 +13,7 @@
 | Requirement matrix | `docs/00_governance/I4_REQUIREMENT_MATRIX.md` |
 | Entry commit | `4127bd27a05b75cb5e3071cf6dc87d9287f679a9` |
 | Entry tree | `e1455ffd8c7a754c63eb2141a47e41f8fe5cdf3a` |
+| Implementation candidate | `f950eefb000ab298344059dfa8afc125aa79ed8a` / exact-head/full PASS |
 | Branch | `codex/i4-production-interaction-convergence` |
 | Authorization | 用户于 2026-07-30 明确授权计划审计、执行、测试、阶段审计与 push |
 
@@ -40,7 +41,8 @@ Windows CRLF 假漂移；修复和重新验证属于 I4.0 入口门。
 1. P0–P7 已按依赖完成候选实现与定向复验；原 I4-R001–R042 和新增 R043–R049 均保留。
 2. P8 已完成 Deploy 12 图、长期 25 页、生产 14 个高风险状态的真实渲染与当前逐图复核；
    非 Deploy 四分辨率×三比例全状态和动态玩家输入仍未关闭。
-3. P9 当前执行候选提交、clean exact-head/full、阶段审计、push 与远端 SHA 核对。
+3. P9 已完成实现候选 `f950eef` 的 clean exact-head/full 与 51 图；当前回填阶段审计，
+   随后对最终审计提交重跑 clean exact-head/full、push 并核对远端 SHA。
 4. 物理手柄、功能听音、目标 GPU 长局和动态玩家验收是已登记外部门；没有设备时不得补写 PASS。
 
 任何单门 PASS、截图清单、exact-head 或 push 都不能单独表述为 I4 已关闭。I4 当前只允许

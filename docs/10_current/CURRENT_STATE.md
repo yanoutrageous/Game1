@@ -13,7 +13,8 @@ entry_commit=4127bd27a05b75cb5e3071cf6dc87d9287f679a9
 entry_tree=e1455ffd8c7a754c63eb2141a47e41f8fe5cdf3a
 branch=codex/i4-production-interaction-convergence
 remote_main_at_entry=4127bd27a05b75cb5e3071cf6dc87d9287f679a9
-implementation_checkpoint=7af22f4 + audited worktree candidate
+implementation_checkpoint=f950eefb000ab298344059dfa8afc125aa79ed8a
+implementation_tree=c19957042fb5ebe424694716c6a7a0af72922024
 godot=4.6.3.stable.official.7d41c59c4
 ```
 
@@ -59,6 +60,9 @@ I4 不新增内容，而是把这些已有功能整理为可理解、可撤销�
 - 当前真实渲染已复核 Deploy 12 状态、长期系统 25 页面和 14 个生产高风险状态。捕获过程中
   实际发现并修复筛选页签越界、局内左轨过高、Codex 第八页签不可见、调试横幅/面板遮挡
   和宝箱捕获旧语义等待问题；这些发现说明真实原图门不能由静态几何替代。
+- 实现候选 `f950eef` 的 clean exact-head/full 和 exact-head 51 图清单均已通过；自动总门
+  明确返回 `BLOCKED_EXTERNAL_DEVICE_AND_DYNAMIC_ACCEPTANCE`。当前文档回填将形成后续审计
+  提交，因此最终 HEAD 仍需重跑 exact-head/full。
 
 ## I4 当前进度
 
@@ -95,7 +99,7 @@ ART21 仍是项目级最新闭合美术阶段。
 
 ## 当前未完成
 
-- 提交当前候选，执行 clean `exact-head/full`，再核对 push 后远端分支 SHA。
+- 提交当前阶段审计回填，对最终审计提交重跑 clean `exact-head/full`，再 push 并核对远端 SHA。
 - 完成四分辨率×三 UI 比例的非 Deploy 全状态逐原图与动态输入复核；当前 1280 代表状态
   和 Deploy 12 图不能外推为全矩阵。
 - 完成旧失败断言全量 disposition；当前只登记了地图承载层、字体角色、左下滚动阈值和

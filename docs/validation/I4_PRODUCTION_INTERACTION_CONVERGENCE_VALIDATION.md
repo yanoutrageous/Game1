@@ -31,7 +31,9 @@ branch=codex/i4-production-interaction-convergence
 entry_commit=4127bd27a05b75cb5e3071cf6dc87d9287f679a9
 entry_tree=e1455ffd8c7a754c63eb2141a47e41f8fe5cdf3a
 implementation_checkpoint=7af22f44bacc6a5a78e136b35b2faea825b07df8
-candidate_commit=PENDING_FINAL_COMMIT
+implementation_candidate=f950eefb000ab298344059dfa8afc125aa79ed8a
+implementation_tree=c19957042fb5ebe424694716c6a7a0af72922024
+final_audit_commit=PENDING_FINAL_AUDIT_COMMIT
 godot=4.6.3.stable.official.7d41c59c4
 renderer=OpenGL 3.3 Compatibility
 gpu=NVIDIA GeForce RTX 3060 Laptop GPU
@@ -171,12 +173,47 @@ non_deploy_full_12_group_visual=NOT_RUN
 没有物理手柄时无法验证真实手柄焦点/重复输入；检测到音频路由不等于人耳听音通过；
 记录 GPU 和运行指标不等于满足尚未登记的目标设备/阈值。
 
-## 6. 阶段审计
+## 6. Clean exact-head 证据
+
+`f950eefb000ab298344059dfa8afc125aa79ed8a` 在完全 clean 工作树上执行：
+
+```text
+exact_head_full=PASS
+stage_acceptance=BLOCKED_EXTERNAL_DEVICE_AND_DYNAMIC_ACCEPTANCE
+report=.tmp/i4_exact_head_full_f950eef/evidence/i4_report.json
+report_sha256=DAFE502175D30034C210AA664769770AB74420AF42FB1B45BE98F4E15F079E56
+static=PASS quality=12/12 i4_runners=8 protected_dirty=0 fixed_frame_helpers=0
+static_sha256=C708B0BCC09A436BD23218CC832AF8DEF16E7D7945C2F3987F135E09A9BC8F56
+census=PASS rows=156
+census_sha256=CC31EB553CB0BE106AD93DB75A1C8E653A60D648A06499C3689E84F23E8FBF04
+repetition=PASS critical=6x10 process_launches=60 unique_pid_values=58 journey=3/3
+repetition_sha256=5B7805C7BC472CE89E6D2807A9B44E177BA0E91FFBC7D3CB141FC92004C79471
+device=PASS joypads=0 controller=BLOCKED_NOT_RUN
+device_sha256=48335E1DB9FB931FCE87F670EBFE4D6CA55A9A4B0B76E7BF699773E87A3C312F
+```
+
+同一提交的真实 renderer：
+
+```text
+exact_head_capture=PASS
+profile=all
+images=51
+visual_status=VISUAL_CANDIDATE
+manifest=.tmp/i4_exact_head_render_f950eef/evidence/capture_manifest.json
+manifest_sha256=981126BEFFC89311986262EB78A036DE054911DE2869982BD0F99B49F5F8800E
+duplicate_semantic_hashes=0
+worktree_unchanged=true
+```
+
+本验证文档的回填将形成后续审计提交；所以上述报告是实现候选证据，不会被冒充为后续
+最终 HEAD 证据。最终审计提交仍需重跑 clean exact-head/full。
+
+## 7. 阶段审计
 
 未关闭的 MUST：
 
 1. I4-R025：非 Deploy 四分辨率×三 UI 比例全状态原图与动态输入；
-2. I4-R029：候选 clean exact-head/full、push 和远端 SHA；
+2. I4-R029：实现候选 exact-head/full 已过；最终审计提交同门、push 和远端 SHA 待完成；
 3. I4-R038：156 行内容的完整捕获/等价覆盖；
 4. I4-R040：旧失败断言全量 disposition；
 5. I4-R042：全部 MUST 与外部动态验收清零。

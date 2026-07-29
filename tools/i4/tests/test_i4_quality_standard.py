@@ -127,7 +127,11 @@ class I4QualityStandardGovernanceTest(unittest.TestCase):
                 )
         self.assertRegex(
             self.matrix,
-            r"\| I4-R029 \|[^\n]+\| `NOT_STARTED` \|",
+            r"\| I4-R029 \|[^\n]+\| `IMPLEMENTING` \|",
+        )
+        self.assertRegex(
+            self.matrix,
+            r"\| I4-R030 \|[^\n]+\| `TARGETED_PASS` \|",
         )
 
     def test_in_run_layer_collision_and_density_thresholds_are_explicit(self) -> None:
