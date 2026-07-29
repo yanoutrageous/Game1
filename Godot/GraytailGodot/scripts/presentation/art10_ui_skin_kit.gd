@@ -16,7 +16,8 @@ const CANVAS_SIZE := Vector2(1280, 720)
 const MIN_RUNTIME_UI_SCALE := 1.0
 const MAX_RUNTIME_UI_SCALE := 1.5
 
-static var _player_ui_font_cache: Font
+static var _display_font_cache: Font
+static var _readable_font_cache: Font
 static var _player_ui_theme_cache: Theme
 static var _runtime_ui_scale_factor := 1.0
 
@@ -24,6 +25,23 @@ const CONTROL_SLICE_INSETS := Vector4(18.0, 6.0, 18.0, 6.0)
 const CONTROL_CONTENT_INSETS := Vector4(22.0, 5.0, 22.0, 5.0)
 const POPUP_SLICE_INSETS := Vector4(20.0, 14.0, 20.0, 14.0)
 const POPUP_CONTENT_INSETS := Vector4(24.0, 16.0, 24.0, 16.0)
+const CONTROL_INSET_PROFILES := {
+	&"compact": {
+		"slice": Vector4(12.0, 5.0, 12.0, 5.0),
+		"content": Vector4(12.0, 4.0, 12.0, 4.0),
+		"minimum_size": Vector2(64.0, 32.0),
+	},
+	&"regular": {
+		"slice": CONTROL_SLICE_INSETS,
+		"content": CONTROL_CONTENT_INSETS,
+		"minimum_size": Vector2(104.0, 38.0),
+	},
+	&"large": {
+		"slice": Vector4(24.0, 9.0, 24.0, 9.0),
+		"content": Vector4(28.0, 8.0, 28.0, 8.0),
+		"minimum_size": Vector2(180.0, 50.0),
+	},
+}
 
 const FONT_TOKENS := {
 	&"title": 54,
@@ -70,13 +88,10 @@ const LABEL_SAFE_PADDING := {
 }
 
 const DISPLAY_FONT_TOKENS := [
-	&"title",
-	&"page_title",
-	&"section_title",
-	&"main_button",
-	&"button",
-	&"tab",
+	&"numeric",
 	&"key_prompt",
+	&"hud",
+	&"hud_small",
 ]
 
 # Shared semantic contract for text laid over framed art. Consumers may keep
@@ -84,7 +99,7 @@ const DISPLAY_FONT_TOKENS := [
 # every label as the same font and padding case.
 const COMPOSITION_DESCRIPTORS := {
 	&"title": {
-		"font_role": &"display",
+		"font_role": &"readable",
 		"font_token": &"page_title",
 		"text_budget_token": &"page_title",
 		"max_lines": 1,
@@ -100,7 +115,7 @@ const COMPOSITION_DESCRIPTORS := {
 		"label_safe_padding": Vector2(10, 7),
 	},
 	&"button": {
-		"font_role": &"display",
+		"font_role": &"readable",
 		"font_token": &"button",
 		"text_budget_token": &"button",
 		"max_lines": 1,
@@ -108,7 +123,7 @@ const COMPOSITION_DESCRIPTORS := {
 		"label_safe_padding": Vector2(10, 6),
 	},
 	&"status": {
-		"font_role": &"display",
+		"font_role": &"readable",
 		"font_token": &"hud",
 		"text_budget_token": &"hud_small",
 		"max_lines": 1,
@@ -209,15 +224,43 @@ const RUN_RECTS := {
 
 
 static func pixel_font() -> Resource:
-	return player_ui_font()
+	if _display_font_cache != null:
+		return _display_font_cache
+	var display_font := _font_asset(DISPLAY_FONT_ASSET_ID)
+	if display_font == null:
+		return null
+	var readable_fallback := _font_asset(READABLE_FONT_ASSET_ID)
+	_apply_player_font_runtime_policy(display_font, true)
+	_apply_player_font_runtime_policy(readable_fallback, false)
+	var font_stack := FontVariation.new()
+	font_stack.resource_name = "FusionPixelDisplayWithNotoGlyphFallback"
+	font_stack.base_font = display_font
+	if readable_fallback != null:
+		font_stack.fallbacks = [readable_fallback]
+	_display_font_cache = font_stack
+	return _display_font_cache
 
 
 static func readable_font() -> Resource:
-	return player_ui_font()
+	if _readable_font_cache != null:
+		return _readable_font_cache
+	var readable_base := _font_asset(READABLE_FONT_ASSET_ID)
+	if readable_base == null:
+		return pixel_font()
+	_apply_player_font_runtime_policy(readable_base, false)
+	var display_fallback := _font_asset(DISPLAY_FONT_ASSET_ID)
+	_apply_player_font_runtime_policy(display_fallback, true)
+	var font_stack := FontVariation.new()
+	font_stack.resource_name = "NotoCJKReadableWithFusionGlyphFallback"
+	font_stack.base_font = readable_base
+	if display_fallback != null:
+		font_stack.fallbacks = [display_fallback]
+	_readable_font_cache = font_stack
+	return _readable_font_cache
 
 
-static func font_for_role(_role: StringName) -> Resource:
-	return player_ui_font()
+static func font_for_role(role: StringName) -> Resource:
+	return pixel_font() if role == &"display" else readable_font()
 
 
 static func set_runtime_ui_scale_factor(value: float) -> float:
@@ -247,21 +290,7 @@ static func scaled_control_minimum(base_size: Vector2, factor: float = -1.0) -> 
 
 
 static func player_ui_font() -> Font:
-	if _player_ui_font_cache != null:
-		return _player_ui_font_cache
-	var display_font := _font_asset(DISPLAY_FONT_ASSET_ID)
-	if display_font == null:
-		return null
-	var fallback_font := _font_asset(READABLE_FONT_ASSET_ID)
-	_apply_player_font_runtime_policy(display_font, true)
-	_apply_player_font_runtime_policy(fallback_font, false)
-	var font_stack := FontVariation.new()
-	font_stack.resource_name = "FusionPixelPlayerUIWithNotoGlyphFallback"
-	font_stack.base_font = display_font
-	if fallback_font != null:
-		font_stack.fallbacks = [fallback_font]
-	_player_ui_font_cache = font_stack
-	return _player_ui_font_cache
+	return readable_font() as Font
 
 
 static func _apply_player_font_runtime_policy(font: Font, pixel_primary: bool) -> void:
@@ -269,29 +298,29 @@ static func _apply_player_font_runtime_policy(font: Font, pixel_primary: bool) -
 		return
 	var font_file := font as FontFile
 	font_file.allow_system_fallback = false
-	if not pixel_primary:
-		return
-	font_file.antialiasing = TextServer.FONT_ANTIALIASING_NONE
-	font_file.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+	if pixel_primary:
+		font_file.antialiasing = TextServer.FONT_ANTIALIASING_NONE
+		font_file.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+	else:
+		font_file.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
+		font_file.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
 
 
 static func player_ui_theme() -> Theme:
 	if _player_ui_theme_cache != null:
 		return _player_ui_theme_cache
-	var font := player_ui_font()
+	var readable := readable_font()
 	var shared_theme := Theme.new()
-	shared_theme.resource_name = "FusionPixelPlayerUITheme"
+	shared_theme.resource_name = "I4RoleSeparatedPlayerUITheme"
 	shared_theme.set_type_variation(&"TooltipLabel", &"Label")
 	shared_theme.set_type_variation(&"TooltipPanel", &"PopupPanel")
-	if font != null:
-		shared_theme.default_font = font
+	if readable is Font:
+		shared_theme.default_font = readable as Font
 	shared_theme.default_font_size = font_size(&"body")
 	for theme_type in [
 		&"Label",
-		&"Button",
 		&"CheckBox",
 		&"CheckButton",
-		&"MenuButton",
 		&"OptionButton",
 		&"PopupMenu",
 		&"TooltipLabel",
@@ -299,10 +328,12 @@ static func player_ui_theme() -> Theme:
 		&"TextEdit",
 		&"ItemList",
 		&"Tree",
-		&"TabBar",
 	]:
-		if font != null:
-			shared_theme.set_font(&"font", theme_type, font)
+		if readable is Font:
+			shared_theme.set_font(&"font", theme_type, readable as Font)
+	for theme_type in [&"Button", &"MenuButton", &"TabBar"]:
+		if readable is Font:
+			shared_theme.set_font(&"font", theme_type, readable as Font)
 	for rich_font_name in [
 		&"normal_font",
 		&"bold_font",
@@ -310,8 +341,8 @@ static func player_ui_theme() -> Theme:
 		&"bold_italics_font",
 		&"mono_font",
 	]:
-		if font != null:
-			shared_theme.set_font(rich_font_name, &"RichTextLabel", font)
+		if readable is Font:
+			shared_theme.set_font(rich_font_name, &"RichTextLabel", readable as Font)
 	shared_theme.set_font_size(&"font_size", &"TooltipLabel", font_size(&"body_small"))
 	shared_theme.set_color(&"font_color", &"TooltipLabel", color(&"text"))
 	shared_theme.set_color(&"font_color", &"PopupMenu", color(&"text"))
@@ -372,11 +403,11 @@ static func apply_player_ui_theme(root_control: Control) -> void:
 	root_control.theme = player_ui_theme()
 
 
-static func apply_player_ui_font(control: Control) -> void:
+static func apply_player_ui_font(control: Control, role: StringName = &"readable") -> void:
 	if control == null:
 		return
-	var font := player_ui_font()
-	if font == null:
+	var font := font_for_role(role)
+	if not (font is Font):
 		return
 	if control is RichTextLabel:
 		for rich_font_name in [
@@ -386,9 +417,11 @@ static func apply_player_ui_font(control: Control) -> void:
 			&"bold_italics_font",
 			&"mono_font",
 		]:
-			control.add_theme_font_override(rich_font_name, font)
+			control.add_theme_font_override(rich_font_name, font as Font)
+		control.set_meta("ui_font_role", role)
 		return
-	control.add_theme_font_override(&"font", font)
+	control.add_theme_font_override(&"font", font as Font)
+	control.set_meta("ui_font_role", role)
 
 
 static func apply_option_button_theme(option: OptionButton) -> void:
@@ -474,7 +507,12 @@ static func _configure_shared_control_theme(shared_theme: Theme) -> void:
 		shared_theme.set_icon(&"grabber_disabled", &"HSlider", off_icon)
 
 
-static func registered_control_style(state: StringName = &"secondary") -> StyleBox:
+static func control_inset_profile(size_class: StringName = &"regular") -> Dictionary:
+	var value: Variant = CONTROL_INSET_PROFILES.get(size_class, CONTROL_INSET_PROFILES[&"regular"])
+	return (value as Dictionary).duplicate(true)
+
+
+static func registered_control_style(state: StringName = &"secondary", size_class: StringName = &"regular") -> StyleBox:
 	var visual_key := &"art21r2.modal.button.secondary"
 	match state:
 		&"primary", &"selected":
@@ -483,16 +521,21 @@ static func registered_control_style(state: StringName = &"secondary") -> StyleB
 			visual_key = &"art21r2.modal.button.danger"
 		&"row":
 			visual_key = &"art21r2.modal.item_row.normal"
+	var inset_profile := control_inset_profile(size_class)
+	var slice_insets: Vector4 = inset_profile.get("slice", CONTROL_SLICE_INSETS)
+	var content_insets: Vector4 = inset_profile.get("content", CONTROL_CONTENT_INSETS)
 	var style := _registered_texture_style(
 		visual_key,
 		&"ui.art19.button.dark",
-		CONTROL_SLICE_INSETS,
-		CONTROL_CONTENT_INSETS
+		slice_insets,
+		content_insets
 	)
 	if style == null:
 		return button_style(&"primary" if state == &"primary" else &"secondary")
 	if state == &"focus" and style is StyleBoxTexture:
 		(style as StyleBoxTexture).draw_center = false
+	if style != null:
+		style.set_meta("ui_control_size_class", size_class)
 	return style
 
 
@@ -809,6 +852,8 @@ static func apply_label(label: Label, font_size_value: int = -1, font_color: Col
 	_apply_label_with_font(label, readable_font(), font_size_value, font_color)
 	if label != null:
 		label.set_meta("ui_composition_role", &"body")
+		label.set_meta("ui_font_role", &"readable")
+		label.set_meta("ui_font_token", &"body" if font_size_value <= 0 or font_size_value >= font_size(&"body") else &"body_small")
 
 
 static func apply_composition_label(label: Label, role: StringName, font_size_value: int = -1, font_color: Color = Color(-1, -1, -1, -1)) -> void:
@@ -819,6 +864,8 @@ static func apply_composition_label(label: Label, role: StringName, font_size_va
 	var resolved_size := font_size_value if font_size_value > 0 else font_size(token)
 	_apply_label_with_font(label, font_for_role(StringName(descriptor.get("font_role", &"readable"))), resolved_size, font_color)
 	label.set_meta("ui_composition_role", role)
+	label.set_meta("ui_font_role", StringName(descriptor.get("font_role", &"readable")))
+	label.set_meta("ui_font_token", token)
 	label.set_meta("ui_panel_safe_margin", int(descriptor.get("panel_safe_margin", 16)))
 	label.set_meta("ui_label_safe_padding", descriptor.get("label_safe_padding", Vector2(8, 6)))
 
@@ -844,9 +891,11 @@ static func apply_label_token(label: Label, token: StringName, color_token: Stri
 		return
 	_apply_label_with_font(label, font_for_role(font_role_for_token(token)), font_size(token), color(color_token))
 	label.set_meta("ui_composition_role", &"title" if font_role_for_token(token) == &"display" else &"body")
+	label.set_meta("ui_font_role", font_role_for_token(token))
+	label.set_meta("ui_font_token", token)
 
 
-static func apply_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button", font_role: StringName = &"display") -> void:
+static func apply_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button", font_role: StringName = &"readable") -> void:
 	if button == null:
 		return
 	button.focus_mode = Control.FOCUS_ALL
@@ -871,10 +920,11 @@ static func apply_button(button: Button, tone: StringName = &"secondary", font_s
 	button.modulate = Color(1, 1, 1, 1) if not button.disabled else Color(0.72, 0.76, 0.74, 1.0)
 	button.set_meta("ui_composition_role", &"button")
 	button.set_meta("ui_font_role", font_role)
+	button.set_meta("ui_font_token", &"button")
 	button.set_meta("ui_panel_safe_margin", composition_panel_safe_margin(&"button"))
 
 
-static func apply_transparent_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button", padding: int = 2, font_role: StringName = &"display") -> void:
+static func apply_transparent_button(button: Button, tone: StringName = &"secondary", font_size_value: int = -1, icon_token: StringName = &"button", padding: int = 2, font_role: StringName = &"readable") -> void:
 	if button == null:
 		return
 	apply_button(button, tone, font_size_value, icon_token, font_role)
@@ -886,10 +936,14 @@ static func apply_transparent_button(button: Button, tone: StringName = &"second
 
 static func apply_button_token(button: Button, tone: StringName, token: StringName, icon_token: StringName = &"button") -> void:
 	apply_button(button, tone, font_size(token), icon_token)
+	if button != null:
+		button.set_meta("ui_font_token", token)
 
 
 static func apply_transparent_button_token(button: Button, tone: StringName, token: StringName, icon_token: StringName = &"button", padding: int = 2) -> void:
 	apply_transparent_button(button, tone, font_size(token), icon_token, padding)
+	if button != null:
+		button.set_meta("ui_font_token", token)
 
 
 static func style_box_from_asset_ref(asset_ref: Dictionary, padding: int = 8, texture_margin: int = 16) -> StyleBoxTexture:

@@ -21,9 +21,13 @@ static func build(profile: Dictionary) -> Dictionary:
 	var modal_left := width - modal_width - SAFE_MARGIN
 	var modal_top := SAFE_MARGIN + 80.0
 	var available_height := maxf(220.0, height - modal_top - SAFE_MARGIN)
-	var debug_width := clampf(width * 0.24, 300.0, 380.0)
-	var debug_top := SAFE_MARGIN + 70.0
-	var debug_height := maxf(380.0, height - debug_top - SAFE_MARGIN)
+	# The diagnostic rail must remain a docked inspection surface, not a second
+	# full-height HUD.  The upper reserve clears the protocol card and the lower
+	# reserve keeps the production action dock fully usable.
+	var debug_width := clampf(width * 0.24, 260.0, 360.0)
+	var debug_top := clampf(height * 0.15, SAFE_MARGIN + 84.0, 160.0)
+	var debug_height := clampf(height * 0.70, 340.0, 560.0)
+	debug_height = minf(debug_height, maxf(260.0, height - debug_top - SAFE_MARGIN - 64.0))
 	return {
 		"event": Rect2(modal_left, modal_top, modal_width, minf(360.0, available_height)),
 		"extract": _centered_rect(
@@ -47,7 +51,7 @@ static func build(profile: Dictionary) -> Dictionary:
 			Vector2(clampf(width * 0.42, 480.0, 560.0), clampf(height * 0.34, 230.0, 290.0))
 		),
 		"debug": Rect2(width - debug_width - SAFE_MARGIN, debug_top, debug_width, debug_height),
-		"debug_scroll_minimum": Vector2(debug_width - 32.0, maxf(240.0, debug_height - 170.0)),
+		"debug_scroll_minimum": Vector2(debug_width - 32.0, maxf(220.0, debug_height - 210.0)),
 		"viewport": Rect2(Vector2.ZERO, Vector2(width, height)),
 		"safe_margin": SAFE_MARGIN,
 		"read_only": true,

@@ -4,6 +4,7 @@ class_name MiniMapPanel
 const ContentDBAccessScript := preload("res://scripts/core/content/content_db_access.gd")
 const RuntimeInputProfileScript := preload("res://scripts/core/input/runtime_input_profile.gd")
 const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
+const MapCellLayerLayoutScript := preload("res://scripts/ui/map_shared/map_cell_layer_layout.gd")
 
 # UI reads MiniMapViewModel only. UI must not read TruthMap directly.
 
@@ -179,40 +180,45 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 	cell.name = "MiniMapCell_%d_%d" % [pos.x, pos.y]
 	cell.set_meta("map_marker_state", PresentationMapping.map_marker_state(marker))
 	cell.custom_minimum_size = size
+	cell.clip_contents = true
 	cell.mouse_filter = Control.MOUSE_FILTER_STOP
 	cell.tooltip_text = String(marker.get("detail_text", marker.get("tooltip", "")))
 	cell.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
+	var adjacent := _public_adjacent_mines(marker)
+	var layer_layout := MapCellLayerLayoutScript.calculate(size, adjacent >= 0)
+	cell.set_meta("map_cell_layer_layout", layer_layout.duplicate(true))
+	cell.set_meta("map_cell_clip_contract", true)
 	if asset_ref is Texture2D:
 		var base_icon := TextureRect.new()
+		base_icon.name = "CellBase"
 		base_icon.texture = asset_ref
-		base_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		MapCellLayerLayoutScript.apply_rect(base_icon, Rect2(layer_layout.get("base_rect", Rect2())))
 		base_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		base_icon.stretch_mode = TextureRect.STRETCH_SCALE
 		base_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		base_icon.z_index = int(layer_layout.get("base_z", 0))
 		cell.add_child(base_icon)
-		var overlay_id := _overlay_asset_id_for_marker(marker)
-		if overlay_id != &"":
-			var overlay_ref := ContentDBAccessScript.get_asset_ref(overlay_id)
-			if overlay_ref is Texture2D:
-				var overlay_icon := TextureRect.new()
-				overlay_icon.name = "SemanticMarker"
-				overlay_icon.texture = overlay_ref
-				overlay_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-				overlay_icon.offset_left = -4.0
-				overlay_icon.offset_top = -4.0
-				overlay_icon.offset_right = 4.0
-				overlay_icon.offset_bottom = 4.0
-				overlay_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-				overlay_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-				overlay_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-				cell.add_child(overlay_icon)
-	else:
+	var overlay_id := _overlay_asset_id_for_marker(marker)
+	var overlay_ref := ContentDBAccessScript.get_asset_ref(overlay_id) if overlay_id != &"" else null
+	if overlay_ref is Texture2D:
+		var overlay_icon := TextureRect.new()
+		overlay_icon.name = "SemanticMarker"
+		overlay_icon.texture = overlay_ref
+		MapCellLayerLayoutScript.apply_rect(overlay_icon, Rect2(layer_layout.get("semantic_rect", Rect2())))
+		overlay_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		overlay_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		overlay_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		overlay_icon.z_index = int(layer_layout.get("semantic_z", 20))
+		cell.add_child(overlay_icon)
+	elif not (asset_ref is Texture2D) or PresentationMapping.map_marker_state(marker) not in [&"unknown", &"scanned", &"explored"]:
 		var label := Label.new()
+		label.name = "SemanticFallback"
 		var label_text := String(marker.get("label", "?"))
-		label.set_anchors_preset(Control.PRESET_FULL_RECT)
+		MapCellLayerLayoutScript.apply_rect(label, Rect2(layer_layout.get("semantic_rect", Rect2())))
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.z_index = int(layer_layout.get("semantic_z", 20))
 		var marker_color := PresentationTheme.color_for_key(theme_key)
 		if label_text == "?":
 			marker_color = Color(0.72, 0.94, 0.82, 0.92)
@@ -220,29 +226,36 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		label.add_theme_font_size_override("font_size", marker_font_size)
 		label.text = label_text
 		cell.add_child(label)
-	_add_adjacent_mine_count(cell, marker)
+	_add_adjacent_mine_count(cell, marker, layer_layout)
 	grid.add_child(cell)
 
 
-func _add_adjacent_mine_count(cell: Control, marker: Dictionary) -> void:
+func _add_adjacent_mine_count(cell: Control, marker: Dictionary, layer_layout: Dictionary = {}) -> void:
 	var adjacent := _public_adjacent_mines(marker)
 	if adjacent < 0:
 		return
+	if layer_layout.is_empty():
+		layer_layout = MapCellLayerLayoutScript.calculate(cell.custom_minimum_size, true)
+	var count_rect := Rect2(layer_layout.get("count_rect", Rect2()))
+	var badge_background := ColorRect.new()
+	badge_background.name = "AdjacentMineBadgeBackground"
+	badge_background.color = Color(0.015, 0.025, 0.028, 0.92)
+	badge_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge_background.z_index = int(layer_layout.get("count_z", 30))
+	MapCellLayerLayoutScript.apply_rect(badge_background, count_rect)
+	cell.add_child(badge_background)
 	var count_label := Label.new()
 	count_label.name = "AdjacentMineCount"
-	count_label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	count_label.offset_left = 2.0
-	count_label.offset_top = 2.0
-	count_label.offset_right = -3.0
-	count_label.offset_bottom = -1.0
-	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	count_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	MapCellLayerLayoutScript.apply_rect(count_label, count_rect)
+	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	count_label.z_index = int(layer_layout.get("count_z", 30)) + 1
 	count_label.text = str(adjacent)
-	count_label.add_theme_font_size_override("font_size", clampi(marker_font_size - 2, 9, 15))
+	count_label.add_theme_font_size_override("font_size", clampi(int(count_rect.size.y * 0.62), 9, 15))
 	count_label.add_theme_color_override("font_color", Color(0.98, 0.94, 0.78, 1.0))
 	count_label.add_theme_color_override("font_outline_color", Color(0.02, 0.03, 0.03, 1.0))
-	count_label.add_theme_constant_override("outline_size", 2)
+	count_label.add_theme_constant_override("outline_size", 1)
 	cell.add_child(count_label)
 
 

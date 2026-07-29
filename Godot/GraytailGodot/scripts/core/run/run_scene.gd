@@ -211,7 +211,8 @@ func _ready() -> void:
 		Callable(self, "_show_loot_panel"),
 		Callable(self, "_runtime_modal_is_top"),
 		Callable(self, "_pop_runtime_modal"),
-		func() -> void: get_viewport().gui_release_focus()
+		func() -> void: get_viewport().gui_release_focus(),
+		Callable(self, "_show_pause_panel")
 	)
 	_bind_runtime_modal_controller()
 	refresh_controller.bind_targets(
@@ -555,6 +556,22 @@ func _build_run_overlay() -> void:
 	debug_panel.offset_right = 1220.0
 	debug_panel.offset_bottom = 690.0
 	debug_panel.visible = false
+	var debug_panel_style := StyleBoxFlat.new()
+	debug_panel_style.bg_color = Color(0.012, 0.032, 0.038, 0.97)
+	debug_panel_style.border_color = Color(0.28, 0.82, 0.76, 0.92)
+	debug_panel_style.border_width_left = 2
+	debug_panel_style.border_width_top = 2
+	debug_panel_style.border_width_right = 2
+	debug_panel_style.border_width_bottom = 2
+	debug_panel_style.corner_radius_top_left = 4
+	debug_panel_style.corner_radius_top_right = 4
+	debug_panel_style.corner_radius_bottom_left = 4
+	debug_panel_style.corner_radius_bottom_right = 4
+	debug_panel_style.content_margin_left = 10.0
+	debug_panel_style.content_margin_right = 10.0
+	debug_panel_style.content_margin_top = 8.0
+	debug_panel_style.content_margin_bottom = 8.0
+	debug_panel.add_theme_stylebox_override("panel", debug_panel_style)
 	run_overlay_root.add_child(debug_panel)
 	var debug_outer := VBoxContainer.new()
 	debug_outer.name = "DebugOperationContent"
@@ -564,12 +581,17 @@ func _build_run_overlay() -> void:
 	debug_header.name = "DebugOperationHeader"
 	debug_outer.add_child(debug_header)
 	var debug_title := Label.new()
-	debug_title.text = "M1 Debug Cheats"
+	debug_title.text = "诊断面板"
 	debug_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	debug_header.add_child(debug_title)
-	RunSceneDebugPanelControllerScript.add_button(debug_header, "Close", func() -> void: debug_panel_controller.close_panel())
+	RunSceneDebugPanelControllerScript.add_button(
+		debug_header,
+		"关闭",
+		func() -> void: debug_panel_controller.close_panel(),
+		false
+	)
 	var debug_note := Label.new()
-	debug_note.text = "dev_only=true | commands go through CommandBus / MetaProgressAdapter"
+	debug_note.text = "只读检查不污染会话；写命令经真实命令总线并标记测试会话。"
 	debug_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	debug_outer.add_child(debug_note)
 	var coord_row := HBoxContainer.new()
@@ -577,7 +599,7 @@ func _build_run_overlay() -> void:
 	coord_row.add_theme_constant_override("separation", 6)
 	debug_outer.add_child(coord_row)
 	var coord_label := Label.new()
-	coord_label.text = "XY"
+	coord_label.text = "坐标"
 	coord_row.add_child(coord_label)
 	debug_x_spin = SpinBox.new()
 	debug_x_spin.name = "DebugTeleportX"
@@ -602,43 +624,45 @@ func _build_run_overlay() -> void:
 	debug_content.name = "DebugOperationButtons"
 	debug_content.add_theme_constant_override("separation", 6)
 	debug_scroll.add_child(debug_content)
-	RunSceneDebugPanelControllerScript.add_section(debug_content, "WRITE COMMANDS · TAINTS SESSION")
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Standard Run", func() -> void: _start_standard_from_ui())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Teleport Exit", func() -> void: debug_panel_controller.teleport_to_exit())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Nearest Chest", func() -> void: _debug_teleport_to_room_type(&"Chest"))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Nearest Event", func() -> void: _debug_teleport_to_room_type(&"Event"))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Nearest Monster", func() -> void: _debug_teleport_to_room_type(&"Monster"))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Nearest Mine", func() -> void: _debug_teleport_to_room_type(&"Mine"))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Move XY no trigger", func() -> void: debug_panel_controller.teleport_xy(false))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Enter XY trigger", func() -> void: debug_panel_controller.teleport_xy(true))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "+100 Run Black Coin", func() -> void: _dispatch_command(&"debug_add_run_black_coin", {"amount": 100, "source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Reveal Full Map", func() -> void: _dispatch_command(&"debug_reveal_full_map", {"source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Spawn Floor Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_floor", {"source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Spawn Backpack Item", func() -> void: _dispatch_command(&"debug_spawn_test_item_backpack", {"source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Full HP", func() -> void: _dispatch_command(&"debug_heal_full", {"source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Toggle Reduced Motion", func() -> void: debug_panel_controller.toggle_reduced_motion())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Force Extract Success", func() -> void: _dispatch_command(&"debug_force_extract", {"source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Force Fail", func() -> void: _dispatch_command(&"debug_force_fail", {"reason": "debug_forced_failure", "source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_section(debug_content, "Run Utility")
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Grid Up", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, -1), "source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Grid Down", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, 1), "source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Grid Left", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(-1, 0), "source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Grid Right", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(1, 0), "source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Flag Current", func() -> void: _dispatch_command(&"flag_current_cell", {"source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Search Current", func() -> void: debug_panel_controller.search_and_show_loot())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Pickup Floor", func() -> void: _pickup_floor_from_ui())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Drop Item", func() -> void: _drop_inventory_from_ui())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Request Extract", func() -> void: _request_extract_from_ui())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Confirm Extract", func() -> void: _dispatch_command(&"confirm_extract", {"source": "debug"}))
-	RunSceneDebugPanelControllerScript.add_section(debug_content, "WRITE COMMANDS · SANDBOX META")
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "+1000 Meta Gold", func() -> void: debug_panel_controller.meta_add_gold())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Set Meta Gold 0", func() -> void: debug_panel_controller.meta_set_gold(0))
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Clear Meta Gold", func() -> void: debug_panel_controller.meta_clear_gold())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Add Warehouse Test Item", func() -> void: debug_panel_controller.meta_add_warehouse_item())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Clear Warehouse", func() -> void: debug_panel_controller.meta_clear_warehouse())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Save Meta Now", func() -> void: debug_panel_controller.meta_save())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Clear Save", func() -> void: debug_panel_controller.meta_clear_save())
-	RunSceneDebugPanelControllerScript.add_button(debug_content, "Capture Failure Bundle", func() -> void: debug_panel_controller.capture_failure_bundle())
+	RunSceneDebugPanelControllerScript.add_section(debug_content, "只读状态 · 不污染")
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "刷新状态摘要", func() -> void: debug_panel_controller.meta_summary(), false)
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "捕获失败证据包", func() -> void: debug_panel_controller.capture_failure_bundle(), false)
+	RunSceneDebugPanelControllerScript.add_section(debug_content, "局内写命令 · 标记 TAINTED")
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "重新开始标准测试局", func() -> void: _start_standard_from_ui())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "传送到撤离点", func() -> void: debug_panel_controller.teleport_to_exit())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "传送到最近宝箱房", func() -> void: _debug_teleport_to_room_type(&"Chest"))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "传送到最近事件房", func() -> void: _debug_teleport_to_room_type(&"Event"))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "传送到最近战斗房", func() -> void: _debug_teleport_to_room_type(&"Monster"))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "传送到最近雷区房", func() -> void: _debug_teleport_to_room_type(&"Mine"))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "移动到坐标（不触发）", func() -> void: debug_panel_controller.teleport_xy(false))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "进入坐标并触发", func() -> void: debug_panel_controller.teleport_xy(true))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "局内黑币 +100", func() -> void: _dispatch_command(&"debug_add_run_black_coin", {"amount": 100, "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "揭示完整地图", func() -> void: _dispatch_command(&"debug_reveal_full_map", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "生成地面测试物品", func() -> void: _dispatch_command(&"debug_spawn_test_item_floor", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "生成背包测试物品", func() -> void: _dispatch_command(&"debug_spawn_test_item_backpack", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "恢复全部生命", func() -> void: _dispatch_command(&"debug_heal_full", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "切换减弱动态效果", func() -> void: debug_panel_controller.toggle_reduced_motion())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "强制撤离成功", func() -> void: _dispatch_command(&"debug_force_extract", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "强制本局失败", func() -> void: _dispatch_command(&"debug_force_fail", {"reason": "debug_forced_failure", "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_section(debug_content, "真实运行命令")
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "向上移动一格", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, -1), "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "向下移动一格", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(0, 1), "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "向左移动一格", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(-1, 0), "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "向右移动一格", func() -> void: _dispatch_command(&"move_by", {"delta": Vector2i(1, 0), "source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "标记当前格", func() -> void: _dispatch_command(&"flag_current_cell", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "搜索当前房间", func() -> void: debug_panel_controller.search_and_show_loot())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "拾取地面物品", func() -> void: _pickup_floor_from_ui())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "丢弃背包物品", func() -> void: _drop_inventory_from_ui())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "请求撤离", func() -> void: _request_extract_from_ui())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "确认撤离", func() -> void: _dispatch_command(&"confirm_extract", {"source": "debug"}))
+	RunSceneDebugPanelControllerScript.add_section(debug_content, "沙盒长期数据写入 · 标记 TAINTED")
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "长期金币 +1000", func() -> void: debug_panel_controller.meta_add_gold())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "长期金币设为 0", func() -> void: debug_panel_controller.meta_set_gold(0))
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "清空长期金币", func() -> void: debug_panel_controller.meta_clear_gold())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "添加仓库测试物品", func() -> void: debug_panel_controller.meta_add_warehouse_item())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "清空测试仓库", func() -> void: debug_panel_controller.meta_clear_warehouse())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "立即保存沙盒档", func() -> void: debug_panel_controller.meta_save())
+	RunSceneDebugPanelControllerScript.add_button(debug_content, "清空沙盒存档", func() -> void: debug_panel_controller.meta_clear_save())
 	debug_log = Label.new()
 	debug_log.name = "DebugLastMessage"
 	debug_log.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -2396,7 +2420,7 @@ func _apply_full_view_models() -> void:
 	if dev_diagnostics_panel != null and dev_diagnostics_panel.visible:
 		_apply_dev_diagnostics(snapshot)
 	if debug_log != null:
-		debug_log.text = String(snapshot.get("last_message", ""))
+		debug_panel_controller.set_log_text(String(snapshot.get("last_message", "")))
 	if debug_panel != null and debug_panel.visible:
 		debug_panel_controller.sync_coordinates()
 	if result_panel != null and bool(snapshot.get("run_active", false)):

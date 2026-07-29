@@ -8,6 +8,7 @@ const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const Art24MapOverlayLayoutScript := preload("res://scripts/presentation/art24/art24_map_overlay_layout.gd")
 const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
+const MapCellLayerLayoutScript := preload("res://scripts/ui/map_shared/map_cell_layer_layout.gd")
 
 signal cell_action_requested(marker: Dictionary)
 signal close_requested
@@ -56,7 +57,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	offset_bottom = 0.0
 	var dimmer := get_node_or_null("Dimmer") as ColorRect
 	if dimmer != null:
-		dimmer.color = Color(0.0, 0.0, 0.0, 0.70)
+		dimmer.color = Color(0.0, 0.0, 0.0, 0.84)
 	var panel := get_node_or_null("Panel") as Control
 	if panel != null:
 		# Budget the real M7 grid dimensions plus title, feedback and frame
@@ -310,7 +311,8 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.focus_mode = Control.FOCUS_ALL
-	button.text = label_text
+	button.text = ""
+	button.clip_contents = true
 	button.tooltip_text = String(marker.get("detail_text", marker.get("tooltip", "")))
 	var marker_color := PresentationTheme.color_for_key(theme_key)
 	if label_text == "?":
@@ -319,44 +321,85 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary) -> void:
 	button.add_theme_font_size_override("font_size", maxi(13, int(min(marker_size.x, marker_size.y) * 0.52)))
 	var state := PresentationMapping.map_marker_state(marker)
 	var selected := _is_selected_marker(marker)
+	var adjacent := _public_adjacent_mines(marker)
+	var layer_layout := MapCellLayerLayoutScript.calculate(marker_size, adjacent >= 0)
+	button.set_meta("map_cell_layer_layout", layer_layout.duplicate(true))
+	button.set_meta("map_cell_clip_contract", true)
 	_apply_marker_button_style(button, theme_key, state, selected)
 	var texture := Art09ManifestAssetMappingScript.resolve_texture(_map_overlay_asset_ref_for_marker(marker))
 	if texture != null:
-		button.icon = texture
-		# Every icon must be allowed to shrink with the tile. Leaving the default
-		# map icons at native size silently raises Button's minimum height and makes
-		# the ten-row GridContainer expand the whole modal at 720p.
-		button.expand_icon = true
-		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		button.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
-		button.add_theme_constant_override("icon_max_width", _icon_width_for_marker_state(state, marker_size))
-		button.text = "" if label_text != "P" else "P"
+		var semantic_icon := TextureRect.new()
+		semantic_icon.name = "SemanticMarker"
+		semantic_icon.texture = texture
+		semantic_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		semantic_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		semantic_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		semantic_icon.z_index = int(layer_layout.get("semantic_z", 20))
+		MapCellLayerLayoutScript.apply_rect(semantic_icon, Rect2(layer_layout.get("semantic_rect", Rect2())))
+		button.add_child(semantic_icon)
+		button.set_meta("semantic_texture", texture)
+	else:
+		var semantic_fallback := Label.new()
+		semantic_fallback.name = "SemanticFallback"
+		semantic_fallback.text = label_text
+		semantic_fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		semantic_fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		semantic_fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		semantic_fallback.z_index = int(layer_layout.get("semantic_z", 20))
+		semantic_fallback.add_theme_color_override("font_color", marker_color)
+		semantic_fallback.add_theme_font_size_override("font_size", maxi(11, int(min(marker_size.x, marker_size.y) * 0.42)))
+		MapCellLayerLayoutScript.apply_rect(semantic_fallback, Rect2(layer_layout.get("semantic_rect", Rect2())))
+		button.add_child(semantic_fallback)
+	var focus_outline := Panel.new()
+	focus_outline.name = "FocusSelectionOutline"
+	focus_outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	focus_outline.z_index = int(layer_layout.get("focus_z", 40))
+	focus_outline.visible = selected
+	focus_outline.add_theme_stylebox_override(
+		"panel",
+		_marker_style(Color(0, 0, 0, 0), PresentationTheme.color_for_key(&"ui.accent"), 2)
+	)
+	MapCellLayerLayoutScript.apply_rect(focus_outline, Rect2(layer_layout.get("focus_rect", Rect2())))
+	button.add_child(focus_outline)
 	button.modulate = _modulate_for_marker_state(state, selected)
 	button.pressed.connect(func() -> void: _activate_marker(marker))
-	button.focus_entered.connect(func() -> void: _select_marker(marker))
-	_add_adjacent_mine_count(button, marker)
+	button.focus_entered.connect(func() -> void:
+		_select_marker(marker)
+		focus_outline.visible = true
+	)
+	button.focus_exited.connect(func() -> void:
+		focus_outline.visible = _is_selected_marker(marker)
+	)
+	_add_adjacent_mine_count(button, marker, layer_layout)
 	grid.add_child(button)
 
 
-func _add_adjacent_mine_count(button: Button, marker: Dictionary) -> void:
+func _add_adjacent_mine_count(button: Button, marker: Dictionary, layer_layout: Dictionary = {}) -> void:
 	var adjacent := _public_adjacent_mines(marker)
 	if adjacent < 0:
 		return
+	if layer_layout.is_empty():
+		layer_layout = MapCellLayerLayoutScript.calculate(button.custom_minimum_size, true)
+	var count_rect := Rect2(layer_layout.get("count_rect", Rect2()))
+	var badge_background := ColorRect.new()
+	badge_background.name = "AdjacentMineBadgeBackground"
+	badge_background.color = Color(0.015, 0.025, 0.028, 0.92)
+	badge_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge_background.z_index = int(layer_layout.get("count_z", 30))
+	MapCellLayerLayoutScript.apply_rect(badge_background, count_rect)
+	button.add_child(badge_background)
 	var count_label := Label.new()
 	count_label.name = "AdjacentMineCount"
-	count_label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	count_label.offset_left = 3.0
-	count_label.offset_top = 3.0
-	count_label.offset_right = -4.0
-	count_label.offset_bottom = -2.0
-	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	count_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	count_label.z_index = int(layer_layout.get("count_z", 30)) + 1
 	count_label.text = str(adjacent)
-	count_label.add_theme_font_size_override("font_size", clampi(int(marker_size.y * 0.28), 11, 15))
+	count_label.add_theme_font_size_override("font_size", clampi(int(count_rect.size.y * 0.62), 9, 15))
 	count_label.add_theme_color_override("font_color", Color(0.98, 0.94, 0.78, 1.0))
 	count_label.add_theme_color_override("font_outline_color", Color(0.02, 0.03, 0.03, 1.0))
-	count_label.add_theme_constant_override("outline_size", 2)
+	count_label.add_theme_constant_override("outline_size", 1)
+	MapCellLayerLayoutScript.apply_rect(count_label, count_rect)
 	button.add_child(count_label)
 
 
@@ -373,10 +416,18 @@ func _apply_overlay_panel_style(control: Control) -> void:
 	if not (control is PanelContainer):
 		return
 	var panel := control as PanelContainer
-	# The dimmer owns the modal boundary.  A second inventory-derived shell made
-	# the scan read as a warehouse dialog and left almost no usable outside-click
-	# lane, so the panel remains a transparent, tightly fitted layout host.
-	panel.add_theme_stylebox_override("panel", Art10UISkinKitScript.transparent_style_box(0))
+	# The host remains tightly fitted, but it must be opaque enough that protocol
+	# copy and room art cannot remain legible through grid gaps.
+	var backing := StyleBoxFlat.new()
+	backing.bg_color = Color(0.008, 0.021, 0.023, 0.97)
+	backing.border_color = Color(0.42, 0.66, 0.58, 0.92)
+	backing.set_border_width_all(2)
+	backing.content_margin_left = 0
+	backing.content_margin_top = 0
+	backing.content_margin_right = 0
+	backing.content_margin_bottom = 0
+	panel.add_theme_stylebox_override("panel", backing)
+	panel.set_meta("map_content_backing_alpha", backing.bg_color.a)
 
 
 func _apply_overlay_text_hierarchy(title: Label, detail: Label, action_button: Button, footer: Label) -> void:
@@ -485,7 +536,7 @@ func _icon_width_for_marker_state(state: StringName, size: Vector2) -> int:
 
 func _modulate_for_marker_state(state: StringName, selected: bool) -> Color:
 	if selected:
-		return Color(1.14, 1.14, 1.06, 1.0)
+		return Color(1.10, 1.10, 1.06, 1.0)
 	match state:
 		&"unknown":
 			return Color(0.72, 0.78, 0.74, 0.58)

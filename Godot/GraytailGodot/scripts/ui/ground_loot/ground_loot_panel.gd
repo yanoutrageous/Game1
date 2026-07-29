@@ -394,7 +394,9 @@ func _apply_rarity_row_style(button: Button, item: Dictionary) -> void:
 	var descriptor: Dictionary = ItemRarityDescriptorScript.describe_item(item)
 	var rarity_color: Color = descriptor.get("color", Color(0.64, 0.72, 0.68, 1.0))
 	button.set_meta("rarity_border_token", StringName(descriptor.get("border_token", &"rarity.unknown")))
-	button.set_meta("rarity_display_text", String(descriptor.get("display_text", "[?] 未鉴定")))
+	button.set_meta("rarity_display_text", String(descriptor.get("label", "未鉴定")))
+	for color_name in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color"]:
+		button.add_theme_color_override(color_name, rarity_color)
 	var marker := ColorRect.new()
 	marker.name = "GroundLootItemRarityMarker"
 	marker.color = rarity_color
@@ -402,7 +404,7 @@ func _apply_rarity_row_style(button: Button, item: Dictionary) -> void:
 	marker.z_index = 2
 	marker.anchor_top = 0.0
 	marker.anchor_bottom = 1.0
-	marker.offset_left = 7.0
+	marker.offset_left = 8.0
 	marker.offset_top = 8.0
 	marker.offset_right = 12.0
 	marker.offset_bottom = -8.0
@@ -456,10 +458,18 @@ func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: S
 		font_role
 	)
 	button.set_meta("ui_scale_base_font_size", font_size_value)
-	var style := Art21UIPlacementContractScript.style_box_for_visual_key(visual_key, &"ui.art19.button.dark", padding, texture_margin)
+	var size_class := &"compact" if button.custom_minimum_size.x <= 96.0 else &"regular"
+	var inset_profile := Art10UISkinKitScript.control_inset_profile(size_class)
+	var texture := Art21UIPlacementContractScript.texture_for_visual_key(visual_key, &"ui.art19.button.dark")
+	var style := Art10UISkinKitScript.style_box_from_texture_with_insets(
+		texture,
+		inset_profile.get("content", Vector4(padding, padding, padding, padding)),
+		inset_profile.get("slice", Vector4(texture_margin, texture_margin, texture_margin, texture_margin))
+	)
 	if style != null:
 		for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 			button.add_theme_stylebox_override(state, style.duplicate() as StyleBoxTexture)
+	button.set_meta("ui_control_size_class", size_class)
 	button.add_theme_color_override("font_color", Color(0.92, 0.95, 0.88, 1.0))
 	button.add_theme_color_override("font_disabled_color", Color(0.48, 0.54, 0.51, 1.0))
 

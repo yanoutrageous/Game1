@@ -6,6 +6,7 @@ const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_
 const Art22DeployPrepAssetContractScript := preload("res://scripts/presentation/art22_deploy_prep_asset_contract.gd")
 const Art25ContentAssetContractScript := preload("res://scripts/presentation/art25_content_asset_contract.gd")
 const ItemRarityDescriptorScript := preload("res://scripts/presentation/item_rarity_descriptor.gd")
+const DeployPrepLayoutContractScript := preload("res://scripts/ui/deploy_prep/deploy_prep_layout_contract.gd")
 
 signal card_pressed(card_id: StringName)
 signal quantity_delta_requested(card_id: StringName, delta: int)
@@ -159,15 +160,16 @@ func _build_nodes(tab_id: StringName) -> void:
 	add_child(artwork)
 
 	var title_color := _rarity_color() if card_data.has("item_id") else Color(0.96, 0.86, 0.63)
-	title_label = _add_label("CardTitle", Rect2(72, 8, 210, 23), _display_title(), 15, title_color, HORIZONTAL_ALIGNMENT_LEFT)
+	title_label = _add_label("CardTitle", Rect2(72, 6, 210, 28), _display_title(), 15, title_color, HORIZONTAL_ALIGNMENT_LEFT)
 	title_label.clip_text = true
 	if bool(card_data.get("quantity_capable", false)):
-		summary_label = _add_label("CardSummary", Rect2(72, 37, 120, 24), "", 11, Color(0.76, 0.82, 0.76), HORIZONTAL_ALIGNMENT_LEFT)
+		summary_label = _add_label("CardSummary", Rect2(72, 39, 120, 24), "", 11, Color(0.76, 0.82, 0.76), HORIZONTAL_ALIGNMENT_LEFT)
 		summary_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		summary_label.clip_text = true
-		quantity_minus_button = _add_quantity_button("CardQuantityMinus", Rect2(196, 36, 24, 26), "−", -1)
-		quantity_value_label = _add_label("CardQuantityValue", Rect2(221, 36, 36, 26), "", 11, Color(0.96, 0.86, 0.63), HORIZONTAL_ALIGNMENT_CENTER)
-		quantity_plus_button = _add_quantity_button("CardQuantityPlus", Rect2(258, 36, 24, 26), "+", 1)
+		_add_quantity_stepper_panel(Rect2(194, 37, 90, 30))
+		quantity_minus_button = _add_quantity_button("CardQuantityMinus", Rect2(196, 40, 24, 24), "−", -1)
+		quantity_value_label = _add_label("CardQuantityValue", Rect2(221, 40, 36, 24), "", 11, Color(0.96, 0.86, 0.63), HORIZONTAL_ALIGNMENT_CENTER)
+		quantity_plus_button = _add_quantity_button("CardQuantityPlus", Rect2(258, 40, 24, 24), "+", 1)
 		state_panel = null
 		state_label = null
 		state_hint_label = null
@@ -213,6 +215,8 @@ func _refresh_quantity_projection() -> void:
 		_:
 			quantity_value_label.text = "%d 件" % limit
 			quantity_value_label.tooltip_text = "当前持有数量"
+	_apply_scaled_label_font(summary_label)
+	_apply_scaled_label_font(quantity_value_label)
 
 
 func _display_title() -> String:
@@ -338,6 +342,7 @@ func _add_label(node_name: String, rect: Rect2, text: String, font_size: int, co
 	label.set_meta("deploy_card_base_font_size", font_size)
 	label.set_meta("deploy_card_composition_role", composition_role)
 	label.set_meta("deploy_card_max_font_size", maxi(font_size, int(floor(rect.size.y - 2.0))))
+	label.set_meta("deploy_card_text_bounds", rect.size)
 	_apply_scaled_label_font(label)
 	_set_rect(label, rect)
 	add_child(label)
@@ -354,12 +359,19 @@ func _apply_scaled_label_font(label: Label) -> void:
 	if label == null or not label.has_meta("deploy_card_base_font_size"):
 		return
 	var base_font_size := int(label.get_meta("deploy_card_base_font_size", 0))
-	var scaled_font_size := Art10UISkinKitScript.scaled_font_size(base_font_size, ui_scale_factor)
-	scaled_font_size = mini(
-		scaled_font_size,
-		int(label.get_meta("deploy_card_max_font_size", scaled_font_size))
+	var fit := DeployPrepLayoutContractScript.fit_text(
+		label.text,
+		label.get_theme_font("font"),
+		label.get_meta("deploy_card_text_bounds", label.size),
+		base_font_size,
+		ui_scale_factor,
+		false,
+		label.horizontal_alignment,
+		Vector2(2, 1),
+		int(label.get_meta("deploy_card_max_font_size", base_font_size))
 	)
-	label.add_theme_font_size_override("font_size", scaled_font_size)
+	label.add_theme_font_size_override("font_size", int(fit.get("font_size", base_font_size)))
+	label.set_meta("deploy_text_fit", fit)
 	label.set_meta("runtime_ui_scale_factor", ui_scale_factor)
 
 
@@ -391,12 +403,58 @@ func _add_quantity_button(
 	control.focus_mode = Control.FOCUS_ALL
 	control.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	Art10UISkinKitScript.apply_button(control, &"secondary", 12)
+	control.add_theme_stylebox_override("normal", _quantity_button_style(&"normal"))
+	control.add_theme_stylebox_override("hover", _quantity_button_style(&"focused"))
+	control.add_theme_stylebox_override("focus", _quantity_button_style(&"focused"))
+	control.add_theme_stylebox_override("pressed", _quantity_button_style(&"pressed"))
+	control.add_theme_stylebox_override("hover_pressed", _quantity_button_style(&"pressed"))
+	control.add_theme_stylebox_override("disabled", _quantity_button_style(&"disabled"))
+	control.add_theme_constant_override("outline_size", 0)
+	control.set_meta("ui_control_size_class", &"compact")
 	_set_rect(control, rect)
 	control.pressed.connect(func() -> void:
 		quantity_delta_requested.emit(card_id, delta)
 	)
 	add_child(control)
 	return control
+
+
+func _add_quantity_stepper_panel(rect: Rect2) -> Panel:
+	var panel := Panel.new()
+	panel.name = "CardQuantityStepperPanel"
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.012, 0.050, 0.052, 0.92)
+	style.border_color = Color(0.43, 0.60, 0.52, 0.78)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(2)
+	panel.add_theme_stylebox_override("panel", style)
+	_set_rect(panel, rect)
+	add_child(panel)
+	return panel
+
+
+func _quantity_button_style(state: StringName) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.03, 0.10, 0.10, 0.34)
+	style.border_color = Color(0.42, 0.90, 0.84, 0.0)
+	match state:
+		&"focused":
+			style.bg_color = Color(0.06, 0.24, 0.22, 0.88)
+			style.border_color.a = 0.92
+		&"pressed":
+			style.bg_color = Color(0.12, 0.34, 0.30, 0.96)
+			style.border_color.a = 0.92
+		&"disabled":
+			style.bg_color = Color(0.02, 0.04, 0.04, 0.46)
+			style.border_color = Color(0.26, 0.31, 0.29, 0.36)
+	style.set_border_width_all(1 if state in [&"focused", &"pressed"] else 0)
+	style.set_corner_radius_all(2)
+	style.content_margin_left = 1
+	style.content_margin_top = 1
+	style.content_margin_right = 1
+	style.content_margin_bottom = 1
+	return style
 
 
 func _add_asset_panel(node_name: String, rect: Rect2, control_id: StringName, state: StringName) -> Panel:

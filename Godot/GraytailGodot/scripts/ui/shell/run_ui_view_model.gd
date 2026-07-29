@@ -65,7 +65,7 @@ static func item_presentation(item: Dictionary) -> Dictionary:
 	var item_type := String(item.get("item_type", item.get("main_type", "item")))
 	var type_label := _item_type_label(item_type)
 	var rarity: Dictionary = ItemRarityDescriptorScript.describe_item(item)
-	var rarity_text := String(rarity.get("display_text", "[?] 未鉴定"))
+	var rarity_text := String(rarity.get("natural_text", rarity.get("label", "未鉴定")))
 	var quantity := item_quantity(item)
 	var weight: Variant = item.get("weight", 1)
 	var base_value: Variant = item.get("base_value", 0)

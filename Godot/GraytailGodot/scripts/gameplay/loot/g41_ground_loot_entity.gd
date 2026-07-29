@@ -4,6 +4,7 @@ class_name G41GroundLootEntity
 signal feedback_finished(instance_id: String)
 
 const ItemVisualCatalog := preload("res://scripts/presentation/art24/art24_item_visual_catalog.gd")
+const ItemRarityDescriptorScript := preload("res://scripts/presentation/item_rarity_descriptor.gd")
 const PICKUP_BEAM_TEXTURES := [
 	preload("res://assets/art24/fx/pickup_beam_0.png"),
 	preload("res://assets/art24/fx/pickup_beam_1.png"),
@@ -113,11 +114,16 @@ func _apply_visual_state() -> void:
 	super._apply_visual_state()
 	var art_visual := get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
 	var beam := get_node_or_null("VisualRoot/PickupBeam") as Sprite2D
+	var rarity_color := Color(ItemRarityDescriptorScript.describe_item(item).get("color", Color.WHITE))
 	if art_visual != null:
-		art_visual.modulate = Color(1.0, 0.58, 0.52, 1.0) if visual_state == &"blocked" else (Color(1.16, 1.08, 0.76, 1.0) if focused else Color.WHITE)
+		# Failure/focus feedback must not overwrite the item's rarity channel.
+		art_visual.modulate = Color(1.10, 1.10, 1.06, 1.0) if focused else Color.WHITE
 		art_visual.scale = Vector2.ONE * (0.21 if focused else 0.18)
 	if beam != null:
-		beam.modulate = Color(1.0, 0.48, 0.32, 0.92) if visual_state == &"blocked" else Color(0.32, 0.78, 1.0, 0.90)
+		beam.modulate = Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.90)
+	var blocked_marker := get_node_or_null("VisualRoot/BlockedMarker") as Label
+	if blocked_marker != null:
+		blocked_marker.visible = visual_state == &"blocked"
 	var prompt := get_node_or_null("PromptAnchor/InteractionPrompt") as Label
 	if prompt != null:
 		prompt.text = "[G] 地面回收 · 1件物资"
@@ -146,7 +152,23 @@ func _ensure_art_visuals() -> void:
 		var art_visual := Sprite2D.new()
 		art_visual.name = "ArtVisual"
 		art_visual.position = Vector2(0, -3)
+		art_visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		visual_root.add_child(art_visual)
+	if visual_root.get_node_or_null("BlockedMarker") == null:
+		var blocked_marker := Label.new()
+		blocked_marker.name = "BlockedMarker"
+		blocked_marker.position = Vector2(-13, -22)
+		blocked_marker.size = Vector2(26, 26)
+		blocked_marker.text = "×"
+		blocked_marker.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		blocked_marker.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		blocked_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		blocked_marker.z_index = 5
+		blocked_marker.add_theme_font_size_override("font_size", 22)
+		blocked_marker.add_theme_color_override("font_color", Color(1.0, 0.22, 0.16, 1.0))
+		blocked_marker.add_theme_color_override("font_outline_color", Color(0.08, 0.015, 0.01, 1.0))
+		blocked_marker.add_theme_constant_override("outline_size", 2)
+		visual_root.add_child(blocked_marker)
 	if get_node_or_null("PromptAnchor/LootCaption") == null:
 		var caption := Label.new()
 		caption.name = "LootCaption"
@@ -163,11 +185,17 @@ func _ensure_art_visuals() -> void:
 
 func _apply_item_visual() -> void:
 	var art_visual := get_node_or_null("VisualRoot/ArtVisual") as Sprite2D
+	var resolution := ItemVisualCatalog.resolve(item, &"world_ground_drop")
 	if art_visual != null:
-		art_visual.texture = ItemVisualCatalog.texture_for_visual_key(visual_key)
+		art_visual.texture = resolution.get("texture", null) as Texture2D
+		art_visual.set_meta("item_visual_resolution", resolution.duplicate())
+		art_visual.set_meta("requested_visual_key", resolution.get("requested_key", &""))
+		art_visual.set_meta("resolved_visual_key", resolution.get("resolved_key", &""))
+		art_visual.set_meta("resolved_texture_path", resolution.get("resolved_path", ""))
 	var beam := get_node_or_null("VisualRoot/PickupBeam") as Sprite2D
 	if beam != null:
 		beam.texture = PICKUP_BEAM_TEXTURES[0]
+		beam.set_meta("rarity_key", ItemRarityDescriptorScript.describe_item(item).get("key", &"unknown"))
 	var caption := get_node_or_null("PromptAnchor/LootCaption") as Label
 	if caption != null:
 		caption.text = "%s  ·  估值 %d" % [
@@ -201,8 +229,7 @@ func _apply_feedback_transform() -> void:
 
 
 func _placeholder_color() -> Color:
-	if visual_state == &"blocked":
-		return Color(0.92, 0.28, 0.25, 1.0)
+	var rarity_color := Color(ItemRarityDescriptorScript.describe_item(item).get("color", Color(0.34, 0.88, 0.78, 1.0)))
 	if focused:
-		return Color(1.0, 0.88, 0.32, 1.0)
-	return Color(0.34, 0.88, 0.78, 1.0)
+		return rarity_color.lightened(0.16)
+	return rarity_color

@@ -8,6 +8,7 @@ const MATRIX := [
 	[&"profile", [&"qualification_level", &"history", &"statistics", &"milestone", &"title", &"badge"]],
 	[&"collection_appearance", [&"unique_display", &"appearance_config", &"display_content", &"badge_title", &"settlement_display"]],
 ]
+const WAIT_TIMEOUT_MS := 5000
 
 
 func _initialize() -> void:
@@ -52,17 +53,51 @@ func _capture_matrix() -> void:
 			"gold": 12840, "warehouse_items": [], "warehouse_items_count": 0,
 		},
 	})
-	await _frames(16)
+	if not await _wait_until(
+		func() -> bool:
+			return (
+				shell.is_inside_tree()
+				and shell.get_selected_module_id() == &"task_archive"
+				and shell.get_selected_secondary_id() == &"task"
+			),
+		"initial LongTerm workspace"
+	):
+		quit(2)
+		return
 	var captured := 0
 	for raw_entry in MATRIX:
 		var entry := raw_entry as Array
 		var module_id := StringName(entry[0])
 		shell.call("_apply_module_immediately", module_id)
-		await _frames(3)
+		if not await _wait_until(
+			func() -> bool:
+				return (
+					StringName(shell.get("displayed_module_id")) == module_id
+					and StringName(shell.get("transition_state")) == shell.STATE_OPEN
+				),
+			"module %s" % String(module_id)
+		):
+			quit(2)
+			return
 		for raw_group_id in entry[1] as Array:
 			var group_id := StringName(raw_group_id)
 			shell.call("show_secondary", group_id)
-			await _frames(3)
+			if not await _wait_until(
+				func() -> bool:
+					return (
+						shell.get_selected_secondary_id() == group_id
+						and not String(shell.get("current_workspace").get("kind", "")).is_empty()
+					),
+				"secondary %s/%s" % [String(module_id), String(group_id)]
+			):
+				quit(2)
+				return
+			if not await _wait_for_stable_layout(
+				shell,
+				"capture %s/%s" % [String(module_id), String(group_id)]
+			):
+				quit(2)
+				return
 			var image := capture_viewport.get_texture().get_image()
 			if image == null:
 				push_error("ART23 matrix renderer returned no image")
@@ -79,9 +114,65 @@ func _capture_matrix() -> void:
 	quit(0 if captured == 25 else 2)
 
 
-func _frames(count: int) -> void:
-	for _index in range(count):
+func _wait_until(predicate: Callable, label: String) -> bool:
+	var deadline := Time.get_ticks_msec() + WAIT_TIMEOUT_MS
+	while Time.get_ticks_msec() <= deadline:
+		if bool(predicate.call()):
+			return true
 		await process_frame
+	push_error("ART23 matrix timed out waiting for semantic state: %s" % label)
+	return false
+
+
+func _wait_for_stable_layout(shell: Control, label: String) -> bool:
+	var deadline := Time.get_ticks_msec() + WAIT_TIMEOUT_MS
+	var previous := ""
+	var stable_submissions := 0
+	while Time.get_ticks_msec() <= deadline:
+		await process_frame
+		var fingerprint := _visible_layout_fingerprint(shell)
+		if not fingerprint.is_empty() and fingerprint == previous:
+			stable_submissions += 1
+		else:
+			previous = fingerprint
+			stable_submissions = 1 if not fingerprint.is_empty() else 0
+		if stable_submissions >= 3:
+			return true
+	push_error("ART23 matrix layout did not stabilize: %s" % label)
+	return false
+
+
+func _visible_layout_fingerprint(node: Node) -> String:
+	var records: Array[String] = []
+	_collect_visible_layout(node, records)
+	records.sort()
+	return "|".join(records)
+
+
+func _collect_visible_layout(node: Node, records: Array[String]) -> void:
+	if node is Control:
+		var control := node as Control
+		if control.is_visible_in_tree():
+			var rect := control.get_global_rect()
+			var text_value := ""
+			if control is Label:
+				text_value = (control as Label).text
+			elif control is Button:
+				text_value = (control as Button).text
+			records.append(
+				"%s:%.2f,%.2f,%.2f,%.2f:%.3f:%s"
+				% [
+					String(control.get_path()),
+					rect.position.x,
+					rect.position.y,
+					rect.size.x,
+					rect.size.y,
+					control.modulate.a,
+					text_value,
+				]
+			)
+	for child in node.get_children():
+		_collect_visible_layout(child, records)
 
 
 func _parse_options(arguments: PackedStringArray) -> Dictionary:

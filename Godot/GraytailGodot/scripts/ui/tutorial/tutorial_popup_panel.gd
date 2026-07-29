@@ -151,7 +151,7 @@ func _refresh(reset_scroll: bool = false) -> void:
 	if message != null:
 		message.mouse_filter = Control.MOUSE_FILTER_STOP if blocking else Control.MOUSE_FILTER_IGNORE
 		message.add_theme_color_override("default_color", PresentationThemeScript.text_color())
-		var body_font := Art10UISkinKitScript.player_ui_font()
+		var body_font := Art10UISkinKitScript.readable_font()
 		if body_font is Font:
 			message.add_theme_font_override("normal_font", body_font as Font)
 			message.add_theme_font_override("bold_font", body_font as Font)

@@ -272,17 +272,44 @@ func _long_term_journey() -> void:
 		await _click_control(cards[0] as Button, "long_term.focus_history_record")
 	await _checkpoint("19_long_term_archive", "character history archive available")
 
+	var navigation_before_back := long_term.call("get_navigation_snapshot") as Dictionary
+	_require(
+		int(navigation_before_back.get("history_depth", 0)) == 3,
+		"LongTerm production journey did not retain the three visited page states"
+	)
 	await _seconds(0.70)
-	await _tap_key(KEY_ESCAPE, "long_term.escape_to_secondary")
-	_require(_focus_in_buttons(long_term.get("secondary_button_order") as Array), "first Esc did not return record focus to secondary navigation")
-	await _checkpoint("20_long_term_focus_secondary", "Esc restored secondary-page focus")
+	await _tap_key(KEY_ESCAPE, "long_term.back_to_profile_default")
+	_require(
+		int((long_term.call("get_navigation_snapshot") as Dictionary).get("history_depth", -1)) == 2,
+		"first Back did not consume exactly one LongTerm page-history entry"
+	)
+	_require(
+		_focus_in_buttons(long_term.get("secondary_button_order") as Array),
+		"first Back did not restore the previous profile page and its secondary focus"
+	)
+	await _checkpoint("20_long_term_focus_secondary", "Back restored previous profile page and secondary focus")
 	await _seconds(0.70)
-	await _tap_key(KEY_ESCAPE, "long_term.escape_to_primary")
-	_require(_focus_in_buttons(long_term.get("tab_button_order") as Array), "second Esc did not return focus to primary modules")
-	await _checkpoint("21_long_term_focus_primary", "Esc restored primary-module focus")
+	await _tap_key(KEY_ESCAPE, "long_term.back_to_talent")
+	_require(
+		int((long_term.call("get_navigation_snapshot") as Dictionary).get("history_depth", -1)) == 1,
+		"second Back did not consume exactly one LongTerm page-history entry"
+	)
+	_require(
+		long_term.call("get_selected_module_id") == &"talent"
+		and _focus_in_buttons(long_term.get("tab_button_order") as Array),
+		"second Back did not restore the talent page and primary-module focus"
+	)
+	await _checkpoint("21_long_term_focus_primary", "Back restored talent page and primary-module focus")
+	await _seconds(0.70)
+	await _tap_key(KEY_ESCAPE, "long_term.back_to_entry_page")
+	_require(
+		int((long_term.call("get_navigation_snapshot") as Dictionary).get("history_depth", -1)) == 0
+		and long_term.call("get_selected_module_id") == &"task_archive",
+		"third Back did not restore the LongTerm entry page and exhaust page history"
+	)
 	await _seconds(0.70)
 	await _tap_key(KEY_ESCAPE, "long_term.escape_to_main")
-	_require(await _wait_screen(&"main_menu", 4.0), "third staged Esc did not return LongTerm to main")
+	_require(await _wait_screen(&"main_menu", 4.0), "Esc after exhausted page history did not return LongTerm to main")
 	await _checkpoint("22_final_main", "out-of-run journey returned to production main menu")
 
 
@@ -674,7 +701,7 @@ func _finish() -> void:
 	_dispose_main()
 	if failures.is_empty():
 		print(
-			"%s production=main.tscn checkpoints=%d screenshots=%d inputs=%d settings=apply,cancel,display_revert deploy=map+warehouse+claim+objective+loadout batch=cancel_then_confirm long_term=task+talent+archive escape=secondary,primary,main evidence=%s csv=%s"
+			"%s production=main.tscn checkpoints=%d screenshots=%d inputs=%d settings=apply,cancel,display_revert deploy=map+warehouse+claim+objective+loadout batch=cancel_then_confirm long_term=task+talent+archive escape=history_profile,history_talent,history_entry,main evidence=%s csv=%s"
 			% [PASS_MARKER, checkpoint_count, screenshot_count, input_count, evidence_path, csv_path]
 		)
 		_schedule_quit(0)

@@ -103,6 +103,7 @@ func build_snapshot() -> Dictionary:
 		"visual_state": visual_state,
 		"prompt_text": prompt_text,
 		"payload": payload.duplicate(true),
+		"visual_resolution": visual_resolution_snapshot(),
 	}
 
 
@@ -141,7 +142,7 @@ func _ensure_contract_nodes() -> void:
 		label.size = Vector2(144, 24)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 12)
-		Art10UISkinKitScript.apply_player_ui_font(label)
+		Art10UISkinKitScript.apply_player_ui_font(label, &"display")
 		get_node("PromptAnchor").add_child(label)
 
 
@@ -149,7 +150,8 @@ func _apply_visual_state() -> void:
 	var placeholder := get_node_or_null("VisualRoot/ProgramPlaceholder") as Polygon2D
 	if placeholder != null:
 		placeholder.color = _placeholder_color()
-		placeholder.visible = get_node_or_null("VisualRoot/ArtVisual") == null
+		placeholder.visible = not has_resolved_art_visual()
+		placeholder.set_meta("fallback_reason", &"art_texture_unresolved" if placeholder.visible else &"none")
 	var prompt := get_node_or_null("PromptAnchor/InteractionPrompt") as Label
 	if prompt != null:
 		var interact_hint := SemanticActionHintScript.current_binding_label(&"interact")
@@ -159,6 +161,46 @@ func _apply_visual_state() -> void:
 			else prompt_text
 		)
 		prompt.visible = focused and enabled
+
+
+func has_resolved_art_visual() -> bool:
+	var art_visual := get_node_or_null("VisualRoot/ArtVisual")
+	if art_visual is Sprite2D:
+		var sprite := art_visual as Sprite2D
+		return sprite.visible and sprite.texture != null and sprite.modulate.a >= 0.25
+	if art_visual is TextureRect:
+		var texture_rect := art_visual as TextureRect
+		return texture_rect.visible and texture_rect.texture != null and texture_rect.modulate.a >= 0.25
+	return false
+
+
+func has_visible_collision_correspondence() -> bool:
+	if has_resolved_art_visual():
+		return true
+	var placeholder := get_node_or_null("VisualRoot/ProgramPlaceholder") as Polygon2D
+	return placeholder != null and placeholder.visible and placeholder.color.a >= 0.25
+
+
+func visual_resolution_snapshot() -> Dictionary:
+	var art_visual := get_node_or_null("VisualRoot/ArtVisual")
+	var texture: Texture2D = null
+	var visible := false
+	if art_visual is Sprite2D:
+		texture = (art_visual as Sprite2D).texture
+		visible = (art_visual as Sprite2D).visible
+	elif art_visual is TextureRect:
+		texture = (art_visual as TextureRect).texture
+		visible = (art_visual as TextureRect).visible
+	var placeholder := get_node_or_null("VisualRoot/ProgramPlaceholder") as Polygon2D
+	return {
+		"visual_key": visual_key,
+		"texture_resolved": texture != null,
+		"resolved_texture_path": texture.resource_path if texture != null else "",
+		"resolved_texture_size": texture.get_size() if texture != null else Vector2.ZERO,
+		"art_visible": visible,
+		"fallback_visible": placeholder != null and placeholder.visible,
+		"collision_correspondence_visible": has_visible_collision_correspondence(),
+	}
 
 
 func _placeholder_color() -> Color:

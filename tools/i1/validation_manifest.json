@@ -163,7 +163,15 @@
     "I3R_RUN_FOCUS_LAYOUT",
     "I3_PRODUCTION_INPUT_JOURNEY",
     "I3_PRODUCTION_FULL_BAG_REPLACEMENT",
-    "I3_PRODUCTION_TERMINAL_BRANCHES"
+    "I3_PRODUCTION_TERMINAL_BRANCHES",
+    "I4_DEBUG_SANDBOX",
+    "I4_QUANTITY_TRANSACTION",
+    "I4_DEPLOY_QUANTITY_UI",
+    "I4_IN_RUN_ITEM_AGGREGATION",
+    "I4_DEPLOY_INFORMATION_LAYOUT",
+    "I4_FONT_ROLE_RASTER",
+    "I4_LONG_TERM_NAVIGATION",
+    "I4_IN_RUN_VISUAL_PHYSICS"
   ],
   "profiles": {
     "preflight": {
@@ -244,7 +252,15 @@
         "I3R_UI_MATERIAL_SAFE_ZONE",
         "I3R_PLAYER_FEEDBACK_AUDIO",
         "I3R_WORLD_OBJECT_PRESENTATION_CONTRACT",
-        "I3R_RUN_FOCUS_LAYOUT"
+        "I3R_RUN_FOCUS_LAYOUT",
+        "I4_DEBUG_SANDBOX",
+        "I4_QUANTITY_TRANSACTION",
+        "I4_DEPLOY_QUANTITY_UI",
+        "I4_IN_RUN_ITEM_AGGREGATION",
+        "I4_DEPLOY_INFORMATION_LAYOUT",
+        "I4_FONT_ROLE_RASTER",
+        "I4_LONG_TERM_NAVIGATION",
+        "I4_IN_RUN_VISUAL_PHYSICS"
       ]
     },
     "core": {
@@ -485,7 +501,15 @@
         "I3R_RUN_FOCUS_LAYOUT",
         "I3_PRODUCTION_INPUT_JOURNEY",
         "I3_PRODUCTION_FULL_BAG_REPLACEMENT",
-        "I3_PRODUCTION_TERMINAL_BRANCHES"
+        "I3_PRODUCTION_TERMINAL_BRANCHES",
+        "I4_DEBUG_SANDBOX",
+        "I4_QUANTITY_TRANSACTION",
+        "I4_DEPLOY_QUANTITY_UI",
+        "I4_IN_RUN_ITEM_AGGREGATION",
+        "I4_DEPLOY_INFORMATION_LAYOUT",
+        "I4_FONT_ROLE_RASTER",
+        "I4_LONG_TERM_NAVIGATION",
+        "I4_IN_RUN_VISUAL_PHYSICS"
       ]
     }
   },
@@ -867,7 +891,7 @@
       "id": "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY",
       "relative_path": "Godot/GraytailGodot/tests/i3r_out_of_run_production_journey_runner.gd",
       "pass_marker": "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY=PASS",
-      "pass_line_regex": "^I3R_OUT_OF_RUN_PRODUCTION_JOURNEY=PASS production=main\\.tscn checkpoints=22 screenshots=[0-9]+ inputs=[0-9]+ settings=apply,cancel,display_revert deploy=map\\+warehouse\\+claim\\+objective\\+loadout batch=cancel_then_confirm long_term=task\\+talent\\+archive escape=secondary,primary,main evidence=.+ csv=.+$",
+      "pass_line_regex": "^I3R_OUT_OF_RUN_PRODUCTION_JOURNEY=PASS production=main\\.tscn checkpoints=22 screenshots=[0-9]+ inputs=[0-9]+ settings=apply,cancel,display_revert deploy=map\\+warehouse\\+claim\\+objective\\+loadout batch=cancel_then_confirm long_term=task\\+talent\\+archive escape=history_profile,history_talent,history_entry,main evidence=.+ csv=.+$",
       "fail_marker": "I3R_OUT_OF_RUN_PRODUCTION_JOURNEY=FAIL",
       "timeout_seconds": 180,
       "coverage": ["production_main_scene", "real_input", "out_of_run", "settings_apply", "settings_cancel", "dangerous_display_revert", "main_menu_transition", "deploy_prep", "single_page_map_difficulty", "warehouse", "batch_sale_cancel", "batch_sale_confirm", "claim", "objective", "loadout", "summary", "long_term", "task_archive", "talent_tree", "character_archive", "staged_escape_focus", "isolated_authoritative_fixture", "evidence_capture"]
@@ -1223,14 +1247,14 @@
       "id": "I3R_FONT_SURFACE_COVERAGE",
       "relative_path": "Godot/GraytailGodot/tests/i3r_font_surface_coverage_runner.gd",
       "pass_marker": "I3R_FONT_SURFACE_COVERAGE=PASS",
-      "pass_line_regex": "^I3R_FONT_SURFACE_COVERAGE=PASS controls=[1-9][0-9]* visible_controls=[1-9][0-9]* tooltips=[1-9][0-9]* settings_popups=8 surfaces=\\[\"ui_root\", \"main\", \"deploy\", \"long_term\", \"settings\", \"runtime_settings\", \"run\", \"inventory\", \"map\", \"result\", \"tutorial\", \"loot_result\", \"world_popup\"\\] primary=FusionPixel fallback=Noto$",
+      "pass_line_regex": "^I3R_FONT_SURFACE_COVERAGE=PASS controls=[1-9][0-9]* visible_controls=[1-9][0-9]* tooltips=[1-9][0-9]* settings_popups=8 surfaces=\\[\"ui_root\", \"main\", \"deploy\", \"long_term\", \"settings\", \"runtime_settings\", \"run\", \"inventory\", \"map\", \"result\", \"tutorial\", \"loot_result\", \"world_popup\"\\] roles=FusionPixel,Noto$",
       "fail_marker": "I3R_FONT_SURFACE_COVERAGE=FAIL",
       "coverage": ["ui", "font_roles", "production_main_scene", "dynamic_controls", "tooltip", "popup_menu", "settings", "world_prompts", "FusionPixel", "Noto_fallback"]
     },
     {
       "id": "I3R_FONT_RASTER_POLICY",
       "relative_path": "Godot/GraytailGodot/tests/i3r_font_raster_policy_runner.gd",
-      "pass_marker": "I3R_FONT_RASTER_POLICY=PASS antialiasing=0 subpixel=0 system_fallback=false primary=FusionPixel fallback=Noto theme_types=6",
+      "pass_marker": "I3R_FONT_RASTER_POLICY=PASS antialiasing=0 subpixel=0 system_fallback=false display=FusionPixel readable=Noto theme_types=6",
       "fail_marker": "I3R_FONT_RASTER_POLICY=FAIL",
       "coverage": ["ui", "font_raster_policy", "antialiasing", "subpixel_positioning", "system_fallback", "manifest_hash", "theme_fonts"]
     },
@@ -1245,7 +1269,7 @@
     {
       "id": "I3R_UI_COMPOSITION_CONTRACT",
       "relative_path": "Godot/GraytailGodot/tests/i3r_ui_composition_contract_runner.gd",
-      "pass_marker": "I3R_UI_COMPOSITION_CONTRACT=PASS font=FusionPixel fallback=Noto surfaces=settings,tooltip,item,world,option_popup,result texture_safe=5 license=upstream_ofl",
+      "pass_marker": "I3R_UI_COMPOSITION_CONTRACT=PASS fonts=FusionPixel,Noto roles=display,readable surfaces=settings,tooltip,item,world,option_popup,result texture_safe=5 license=upstream_ofl",
       "fail_marker": "I3R_UI_COMPOSITION_CONTRACT=FAIL",
       "coverage": ["ui", "font_roles", "composition", "texture_safe_zone", "asset_license"]
     },
@@ -1303,6 +1327,71 @@
       "fail_marker": "I3_PRODUCTION_TERMINAL_BRANCHES=FAIL",
       "timeout_seconds": 600,
       "coverage": ["production_main_scene", "real_input", "long_term_transition", "pause", "abandon", "failure", "salvage", "result_panel", "return_main", "evidence_capture"]
+    },
+    {
+      "id": "I4_DEBUG_SANDBOX",
+      "relative_path": "Godot/GraytailGodot/tests/i4_debug_sandbox_runner.gd",
+      "pass_marker": "I4_DEBUG_SANDBOX=PASS",
+      "pass_line_regex": "^I4_DEBUG_SANDBOX=PASS profile=dev_sandbox taint_guard=PASS settings_entry=PASS$",
+      "fail_marker": "I4_DEBUG_SANDBOX=FAIL",
+      "coverage": ["i4", "debug_sandbox", "taint_guard", "settings_entry", "profile_isolation"]
+    },
+    {
+      "id": "I4_QUANTITY_TRANSACTION",
+      "relative_path": "Godot/GraytailGodot/tests/i4_quantity_transaction_runner.gd",
+      "pass_marker": "I4_QUANTITY_TRANSACTION=PASS",
+      "pass_line_regex": "^I4_QUANTITY_TRANSACTION=PASS purchase=N_instances save=once rollback=exact idempotency=PASS$",
+      "fail_marker": "I4_QUANTITY_TRANSACTION=FAIL",
+      "coverage": ["i4", "purchase_quantity", "atomic_save", "rollback", "idempotency", "instance_identity"]
+    },
+    {
+      "id": "I4_DEPLOY_QUANTITY_UI",
+      "relative_path": "Godot/GraytailGodot/tests/i4_deploy_quantity_interaction_runner.gd",
+      "pass_marker": "I4_DEPLOY_QUANTITY_UI=PASS",
+      "pass_line_regex": "^I4_DEPLOY_QUANTITY_UI=PASS card=two_line context=single quantity=minus_value_plus carry=exact purchase=draft sale=batch$",
+      "fail_marker": "I4_DEPLOY_QUANTITY_UI=FAIL",
+      "coverage": ["i4", "deploy", "two_line_card", "quantity_stepper", "carry", "purchase", "batch_sale"]
+    },
+    {
+      "id": "I4_IN_RUN_ITEM_AGGREGATION",
+      "relative_path": "Godot/GraytailGodot/tests/i4_in_run_item_aggregation_runner.gd",
+      "pass_marker": "I4_IN_RUN_ITEM_AGGREGATION=PASS",
+      "pass_line_regex": "^I4_IN_RUN_ITEM_AGGREGATION=PASS display=aggregate ledger=exact action=one_instance settlement=preserved$",
+      "fail_marker": "I4_IN_RUN_ITEM_AGGREGATION=FAIL",
+      "coverage": ["i4", "in_run", "item_aggregation", "exact_instance_ledger", "single_instance_action", "settlement"]
+    },
+    {
+      "id": "I4_DEPLOY_INFORMATION_LAYOUT",
+      "relative_path": "Godot/GraytailGodot/tests/i4_deploy_information_layout_runner.gd",
+      "pass_marker": "I4_DEPLOY_INFORMATION_LAYOUT=PASS",
+      "pass_line_regex": "^I4_DEPLOY_INFORMATION_LAYOUT=PASS matrix=4x3 ordinary=310,12,310 map=198,424 summary=dynamic_scroll detail=scroll gold=contextual focus=reachable screenshots=[0-9]+$",
+      "fail_marker": "I4_DEPLOY_INFORMATION_LAYOUT=FAIL",
+      "timeout_seconds": 180,
+      "coverage": ["i4", "deploy", "resolution_matrix", "ui_scale", "summary_semantics", "summary_scroll", "text_safe_zone", "focus", "border_insets"]
+    },
+    {
+      "id": "I4_FONT_ROLE_RASTER",
+      "relative_path": "Godot/GraytailGodot/tests/i4_font_role_raster_runner.gd",
+      "pass_marker": "I4_FONT_ROLE_RASTER=PASS",
+      "pass_line_regex": "^I4_FONT_ROLE_RASTER=PASS localized=NotoCJK numeric=FusionPixel aa=split sizes=integer frame_safe=compact,large rarity=natural$",
+      "fail_marker": "I4_FONT_ROLE_RASTER=FAIL",
+      "coverage": ["i4", "font_roles", "readable_cjk", "numeric_display", "antialiasing", "integer_sizes", "frame_safe"]
+    },
+    {
+      "id": "I4_LONG_TERM_NAVIGATION",
+      "relative_path": "Godot/GraytailGodot/tests/i4_long_term_navigation_runner.gd",
+      "pass_marker": "I4_LONG_TERM_NAVIGATION=PASS",
+      "pass_line_regex": "^I4_LONG_TERM_NAVIGATION=PASS notification=card unread=explicit history=module,filter,card,scroll focus=restored$",
+      "fail_marker": "I4_LONG_TERM_NAVIGATION=FAIL",
+      "coverage": ["i4", "long_term", "notification_route", "explicit_read", "history", "filter", "selection", "scroll", "focus_restore"]
+    },
+    {
+      "id": "I4_IN_RUN_VISUAL_PHYSICS",
+      "relative_path": "Godot/GraytailGodot/tests/i4_in_run_visual_physics_runner.gd",
+      "pass_marker": "I4_IN_RUN_VISUAL_PHYSICS=PASS",
+      "pass_line_regex": "^I4_IN_RUN_VISUAL_PHYSICS=PASS palette=8 resolver=formal_same_path\\+typed_fallback map=base,semantic,count,focus collision=normal0,monster1,event1,chest1 drops=body\\+rarity_beam\\+failure_marker hud=protocol_safe_rect\\+bag_0,1,4$",
+      "fail_marker": "I4_IN_RUN_VISUAL_PHYSICS=FAIL",
+      "coverage": ["i4", "rarity_palette", "item_visual_resolver", "map_layers", "collision_visual_correspondence", "ground_loot_fallback", "protocol_safe_rect", "backpack_density"]
     }
   ],
   "diagnostics": {
@@ -1535,7 +1624,15 @@
       "I3_PRODUCTION_TERMINAL_BRANCHES": [
         "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
         "ERROR: 18 resources still in use at exit (run with --verbose for details)."
-      ]
+      ],
+      "I4_DEBUG_SANDBOX": [],
+      "I4_QUANTITY_TRANSACTION": [],
+      "I4_DEPLOY_QUANTITY_UI": [],
+      "I4_IN_RUN_ITEM_AGGREGATION": [],
+      "I4_DEPLOY_INFORMATION_LAYOUT": [],
+      "I4_FONT_ROLE_RASTER": [],
+      "I4_LONG_TERM_NAVIGATION": [],
+      "I4_IN_RUN_VISUAL_PHYSICS": []
     },
     "preview_capture_expected_cleanup_diagnostics_by_scene": {
       "main_menu": [

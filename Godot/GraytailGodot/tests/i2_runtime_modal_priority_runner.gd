@@ -570,7 +570,7 @@ func _assert_extract_modal_priority(run_scene: Node, bus: Variant, stack: Varian
 		_require(collectible_row.size.x >= 300.0, "extract carried-item row collapsed horizontally: rect=%s" % collectible_row.get_global_rect())
 		_require(name_label != null and name_label.size.x >= 100.0, "extract carried-item name collapsed: rect=%s" % (name_label.get_global_rect() if name_label != null else Rect2()))
 		_require(name_label != null and name_label.text.contains("密封现场档案"), "extract confirmation omitted the actual carried item name")
-		_require(meta_label != null and meta_label.text.contains("[T4] 珍贵"), "extract confirmation omitted the carried item rarity")
+		_require(meta_label != null and meta_label.text.contains("珍贵") and not meta_label.text.contains("[T4]"), "extract confirmation omitted natural-language rarity or exposed a T-code")
 		_require(meta_label != null and meta_label.text.contains("收藏等级 4"), "extract confirmation omitted the actual collectible level")
 		_require(marker != null and marker.color.is_equal_approx(Color(descriptor.get("color"))), "extract confirmation rarity marker drifted from the shared descriptor")
 		_require(marker != null and marker.mouse_filter == Control.MOUSE_FILTER_IGNORE, "extract confirmation rarity marker intercepted input")

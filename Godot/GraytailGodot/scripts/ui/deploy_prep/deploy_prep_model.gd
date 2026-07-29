@@ -404,7 +404,7 @@ static func _warehouse_item_row(
 		"rarity": rarity,
 		"rarity_label": String(rarity_descriptor.get("label", "未鉴定")),
 		"rarity_badge": String(rarity_descriptor.get("badge", "?")),
-		"rarity_display_text": String(rarity_descriptor.get("display_text", "[?] 未鉴定")),
+		"rarity_display_text": String(rarity_descriptor.get("label", "未鉴定")),
 		"rarity_border_token": StringName(rarity_descriptor.get("border_token", &"rarity.border.unknown")),
 		"rarity_color": Color(rarity_descriptor.get("color", Color.WHITE)),
 		"rarity_locked": bool(rarity_descriptor.get("locked", false)),
@@ -739,14 +739,14 @@ static func _loadout_item_row(item: Dictionary, category: String, prefix: String
 	var collectible_level := maxi(0, int(item.get("collectible_level", 0)))
 	var collectible_level_text := "收藏 Lv.%d" % collectible_level if collectible_level > 0 else ""
 	var summary_parts := [
-		String(rarity_descriptor.get("display_text", "[?] 未鉴定")),
+		String(rarity_descriptor.get("label", "未鉴定")),
 		"重量 %d" % int(item.get("weight", 0)),
 	]
 	if not collectible_level_text.is_empty():
 		summary_parts.insert(1, collectible_level_text)
 	var facts := [
 		_fact("类型", category),
-		_fact("品质", String(rarity_descriptor.get("display_text", "[?] 未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
+		_fact("品质", String(rarity_descriptor.get("label", "未鉴定")), StringName(rarity_descriptor.get("tone", &"unknown"))),
 	]
 	if collectible_level > 0:
 		facts.append(_fact("收藏等级", "Lv.%d" % collectible_level, &"positive"))
@@ -765,7 +765,7 @@ static func _loadout_item_row(item: Dictionary, category: String, prefix: String
 		"rarity": rarity,
 		"rarity_label": String(rarity_descriptor.get("label", "未鉴定")),
 		"rarity_badge": String(rarity_descriptor.get("badge", "?")),
-		"rarity_display_text": String(rarity_descriptor.get("display_text", "[?] 未鉴定")),
+		"rarity_display_text": String(rarity_descriptor.get("label", "未鉴定")),
 		"rarity_border_token": StringName(rarity_descriptor.get("border_token", &"rarity.border.unknown")),
 		"rarity_color": Color(rarity_descriptor.get("color", Color.WHITE)),
 		"rarity_locked": bool(rarity_descriptor.get("locked", false)),
@@ -791,12 +791,15 @@ static func _detail_projection(active_tab: StringName, selected_row: Dictionary)
 			"actions": [],
 			"read_only": true,
 		}
+	var subtitle := str(selected_row.get("summary", ""))
+	if selected_row.has("rarity_label"):
+		subtitle = str(selected_row.get("category", ""))
 	var result := {
 		"kind": StringName(selected_row.get("detail_kind", active_tab)),
 		"empty": false,
 		"id": StringName(selected_row.get("id", &"")),
 		"title": str(selected_row.get("title", "")),
-		"subtitle": str(selected_row.get("summary", "")),
+		"subtitle": subtitle,
 		"description": str(selected_row.get("description", selected_row.get("detail", ""))),
 		"state": str(selected_row.get("state", "")),
 		"facts": _array_from(selected_row.get("facts", [])),
@@ -832,21 +835,51 @@ static func _summary_projection(config: Dictionary, map_projection: Dictionary) 
 	var equipment := _array_from(config.get("selected_equipment_items", []))
 	var consumables := _array_from(config.get("selected_consumable_items", []))
 	var equipment_names := _item_names(equipment, "未携带装备")
-	var consumable_names := _item_names_with_counts(consumables, "未携带补给")
+	var consumable_type_keys := {}
+	for raw_consumable in consumables:
+		var consumable := _dictionary_from(raw_consumable)
+		var type_key := str(
+			consumable.get(
+				"item_id",
+				consumable.get("display_name", consumable.get("instance_id", "未命名补给"))
+			)
+		)
+		consumable_type_keys[type_key] = true
 	var used := int(config.get("bag_used", 0))
 	var limit := int(config.get("bag_limit", config.get("backpack_capacity", 10)))
 	var map_summary := _map_summary_text(map_name, scale_label, difficulty_label)
+	var remaining := maxi(0, limit - used)
 	if tutorial_map:
 		var completion_label := str(selected_map.get("completion_label", "未完成"))
 		var tutorial_overview := [
-			map_summary,
-			"固定 5×5 教学演练",
-			"状态：%s" % completion_label,
-			"训练装备与收益不写入正式档案",
+			"地图：%s · 固定 5×5 教学演练" % map_summary,
+			"委托：完成固定路线并从信标撤离",
+			"装备：固定训练装备",
+			"补给：0 件 / 0 种（不消耗仓库）",
+			"容量：训练配置独立",
+			"出发状态：可重播 · 教程%s" % completion_label,
 		]
-		var tutorial_config_lines := ["地图：%s" % map_summary, "固定种子：777", "训练配置：独立"]
-		var tutorial_effect_lines := ["不消耗仓库物品", "不结算金币与回收物", "仅记录教程完成状态"]
-		var tutorial_objective_lines := ["教学目标：完成固定路线并从信标撤离", "可随时从地图页重播"]
+		var tutorial_config_lines := [
+			"装备：固定训练装备",
+			"补给：未携带补给",
+			"特殊物：无",
+			"容量：训练配置独立",
+			"固定种子：777",
+		]
+		var tutorial_effect_lines := [
+			"协议：固定教学规则",
+			"装备效果：仅在训练局生效",
+			"天赋：不读取正式档案",
+			"补给效果：不消耗仓库物品",
+			"结算边界：不结算金币与回收物，仅记录教程完成状态",
+		]
+		var tutorial_objective_lines := [
+			"委托：固定路线撤离教学",
+			"条件：完成固定路线并从信标撤离",
+			"奖励：无正式档案收益",
+			"进度：%s" % completion_label,
+			"适用：教学地图，可随时从地图页重播",
+		]
 		return {
 			"page_ids": [&"overview", &"config", &"effect", &"objective"],
 			"active_page": &"overview",
@@ -864,10 +897,11 @@ static func _summary_projection(config: Dictionary, map_projection: Dictionary) 
 		}
 	var validity := DeployConfigScript.config_validity(config)
 	var overview := [
-		"地图：%s" % map_name,
-		"难度：%s" % difficulty_label,
-		"目标：%s" % objective_name,
-		"容量：%d / %d" % [used, limit],
+		"地图：%s" % map_summary,
+		"委托：%s · %s" % [objective_name, condition],
+		"装备：%s" % equipment_names,
+		"补给：%d 件 / %d 种" % [consumables.size(), consumable_type_keys.size()],
+		"容量：%d / %d（剩余 %d）" % [used, limit, remaining],
 		(
 			"出发状态：可以出发"
 			if bool(validity.get("can_start", false))
@@ -876,23 +910,23 @@ static func _summary_projection(config: Dictionary, map_projection: Dictionary) 
 			)
 		),
 	]
-	var config_lines := [
-		"装备：%s" % equipment_names,
-		"补给：%s" % consumable_names,
-		"数量：装备 %d 件，补给 %d 件" % [equipment.size(), consumables.size()],
-		"容量：%d / %d" % [used, limit],
-	]
-	var effect_lines := _effect_summary_lines(config, equipment, consumables)
-	effect_lines.append("协议：难度 %d" % int(config.get("protocol_difficulty", 5)))
+	var config_lines := _summary_item_rows(equipment, "装备", "未携带装备")
+	config_lines.append_array(_summary_item_rows(consumables, "补给", "未携带补给"))
+	config_lines.append("合计：装备 %d 件，补给 %d 件" % [equipment.size(), consumables.size()])
+	config_lines.append("容量：%d / %d（剩余 %d）" % [used, limit, remaining])
+	var effect_lines: Array = ["协议：难度 %d" % int(config.get("protocol_difficulty", 5))]
 	var active_talents := _array_from(config.get("active_talent_effects", []))
-	effect_lines.append(
-		"天赋：%s" % (
-			"无生效天赋"
-			if active_talents.is_empty()
-			else "%d 项生效" % active_talents.size()
-		)
-	)
-	effect_lines.append("补给：%s" % consumable_names)
+	if active_talents.is_empty():
+		effect_lines.append("天赋：无生效天赋")
+	else:
+		for raw_talent in active_talents:
+			var talent := _dictionary_from(raw_talent)
+			effect_lines.append(
+				"天赋：%s" % str(
+					talent.get("display_name", talent.get("name", talent.get("id", "已生效")))
+				)
+			)
+	effect_lines.append_array(_effect_summary_lines(config, equipment, consumables))
 	var objective_lines := [
 		"委托：%s" % objective_name,
 		"条件：%s" % condition,
@@ -944,13 +978,32 @@ static func _effect_summary_lines(config: Dictionary, equipment: Array, consumab
 	var result := []
 	for raw_effect in _array_from(config.get("equipment_effects", [])):
 		var effect := _dictionary_from(raw_effect)
-		result.append("%s：%s" % [str(effect.get("display_name", effect.get("item_id", "装备"))), _effect_text(str(effect.get("effect_kind", "")), int(effect.get("effect_amount", 0)))])
+		result.append("装备效果：%s · %s" % [str(effect.get("display_name", effect.get("item_id", "装备"))), _effect_text(str(effect.get("effect_kind", "")), int(effect.get("effect_amount", 0)))])
 	for raw_item in consumables:
 		var item := _dictionary_from(raw_item)
-		result.append("%s：%s" % [str(item.get("display_name", item.get("item_id", "补给"))), str(item.get("short_description", "局内使用"))])
+		result.append("补给效果：%s · %s" % [str(item.get("display_name", item.get("item_id", "补给"))), str(item.get("short_description", "局内使用"))])
 	if result.is_empty():
-		result.append("本局无额外装备或补给效果")
-	result.append("背包容量 %d；失败抢救容量 %d" % [int(config.get("bag_limit", 10)), int(config.get("failure_salvage_capacity", 4))])
+		result.append("物品效果：无额外装备或补给效果")
+	result.append("结算边界：背包 %d；失败抢救 %d" % [int(config.get("bag_limit", 10)), int(config.get("failure_salvage_capacity", 4))])
+	return result
+
+
+static func _summary_item_rows(items: Array, prefix: String, empty_text: String) -> Array:
+	if items.is_empty():
+		return ["%s：%s" % [prefix, empty_text]]
+	var order: Array[String] = []
+	var counts := {}
+	for raw_item in items:
+		var item := _dictionary_from(raw_item)
+		var name := str(item.get("display_name", item.get("item_id", "未命名物品")))
+		if not counts.has(name):
+			order.append(name)
+			counts[name] = 0
+		counts[name] = int(counts[name]) + 1
+	var result := []
+	for name in order:
+		var count := int(counts[name])
+		result.append("%s：%s%s" % [prefix, name, " ×%d" % count if count > 1 else ""])
 	return result
 
 

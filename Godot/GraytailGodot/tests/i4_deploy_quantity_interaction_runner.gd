@@ -113,10 +113,19 @@ func _test_player_controls() -> void:
 	_expect(collectible_card != null, "grouped collectible card is missing")
 	if collectible_card != null:
 		var plus_sale := collectible_card.get("quantity_plus_button") as Button
-		for _index in range(2):
+		for target_count in range(1, 3):
 			if plus_sale != null and not plus_sale.disabled:
 				plus_sale.emit_signal("pressed")
-			await process_frame
+			await _wait_until(
+				func() -> bool:
+					return int(
+						(shell.call("get_warehouse_batch_snapshot") as Dictionary).get(
+							"selected_count",
+							0
+						)
+					) == target_count,
+				"batch sale selection count %d" % target_count
+			)
 			collectible_card = _card_by_item(shell, "col_01")
 			plus_sale = collectible_card.get("quantity_plus_button") as Button
 	await _wait_until(
@@ -180,8 +189,9 @@ func _card_by_item(shell: Control, item_id: String) -> Control:
 	return null
 
 
-func _wait_until(predicate: Callable, label: String, max_frames: int = 60) -> void:
-	for _index in range(max_frames):
+func _wait_until(predicate: Callable, label: String, timeout_ms: int = 5000) -> void:
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() <= deadline:
 		if bool(predicate.call()):
 			return
 		await process_frame

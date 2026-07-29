@@ -55,7 +55,16 @@ func _run() -> void:
 	inventory.apply_layout_profile(_profile())
 	inventory.apply_snapshot(snapshot)
 	inventory.show_panel()
-	await _frames(3)
+	await _wait_until(
+		func() -> bool:
+			var list := inventory.get("item_list") as VBoxContainer
+			return (
+				list != null
+				and list.get_child_count() == 2
+				and inventory.find_child("InventoryUseButton", true, false) is Button
+			),
+		"initial aggregate rows and use action"
+	)
 	var item_list := inventory.get("item_list") as VBoxContainer
 	_expect(item_list != null and item_list.get_child_count() == 2, "inventory rendered one row per instance instead of one row per compatible stack")
 	var use_button := inventory.find_child("InventoryUseButton", true, false) as Button
@@ -76,7 +85,16 @@ func _run() -> void:
 		variant_item,
 	]
 	inventory.apply_snapshot(_snapshot(after_use_items))
-	await _frames(3)
+	await _wait_until(
+		func() -> bool:
+			var focus := inventory.get_viewport().gui_get_focus_owner()
+			return (
+				focus != null
+				and String(focus.get_meta("item_instance_id", "")) == "ration_b"
+				and StringName(focus.get_meta("item_action", &"")) == &"use"
+			),
+		"focus restoration after one exact use"
+	)
 	var focus_after_use := inventory.get_viewport().gui_get_focus_owner()
 	_expect(focus_after_use != null and String(focus_after_use.get_meta("item_instance_id", "")) == "ration_b", "stack focus was lost after consuming its representative")
 	_expect(focus_after_use == null or StringName(focus_after_use.get_meta("item_action", &"")) == &"use", "stack action focus changed after consuming one item")
@@ -92,7 +110,15 @@ func _run() -> void:
 	_expect(_ids(ledger.get_items_by_location(RunAssetLedgerScript.LOCATION_INVENTORY)) == ["ration_b", "ration_c", "ration_variant"], "one use changed the wrong ledger instances")
 
 	inventory.apply_snapshot(_snapshot(ledger.get_items_by_location(RunAssetLedgerScript.LOCATION_INVENTORY)))
-	await _frames(3)
+	await _wait_until(
+		func() -> bool:
+			var candidate := inventory.find_child("InventoryDropButton", true, false) as Button
+			return (
+				candidate != null
+				and String(candidate.get_meta("item_instance_id", "")) == "ration_b"
+			),
+		"drop action after exact-ledger refresh"
+	)
 	var drop_button := inventory.find_child("InventoryDropButton", true, false) as Button
 	_expect(drop_button != null, "inventory stack drop action is missing")
 	if drop_button != null:
@@ -115,7 +141,7 @@ func _run() -> void:
 	_expect(warehouse_ids.has("core_a") and warehouse_ids.has("core_b"), "settlement collapsed or lost exact item instances")
 
 	host.queue_free()
-	await _frames(2)
+	await host.tree_exited
 	_finish()
 
 
@@ -217,9 +243,14 @@ func _on_drop_requested(instance_id: String) -> void:
 	emitted_drop_instance_id = instance_id
 
 
-func _frames(count: int) -> void:
-	for _index in range(count):
+func _wait_until(predicate: Callable, label: String, timeout_ms: int = 5000) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() <= deadline:
+		if bool(predicate.call()):
+			return true
 		await process_frame
+	failures.append("timed out waiting for semantic state: %s" % label)
+	return false
 
 
 func _expect(condition: bool, message: String) -> void:

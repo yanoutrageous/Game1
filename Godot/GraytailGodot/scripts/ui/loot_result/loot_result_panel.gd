@@ -264,7 +264,7 @@ func _add_item_card(item: Dictionary) -> void:
 	meta_label.name = "LootResultRarityMeta"
 	var meta_parts: Array[String] = [
 		String(presentation.get("type_label", _item_type_label(String(item.get("item_type", item.get("main_type", "collectible")))))),
-		String(rarity.get("display_text", "[?] 未鉴定")),
+		String(rarity.get("label", "未鉴定")),
 	]
 	var collectible_level_text := String(presentation.get("collectible_level_text", ""))
 	if collectible_level_text != "":

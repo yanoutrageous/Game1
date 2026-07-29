@@ -9,6 +9,7 @@ const RunSceneMetaCommitterScript := preload("res://scripts/core/run/run_scene_m
 const SaveManagerScript := preload("res://scripts/core/save/save_manager.gd")
 const SaveProfileManifestScript := preload("res://scripts/core/save/save_profile_manifest.gd")
 const SettingsPanelScript := preload("res://scripts/ui/settings/settings_panel.gd")
+const RuntimeModalLayoutModelScript := preload("res://scripts/ui/run_surface/runtime_modal_layout_model.gd")
 
 const PASS_MARKER := "I4_DEBUG_SANDBOX=PASS"
 const FAIL_MARKER := "I4_DEBUG_SANDBOX=FAIL"
@@ -27,6 +28,7 @@ func _run() -> void:
 	_cleanup()
 	_check_profile_isolation_and_taint_guard()
 	_check_reproduction_foundation()
+	_check_debug_panel_geometry()
 	await _check_settings_entry()
 	_cleanup()
 	ProjectSettings.set_setting(DebugGateScript.ENABLE_SETTING, original_debug_setting)
@@ -137,7 +139,10 @@ func _check_profile_isolation_and_taint_guard() -> void:
 func _check_settings_entry() -> void:
 	var panel = SettingsPanelScript.new()
 	root.add_child(panel)
-	await process_frame
+	await _wait_until(
+		func() -> bool: return panel.get("test_room_button") is Button,
+		"debug settings test-room entry"
+	)
 	var button: Button = panel.get("test_room_button")
 	_require(button != null, "debug build settings did not expose the test-room entry")
 	if button != null:
@@ -146,9 +151,8 @@ func _check_settings_entry() -> void:
 			button.tooltip_text.contains("dev_sandbox"),
 			"test-room entry did not disclose the isolated profile"
 		)
-	root.remove_child(panel)
 	panel.queue_free()
-	await process_frame
+	await panel.tree_exited
 
 
 func _check_reproduction_foundation() -> void:
@@ -181,6 +185,44 @@ func _check_reproduction_foundation() -> void:
 	_require(str(bundle.get("save_before", "")) == str(bundle.get("save_after", "")), "failure bundle lost save hash evidence")
 
 
+func _check_debug_panel_geometry() -> void:
+	for viewport_size in [
+		Vector2i(1280, 720),
+		Vector2i(1366, 768),
+		Vector2i(1600, 900),
+		Vector2i(1920, 1080),
+	]:
+		var layout := RuntimeModalLayoutModelScript.build({
+			"supported_size": Vector2(viewport_size),
+			"actual_viewport_size": viewport_size,
+		})
+		var rect: Rect2 = layout.get("debug", Rect2())
+		_require(
+			rect.size.x <= float(viewport_size.x) * 0.28 + 0.01,
+			"debug panel exceeded 28%% width at %s" % viewport_size
+		)
+		_require(
+			rect.size.y <= float(viewport_size.y) * 0.75 + 0.01,
+			"debug panel exceeded 75%% height at %s" % viewport_size
+		)
+		_require(
+			rect.position.y >= 104.0,
+			"debug panel entered the protocol vertical safe band at %s" % viewport_size
+		)
+		_require(
+			rect.end.y <= float(viewport_size.y) - 64.0,
+			"debug panel entered the action-dock vertical safe band at %s" % viewport_size
+		)
+	var controller_source := FileAccess.get_file_as_string(
+		"res://scripts/core/run/run_scene_debug_panel_controller.gd"
+	)
+	_require(controller_source.contains("\"CLEAN\""), "sandbox watermark omitted explicit CLEAN state")
+	_require(controller_source.contains("commit=%s"), "sandbox watermark omitted commit identity")
+	_require(controller_source.contains("profile=%s"), "sandbox watermark omitted profile identity")
+	_require(controller_source.contains("scenario=%s"), "sandbox watermark omitted scenario identity")
+	_require(controller_source.contains("save=%s"), "sandbox watermark omitted save-target identity")
+
+
 func _cleanup() -> void:
 	for profile_id in [
 		SaveProfileManifestScript.DEFAULT_PROFILE_ID,
@@ -198,3 +240,13 @@ func _cleanup() -> void:
 func _require(condition: bool, message: String) -> void:
 	if not condition:
 		failures.append(message)
+
+
+func _wait_until(predicate: Callable, label: String, timeout_ms: int = 5000) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() <= deadline:
+		if bool(predicate.call()):
+			return true
+		await process_frame
+	failures.append("timed out waiting for semantic state: %s" % label)
+	return false

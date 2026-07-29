@@ -128,6 +128,7 @@ var default_action_guidance := ""
 var active_guidance_action: StringName = &""
 var encounter_option_base_rect := Rect2()
 var last_backpack_signature := "__uninitialized__"
+var current_backpack_item_count := 0
 var current_protocol_level := 5
 var current_protocol_pressure := 0.0
 var command_feedback_time_remaining := 0.0
@@ -592,10 +593,44 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var scanner_stats_top: float = scanner_map_top + scanner_map_height + 10.0
 	var stats_height: float = (84.0 if is_low else 94.0) + 10.0 * ui_scale_step
 	var backpack_top: float = scanner_stats_top + stats_height + 10.0
-	var backpack_panel_height: float = maxf(192.0, height - backpack_top - 28.0)
-	# The quick bag is a true scroll surface. Reserve stable detail and burden
-	# bands, then let every real item remain reachable inside the remaining rail.
-	var backpack_scroll_height: float = maxf(56.0, backpack_panel_height - 136.0 - 20.0 * ui_scale_step)
+	var backpack_row_height := 46.0
+	var backpack_gap := 4.0
+	var backpack_visible_rows := mini(current_backpack_item_count, 3)
+	var backpack_list_height := (
+		48.0
+		if current_backpack_item_count == 0
+		else backpack_row_height * backpack_visible_rows + backpack_gap * maxf(0.0, backpack_visible_rows - 1.0)
+	)
+	var backpack_header_height := 24.0
+	var backpack_detail_height := 44.0
+	var backpack_capacity_height := 24.0
+	var backpack_outer_padding := 8.0
+	var backpack_panel_height := (
+		backpack_outer_padding * 2.0
+		+ backpack_header_height
+		+ backpack_list_height
+		+ backpack_detail_height
+		+ backpack_capacity_height
+		+ backpack_gap * 3.0
+	)
+	var backpack_available_height := maxf(168.0, height - backpack_top - 12.0)
+	if backpack_panel_height > backpack_available_height and backpack_visible_rows > 0:
+		var excess_per_row := ceilf(
+			(backpack_panel_height - backpack_available_height) / float(backpack_visible_rows)
+		)
+		backpack_row_height = maxf(44.0, backpack_row_height - excess_per_row)
+		backpack_list_height = (
+			backpack_row_height * backpack_visible_rows
+			+ backpack_gap * maxf(0.0, backpack_visible_rows - 1.0)
+		)
+		backpack_panel_height = (
+			backpack_outer_padding * 2.0
+			+ backpack_header_height
+			+ backpack_list_height
+			+ backpack_detail_height
+			+ backpack_capacity_height
+			+ backpack_gap * 3.0
+		)
 	var preferred_key_width := (620.0 if is_low else 720.0) + 80.0 * ui_scale_step
 	var bottom_key_width: float = minf(preferred_key_width, gameplay_width - margin * 3.0)
 	bottom_key_width = maxf(minf(520.0, gameplay_width - margin * 3.0), bottom_key_width)
@@ -621,22 +656,35 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	encounter_top = clampf(gameplay_square_top + gameplay_square_size * 0.68, gameplay_square_top + 120.0, gameplay_square_top + gameplay_square_size - encounter_height - 24.0)
 
 	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
-	_set_rect(left_rail_art, Rect2(0, 0, left_width, height))
+	var left_rail_height := minf(
+		height - margin,
+		backpack_top + backpack_panel_height + 12.0
+	)
+	_set_rect(left_rail_art, Rect2(0, 0, left_width, left_rail_height))
 	_set_rect(right_backdrop, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(status_card_art, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(protocol_level_plate, Rect2())
-	var protocol_left_padding := maxf(18.0, right_card_width * 0.18)
-	var protocol_right_padding := maxf(14.0, right_card_width * 0.07)
-	var protocol_bottom_padding := maxf(18.0, right_card_height * 0.18)
-	var protocol_copy_left := right_left + protocol_left_padding
-	var protocol_copy_width := maxf(1.0, right_card_width - protocol_left_padding - protocol_right_padding)
+	var protocol_visible_border := 12.0
+	var protocol_safe_inset := maxf(protocol_visible_border + 6.0, 14.0)
+	var protocol_safe_rect := Rect2(
+		Vector2(right_left + protocol_safe_inset, margin + protocol_safe_inset),
+		Vector2(
+			maxf(1.0, right_card_width - protocol_safe_inset * 2.0),
+			maxf(1.0, right_card_height - protocol_safe_inset * 2.0)
+		)
+	)
+	var protocol_copy_left := protocol_safe_rect.position.x
+	var protocol_copy_width := protocol_safe_rect.size.x
 	var protocol_track_rect := Rect2(
 		protocol_copy_left,
-		margin + right_card_height - protocol_bottom_padding - 6.0,
+		protocol_safe_rect.end.y - 6.0,
 		protocol_copy_width,
 		6.0
 	)
+	status_card_art.set_meta("protocol_visible_border_thickness", protocol_visible_border)
+	status_card_art.set_meta("protocol_safe_rect", protocol_safe_rect)
 	_set_rect(protocol_pressure_track, protocol_track_rect)
+	protocol_pressure_track.set_meta("protocol_safe_rect", protocol_safe_rect)
 	_set_rect(protocol_pressure_fill, Rect2(protocol_track_rect.position, Vector2(protocol_track_rect.size.x * current_protocol_pressure / PROTOCOL_PRESSURE_MAX, protocol_track_rect.size.y)))
 	_set_rect(center_backdrop, Rect2(0, 0, 0, 0))
 	_set_rect(room_background_layer, Rect2(0, 0, 0, 0))
@@ -655,7 +703,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(room_hint_softener, Rect2(0, 0, 0, 0))
 	_set_rect(scanner_glow_layer, Rect2(0, 0, 0, 0))
 	_set_rect(room_glow_layer, Rect2(0, 0, 0, 0))
-	_set_rect(protocol_glow_layer, Rect2(right_content_left, margin + 30.0, right_content_width, right_card_height - 44.0))
+	_set_rect(protocol_glow_layer, protocol_safe_rect)
 	_set_rect(bottom_key_glow_layer, Rect2(bottom_key_left + 8.0, bottom_key_top + 8.0, bottom_key_width - 16.0, bottom_key_height - 16.0))
 	_set_rect(right_game_fill_layer, Rect2(0, 0, 0, 0))
 	left_backdrop.visible = false
@@ -692,22 +740,54 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(minimap_panel, Rect2(rail_content_left, scanner_map_top, rail_content_width, scanner_map_height))
 	minimap_panel.apply_layout_profile(profile)
 	_set_rect(scanner_legend_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 8.0, rail_content_width - 20.0, stats_height - 16.0))
-	_set_rect(scanner_detail_label, Rect2(rail_content_left + 10.0, backpack_top + 10.0, rail_content_width - 20.0, 20.0 + 6.0 * ui_scale_step))
-	var backpack_scroll_rect := Rect2(rail_content_left + 10.0, backpack_top + 40.0, rail_content_width - 20.0, backpack_scroll_height)
-	_set_rect(backpack_scroll, backpack_scroll_rect)
-	backpack_strip.custom_minimum_size = Vector2(maxf(80.0, backpack_scroll_rect.size.x - 12.0), 0.0)
-	_set_rect(backpack_empty_watermark, Rect2(backpack_scroll_rect.position + Vector2(10.0, 4.0), backpack_scroll_rect.size - Vector2(20.0, 8.0)))
-	_set_rect(backpack_detail_label, Rect2(rail_content_left + 10.0, backpack_scroll_rect.end.y + 6.0, rail_content_width - 20.0, 52.0))
-	var backpack_capacity_height := 20.0 + 10.0 * ui_scale_step
-	_set_rect(
-		backpack_capacity_label,
-		Rect2(
-			rail_content_left + 10.0,
-			backpack_top + backpack_panel_height - backpack_capacity_height - 10.0,
-			rail_content_width - 20.0,
-			backpack_capacity_height
-		)
+	var backpack_content_left := rail_content_left + backpack_outer_padding
+	var backpack_content_width := rail_content_width - backpack_outer_padding * 2.0
+	var backpack_header_rect := Rect2(
+		backpack_content_left,
+		backpack_top + backpack_outer_padding,
+		backpack_content_width,
+		backpack_header_height
 	)
+	var backpack_list_rect := Rect2(
+		backpack_content_left,
+		backpack_header_rect.end.y + backpack_gap,
+		backpack_content_width,
+		backpack_list_height
+	)
+	var backpack_detail_rect := Rect2(
+		backpack_content_left,
+		backpack_list_rect.end.y + backpack_gap,
+		backpack_content_width,
+		backpack_detail_height
+	)
+	var backpack_capacity_rect := Rect2(
+		backpack_content_left,
+		backpack_detail_rect.end.y + backpack_gap,
+		backpack_content_width,
+		backpack_capacity_height
+	)
+	_set_rect(scanner_detail_label, backpack_header_rect)
+	_set_rect(backpack_scroll, backpack_list_rect if current_backpack_item_count > 0 else Rect2())
+	backpack_scroll.visible = current_backpack_item_count > 0
+	backpack_scroll.mouse_filter = Control.MOUSE_FILTER_STOP if backpack_scroll.visible else Control.MOUSE_FILTER_IGNORE
+	backpack_scroll.vertical_scroll_mode = (
+		ScrollContainer.SCROLL_MODE_AUTO
+		if current_backpack_item_count > 3
+		else ScrollContainer.SCROLL_MODE_DISABLED
+	)
+	backpack_strip.custom_minimum_size = Vector2(maxf(80.0, backpack_content_width - 12.0), 0.0)
+	_set_rect(backpack_empty_watermark, backpack_list_rect if current_backpack_item_count == 0 else Rect2())
+	backpack_empty_watermark.visible = current_backpack_item_count == 0
+	_set_rect(backpack_detail_label, backpack_detail_rect)
+	_set_rect(backpack_capacity_label, backpack_capacity_rect)
+	scanner_text_mask.set_meta("content_item_count", current_backpack_item_count)
+	scanner_text_mask.set_meta("content_layout_rects", {
+		"panel": Rect2(rail_content_left, backpack_top, rail_content_width, backpack_panel_height),
+		"header": backpack_header_rect,
+		"list": backpack_list_rect,
+		"detail": backpack_detail_rect,
+		"capacity": backpack_capacity_rect,
+	})
 
 	_set_rect(room_title_label, Rect2(gameplay_square_left + 26.0, gameplay_square_top + 22.0, room_info_width - 28.0, 24.0))
 	_set_rect(room_body_label, Rect2(0, 0, 0, 0))
@@ -736,19 +816,39 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		)
 	)
 
-	var right_title_height := 24.0 + 18.0 * ui_scale_step
-	var right_title_top := margin + maxf(12.0, right_card_height * 0.10)
-	var protocol_copy_bottom := protocol_track_rect.position.y - 4.0
+	var desired_right_title_height := 24.0 + 18.0 * ui_scale_step
+	var protocol_title_body_gap := 4.0
+	var protocol_body_track_gap := 6.0
+	var protocol_body_minimum_height := 20.0
+	var right_title_height := minf(
+		desired_right_title_height,
+		maxf(
+			20.0,
+			protocol_safe_rect.size.y
+			- protocol_title_body_gap
+			- protocol_body_minimum_height
+			- protocol_body_track_gap
+			- protocol_track_rect.size.y
+		)
+	)
+	var right_title_top := protocol_safe_rect.position.y
+	var protocol_copy_bottom := protocol_track_rect.position.y - protocol_body_track_gap
 	_set_rect(right_title_label, Rect2(protocol_copy_left, right_title_top, protocol_copy_width, right_title_height))
+	right_title_label.set_meta("protocol_safe_rect", protocol_safe_rect)
 	_set_rect(
 		right_body_label,
 		Rect2(
 			protocol_copy_left,
-			right_title_top + right_title_height + 2.0,
+			right_title_top + right_title_height + protocol_title_body_gap,
 			protocol_copy_width,
-			maxf(1.0, protocol_copy_bottom - (right_title_top + right_title_height + 2.0))
+			maxf(1.0, protocol_copy_bottom - (right_title_top + right_title_height + protocol_title_body_gap))
 		)
 	)
+	right_body_label.set_meta("protocol_safe_rect", protocol_safe_rect)
+	right_body_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	right_body_label.max_lines_visible = 1
+	right_body_label.clip_text = false
+	right_body_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	_set_rect(event_label, Rect2(0, 0, 0, 0))
 	event_label.visible = false
 	_set_rect(reward_label, Rect2(0, 0, 0, 0))
@@ -833,6 +933,10 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 	if backpack_strip == null:
 		return
 	var items: Array = items_variant if items_variant is Array else []
+	var item_count_changed := current_backpack_item_count != items.size()
+	current_backpack_item_count = items.size()
+	if item_count_changed and not current_layout_profile.is_empty():
+		call_deferred("_reflow_backpack_content_layout")
 	if backpack_empty_watermark != null:
 		backpack_empty_watermark.visible = items.is_empty()
 		backpack_empty_watermark.modulate.a = 0.14
@@ -879,7 +983,7 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		item_meta.append("%s重" % presentation.get("weight", 0))
 		var slot := Button.new()
 		slot.name = "BackpackItem%d" % index
-		slot.custom_minimum_size = Vector2(0, 50)
+		slot.custom_minimum_size = Vector2(0, 46)
 		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slot.focus_mode = Control.FOCUS_ALL
 		slot.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -894,14 +998,15 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		slot.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		slot.add_theme_constant_override("icon_max_width", 34)
 		slot.add_theme_font_size_override("font_size", 13)
-		slot.add_theme_color_override("font_color", PresentationTheme.text_color())
-		slot.add_theme_color_override("font_hover_color", PresentationTheme.text_color())
-		slot.add_theme_color_override("font_focus_color", PresentationTheme.text_color())
-		var neutral_border := Color(0.20, 0.50, 0.46, 0.58)
-		slot.add_theme_stylebox_override("normal", _panel_style(Color(0.012, 0.022, 0.026, 0.94), neutral_border, 1))
-		slot.add_theme_stylebox_override("hover", _panel_style(Color(0.024, 0.044, 0.048, 0.98), neutral_border.lightened(0.12), 1))
+		slot.add_theme_color_override("font_color", rarity_color)
+		slot.add_theme_color_override("font_hover_color", rarity_color.lightened(0.08))
+		slot.add_theme_color_override("font_focus_color", rarity_color.lightened(0.08))
+		slot.add_theme_color_override("font_pressed_color", rarity_color)
+		var rarity_border := Color(rarity_color.r, rarity_color.g, rarity_color.b, 0.72)
+		slot.add_theme_stylebox_override("normal", _panel_style(Color(0.012, 0.022, 0.026, 0.94), rarity_border, 1))
+		slot.add_theme_stylebox_override("hover", _panel_style(Color(0.024, 0.044, 0.048, 0.98), rarity_border.lightened(0.10), 1))
 		slot.add_theme_stylebox_override("focus", _panel_style(Color(0.024, 0.044, 0.048, 0.98), PresentationTheme.color_for_key(&"ui.accent"), 2))
-		slot.add_theme_stylebox_override("pressed", _panel_style(Color(0.018, 0.034, 0.038, 0.98), neutral_border, 1))
+		slot.add_theme_stylebox_override("pressed", _panel_style(Color(0.018, 0.034, 0.038, 0.98), rarity_border, 1))
 		slot.set_meta("item_instance_id", String(item.get("instance_id", "")))
 		slot.set_meta("item_instance_ids", (item.get("instance_ids", []) as Array).duplicate())
 		slot.set_meta("item_stack_key", String(item.get("stack_key", "")))
@@ -912,7 +1017,7 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		rarity_marker.color = rarity_color
 		rarity_marker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		rarity_marker.anchor_bottom = 1.0
-		rarity_marker.offset_left = 3.0
+		rarity_marker.offset_left = 4.0
 		rarity_marker.offset_top = 5.0
 		rarity_marker.offset_right = 7.0
 		rarity_marker.offset_bottom = -5.0
@@ -923,6 +1028,11 @@ func _refresh_backpack_strip(items_variant: Variant) -> void:
 		backpack_strip.add_child(slot)
 	if not first_item.is_empty():
 		_show_backpack_item_detail(first_item)
+
+
+func _reflow_backpack_content_layout() -> void:
+	if not current_layout_profile.is_empty():
+		apply_layout_profile(current_layout_profile)
 
 
 func _show_backpack_item_detail(item: Dictionary) -> void:
@@ -1967,11 +2077,15 @@ func _compact_stat_number(token: String) -> String:
 func _apply_ue_readability_tokens(profile: Dictionary = {}) -> void:
 	var is_low := bool(profile.get("is_low_resolution", false))
 	var is_high := bool(profile.get("is_high_resolution", false))
-	for label in [scanner_legend_label, scanner_detail_label, right_body_label, event_label]:
+	for label in [scanner_legend_label, scanner_detail_label, event_label]:
 		if label is Label:
 			label.clip_text = false
 			label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 			label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	right_body_label.clip_text = false
+	right_body_label.max_lines_visible = 1
+	right_body_label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	right_body_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	resource_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	resource_label.clip_text = true
 	resource_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS

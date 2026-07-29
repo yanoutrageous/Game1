@@ -33,7 +33,7 @@ const SUMMARY_PAGES := [
 const CHARACTER_FIRST_LOOK_SECONDS := 5.0
 const CHARACTER_LOOK_INTERVAL_SECONDS := 10.0
 const META_DETAIL_ACTION_IDS := [&"purchase", &"sell", &"confirm_batch_sell"]
-const SUMMARY_MAX_ROWS := 8
+const SUMMARY_INITIAL_ROWS := 8
 
 var current_model: Dictionary = {}
 var current_snapshot: Dictionary = {}
@@ -703,26 +703,10 @@ func _build_summary_board() -> void:
 	summary_scroll_content.name = "DeploySummaryScrollContent"
 	summary_scroll_content.custom_minimum_size = Vector2(208, 0)
 	summary_scroll_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	summary_scroll_content.add_theme_constant_override("separation", 8)
+	summary_scroll_content.add_theme_constant_override("separation", 4)
 	summary_scroll.add_child(summary_scroll_content)
-	for index in range(SUMMARY_MAX_ROWS):
-		var row_panel := PanelContainer.new()
-		row_panel.name = "DeploySummaryRowPanel%d" % index
-		row_panel.custom_minimum_size = Vector2(208, 72)
-		row_panel.add_theme_stylebox_override(
-			"panel",
-			Art10UISkinKitScript.style_box_from_asset_ref(
-				Art22DeployPrepAssetContractScript.control_ref(&"slot", &"normal"),
-				8,
-				12
-			)
-		)
-		summary_scroll_content.add_child(row_panel)
-		var row_label := _add_label(row_panel, "DeploySummaryRow%d" % index, Rect2(0, 0, 184, 56), "", 14, Color(0.94, 0.87, 0.72), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_CENTER, 0)
-		row_label.custom_minimum_size = Vector2(184, 56)
-		row_label.set_meta("deploy_scroll_content", true)
-		_apply_label_flow_policy(row_label)
-		summary_row_labels.append(row_label)
+	for index in range(SUMMARY_INITIAL_ROWS):
+		_append_summary_row(index)
 	_add_image_panel(root, "DeploySummaryMessagePanel", DeployPrepLayoutContractScript.SUMMARY_MESSAGE_PANEL, &"slot", &"normal", 1)
 	summary_message_label = _add_label(root, "DeploySummaryMessage", DeployPrepLayoutContractScript.SUMMARY_MESSAGE, "", 13, Color(0.56, 0.87, 0.83), HORIZONTAL_ALIGNMENT_LEFT, VERTICAL_ALIGNMENT_CENTER, 2)
 	summary_message_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1395,14 +1379,23 @@ func _refresh_summary() -> void:
 		button.set_pressed_no_signal(selected)
 		_apply_image_button_surface(button, &"filter", &"selected" if selected else &"normal")
 	var blocks := _summary_page_blocks(active_summary_page)
+	_ensure_summary_row_count(blocks.size())
 	for index in range(summary_row_labels.size()):
 		var row_label := summary_row_labels[index]
 		var full_text := String(blocks[index]) if index < blocks.size() else ""
+		var show_row := not full_text.is_empty()
 		row_label.text = full_text
 		row_label.tooltip_text = full_text
-		row_label.visible = not full_text.is_empty()
-		_resize_scroll_label(row_label, 56.0, 15)
+		row_label.visible = show_row
+		var row_panel := row_label.get_meta("deploy_summary_row_panel") as CanvasItem
+		if row_panel != null:
+			row_panel.visible = show_row
 		_apply_scaled_control_font(row_label)
+		_resize_scroll_label(row_label, 34.0, 18)
+		var label_height := row_label.custom_minimum_size.y
+		_set_rect(row_label, Rect2(8, 6, 192, label_height))
+		if row_panel is Control:
+			(row_panel as Control).custom_minimum_size = Vector2(208, label_height + 12.0)
 	if summary_message_label != null:
 		var full_message := Art10UISkinKitScript.sanitize_player_copy(String(current_model.get("action_message", ""))).strip_edges()
 		var message := Art10UISkinKitScript.short_summary(full_message, _summary_message_budget())
@@ -2131,13 +2124,48 @@ func _summary_page_blocks(page_id: StringName) -> Array[String]:
 	var pages := _dictionary_from(summary.get("pages", {}))
 	var lines := _array_from(pages, String(page_id))
 	var result: Array[String] = []
-	for index in range(4):
-		if index >= lines.size():
-			result.append("")
-			continue
+	for index in range(lines.size()):
 		var line := Art10UISkinKitScript.sanitize_player_copy(str(lines[index])).strip_edges()
 		result.append(line)
 	return result
+
+
+func _ensure_summary_row_count(required_count: int) -> void:
+	for index in range(summary_row_labels.size(), maxi(0, required_count)):
+		_append_summary_row(index)
+
+
+func _append_summary_row(index: int) -> void:
+	if summary_scroll_content == null:
+		return
+	var row_panel := Panel.new()
+	row_panel.name = "DeploySummaryRowPanel%d" % index
+	row_panel.custom_minimum_size = Vector2(208, 46)
+	row_panel.add_theme_stylebox_override(
+		"panel",
+		Art10UISkinKitScript.style_box_from_asset_ref_with_insets(
+			Art22DeployPrepAssetContractScript.control_ref(&"slot", &"normal"),
+			Vector4.ZERO,
+			Vector4(4, 4, 4, 4)
+		)
+	)
+	summary_scroll_content.add_child(row_panel)
+	var row_label := _add_label(
+		row_panel,
+		"DeploySummaryRow%d" % index,
+		Rect2(8, 6, 192, 34),
+		"",
+		14,
+		Color(0.94, 0.87, 0.72),
+		HORIZONTAL_ALIGNMENT_LEFT,
+		VERTICAL_ALIGNMENT_CENTER,
+		0
+	)
+	row_label.custom_minimum_size = Vector2(192, 34)
+	row_label.set_meta("deploy_scroll_content", true)
+	row_label.set_meta("deploy_summary_row_panel", row_panel)
+	_apply_label_flow_policy(row_label)
+	summary_row_labels.append(row_label)
 
 
 func _summary_character_budget() -> int:
@@ -2426,7 +2454,7 @@ func _apply_image_button_surface(button: Button, control_id: StringName, normal_
 
 
 func _button_style(control_id: StringName, state: StringName) -> StyleBox:
-	var padding := 7
+	var content_inset := 6
 	var texture_margin := 12
 	match control_id:
 		&"nav": texture_margin = 18
@@ -2434,11 +2462,13 @@ func _button_style(control_id: StringName, state: StringName) -> StyleBox:
 		&"danger": texture_margin = 18
 		&"tab": texture_margin = 12
 		&"filter": texture_margin = 10
-		&"handle": texture_margin = 12
-	return Art10UISkinKitScript.style_box_from_asset_ref(
+		&"handle":
+			content_inset = 4
+			texture_margin = 12
+	return Art10UISkinKitScript.style_box_from_asset_ref_with_insets(
 		Art22DeployPrepAssetContractScript.control_ref(control_id, state),
-		padding,
-		texture_margin
+		Vector4(content_inset, content_inset, content_inset, content_inset),
+		Vector4(texture_margin, texture_margin, texture_margin, texture_margin)
 	)
 
 

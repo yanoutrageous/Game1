@@ -72,12 +72,12 @@ const TONES := {
 }
 
 const COLORS := {
-	TIER_1: Color("d7d4c8"),
-	TIER_2: Color("9fdc9b"),
-	TIER_3: Color("83c9ff"),
-	TIER_4: Color("c9a2ff"),
-	TIER_5: Color("f2c66d"),
-	TIER_6: Color("ff917a"),
+	TIER_1: Color("d0d8e0"),
+	TIER_2: Color("78dcaa"),
+	TIER_3: Color("5fa5ff"),
+	TIER_4: Color("be78ff"),
+	TIER_5: Color("ffc346"),
+	TIER_6: Color("fa5f55"),
 	UNIQUE: Color("f6e079"),
 	UNKNOWN: Color("a9b0ad"),
 }
@@ -111,11 +111,13 @@ static func describe(value: Variant) -> Dictionary:
 	var known := normalized != UNKNOWN
 	var label := String(LABELS[normalized])
 	var badge := String(BADGES[normalized])
+	var natural_text := "%s %s（锁定）" % [badge, label] if locked else label
 	return {
 		"normalized_key": normalized,
 		"key": normalized,
 		"label": label,
 		"badge": badge,
+		"natural_text": natural_text,
 		"display_text": "[%s] %s%s" % [badge, label, "（锁定）" if locked else ""],
 		"border_token": StringName(BORDER_TOKENS[normalized]),
 		"shape_token": StringName(SHAPE_TOKENS[normalized]),

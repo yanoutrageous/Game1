@@ -22,10 +22,11 @@ Read current stage facts in this order:
 2. `docs/10_current/CURRENT_STATE.md`
 3. `docs/10_current/NEXT_ACTION.md`
 4. `docs/20_product/I4_PRODUCTION_INTERACTION_CONVERGENCE_CONTRACT.md`
-5. `docs/00_governance/I4_EXECUTION_LEDGER.md`
-6. `docs/00_governance/I4_REQUIREMENT_MATRIX.md`
-7. `docs/40_validation/VALIDATION_INDEX.md`
-8. `tools/i4/README.md`
+5. `docs/20_product/I4_ENGINEERING_QUALITY_AND_ACCEPTANCE_STANDARD.md`
+6. `docs/00_governance/I4_EXECUTION_LEDGER.md`
+7. `docs/00_governance/I4_REQUIREMENT_MATRIX.md`
+8. `docs/40_validation/VALIDATION_INDEX.md`
+9. `tools/i4/README.md`
 
 Historical G40 source roots:
 
@@ -61,3 +62,6 @@ Rules:
 - I4 is the current active production-interaction convergence stage. It does not
   automatically authorize a new art stage, content expansion, release, or any
   other successor.
+- I4 visual or stage PASS must follow `I4-QA-FROZEN-1`; automated runners,
+  screenshot generation, geometry probes, and historical visual reports cannot
+  substitute for current real-render, original-image, and dynamic review.

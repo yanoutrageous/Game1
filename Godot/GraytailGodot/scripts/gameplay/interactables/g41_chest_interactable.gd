@@ -137,6 +137,9 @@ func _apply_visual_state() -> void:
 			var frame := mini(OPENING_FX_FRAMES - 1, int(progress * float(OPENING_FX_FRAMES)))
 			opening_fx.texture = AssetContract.texture(StringName("visual.art24.fx.chest_opening.%d" % frame))
 			_apply_opening_fx_geometry(opening_fx)
+	# The parent fallback decision is texture-based. Re-evaluate it after this
+	# subtype has assigned the stable chest texture.
+	super._apply_visual_state()
 	var prompt := get_node_or_null("PromptAnchor/InteractionPrompt") as Label
 	if prompt != null:
 		prompt.visible = false

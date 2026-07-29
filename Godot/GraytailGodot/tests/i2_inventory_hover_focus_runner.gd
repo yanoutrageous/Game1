@@ -47,7 +47,7 @@ func _run() -> void:
 		await process_frame
 		_assert_detail(inventory.get("tooltip_label") as Label, "inventory focus")
 		_require(inventory_drop_count == 0 and inventory_use_count == 0, "inventory focus emitted an action")
-		_require(String(inventory_item.get_meta("rarity_display_text", "")) == "[T6] 秘藏", "inventory rarity metadata drifted")
+		_require(String(inventory_item.get_meta("rarity_display_text", "")) == "秘藏", "inventory natural-language rarity metadata drifted")
 		_require(String(inventory_item.get_meta("rarity_border_token", "")) != "", "inventory rarity border token is missing")
 		_assert_rarity_marker(inventory_item, "InventoryItemRarityMarker", item, "inventory")
 	if inventory_use != null:
@@ -154,7 +154,7 @@ func _assert_detail(label: Label, context: String) -> void:
 	if label == null:
 		return
 	var text := label.text
-	for expected: String in ["沉星罗盘", "[T6] 秘藏", "重量：4", "数量：3", "指针会记录"]:
+	for expected: String in ["沉星罗盘", "秘藏", "重量：4", "数量：3", "指针会记录"]:
 		_require(text.contains(expected), "%s detail is missing %s" % [context, expected])
 	var first_lines := text.split("\n").slice(0, 3)
 	_require("\n".join(first_lines).contains("收藏等级：6"), "%s first three detail lines omitted collectible level" % context)

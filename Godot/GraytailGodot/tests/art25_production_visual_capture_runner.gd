@@ -18,10 +18,12 @@ func _capture() -> void:
 	var height := int(options.get("height", 720))
 	var state := StringName(options.get("state", "run"))
 	var output := String(options.get("output", "res://art25_production_capture.png"))
+	var debug_state := state in [&"debug_settings", &"debug_sandbox", &"debug_panel"]
 	# Each invocation is a disposable capture process. Pinning the setting here
 	# makes normal and reduced-motion evidence deterministic without persisting a
 	# player preference or replacing any production presentation node.
 	ProjectSettings.set_setting("accessibility/reduce_motion", state in [&"reduced_motion", &"monster_reduced_motion"])
+	ProjectSettings.set_setting("application/run/m1_debug_tools_enabled", debug_state)
 	root.size = Vector2i(width, height)
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	root.transparent_bg = false
@@ -32,21 +34,38 @@ func _capture() -> void:
 		return
 	var main := main_scene.instantiate()
 	root.add_child(main)
-	await _frames(16)
+	if not await _await_condition(
+		func() -> bool: return main.get_node_or_null("RunScene") != null,
+		"production RunScene creation"
+	):
+		return
 	var run_scene := main.get_node_or_null("RunScene")
 	if run_scene == null:
 		_fail("RunScene missing")
 		return
-	run_scene.call("_start_standard_from_ui")
-	await _frames(18)
+	if debug_state:
+		if not await _prepare_debug_state(run_scene, state):
+			return
+	else:
+		run_scene.call("_start_standard_from_ui")
+		if not await _await_condition(
+			func() -> bool:
+				var context = run_scene.get("run_context")
+				return StringName(run_scene.get("screen_state")) == &"run" and context != null and bool(context.get("run_active")),
+			"standard run admission"
+		):
+			return
 	if state in [&"inventory_items", &"exit_confirm"]:
 		if not _seed_item_preview_inventory(run_scene):
 			return
 		run_scene.call("_refresh_view_models")
-		await _frames(5)
+		if not await _await_layout_stable(run_scene, "seeded item preview"):
+			return
 
 	match state:
 		&"run":
+			pass
+		&"debug_settings", &"debug_sandbox", &"debug_panel":
 			pass
 		&"map":
 			run_scene.call("_open_map_from_ui", &"art25_capture")
@@ -57,13 +76,34 @@ func _capture() -> void:
 				return
 			if state == &"chest_open":
 				run_scene.call("_handle_interact_pressed")
-				await _frames(4)
+				if not await _await_condition(
+					func() -> bool:
+						var context = run_scene.get("run_context")
+						var room_view = run_scene.get("room_runtime_view")
+						var popup = room_view.get("context_popup") if room_view != null else null
+						var snapshot: Dictionary = context.get_status_snapshot() if context != null else {}
+						var search_data: Dictionary = snapshot.get("search_state_data", {})
+						return (
+							bool(search_data.get("searched", false))
+							and popup != null
+							and popup.visible
+							and popup.context_kind == &"chest"
+							and bool(popup.current_context.get("opened_once", false))
+							and popup.context_items.size() > 0
+						),
+					"opened chest contextual contents"
+				):
+					return
 		&"event", &"event_options":
 			if not await _teleport_and_focus(run_scene, &"Event", WorldObjectProjectionScript.EVENT_LOCAL_POS):
 				return
 			if state == &"event_options":
 				run_scene.call("_handle_interact_pressed")
-				await _frames(4)
+				if not await _await_condition(
+					func() -> bool: return bool(run_scene.call("_runtime_modal_is_top", &"event")),
+					"event option modal"
+				):
+					return
 		&"event_merchant":
 			if not await _teleport_and_focus(run_scene, &"Event", WorldObjectProjectionScript.EVENT_LOCAL_POS):
 				return
@@ -83,8 +123,12 @@ func _capture() -> void:
 				return
 			if state == &"exit_confirm":
 				run_scene.call("_handle_interact_pressed")
-				await _frames(5)
-		&"ground_loot":
+				if not await _await_condition(
+					func() -> bool: return bool(run_scene.call("_runtime_modal_is_top", &"extract")),
+					"extract confirmation modal"
+				):
+					return
+		&"ground_loot", &"ground_loot_visual":
 			var loot_view = run_scene.get("room_runtime_view")
 			var loot_player = run_scene.get("player_controller")
 			var run_context = run_scene.get("run_context")
@@ -102,10 +146,17 @@ func _capture() -> void:
 				snapshot["backpack_remaining"] = 8
 				snapshot["inventory_items"] = []
 				loot_view.configure_room(snapshot)
-				await _frames(3)
+				if not await _await_condition(
+					func() -> bool: return loot_view.ground_loot_entities.has("art25_capture_emergency_bandage"),
+					"ground-loot world entity"
+				):
+					return
 				var entity = loot_view.ground_loot_entities.get("art25_capture_emergency_bandage")
 				if entity != null:
-					loot_player.set_local_position(entity.local_pos)
+					var target_pos: Vector2 = entity.local_pos
+					if state == &"ground_loot_visual":
+						target_pos.x = clampf(target_pos.x - 0.18, 0.12, 0.88)
+					loot_player.set_local_position(target_pos)
 					loot_view.advance(0.0, loot_player.get_local_position(), {})
 		&"result_success", &"result_success_empty", &"result_failure", &"result_salvage", &"result_failure_empty", &"result_failure_mixed", &"result_failure_final", &"result_failure_final_empty", &"result_abandon", &"result_abandon_empty", &"result_save_failed", &"result_save_recovered":
 			var result_panel = run_scene.get("result_panel")
@@ -116,7 +167,8 @@ func _capture() -> void:
 				var failed_snapshot := _result_snapshot(&"result_save_failed")
 				failed_snapshot["result_id"] = "art25-result-save-retry"
 				result_panel.show_summary(failed_snapshot)
-				await _frames(3)
+				if not await _await_layout_stable(result_panel, "save-failed result"):
+					return
 				var recovered_snapshot := failed_snapshot.duplicate(true)
 				recovered_snapshot["persistence_state"] = &"committed"
 				recovered_snapshot["normal_exit_allowed"] = true
@@ -134,7 +186,8 @@ func _capture() -> void:
 		_:
 			_fail("unknown state: %s" % String(state))
 			return
-	await _frames(14)
+	if not await _await_layout_stable(run_scene, "capture state %s" % String(state)):
+		return
 	if state.begins_with("result_"):
 		var production_result = run_scene.get("result_panel")
 		var expected_focus := production_result.preferred_focus_control() as Control if production_result != null else null
@@ -151,6 +204,8 @@ func _capture() -> void:
 	if state == &"inventory_items" and not _inventory_item_preview_is_safe(run_scene):
 		return
 	if state == &"exit_confirm" and not _extract_item_preview_is_safe(run_scene):
+		return
+	if state == &"debug_panel" and not _debug_panel_layout_is_safe(run_scene, Vector2i(width, height)):
 		return
 
 	var image := root.get_texture().get_image()
@@ -306,18 +361,56 @@ func _extract_item_preview_is_safe(run_scene: Node) -> bool:
 	var first := rows[0] as PanelContainer
 	var meta := first.find_child("ExtractItemMeta", true, false) as Label
 	var marker := first.find_child("ExtractItemRarityMarker", true, false) as ColorRect
-	if meta == null or not meta.text.contains("收藏等级 4") or not meta.text.contains("[T4] 珍贵") or marker == null:
+	if meta == null or not meta.text.contains("收藏等级 4") or not meta.text.contains("珍贵") or meta.text.contains("[T4]") or marker == null:
 		_fail("production extract confirmation omitted rarity or collectible-level identity")
+		return false
+	return true
+
+
+func _debug_panel_layout_is_safe(run_scene: Node, viewport_size: Vector2i) -> bool:
+	var panel = run_scene.get("debug_panel") as Control
+	var run_surface = run_scene.get("run_surface")
+	var action_bar = run_surface.get("action_bar") as Control if run_surface != null else null
+	var protocol = run_surface.get("right_backdrop") as Control if run_surface != null else null
+	var player = run_scene.get("player_controller")
+	if panel == null or action_bar == null or protocol == null or player == null:
+		_fail("debug-panel visual check is missing production controls")
+		return false
+	var panel_rect := panel.get_global_rect()
+	if panel_rect.size.x > float(viewport_size.x) * 0.28 + 0.5:
+		_fail("expanded debug panel exceeded 28%% viewport width")
+		return false
+	if panel_rect.size.y > float(viewport_size.y) * 0.75 + 0.5:
+		_fail("expanded debug panel exceeded 75%% viewport height")
+		return false
+	if panel_rect.intersects(action_bar.get_global_rect(), true):
+		_fail("expanded debug panel overlapped the production action dock")
+		return false
+	if panel_rect.intersects(protocol.get_global_rect(), true):
+		_fail("expanded debug panel overlapped the production protocol card")
+		return false
+	var focus_owner := root.gui_get_focus_owner()
+	if focus_owner == null or not panel.is_ancestor_of(focus_owner):
+		_fail("expanded debug panel did not own keyboard/gamepad focus")
+		return false
+	if bool(player.get("input_enabled")):
+		_fail("expanded debug panel left production movement input enabled")
 		return false
 	return true
 
 
 func _teleport_to_room(run_scene, room_type: StringName) -> bool:
 	run_scene.call("_debug_teleport_to_room_type", room_type)
-	await _frames(8)
 	var run_context = run_scene.get("run_context")
 	if run_context == null:
 		_fail("production RunContext missing for %s capture" % String(room_type))
+		return false
+	if not await _await_condition(
+		func() -> bool:
+			var current: Dictionary = run_context.get_status_snapshot()
+			return StringName(current.get("current_room", &"Unknown")) == room_type,
+		"enter %s room" % String(room_type)
+	):
 		return false
 	var snapshot: Dictionary = run_context.get_status_snapshot()
 	if StringName(snapshot.get("current_room", &"Unknown")) != room_type:
@@ -336,8 +429,7 @@ func _teleport_and_focus(run_scene, room_type: StringName, local_pos: Vector2) -
 		return false
 	player.set_local_position(local_pos)
 	room_view.advance(0.0, player.get_local_position(), {})
-	await _frames(3)
-	return true
+	return await _await_layout_stable(run_scene, "%s proximity focus" % String(room_type))
 
 
 func _configure_full_merchant(run_scene) -> bool:
@@ -368,7 +460,13 @@ func _configure_full_merchant(run_scene) -> bool:
 	var player = run_scene.get("player_controller")
 	if room_view != null and player != null:
 		room_view.advance(0.0, player.get_local_position(), {})
-	await _frames(5)
+	if not await _await_condition(
+		func() -> bool:
+			var context_popup = room_view.get("context_popup") if room_view != null else null
+			return context_popup != null and context_popup.visible and context_popup.context_kind == &"event",
+		"merchant proximity entry"
+	):
+		return false
 	var run_surface = run_scene.get("run_surface")
 	var steady_buttons: Array = run_surface.get("encounter_option_buttons") if run_surface != null else []
 	if not steady_buttons.is_empty():
@@ -381,7 +479,11 @@ func _configure_full_merchant(run_scene) -> bool:
 	if not bool(popup.activate_primary()):
 		_fail("production merchant context entry did not open its decision modal")
 		return false
-	await _frames(5)
+	if not await _await_condition(
+		func() -> bool: return bool(run_scene.call("_runtime_modal_is_top", &"event")),
+		"merchant decision modal"
+	):
+		return false
 	if not bool(run_scene.call("_runtime_modal_is_top", &"event")):
 		_fail("production merchant decision modal is not authoritative")
 		return false
@@ -508,9 +610,102 @@ func _result_layout_is_safe(result_panel, state: StringName, viewport_size: Vect
 	return true
 
 
-func _frames(count: int) -> void:
-	for _index in range(count):
+func _prepare_debug_state(run_scene: Node, state: StringName) -> bool:
+	if not bool(run_scene.call("_show_settings_shell")):
+		_fail("production settings could not open for debug test-room capture")
+		return false
+	var ui_shell = run_scene.get("ui_shell")
+	if not await _await_condition(
+		func() -> bool:
+			var panel = ui_shell.call("get_settings_panel") if ui_shell != null else null
+			return StringName(run_scene.get("screen_state")) == &"settings_shell" and panel != null and panel.is_visible_in_tree(),
+		"debug settings entry"
+	):
+		return false
+	var settings_panel = ui_shell.call("get_settings_panel") if ui_shell != null else null
+	var test_room_button = settings_panel.get("test_room_button") as Button if settings_panel != null else null
+	if test_room_button == null or not test_room_button.is_visible_in_tree():
+		_fail("debug build settings omitted the isolated test-room entry")
+		return false
+	if state == &"debug_settings":
+		return await _await_layout_stable(ui_shell, "debug settings")
+	test_room_button.pressed.emit()
+	if not await _await_condition(
+		func() -> bool:
+			var controller = run_scene.get("debug_panel_controller")
+			return (
+				StringName(run_scene.get("screen_state")) == &"run"
+				and controller != null
+				and bool(controller.call("is_test_room_active"))
+			),
+		"isolated test-room admission"
+	):
+		return false
+	var banner := run_scene.find_child("DebugSandboxBanner", true, false) as Label
+	if banner == null or not banner.is_visible_in_tree():
+		_fail("isolated test room omitted its profile/scenario/seed/save banner")
+		return false
+	if state == &"debug_panel":
+		run_scene.call("_open_debug_panel")
+		if not await _await_condition(
+			func() -> bool:
+				var panel = run_scene.get("debug_panel")
+				return panel != null and panel.is_visible_in_tree(),
+			"expanded debug panel"
+		):
+			return false
+	return await _await_layout_stable(run_scene, String(state))
+
+
+func _await_condition(predicate: Callable, label: String, max_process_frames: int = 360) -> bool:
+	for _poll in range(max_process_frames):
 		await process_frame
+		if bool(predicate.call()):
+			return true
+	_fail("semantic wait timed out: %s" % label)
+	return false
+
+
+func _await_layout_stable(subject: Node, label: String, max_process_frames: int = 360) -> bool:
+	var previous := ""
+	var stable_submissions := 0
+	for _poll in range(max_process_frames):
+		await process_frame
+		var current := _visible_layout_fingerprint(subject)
+		if not current.is_empty() and current == previous:
+			stable_submissions += 1
+		else:
+			stable_submissions = 0
+		previous = current
+		if stable_submissions >= 3:
+			return true
+	_fail("layout did not stabilize for three submissions: %s" % label)
+	return false
+
+
+func _visible_layout_fingerprint(subject: Node) -> String:
+	var rows: PackedStringArray = []
+	for candidate in subject.find_children("*", "Control", true, false):
+		var control := candidate as Control
+		if control == null or not control.is_visible_in_tree():
+			continue
+		var rect := control.get_global_rect()
+		var text := ""
+		if control is Label:
+			text = (control as Label).text
+		elif control is Button:
+			text = (control as Button).text
+		rows.append("%s|%.2f,%.2f,%.2f,%.2f|%.3f|%s" % [
+			String(control.get_path()),
+			rect.position.x,
+			rect.position.y,
+			rect.size.x,
+			rect.size.y,
+			control.modulate.a,
+			text,
+		])
+	rows.sort()
+	return "\n".join(rows)
 
 
 func _parse_options(arguments: PackedStringArray) -> Dictionary:

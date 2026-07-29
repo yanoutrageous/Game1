@@ -6,20 +6,34 @@
 ## I4 活动入口
 
 - 总契约：`docs/20_product/I4_PRODUCTION_INTERACTION_CONVERGENCE_CONTRACT.md`
+- 工程质量与验收标准：`docs/20_product/I4_ENGINEERING_QUALITY_AND_ACCEPTANCE_STANDARD.md`
 - 执行台账：`docs/00_governance/I4_EXECUTION_LEDGER.md`
 - 需求矩阵：`docs/00_governance/I4_REQUIREMENT_MATRIX.md`
 - 运行手册：`docs/30_engineering/godot/I4_REPRODUCIBLE_PRODUCTION_VALIDATION_RUNBOOK.md`
+- 阶段验证原文：`docs/validation/I4_PRODUCTION_INTERACTION_CONVERGENCE_VALIDATION.md`
 - 工具入口：`tools/i4/README.md`
 - entry commit：`4127bd27a05b75cb5e3071cf6dc87d9287f679a9`
 - entry tree：`e1455ffd8c7a754c63eb2141a47e41f8fe5cdf3a`
 
-I4 当前处于计划审计和入口治理。未在 I4 台账登记的 I3R 报告不得作为 I4 PASS。
-当前已完成的定向证据仅有：
+I4 当前处于质量标准局内补充重审和既有内容重验。未在 I4 台账登记的 I3R 报告不得作为 I4 PASS。
+自动、截图生成、逐原图人工、动态输入、存档、设备和 Git 证据必须分开声明。
+
+当前状态：
 
 | 门 | 当前结果 | 证据与边界 |
 | --- | --- | --- |
 | I4 Base overlay Windows 换行复现 | TARGETED PASS | 入口 exact-head 首次执行复现三份 CSV 仅 CRLF/LF 不同；验证器现只归一化行尾，真实字段变化仍 `OVERLAY_DRIFT`；`tools/i3r/tests/test_base_governance_overlay.py` 新增正反测试。完整 exact-head 尚未执行。 |
 | I4 入口 Git/dirty 审计 | PASS | 本地/远端入口均为 `4127bd2`，ahead/behind 0/0；Godot 生成 metadata 保存至命名 stash，未并入 I4。 |
+| I4.1–I4.3 隔离/诊断/数量 | TARGETED PASS / VISUAL CANDIDATE | sandbox/taint、诊断身份与读写分区、默认档哈希、原子 N 件购买和精确实例数量定向门通过；1280 测试场/面板原图已复核，外部动态门未过。 |
+| I4.4 Deploy | TARGETED PASS / VISUAL CANDIDATE | 原反例继续保留；当前候选已通过两行卡、单一数量语义、310/12/310、六项摘要、滚动和上下文金币门，12 张真实 Deploy 原图完成逐图复核。 |
+| I4.5 局内补充 | TARGETED PASS / VISUAL CANDIDATE | 地图四层、稳定阻挡 descriptor/可见足迹、纹理 fallback、内容驱动左下高度、品质描述器与世界掉落光束定向门通过；当前 1280 原图已复核，完整 12 组/动态玩家门未过。 |
+| I4.6 长期导航 | TARGETED PASS / VISUAL CANDIDATE | 通知直达、显式已读、页面历史及筛选/选择/滚动/焦点恢复 runner 通过；6 模块/25 页面真实矩阵已逐图复核。 |
+| I4.7 字体/边框/HUD | TARGETED PASS / VISUAL CANDIDATE | readable/display 角色、16/8/4/2 边框、协议安全区和 0/1/3/4/满包布局定向门通过；全状态 12 组矩阵未关闭。 |
+| I4 worktree 统一预检 | PASS / AUTOMATION PREFLIGHT ONLY | `.tmp/i4_unified_worktree_preflight_final/evidence/i4_report.json`，SHA-256 `81741EAE3B23F75EB773BE4DD3EED355A72CFA49B8B3FF05D090370FF0E80F07`；最终静态报告 SHA-256 `13D1EE13E79B21C76211F0CC7FEA1DD3C9CD49EAD2235311BC68FC17324278C1`；12/12、8 个 I4 runner、protected dirty 0、fixed-frame helper 0、156 行 census 与 6×1+1 旅程均通过。 |
+| I4 worktree 重复门 | PASS | 6 个关键 runner 各 10 次、局外生产旅程 3 次；报告 SHA-256 `D7D5933EE5DBF6A7F9E8A3412CDE2D44DD1E0D7F1ED1270E57F85C2C70444C19`。 |
+| I4 统一真实捕获 | VISUAL CANDIDATE | 同一 worktree 身份下 Deploy 12 + 长期 25 + 生产 14，共 51 图；manifest SHA-256 `42894CFFFAEDA529367941F5CA8EA1424EF4C89FD8EDFB69E0AF3CB9581D16F7`。捕获成功与当前逐图复核均不替代全矩阵/动态玩家。 |
+| I4 设备边界 | EXTERNAL GATES BLOCKED | GPU/音频路由已枚举；joypad=0，手柄为 `BLOCKED_NOT_RUN`；音频为 `ROUTE_DETECTED_NOT_FUNCTIONALLY_ACCEPTED`，GPU 为 `MEASURED_NOT_ACCEPTED`。 |
+| I4-QA-FROZEN-1 | QUALITY_STANDARD_AUDIT_PASS / CANDIDATE_ONLY | 原 R/S/G/V/H/F/P、16/8/4/2、内容/动作/测试场门保持；新增地图 z=0/20/30/40、碰撞 90% 足迹、协议 B+6/14、左下 8/16 px、冻结品质色和纹理枚举门。治理测试 12/12 PASS；不证明生产或阶段通过。 |
 
 ## I3R 历史入口
 

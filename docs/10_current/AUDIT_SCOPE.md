@@ -6,7 +6,7 @@
 ## 身份与阶段
 
     active_repo: git rev-parse --show-toplevel
-    active_stage: I4 / ACTIVE / PLAN_AUDIT
+    active_stage: I4 / ACTIVE / QUALITY_STANDARD_FROZEN
     delivery_branch: codex/i4-production-interaction-convergence
     i4_entry_head: 4127bd27a05b75cb5e3071cf6dc87d9287f679a9
     i4_entry_tree: e1455ffd8c7a754c63eb2141a47e41f8fe5cdf3a
@@ -31,6 +31,10 @@ I3 保持历史记录。I3R 的机器复验、静态视觉复核与空间治理�
   runtime admission 边界。
 - I1 历史验证快照的内容寻址归档、独立恢复证明、源工作树清理和项目容量治理。
 - 自动化、渲染预览、污染检查、玩家/视觉签收、目标设备和外部交付门。
+- `I4-QA-FROZEN-1` 定义的当前内容普查、R/S/G/V/H/F/P、边框层级/带宽、
+  动作预算、真实渲染逐原图和旧断言处置。
+- I4-R043–R049 定义的折叠/展开地图局部层、静态阻挡—可见物对应、协议安全区、
+  左下内容驱动密度、跨表面品质色和物品纹理/fallback。
 
 ## 证据优先级
 
@@ -42,6 +46,14 @@ I3 保持历史记录。I3R 的机器复验、静态视觉复核与空间治理�
 
 用户观察必须逐项处置，但不能覆盖仓库事实。UE 只用于解释体验差异，不能替代
 Godot 对 KnownMap、GroundLoot、保存、结算、fixed tick、伤害和容量替换的权威。
+
+2026-07-30 用户当前 Deploy 截图已作为仓库事实的外部可见反例登记：它不改变领域权威，
+但证明此前机器/静态视觉门不足，I4.4/I4.7 已重新打开。截图生成和几何 runner 的成功
+最多产生 `VISUAL_CANDIDATE`。
+
+同日用户新增局内直接观察作为第二组外部反例登记。当前代码进一步确认地图负 offset/
+共中心叠层、匿名房型阻挡、空纹理节点隐藏 fallback 和固定空包区域，因此 I4.5 也已重开。
+该反例没有独立截图 SHA，必须由当前候选新鲜捕获补齐 bbox；不得用旧 gallery 关闭。
 
 ## 最终工作树 full
 
@@ -96,6 +108,11 @@ Godot 对 KnownMap、GroundLoot、保存、结算、fixed tick、伤害和容量
 
 ## 审计与关闭门
 
+- 工程质量标准：`docs/20_product/I4_ENGINEERING_QUALITY_AND_ACCEPTANCE_STANDARD.md`。
+- 页面/工作区/卡片/紧凑控件边框 16/8/4/2、最多两层完整框和信息无损门。
+- 当前生产内容普查、布局等价证明、12 组真实捕获和逐原图人工记录。
+- 地图两表面 15 状态、全房型 obstacle descriptor/通行扫描、协议五等级极值、
+  左下 0/1/3/4/满包和全 item ID 五消费者纹理/品质门。
 - 候选提交的 exact-head/full 与 Git 远端一致性由本次最终交付记录提供。
 - 真实键鼠/手柄、控制器、音频设备、减少动态、完整玩家与动态视觉签收。
 - 目标 GPU/FPS、内存和长局稳定性。

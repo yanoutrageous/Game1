@@ -374,7 +374,7 @@ func _build_result_item_row(item_model: Dictionary) -> Control:
 	name_label.add_theme_color_override("font_color", PresentationTheme.text_color())
 	line.add_child(name_label)
 	var rarity_label := Label.new()
-	rarity_label.text = String(rarity.get("display_text", "[?] 未鉴定"))
+	rarity_label.text = String(rarity.get("label", "未鉴定"))
 	_set_scaled_font_size(rarity_label, 13)
 	rarity_label.add_theme_color_override("font_color", rarity.get("color", PresentationTheme.color_for_key(&"ui.muted")))
 	line.add_child(rarity_label)
@@ -666,7 +666,7 @@ func _configure_failure_salvage(snapshot: Dictionary) -> void:
 		var rarity: Dictionary = item_model.get("rarity", {}) if item_model.get("rarity", {}) is Dictionary else {}
 		var button := Button.new()
 		button.toggle_mode = true
-		var item_meta: Array[String] = [String(rarity.get("display_text", "[?] 未鉴定"))]
+		var item_meta: Array[String] = [String(rarity.get("label", "未鉴定"))]
 		var collectible_level_text := String(item_model.get("collectible_level_text", ""))
 		if collectible_level_text != "":
 			item_meta.append(collectible_level_text)

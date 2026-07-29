@@ -89,14 +89,21 @@ static func visual_key(item: Dictionary) -> StringName:
 	if ITEM_TEXTURES.has(item_id):
 		var mapped_name := String(ITEM_TEXTURES[item_id]).get_file().get_basename()
 		return StringName("visual.art24.item.world_loot.%s" % mapped_name)
+	if ART24_WORLD_IDS.has(item_id):
+		return StringName("visual.art24.item.world_loot.%s" % item_id)
 	if ART25_ITEM_IDS.has(item_id):
 		return StringName("art25.long_term.item.%s" % item_id)
-	var item_type := String(item.get("item_type", item.get("main_type", "collectible"))).to_lower()
-	var fallback_name := String(TYPE_FALLBACKS.get(item_type, TYPE_FALLBACKS["collectible"])).get_file().get_basename()
-	return StringName("visual.art24.item.world_loot.%s" % fallback_name)
+	return _fallback_visual_key(_item_type(item))
 
 
 static func texture_path_for_visual_key(key: StringName) -> String:
+	var exact_path := _exact_texture_path_for_visual_key(key)
+	if not exact_path.is_empty():
+		return exact_path
+	return String(TYPE_FALLBACKS["collectible"])
+
+
+static func _exact_texture_path_for_visual_key(key: StringName) -> String:
 	var token := String(key)
 	var art24_prefix := "visual.art24.item.world_loot."
 	if token.begins_with(art24_prefix):
@@ -108,11 +115,57 @@ static func texture_path_for_visual_key(key: StringName) -> String:
 		var art25_id := token.trim_prefix(art25_prefix)
 		if ART25_ITEM_IDS.has(art25_id):
 			return ART25_ITEM_ROOT + art25_id + ".png"
-	return String(TYPE_FALLBACKS["collectible"])
+	return ""
+
+
+static func resolve(item: Dictionary, consumer: StringName = &"unspecified") -> Dictionary:
+	var item_id := String(item.get("item_id", "")).to_lower()
+	var item_type := _item_type(item)
+	var explicit_mapping := has_explicit_mapping(item_id)
+	var requested_key := _requested_visual_key(item_id)
+	var requested_path := _exact_texture_path_for_visual_key(requested_key)
+	var resolved_key := visual_key(item)
+	var resolved_path := _exact_texture_path_for_visual_key(resolved_key)
+	var fallback_used := not explicit_mapping
+	var reason := &"explicit_mapping" if explicit_mapping else &"item_type_fallback"
+	var texture := (
+		RuntimeTextureCacheScript.texture(resolved_path)
+		if not resolved_path.is_empty()
+		else null
+	)
+	if texture == null:
+		var fallback_key := _fallback_visual_key(item_type)
+		var fallback_path := _exact_texture_path_for_visual_key(fallback_key)
+		if resolved_key != fallback_key or resolved_path != fallback_path:
+			resolved_key = fallback_key
+			resolved_path = fallback_path
+			texture = RuntimeTextureCacheScript.texture(resolved_path)
+			fallback_used = true
+			reason = &"requested_texture_unresolved"
+		elif fallback_used:
+			reason = &"fallback_texture_unresolved" if texture == null else reason
+		else:
+			reason = &"requested_texture_unresolved"
+	var texture_size := texture.get_size() if texture != null else Vector2.ZERO
+	return {
+		"item_id": item_id,
+		"item_type": item_type,
+		"consumer": consumer,
+		"requested_key": requested_key,
+		"requested_path": requested_path,
+		"resolved_key": resolved_key,
+		"resolved_path": resolved_path,
+		"resolved_size": texture_size,
+		"explicit_mapping": explicit_mapping,
+		"fallback_used": fallback_used,
+		"reason": reason,
+		"texture": texture,
+		"resolved": texture != null and texture_size.x > 0.0 and texture_size.y > 0.0,
+	}
 
 
 static func texture_for(item: Dictionary) -> Texture2D:
-	return RuntimeTextureCacheScript.texture(texture_path(item))
+	return resolve(item).get("texture", null) as Texture2D
 
 
 static func texture_for_visual_key(key: StringName) -> Texture2D:
@@ -121,4 +174,29 @@ static func texture_for_visual_key(key: StringName) -> Texture2D:
 
 static func has_explicit_mapping(item_id: String) -> bool:
 	var normalized_id := item_id.to_lower()
-	return ITEM_TEXTURES.has(normalized_id) or ART25_ITEM_IDS.has(normalized_id)
+	return (
+		ITEM_TEXTURES.has(normalized_id)
+		or ART24_WORLD_IDS.has(normalized_id)
+		or ART25_ITEM_IDS.has(normalized_id)
+	)
+
+
+static func _requested_visual_key(item_id: String) -> StringName:
+	if ITEM_TEXTURES.has(item_id):
+		var mapped_name := String(ITEM_TEXTURES[item_id]).get_file().get_basename()
+		return StringName("visual.art24.item.world_loot.%s" % mapped_name)
+	if ART24_WORLD_IDS.has(item_id):
+		return StringName("visual.art24.item.world_loot.%s" % item_id)
+	if ART25_ITEM_IDS.has(item_id):
+		return StringName("art25.long_term.item.%s" % item_id)
+	return StringName("item.request.%s" % (item_id if not item_id.is_empty() else "unknown"))
+
+
+static func _fallback_visual_key(item_type: String) -> StringName:
+	var fallback_path := String(TYPE_FALLBACKS.get(item_type, TYPE_FALLBACKS["collectible"]))
+	return StringName("visual.art24.item.world_loot.%s" % fallback_path.get_file().get_basename())
+
+
+static func _item_type(item: Dictionary) -> String:
+	var item_type := String(item.get("item_type", item.get("main_type", "collectible"))).to_lower()
+	return item_type if TYPE_FALLBACKS.has(item_type) else "collectible"

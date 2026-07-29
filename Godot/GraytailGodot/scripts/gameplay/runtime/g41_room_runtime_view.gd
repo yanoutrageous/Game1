@@ -90,6 +90,7 @@ var door_projections: Array[Dictionary] = []
 var door_visuals: Dictionary = {}
 var foreground_occluders: Dictionary = {}
 var logical_obstacles: Array[Rect2] = []
+var obstacle_descriptors: Array[Dictionary] = []
 var context_popup: G41WorldContextPopup
 var last_door_locked: bool = false
 var last_combat_geometry_visible := false
@@ -289,6 +290,7 @@ func build_read_only_snapshot() -> Dictionary:
 		"nearby_door_direction": nearby_door_direction,
 		"nearby_door_state": nearby_door_state,
 		"logical_obstacles": logical_obstacles.duplicate(),
+		"obstacle_descriptors": obstacle_descriptors.duplicate(true),
 		"room_entry_result": last_room_entry_result.duplicate(true),
 		"mine_feedback_active": mine_feedback_remaining > 0.0,
 		"visual_contract_id": &"g41.runtime_visual.v1",
@@ -309,6 +311,10 @@ func get_logical_obstacles() -> Array[Rect2]:
 	return logical_obstacles.duplicate()
 
 
+func get_obstacle_descriptors() -> Array[Dictionary]:
+	return obstacle_descriptors.duplicate(true)
+
+
 func get_door_projections() -> Array[Dictionary]:
 	return door_projections.duplicate(true)
 
@@ -323,6 +329,7 @@ func clear_runtime() -> void:
 	projection_room_key = ""
 	room_type = &"Unknown"
 	logical_obstacles.clear()
+	obstacle_descriptors.clear()
 	focused_interaction_id = ""
 	focus_residence_elapsed = 0.0
 	focus_lost_elapsed = 0.0
@@ -374,9 +381,7 @@ func _rebuild_world_projection() -> void:
 	_sync_ground_loot(objects, same_room)
 	_sync_special_objects(objects)
 	projection_room_key = room_key
-	logical_obstacles = _obstacles_for_room(room_type)
-	if chest != null:
-		logical_obstacles.append(chest.body_rect)
+	_rebuild_obstacle_projection()
 
 
 func _rebuild_door_projection() -> void:
@@ -1296,7 +1301,7 @@ func _ensure_layers() -> void:
 		label.size = Vector2(280, 24)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 13)
-		Art10UISkinKitScript.apply_player_ui_font(label)
+		Art10UISkinKitScript.apply_player_ui_font(label, &"display")
 		label.z_index = DOOR_FOREGROUND_Z + 5
 		add_child(label)
 
@@ -1366,14 +1371,124 @@ func _remove_missing_views(views: Dictionary, active_ids: Dictionary) -> void:
 		views.erase(actor_id)
 
 
+func _rebuild_obstacle_projection() -> void:
+	obstacle_descriptors.clear()
+	logical_obstacles.clear()
+	if room_type == &"Monster":
+		for raw_occluder in (world_projection.get("occluders", []) as Array):
+			if not raw_occluder is Dictionary:
+				continue
+			var occluder := raw_occluder as Dictionary
+			var projection_id := String(occluder.get("projection_id", ""))
+			var sprite := foreground_occluders.get(projection_id) as Sprite2D
+			_append_texture_obstacle_descriptor(occluder, sprite, true)
+	elif room_type == &"Event":
+		for entity in special_entities.values():
+			if entity != null and entity.interaction_kind == &"event":
+				_append_interactable_obstacle_descriptor(entity, true)
+	elif room_type == &"Chest" and chest != null:
+		_append_interactable_obstacle_descriptor(chest, true)
+	for descriptor in obstacle_descriptors:
+		if bool(descriptor.get("collision_enabled", false)):
+			logical_obstacles.append(Rect2(descriptor.get("body_rect", Rect2())))
+	world_projection["obstacle_descriptors"] = obstacle_descriptors.duplicate(true)
+
+
+func _append_texture_obstacle_descriptor(
+	source: Dictionary,
+	sprite: Sprite2D,
+	required_visual: bool
+) -> void:
+	var body_rect := Rect2(source.get("body_rect", Rect2()))
+	var visual_rect := Rect2(source.get("visual_rect_local", body_rect))
+	var texture := sprite.texture if sprite != null else null
+	var texture_resolved := texture != null and texture.get_size().x > 0.0 and texture.get_size().y > 0.0
+	var alpha := sprite.modulate.a * sprite.self_modulate.a if sprite != null else 0.0
+	var visible := sprite != null and sprite.visible and alpha >= 0.25
+	_append_obstacle_descriptor({
+		"obstacle_id": String(source.get("projection_id", "obstacle:%s" % room_key)),
+		"source_projection_id": String(source.get("projection_id", "")),
+		"source_kind": StringName(source.get("interaction_kind", &"visual_occluder")),
+		"room_type": room_type,
+		"body_rect": body_rect,
+		"visual_key": StringName(source.get("visual_key", &"runtime.missing")),
+		"resolved_texture_path": texture.resource_path if texture != null else "",
+		"resolved_texture_size": texture.get_size() if texture != null else Vector2.ZERO,
+		"texture_resolved": texture_resolved,
+		"visual_footprint": visual_rect,
+		"visual_node_path": String(sprite.get_path()) if sprite != null else "",
+		"visual_visible": visible,
+		"visible_alpha": alpha,
+		"fallback_visible": false,
+		"required_visual": required_visual,
+	})
+
+
+func _append_interactable_obstacle_descriptor(entity, required_visual: bool) -> void:
+	var snapshot: Dictionary = entity.build_snapshot()
+	var resolution: Dictionary = snapshot.get("visual_resolution", {})
+	var art_visual := entity.get_node_or_null("VisualRoot/ArtVisual") as CanvasItem
+	var fallback := entity.get_node_or_null("VisualRoot/ProgramPlaceholder") as Polygon2D
+	var fallback_visible := fallback != null and fallback.visible and fallback.color.a >= 0.25
+	var alpha := 0.0
+	var visual_node_path := ""
+	if art_visual != null and art_visual.visible:
+		alpha = art_visual.modulate.a * art_visual.self_modulate.a
+		visual_node_path = String(art_visual.get_path())
+	elif fallback_visible:
+		alpha = fallback.color.a
+		visual_node_path = String(fallback.get_path())
+	_append_obstacle_descriptor({
+		"obstacle_id": String(snapshot.get("projection_id", "obstacle:%s" % room_key)),
+		"source_projection_id": String(snapshot.get("projection_id", "")),
+		"source_kind": StringName(snapshot.get("interaction_kind", &"unknown")),
+		"room_type": room_type,
+		"body_rect": Rect2(snapshot.get("body_rect", Rect2())),
+		"visual_key": StringName(snapshot.get("visual_key", &"runtime.missing")),
+		"resolved_texture_path": String(resolution.get("resolved_texture_path", "")),
+		"resolved_texture_size": Vector2(resolution.get("resolved_texture_size", Vector2.ZERO)),
+		"texture_resolved": bool(resolution.get("texture_resolved", false)),
+		"visual_footprint": Rect2(snapshot.get("visual_rect_local", snapshot.get("body_rect", Rect2()))),
+		"visual_node_path": visual_node_path,
+		"visual_visible": entity.has_visible_collision_correspondence(),
+		"visible_alpha": alpha,
+		"fallback_visible": fallback_visible,
+		"required_visual": required_visual,
+	})
+
+
+func _append_obstacle_descriptor(values: Dictionary) -> void:
+	var descriptor := values.duplicate(true)
+	var body_rect := Rect2(descriptor.get("body_rect", Rect2()))
+	var visual_footprint := Rect2(descriptor.get("visual_footprint", Rect2()))
+	var body_area := maxf(0.0, body_rect.size.x) * maxf(0.0, body_rect.size.y)
+	var intersection := body_rect.intersection(visual_footprint)
+	var intersection_area := maxf(0.0, intersection.size.x) * maxf(0.0, intersection.size.y)
+	var coverage_ratio := intersection_area / body_area if body_area > 0.0 else 0.0
+	var center_inside := visual_footprint.has_point(body_rect.get_center())
+	var visual_correspondence := (
+		bool(descriptor.get("visual_visible", false))
+		and float(descriptor.get("visible_alpha", 0.0)) >= 0.25
+		and center_inside
+		and coverage_ratio >= 0.90
+		and (
+			bool(descriptor.get("texture_resolved", false))
+			or bool(descriptor.get("fallback_visible", false))
+		)
+	)
+	descriptor["body_center_inside_visual"] = center_inside
+	descriptor["visual_body_coverage_ratio"] = coverage_ratio
+	descriptor["collision_enabled"] = visual_correspondence
+	descriptor["disable_reason"] = &"none" if visual_correspondence else &"visible_correspondence_failed"
+	obstacle_descriptors.append(descriptor)
+
+
 func _obstacles_for_room(next_room_type: StringName) -> Array[Rect2]:
+	# Legacy characterization helper for the combat arena contract. Production
+	# movement consumes obstacle_descriptors, never anonymous room-type rects.
 	match next_room_type:
 		&"Monster":
 			return CombatSimulationScript.production_arena_obstacles()
-		&"Event":
-			return [Rect2(Vector2(0.46, 0.32), Vector2(0.10, 0.18))]
-		&"Normal":
-			return [Rect2(Vector2(0.44, 0.38), Vector2(0.12, 0.12))]
 	return []
 
 

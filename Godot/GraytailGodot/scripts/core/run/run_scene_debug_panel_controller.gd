@@ -6,6 +6,7 @@ const DebugFailureBundleScript := preload("res://scripts/core/debug/debug_failur
 const DebugSandboxSessionScript := preload("res://scripts/core/debug/debug_sandbox_session.gd")
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const RunSceneRouteControllerScript := preload("res://scripts/core/run/run_scene_route_controller.gd")
+const RunUIViewModelScript := preload("res://scripts/ui/shell/run_ui_view_model.gd")
 
 var _enabled := false
 var _run_context: Variant
@@ -26,9 +27,13 @@ var _show_loot_panel: Callable
 var _runtime_modal_is_top: Callable
 var _pop_runtime_modal: Callable
 var _release_focus: Callable
+var _show_pause: Callable
 var _sandbox_session = DebugSandboxSessionScript.new()
 var _debug_input_index := 0
 var _last_debug_command: Dictionary = {}
+var _session_commit_id := ""
+var _focus_before_panel: Control
+var _opened_from_pause := false
 
 
 func bind_targets(
@@ -50,7 +55,8 @@ func bind_targets(
 	show_loot_panel: Callable,
 	runtime_modal_is_top: Callable,
 	pop_runtime_modal: Callable,
-	release_focus: Callable
+	release_focus: Callable,
+	show_pause: Callable
 ) -> void:
 	_enabled = enabled
 	_run_context = run_context
@@ -70,6 +76,7 @@ func bind_targets(
 	_runtime_modal_is_top = runtime_modal_is_top
 	_pop_runtime_modal = pop_runtime_modal
 	_release_focus = release_focus
+	_show_pause = show_pause
 	_ensure_session_banner(run_overlay_root)
 	_update_session_banner()
 
@@ -151,19 +158,29 @@ func toggle_panel() -> void:
 		_show_debug_disabled_feedback()
 		_release_gui_focus()
 		return
-	_debug_panel.visible = not _debug_panel.visible
-	_release_gui_focus()
+	if _debug_panel.visible:
+		close_panel()
+	else:
+		open_panel()
 
 
 func open_from_pause() -> void:
 	if not _runtime_modal_is_top.is_valid() or not bool(_runtime_modal_is_top.call(&"pause")):
 		return
+	_focus_before_panel = _debug_panel.get_viewport().gui_get_focus_owner() if _debug_panel != null else null
+	_opened_from_pause = true
 	if _pop_runtime_modal.is_valid():
 		_pop_runtime_modal.call(&"pause", false)
-	open_panel()
+	_open_panel_internal()
 
 
 func open_panel() -> void:
+	_opened_from_pause = false
+	_focus_before_panel = _debug_panel.get_viewport().gui_get_focus_owner() if _debug_panel != null else null
+	_open_panel_internal()
+
+
+func _open_panel_internal() -> void:
 	if _debug_panel == null:
 		return
 	if not can_use_debug_tools():
@@ -172,22 +189,60 @@ func open_panel() -> void:
 		_release_gui_focus()
 		return
 	_debug_panel.visible = true
-	_release_gui_focus()
+	call_deferred("_focus_first_panel_control")
 
 
 func close_panel() -> void:
-	hide_panel()
+	if _debug_panel != null:
+		_debug_panel.visible = false
+	if _opened_from_pause and _show_pause.is_valid():
+		_show_pause.call()
+		call_deferred("_restore_previous_focus")
+	else:
+		call_deferred("_restore_previous_focus")
+	_opened_from_pause = false
 
 
 func hide_panel(release_focus: bool = true) -> void:
 	if _debug_panel != null:
 		_debug_panel.visible = false
+	_opened_from_pause = false
 	if release_focus:
 		_release_gui_focus()
 
 
 func is_open() -> bool:
 	return _debug_panel != null and _debug_panel.visible
+
+
+func _focus_first_panel_control() -> void:
+	if _debug_panel == null or not _debug_panel.is_visible_in_tree():
+		return
+	for candidate in _debug_panel.find_children("*", "Button", true, false):
+		var button := candidate as Button
+		if (
+			button != null
+			and button.focus_mode == Control.FOCUS_ALL
+			and button.is_visible_in_tree()
+			and not button.disabled
+		):
+			button.grab_focus()
+			return
+	_release_gui_focus()
+
+
+func _restore_previous_focus() -> void:
+	if (
+		_focus_before_panel != null
+		and is_instance_valid(_focus_before_panel)
+		and _focus_before_panel.is_inside_tree()
+		and _focus_before_panel.is_visible_in_tree()
+		and _focus_before_panel.focus_mode != Control.FOCUS_NONE
+	):
+		_focus_before_panel.grab_focus()
+	else:
+		_release_gui_focus()
+	_focus_before_panel = null
 
 
 func can_use_debug_tools() -> bool:
@@ -216,7 +271,7 @@ func sync_coordinates() -> void:
 
 func set_log_text(message: String) -> void:
 	if _debug_log != null:
-		_debug_log.text = message
+		_debug_log.text = RunUIViewModelScript.player_message(message)
 
 
 func teleport_to_exit() -> void:
@@ -451,19 +506,81 @@ static func add_section(parent: Control, label: String) -> Label:
 	var section := Label.new()
 	section.text = label
 	section.add_theme_font_size_override("font_size", 15)
+	section.add_theme_color_override("font_color", Color(0.45, 0.92, 0.86, 1.0))
 	section.custom_minimum_size = Vector2(200, 24)
 	parent.add_child(section)
 	return section
 
 
-static func add_button(parent: Control, label: String, callback: Callable) -> Button:
+static func add_button(
+	parent: Control,
+	label: String,
+	callback: Callable,
+	dangerous_write: bool = true
+) -> Button:
 	var button := Button.new()
 	button.text = label
 	button.custom_minimum_size = Vector2(180, 28)
 	button.focus_mode = Control.FOCUS_ALL
+	button.set_meta("debug_operation_kind", &"write" if dangerous_write else &"read")
+	button.tooltip_text = (
+		"写命令：会将隔离测试会话标记为 TAINTED"
+		if dangerous_write
+		else "只读诊断：不修改运行或存档状态"
+	)
+	var normal := _debug_button_style(dangerous_write, false, false)
+	var hover := _debug_button_style(dangerous_write, true, false)
+	var pressed := _debug_button_style(dangerous_write, true, true)
+	var focus := _debug_button_style(dangerous_write, true, false)
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("focus", focus)
+	button.add_theme_stylebox_override("disabled", normal)
+	var text_color := Color(1.0, 0.72, 0.46, 1.0) if dangerous_write else Color(0.78, 0.96, 0.92, 1.0)
+	button.add_theme_color_override("font_color", text_color)
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_focus_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color.WHITE)
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
+
+
+static func _debug_button_style(
+	dangerous_write: bool,
+	emphasized: bool,
+	pressed: bool
+) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = (
+		Color(0.20, 0.08, 0.04, 0.98)
+		if dangerous_write
+		else Color(0.035, 0.105, 0.115, 0.98)
+	)
+	if emphasized:
+		style.bg_color = style.bg_color.lightened(0.10)
+	if pressed:
+		style.bg_color = style.bg_color.darkened(0.08)
+	style.border_color = (
+		Color(0.96, 0.50, 0.22, 0.95)
+		if dangerous_write
+		else Color(0.28, 0.82, 0.76, 0.95)
+	)
+	var border := 2 if emphasized else 1
+	style.border_width_left = border
+	style.border_width_top = border
+	style.border_width_right = border
+	style.border_width_bottom = border
+	style.corner_radius_top_left = 3
+	style.corner_radius_top_right = 3
+	style.corner_radius_bottom_left = 3
+	style.corner_radius_bottom_right = 3
+	style.content_margin_left = 8.0
+	style.content_margin_right = 8.0
+	style.content_margin_top = 3.0
+	style.content_margin_bottom = 3.0
+	return style
 
 
 func _target_pos() -> Vector2i:
@@ -495,6 +612,7 @@ func _dispatch(command_name: StringName, payload: Dictionary = {}) -> Dictionary
 		"payload": payload.duplicate(true),
 		"result": result.duplicate(true),
 	}
+	_update_session_banner()
 	return result
 
 
@@ -519,17 +637,37 @@ func _ensure_session_banner(parent: Control) -> void:
 		return
 	_session_banner = Label.new()
 	_session_banner.name = "DebugSandboxBanner"
-	_session_banner.position = Vector2(280.0, 8.0)
-	_session_banner.size = Vector2(720.0, 34.0)
+	_session_banner.position = Vector2(288.0, 6.0)
+	_session_banner.size = Vector2(720.0, 62.0)
 	_session_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_session_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_session_banner.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_session_banner.clip_text = true
+	_session_banner.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_session_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_session_banner.add_theme_color_override("font_color", Color(1.0, 0.82, 0.32, 1.0))
 	_session_banner.add_theme_color_override("font_outline_color", Color(0.08, 0.02, 0.02, 1.0))
-	_session_banner.add_theme_constant_override("outline_size", 6)
-	_session_banner.add_theme_font_size_override("font_size", 16)
+	_session_banner.add_theme_constant_override("outline_size", 3)
+	_session_banner.add_theme_font_size_override("font_size", 13)
+	var banner_style := StyleBoxFlat.new()
+	banner_style.bg_color = Color(0.015, 0.035, 0.04, 0.94)
+	banner_style.border_color = Color(0.84, 0.58, 0.20, 0.95)
+	banner_style.border_width_left = 1
+	banner_style.border_width_top = 1
+	banner_style.border_width_right = 1
+	banner_style.border_width_bottom = 1
+	banner_style.corner_radius_top_left = 3
+	banner_style.corner_radius_top_right = 3
+	banner_style.corner_radius_bottom_left = 3
+	banner_style.corner_radius_bottom_right = 3
+	banner_style.content_margin_left = 8.0
+	banner_style.content_margin_right = 8.0
+	banner_style.content_margin_top = 4.0
+	banner_style.content_margin_bottom = 4.0
+	_session_banner.add_theme_stylebox_override("normal", banner_style)
 	_session_banner.visible = false
 	parent.add_child(_session_banner)
+	_session_commit_id = DebugFailureBundleScript.commit_id()
 
 
 func _update_session_banner() -> void:
@@ -540,8 +678,10 @@ func _update_session_banner() -> void:
 	_session_banner.visible = bool(snapshot.get("active", false))
 	if not _session_banner.visible:
 		return
-	_session_banner.text = "DEBUG %s | profile=%s | scenario=%s | seed=%s | save=%s" % [
-		"TAINTED" if bool(snapshot.get("tainted", false)) else "SANDBOX",
+	var commit_short := _session_commit_id.substr(0, mini(8, _session_commit_id.length()))
+	_session_banner.text = "DEBUG/TEST · %s · commit=%s\nprofile=%s · scenario=%s · seed=%s\nsave=%s" % [
+		"TAINTED" if bool(snapshot.get("tainted", false)) else "CLEAN",
+		commit_short,
 		snapshot.get("profile_id", ""),
 		snapshot.get("scenario_id", ""),
 		snapshot.get("seed", 0),

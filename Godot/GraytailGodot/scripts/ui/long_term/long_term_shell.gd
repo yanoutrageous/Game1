@@ -115,6 +115,9 @@ var current_record_count := 0
 var selected_content_card_index := 0
 var selected_content_card_id_by_group: Dictionary = {}
 var content_card_page_by_group: Dictionary = {}
+var content_scroll_by_group: Dictionary = {}
+var navigation_history: Array[Dictionary] = []
+var restoring_navigation := false
 var pending_meta_action: Dictionary = {}
 var pending_background_meta_actions: Dictionary = {}
 var last_meta_action_result: Dictionary = {}
@@ -160,6 +163,9 @@ var ui_scale_factor := 1.0
 
 func build(model: Dictionary = {}) -> void:
 	_clear_children()
+	navigation_history.clear()
+	content_scroll_by_group.clear()
+	restoring_navigation = false
 	Art10UISkinKitScript.apply_player_ui_theme(self)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
@@ -330,7 +336,6 @@ func show_module(module_id: StringName = &"task_archive") -> void:
 	selected_module_id = normalized
 	requested_module_id = normalized
 	_refresh_module_buttons()
-	call_deferred("_mark_current_module_viewed", normalized)
 	if not page_active or not is_inside_tree() or reduced_motion:
 		_apply_module_immediately(normalized)
 		return
@@ -342,6 +347,7 @@ func show_module(module_id: StringName = &"task_archive") -> void:
 
 
 func show_secondary(group_id: StringName) -> void:
+	_remember_current_scroll()
 	var normalized := _normalize_secondary_id(displayed_module_id, group_id)
 	selected_secondary_by_module[displayed_module_id] = normalized
 	_refresh_secondary_buttons()
@@ -370,6 +376,101 @@ func get_secondary_ids(module_id: StringName = &"") -> Array[StringName]:
 	for group: Dictionary in _secondary_groups(target):
 		result.append(StringName(group.get("group_id", group.get("id", &""))))
 	return result
+
+
+func notification_route_for_module(module_id: StringName) -> Dictionary:
+	var normalized := _normalize_module_id(module_id)
+	var meta: Dictionary = current_model.get("meta_progress_summary", {})
+	var red_dots: Dictionary = current_model.get("m7_red_dot_state", {})
+	match normalized:
+		&"task_archive":
+			if bool(red_dots.get("claimable_rewards", false)):
+				return _first_action_notification(normalized, &"claim_goal")
+		&"codex":
+			var unread_codex := meta.get("unread_codex_ids", []) as Array
+			if not unread_codex.is_empty():
+				return _notification_for_card(normalized, str(unread_codex[0]), &"codex")
+		&"research":
+			if bool(red_dots.get("research_available", false)):
+				return _first_action_notification(normalized, &"complete_research")
+		&"talent":
+			if bool(red_dots.get("talent_available", false)):
+				return _first_action_notification(normalized, &"unlock_talent")
+		&"profile":
+			var unread_history := meta.get("unread_history_ids", []) as Array
+			if not unread_history.is_empty():
+				return _notification_for_card(
+					normalized,
+					"profile_history_%s" % str(unread_history.back()),
+					&"history",
+					&"history"
+				)
+		&"collection_appearance":
+			var unread_collection := meta.get("unread_collection_set_ids", []) as Array
+			if not unread_collection.is_empty():
+				return _notification_for_card(normalized, str(unread_collection[0]), &"collection", &"unique_display")
+	return {}
+
+
+func open_notification(notification: Dictionary) -> Dictionary:
+	if notification.is_empty():
+		return {"ok": false, "status": &"notification_missing"}
+	var module_id := _normalize_module_id(StringName(notification.get("module_id", &"task_archive")))
+	var secondary_id := _normalize_secondary_id(
+		module_id,
+		StringName(notification.get("secondary_id", &""))
+	)
+	var card_id := str(notification.get("card_id", notification.get("target_id", "")))
+	_push_navigation_state()
+	selected_secondary_by_module[module_id] = secondary_id
+	var group_key := "%s/%s" % [String(module_id), String(secondary_id)]
+	if card_id != "":
+		selected_content_card_id_by_group[group_key] = card_id
+	_apply_module_immediately(module_id)
+	var card_index := _content_card_index(card_id)
+	var card_found := card_id == "" or card_index >= 0
+	if card_index >= 0:
+		_select_long_term_card(card_index, true)
+	elif not current_content_cards.is_empty():
+		_select_long_term_card(0, true)
+	if not card_found:
+		if content_record_state_label != null:
+			content_record_state_label.text = "目标条目当前不可用，已打开所属分类。"
+		return {
+			"ok": false,
+			"status": &"notification_target_unavailable",
+			"module_id": module_id,
+			"secondary_id": secondary_id,
+			"card_id": card_id,
+			"history_depth": navigation_history.size(),
+		}
+	var pending_before := pending_background_meta_actions.size()
+	var view_kind := str(notification.get("view_kind", ""))
+	if view_kind != "":
+		_mark_current_module_viewed(module_id)
+	return {
+		"ok": true,
+		"status": &"notification_opened",
+		"module_id": module_id,
+		"secondary_id": secondary_id,
+		"card_id": card_id,
+		"unread_ack_requested": pending_background_meta_actions.size() > pending_before,
+		"history_depth": navigation_history.size(),
+	}
+
+
+func get_navigation_snapshot() -> Dictionary:
+	_remember_current_scroll()
+	return {
+		"current": _current_navigation_state(),
+		"history": navigation_history.duplicate(true),
+		"history_depth": navigation_history.size(),
+		"scroll_by_group": content_scroll_by_group.duplicate(true),
+	}
+
+
+func clear_navigation_history() -> void:
+	navigation_history.clear()
 
 
 func set_archive_collapsed(value: bool, animate: bool = true) -> void:
@@ -444,6 +545,8 @@ func _cancel_press_is_debounced(now_msec: int) -> bool:
 
 
 func _handle_cancel_focus_step() -> StringName:
+	if _restore_previous_page():
+		return &"history"
 	var focus := get_viewport().gui_get_focus_owner()
 	if archive_collapsed:
 		set_archive_collapsed(false)
@@ -728,12 +831,32 @@ func _rebuild_secondary_buttons() -> void:
 	for child in secondary_row.get_children():
 		secondary_row.remove_child(child)
 		child.queue_free()
-	for group: Dictionary in _secondary_groups(displayed_module_id):
+	var groups := _secondary_groups(displayed_module_id)
+	var gap := float(secondary_row.get_theme_constant("separation"))
+	var fitted_width := LongTermLayoutContractScript.SECONDARY_ROW_MIN.x
+	if not groups.is_empty():
+		fitted_width = floorf(
+			(
+				LongTermLayoutContractScript.SECONDARY_SCROLL.size.x
+				- gap * maxf(0.0, groups.size() - 1.0)
+			) / float(groups.size())
+		)
+		fitted_width = clampf(
+			fitted_width,
+			84.0,
+			LongTermLayoutContractScript.SECONDARY_ROW_MIN.x
+		)
+	for group: Dictionary in groups:
 		var group_id := StringName(group.get("group_id", group.get("id", &"")))
 		var button := Button.new()
 		button.name = "LongTermSecondary_%s_%s" % [String(displayed_module_id), String(group_id)]
 		button.text = String(group.get("title", group_id))
-		button.custom_minimum_size = LongTermLayoutContractScript.SECONDARY_ROW_MIN
+		button.custom_minimum_size = Vector2(
+			fitted_width,
+			LongTermLayoutContractScript.SECONDARY_ROW_MIN.y
+		)
+		button.clip_text = true
+		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		button.toggle_mode = true
 		button.focus_mode = Control.FOCUS_ALL
 		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -786,6 +909,11 @@ func _refresh_content() -> void:
 	_rebuild_content_cards(group)
 	_refresh_secondary_buttons()
 	_refresh_ui_scaled_copy()
+	call_deferred(
+		"_restore_content_scroll",
+		group_key,
+		int(content_scroll_by_group.get(group_key, 0))
+	)
 
 
 func _rebuild_content_cards(group: Dictionary) -> void:
@@ -914,6 +1042,12 @@ func _refresh_secondary_buttons() -> void:
 
 
 func _on_module_tab_pressed(module_id: StringName) -> void:
+	var notification := notification_route_for_module(module_id)
+	if not notification.is_empty():
+		open_notification(notification)
+		return
+	if module_id != displayed_module_id:
+		_push_navigation_state()
 	show_module(module_id)
 	var button := tab_buttons.get(module_id, null) as Button
 	if button != null:
@@ -921,6 +1055,8 @@ func _on_module_tab_pressed(module_id: StringName) -> void:
 
 
 func _on_secondary_pressed(group_id: StringName) -> void:
+	if group_id != get_selected_secondary_id():
+		_push_navigation_state()
 	show_secondary(group_id)
 	var button := secondary_buttons.get(group_id, null) as Button
 	if button != null:
@@ -1081,6 +1217,164 @@ func _normalize_secondary_id(module_id: StringName, group_id: StringName) -> Str
 		if candidate == group_id:
 			return candidate
 	return StringName((groups[0] as Dictionary).get("group_id", &"")) if not groups.is_empty() else &""
+
+
+func _notification_for_card(
+	module_id: StringName,
+	card_id: String,
+	view_kind: StringName = &"",
+	preferred_secondary_id: StringName = &""
+) -> Dictionary:
+	var secondary_id := _normalize_secondary_id(module_id, preferred_secondary_id)
+	var cards_by_group: Dictionary = current_model.get("m7_cards_by_group", {})
+	for group: Dictionary in _secondary_groups(module_id):
+		var candidate_secondary_id := StringName(group.get("group_id", group.get("id", &"")))
+		var group_key := "%s/%s" % [String(module_id), String(candidate_secondary_id)]
+		if _model_group_has_card(cards_by_group, group_key, card_id):
+			secondary_id = candidate_secondary_id
+			break
+	return {
+		"module_id": module_id,
+		"secondary_id": secondary_id,
+		"card_id": card_id,
+		"view_kind": view_kind,
+		"notification_kind": &"unread",
+	}
+
+
+func _first_action_notification(module_id: StringName, action_id: StringName) -> Dictionary:
+	var cards_by_group: Dictionary = current_model.get("m7_cards_by_group", {})
+	for group: Dictionary in _secondary_groups(module_id):
+		var secondary_id := StringName(group.get("group_id", group.get("id", &"")))
+		var group_key := "%s/%s" % [String(module_id), String(secondary_id)]
+		for raw_card in cards_by_group.get(group_key, []):
+			if not (raw_card is Dictionary):
+				continue
+			var card := raw_card as Dictionary
+			var action_value: Variant = card.get("action", {})
+			var action: Dictionary = action_value as Dictionary if action_value is Dictionary else {}
+			if StringName(action.get("action", &"")) == action_id:
+				return {
+					"module_id": module_id,
+					"secondary_id": secondary_id,
+					"card_id": str(card.get("id", "")),
+					"view_kind": &"",
+					"notification_kind": &"actionable",
+				}
+	return {}
+
+
+func _model_group_has_card(cards_by_group: Dictionary, group_key: String, card_id: String) -> bool:
+	for raw_card in cards_by_group.get(group_key, []):
+		if raw_card is Dictionary and str((raw_card as Dictionary).get("id", "")) == card_id:
+			return true
+	return false
+
+
+func _content_card_index(card_id: String) -> int:
+	if card_id.is_empty():
+		return -1
+	for index in range(current_content_cards.size()):
+		if str(current_content_cards[index].get("id", "")) == card_id:
+			return index
+	return -1
+
+
+func _remember_current_scroll() -> void:
+	if content_list_scroll == null or displayed_module_id == &"":
+		return
+	var group_key := "%s/%s" % [String(displayed_module_id), String(get_selected_secondary_id())]
+	content_scroll_by_group[group_key] = content_list_scroll.scroll_vertical
+
+
+func _current_navigation_state() -> Dictionary:
+	var secondary_id := get_selected_secondary_id()
+	var group_key := "%s/%s" % [String(displayed_module_id), String(secondary_id)]
+	var card_id := str(selected_content_card_id_by_group.get(group_key, ""))
+	var focus_zone := &"module"
+	if is_inside_tree():
+		var focus := get_viewport().gui_get_focus_owner()
+		if focus in long_term_card_buttons or focus == content_action_button:
+			focus_zone = &"card"
+		elif focus in secondary_button_order:
+			focus_zone = &"secondary"
+		elif focus == lever_button:
+			focus_zone = &"lever"
+	return {
+		"module_id": displayed_module_id,
+		"secondary_id": secondary_id,
+		"card_id": card_id,
+		"scroll_vertical": int(content_scroll_by_group.get(group_key, 0)),
+		"archive_collapsed": archive_collapsed,
+		"focus_zone": focus_zone,
+	}
+
+
+func _push_navigation_state() -> void:
+	if restoring_navigation or module_group == null:
+		return
+	_remember_current_scroll()
+	var state := _current_navigation_state()
+	if not navigation_history.is_empty() and navigation_history.back() == state:
+		return
+	navigation_history.append(state)
+	while navigation_history.size() > 32:
+		navigation_history.pop_front()
+
+
+func _restore_previous_page() -> bool:
+	if restoring_navigation or navigation_history.is_empty():
+		return false
+	_remember_current_scroll()
+	var state := (navigation_history.pop_back() as Dictionary).duplicate(true)
+	var module_id := _normalize_module_id(StringName(state.get("module_id", &"task_archive")))
+	var secondary_id := _normalize_secondary_id(module_id, StringName(state.get("secondary_id", &"")))
+	var group_key := "%s/%s" % [String(module_id), String(secondary_id)]
+	restoring_navigation = true
+	selected_secondary_by_module[module_id] = secondary_id
+	selected_content_card_id_by_group[group_key] = str(state.get("card_id", ""))
+	content_scroll_by_group[group_key] = int(state.get("scroll_vertical", 0))
+	archive_collapsed = bool(state.get("archive_collapsed", false))
+	_apply_module_immediately(module_id)
+	if module_group != null:
+		module_group.position = LongTermLayoutContractScript.COLLAPSED_OFFSET if archive_collapsed else Vector2.ZERO
+	_update_lever()
+	restoring_navigation = false
+	call_deferred("_restore_navigation_focus", state)
+	return true
+
+
+func _restore_content_scroll(group_key: String, scroll_vertical: int) -> void:
+	if content_list_scroll == null:
+		return
+	var current_group_key := "%s/%s" % [String(displayed_module_id), String(get_selected_secondary_id())]
+	if current_group_key != group_key:
+		return
+	content_list_scroll.scroll_vertical = maxi(0, scroll_vertical)
+	set_meta("last_scroll_restore_group", group_key)
+	set_meta("last_scroll_restore_value", content_list_scroll.scroll_vertical)
+
+
+func _restore_navigation_focus(state: Dictionary) -> void:
+	if not page_active or not is_visible_in_tree():
+		return
+	match StringName(state.get("focus_zone", &"card")):
+		&"secondary":
+			var secondary := secondary_buttons.get(get_selected_secondary_id(), null) as Button
+			if secondary != null:
+				secondary.grab_focus()
+				return
+		&"module":
+			var module_button := tab_buttons.get(displayed_module_id, null) as Button
+			if module_button != null:
+				module_button.grab_focus()
+				return
+		&"lever":
+			if lever_button != null:
+				lever_button.grab_focus()
+				return
+	if not long_term_card_buttons.is_empty():
+		long_term_card_buttons[clampi(selected_content_card_index, 0, long_term_card_buttons.size() - 1)].grab_focus()
 
 
 func _wire_long_term_tab_focus() -> void:
@@ -1472,7 +1766,7 @@ func _add_texture(parent: Control, node_name: String, rect: Rect2, texture: Text
 	return texture_rect
 
 
-func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color, alignment: HorizontalAlignment, _font_role: StringName = &"display") -> Label:
+func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color, alignment: HorizontalAlignment, font_role: StringName = &"display") -> Label:
 	var label := Label.new()
 	label.name = node_name
 	label.text = text
@@ -1482,9 +1776,10 @@ func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, f
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.clip_text = true
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var font: Font = _pixel_font_safe()
+	var font := Art10UISkinKitScript.font_for_role(font_role)
 	if font is Font:
 		label.add_theme_font_override("font", font as Font)
+	label.set_meta("ui_font_role", font_role)
 	label.set_meta("long_term_base_font_size", font_size)
 	match node_name:
 		"LongTermContentDetailTitle":

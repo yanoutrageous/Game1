@@ -112,7 +112,7 @@ func _check_quick_bag(surface: RunSurface, profile: Dictionary) -> void:
 			var rarity := ItemRarityDescriptor.describe_item(first_item)
 			var detail := surface.backpack_detail_label.text
 			_check(detail.contains(String(first_item.get("display_name", ""))), "Quick-bag focus detail omitted item name")
-			_check(detail.contains(String(rarity.get("display_text", ""))), "Quick-bag focus detail omitted non-color rarity")
+			_check(detail.contains(String(rarity.get("label", ""))) and not detail.contains("[T"), "Quick-bag focus detail omitted natural-language rarity or exposed a T-code")
 			_check(detail.contains("数量") and detail.contains("重量"), "Quick-bag focus detail omitted quantity or weight")
 	if surface.backpack_scroll != null:
 		_check(surface.backpack_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "Quick bag is not vertically scrollable")

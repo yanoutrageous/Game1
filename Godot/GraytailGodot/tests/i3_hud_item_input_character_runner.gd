@@ -104,12 +104,16 @@ func _check_hud_actions_and_items() -> void:
 	_require(bool(descriptor.get("read_only", false)), "shared item presentation is not read-only")
 	_require(String(descriptor.get("display_name", "")) == "沉星罗盘", "shared item name drifted")
 	_require(int(descriptor.get("quantity", 0)) == 3 and int(descriptor.get("weight", 0)) == 4, "shared item quantity/weight drifted")
-	_require(String(descriptor.get("detail_text", "")).contains("[T6] 秘藏"), "shared item detail omitted non-color rarity")
+	_require(String(descriptor.get("detail_text", "")).contains("秘藏") and not String(descriptor.get("detail_text", "")).contains("[T6]"), "shared item detail omitted natural-language rarity or exposed a T-code")
 	_require(not String(descriptor.get("detail_text", "")).contains("raw_internal_item_id"), "shared item detail leaked item_id")
 	var quick_button := surface.backpack_strip.get_child(0) as Button
 	_require(quick_button != null and quick_button.tooltip_text == String(descriptor.get("detail_text", "")), "quick bag bypassed the shared item detail")
 	_require(surface.backpack_detail_label.text == String(descriptor.get("detail_text", "")), "quick bag focus detail drifted from the shared descriptor")
-	_require(surface.backpack_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "quick bag real-item area is not scrollable")
+	_require(surface.current_backpack_item_count == 1, "single aggregated quick-bag row count drifted")
+	_require(
+		surface.backpack_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED,
+		"single quick-bag row reserved an unnecessary scroll range"
+	)
 	_require(surface.backpack_capacity_label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "quick bag burden is not bottom-centered")
 	_require(not _tree_text(surface.backpack_strip).contains("空位"), "quick bag rendered fake empty slots")
 

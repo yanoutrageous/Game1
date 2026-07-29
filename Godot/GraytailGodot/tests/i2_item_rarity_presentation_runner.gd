@@ -144,8 +144,8 @@ func _check_deploy_consumers() -> void:
 		if row.is_empty():
 			continue
 		_check(StringName(row.get("rarity", &"")) == descriptor.get("normalized_key"), "Deploy did not normalize %s" % item.get("item_id", ""))
-		_check(String(row.get("rarity_display_text", "")) == descriptor.get("display_text"), "Deploy display text drifted for %s" % item.get("item_id", ""))
-		_check(String(row.get("summary", "")).contains(String(descriptor.get("badge", ""))) and String(row.get("summary", "")).contains(String(descriptor.get("label", ""))), "Deploy summary lacks badge + label for %s" % item.get("item_id", ""))
+		_check(String(row.get("rarity_display_text", "")) == descriptor.get("label"), "Deploy natural-language rarity drifted for %s" % item.get("item_id", ""))
+		_check(String(row.get("summary", "")).contains(String(descriptor.get("label", ""))) and not String(row.get("summary", "")).contains("[T"), "Deploy summary did not replace T-code copy for %s" % item.get("item_id", ""))
 		var collectible_level := int(item.get("collectible_level", 0))
 		_check(collectible_level > 0 and int(row.get("collectible_level", 0)) == collectible_level, "Deploy did not project the authoritative collectible level for %s" % item.get("item_id", ""))
 		_check(String(row.get("summary", "")).contains("收藏 Lv.%d" % collectible_level), "Deploy summary omitted the collectible level for %s" % item.get("item_id", ""))
@@ -160,13 +160,13 @@ func _check_deploy_consumers() -> void:
 	canvas.add_child(card)
 	card.setup(tier_6_row, &"warehouse", true)
 	await process_frame
-	var chip := card.get_node_or_null("CardModeChipLabel") as Label
-	var category_chip := card.get_node_or_null("CardCategoryChipLabel") as Label
+	var title_label := card.get_node_or_null("CardTitle") as Label
 	var edge := card.get_node_or_null("CardRarityEdge") as ColorRect
 	var tier_6_descriptor: Dictionary = ItemRarityDescriptor.describe(&"tier_6")
 	var tier_6_collectible_level := int(tier_6.get("collectible_level", 0))
-	_check(chip != null and chip.text.contains("T6") and chip.text.contains("秘藏"), "Deploy card did not render the T6 non-color badge + label")
-	_check(category_chip != null and category_chip.text == "藏品 Lv.%d" % tier_6_collectible_level, "Deploy card did not render the authoritative collectible level")
+	_check(title_label != null and title_label.get_theme_color("font_color") == tier_6_descriptor.get("color"), "Deploy card title did not consume the shared rarity color")
+	_check(not JSON.stringify(card.get("card_data")).contains("[T6]"), "Deploy card still carried the T6 engineering badge")
+	_check(tier_6_collectible_level > 0, "Deploy card fixture lost its authoritative collectible level")
 	_check(edge != null and edge.color == tier_6_descriptor.get("color"), "Deploy card did not consume the shared T6 color")
 	_check(edge != null and edge.get_meta("rarity_border_token", &"") == tier_6_descriptor.get("border_token"), "Deploy card did not consume the shared T6 border token")
 	canvas.queue_free()
@@ -186,7 +186,7 @@ func _check_loot_result_consumer() -> void:
 	var card := panel.find_child("LootResultItemCard", true, false) as PanelContainer
 	var descriptor: Dictionary = ItemRarityDescriptor.describe_item(tier_6)
 	var collectible_level := int(tier_6.get("collectible_level", 0))
-	_check(meta != null and meta.text.contains("[T6] 秘藏"), "Loot result downgraded or omitted T6")
+	_check(meta != null and meta.text.contains("秘藏") and not meta.text.contains("[T6]"), "Loot result omitted natural-language rarity or exposed a T-code")
 	_check(collectible_level > 0 and meta != null and meta.text.contains("收藏等级 %d" % collectible_level), "Loot result omitted the authoritative collectible level")
 	_check(meta != null and not meta.text.contains("tier_6"), "Loot result leaked raw tier_6")
 	_check(edge != null and edge.color == descriptor.get("color"), "Loot result did not consume the shared T6 color")
@@ -209,7 +209,7 @@ func _check_world_popup_consumer() -> void:
 	var marker := popup.find_child("WorldContextItemRarityMarker", true, false) as ColorRect
 	var descriptor: Dictionary = ItemRarityDescriptor.describe_item(tier_6)
 	var collectible_level := int(tier_6.get("collectible_level", 0))
-	_check(info != null and info.text.contains("[T6] 秘藏"), "World popup downgraded or omitted T6")
+	_check(info != null and info.text.contains("秘藏") and not info.text.contains("[T6]"), "World popup omitted natural-language rarity or exposed a T-code")
 	_check(collectible_level > 0 and info != null and info.text.contains("收藏等级 %d" % collectible_level), "World popup omitted the authoritative collectible level")
 	_check(info != null and not info.text.contains("tier_6"), "World popup leaked raw tier_6")
 	_check(info != null and info.get_meta("rarity_border_token", &"") == descriptor.get("border_token"), "World popup did not consume the shared T6 border token")

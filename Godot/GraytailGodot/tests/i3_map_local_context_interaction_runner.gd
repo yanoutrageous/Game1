@@ -96,7 +96,18 @@ func _check_expanded_map(canvas: Control, map_size: int) -> void:
 	var mine_button := grid.get_node("MapCell_%d_%d" % [current.x + 1, current.y]) as Button
 	_check(StringName(monster_button.get_meta("map_marker_state", &"")) == &"monster", "Expanded map collapsed Monster into another semantic")
 	_check(StringName(mine_button.get_meta("map_marker_state", &"")) == &"mine", "Expanded map lost the Mine semantic")
-	_check(monster_button.icon != null and mine_button.icon != null and monster_button.icon != mine_button.icon, "Expanded map Monster and Mine do not have distinct rendered icons")
+	# I4-R043 replaces the legacy Button.icon assertion: semantic art now has a
+	# dedicated, clipped layer so it cannot collide with count/focus layers.
+	var monster_icon := monster_button.get_node_or_null("SemanticMarker") as TextureRect
+	var mine_icon := mine_button.get_node_or_null("SemanticMarker") as TextureRect
+	_check(
+		monster_icon != null
+		and mine_icon != null
+		and monster_icon.texture != null
+		and mine_icon.texture != null
+		and monster_icon.texture != mine_icon.texture,
+		"Expanded map Monster and Mine do not have distinct rendered semantic-layer icons"
+	)
 	monster_button.grab_focus()
 	await _frames(1)
 	_check(Vector2i(overlay.selected_marker.get("pos", Vector2i(-1, -1))) == current + Vector2i(-1, 0), "Focus movement did not synchronize selection")

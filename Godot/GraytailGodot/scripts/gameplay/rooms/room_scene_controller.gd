@@ -26,11 +26,21 @@ func _apply_visuals() -> void:
 	var prop := get_node_or_null("Interactables/PropSprite") as Sprite2D
 	var background_asset := StringName(room_data.get("background_asset_id", &""))
 	var background_ref := ContentDBAccessScript.get_asset_ref(background_asset) if background_asset != &"" else null
+	var fallback := get_node_or_null("Background/MissingBackgroundFallback") as Node2D
 
-	if background != null and background_ref is Texture2D:
-		background.texture = background_ref
-		background.position = RuntimeLayout.ROOM_RECT.get_center()
-		background.scale = RuntimeLayout.ROOM_RECT.size / background_ref.get_size()
+	if background != null:
+		background.set_meta("requested_asset_id", background_asset)
+		background.texture = background_ref as Texture2D if background_ref is Texture2D else null
+		background.visible = background.texture != null
+		background.set_meta("texture_resolved", background.texture != null)
+		background.set_meta("resolved_texture_path", background.texture.resource_path if background.texture != null else "")
+		if background.texture != null:
+			background.position = RuntimeLayout.ROOM_RECT.get_center()
+			background.scale = RuntimeLayout.ROOM_RECT.size / background.texture.get_size()
+	if fallback != null:
+		fallback.visible = background == null or background.texture == null
+		fallback.set_meta("requested_asset_id", background_asset)
+		fallback.set_meta("fallback_reason", &"background_texture_unresolved" if fallback.visible else &"none")
 	if title != null:
 		title.text = "%s\n%s" % [String(room_data.get("title", "Room")), String(room_data.get("hint", ""))]
 		title.add_theme_color_override("font_color", PresentationTheme.color_for_key(StringName(room_data.get("risk_key", &"ui.text"))))
@@ -44,12 +54,41 @@ func _apply_visuals() -> void:
 
 func _ensure_background() -> void:
 	var background_layer := get_node_or_null("Background") as Node2D
-	if background_layer == null or background_layer.get_node_or_null("BackgroundSprite") != null:
+	if background_layer == null:
 		return
-	var sprite := Sprite2D.new()
-	sprite.name = "BackgroundSprite"
-	sprite.position = RuntimeLayout.ROOM_RECT.get_center()
-	background_layer.add_child(sprite)
+	if background_layer.get_node_or_null("BackgroundSprite") == null:
+		var sprite := Sprite2D.new()
+		sprite.name = "BackgroundSprite"
+		sprite.position = RuntimeLayout.ROOM_RECT.get_center()
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		background_layer.add_child(sprite)
+	if background_layer.get_node_or_null("MissingBackgroundFallback") == null:
+		var fallback := Node2D.new()
+		fallback.name = "MissingBackgroundFallback"
+		fallback.z_index = -1
+		var plate := Polygon2D.new()
+		plate.name = "FallbackPlate"
+		var rect := RuntimeLayout.ROOM_RECT
+		plate.polygon = PackedVector2Array([
+			rect.position,
+			Vector2(rect.end.x, rect.position.y),
+			rect.end,
+			Vector2(rect.position.x, rect.end.y),
+		])
+		plate.color = Color(0.035, 0.055, 0.058, 1.0)
+		fallback.add_child(plate)
+		var label := Label.new()
+		label.name = "FallbackLabel"
+		label.position = rect.get_center() - Vector2(150, 20)
+		label.size = Vector2(300, 40)
+		label.text = "房间图像未载入"
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 16)
+		label.add_theme_color_override("font_color", Color(0.72, 0.78, 0.74, 0.92))
+		fallback.add_child(label)
+		background_layer.add_child(fallback)
+		background_layer.move_child(fallback, 0)
 
 
 func _ensure_label() -> void:

@@ -108,6 +108,10 @@ static func validate(bundle: Dictionary) -> Dictionary:
 	}
 
 
+static func commit_id() -> String:
+	return _commit_id()
+
+
 static func _commit_id() -> String:
 	var configured := OS.get_environment("I4_EVIDENCE_COMMIT").strip_edges()
 	if not configured.is_empty():
