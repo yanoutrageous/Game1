@@ -107,11 +107,14 @@ $requiredPaths = @(
     'docs\00_governance\I4_EXECUTION_LEDGER.md',
     'docs\00_governance\I4_REQUIREMENT_MATRIX.md',
     'docs\30_engineering\godot\I4_REPRODUCIBLE_PRODUCTION_VALIDATION_RUNBOOK.md',
+    'tools\i4\audit_i4_legacy_assertions.ps1',
     'tools\i4\build_i4_content_census.ps1',
+    'tools\i4\capture_i4_census_matrix.ps1',
     'tools\i4\capture_i4_real_render.ps1',
     'tools\i4\godot_i4_content_census_runner.gd',
     'tools\i4\invoke_i4.ps1',
     'tools\i4\invoke_i4_repetition.ps1',
+    'tools\i4\legacy_assertion_disposition.json',
     'tools\i1\validation_manifest.json'
 )
 foreach ($relativePath in $requiredPaths) {
@@ -151,6 +154,40 @@ foreach ($runnerFile in $i4RunnerFiles) {
 }
 if ($fixedFrameViolations.Count -gt 0) {
     throw "I4 critical runner still contains a fixed-frame correctness helper: $($fixedFrameViolations -join ', ')"
+}
+
+$legacyAssertionLog = Join-Path $resolvedOutputRoot 'legacy_assertion_audit.log'
+$legacyAssertionScript = Join-Path $resolvedRoot 'tools\i4\audit_i4_legacy_assertions.ps1'
+$legacyAssertionArguments = @(
+    '-NoProfile',
+    '-NonInteractive',
+    '-ExecutionPolicy', 'Bypass',
+    '-File', $legacyAssertionScript,
+    '-SourceMode', $SourceMode,
+    '-RepoRoot', $resolvedRoot
+)
+$legacyAssertions = Invoke-I4Captured `
+    -Label 'legacy_assertion_audit' `
+    -LogPath $legacyAssertionLog `
+    -Command {
+        & powershell.exe @legacyAssertionArguments
+    }
+if (
+    $legacyAssertions.exit_code -ne 0 -or
+    $legacyAssertions.text -notmatch '(?m)^I4_LEGACY_ASSERTION_AUDIT=PASS source_mode=(?:worktree|head) files=15 '
+) {
+    throw 'I4 legacy-assertion disposition audit failed or omitted its exact 15-file marker.'
+}
+$legacyReportMatch = [regex]::Match(
+    $legacyAssertions.text,
+    '(?m)^I4_LEGACY_ASSERTION_AUDIT=PASS .* report=(.+) sha256=([0-9A-F]{64})$'
+)
+if (-not $legacyReportMatch.Success) {
+    throw 'I4 legacy-assertion audit omitted its report identity.'
+}
+$legacyReportPath = $legacyReportMatch.Groups[1].Value.Trim()
+if (-not (Test-Path -LiteralPath $legacyReportPath -PathType Leaf)) {
+    throw "I4 legacy-assertion audit report is missing: $legacyReportPath"
 }
 
 $manifestPath = Join-Path $resolvedRoot 'tools\i1\validation_manifest.json'
@@ -272,6 +309,9 @@ $report = [pscustomobject][ordered]@{
     protected_dirty = $protectedDirty
     i4_runner_count = $i4RunnerFiles.Count
     fixed_frame_correctness_helpers = $fixedFrameViolations.ToArray()
+    legacy_assertion_audit = $legacyAssertions
+    legacy_assertion_report_path = $legacyReportPath
+    legacy_assertion_report_sha256 = Get-I4Sha256 -Path $legacyReportPath
     manifest_sha256 = Get-I4Sha256 -Path $manifestPath
     registered_i4_runner_ids = $requiredI4RunnerIds
     quality_standard_tests = $quality
@@ -285,7 +325,7 @@ Write-I4Json -Value $report -Path $reportPath
 
 $summaryFormat = (
     'I4_STATIC=PASS source_mode={0} quality=12/12 i4_runners={1} protected_dirty=0 ' +
-    'fixed_frame_helpers=0 report={2} sha256={3}'
+    'fixed_frame_helpers=0 legacy_assertions=15/15 report={2} sha256={3}'
 )
 $summaryArguments = [object[]]@(
     $SourceMode,

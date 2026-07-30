@@ -549,81 +549,16 @@ func _build_run_overlay() -> void:
 	debug_toggle_button.visible = false
 	debug_toggle_button.disabled = not m1_debug_panel_enabled
 	debug_toggle_button.tooltip_text = "m1_debug_panel=true; dev/test-only cheat panel"
-	debug_panel = PanelContainer.new()
-	debug_panel.name = "DebugOperationPanel"
-	debug_panel.offset_left = 980.0
-	debug_panel.offset_top = 270.0
-	debug_panel.offset_right = 1220.0
-	debug_panel.offset_bottom = 690.0
-	debug_panel.visible = false
-	var debug_panel_style := StyleBoxFlat.new()
-	debug_panel_style.bg_color = Color(0.012, 0.032, 0.038, 0.97)
-	debug_panel_style.border_color = Color(0.28, 0.82, 0.76, 0.92)
-	debug_panel_style.border_width_left = 2
-	debug_panel_style.border_width_top = 2
-	debug_panel_style.border_width_right = 2
-	debug_panel_style.border_width_bottom = 2
-	debug_panel_style.corner_radius_top_left = 4
-	debug_panel_style.corner_radius_top_right = 4
-	debug_panel_style.corner_radius_bottom_left = 4
-	debug_panel_style.corner_radius_bottom_right = 4
-	debug_panel_style.content_margin_left = 10.0
-	debug_panel_style.content_margin_right = 10.0
-	debug_panel_style.content_margin_top = 8.0
-	debug_panel_style.content_margin_bottom = 8.0
-	debug_panel.add_theme_stylebox_override("panel", debug_panel_style)
-	run_overlay_root.add_child(debug_panel)
-	var debug_outer := VBoxContainer.new()
-	debug_outer.name = "DebugOperationContent"
-	debug_outer.add_theme_constant_override("separation", 8)
-	debug_panel.add_child(debug_outer)
-	var debug_header := HBoxContainer.new()
-	debug_header.name = "DebugOperationHeader"
-	debug_outer.add_child(debug_header)
-	var debug_title := Label.new()
-	debug_title.text = "诊断面板"
-	debug_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	debug_header.add_child(debug_title)
-	RunSceneDebugPanelControllerScript.add_button(
-		debug_header,
-		"关闭",
-		func() -> void: debug_panel_controller.close_panel(),
-		false
+	var debug_view := RunSceneDebugPanelControllerScript.build_panel_view(
+		run_overlay_root,
+		func() -> void: debug_panel_controller.close_panel()
 	)
-	var debug_note := Label.new()
-	debug_note.text = "只读检查不污染会话；写命令经真实命令总线并标记测试会话。"
-	debug_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	debug_outer.add_child(debug_note)
-	var coord_row := HBoxContainer.new()
-	coord_row.name = "DebugCoordinateRow"
-	coord_row.add_theme_constant_override("separation", 6)
-	debug_outer.add_child(coord_row)
-	var coord_label := Label.new()
-	coord_label.text = "坐标"
-	coord_row.add_child(coord_label)
-	debug_x_spin = SpinBox.new()
-	debug_x_spin.name = "DebugTeleportX"
-	debug_x_spin.min_value = 0
-	debug_x_spin.max_value = 99
-	debug_x_spin.step = 1
-	debug_x_spin.custom_minimum_size = Vector2(70, 28)
-	coord_row.add_child(debug_x_spin)
-	debug_y_spin = SpinBox.new()
-	debug_y_spin.name = "DebugTeleportY"
-	debug_y_spin.min_value = 0
-	debug_y_spin.max_value = 99
-	debug_y_spin.step = 1
-	debug_y_spin.custom_minimum_size = Vector2(70, 28)
-	coord_row.add_child(debug_y_spin)
-	debug_scroll = ScrollContainer.new()
-	debug_scroll.name = "DebugOperationScroll"
-	debug_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	debug_scroll.custom_minimum_size = Vector2(260, 360)
-	debug_outer.add_child(debug_scroll)
-	debug_content = VBoxContainer.new()
-	debug_content.name = "DebugOperationButtons"
-	debug_content.add_theme_constant_override("separation", 6)
-	debug_scroll.add_child(debug_content)
+	debug_panel = debug_view.get("panel") as PanelContainer
+	debug_content = debug_view.get("content") as VBoxContainer
+	debug_scroll = debug_view.get("scroll") as ScrollContainer
+	debug_x_spin = debug_view.get("x_spin") as SpinBox
+	debug_y_spin = debug_view.get("y_spin") as SpinBox
+	debug_log = debug_view.get("log") as Label
 	RunSceneDebugPanelControllerScript.add_section(debug_content, "只读状态 · 不污染")
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "刷新状态摘要", func() -> void: debug_panel_controller.meta_summary(), false)
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "捕获失败证据包", func() -> void: debug_panel_controller.capture_failure_bundle(), false)
@@ -663,11 +598,6 @@ func _build_run_overlay() -> void:
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "清空测试仓库", func() -> void: debug_panel_controller.meta_clear_warehouse())
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "立即保存沙盒档", func() -> void: debug_panel_controller.meta_save())
 	RunSceneDebugPanelControllerScript.add_button(debug_content, "清空沙盒存档", func() -> void: debug_panel_controller.meta_clear_save())
-	debug_log = Label.new()
-	debug_log.name = "DebugLastMessage"
-	debug_log.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	debug_outer.add_child(debug_log)
-
 	inventory_panel = InventoryPanelScript.new() as Control
 	inventory_panel.name = "InventoryPanel"
 	inventory_panel.connect("drop_item_requested", _on_inventory_drop_requested)

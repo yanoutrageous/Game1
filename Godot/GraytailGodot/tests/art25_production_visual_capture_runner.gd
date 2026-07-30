@@ -2,23 +2,96 @@ extends SceneTree
 
 const WorldObjectProjectionScript := preload("res://scripts/gameplay/runtime/g41_world_object_projection.gd")
 const EventServiceScript := preload("res://scripts/core/run/event_service.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
+const WAIT_TIMEOUT_MS := 5000
 
 # Diagnostic capture only. This runner instantiates main.tscn and operates the
 # production RunScene nodes; it is evidence for iteration, never a substitute
 # for the frozen Computer Use acceptance pass.
 
+var batch_mode := false
+var batch_failure := ""
+
 
 func _initialize() -> void:
-	call_deferred("_capture")
+	call_deferred("_run")
 
 
-func _capture() -> void:
+func _run() -> void:
 	var options := _parse_options(OS.get_cmdline_user_args())
+	if options.has("batch-manifest"):
+		batch_mode = true
+		await _capture_batch(options)
+		return
+	await _capture_one(options)
+
+
+func _capture_batch(options: Dictionary) -> void:
+	var manifest_path := String(options.get("batch-manifest", ""))
+	if not manifest_path.is_absolute_path():
+		manifest_path = ProjectSettings.globalize_path(manifest_path)
+	var file := FileAccess.open(manifest_path, FileAccess.READ)
+	if file == null:
+		_fail("batch manifest could not be opened: %s" % manifest_path)
+		quit(2)
+		return
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	if not parsed is Dictionary:
+		_fail("batch manifest root is not an object")
+		quit(2)
+		return
+	var requests := (parsed as Dictionary).get("requests", []) as Array
+	if requests.is_empty():
+		_fail("batch manifest contains no requests")
+		quit(2)
+		return
+	var captured := 0
+	for raw_request in requests:
+		if not raw_request is Dictionary:
+			_fail("batch request %d is not an object" % captured)
+			break
+		batch_failure = ""
+		await _capture_one((raw_request as Dictionary).duplicate(true))
+		if not batch_failure.is_empty():
+			break
+		captured += 1
+	if not batch_failure.is_empty() or captured != requests.size():
+		printerr(
+			"ART25_PRODUCTION_BATCH=FAIL captured=%d requested=%d reason=%s"
+			% [captured, requests.size(), batch_failure]
+		)
+		quit(2)
+		return
+	print(
+		"ART25_PRODUCTION_BATCH=PASS states=%d manifest=%s"
+		% [captured, manifest_path]
+	)
+	quit(0)
+
+
+func _capture_one(options: Dictionary) -> void:
 	var width := int(options.get("width", 1280))
 	var height := int(options.get("height", 720))
+	var ui_scale := Art10UISkinKitScript.set_runtime_ui_scale_factor(
+		float(options.get("ui-scale", 1.0))
+	)
 	var state := StringName(options.get("state", "run"))
 	var output := String(options.get("output", "res://art25_production_capture.png"))
-	var debug_state := state in [&"debug_settings", &"debug_sandbox", &"debug_panel"]
+	var debug_state := state in [
+		&"debug_settings",
+		&"debug_sandbox",
+		&"debug_panel",
+		&"debug_matrix",
+		&"debug_scenario_quad",
+	]
+	var debug_panel_requested := (
+		state == &"debug_panel"
+		or (
+			state == &"debug_matrix"
+			and String(options.get("panel", "collapsed")) == "expanded"
+		)
+	)
 	# Each invocation is a disposable capture process. Pinning the setting here
 	# makes normal and reduced-motion evidence deterministic without persisting a
 	# player preference or replacing any production presentation node.
@@ -26,6 +99,7 @@ func _capture() -> void:
 	ProjectSettings.set_setting("application/run/m1_debug_tools_enabled", debug_state)
 	root.size = Vector2i(width, height)
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+	root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_IGNORE
 	root.transparent_bg = false
 
 	var main_scene := load("res://scenes/main/main.tscn") as PackedScene
@@ -43,8 +117,37 @@ func _capture() -> void:
 	if run_scene == null:
 		_fail("RunScene missing")
 		return
-	if debug_state:
-		if not await _prepare_debug_state(run_scene, state):
+	if not bool(run_scene.call("set_ui_scale_factor", ui_scale)):
+		_fail("production RunScene rejected requested UI scale %.2f" % ui_scale)
+		return
+	if not await _await_condition(
+		func() -> bool:
+			var app_shell = run_scene.get("ui_shell")
+			return (
+				is_equal_approx(float(run_scene.call("get_ui_scale_factor")), ui_scale)
+				and app_shell != null
+				and is_equal_approx(float(app_shell.call("get_ui_scale_factor")), ui_scale)
+			),
+		"production UI scale %.2f" % ui_scale
+	):
+		return
+	if state == &"main_menu":
+		if not await _await_condition(
+			func() -> bool: return StringName(run_scene.get("screen_state")) == &"main_menu",
+			"production main menu"
+		):
+			return
+	elif state == &"settings":
+		if not bool(run_scene.call("_show_settings_shell")):
+			_fail("production settings could not open")
+			return
+		if not await _await_condition(
+			func() -> bool: return StringName(run_scene.get("screen_state")) == &"settings_shell",
+			"production settings"
+		):
+			return
+	elif debug_state:
+		if not await _prepare_debug_state(run_scene, state, options):
 			return
 	else:
 		run_scene.call("_start_standard_from_ui")
@@ -61,11 +164,46 @@ func _capture() -> void:
 		run_scene.call("_refresh_view_models")
 		if not await _await_layout_stable(run_scene, "seeded item preview"):
 			return
+	if state in [
+		&"quick_bag_empty",
+		&"quick_bag_one",
+		&"quick_bag_three",
+		&"quick_bag_overflow",
+	]:
+		var row_count := int({
+			&"quick_bag_empty": 0,
+			&"quick_bag_one": 1,
+			&"quick_bag_three": 3,
+			&"quick_bag_overflow": 4,
+		}.get(state, 0))
+		if not _seed_quick_bag_inventory(run_scene, row_count):
+			return
+		run_scene.call("_refresh_view_models")
+		if not await _await_layout_stable(run_scene, "quick-bag fixture %s" % String(state)):
+			return
+	if state == &"debug_scenario_quad":
+		if not await _capture_debug_scenario_quad(
+			run_scene,
+			options,
+			width,
+			height,
+			ui_scale
+		):
+			return
+		if batch_mode:
+			main.queue_free()
+			await main.tree_exited
+			await process_frame
+			return
+		quit(0)
+		return
 
 	match state:
-		&"run":
+		&"run", &"main_menu", &"settings":
 			pass
-		&"debug_settings", &"debug_sandbox", &"debug_panel":
+		&"debug_settings", &"debug_sandbox", &"debug_panel", &"debug_matrix":
+			pass
+		&"quick_bag_empty", &"quick_bag_one", &"quick_bag_three", &"quick_bag_overflow":
 			pass
 		&"map":
 			run_scene.call("_open_map_from_ui", &"art25_capture")
@@ -124,7 +262,7 @@ func _capture() -> void:
 			if state == &"exit_confirm":
 				run_scene.call("_handle_interact_pressed")
 				if not await _await_condition(
-					func() -> bool: return bool(run_scene.call("_runtime_modal_is_top", &"extract")),
+					func() -> bool: return bool(run_scene.call("_runtime_modal_is_top", &"extract_confirm")),
 					"extract confirmation modal"
 				):
 					return
@@ -158,6 +296,26 @@ func _capture() -> void:
 						target_pos.x = clampf(target_pos.x - 0.18, 0.12, 0.88)
 					loot_player.set_local_position(target_pos)
 					loot_view.advance(0.0, loot_player.get_local_position(), {})
+		&"pause":
+			run_scene.call("_show_pause_panel")
+			if not await _await_condition(
+				func() -> bool: return bool(run_scene.call("_runtime_modal_is_top", &"pause")),
+				"pause modal"
+			):
+				return
+		&"pause_settings":
+			run_scene.call("_show_pause_panel")
+			if not await _await_condition(
+				func() -> bool: return bool(run_scene.call("_runtime_modal_is_top", &"pause")),
+				"pause modal before settings"
+			):
+				return
+			run_scene.call("_open_settings_from_pause")
+			if not await _await_condition(
+				func() -> bool: return bool(run_scene.call("_runtime_modal_is_top", &"settings")),
+				"run settings modal"
+			):
+				return
 		&"result_success", &"result_success_empty", &"result_failure", &"result_salvage", &"result_failure_empty", &"result_failure_mixed", &"result_failure_final", &"result_failure_final_empty", &"result_abandon", &"result_abandon_empty", &"result_save_failed", &"result_save_recovered":
 			var result_panel = run_scene.get("result_panel")
 			if result_panel == null:
@@ -194,9 +352,18 @@ func _capture() -> void:
 		if expected_focus == null or root.gui_get_focus_owner() != expected_focus:
 			_fail("production ResultPanel focus is not visible for %s" % String(state))
 			return
-		if state == &"result_abandon" and _has_partially_visible_result_section(production_result):
-			_fail("result_abandon leaves a half-clipped item section in the initial viewport")
-			return
+		if state == &"result_abandon":
+			var partial_section := _partially_visible_result_section(production_result)
+			if not partial_section.is_empty():
+				_fail(
+					"result_abandon leaves a half-clipped item section: viewport=%s section=%s index=%d"
+					% [
+						partial_section.get("viewport_rect", Rect2()),
+						partial_section.get("section_rect", Rect2()),
+						int(partial_section.get("section_index", -1)),
+					]
+				)
+				return
 		if not _result_layout_is_safe(production_result, state, Vector2i(width, height)):
 			return
 	if state == &"event_merchant" and not _merchant_layout_is_safe(run_scene):
@@ -205,7 +372,12 @@ func _capture() -> void:
 		return
 	if state == &"exit_confirm" and not _extract_item_preview_is_safe(run_scene):
 		return
-	if state == &"debug_panel" and not _debug_panel_layout_is_safe(run_scene, Vector2i(width, height)):
+	if debug_panel_requested and not _debug_panel_layout_is_safe(run_scene, Vector2i(width, height)):
+		return
+	if (
+		StringName(run_scene.get("screen_state")) == &"run"
+		and not _folded_minimap_layout_is_safe(run_scene)
+	):
 		return
 
 	var image := root.get_texture().get_image()
@@ -221,7 +393,21 @@ func _capture() -> void:
 	if result != OK:
 		_fail("capture failed: %s" % error_string(result))
 		return
-	print("ART25_PRODUCTION_CAPTURE=PASS state=%s size=%dx%d output=%s" % [String(state), image.get_width(), image.get_height(), output_path])
+	print(
+		"ART25_PRODUCTION_CAPTURE=PASS state=%s size=%dx%d ui_scale=%d output=%s"
+		% [
+			String(state),
+			image.get_width(),
+			image.get_height(),
+			int(round(ui_scale * 100.0)),
+			output_path,
+		]
+	)
+	if batch_mode:
+		main.queue_free()
+		await main.tree_exited
+		await process_frame
+		return
 	quit(0)
 
 
@@ -339,6 +525,33 @@ func _seed_item_preview_inventory(run_scene: Node) -> bool:
 	return true
 
 
+func _seed_quick_bag_inventory(run_scene: Node, row_count: int) -> bool:
+	var run_context = run_scene.get("run_context")
+	if run_context == null or run_context.get("asset_ledger") == null:
+		_fail("quick-bag fixture has no RunAssetLedger")
+		return false
+	var ledger = run_context.get("asset_ledger")
+	ledger.item_instances.clear()
+	ledger.room_floor_items.clear()
+	var item_ids := ["con_ration", "con_tape_roll", "con_scan_pin", "eq_goggles"]
+	var rarity_ids := [&"tier_1", &"tier_2", &"tier_3", &"tier_4"]
+	for index in range(clampi(row_count, 0, item_ids.size())):
+		var definition := M7ContentCatalogScript.item_definition(item_ids[index])
+		if definition.is_empty():
+			_fail("quick-bag fixture item is absent from M7: %s" % item_ids[index])
+			return false
+		definition["instance_id"] = "capture_quick_bag_%d_%s" % [index, item_ids[index]]
+		definition["rarity"] = rarity_ids[index]
+		ledger.create_item_instance(definition, RunAssetLedger.LOCATION_INVENTORY)
+	var actual_count: int = ledger.get_items_by_location(
+		RunAssetLedger.LOCATION_INVENTORY
+	).size()
+	if actual_count != row_count:
+		_fail("quick-bag fixture expected %d rows, created %d" % [row_count, actual_count])
+		return false
+	return true
+
+
 func _inventory_item_preview_is_safe(run_scene: Node) -> bool:
 	var inventory = run_scene.get("inventory_panel") as Control
 	var marker := inventory.find_child("InventoryItemRarityMarker", true, false) as ColorRect if inventory != null else null
@@ -378,16 +591,40 @@ func _debug_panel_layout_is_safe(run_scene: Node, viewport_size: Vector2i) -> bo
 		return false
 	var panel_rect := panel.get_global_rect()
 	if panel_rect.size.x > float(viewport_size.x) * 0.28 + 0.5:
-		_fail("expanded debug panel exceeded 28%% viewport width")
+		_fail(
+			"expanded debug panel exceeded 28%% viewport width: actual=%.1f limit=%.1f rect=%s viewport=%s"
+			% [
+				panel_rect.size.x,
+				float(viewport_size.x) * 0.28,
+				str(panel_rect),
+				str(viewport_size),
+			]
+		)
 		return false
 	if panel_rect.size.y > float(viewport_size.y) * 0.75 + 0.5:
-		_fail("expanded debug panel exceeded 75%% viewport height")
+		_fail(
+			"expanded debug panel exceeded 75%% viewport height: actual=%.1f limit=%.1f rect=%s viewport=%s"
+			% [
+				panel_rect.size.y,
+				float(viewport_size.y) * 0.75,
+				str(panel_rect),
+				str(viewport_size),
+			]
+		)
 		return false
-	if panel_rect.intersects(action_bar.get_global_rect(), true):
-		_fail("expanded debug panel overlapped the production action dock")
+	var action_rect := action_bar.get_global_rect()
+	if panel_rect.intersects(action_rect, true):
+		_fail(
+			"expanded debug panel overlapped the production action dock: panel=%s action=%s"
+			% [str(panel_rect), str(action_rect)]
+		)
 		return false
-	if panel_rect.intersects(protocol.get_global_rect(), true):
-		_fail("expanded debug panel overlapped the production protocol card")
+	var protocol_rect := protocol.get_global_rect()
+	if panel_rect.intersects(protocol_rect, true):
+		_fail(
+			"expanded debug panel overlapped the production protocol card: panel=%s protocol=%s"
+			% [str(panel_rect), str(protocol_rect)]
+		)
 		return false
 	var focus_owner := root.gui_get_focus_owner()
 	if focus_owner == null or not panel.is_ancestor_of(focus_owner):
@@ -396,6 +633,54 @@ func _debug_panel_layout_is_safe(run_scene: Node, viewport_size: Vector2i) -> bo
 	if bool(player.get("input_enabled")):
 		_fail("expanded debug panel left production movement input enabled")
 		return false
+	return true
+
+
+func _folded_minimap_layout_is_safe(run_scene: Node) -> bool:
+	var run_surface = run_scene.get("run_surface")
+	var panel = run_surface.get_minimap_panel() as Control if run_surface != null else null
+	var grid := panel.get_node_or_null("Grid") as GridContainer if panel != null else null
+	if panel == null or grid == null:
+		_fail("folded minimap visual check is missing production controls")
+		return false
+	if not panel.clip_contents:
+		_fail("folded minimap host does not clip its cell layers")
+		return false
+	var visible_rect: Rect2i = panel.get("visible_map_rect")
+	var expected_cells := visible_rect.size.x * visible_rect.size.y
+	if expected_cells <= 0 or grid.get_child_count() != expected_cells:
+		_fail(
+			"folded minimap cell count drifted: expected=%d actual=%d"
+			% [expected_cells, grid.get_child_count()]
+		)
+		return false
+	var panel_rect := panel.get_global_rect().grow(0.5)
+	var grid_rect := grid.get_global_rect().grow(0.5)
+	if not panel_rect.encloses(grid_rect):
+		_fail(
+			"folded minimap grid escaped its host: panel=%s grid=%s"
+			% [panel.get_global_rect(), grid.get_global_rect()]
+		)
+		return false
+	for raw_cell in grid.get_children():
+		var cell := raw_cell as Control
+		if cell == null or not cell.is_visible_in_tree():
+			continue
+		var cell_rect := cell.get_global_rect()
+		if not panel_rect.encloses(cell_rect) or not grid_rect.encloses(cell_rect):
+			_fail(
+				"folded minimap exposes a clipped cell %s: panel=%s grid=%s cell=%s"
+				% [
+					cell.name,
+					panel.get_global_rect(),
+					grid.get_global_rect(),
+					cell_rect,
+				]
+			)
+			return false
+		if not cell.clip_contents:
+			_fail("folded minimap cell %s does not clip its local layers" % cell.name)
+			return false
 	return true
 
 
@@ -555,22 +840,31 @@ func _has_reduced_motion_enemy(run_scene) -> bool:
 	return false
 
 
-func _has_partially_visible_result_section(result_panel) -> bool:
+func _partially_visible_result_section(result_panel) -> Dictionary:
 	if result_panel == null:
-		return false
+		return {}
 	var scroll := result_panel.get_node_or_null("ResultItemSectionsScroll") as ScrollContainer
 	var sections := result_panel.get_node_or_null("ResultItemSectionsScroll/ResultItemSections") as VBoxContainer
 	if scroll == null or sections == null:
-		return true
+		return {
+			"section_index": -1,
+			"viewport_rect": Rect2(),
+			"section_rect": Rect2(),
+		}
 	var viewport_rect := scroll.get_global_rect()
-	for child in sections.get_children():
+	for section_index in range(sections.get_child_count()):
+		var child := sections.get_child(section_index)
 		if not (child is Control) or not (child as Control).visible:
 			continue
 		var section_rect := (child as Control).get_global_rect()
 		var intersects := section_rect.end.y > viewport_rect.position.y + 0.5 and section_rect.position.y < viewport_rect.end.y - 0.5
 		if intersects and (section_rect.position.y < viewport_rect.position.y - 0.5 or section_rect.end.y > viewport_rect.end.y + 0.5):
-			return true
-	return false
+			return {
+				"section_index": section_index,
+				"viewport_rect": viewport_rect,
+				"section_rect": section_rect,
+			}
+	return {}
 
 
 func _result_layout_is_safe(result_panel, state: StringName, viewport_size: Vector2i) -> bool:
@@ -610,7 +904,11 @@ func _result_layout_is_safe(result_panel, state: StringName, viewport_size: Vect
 	return true
 
 
-func _prepare_debug_state(run_scene: Node, state: StringName) -> bool:
+func _prepare_debug_state(
+	run_scene: Node,
+	state: StringName,
+	options: Dictionary
+) -> bool:
 	if not bool(run_scene.call("_show_settings_shell")):
 		_fail("production settings could not open for debug test-room capture")
 		return false
@@ -629,7 +927,28 @@ func _prepare_debug_state(run_scene: Node, state: StringName) -> bool:
 		return false
 	if state == &"debug_settings":
 		return await _await_layout_stable(ui_shell, "debug settings")
-	test_room_button.pressed.emit()
+	var scenario_id := StringName(options.get("scenario", "demo_7x7"))
+	var seed := int(options.get("seed", 1001))
+	if state in [&"debug_matrix", &"debug_scenario_quad"]:
+		run_scene.call("_on_app_shell_host_route_requested", {
+			"target": &"run",
+			"source": &"settings_test_room",
+			"payload": {
+				"entry_id": &"i4_debug_test_room",
+				"entry_label": "隔离测试场",
+				"source_page": &"settings_placeholder",
+				"route_mode": &"demo_run",
+				"debug_test_room": true,
+				"scenario_id": scenario_id,
+				"seed_value": seed,
+				"playable_route": true,
+				"preview_only": false,
+			},
+			"requires_confirm": false,
+			"blocked_reason": &"",
+		})
+	else:
+		test_room_button.pressed.emit()
 	if not await _await_condition(
 		func() -> bool:
 			var controller = run_scene.get("debug_panel_controller")
@@ -645,7 +964,71 @@ func _prepare_debug_state(run_scene: Node, state: StringName) -> bool:
 	if banner == null or not banner.is_visible_in_tree():
 		_fail("isolated test room omitted its profile/scenario/seed/save banner")
 		return false
-	if state == &"debug_panel":
+	var controller = run_scene.get("debug_panel_controller")
+	var session_snapshot: Dictionary = (
+		controller.call("test_room_snapshot")
+		if controller != null
+		else {}
+	)
+	if (
+		StringName(session_snapshot.get("scenario_id", &"")) != scenario_id
+		or int(session_snapshot.get("seed", 0)) != seed
+	):
+		_fail(
+			"isolated test room identity drifted: expected=%s/%d actual=%s/%d"
+			% [
+				String(scenario_id),
+				seed,
+				String(session_snapshot.get("scenario_id", "")),
+				int(session_snapshot.get("seed", 0)),
+			]
+		)
+		return false
+	if bool(session_snapshot.get("tainted", true)):
+		_fail("deterministic scenario fixture did not establish a CLEAN baseline")
+		return false
+	if not _debug_fixture_matches(session_snapshot, scenario_id):
+		return false
+	var taint_requested := (
+		state in [&"debug_matrix", &"debug_scenario_quad"]
+		and String(options.get("taint", "clean")) == "tainted"
+	)
+	if taint_requested:
+		var taint_result: Dictionary = run_scene.call(
+			"_dispatch_command",
+			&"debug_add_run_black_coin",
+			{"source": "i4_capture_taint", "amount": 1},
+			false,
+			false
+		)
+		if not bool(taint_result.get("ok", false)):
+			_fail("debug matrix taint command was rejected")
+			return false
+		controller.call("sync_coordinates")
+		if not await _await_condition(
+			func() -> bool:
+				var active_controller = run_scene.get("debug_panel_controller")
+				return (
+					active_controller != null
+					and bool(
+						(active_controller.call("test_room_snapshot") as Dictionary)
+						.get("tainted", false)
+					)
+				),
+			"debug matrix taint banner"
+		):
+			return false
+		if not banner.text.contains("TAINTED"):
+			_fail("debug matrix taint state did not update the visible session banner")
+			return false
+	var panel_requested := (
+		state == &"debug_panel"
+		or (
+			state == &"debug_matrix"
+			and String(options.get("panel", "collapsed")) == "expanded"
+		)
+	)
+	if panel_requested:
 		run_scene.call("_open_debug_panel")
 		if not await _await_condition(
 			func() -> bool:
@@ -654,11 +1037,241 @@ func _prepare_debug_state(run_scene: Node, state: StringName) -> bool:
 			"expanded debug panel"
 		):
 			return false
+	elif state in [&"debug_matrix", &"debug_scenario_quad"]:
+		var debug_panel = run_scene.get("debug_panel") as Control
+		if debug_panel == null or debug_panel.visible:
+			_fail("collapsed debug matrix state exposed the diagnostics panel")
+			return false
 	return await _await_layout_stable(run_scene, String(state))
 
 
-func _await_condition(predicate: Callable, label: String, max_process_frames: int = 360) -> bool:
-	for _poll in range(max_process_frames):
+func _capture_debug_scenario_quad(
+	run_scene: Node,
+	options: Dictionary,
+	width: int,
+	height: int,
+	ui_scale: float
+) -> bool:
+	var scenario_id := StringName(options.get("scenario", "demo_7x7"))
+	var output_dir := String(options.get("output-dir", ""))
+	if output_dir.is_empty():
+		_fail("debug scenario quad omitted output-dir")
+		return false
+	if not output_dir.is_absolute_path():
+		output_dir = ProjectSettings.globalize_path(output_dir)
+	var mkdir_error := DirAccess.make_dir_recursive_absolute(output_dir)
+	if mkdir_error != OK and not DirAccess.dir_exists_absolute(output_dir):
+		_fail("debug scenario quad could not create output-dir: %s" % output_dir)
+		return false
+	var controller = run_scene.get("debug_panel_controller")
+	var banner := run_scene.find_child("DebugSandboxBanner", true, false) as Label
+	var panel = run_scene.get("debug_panel") as Control
+	if controller == null or banner == null or panel == null:
+		_fail("debug scenario quad is missing production controls")
+		return false
+	if bool((controller.call("test_room_snapshot") as Dictionary).get("tainted", true)):
+		_fail("debug scenario quad did not start CLEAN")
+		return false
+	if panel.visible or not banner.text.contains("CLEAN"):
+		_fail("debug scenario quad clean/collapsed state drifted")
+		return false
+	if not _folded_minimap_layout_is_safe(run_scene):
+		return false
+	if not _save_debug_quad_image(
+		output_dir,
+		scenario_id,
+		&"clean",
+		&"collapsed",
+		width,
+		height,
+		ui_scale
+	):
+		return false
+
+	run_scene.call("_open_debug_panel")
+	if not await _await_condition(
+		func() -> bool: return panel.is_visible_in_tree(),
+		"debug quad clean expanded panel"
+	):
+		return false
+	if not await _await_layout_stable(run_scene, "debug quad clean expanded"):
+		return false
+	if not _debug_panel_layout_is_safe(run_scene, Vector2i(width, height)):
+		return false
+	if not _save_debug_quad_image(
+		output_dir,
+		scenario_id,
+		&"clean",
+		&"expanded",
+		width,
+		height,
+		ui_scale
+	):
+		return false
+
+	controller.call("close_panel")
+	if not await _await_condition(
+		func() -> bool: return not panel.is_visible_in_tree(),
+		"debug quad close before taint"
+	):
+		return false
+	var taint_result: Dictionary = run_scene.call(
+		"_dispatch_command",
+		&"debug_add_run_black_coin",
+		{"source": "i4_capture_taint", "amount": 1},
+		false,
+		false
+	)
+	if not bool(taint_result.get("ok", false)):
+		_fail("debug scenario quad taint command was rejected")
+		return false
+	controller.call("sync_coordinates")
+	if not await _await_condition(
+		func() -> bool:
+			return (
+				bool(
+					(controller.call("test_room_snapshot") as Dictionary)
+					.get("tainted", false)
+				)
+				and banner.text.contains("TAINTED")
+			),
+		"debug quad tainted identity"
+	):
+		return false
+	if not await _await_layout_stable(run_scene, "debug quad tainted collapsed"):
+		return false
+	if not _save_debug_quad_image(
+		output_dir,
+		scenario_id,
+		&"tainted",
+		&"collapsed",
+		width,
+		height,
+		ui_scale
+	):
+		return false
+
+	run_scene.call("_open_debug_panel")
+	if not await _await_condition(
+		func() -> bool: return panel.is_visible_in_tree(),
+		"debug quad tainted expanded panel"
+	):
+		return false
+	if not await _await_layout_stable(run_scene, "debug quad tainted expanded"):
+		return false
+	if not _debug_panel_layout_is_safe(run_scene, Vector2i(width, height)):
+		return false
+	if not _save_debug_quad_image(
+		output_dir,
+		scenario_id,
+		&"tainted",
+		&"expanded",
+		width,
+		height,
+		ui_scale
+	):
+		return false
+	print(
+		"ART25_DEBUG_QUAD=PASS scenario=%s states=4 size=%dx%d ui_scale=%d output=%s"
+		% [
+			String(scenario_id),
+			width,
+			height,
+			int(round(ui_scale * 100.0)),
+			output_dir,
+		]
+	)
+	return true
+
+
+func _save_debug_quad_image(
+	output_dir: String,
+	scenario_id: StringName,
+	taint_state: StringName,
+	panel_state: StringName,
+	width: int,
+	height: int,
+	ui_scale: float
+) -> bool:
+	var image := root.get_texture().get_image()
+	if image == null or image.is_empty():
+		_fail(
+			"debug scenario quad returned no image for %s/%s/%s"
+			% [String(scenario_id), String(taint_state), String(panel_state)]
+		)
+		return false
+	if image.get_size() != Vector2i(width, height):
+		_fail(
+			"debug scenario quad size mismatch for %s/%s/%s"
+			% [String(scenario_id), String(taint_state), String(panel_state)]
+		)
+		return false
+	var file_name := "%s__%s__%s__%dx%d__ui%d.png" % [
+		String(scenario_id),
+		String(taint_state),
+		String(panel_state),
+		width,
+		height,
+		int(round(ui_scale * 100.0)),
+	]
+	var save_error := image.save_png(output_dir.path_join(file_name))
+	if save_error != OK:
+		_fail(
+			"debug scenario quad save failed for %s: %s"
+			% [file_name, error_string(save_error)]
+		)
+		return false
+	return true
+
+
+func _debug_fixture_matches(
+	session_snapshot: Dictionary,
+	scenario_id: StringName
+) -> bool:
+	var fixture := session_snapshot.get("fixture", {}) as Dictionary
+	if (
+		not bool(fixture.get("ok", false))
+		or StringName(fixture.get("scenario_id", &"")) != scenario_id
+	):
+		_fail(
+			"debug scenario fixture was not admitted: scenario=%s fixture=%s"
+			% [String(scenario_id), fixture]
+		)
+		return false
+	var current_room := StringName(fixture.get("current_room_type", &"Unknown"))
+	var backpack_count := int(fixture.get("backpack_count", -1))
+	var ground_count := int(fixture.get("ground_count", -1))
+	var matches := true
+	match scenario_id:
+		&"demo_7x7":
+			matches = int(fixture.get("applied_command_count", -1)) == 0
+		&"combat_room":
+			matches = current_room == &"Monster"
+		&"full_backpack":
+			matches = backpack_count >= 10 and ground_count >= 1
+		&"duplicate_items":
+			matches = backpack_count >= 3
+		&"terminal_success_failure":
+			matches = current_room == &"Exit"
+		&"persistence_failure":
+			matches = bool(fixture.get("failure_injection_armed", false))
+		_:
+			matches = false
+	if not matches:
+		_fail(
+			"debug scenario fixture content drifted: scenario=%s fixture=%s"
+			% [String(scenario_id), fixture]
+		)
+	return matches
+
+
+func _await_condition(
+	predicate: Callable,
+	label: String,
+	timeout_ms: int = WAIT_TIMEOUT_MS
+) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() <= deadline:
 		await process_frame
 		if bool(predicate.call()):
 			return true
@@ -666,10 +1279,15 @@ func _await_condition(predicate: Callable, label: String, max_process_frames: in
 	return false
 
 
-func _await_layout_stable(subject: Node, label: String, max_process_frames: int = 360) -> bool:
+func _await_layout_stable(
+	subject: Node,
+	label: String,
+	timeout_ms: int = WAIT_TIMEOUT_MS
+) -> bool:
 	var previous := ""
 	var stable_submissions := 0
-	for _poll in range(max_process_frames):
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while Time.get_ticks_msec() <= deadline:
 		await process_frame
 		var current := _visible_layout_fingerprint(subject)
 		if not current.is_empty() and current == previous:
@@ -721,4 +1339,8 @@ func _parse_options(arguments: PackedStringArray) -> Dictionary:
 
 func _fail(message: String) -> void:
 	push_error("ART25_PRODUCTION_CAPTURE:%s" % message)
+	if batch_mode:
+		if batch_failure.is_empty():
+			batch_failure = message
+		return
 	quit(2)

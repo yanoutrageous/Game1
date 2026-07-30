@@ -381,7 +381,7 @@ func apply_surface_model(model: Dictionary) -> void:
 	var protocol_level := clampi(int(model.get("protocol_level", 5)), 1, 5)
 	var protocol_title := String(model.get("protocol_title", RunSurfaceModelScript.protocol_title_for_level(protocol_level)))
 	right_title_label.text = "协议 %s" % protocol_level
-	right_body_label.text = "%s · 压力 %s/100" % [protocol_title, model.get("pressure", "--")]
+	right_body_label.text = "%s · 压力 %s%%" % [protocol_title, model.get("pressure", "--")]
 	_update_protocol_presentation(model.get("protocol_level", 5), model.get("pressure", 0))
 	event_label.text = ""
 	event_label.visible = false
@@ -433,7 +433,7 @@ func apply_combat_snapshot(snapshot: Dictionary) -> void:
 			alive_enemies += 1
 	var protocol_level := clampi(int(snapshot.get("protocol_level", 5)), 1, 5)
 	right_title_label.text = "协议 %s" % protocol_level
-	right_body_label.text = "%s · 压力 %s/100" % [
+	right_body_label.text = "%s · 压力 %s%%" % [
 		RunSurfaceModelScript.protocol_title_for_level(protocol_level),
 		snapshot.get("pressure", 0),
 	]
@@ -595,6 +595,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var backpack_top: float = scanner_stats_top + stats_height + 10.0
 	var backpack_row_height := 46.0
 	var backpack_gap := 4.0
+	var backpack_capacity_gap := 8.0
 	var backpack_visible_rows := mini(current_backpack_item_count, 3)
 	var backpack_list_height := (
 		48.0
@@ -604,14 +605,15 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var backpack_header_height := 24.0
 	var backpack_detail_height := 44.0
 	var backpack_capacity_height := 24.0
-	var backpack_outer_padding := 8.0
+	var backpack_outer_padding := 6.0
 	var backpack_panel_height := (
 		backpack_outer_padding * 2.0
 		+ backpack_header_height
 		+ backpack_list_height
 		+ backpack_detail_height
 		+ backpack_capacity_height
-		+ backpack_gap * 3.0
+		+ backpack_gap * 2.0
+		+ backpack_capacity_gap
 	)
 	var backpack_available_height := maxf(168.0, height - backpack_top - 12.0)
 	if backpack_panel_height > backpack_available_height and backpack_visible_rows > 0:
@@ -629,7 +631,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 			+ backpack_list_height
 			+ backpack_detail_height
 			+ backpack_capacity_height
-			+ backpack_gap * 3.0
+			+ backpack_gap * 2.0
+			+ backpack_capacity_gap
 		)
 	var preferred_key_width := (620.0 if is_low else 720.0) + 80.0 * ui_scale_step
 	var bottom_key_width: float = minf(preferred_key_width, gameplay_width - margin * 3.0)
@@ -665,12 +668,27 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(status_card_art, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(protocol_level_plate, Rect2())
 	var protocol_visible_border := 12.0
-	var protocol_safe_inset := maxf(protocol_visible_border + 6.0, 14.0)
+	var protocol_left_inset := maxf(
+		float(status_card_art.get_patch_margin(SIDE_LEFT)),
+		right_card_width * 0.18
+	)
+	var protocol_top_inset := maxf(
+		protocol_visible_border + 6.0,
+		float(status_card_art.get_patch_margin(SIDE_TOP))
+	)
+	var protocol_right_inset := maxf(
+		protocol_visible_border + 6.0,
+		float(status_card_art.get_patch_margin(SIDE_RIGHT))
+	)
+	var protocol_bottom_inset := maxf(
+		protocol_visible_border + 6.0,
+		float(status_card_art.get_patch_margin(SIDE_BOTTOM))
+	)
 	var protocol_safe_rect := Rect2(
-		Vector2(right_left + protocol_safe_inset, margin + protocol_safe_inset),
+		Vector2(right_left + protocol_left_inset, margin + protocol_top_inset),
 		Vector2(
-			maxf(1.0, right_card_width - protocol_safe_inset * 2.0),
-			maxf(1.0, right_card_height - protocol_safe_inset * 2.0)
+			maxf(1.0, right_card_width - protocol_left_inset - protocol_right_inset),
+			maxf(1.0, right_card_height - protocol_top_inset - protocol_bottom_inset)
 		)
 	)
 	var protocol_copy_left := protocol_safe_rect.position.x
@@ -762,7 +780,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	)
 	var backpack_capacity_rect := Rect2(
 		backpack_content_left,
-		backpack_detail_rect.end.y + backpack_gap,
+		backpack_detail_rect.end.y + backpack_capacity_gap,
 		backpack_content_width,
 		backpack_capacity_height
 	)

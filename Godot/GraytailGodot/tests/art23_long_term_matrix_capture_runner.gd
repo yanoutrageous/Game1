@@ -1,5 +1,7 @@
 extends SceneTree
 
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+
 const MATRIX := [
 	[&"task_archive", [&"task", &"achievement", &"commission_record"]],
 	[&"codex", [&"map", &"monster", &"collectible", &"equipment", &"consumable", &"event", &"rule", &"lore"]],
@@ -19,9 +21,11 @@ func _capture_matrix() -> void:
 	var options := _parse_options(OS.get_cmdline_user_args())
 	var width := int(options.get("width", 1280))
 	var height := int(options.get("height", 720))
+	var ui_scale := float(options.get("ui-scale", 1.0))
 	var output_dir := String(options.get("output-dir", "res://art23_long_term_matrix"))
 	var output_path := output_dir if output_dir.is_absolute_path() else ProjectSettings.globalize_path(output_dir)
 	DirAccess.make_dir_recursive_absolute(output_path)
+	ui_scale = Art10UISkinKitScript.set_runtime_ui_scale_factor(ui_scale)
 
 	root.size = Vector2i(1280, 720)
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_DISABLED
@@ -46,6 +50,7 @@ func _capture_matrix() -> void:
 	shell.size = Vector2(1280, 720)
 	design_root.add_child(shell)
 	shell.call("build")
+	shell.call("set_ui_scale_factor", ui_scale)
 	shell.call("apply_snapshot", {
 		"meta_progress_summary": {
 			"profile_level": 12, "profile_exp": 3456, "run_count": 23,
@@ -103,14 +108,26 @@ func _capture_matrix() -> void:
 				push_error("ART23 matrix renderer returned no image")
 				quit(2)
 				return
-			var file_path := output_path.path_join("%s__%s__%dx%d.png" % [String(module_id), String(group_id), width, height])
+			var file_path := output_path.path_join(
+				"%s__%s__%dx%d__ui%d.png"
+				% [
+					String(module_id),
+					String(group_id),
+					width,
+					height,
+					int(round(ui_scale * 100.0)),
+				]
+			)
 			var result := image.save_png(file_path)
 			if result != OK:
 				push_error("ART23 matrix capture failed: %s" % file_path)
 				quit(2)
 				return
 			captured += 1
-	print("ART23_MATRIX_CAPTURE=PASS states=%d size=%dx%d output=%s" % [captured, width, height, output_path])
+	print(
+		"ART23_MATRIX_CAPTURE=PASS states=%d size=%dx%d ui_scale=%d output=%s"
+		% [captured, width, height, int(round(ui_scale * 100.0)), output_path]
+	)
 	quit(0 if captured == 25 else 2)
 
 

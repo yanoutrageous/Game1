@@ -6,6 +6,7 @@ signal primary_navigation_requested(direction: int)
 
 const Layout := preload("res://scripts/presentation/art24/art24_in_run_layout_contract.gd")
 const Assets := preload("res://scripts/presentation/art24/art24_in_run_asset_contract.gd")
+const SkinKit := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 const ROOM_LABELS := {
 	"normal": "普通作业间",
@@ -48,7 +49,7 @@ var interactive := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	body_font = load("res://assets/fonts/NotoSansCJKsc-Regular.otf") as Font
+	body_font = SkinKit.player_ui_font()
 	set_process(true)
 	queue_redraw()
 

@@ -261,7 +261,9 @@ func _build_once() -> void:
 		test_room_button.text = "进入隔离测试场"
 		test_room_button.tooltip_text = "使用 dev_sandbox 独立存档和固定 7×7 场景。"
 		test_room_button.pressed.connect(_on_test_room_pressed)
-		_add_field_row("开发与测试", test_room_button)
+		var test_room_row := _add_field_row("开发与测试", test_room_button)
+		test_room_row.set_meta("dev_only", true)
+		test_room_row.set_meta("debug_gate", &"debug_tools_enabled")
 
 	status_label = Label.new()
 	status_label.name = "Status"
@@ -315,7 +317,7 @@ func _build_once() -> void:
 	_refresh_ui_scale_metrics()
 
 
-func _add_field_row(label_text: String, control: Control) -> void:
+func _add_field_row(label_text: String, control: Control) -> VBoxContainer:
 	var row := VBoxContainer.new()
 	row.name = "%sField" % control.name
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -326,6 +328,7 @@ func _add_field_row(label_text: String, control: Control) -> void:
 	row.add_child(label)
 	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(control)
+	return row
 
 
 func _make_option(control_name: String, labels: Array) -> OptionButton:

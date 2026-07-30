@@ -585,6 +585,13 @@
       "reason": "Production capture writes review artifacts and requires human visual acceptance; it is tracked as I2 evidence but is not a self-verifying headless runner."
     },
     {
+      "id": "I4_LONG_TERM_ASSET_BOARD_CAPTURE",
+      "relative_path": "Godot/GraytailGodot/tests/i4_long_term_asset_board_runner.gd",
+      "category": "capture",
+      "disposition": "EXCLUDED_NON_SLICE",
+      "reason": "Renders paged long-term runtime-asset boards for I4 original-image review; successful PNG generation is census evidence, not automated visual acceptance."
+    },
+    {
       "id": "I1_PRODUCTION_PREVIEW_CAPTURE",
       "relative_path": "Godot/GraytailGodot/tests/i1_production_preview_capture_runner.gd",
       "category": "capture",
@@ -1247,14 +1254,14 @@
       "id": "I3R_FONT_SURFACE_COVERAGE",
       "relative_path": "Godot/GraytailGodot/tests/i3r_font_surface_coverage_runner.gd",
       "pass_marker": "I3R_FONT_SURFACE_COVERAGE=PASS",
-      "pass_line_regex": "^I3R_FONT_SURFACE_COVERAGE=PASS controls=[1-9][0-9]* visible_controls=[1-9][0-9]* tooltips=[1-9][0-9]* settings_popups=8 surfaces=\\[\"ui_root\", \"main\", \"deploy\", \"long_term\", \"settings\", \"runtime_settings\", \"run\", \"inventory\", \"map\", \"result\", \"tutorial\", \"loot_result\", \"world_popup\"\\] roles=FusionPixel,Noto$",
+      "pass_line_regex": "^I3R_FONT_SURFACE_COVERAGE=PASS controls=[1-9][0-9]* visible_controls=[1-9][0-9]* tooltips=[1-9][0-9]* settings_popups=8 surfaces=\\[\"ui_root\", \"main\", \"deploy\", \"long_term\", \"settings\", \"runtime_settings\", \"run\", \"inventory\", \"map\", \"result\", \"tutorial\", \"loot_result\", \"world_popup\"\\] primary=FusionPixel fallback=Noto$",
       "fail_marker": "I3R_FONT_SURFACE_COVERAGE=FAIL",
       "coverage": ["ui", "font_roles", "production_main_scene", "dynamic_controls", "tooltip", "popup_menu", "settings", "world_prompts", "FusionPixel", "Noto_fallback"]
     },
     {
       "id": "I3R_FONT_RASTER_POLICY",
       "relative_path": "Godot/GraytailGodot/tests/i3r_font_raster_policy_runner.gd",
-      "pass_marker": "I3R_FONT_RASTER_POLICY=PASS antialiasing=0 subpixel=0 system_fallback=false display=FusionPixel readable=Noto theme_types=6",
+      "pass_marker": "I3R_FONT_RASTER_POLICY=PASS antialiasing=0 subpixel=0 system_fallback=false primary=FusionPixel fallback=Noto theme_types=6",
       "fail_marker": "I3R_FONT_RASTER_POLICY=FAIL",
       "coverage": ["ui", "font_raster_policy", "antialiasing", "subpixel_positioning", "system_fallback", "manifest_hash", "theme_fonts"]
     },
@@ -1269,7 +1276,7 @@
     {
       "id": "I3R_UI_COMPOSITION_CONTRACT",
       "relative_path": "Godot/GraytailGodot/tests/i3r_ui_composition_contract_runner.gd",
-      "pass_marker": "I3R_UI_COMPOSITION_CONTRACT=PASS fonts=FusionPixel,Noto roles=display,readable surfaces=settings,tooltip,item,world,option_popup,result texture_safe=5 license=upstream_ofl",
+      "pass_marker": "I3R_UI_COMPOSITION_CONTRACT=PASS primary=FusionPixel fallback=Noto roles=display,readable surfaces=settings,tooltip,item,world,option_popup,result texture_safe=5 license=upstream_ofl",
       "fail_marker": "I3R_UI_COMPOSITION_CONTRACT=FAIL",
       "coverage": ["ui", "font_roles", "composition", "texture_safe_zone", "asset_license"]
     },
@@ -1332,9 +1339,9 @@
       "id": "I4_DEBUG_SANDBOX",
       "relative_path": "Godot/GraytailGodot/tests/i4_debug_sandbox_runner.gd",
       "pass_marker": "I4_DEBUG_SANDBOX=PASS",
-      "pass_line_regex": "^I4_DEBUG_SANDBOX=PASS profile=dev_sandbox taint_guard=PASS settings_entry=PASS$",
+      "pass_line_regex": "^I4_DEBUG_SANDBOX=PASS profile=dev_sandbox taint_guard=PASS settings_entry=PASS scenario_fixture=PASS save_injection=one_shot$",
       "fail_marker": "I4_DEBUG_SANDBOX=FAIL",
-      "coverage": ["i4", "debug_sandbox", "taint_guard", "settings_entry", "profile_isolation"]
+      "coverage": ["i4", "debug_sandbox", "taint_guard", "settings_entry", "profile_isolation", "scenario_fixture", "one_shot_save_failure_injection"]
     },
     {
       "id": "I4_QUANTITY_TRANSACTION",
@@ -1373,7 +1380,7 @@
       "id": "I4_FONT_ROLE_RASTER",
       "relative_path": "Godot/GraytailGodot/tests/i4_font_role_raster_runner.gd",
       "pass_marker": "I4_FONT_ROLE_RASTER=PASS",
-      "pass_line_regex": "^I4_FONT_ROLE_RASTER=PASS localized=NotoCJK numeric=FusionPixel aa=split sizes=integer frame_safe=compact,large rarity=natural$",
+      "pass_line_regex": "^I4_FONT_ROLE_RASTER=PASS primary=FusionPixel fallback=Noto aa=pixel sizes=integer frame_safe=compact,large rarity=natural$",
       "fail_marker": "I4_FONT_ROLE_RASTER=FAIL",
       "coverage": ["i4", "font_roles", "readable_cjk", "numeric_display", "antialiasing", "integer_sizes", "frame_safe"]
     },

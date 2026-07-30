@@ -20,6 +20,7 @@ const WAIT_TIMEOUT_MS := 5000
 var failures: Array[String] = []
 var capture_paths: Array[String] = []
 var output_directory := ""
+var capture_scope := "representative"
 
 
 func _initialize() -> void:
@@ -28,8 +29,12 @@ func _initialize() -> void:
 
 func _run() -> void:
 	output_directory = _output_directory(OS.get_cmdline_user_args())
+	capture_scope = _capture_scope(OS.get_cmdline_user_args())
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
-	root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_KEEP
+	# Match project.godot's canvas-items stretch without introducing a synthetic
+	# 16:9 keep-aspect viewport. KEEP rounds 1366×768 down to a 1365 px render
+	# target, so the PNG no longer has the requested physical window identity.
+	root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_IGNORE
 	root.content_scale_size = LOGICAL_SIZE
 	root.content_scale_factor = 1.0
 	root.transparent_bg = false
@@ -86,13 +91,101 @@ func _check_case(resolution: Dictionary, ui_scale: float) -> void:
 		await _check_filter_overflow(shell, case_id)
 		await _check_contextual_gold_and_map(shell, case_id)
 		_check_text_safety(shell, case_id)
+		# Geometry and focus are exercised with production motion above. Freeze
+		# only the capture phase so the hanging-board sway cannot turn renderer
+		# throughput into a false "layout never stabilized" result.
+		shell.set_reduced_motion_enabled(true)
+		await process_frame
 		# Capture only after the same visible control geometry/alpha fingerprint
 		# survives three consecutive render submissions. This is a measured
 		# stability condition, not a fixed-frame delay.
-		await _wait_for_stable_layout(shell, "%s capture layout" % case_id)
-		await _capture_case(case_id, physical_size)
+		if capture_scope == "census":
+			await _capture_census_states(shell, case_id, physical_size)
+		else:
+			await _wait_for_stable_layout(shell, "%s capture layout" % case_id)
+			await _capture_case(case_id, physical_size)
 	canvas.queue_free()
 	await canvas.tree_exited
+
+
+func _capture_census_states(shell: Control, case_id: String, expected_size: Vector2i) -> void:
+	for raw_tab in DeployTabModelScript.build_tabs():
+		var tab := raw_tab as Dictionary
+		var tab_id := StringName(tab.get("id", &""))
+		shell.show_tab(tab_id)
+		var tab_ready := await _wait_until(
+			func() -> bool:
+				return StringName((shell.get("current_model") as Dictionary).get("active_tab", &"")) == tab_id,
+			"%s census tab %s" % [case_id, String(tab_id)]
+		)
+		if not tab_ready:
+			continue
+		for raw_filter in tab.get("secondary_filters", []) as Array:
+			var filter := raw_filter as Dictionary
+			var filter_id := StringName(filter.get("id", &""))
+			var filter_button := (
+				(shell.get("filter_buttons") as Dictionary).get(filter_id) as Button
+			)
+			if filter_button != null:
+				filter_button.grab_focus()
+				filter_button.emit_signal("pressed")
+			else:
+				shell.call("_on_filter_pressed", filter_id)
+			var filter_ready := await _wait_until(
+				func() -> bool:
+					var model := shell.get("current_model") as Dictionary
+					return (
+						StringName(model.get("active_tab", &"")) == tab_id
+						and StringName(model.get("selected_filter", &"")) == filter_id
+						and (
+							filter_button == null
+							or _rect_encloses(
+								(shell.get("filter_scroll") as ScrollContainer).get_global_rect(),
+								filter_button.get_global_rect()
+							)
+						)
+					),
+				"%s census filter %s/%s" % [case_id, String(tab_id), String(filter_id)]
+			)
+			if not filter_ready:
+				continue
+			_check_no_partial_filter_buttons(
+				shell,
+				"%s census filter %s/%s" % [case_id, String(tab_id), String(filter_id)]
+			)
+			await _wait_for_stable_layout(
+				shell,
+				"%s census filter layout %s/%s" % [case_id, String(tab_id), String(filter_id)]
+			)
+			await _capture_case(
+				"%s__filter__%s__%s" % [case_id, String(tab_id), String(filter_id)],
+				expected_size
+			)
+	shell.show_tab(DeployTabModelScript.TAB_WAREHOUSE)
+	await _wait_until(
+		func() -> bool:
+			return (
+				StringName((shell.get("current_model") as Dictionary).get("active_tab", &""))
+				== DeployTabModelScript.TAB_WAREHOUSE
+			),
+		"%s census summary host" % case_id
+	)
+	for page_id in [&"overview", &"config", &"effect", &"objective"]:
+		shell.call("_show_summary_page", page_id)
+		var page_ready := await _wait_until(
+			func() -> bool: return StringName(shell.get("active_summary_page")) == page_id,
+			"%s census summary %s" % [case_id, String(page_id)]
+		)
+		if not page_ready:
+			continue
+		await _wait_for_stable_layout(
+			shell,
+			"%s census summary layout %s" % [case_id, String(page_id)]
+		)
+		await _capture_case(
+			"%s__summary__%s" % [case_id, String(page_id)],
+			expected_size
+		)
 
 
 func _check_ordinary_split(shell: Control, case_id: String) -> void:
@@ -341,9 +434,11 @@ func _check_filter_overflow(shell: Control, case_id: String) -> void:
 	var max_scroll := maxi(0, int(ceil(bar.max_value - bar.page))) if bar != null else 0
 	if max_scroll == 0:
 		_expect(not previous.visible and not next.visible, "%s filter arrows are visible without overflow" % case_id)
+		_check_no_partial_filter_buttons(shell, "%s filter start" % case_id)
 		return
 	_expect(previous.visible and next.visible, "%s filter overflow has no visible navigation" % case_id)
 	_expect(previous.disabled and not next.disabled, "%s filter overflow starts with incorrect arrow states" % case_id)
+	_check_no_partial_filter_buttons(shell, "%s filter start" % case_id)
 	next.emit_signal("pressed")
 	var advanced := await _wait_until(
 		func() -> bool: return scroll.scroll_horizontal > 0,
@@ -351,6 +446,7 @@ func _check_filter_overflow(shell: Control, case_id: String) -> void:
 	)
 	if not advanced:
 		return
+	_check_no_partial_filter_buttons(shell, "%s filter next page" % case_id)
 	special.grab_focus()
 	var focused_and_visible := await _wait_until(
 		func() -> bool:
@@ -361,11 +457,35 @@ func _check_filter_overflow(shell: Control, case_id: String) -> void:
 		"%s hidden special filter focus reveal" % case_id
 	)
 	_expect(focused_and_visible, "%s hidden special filter is not focus-reachable" % case_id)
+	_check_no_partial_filter_buttons(shell, "%s filter focused end" % case_id)
 	scroll.scroll_horizontal = 0
 	await _wait_until(
 		func() -> bool: return scroll.scroll_horizontal == 0 and previous.disabled,
 		"%s filter scroll restore" % case_id
 	)
+	_check_no_partial_filter_buttons(shell, "%s filter restored" % case_id)
+
+
+func _check_no_partial_filter_buttons(shell: Control, label: String) -> void:
+	var scroll := shell.get("filter_scroll") as ScrollContainer
+	var filters := shell.get("filter_buttons") as Dictionary
+	if scroll == null:
+		_expect(false, "%s filter viewport missing" % label)
+		return
+	var viewport_rect := scroll.get_global_rect()
+	for raw_button in filters.values():
+		var button := raw_button as Button
+		if button == null or not button.is_visible_in_tree():
+			continue
+		var button_rect := button.get_global_rect()
+		var intersection := viewport_rect.intersection(button_rect)
+		if intersection.size.x <= 0.5 or intersection.size.y <= 0.5:
+			continue
+		_expect(
+			_rect_encloses(viewport_rect, button_rect),
+			"%s exposes partial filter %s: viewport=%s button=%s"
+			% [label, button.name, viewport_rect, button_rect]
+		)
 
 
 func _check_contextual_gold_and_map(shell: Control, case_id: String) -> void:
@@ -693,6 +813,17 @@ func _output_directory(arguments: PackedStringArray) -> String:
 				return ""
 			return absolute
 	return ""
+
+
+func _capture_scope(arguments: PackedStringArray) -> String:
+	for argument in arguments:
+		if argument.begins_with("--capture-scope="):
+			var requested := argument.trim_prefix("--capture-scope=").strip_edges()
+			if requested in ["representative", "census"]:
+				return requested
+			failures.append("unknown capture scope: %s" % requested)
+			return "representative"
+	return "representative"
 
 
 func _expect(condition: bool, message: String) -> void:

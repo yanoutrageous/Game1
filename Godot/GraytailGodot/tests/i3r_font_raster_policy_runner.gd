@@ -28,7 +28,7 @@ func _run() -> void:
 	var base_font := display_variation.base_font as FontFile
 	var readable_base := readable_variation.base_font as FontFile
 	_require(base_font != null, "FusionPixel base font is not a FontFile")
-	_require(readable_base != null, "Noto readable base font is not a FontFile")
+	_require(readable_base != null, "FusionPixel readable base font is not a FontFile")
 	if base_font == null or readable_base == null:
 		_finish(null)
 		return
@@ -49,12 +49,18 @@ func _run() -> void:
 		not base_font.allow_system_fallback,
 		"FusionPixel must disable implicit system fallback"
 	)
-	_require(readable_base.resource_path == FALLBACK_FONT_PATH, "readable base path is not Noto CJK")
-	_require(readable_base.antialiasing == TextServer.FONT_ANTIALIASING_GRAY, "Noto readable antialiasing is not grayscale")
-	_require(readable_base.subpixel_positioning == TextServer.SUBPIXEL_POSITIONING_AUTO, "Noto readable subpixel positioning is not automatic")
-	_require(not readable_base.allow_system_fallback, "Noto readable font must disable implicit system fallback")
+	_require(readable_base.resource_path == DISPLAY_FONT_PATH, "readable base path is not FusionPixel")
+	_require(readable_base.antialiasing == TextServer.FONT_ANTIALIASING_NONE, "FusionPixel readable antialiasing is not disabled")
+	_require(readable_base.subpixel_positioning == TextServer.SUBPIXEL_POSITIONING_DISABLED, "FusionPixel readable subpixel positioning is not disabled")
+	_require(not readable_base.allow_system_fallback, "FusionPixel readable font must disable implicit system fallback")
+	var glyph_fallback := _font_file_for_path(readable_variation.fallbacks, FALLBACK_FONT_PATH)
+	_require(glyph_fallback != null, "Noto glyph fallback is missing from the readable stack")
+	if glyph_fallback != null:
+		_require(glyph_fallback.antialiasing == TextServer.FONT_ANTIALIASING_GRAY, "Noto fallback antialiasing is not grayscale")
+		_require(glyph_fallback.subpixel_positioning == TextServer.SUBPIXEL_POSITIONING_AUTO, "Noto fallback subpixel positioning is not automatic")
+		_require(not glyph_fallback.allow_system_fallback, "Noto fallback must disable implicit system fallback")
 	_check_explicit_fallback(display_variation, FALLBACK_FONT_PATH)
-	_check_explicit_fallback(readable_variation, DISPLAY_FONT_PATH)
+	_check_explicit_fallback(readable_variation, FALLBACK_FONT_PATH)
 	_check_manifest_hash()
 	_check_theme_fonts(SkinKit.player_ui_theme(), display_variation, readable_variation)
 	_finish(base_font)
@@ -68,6 +74,13 @@ func _check_explicit_fallback(variation: FontVariation, expected_path: String) -
 		fallback_paths.has(expected_path),
 		"explicit glyph fallback is missing (%s): %s" % [expected_path, fallback_paths]
 	)
+
+
+func _font_file_for_path(fonts: Array[Font], expected_path: String) -> FontFile:
+	for font in fonts:
+		if font is FontFile and font.resource_path == expected_path:
+			return font as FontFile
+	return null
 
 
 func _check_manifest_hash() -> void:
@@ -159,7 +172,7 @@ func _finish(base_font: FontFile) -> void:
 		]
 	if failures.is_empty():
 		print(
-			"I3R_FONT_RASTER_POLICY=PASS %s display=FusionPixel readable=Noto theme_types=6"
+			"I3R_FONT_RASTER_POLICY=PASS %s primary=FusionPixel fallback=Noto theme_types=6"
 			% actual_policy
 		)
 		quit(0)
@@ -167,7 +180,7 @@ func _finish(base_font: FontFile) -> void:
 	for failure in failures:
 		push_error("I3R font raster policy: " + failure)
 	print(
-		"I3R_FONT_RASTER_POLICY=FAIL failures=%d %s display=FusionPixel readable=Noto theme_types=6"
+		"I3R_FONT_RASTER_POLICY=FAIL failures=%d %s primary=FusionPixel fallback=Noto theme_types=6"
 		% [failures.size(), actual_policy]
 	)
 	quit(1)

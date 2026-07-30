@@ -410,6 +410,8 @@ func _is_dev_only_node(node: Node) -> bool:
 	while cursor != null:
 		if DEV_ONLY_ROOT_NAMES.has(StringName(cursor.name)):
 			return true
+		if bool(cursor.get_meta("dev_only", false)):
+			return true
 		cursor = cursor.get_parent()
 	return false
 

@@ -295,9 +295,11 @@ func _check_protocol_and_left_density() -> void:
 			_check(list.size.y >= 140.0 and list.size.y <= 164.0, "Four-item backpack does not expose three complete rows")
 	var safe_rect := Rect2(surface.status_card_art.get_meta("protocol_safe_rect", Rect2()))
 	for control in [surface.right_title_label, surface.right_body_label, surface.protocol_pressure_track]:
+		var control_rect := (control as Control).get_global_rect()
 		_check(
-			_rect_encloses_with_tolerance(safe_rect, (control as Control).get_global_rect()),
-			"Protocol content escaped the measured safe rectangle: %s" % (control as Control).name
+			_rect_encloses_with_tolerance(safe_rect, control_rect),
+			"Protocol content escaped the measured safe rectangle: %s safe=%s actual=%s"
+			% [(control as Control).name, safe_rect, control_rect]
 		)
 	var title_body_gap := _vertical_gap(surface.right_title_label.get_global_rect(), surface.right_body_label.get_global_rect())
 	var body_track_gap := _vertical_gap(surface.right_body_label.get_global_rect(), surface.protocol_pressure_track.get_global_rect())

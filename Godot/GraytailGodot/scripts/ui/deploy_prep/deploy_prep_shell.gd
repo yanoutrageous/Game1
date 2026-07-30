@@ -1310,13 +1310,48 @@ func _rebuild_filters() -> void:
 	var fitted_width := 0.0
 	if not filters.is_empty() and filters.size() <= 5:
 		fitted_width = floor((DeployPrepLayoutContractScript.FILTER_SCROLL.size.x - float((filters.size() - 1) * DeployPrepLayoutContractScript.FILTER_GAP)) / float(filters.size()))
+	var paged_button_width := 0.0
+	if fitted_width > 0.0:
+		var projected_width := (
+			float(filters.size())
+			* Art10UISkinKitScript.scaled_control_minimum(
+				Vector2(fitted_width, 0.0),
+				ui_scale_factor
+			).x
+			+ float(maxi(0, filters.size() - 1) * DeployPrepLayoutContractScript.FILTER_GAP)
+		)
+		if projected_width > DeployPrepLayoutContractScript.FILTER_SCROLL.size.x:
+			# The navigation viewport shows three complete choices per page.
+			# Deriving the base minimum from its final width prevents a fourth
+			# button from leaking into the clip region with its text removed.
+			var visible_count := mini(3, filters.size())
+			paged_button_width = floor(
+				(
+					DeployPrepLayoutContractScript.FILTER_SCROLL_WITH_NAV.size.x
+					- float((visible_count - 1) * DeployPrepLayoutContractScript.FILTER_GAP)
+				)
+				/ float(visible_count)
+			)
 	for raw_filter in filters:
 		var filter := _dictionary_from(raw_filter)
 		var filter_id := StringName(filter.get("id", DeployTabModelScript.FILTER_ALL))
 		var filter_label := String(filter.get("label", filter_id))
 		var captured := filter_id
 		var resolved_width := fitted_width if fitted_width > 0.0 else _long_filter_width(filter_label)
+		if paged_button_width > 0.0:
+			resolved_width = paged_button_width / ui_scale_factor
 		var button := _add_container_image_button(filter_row, "DeployFilter_%s" % String(filter_id), Vector2(resolved_width, 34), filter_label, &"filter", func() -> void: _on_filter_pressed(captured), 12)
+		if paged_button_width > 0.0:
+			button.set_meta(
+				"deploy_max_minimum_size",
+				Vector2(
+					paged_button_width,
+					DeployPrepLayoutContractScript.FILTER_SCROLL.size.y
+				)
+			)
+			button.set_meta("deploy_text_bounds", Vector2(paged_button_width, 34))
+			_apply_scaled_control_minimum(button)
+			_apply_scaled_control_font(button)
 		button.toggle_mode = true
 		button.button_group = filter_button_group
 		button.focus_entered.connect(func() -> void: _ensure_filter_visible(button))
@@ -2743,6 +2778,20 @@ func _ensure_filter_visible(button: Control) -> void:
 		max_scroll = maxi(0, int(bar.max_value - bar.page))
 	var current_scroll := float(filter_scroll.scroll_horizontal)
 	var viewport_width := filter_scroll.size.x
+	if button.has_meta("deploy_max_minimum_size") and max_scroll > 0:
+		# Paged filter rows expose exactly three complete controls. Minimal
+		# "ensure visible" scrolling can leave both neighbours half-clipped
+		# (for example at the fourth of five filters), so snap to the page
+		# boundary that owns the focused control.
+		var visible_count := 3
+		var page_index := button.get_index() / visible_count
+		filter_scroll.scroll_horizontal = clampi(
+			int(round(float(page_index) * viewport_width)),
+			0,
+			max_scroll
+		)
+		_update_filter_navigation()
+		return
 	var margin := 10.0
 	var target_scroll := current_scroll
 	if button.position.x < current_scroll + margin:

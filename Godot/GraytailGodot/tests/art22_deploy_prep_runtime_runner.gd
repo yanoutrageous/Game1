@@ -2,6 +2,7 @@ extends SceneTree
 
 const M7ContentCatalogScript := preload("res://scripts/core/content/m7_content_catalog.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
+const DeployPrepLayoutContractScript := preload("res://scripts/ui/deploy_prep/deploy_prep_layout_contract.gd")
 
 var failures: Array[String] = []
 var route_intents: Array[Dictionary] = []
@@ -138,14 +139,21 @@ func _check_ui_scale_contract(shell: Control) -> void:
 		_check(metric_label != null and bool(text_fit.get("fits", false)), "Deploy metric text did not fit its authoritative contract")
 	for raw_summary_label in shell.get("summary_row_labels") as Array:
 		var summary_label := raw_summary_label as Label
-		var summary_fit := summary_label.get_meta("deploy_text_fit", {}) as Dictionary if summary_label != null else {}
+		var summary_panel := (
+			summary_label.get_meta("deploy_summary_row_panel") as Control
+			if summary_label != null
+			else null
+		)
 		_check(
 			summary_label != null
-			and summary_label.autowrap_mode == TextServer.AUTOWRAP_OFF
-			and summary_label.max_lines_visible == 1
-			and summary_label.text.length() <= 9
-			and bool(summary_fit.get("fits", false)),
-			"Deploy summary row escaped its 150% compact single-line contract"
+			and summary_label.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART
+			and summary_label.max_lines_visible == -1
+			and not summary_label.clip_text
+			and summary_label.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING
+			and summary_label.tooltip_text == summary_label.text
+			and summary_panel != null
+			and summary_panel.custom_minimum_size.y >= summary_label.custom_minimum_size.y + 12.0,
+			"Deploy summary row lost information or failed to expand at 150% UI scale"
 		)
 	_check(
 		clean_plate != null and clean_plate.get_rect() == clean_plate_rect,
@@ -232,8 +240,20 @@ func _check_map_same_page_contract(shell: Control) -> void:
 	_check(scale_buttons.get(&"5x5") is Button, "Tutorial 5x5 scale control is missing from the same Deploy map page")
 	var gold_label := shell.get("detail_gold_label") as Label
 	var gold_panel := shell.get("detail_gold_panel") as Control
-	_check(gold_label != null and gold_label.visible and gold_label.text.begins_with("—") and gold_label.text.ends_with("金币"), "Missing wallet value must display — 金币")
-	_check(gold_panel != null and gold_panel.visible and gold_panel.position.x >= 700.0 and gold_panel.position.y <= 120.0, "Gold is not resident at the upper-right of Deploy content")
+	_check(gold_panel != null and not gold_panel.visible, "Gold leaked into the non-transaction map context")
+	shell.call("show_tab", &"claim")
+	_check(
+		gold_label != null and gold_label.visible and gold_label.text == "— 金币",
+		"Missing wallet value must display exactly — 金币 in the purchase context"
+	)
+	_check(
+		gold_panel != null
+		and gold_panel.visible
+		and gold_panel.get_rect() == DeployPrepLayoutContractScript.DETAIL_GOLD_PANEL,
+		"Contextual gold escaped its authoritative upper-right transaction rect"
+	)
+	shell.call("show_tab", &"map")
+	_check(gold_panel != null and not gold_panel.visible, "Gold remained visible after returning to the map context")
 
 
 func _check_map_selection_contract(shell: Control) -> void:
@@ -319,7 +339,7 @@ func _check_non_map_split_and_explicit_actions(shell: Control) -> void:
 		filter_scroll.position = Vector2(307, 104)
 		filter_scroll.size = Vector2(198, 38)
 		shell.call("_update_filter_navigation")
-		_check(filter_scroll.position == Vector2(286, 104) and filter_scroll.size == Vector2(240, 38), "Filter navigation did not recover its full-width viewport after a prior overflow state")
+		_check(filter_scroll.get_rect() == DeployPrepLayoutContractScript.FILTER_SCROLL, "Filter navigation did not recover its authoritative full-width viewport after a prior overflow state")
 		_check(filter_previous != null and not filter_previous.visible and filter_next != null and not filter_next.visible, "Filter arrows remained visible for a full-width filter set that fits")
 		var filter_buttons := shell.get("filter_buttons") as Dictionary
 		if not filter_buttons.is_empty():
@@ -329,7 +349,30 @@ func _check_non_map_split_and_explicit_actions(shell: Control) -> void:
 			shell.call("_update_filter_navigation")
 			var bar := filter_scroll.get_h_scroll_bar()
 			var final_scroll := maxi(0, int(bar.max_value - bar.page)) if bar != null else 0
-			_check(filter_scroll.size == Vector2(198, 38) and filter_next != null and filter_next.visible, "Overflowing filters did not reserve non-overlapping navigation controls")
+			_check(
+				filter_scroll.get_rect() == DeployPrepLayoutContractScript.FILTER_SCROLL_WITH_NAV
+				and filter_previous != null
+				and filter_previous.position == DeployPrepLayoutContractScript.FILTER_PREVIOUS.position
+				and filter_previous.size.x == DeployPrepLayoutContractScript.FILTER_PREVIOUS.size.x
+				and filter_previous.get_rect().end.y <= DeployPrepLayoutContractScript.CARD_SCROLL.position.y
+				and filter_next != null
+				and filter_next.position == DeployPrepLayoutContractScript.FILTER_NEXT.position
+				and filter_next.size.x == DeployPrepLayoutContractScript.FILTER_NEXT.size.x
+				and filter_next.get_rect().end.y <= DeployPrepLayoutContractScript.CARD_SCROLL.position.y
+				and not filter_scroll.get_global_rect().intersects(filter_previous.get_global_rect())
+				and not filter_scroll.get_global_rect().intersects(filter_next.get_global_rect())
+				and filter_next.visible,
+				(
+					"Overflowing filters did not reserve the authoritative non-overlapping navigation controls: "
+					+ "scroll=%s previous=%s next=%s visible=%s"
+					% [
+						filter_scroll.get_rect(),
+						filter_previous.get_rect() if filter_previous != null else Rect2(),
+						filter_next.get_rect() if filter_next != null else Rect2(),
+						filter_next.visible if filter_next != null else false,
+					]
+				)
+			)
 			filter_scroll.scroll_horizontal = final_scroll
 			await process_frame
 			_check(filter_scroll.scroll_horizontal == final_scroll and filter_next != null and filter_next.disabled, "Overflow navigation clamps away the end of the filter row")
@@ -377,26 +420,64 @@ func _check_non_map_split_and_explicit_actions(shell: Control) -> void:
 				var removed_data := removed_target.get("card_data") as Dictionary if removed_target != null else {}
 				_check(not bool(removed_data.get("selected", true)) and int(removed_data.get("deployed_count", -1)) == 0, "Warehouse left row did not rebuild after removing attendance")
 
-	var ration_a := _find_card_view(shell, &"m3r_i2_con_ration_a")
-	_check(ration_a != null, "First duplicate consumable row is missing")
-	if ration_a != null:
-		(ration_a.call("focus_button") as Button).emit_signal("pressed")
-		await _frames(2)
-		var carry_button := shell.get("detail_primary_action_button") as Button
-		_check(carry_button != null and carry_button.text == "加入携带" and not carry_button.disabled, "First duplicate consumable lacks an explicit carry action")
-		if carry_button != null and not carry_button.disabled:
-			carry_button.emit_signal("pressed")
+	var ration_stack := _find_card_view(shell, &"m3r_i2_con_ration_a")
+	_check(ration_stack != null, "Aggregated duplicate-consumable row is missing")
+	_check(_find_card_view(shell, &"m3r_i2_con_ration_b") == null, "Compatible duplicate consumables escaped into a redundant second visual row")
+	if ration_stack != null:
+		var ration_data := ration_stack.get("card_data") as Dictionary
+		_check(
+			(ration_data.get("instance_ids", []) as Array) == ["i2_con_ration_a", "i2_con_ration_b"]
+			and int(ration_data.get("owned_count", 0)) == 2
+			and int(ration_data.get("quantity_current", -1)) == 0
+			and int(ration_data.get("quantity_limit", -1)) == 2
+			and StringName(ration_data.get("quantity_mode", &"")) == &"carry",
+			"Aggregated consumable row lost its exact instances or 0/2 carry contract"
+		)
+		var plus := ration_stack.get_node_or_null("CardQuantityPlus") as Button
+		_check(plus != null and not plus.disabled, "Aggregated consumable lacks an enabled left-side plus control")
+		if plus != null and not plus.disabled:
+			plus.emit_signal("pressed")
 			await _frames(3)
-	var selected_consumable_ids := _config(shell).get("selected_consumable_ids", []) as Array
-	_check(selected_consumable_ids.has("i2_con_ration_a") and not selected_consumable_ids.has("i2_con_ration_b"), "Selecting one duplicate consumable did not preserve exact instance identity")
-	var ration_row_a := _find_selection_row(shell, &"m3r_i2_con_ration_a")
-	var ration_row_b := _find_selection_row(shell, &"m3r_i2_con_ration_b")
-	_check(bool(ration_row_a.get("selected", false)), "Selected duplicate consumable is not shown as selected")
-	_check(not bool(ration_row_b.get("selected", true)), "Unselected duplicate consumable inherited the selected state by item_id")
-	var ration_b_actions := ration_row_b.get("actions", []) as Array
-	_check(not ration_b_actions.is_empty() and str((ration_b_actions[0] as Dictionary).get("label", "")) == "加入携带", "Unselected duplicate consumable exposes an action opposite to its true state")
-	if not ration_b_actions.is_empty():
-		_check(str(((ration_b_actions[0] as Dictionary).get("payload", {}) as Dictionary).get("instance_id", "")) == "i2_con_ration_b", "Duplicate consumable action lost exact instance identity")
+		var selected_consumable_ids := _config(shell).get("selected_consumable_ids", []) as Array
+		_check(
+			selected_consumable_ids.size() == 1
+			and selected_consumable_ids.has("i2_con_ration_a")
+			and not selected_consumable_ids.has("i2_con_ration_b"),
+			"First plus did not select exactly the stable first consumable instance"
+		)
+		ration_stack = _find_card_view(shell, &"m3r_i2_con_ration_a")
+		ration_data = ration_stack.get("card_data") as Dictionary if ration_stack != null else {}
+		var quantity_value := ration_stack.get_node_or_null("CardQuantityValue") as Label if ration_stack != null else null
+		_check(
+			ration_stack != null
+			and int(ration_data.get("quantity_current", -1)) == 1
+			and quantity_value != null
+			and quantity_value.text == "1/2",
+			"Aggregated consumable did not rebuild as the unambiguous carried/owned value 1/2"
+		)
+		plus = ration_stack.get_node_or_null("CardQuantityPlus") as Button if ration_stack != null else null
+		if plus != null and not plus.disabled:
+			plus.emit_signal("pressed")
+			await _frames(3)
+		selected_consumable_ids = _config(shell).get("selected_consumable_ids", []) as Array
+		_check(
+			selected_consumable_ids.size() == 2
+			and selected_consumable_ids.has("i2_con_ration_a")
+			and selected_consumable_ids.has("i2_con_ration_b"),
+			"Second plus did not select both exact consumable instances"
+		)
+		ration_stack = _find_card_view(shell, &"m3r_i2_con_ration_a")
+		var minus := ration_stack.get_node_or_null("CardQuantityMinus") as Button if ration_stack != null else null
+		if minus != null and not minus.disabled:
+			minus.emit_signal("pressed")
+			await _frames(3)
+		selected_consumable_ids = _config(shell).get("selected_consumable_ids", []) as Array
+		_check(
+			selected_consumable_ids.size() == 1
+			and selected_consumable_ids.has("i2_con_ration_a")
+			and not selected_consumable_ids.has("i2_con_ration_b"),
+			"Minus did not remove exactly the deterministic last selected instance"
+		)
 
 	var collectible := _find_card_view(shell, &"m3r_i2_collectible")
 	_check(collectible != null, "Sellable collectible row is missing")
@@ -540,17 +621,53 @@ func _check_summary_contract(shell: Control) -> void:
 	_check(_sorted_key_strings(summary_buttons) == ["config", "effect", "objective", "overview"], "Summary pages must be overview/config/effect/objective")
 	var summary_projection := (shell.get("current_model") as Dictionary).get("summary_projection", {}) as Dictionary
 	_check(_string_name_array(summary_projection.get("page_ids", [])) == [&"overview", &"config", &"effect", &"objective"], "Summary projection page order drifted")
+	var pages := summary_projection.get("pages", {}) as Dictionary
+	var summary_scroll := shell.get("summary_scroll") as ScrollContainer
+	_check(
+		summary_scroll != null
+		and summary_scroll.get_rect() == DeployPrepLayoutContractScript.SUMMARY_BODY
+		and summary_scroll.horizontal_scroll_mode == ScrollContainer.SCROLL_MODE_DISABLED
+		and summary_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO,
+		"Summary body lost its authoritative vertical-scroll contract"
+	)
 	var forbidden := ["当前选择", "路线 / 难度", "运行状态", "风险"]
 	for page_id in [&"overview", &"config", &"effect", &"objective"]:
 		shell.call("_show_summary_page", page_id)
 		var joined := ""
+		var visible_lines: Array[String] = []
 		for raw_label in shell.get("summary_row_labels") as Array:
 			var label := raw_label as Label
-			if label != null:
+			var row_panel := (
+				label.get_meta("deploy_summary_row_panel") as Control
+				if label != null
+				else null
+			)
+			if label != null and label.visible and row_panel != null and row_panel.visible:
+				visible_lines.append(label.text)
 				joined += label.text + "\n"
+				_check(
+					label.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART
+					and label.max_lines_visible == -1
+					and not label.clip_text
+					and label.text_overrun_behavior == TextServer.OVERRUN_NO_TRIMMING
+					and label.tooltip_text == label.text
+					and label.position.x >= 8.0
+					and row_panel.size.x - label.get_rect().end.x >= 8.0,
+					"Summary page %s contains a clipped row or violates its 8 px horizontal safe inset" % String(page_id)
+				)
 		var message := shell.get("summary_message_label") as Label
 		if message != null:
 			joined += message.text
+		var projected_lines := pages.get(String(page_id), []) as Array
+		_check(
+			visible_lines.size() == projected_lines.size(),
+			"Summary page %s did not render every projected decision row" % String(page_id)
+		)
+		for index in range(mini(visible_lines.size(), projected_lines.size())):
+			_check(
+				visible_lines[index] == str(projected_lines[index]),
+				"Summary page %s changed or truncated projected row %d" % [String(page_id), index]
+			)
 		_check(not joined.strip_edges().is_empty(), "Summary page is empty: " + String(page_id))
 		for phrase in forbidden:
 			_check(not joined.contains(phrase), "Summary page %s contains forbidden copy: %s" % [String(page_id), phrase])
@@ -749,6 +866,10 @@ func _check_collapse_contract(shell: Control) -> void:
 
 
 func _check_motion_contract(shell: Control) -> void:
+	# The full-motion fixture must not inherit a developer/player preference from
+	# user://. Reduced motion is exercised independently below.
+	shell.call("set_reduced_motion_enabled", false)
+	_check(not bool(shell.call("is_reduced_motion_enabled")), "Full-motion fixture could not leave inherited reduced-motion mode")
 	var frames := shell.get("character_frames") as Array
 	var descriptors := shell.get("character_clip_descriptors") as Dictionary
 	var clip_frames := shell.get("character_clip_frames") as Dictionary

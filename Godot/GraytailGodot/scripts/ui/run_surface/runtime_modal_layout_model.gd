@@ -1,6 +1,8 @@
 extends RefCounted
 class_name RuntimeModalLayoutModel
 
+const UILayerContractScript := preload("res://scripts/ui/shell/ui_layer_contract.gd")
+
 const SAFE_MARGIN := 24.0
 
 
@@ -25,9 +27,15 @@ static func build(profile: Dictionary) -> Dictionary:
 	# full-height HUD.  The upper reserve clears the protocol card and the lower
 	# reserve keeps the production action dock fully usable.
 	var debug_width := clampf(width * 0.24, 260.0, 360.0)
-	var debug_top := clampf(height * 0.15, SAFE_MARGIN + 84.0, 160.0)
+	var status_size := UILayerContractScript.run_status_card_size(profile)
+	var status_margin := 10.0 if bool(profile.get("is_low_resolution", false)) else 12.0
+	var protocol_bottom := status_margin + status_size.y
+	var debug_top := maxf(height * 0.15, protocol_bottom + 12.0)
+	debug_top = clampf(debug_top, SAFE_MARGIN + 84.0, maxf(SAFE_MARGIN + 84.0, height - 300.0))
+	var footer := UILayerContractScript.run_footer_geometry(profile)
+	var debug_bottom_limit := float(footer.get("key_top", height - 72.0)) - 12.0
 	var debug_height := clampf(height * 0.70, 340.0, 560.0)
-	debug_height = minf(debug_height, maxf(260.0, height - debug_top - SAFE_MARGIN - 64.0))
+	debug_height = minf(debug_height, maxf(260.0, debug_bottom_limit - debug_top))
 	return {
 		"event": Rect2(modal_left, modal_top, modal_width, minf(360.0, available_height)),
 		"extract": _centered_rect(
@@ -51,7 +59,11 @@ static func build(profile: Dictionary) -> Dictionary:
 			Vector2(clampf(width * 0.42, 480.0, 560.0), clampf(height * 0.34, 230.0, 290.0))
 		),
 		"debug": Rect2(width - debug_width - SAFE_MARGIN, debug_top, debug_width, debug_height),
-		"debug_scroll_minimum": Vector2(debug_width - 32.0, maxf(220.0, debug_height - 210.0)),
+		# This is a usability floor, not a requested panel height. The scroll
+		# expands into all remaining rail space; keeping the minimum independent
+		# of the rail height lets enlarged header/status text consume its needed
+		# space without pushing the rail through the production action dock.
+		"debug_scroll_minimum": Vector2(debug_width - 32.0, 96.0),
 		"viewport": Rect2(Vector2.ZERO, Vector2(width, height)),
 		"safe_margin": SAFE_MARGIN,
 		"read_only": true,

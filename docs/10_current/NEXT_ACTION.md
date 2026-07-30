@@ -9,19 +9,22 @@
 1. `P0 / TARGETED_PASS`：I4-R043–R049 已无冲突接入 I4-R001–R042，治理测试 12/12。
 2. `P1 / TARGETED_PASS`：隔离测试场、诊断身份、失败包、CLEAN/TAINTED 和默认档哈希门已接入。
 3. `P2 / TARGETED_PASS`：数量/交易领域语义、精确实例和失败原子性定向门已通过。
-4. `P3 / TARGETED_PASS`：readable/display 字体、16/8/4/2 边框、品质描述器、
-   纹理 resolver 和地图四层已接入。
+4. `P3 / TARGETED_PASS`：display/readable 排版语义均以 FusionPixel 为主字体，Noto
+   仅缺字回退；16/8/4/2 边框、品质描述器、纹理 resolver 和地图四层已接入。
 5. `P4 / TARGETED_PASS + VISUAL_CANDIDATE`：Deploy 步进器、详情、六项摘要、
    310/12/310 与地图 198/424 已复验。
 6. `P5–P6 / TARGETED_PASS + VISUAL_CANDIDATE`：确定实例、阻挡来源/足迹、
    fallback、地面掉落 body/品质光束已复验。
 7. `P7 / TARGETED_PASS + VISUAL_CANDIDATE`：通知直达、显式已读、Back 历史、
    6/25/58 内容和 25 页真实矩阵已复验。
-8. `P8 / PARTIAL`：协议、左下密度、地图/模态和 1280 高风险状态已复验；非 Deploy
-   四分辨率×三比例全状态和动态玩家输入仍未完成。
-9. `P9 / CURRENT`：实现候选 `f950eef` 的 clean exact-head/full 与 51 图已过；当前回填阶段
-   审计，随后对最终审计提交重跑 clean exact-head/full，再 push 并核对远端 SHA。设备清点
-   已完成，但物理手柄、功能听音、目标 GPU 长局和动态玩家验收保持外部阻塞。
+8. `P8 / CAPTURE_COMPLETE / VISUAL_CANDIDATE`：协议、左下密度、地图/模态和全部
+   156 行 census 已在正确 FusionPixel 主字体下完成 12 组真实捕获，共 1872 个覆盖单元、
+   1140 张原图；逐原图人工 ledger 和动态玩家输入仍未完成。
+9. `P9 / CURRENT`：post-audit worktree 已通过 I1 full 104/104、I4 full、旧断言
+   15/15 和完整矩阵；本文所在提交是最终候选对象，随后在零源码修改条件下重跑
+   clean exact-head/full 与 exact-head 全矩阵，再 push 并核对远端 SHA。I4-R050 第一轮
+   精确清理已释放 E 盘 19,342,217,216 字节且保留正确矩阵/最终/失败证据；最终证据形成后
+   再执行末轮复量。物理手柄、功能听音、目标 GPU 长局和动态玩家验收保持外部阻塞。
 
 当前允许交付的是“已实现且自动验证通过的活动候选”，不是 I4 阶段关闭。即使
 exact-head/full 与 push 成功，也不得把外部门写成 PASS。
@@ -55,6 +58,8 @@ exact-head/full 与 push 成功，也不得把外部门写成 PASS。
 - 协议任一字形/压力条越出按真实 B 计算的 S，或左下语义间空白超过 8 px。
 - 当前登记物品在任一消费者出现空纹理，或 focus/失败状态覆盖品质身份。
 - 工作树出现来源未知的 scene/resource/project/import/translation 变化。
+- 最终证据、失败反例、来源包、用户档、stash 和恢复证明尚未绑定前，对 C/E 盘使用通配、
+  仓库根或临时根级递归清理。
 
 ## 当前权威
 

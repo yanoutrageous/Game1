@@ -325,8 +325,8 @@ func _check_font(font: Font, consumer: String) -> void:
 	var variation := font as FontVariation
 	var base_path := variation.base_font.resource_path if variation.base_font != null else ""
 	_require(
-		base_path in [DISPLAY_FONT_PATH, FALLBACK_FONT_PATH],
-		"%s primary font is not a registered display/readable role: %s" % [
+		base_path == DISPLAY_FONT_PATH,
+		"%s primary font is not FusionPixel: %s" % [
 			consumer,
 			base_path,
 		]
@@ -334,10 +334,9 @@ func _check_font(font: Font, consumer: String) -> void:
 	var fallback_paths: Array[String] = []
 	for fallback in variation.fallbacks:
 		fallback_paths.append(fallback.resource_path)
-	var expected_fallback := FALLBACK_FONT_PATH if base_path == DISPLAY_FONT_PATH else DISPLAY_FONT_PATH
 	_require(
-		fallback_paths.has(expected_fallback),
-		"%s lost the role fallback %s: %s" % [consumer, expected_fallback, fallback_paths]
+		fallback_paths.has(FALLBACK_FONT_PATH),
+		"%s lost the Noto glyph fallback %s: %s" % [consumer, FALLBACK_FONT_PATH, fallback_paths]
 	)
 
 
@@ -354,7 +353,7 @@ func _fail_and_finish(message: String) -> void:
 func _finish() -> void:
 	if failures.is_empty():
 		print(
-			"I3R_FONT_SURFACE_COVERAGE=PASS controls=%d visible_controls=%d tooltips=%d settings_popups=%d surfaces=%s roles=FusionPixel,Noto"
+			"I3R_FONT_SURFACE_COVERAGE=PASS controls=%d visible_controls=%d tooltips=%d settings_popups=%d surfaces=%s primary=FusionPixel fallback=Noto"
 			% [
 				checked_text_controls,
 				checked_visible_controls,

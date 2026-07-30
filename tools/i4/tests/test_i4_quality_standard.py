@@ -52,6 +52,7 @@ class I4QualityStandardGovernanceTest(unittest.TestCase):
             "#### 10.4.6 物品纹理与地面掉落",
             "## 11. 真实渲染捕获与人工视觉复核",
             "## 12. 存档、失败和复现标准",
+            "### 12.1 验证存储收口",
             "## 14. 缺陷严重度与一票否决",
             "## 17. I4.7 边框收敛修复计划",
         ]
@@ -104,11 +105,11 @@ class I4QualityStandardGovernanceTest(unittest.TestCase):
 
     def test_requirement_ids_are_unique_and_contiguous(self) -> None:
         ids = [int(value) for value in re.findall(r"^\| I4-R(\d{3}) \|", self.matrix, re.M)]
-        self.assertEqual(ids, list(range(1, 50)))
+        self.assertEqual(ids, list(range(1, 51)))
         self.assertEqual(len(ids), len(set(ids)))
 
     def test_quality_requirements_preserve_fail_history_and_candidate_boundary(self) -> None:
-        for requirement_id in range(31, 50):
+        for requirement_id in range(31, 51):
             with self.subTest(requirement_id=requirement_id):
                 self.assertIn(f"I4-R{requirement_id:03d}", self.matrix)
         self.assertRegex(
@@ -119,12 +120,22 @@ class I4QualityStandardGovernanceTest(unittest.TestCase):
             "1F85061F1C90B1E6B3F673F8519399B8094FD2499B0F4004DB9BCEBD4C3E0C51",
             self.matrix,
         )
-        for requirement_id in [25, 38, 40, 42]:
+        for requirement_id in [42, 50]:
             with self.subTest(open_requirement=requirement_id):
                 self.assertRegex(
                     self.matrix,
                     rf"\| I4-R{requirement_id:03d} \|[^\n]+\| `IMPLEMENTING` \|",
                 )
+        for requirement_id in [25, 38]:
+            with self.subTest(visual_candidate_requirement=requirement_id):
+                self.assertRegex(
+                    self.matrix,
+                    rf"\| I4-R{requirement_id:03d} \|[^\n]+\| `VISUAL_CANDIDATE` \|",
+                )
+        self.assertRegex(
+            self.matrix,
+            r"\| I4-R040 \|[^\n]+\| `TARGETED_PASS` \|",
+        )
         self.assertRegex(
             self.matrix,
             r"\| I4-R029 \|[^\n]+\| `IMPLEMENTING` \|",

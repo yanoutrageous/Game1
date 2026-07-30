@@ -13,6 +13,7 @@ const RuntimeModalLayoutModelScript := preload("res://scripts/ui/run_surface/run
 
 const PASS_MARKER := "I4_DEBUG_SANDBOX=PASS"
 const FAIL_MARKER := "I4_DEBUG_SANDBOX=FAIL"
+const TEST_PRODUCTION_PROFILE_ID := "i4_test_production"
 
 var failures: Array[String] = []
 var original_debug_setting: Variant
@@ -33,7 +34,11 @@ func _run() -> void:
 	_cleanup()
 	ProjectSettings.set_setting(DebugGateScript.ENABLE_SETTING, original_debug_setting)
 	if failures.is_empty():
-		print("%s profile=dev_sandbox taint_guard=PASS settings_entry=PASS" % PASS_MARKER)
+		print(
+			"%s profile=dev_sandbox taint_guard=PASS settings_entry=PASS "
+			% PASS_MARKER
+			+ "scenario_fixture=PASS save_injection=one_shot"
+		)
 		quit(0)
 		return
 	for failure in failures:
@@ -44,13 +49,20 @@ func _run() -> void:
 func _check_profile_isolation_and_taint_guard() -> void:
 	var manager = SaveManagerScript.new()
 	manager.manifest = SaveProfileManifestScript.default_manifest()
-	manager.active_profile_id = SaveProfileManifestScript.DEFAULT_PROFILE_ID
+	var selected_test_profile := manager.switch_profile(
+		TEST_PRODUCTION_PROFILE_ID,
+		false
+	)
+	_require(
+		bool(selected_test_profile.get("ok", false)),
+		"could not select the disposable production-profile fixture"
+	)
 	var adapter = MetaProgressAdapterScript.new()
 	manager.configure_meta_adapter(adapter)
 	adapter.data["gold"] = 73
 	_require(adapter.save(), "could not seed production profile")
 	var before_hash := DebugSandboxSessionScript.profile_storage_hash(
-		SaveProfileManifestScript.DEFAULT_PROFILE_ID
+		TEST_PRODUCTION_PROFILE_ID
 	)
 
 	var session = DebugSandboxSessionScript.new()
@@ -66,12 +78,39 @@ func _check_profile_isolation_and_taint_guard() -> void:
 		str(adapter.active_profile_id) == SaveProfileManifestScript.DEBUG_SANDBOX_PROFILE_ID,
 		"meta adapter did not switch to dev_sandbox"
 	)
+	var sandbox_hash_before_failure := DebugSandboxSessionScript.profile_storage_hash(
+		SaveProfileManifestScript.DEBUG_SANDBOX_PROFILE_ID
+	)
+	var injection: Dictionary = adapter.debug_inject_next_save_failure()
+	_require(
+		bool(injection.get("ok", false)) and adapter.debug_save_failure_armed(),
+		"sandbox could not arm one-shot persistence failure"
+	)
+	adapter.data["gold"] = 11
+	_require(not adapter.save(), "injected sandbox persistence failure unexpectedly saved")
+	_require(
+		adapter.last_error == "debug_injected_next_save_failure",
+		"injected sandbox persistence failure lost its exact reason"
+	)
+	_require(
+		not adapter.debug_save_failure_armed(),
+		"one-shot sandbox persistence failure remained armed after rejection"
+	)
+	_require(
+		DebugSandboxSessionScript.profile_storage_hash(
+			SaveProfileManifestScript.DEBUG_SANDBOX_PROFILE_ID
+		) == sandbox_hash_before_failure,
+		"injected failed save changed the sandbox file"
+	)
+	_require(adapter.save(), "sandbox did not recover on the save after one-shot rejection")
+	adapter.data["gold"] = 0
+	_require(adapter.save(), "sandbox could not restore its post-injection baseline")
 	var debug_summary: Dictionary = adapter.add_gold(1000, "i4_debug_sandbox_runner")
 	_require(int(debug_summary.get("gold", 0)) == 1000, "sandbox debug gold did not apply")
 	_require(bool(debug_summary.get("debug_used", false)), "sandbox debug write did not taint meta")
 	_require(
 		DebugSandboxSessionScript.profile_storage_hash(
-			SaveProfileManifestScript.DEFAULT_PROFILE_ID
+			TEST_PRODUCTION_PROFILE_ID
 		) == before_hash,
 		"sandbox debug write changed production profile"
 	)
@@ -79,8 +118,14 @@ func _check_profile_isolation_and_taint_guard() -> void:
 	_require(bool(ended.get("ok", false)), "sandbox session did not close cleanly")
 	_require(bool(ended.get("production_unchanged", false)), "production hash changed")
 	_require(
-		str(adapter.active_profile_id) == SaveProfileManifestScript.DEFAULT_PROFILE_ID,
+		str(adapter.active_profile_id) == TEST_PRODUCTION_PROFILE_ID,
 		"production profile was not restored"
+	)
+	var production_injection: Dictionary = adapter.debug_inject_next_save_failure()
+	_require(
+		not bool(production_injection.get("ok", true))
+			and not adapter.debug_save_failure_armed(),
+		"one-shot save failure injection escaped the dev_sandbox profile"
 	)
 
 	var blocked_debug_summary: Dictionary = adapter.add_gold(5, "default_profile_probe")
@@ -92,24 +137,26 @@ func _check_profile_isolation_and_taint_guard() -> void:
 	)
 	_require(
 		DebugSandboxSessionScript.profile_storage_hash(
-			SaveProfileManifestScript.DEFAULT_PROFILE_ID
+			TEST_PRODUCTION_PROFILE_ID
 		) == before_hash,
 		"blocked direct debug write changed production profile"
 	)
 
 	var read_before := DebugSandboxSessionScript.profile_storage_hash(
-		SaveProfileManifestScript.DEFAULT_PROFILE_ID
+		TEST_PRODUCTION_PROFILE_ID
 	)
 	var read_summary := RunSceneMetaCommitterScript.debug_read_summary(
 		adapter,
 		"i4_read_only_probe"
 	)
+	var read_after := DebugSandboxSessionScript.profile_storage_hash(
+		TEST_PRODUCTION_PROFILE_ID
+	)
 	_require(bool(read_summary.get("read_only_diagnostic", false)), "read diagnostic was not marked read-only")
 	_require(
-		DebugSandboxSessionScript.profile_storage_hash(
-			SaveProfileManifestScript.DEFAULT_PROFILE_ID
-		) == read_before,
-		"read-only diagnostic changed production profile"
+		read_after == read_before,
+		"read-only diagnostic changed production profile: before=%s after=%s"
+		% [read_before, read_after]
 	)
 
 	var tainted_result := {
@@ -130,7 +177,7 @@ func _check_profile_isolation_and_taint_guard() -> void:
 	)
 	_require(
 		DebugSandboxSessionScript.profile_storage_hash(
-			SaveProfileManifestScript.DEFAULT_PROFILE_ID
+			TEST_PRODUCTION_PROFILE_ID
 		) == before_hash,
 		"blocked tainted settlement changed production profile"
 	)
@@ -225,7 +272,7 @@ func _check_debug_panel_geometry() -> void:
 
 func _cleanup() -> void:
 	for profile_id in [
-		SaveProfileManifestScript.DEFAULT_PROFILE_ID,
+		TEST_PRODUCTION_PROFILE_ID,
 		SaveProfileManifestScript.DEBUG_SANDBOX_PROFILE_ID,
 	]:
 		var path := str(

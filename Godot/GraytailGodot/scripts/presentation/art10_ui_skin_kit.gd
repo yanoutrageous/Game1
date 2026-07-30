@@ -244,17 +244,17 @@ static func pixel_font() -> Resource:
 static func readable_font() -> Resource:
 	if _readable_font_cache != null:
 		return _readable_font_cache
-	var readable_base := _font_asset(READABLE_FONT_ASSET_ID)
+	var readable_base := _font_asset(DISPLAY_FONT_ASSET_ID)
 	if readable_base == null:
 		return pixel_font()
-	_apply_player_font_runtime_policy(readable_base, false)
-	var display_fallback := _font_asset(DISPLAY_FONT_ASSET_ID)
-	_apply_player_font_runtime_policy(display_fallback, true)
+	_apply_player_font_runtime_policy(readable_base, true)
+	var glyph_fallback := _font_asset(READABLE_FONT_ASSET_ID)
+	_apply_player_font_runtime_policy(glyph_fallback, false)
 	var font_stack := FontVariation.new()
-	font_stack.resource_name = "NotoCJKReadableWithFusionGlyphFallback"
+	font_stack.resource_name = "FusionPixelReadableWithNotoGlyphFallback"
 	font_stack.base_font = readable_base
-	if display_fallback != null:
-		font_stack.fallbacks = [display_fallback]
+	if glyph_fallback != null:
+		font_stack.fallbacks = [glyph_fallback]
 	_readable_font_cache = font_stack
 	return _readable_font_cache
 

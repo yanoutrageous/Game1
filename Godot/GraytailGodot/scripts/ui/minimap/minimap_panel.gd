@@ -5,6 +5,7 @@ const ContentDBAccessScript := preload("res://scripts/core/content/content_db_ac
 const RuntimeInputProfileScript := preload("res://scripts/core/input/runtime_input_profile.gd")
 const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
 const MapCellLayerLayoutScript := preload("res://scripts/ui/map_shared/map_cell_layer_layout.gd")
+const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 
 # UI reads MiniMapViewModel only. UI must not read TruthMap directly.
 
@@ -246,17 +247,24 @@ func _add_adjacent_mine_count(cell: Control, marker: Dictionary, layer_layout: D
 	cell.add_child(badge_background)
 	var count_label := Label.new()
 	count_label.name = "AdjacentMineCount"
-	MapCellLayerLayoutScript.apply_rect(count_label, count_rect)
+	cell.add_child(count_label)
 	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	count_label.z_index = int(layer_layout.get("count_z", 30)) + 1
-	count_label.text = str(adjacent)
+	var count_font := Art10UISkinKitScript.pixel_font()
+	if count_font is Font:
+		count_label.add_theme_font_override("font", count_font as Font)
 	count_label.add_theme_font_size_override("font_size", clampi(int(count_rect.size.y * 0.62), 9, 15))
+	count_label.add_theme_constant_override("line_spacing", 0)
 	count_label.add_theme_color_override("font_color", Color(0.98, 0.94, 0.78, 1.0))
 	count_label.add_theme_color_override("font_outline_color", Color(0.02, 0.03, 0.03, 1.0))
 	count_label.add_theme_constant_override("outline_size", 1)
-	cell.add_child(count_label)
+	count_label.text = str(adjacent)
+	MapCellLayerLayoutScript.apply_rect(count_label, count_rect)
+	# Entering the themed tree can temporarily retain Label's previous minimum
+	# height. Re-assert the authored badge extent at idle before the next draw.
+	count_label.set_deferred("size", count_rect.size)
 
 
 func _markers_by_position(markers: Array[Dictionary]) -> Dictionary:

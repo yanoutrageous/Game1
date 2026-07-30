@@ -174,14 +174,17 @@ func _ensure_backdrop() -> void:
 		result_modal_art.name = "ResultModalFrame"
 		result_modal_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		result_modal_art.modulate = Color(1.0, 1.0, 1.0, 0.96)
-		result_modal_art.patch_margin_left = 38
-		result_modal_art.patch_margin_top = 38
-		result_modal_art.patch_margin_right = 38
-		result_modal_art.patch_margin_bottom = 38
+		result_modal_art.patch_margin_left = 16
+		result_modal_art.patch_margin_top = 16
+		result_modal_art.patch_margin_right = 16
+		result_modal_art.patch_margin_bottom = 16
 		result_modal_art.draw_center = true
 		add_child(result_modal_art)
 	result_modal_art.z_index = 2
-	var modal_texture := Art21UIPlacementContractScript.texture_for_slot(&"result", &"result_modal_frame", &"ui.art19.panel.terminal_main")
+	var modal_texture := Art21UIPlacementContractScript.texture_for_visual_key(
+		&"shared.panel.page_frame.normal",
+		&"ui.art19.panel.terminal_main"
+	)
 	if modal_texture != null:
 		result_modal_art.texture = modal_texture
 	result_summary_art = _ensure_modal_patch(&"ResultSummaryPanelArt", &"art21r2.modal.section.panel", 32, 0.96)
@@ -795,23 +798,26 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	if result_title_art != null:
 		var banner_size := RESULT_BANNER_SIZE
 		var banner_rect := Rect2(
-			Vector2(rect.position.x + (rect.size.x - banner_size.x) * 0.5, rect.position.y + _scaled_metric(18.0)),
+			Vector2(rect.position.x + (rect.size.x - banner_size.x) * 0.5, rect.position.y + 18.0),
 			banner_size
 		)
 		_set_absolute_rect(result_title_art, banner_rect)
 	var title_node := get_node_or_null("ResultTitle") as Label
 	if title_node != null:
 		var title_rect := result_title_art.get_global_rect() if result_title_art != null else Rect2(
-			Vector2(rect.position.x + _scaled_metric(34.0), rect.position.y + _scaled_metric(18.0)),
+			Vector2(rect.position.x + _scaled_metric(34.0), rect.position.y + 18.0),
 			Vector2(rect.size.x - _scaled_metric(68.0), RESULT_BANNER_SIZE.y)
 		)
 		_set_absolute_rect(title_node, title_rect)
 		title_node.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title_node.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var section_gap := _scaled_metric(8.0)
+	# UI scale grows glyphs and interactive rows. Decorative whitespace remains
+	# inside the frozen 4-8 px density band so a height-capped 720p modal does
+	# not expose the next result section only partially.
+	var section_gap := 8.0
 	var horizontal_inset := _scaled_metric(34.0)
-	var bottom_inset := _scaled_metric(18.0)
-	var summary_top := rect.position.y + _scaled_metric(18.0) + RESULT_BANNER_SIZE.y + section_gap
+	var bottom_inset := 18.0
+	var summary_top := rect.position.y + 18.0 + RESULT_BANNER_SIZE.y + section_gap
 	var summary_height := _scaled_metric(54.0)
 	var metrics_top := summary_top + summary_height + section_gap
 	var metrics_height := _scaled_metric(64.0)

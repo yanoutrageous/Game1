@@ -3,6 +3,7 @@ class_name RunSceneDebugPanelController
 
 const RunSceneDebugBridgeScript := preload("res://scripts/core/run/run_scene_debug_bridge.gd")
 const DebugFailureBundleScript := preload("res://scripts/core/debug/debug_failure_bundle.gd")
+const DebugScenarioCatalogScript := preload("res://scripts/core/debug/debug_scenario_catalog.gd")
 const DebugSandboxSessionScript := preload("res://scripts/core/debug/debug_sandbox_session.gd")
 const NavigationIntentScript := preload("res://scripts/ui/app_shell/navigation_intent.gd")
 const RunSceneRouteControllerScript := preload("res://scripts/core/run/run_scene_route_controller.gd")
@@ -34,6 +35,7 @@ var _last_debug_command: Dictionary = {}
 var _session_commit_id := ""
 var _focus_before_panel: Control
 var _opened_from_pause := false
+var _scenario_fixture_snapshot: Dictionary = {}
 
 
 func bind_targets(
@@ -107,6 +109,7 @@ func start_test_room_if_requested(
 		if show_main.is_valid():
 			show_main.call()
 		return true
+	_scenario_fixture_snapshot = {}
 	var route_result := RunSceneRouteControllerScript.start_from_intent(
 		intent,
 		_command_bus,
@@ -116,6 +119,9 @@ func start_test_room_if_requested(
 		_player_controller.call("reset_local_position")
 	if bool(route_result.get("run_screen_requested", false)) and show_run.is_valid():
 		show_run.call()
+		_scenario_fixture_snapshot = _apply_scenario_fixture()
+		if not bool(_scenario_fixture_snapshot.get("ok", false)):
+			_show_feedback(_scenario_fixture_snapshot)
 	else:
 		_sandbox_session.end(_save_manager, _meta_progress_adapter, false)
 		_show_feedback(route_result)
@@ -147,7 +153,142 @@ func is_test_room_active() -> bool:
 
 func test_room_snapshot() -> Dictionary:
 	_sandbox_session.refresh_taint(_run_context, _meta_progress_adapter)
-	return _sandbox_session.snapshot()
+	var result := _sandbox_session.snapshot()
+	result["fixture"] = _scenario_fixture_snapshot.duplicate(true)
+	return result
+
+
+func _apply_scenario_fixture() -> Dictionary:
+	var session := _sandbox_session.snapshot()
+	var scenario_id := StringName(session.get("scenario_id", &""))
+	var scenario := DebugScenarioCatalogScript.find(scenario_id)
+	if scenario.is_empty():
+		return _scenario_fixture_failure(
+			&"debug_scenario_not_found",
+			"测试场景目录中不存在 %s。" % String(scenario_id)
+		)
+	if not _dispatch_command.is_valid() or _run_context == null:
+		return _scenario_fixture_failure(
+			&"debug_scenario_runtime_missing",
+			"测试场景运行边界未就绪。"
+		)
+	var applied_commands: Array[Dictionary] = []
+	for raw_instruction in scenario.get("setup_commands", []) as Array:
+		var instruction := (raw_instruction as Dictionary).duplicate(true)
+		var command := StringName(instruction.get("command", &""))
+		var repeat_count := maxi(1, int(instruction.get("repeat", 1)))
+		var payload := (
+			(instruction.get("payload", {}) as Dictionary).duplicate(true)
+			if instruction.get("payload", {}) is Dictionary
+			else {}
+		)
+		payload["source"] = "debug_scenario_fixture"
+		for repeat_index in range(repeat_count):
+			var result := _apply_scenario_instruction(command, payload)
+			applied_commands.append({
+				"command": command,
+				"repeat_index": repeat_index,
+				"ok": bool(result.get("ok", false)),
+				"status": StringName(result.get("status", &"")),
+			})
+			if not bool(result.get("ok", false)):
+				return _scenario_fixture_failure(
+					&"debug_scenario_setup_rejected",
+					"测试场景 %s 的初始化命令 %s 被拒绝。"
+					% [String(scenario_id), String(command)],
+					{"applied_commands": applied_commands}
+				)
+	var failure_injection_armed := false
+	if bool(scenario.get("requires_failure_injection", false)):
+		if (
+			_meta_progress_adapter == null
+			or not _meta_progress_adapter.has_method("debug_inject_next_save_failure")
+		):
+			return _scenario_fixture_failure(
+				&"debug_scenario_failure_injection_missing",
+				"保存失败测试场缺少隔离注入边界。",
+				{"applied_commands": applied_commands}
+			)
+		var injection: Dictionary = _meta_progress_adapter.call(
+			"debug_inject_next_save_failure"
+		)
+		if not bool(injection.get("ok", false)):
+			return _scenario_fixture_failure(
+				&"debug_scenario_failure_injection_rejected",
+				"保存失败测试场无法启用下一次保存拒绝。",
+				{"applied_commands": applied_commands}
+			)
+		failure_injection_armed = true
+	# Scenario construction is the deterministic admission baseline, not a
+	# post-admission debug write.  CLEAN therefore means the player has not run
+	# another write command after this exact fixture was established.
+	_run_context.set("debug_used", false)
+	var fixture_debug_commands = _run_context.get("debug_commands")
+	if fixture_debug_commands is Array:
+		(fixture_debug_commands as Array).clear()
+	if _player_controller != null:
+		_player_controller.call("reset_local_position")
+	var run_snapshot: Dictionary = _run_context.call("get_status_snapshot")
+	_update_session_banner()
+	return {
+		"ok": true,
+		"status": &"debug_scenario_ready",
+		"scenario_id": scenario_id,
+		"applied_command_count": applied_commands.size(),
+		"applied_commands": applied_commands,
+		"current_room_type": StringName(
+			run_snapshot.get("current_room", &"Unknown")
+		),
+		"backpack_count": (run_snapshot.get("inventory_items", []) as Array).size(),
+		"ground_count": (run_snapshot.get("room_floor_items", []) as Array).size(),
+		"failure_injection_armed": failure_injection_armed,
+	}
+
+
+func _apply_scenario_instruction(
+	command: StringName,
+	payload: Dictionary
+) -> Dictionary:
+	if command == &"debug_find_room":
+		var room_type := StringName(payload.get("room_type", &"Unknown"))
+		var target := RunSceneDebugBridgeScript.nearest_room_of_type(
+			_run_context,
+			room_type
+		)
+		if target.x < 0:
+			return {
+				"ok": false,
+				"status": &"debug_target_missing",
+				"room_type": room_type,
+			}
+		return _dispatch_command.call(
+			&"debug_teleport_to",
+			{
+				"pos": target,
+				"enter_room": true,
+				"source": "debug_scenario_fixture",
+				"target_room_type": room_type,
+			},
+			false,
+			false
+		)
+	return _dispatch_command.call(command, payload, false, false)
+
+
+func _scenario_fixture_failure(
+	reason: StringName,
+	message: String,
+	extra: Dictionary = {}
+) -> Dictionary:
+	var result := {
+		"ok": false,
+		"accepted": false,
+		"status": &"debug_scenario_setup_failed",
+		"reason": reason,
+		"message": message,
+	}
+	result.merge(extra, true)
+	return result
 
 
 func toggle_panel() -> void:
@@ -510,6 +651,85 @@ static func add_section(parent: Control, label: String) -> Label:
 	section.custom_minimum_size = Vector2(200, 24)
 	parent.add_child(section)
 	return section
+
+
+static func build_panel_view(parent: Control, close_callback: Callable) -> Dictionary:
+	var panel := PanelContainer.new()
+	panel.name = "DebugOperationPanel"
+	panel.set_offsets_preset(Control.PRESET_TOP_LEFT)
+	panel.position = Vector2(980, 270)
+	panel.size = Vector2(240, 420)
+	panel.visible = false
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.012, 0.032, 0.038, 0.97)
+	panel_style.border_color = Color(0.28, 0.82, 0.76, 0.92)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(4)
+	panel_style.content_margin_left = 10.0
+	panel_style.content_margin_right = 10.0
+	panel_style.content_margin_top = 8.0
+	panel_style.content_margin_bottom = 8.0
+	panel.add_theme_stylebox_override("panel", panel_style)
+	parent.add_child(panel)
+	var outer := VBoxContainer.new()
+	outer.name = "DebugOperationContent"
+	outer.add_theme_constant_override("separation", 8)
+	panel.add_child(outer)
+	var header := HBoxContainer.new()
+	header.name = "DebugOperationHeader"
+	outer.add_child(header)
+	var title := Label.new()
+	title.text = "诊断面板"
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(title)
+	add_button(header, "关闭", close_callback, false)
+	var note := Label.new()
+	note.text = "只读检查不污染会话；写命令经真实命令总线并标记测试会话。"
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	outer.add_child(note)
+	var coordinate_row := HBoxContainer.new()
+	coordinate_row.name = "DebugCoordinateRow"
+	coordinate_row.add_theme_constant_override("separation", 6)
+	outer.add_child(coordinate_row)
+	var coordinate_label := Label.new()
+	coordinate_label.text = "坐标"
+	coordinate_row.add_child(coordinate_label)
+	var x_spin := _coordinate_spin_box("DebugTeleportX")
+	var y_spin := _coordinate_spin_box("DebugTeleportY")
+	coordinate_row.add_child(x_spin)
+	coordinate_row.add_child(y_spin)
+	var scroll := ScrollContainer.new()
+	scroll.name = "DebugOperationScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size = Vector2(260, 360)
+	outer.add_child(scroll)
+	var content := VBoxContainer.new()
+	content.name = "DebugOperationButtons"
+	content.add_theme_constant_override("separation", 6)
+	scroll.add_child(content)
+	var log_label := Label.new()
+	log_label.name = "DebugLastMessage"
+	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	outer.add_child(log_label)
+	return {
+		"panel": panel,
+		"content": content,
+		"scroll": scroll,
+		"x_spin": x_spin,
+		"y_spin": y_spin,
+		"log": log_label,
+	}
+
+
+static func _coordinate_spin_box(node_name: String) -> SpinBox:
+	var spin := SpinBox.new()
+	spin.name = node_name
+	spin.min_value = 0
+	spin.max_value = 99
+	spin.step = 1
+	spin.custom_minimum_size = Vector2(70, 28)
+	return spin
 
 
 static func add_button(

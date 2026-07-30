@@ -17,7 +17,7 @@ const SCENARIOS := [
 		"seed": 1101,
 		"coverage": [&"combat", &"terminal_failure"],
 		"setup_commands": [
-			{"command": &"debug_find_room", "payload": {"room_type": &"Battle"}},
+			{"command": &"debug_find_room", "payload": {"room_type": &"Monster"}},
 		],
 	},
 	{

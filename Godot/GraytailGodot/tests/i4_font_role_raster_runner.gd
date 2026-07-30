@@ -28,19 +28,19 @@ func _run() -> void:
 		_expect(display_file != null and display_file.antialiasing == TextServer.FONT_ANTIALIASING_NONE, "pixel display font is antialiased")
 		_expect(display_file != null and display_file.subpixel_positioning == TextServer.SUBPIXEL_POSITIONING_DISABLED, "pixel display font uses subpixel positioning")
 	if readable != null:
-		_expect(_base_path(readable) == READABLE_FONT_PATH, "readable role is not Noto Sans CJK")
-		_expect(_fallback_paths(readable).has(DISPLAY_FONT_PATH), "readable role lost explicit display-glyph fallback")
+		_expect(_base_path(readable) == DISPLAY_FONT_PATH, "readable role is not FusionPixel")
+		_expect(_fallback_paths(readable).has(READABLE_FONT_PATH), "readable role lost explicit Noto glyph fallback")
 		var readable_file := readable.base_font as FontFile
-		_expect(readable_file != null and readable_file.antialiasing == TextServer.FONT_ANTIALIASING_GRAY, "readable CJK font has no grayscale antialiasing")
-		_expect(readable_file != null and readable_file.subpixel_positioning == TextServer.SUBPIXEL_POSITIONING_AUTO, "readable CJK font disabled subpixel positioning")
+		_expect(readable_file != null and readable_file.antialiasing == TextServer.FONT_ANTIALIASING_NONE, "readable FusionPixel font is antialiased")
+		_expect(readable_file != null and readable_file.subpixel_positioning == TextServer.SUBPIXEL_POSITIONING_DISABLED, "readable FusionPixel font uses subpixel positioning")
 
 	var theme := SkinKit.player_ui_theme()
-	_expect(_base_path(theme.default_font as FontVariation) == READABLE_FONT_PATH, "theme default is not the readable body role")
+	_expect(_base_path(theme.default_font as FontVariation) == DISPLAY_FONT_PATH, "theme default is not FusionPixel")
 	for theme_type in [&"Label", &"TooltipLabel", &"PopupMenu", &"LineEdit"]:
-		_expect(_base_path(theme.get_font(&"font", theme_type) as FontVariation) == READABLE_FONT_PATH, "%s is not readable-role text" % theme_type)
+		_expect(_base_path(theme.get_font(&"font", theme_type) as FontVariation) == DISPLAY_FONT_PATH, "%s is not FusionPixel" % theme_type)
 	for theme_type in [&"Button", &"MenuButton", &"TabBar"]:
-		_expect(_base_path(theme.get_font(&"font", theme_type) as FontVariation) == READABLE_FONT_PATH, "%s is not consistent readable-role text" % theme_type)
-	_expect(_base_path(theme.get_font(&"normal_font", &"RichTextLabel") as FontVariation) == READABLE_FONT_PATH, "rich body text is not readable-role text")
+		_expect(_base_path(theme.get_font(&"font", theme_type) as FontVariation) == DISPLAY_FONT_PATH, "%s is not FusionPixel" % theme_type)
+	_expect(_base_path(theme.get_font(&"normal_font", &"RichTextLabel") as FontVariation) == DISPLAY_FONT_PATH, "rich body text is not FusionPixel")
 
 	var title := Label.new()
 	var body := Label.new()
@@ -50,9 +50,9 @@ func _run() -> void:
 	SkinKit.apply_composition_label(body, &"body")
 	SkinKit.apply_label_token(numeric, &"numeric")
 	SkinKit.apply_button_token(short_button, &"secondary", &"button")
-	_expect(_base_path(title.get_theme_font("font") as FontVariation) == READABLE_FONT_PATH, "localized title is not visually consistent with body text")
-	_expect(_base_path(body.get_theme_font("font") as FontVariation) == READABLE_FONT_PATH, "body composition did not use readable role")
-	_expect(_base_path(short_button.get_theme_font("font") as FontVariation) == READABLE_FONT_PATH, "localized button is not visually consistent with body text")
+	_expect(_base_path(title.get_theme_font("font") as FontVariation) == DISPLAY_FONT_PATH, "localized title is not FusionPixel")
+	_expect(_base_path(body.get_theme_font("font") as FontVariation) == DISPLAY_FONT_PATH, "body composition is not FusionPixel")
+	_expect(_base_path(short_button.get_theme_font("font") as FontVariation) == DISPLAY_FONT_PATH, "localized button is not FusionPixel")
 	_expect(_base_path(numeric.get_theme_font("font") as FontVariation) == DISPLAY_FONT_PATH, "numeric token lost the intentional pixel role")
 	_expect(title.get_meta("ui_font_token", &"") == &"page_title", "title has no semantic font token")
 	_expect(body.get_meta("ui_font_token", &"") == &"body", "body has no semantic font token")
@@ -82,8 +82,8 @@ func _run() -> void:
 	)
 	var inventory_title := inventory.get("title_label") as Label
 	var inventory_summary := inventory.get("summary_label") as Label
-	_expect(_base_path(inventory_title.get_theme_font("font") as FontVariation) == READABLE_FONT_PATH, "inventory title is not the shared readable role")
-	_expect(_base_path(inventory_summary.get_theme_font("font") as FontVariation) == READABLE_FONT_PATH, "inventory summary is not readable role")
+	_expect(_base_path(inventory_title.get_theme_font("font") as FontVariation) == DISPLAY_FONT_PATH, "inventory title is not FusionPixel")
+	_expect(_base_path(inventory_summary.get_theme_font("font") as FontVariation) == DISPLAY_FONT_PATH, "inventory summary is not FusionPixel")
 	var use_button := inventory.find_child("InventoryUseButton", true, false) as Button
 	_expect(use_button != null and use_button.get_meta("ui_control_size_class", &"") == &"compact", "compact item action did not use the compact nine-slice contract")
 	if use_button != null:
@@ -165,7 +165,7 @@ func _expect(condition: bool, message: String) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("%s localized=NotoCJK numeric=FusionPixel aa=split sizes=integer frame_safe=compact,large rarity=natural" % PASS_MARKER)
+		print("%s primary=FusionPixel fallback=Noto aa=pixel sizes=integer frame_safe=compact,large rarity=natural" % PASS_MARKER)
 		quit(0)
 		return
 	for failure in failures:

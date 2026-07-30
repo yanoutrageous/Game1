@@ -562,6 +562,10 @@ static func _claim_rows(config: Dictionary, selected_filter: StringName) -> Arra
 		})
 		var rarity_descriptor := ItemRarityDescriptorScript.describe_item(item)
 		var item_category := _item_category_label(item)
+		var wallet_gold := int(wallet.get("gold", 0)) if bool(wallet.get("available", false)) else 0
+		var quantity_limit := 99
+		if bool(wallet.get("available", false)) and price > 0:
+			quantity_limit = mini(99, floori(float(wallet_gold) / float(price)))
 		result.append({
 			"id": StringName("m7_shop_%s" % item_id),
 			"filter_id": DeployTabModelScript.FILTER_CLAIM_PURCHASE if unlocked else DeployTabModelScript.FILTER_CLAIM_LOCKED,
@@ -584,11 +588,7 @@ static func _claim_rows(config: Dictionary, selected_filter: StringName) -> Arra
 			"quantity_capable": true,
 			"quantity_mode": &"purchase",
 			"quantity_current": purchase_quantity,
-			"quantity_limit": (
-				mini(99, int(wallet.get("gold", 0)) / maxi(1, price))
-				if bool(wallet.get("available", false)) and price > 0
-				else 99
-			),
+			"quantity_limit": quantity_limit,
 			"quantity_enabled": purchase_enabled or (unlocked and not active_locked),
 			"quantity_category": item_category,
 			"balance": wallet.get("gold", null),
@@ -599,7 +599,7 @@ static func _claim_rows(config: Dictionary, selected_filter: StringName) -> Arra
 			"facts": [
 				_fact("单价", "%d 金币" % price),
 				_fact("本次购买", "%d 件 / %d 金币" % [purchase_quantity, total_price]),
-				_fact("交易后余额", str(int(wallet.get("gold", 0)) - total_price), &"positive" if affordable else &"warning"),
+				_fact("交易后余额", str(wallet_gold - total_price), &"positive" if affordable else &"warning"),
 				_fact("解锁", unlock_text, &"positive" if unlocked else &"muted"),
 			],
 			"actions": [action],

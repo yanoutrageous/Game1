@@ -1,0 +1,417 @@
+{
+  "schema_version": 1,
+  "standard_id": "I4-QA-FROZEN-1",
+  "entry_commit": "4127bd27a05b75cb5e3071cf6dc87d9287f679a9",
+  "review_rule": "Every test file that existed at the I4 entry commit and differs now is an exact-set member. Its normalized entry-to-current diff and current file bytes are frozen here; any later change requires a renewed assertion disposition.",
+  "files": [
+    {
+      "path": "Godot/GraytailGodot/tests/art22_deploy_prep_runtime_runner.gd",
+      "diff_sha256": "B06D7CB8EA96911602C2921787F5F4142A31B978E0A32A2FABF2C33387F9FC4A",
+      "current_file_sha256": "5BDD842E16685DFBF7FDF6F5720FB2D072D1997A5B3EF9B98F1BB1240E1CD13A",
+      "dispositions": [
+        {
+          "id": "deploy_summary_single_line_cap",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Every Deploy summary row had to remain a single unwrapped line of at most nine characters and report a text-fit PASS at 150% UI scale.",
+          "reason": "The fixed single-line cap discarded decision information and directly contradicted I4's complete, vertically scrollable Deploy summary.",
+          "replacement_requirement_ids": ["I4-R015", "I4-R025", "I4-R036"],
+          "replacement_gate": "Require WORD_SMART wrapping, no clipping or trimming, unlimited visible lines, full text in the tooltip, row height expansion by the exact text height plus 12 px, 8 px horizontal safe insets, exact projected-row parity and an AUTO vertical scroll container.",
+          "scope_preserved": "Every summary row must still remain readable at 150% and inside the authored summary board; the replacement strengthens information preservation instead of deleting the scale check.",
+          "verification": "ART22_DEPLOY_PREP_RUNTIME checks the flow policy at 150% and checks every page's visible text against its complete summary projection; I4_DEPLOY_INFORMATION_LAYOUT separately verifies all 12 resolution/scale cells and scroll-end reachability."
+        },
+        {
+          "id": "deploy_resident_gold_on_map",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "A missing wallet value and its gold frame had to remain visible in the upper-right corner while the Deploy map page was active.",
+          "reason": "I4 makes balance contextual so non-transaction pages do not repeat unrelated wallet information.",
+          "replacement_requirement_ids": ["I4-R017"],
+          "replacement_gate": "Require the gold frame and label to be hidden on map, visible in claim/purchase, render the unavailable value exactly as '— 金币', occupy DETAIL_GOLD_PANEL, and hide again when returning to map.",
+          "scope_preserved": "Unavailable-wallet semantics and the authoritative upper-right transaction geometry remain tested in the context where the value affects a decision.",
+          "verification": "ART22_DEPLOY_PREP_RUNTIME switches map→claim→map and checks both visibility transitions, exact copy and exact transaction rect; I4_DEPLOY_INFORMATION_LAYOUT repeats the contextual sequence in every matrix cell."
+        },
+        {
+          "id": "deploy_obsolete_filter_rectangles",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "The filter viewport had to recover to 240×38 and shrink to 198×38 when navigation arrows appeared.",
+          "reason": "The I4 310 px selection pane widened the usable filter viewport while preserving complete controls and non-overlapping navigation.",
+          "replacement_requirement_ids": ["I4-R014", "I4-R025", "I4-R033"],
+          "replacement_gate": "Require FILTER_SCROLL=Rect2(286,104,302,38), FILTER_SCROLL_WITH_NAV=Rect2(307,104,260,38), exact arrow x/y/width placement, arrow bottoms no lower than CARD_SCROLL.y, zero arrow/viewport intersection, and exact end-scroll clamping.",
+          "scope_preserved": "A fitting filter set must still recover the full viewport; an overflowing set must still expose reachable, non-overlapping previous/next controls and the complete final filter.",
+          "verification": "ART22_DEPLOY_PREP_RUNTIME injects a prior overflow geometry and then a 300 px filter to exercise both transitions; I4_DEPLOY_INFORMATION_LAYOUT verifies focus reveal and zero partial filter controls."
+        },
+        {
+          "id": "duplicate_consumable_visual_rows",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Two compatible consumable instances had to appear as two separate visual rows, each with a right-detail add/remove action.",
+          "reason": "I4 deliberately aggregates compatible instances into one two-line card and moves repeated carry changes to the left-side quantity stepper, reducing visual and action-chain duplication without merging stored instances.",
+          "replacement_requirement_ids": ["I4-R009", "I4-R012", "I4-R013"],
+          "replacement_gate": "Require one deterministic row containing both sorted instance IDs, owned/current/limit=2/0/2, carry mode, an enabled plus control, exact 0/2→1/2→2/2→1/2 projection, and stable per-step instance selection/removal.",
+          "scope_preserved": "Both physical instance IDs remain authoritative and independently selected; the replacement changes only their visual grouping and primary interaction location.",
+          "verification": "ART22_DEPLOY_PREP_RUNTIME presses the real card plus/plus/minus controls and checks the exact selected instance set after every rebuild; I4_DEPLOY_QUANTITY_INTERACTION also checks deterministic domain adjustment."
+        },
+        {
+          "id": "motion_fixture_isolation",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "The full-motion presentation cadence and hanging-board sway remain mandatory, but the fixture must explicitly leave any inherited user reduced-motion preference before sampling them; reduced motion is verified in its own phase.",
+          "verification": "ART22_DEPLOY_PREP_RUNTIME forces full motion before its 48 deterministic cadence samples, then independently enables reduced motion and verifies particles and board sway freeze."
+        },
+        {
+          "id": "art22_deploy_runtime_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "The production Deploy shell, five primary tabs, same-page map scale/difficulty selection, exact map identities, selection/detail split, local and meta action ownership, focus graph, reduced motion, escape behavior, settlement surface and active-run locking remain mandatory.",
+          "verification": "The complete ART22 runner still executes these unchanged contracts and emits its original anchored PASS marker; only the four explicitly replaced assertion groups changed."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/art23_long_term_matrix_capture_runner.gd",
+      "diff_sha256": "484E1FA982CB4B0E1560F1B9C2E21C4B8AD6FCF1BD0D59358AF3D9B2873DD70A",
+      "current_file_sha256": "795088FBD0DFD588BB683A026807F9097AB08A49B7097F567413D07D20FCB38B",
+      "dispositions": [
+        {
+          "id": "art23_fixed_frame_waits",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Sixteen startup frames and three frames after each module/secondary selection were treated as proof that LongTerm had reached a capturable state.",
+          "reason": "A frame count is machine-speed dependent and can capture an earlier transition or an unstable layout while still producing a PNG.",
+          "replacement_requirement_ids": ["I4-R025", "I4-R026", "I4-R037", "I4-R038"],
+          "replacement_gate": "Wait for the exact selected/displayed module and secondary workspace, require STATE_OPEN, then require three identical visible-control layout submissions within 5000 ms.",
+          "scope_preserved": "The same six modules and twenty-five secondary states remain required; only the readiness proof changed.",
+          "verification": "ART23_MATRIX_CAPTURE must report states=25 and each output name binds width, height and UI scale after semantic and stable-layout waits."
+        },
+        {
+          "id": "art23_capture_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Production LongTermShell remains the capture source; all 25 module/secondary routes must be selectable, render at the requested physical size, save successfully and be counted exactly once.",
+          "verification": "The runner rejects missing states, failed PNG writes and any final count other than the complete MATRIX traversal."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/art25_production_visual_capture_runner.gd",
+      "diff_sha256": "C2B0BC7A3873CECDF174D09CFC2FB3FBE3688AD12E75D4EB4EC4507504E70273",
+      "current_file_sha256": "4C9334F9A92D609F1742BB0206A292B0C431A34764BAED20FC4492A027054B1A",
+      "dispositions": [
+        {
+          "id": "art25_fixed_frame_waits",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Fixed waits after main creation, run admission, room teleport, interaction, result mutation and final layout were treated as capture readiness.",
+          "reason": "Those waits could pass before a modal, world entity, result focus or layout became authoritative, and could conceal state leakage in a batch.",
+          "replacement_requirement_ids": ["I4-R025", "I4-R026", "I4-R037", "I4-R038"],
+          "replacement_gate": "Each state waits up to 5000 ms for its production semantic: RunScene creation, active run, exact room, opened contents, exact modal-stack id, result focus or debug-session identity; every captured state then requires three stable visible-layout submissions within the same wall-clock bound.",
+          "scope_preserved": "Production main.tscn, real renderer, room interactions, modal contents, result states and exact PNG dimensions remain mandatory.",
+          "verification": "Single-state and batch markers are anchored; a timeout, unknown state, missing semantic node, unstable layout, wrong pixel dimensions or blocking engine diagnostic fails the capture."
+        },
+        {
+          "id": "art25_extract_t_code",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "The extraction preview was required to contain the literal player-facing string '[T4] 珍贵'.",
+          "reason": "I4 removes engineering T-codes from ordinary player copy while retaining rarity identity through natural language, color/border and collectible level.",
+          "replacement_requirement_ids": ["I4-R013", "I4-R024", "I4-R047"],
+          "replacement_gate": "Require '珍贵', forbid '[T4]', require 收藏等级 4, and require the shared rarity marker on the carried-item row.",
+          "scope_preserved": "The exact carried item, rarity tier and collectible level remain authoritative; only redundant T-code copy is removed.",
+          "verification": "_extract_item_preview_is_safe checks two carried rows and the first row's natural-language rarity, level and marker before saving exit_confirm.png."
+        },
+        {
+          "id": "art25_production_capture_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Captures must instantiate production main.tscn, use production room/modal/result controls, preserve exact room and item fixtures, keep result focus visible, enforce result geometry, and save the requested physical dimensions. New quick-bag, minimap, diagnostics and six-scenario states add coverage rather than weaken prior checks.",
+          "verification": "ART25_PRODUCTION_CAPTURE and ART25_PRODUCTION_BATCH fail closed on any missing production control, fixture drift, focus drift, unsafe layout, image error or state-count mismatch."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i2_inventory_hover_focus_runner.gd",
+      "diff_sha256": "DFF8CA7BFC66CC0679FCC88B6B6EC23AC5136DD492C857AD838F899817B71716",
+      "current_file_sha256": "22552D4F343D0481FC3B3115FCC4F5B03FE6FC017A3B1EE3978AE17A6B2FA76B",
+      "dispositions": [
+        {
+          "id": "inventory_t6_copy",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Inventory metadata and detail text had to display '[T6] 秘藏'.",
+          "reason": "Ordinary inventory copy must expose natural-language rarity without an engineering T-code.",
+          "replacement_requirement_ids": ["I4-R013", "I4-R024", "I4-R047"],
+          "replacement_gate": "Require '秘藏' in metadata/detail, retain the shared rarity-border token, and retain 收藏等级：6 in the first three detail lines.",
+          "scope_preserved": "Tier 6 identity and the non-color collectible-level redundancy remain authoritative.",
+          "verification": "The runner checks natural-language metadata, border marker and the exact level together."
+        },
+        {
+          "id": "inventory_hover_focus_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Hover/focus must update the same full item detail without triggering use/drop; name, weight, quantity, description, level and rarity marker remain required.",
+          "verification": "Action counters remain zero during focus and every preserved detail field is asserted."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i2_item_rarity_presentation_runner.gd",
+      "diff_sha256": "F359AFB08BF8CBDEBD6DD41F9833CFD0E486153272EAA540DD64FC8D595CAFE3",
+      "current_file_sha256": "980166891EFF81DF388A12E5DE7D6BCC0545AEE59376BD8D307E7BC5629FD8E2",
+      "dispositions": [
+        {
+          "id": "rarity_consumer_t_codes",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Deploy, loot result and world popup consumers had to repeat badge strings such as '[T6] 秘藏'.",
+          "reason": "I4 separates rarity from engineering codes: player copy uses the natural label while color, border token and collectible level provide independent identity channels.",
+          "replacement_requirement_ids": ["I4-R013", "I4-R024", "I4-R047"],
+          "replacement_gate": "Deploy summaries and all in-run consumers require the descriptor label, forbid '[T', use the shared title/edge color and border token, and preserve the exact collectible level.",
+          "scope_preserved": "Normalization to tier_6 and all shared-descriptor color/border/level mappings remain authoritative.",
+          "verification": "The runner enumerates Deploy rows and checks the tier-6 card, loot result and world popup against ItemRarityDescriptor."
+        },
+        {
+          "id": "rarity_descriptor_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All rarity consumers must normalize the same tier, avoid raw tier ids, retain collectible level and consume the shared color and border token.",
+          "verification": "Existing consumer-by-consumer descriptor comparisons remain active; the changed wording adds a T-code prohibition."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i2_run_information_surface_runner.gd",
+      "diff_sha256": "7EA48A3ECCE1CF33A239A0200C21E9FA6B49FF27902797641C2508858B486CDF",
+      "current_file_sha256": "41EF22EA4224F54D894184AA7FF42499C9018BF0BD9A83DB96203E49D442E25F",
+      "dispositions": [
+        {
+          "id": "quick_bag_t_code",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Quick-bag focus detail had to contain ItemRarityDescriptor.display_text, which included a T-code badge.",
+          "reason": "The quick bag is ordinary player-facing copy and must use natural-language rarity.",
+          "replacement_requirement_ids": ["I4-R013", "I4-R046", "I4-R047"],
+          "replacement_gate": "Require the descriptor label and explicitly forbid '[T' while still requiring name, quantity and weight.",
+          "scope_preserved": "Focused-item identity and its quantity/weight detail remain authoritative.",
+          "verification": "_check_quick_bag evaluates the production detail label for all preserved fields."
+        },
+        {
+          "id": "quick_bag_information_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "The real-item strip, focus detail, quantity, weight, capacity footer and reachability through the scroll container remain required.",
+          "verification": "All unchanged quick-bag geometry and information assertions continue to run."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i2_runtime_modal_priority_runner.gd",
+      "diff_sha256": "DA8F2A7062058321D1B2EB74CC9001753040EB4854706DF773DDF786EF701817",
+      "current_file_sha256": "2BDDF6308B2E05F5E7549C84EBF0032C09BD9F0C4673126B6B0957B50E73B26A",
+      "dispositions": [
+        {
+          "id": "extract_modal_t4_copy",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "The carried-item metadata in the extraction modal had to contain '[T4] 珍贵'.",
+          "reason": "The modal must preserve risk information without exposing the redundant engineering T-code.",
+          "replacement_requirement_ids": ["I4-R013", "I4-R024", "I4-R047"],
+          "replacement_gate": "Require '珍贵', forbid '[T4]', retain 收藏等级 4 and compare the marker color to the shared descriptor.",
+          "scope_preserved": "Actual item name, tier, collectible level, row width and modal priority remain authoritative.",
+          "verification": "_assert_extract_modal_priority checks natural copy and the independent color/level channels in the same row."
+        },
+        {
+          "id": "runtime_modal_priority_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Modal-stack priority, blocked gameplay input, focus ownership, cancel behavior, carried-item row geometry and non-intercepting rarity markers remain unchanged.",
+          "verification": "The complete modal-priority runner still executes all stack and geometry assertions."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3_hud_item_input_character_runner.gd",
+      "diff_sha256": "9696C8FB7E6050B29231B8BB6B35B516FC1163AD2C701906CC21C7ED488399B7",
+      "current_file_sha256": "0591710B6F3D4794FE64F0029D311D7D3201CBCD2171D89A8CF72CB6E4DE4A82",
+      "dispositions": [
+        {
+          "id": "hud_item_t6_copy",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Shared HUD item detail had to contain '[T6] 秘藏'.",
+          "reason": "Quick-bag player copy must retain rarity in natural language and reject the engineering badge.",
+          "replacement_requirement_ids": ["I4-R013", "I4-R047"],
+          "replacement_gate": "Require '秘藏' and forbid '[T6]' in the same shared detail consumed by tooltip and focus detail.",
+          "scope_preserved": "Item name, quantity, weight, read-only status and shared-detail identity remain authoritative.",
+          "verification": "The runner compares both quick-button tooltip and focus detail to the same descriptor."
+        },
+        {
+          "id": "single_row_scroll_threshold",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "A quick bag with one aggregated row had to keep vertical scrolling enabled.",
+          "reason": "I4-R046 permits scrolling only above three complete rows; enabling it for one row reserves empty visual space and lengthens navigation.",
+          "replacement_requirement_ids": ["I4-R019", "I4-R046"],
+          "replacement_gate": "Require exactly one aggregated visible row and SCROLL_MODE_DISABLED; the dedicated I4 visual-physics runner separately proves 0/1/3/4/full thresholds and end reachability.",
+          "scope_preserved": "All real item instances, focus actions and capacity information remain reachable.",
+          "verification": "This runner checks the one-row case; I4_IN_RUN_VISUAL_PHYSICS checks threshold boundaries."
+        },
+        {
+          "id": "hud_item_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Shared descriptor identity, no raw item id leakage, exact tooltip/focus parity, centered capacity footer and absence of fake empty slots remain required.",
+          "verification": "The unchanged assertions run alongside the two explicit replacements."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3_map_local_context_interaction_runner.gd",
+      "diff_sha256": "5F4ED1C32C6B5BB1CA906588636EF013D680681A8853E4A3B76AC24A49F41913",
+      "current_file_sha256": "4FA9EFA4B03BB5D238762DEAA777B40BE2166155329A3D39AACE0EC77510810C",
+      "dispositions": [
+        {
+          "id": "expanded_map_icon_carrier",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Monster and Mine distinction was proved by two different Button.icon resources.",
+          "reason": "I4-R043 moves semantic art into a dedicated clipped child layer so semantic, count and focus layers have independently measurable rectangles and z order.",
+          "replacement_requirement_ids": ["I4-R043"],
+          "replacement_gate": "Require SemanticMarker TextureRect children for Monster and Mine, require both textures, and require distinct texture resources; the I4 map-layer gate also proves clip, z order and zero semantic/count rectangle intersection.",
+          "scope_preserved": "Monster and Mine must remain visually and semantically distinct; only the render carrier changes.",
+          "verification": "_check_expanded_map checks marker state plus the two SemanticMarker textures."
+        },
+        {
+          "id": "map_interaction_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Expanded-map semantic states, selection synchronization, focus movement and local-context interaction remain authoritative.",
+          "verification": "All unchanged map navigation and interaction assertions remain active."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3_production_input_journey_runner.gd",
+      "diff_sha256": "9EA477B7B1751E54D92D457C77342DF7E2CAF22D74E058CC30F4C030A0FEE64F",
+      "current_file_sha256": "B55CB8C55B8B44865B579637A39A2F66CCC2E7073F4851EF9CABBFAE29F8F775",
+      "dispositions": [
+        {
+          "id": "adjacent_count_fill_anchor",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Every public adjacent-mine count label had to fill-anchor the entire tile and use right/bottom alignment with negative right and bottom offsets.",
+          "reason": "I4 assigns count, semantic and focus layers independent rectangles; a full-tile label could overlap semantic art and gave no contrast carrier for the number.",
+          "replacement_requirement_ids": ["I4-R043"],
+          "replacement_gate": "Require a centered count label inside the exact authored bottom-right count_rect, a same-rect contrast badge below the text, both input-transparent, the rect enclosed by the tile and ending at safe_rect.end, and text z above badge z.",
+          "scope_preserved": "Every known cell must still expose its exact 0–8 value in a stable bottom-right scan position without intercepting tile input.",
+          "verification": "I3_PRODUCTION_INPUT_JOURNEY checks the production expanded map after a real traversal; I4 map-layer gates separately prove semantic/count rectangle separation and both minimap states."
+        },
+        {
+          "id": "production_journey_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "The production main scene, real run admission, room traversal, map revisit, interaction sequence, extraction, save retry and final return to main remain mandatory.",
+          "verification": "The same production journey still emits its anchored PASS marker with all checkpoints and input counts; only the map count-layer geometry assertions were replaced."
+        },
+        {
+          "id": "post_journey_cleanup_stability",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "The exact cleanup-diagnostic contract remains strict; the I1 harness is not allowed to accept either 18 or 19 resources as interchangeable.",
+          "verification": "After evidence is written and main is freed, four render submissions let the journey coroutine release local scene/control references before process exit; gameplay waits, assertions, PASS marker and expected cleanup diagnostics are unchanged."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3r_font_raster_policy_runner.gd",
+      "diff_sha256": "7E060BB3878C6B7A9E5DDEBCC07FE71DEC75F2D9861D7E579FEC9B2A5AD94B84",
+      "current_file_sha256": "0EAA906D95CFFA944AAF7AA3AAE62FA81BA8FD361554AC5505744C5A3E48E6A5",
+      "dispositions": [
+        {
+          "id": "single_primary_font_policy",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Every player-visible theme consumer remains FusionPixel-primary, with antialiasing and subpixel positioning disabled; Noto is an explicit missing-glyph fallback only, and implicit system fallback remains prohibited.",
+          "verification": "I3R_FONT_RASTER_POLICY checks both semantic role stacks, both FusionPixel base identities, Noto fallback policy, the manifest hash and six theme consumer types."
+        },
+        {
+          "id": "font_raster_security_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Registered file identity, manifest hash, explicit fallback ownership and disabled implicit system fallback remain mandatory for both roles.",
+          "verification": "The revised runner retains the manifest and FontFile policy checks and expands them to the readable base."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3r_font_surface_coverage_runner.gd",
+      "diff_sha256": "73FB6672CEAAEF4737C2A3EEE2928D138C060F7AF8B30A1518B3BBFC611D13FC",
+      "current_file_sha256": "610B89CD6A98A9CA80E706D2E58416F6387DACD747DCD016EE1A51AD4D6F7F76",
+      "dispositions": [
+        {
+          "id": "surface_single_font_role",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Every enumerated player-visible control, tooltip, popup and production surface must use FusionPixel as its primary base and Noto only as an explicit missing-glyph fallback.",
+          "verification": "I3R_FONT_SURFACE_COVERAGE scans all governed surfaces and rejects any non-FusionPixel primary, missing Noto fallback or ungoverned FontVariation."
+        },
+        {
+          "id": "font_surface_enumeration_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "The same production surfaces, visible controls, tooltips and settings popups remain enumerated; a missing or non-FontVariation stack still fails.",
+          "verification": "Coverage counters and per-consumer checks remain in the PASS contract."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3r_out_of_run_production_journey_runner.gd",
+      "diff_sha256": "203AB9A8C7C46CFCCE4584D36E8E5387D3DE967280ED73426B85CF04B846AB7E",
+      "current_file_sha256": "6A43294ED329CB489F9D90F517517C78CDA0638BD1C4417A153E567493517DFA",
+      "dispositions": [
+        {
+          "id": "long_term_three_stage_escape",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "From an archive record, exactly three Esc presses always stepped to secondary navigation, primary navigation and main menu.",
+          "reason": "I4-R021/R022 require Back to replay actual page history. The journey visits task, talent, profile-default and history, so it owns three page entries before exiting the module.",
+          "replacement_requirement_ids": ["I4-R021", "I4-R022"],
+          "replacement_gate": "Require starting history_depth=3; each of three Back actions consumes exactly one entry and restores profile secondary focus, talent primary focus, then task-archive entry; only the fourth cancel returns to main.",
+          "scope_preserved": "One action consumes one navigation level, focus is restored deterministically, and the journey ultimately returns to main.",
+          "verification": "The production journey records checkpoints after each exact history-depth and selected-page assertion."
+        },
+        {
+          "id": "out_of_run_journey_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "main.tscn remains the source; settings apply/cancel/revert, Deploy map/warehouse/claim/objective/loadout, batch cancel/confirm, LongTerm routes and final main-menu return remain mandatory.",
+          "verification": "The runner's complete checkpoint/input/screenshot sequence and anchored PASS marker remain unchanged except for the explicit Back sequence."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3r_player_copy_leakage_runner.gd",
+      "diff_sha256": "3D284DC801442A0072F90E27DBEB038FFD486C9F730DABA94870D317011B927B",
+      "current_file_sha256": "F973BFB3C3915C2659D7A7532C038B0FF38C335A70E60757354018B7938435B7",
+      "dispositions": [
+        {
+          "id": "dev_only_root_name_allowlist",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "A player-copy subtree was excluded from production leakage checks only when one ancestor used a hard-coded development root name.",
+          "reason": "The I4 settings test-room entry is a normal settings row gated by build/profile state, so its development ownership must be explicit without coupling the validator to one visual node name.",
+          "replacement_requirement_ids": ["I4-R003", "I4-R039"],
+          "replacement_gate": "Walk every ancestor and exclude a subtree only when it uses an existing governed dev-only root name or carries explicit dev_only=true metadata; the production settings row must also retain debug_gate=debug_tools_enabled.",
+          "scope_preserved": "All ordinary player-visible production text remains scanned, and development copy is excluded only through an auditable gate rather than arbitrary text or path matching.",
+          "verification": "I3R_PLAYER_COPY_LEAKAGE enumerates 41 production states and reports the exact excluded dev-only count; I4 debug-sandbox and release-gate runners verify the setting is hidden outside the authorized debug context."
+        },
+        {
+          "id": "player_copy_leakage_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Every non-development visible label, button, tooltip and projected fragment across the enumerated production surfaces must remain free of forbidden engineering, fixture and internal-state copy.",
+          "verification": "The complete production-state and fragment scan remains unchanged; only the explicit development ownership classifier was extended."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3r_ui_composition_contract_runner.gd",
+      "diff_sha256": "CF72EA5010BC25B377FCEB14D6160299994EB6565598F3F494904FE728C6B361",
+      "current_file_sha256": "ADCB598AE10D8296C51511E07BE167167229324421C3EF4871FB6C625F80DD19",
+      "dispositions": [
+        {
+          "id": "composition_single_font_role",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Title, button and status tokens used the display role, numeric used readable, and both accessors resolved the same FusionPixel-primary stack.",
+          "reason": "I4 keeps semantic display/readable roles for size, line-height and information-density rules, but those semantic roles must not replace the project's pixel-font visual identity.",
+          "replacement_requirement_ids": ["I4-R023", "I4-R035"],
+          "replacement_gate": "Require readable roles for title/body/button/status and display for numeric, while both FontVariations remain FusionPixel-primary, disable antialiasing/subpixel positioning, and carry Noto only as an explicit missing-glyph fallback.",
+          "scope_preserved": "Composition token sizes, line limits, safe padding, registered font files and explicit fallback remain authoritative.",
+          "verification": "The runner checks descriptors, accessors, theme defaults, labels, buttons, tooltips and popup roles against the exact FusionPixel primary and Noto fallback paths."
+        },
+        {
+          "id": "size_specific_frame_safe_zone",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "A generic visual-key StyleBox helper and generic texture safe-zone helper were sufficient proof for every shared outer frame.",
+          "reason": "I4-R034 freezes different border budgets for page, workspace, card and compact controls; safe insets must therefore be derived for the actual frame size/class.",
+          "replacement_requirement_ids": ["I4-R033", "I4-R034"],
+          "replacement_gate": "Require each governed consumer to resolve shared framed art through texture_for_visual_key and construct its frame with style_box_from_texture_with_insets.",
+          "scope_preserved": "Shared image-frame ownership, prohibition on local StyleBoxFlat plastic and composition-label ownership remain authoritative.",
+          "verification": "_check_shared_ui_consumers scans each production source for the size-specific inset helper and rejects local flat-frame replacement."
+        },
+        {
+          "id": "composition_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "Every composition descriptor must keep positive line limits, minimum safe margins and label padding; settings, tooltip, item, world, popup and result consumers must continue using governed roles and shared framed art.",
+          "verification": "All unchanged token, safe-area, consumer and license assertions remain active."
+        }
+      ]
+    }
+  ]
+}

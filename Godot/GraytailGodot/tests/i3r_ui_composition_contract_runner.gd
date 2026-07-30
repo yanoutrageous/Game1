@@ -57,7 +57,7 @@ func _check_font_bindings() -> void:
 	_check_player_font(readable_font, "readable accessor")
 	_check(display_font != readable_font, "font role accessors were not separated")
 	_check(_font_base_path(display_font) == DISPLAY_FONT_PATH, "display accessor is not FusionPixel")
-	_check(_font_base_path(readable_font) == READABLE_FONT_PATH, "readable accessor is not Noto CJK")
+	_check(_font_base_path(readable_font) == DISPLAY_FONT_PATH, "readable accessor is not FusionPixel")
 
 	var shared_theme := SkinKit.player_ui_theme()
 	_check(shared_theme != null, "player UI theme is missing")
@@ -65,20 +65,20 @@ func _check_font_bindings() -> void:
 		_check_player_font(shared_theme.default_font, "theme default")
 		_check_player_font(shared_theme.get_font(&"font", &"TooltipLabel"), "native tooltip theme")
 		_check_player_font(shared_theme.get_font(&"font", &"PopupMenu"), "popup menu theme")
-		_check(_font_base_path(shared_theme.default_font) == READABLE_FONT_PATH, "theme default is not readable")
-		_check(_font_base_path(shared_theme.get_font(&"font", &"Button")) == READABLE_FONT_PATH, "theme buttons are not readable role")
-		_check(_font_base_path(shared_theme.get_font(&"font", &"TooltipLabel")) == READABLE_FONT_PATH, "theme tooltip is not readable role")
+		_check(_font_base_path(shared_theme.default_font) == DISPLAY_FONT_PATH, "theme default is not FusionPixel")
+		_check(_font_base_path(shared_theme.get_font(&"font", &"Button")) == DISPLAY_FONT_PATH, "theme buttons are not FusionPixel")
+		_check(_font_base_path(shared_theme.get_font(&"font", &"TooltipLabel")) == DISPLAY_FONT_PATH, "theme tooltip is not FusionPixel")
 
 	var title := Label.new()
 	SkinKit.apply_composition_label(title, &"title")
 	_check_player_font(title.get_theme_font("font"), "title")
-	_check(_font_base_path(title.get_theme_font("font")) == READABLE_FONT_PATH, "title did not use readable role")
+	_check(_font_base_path(title.get_theme_font("font")) == DISPLAY_FONT_PATH, "title did not use FusionPixel")
 	_check(title.get_meta("ui_composition_role", &"") == &"title", "title composition metadata missing")
 
 	var body := Label.new()
 	SkinKit.apply_label(body)
 	_check_player_font(body.get_theme_font("font"), "generic/body label")
-	_check(_font_base_path(body.get_theme_font("font")) == READABLE_FONT_PATH, "body did not use readable role")
+	_check(_font_base_path(body.get_theme_font("font")) == DISPLAY_FONT_PATH, "body did not use FusionPixel")
 
 	var token_body := Label.new()
 	SkinKit.apply_label_token(token_body, &"body")
@@ -87,7 +87,7 @@ func _check_font_bindings() -> void:
 	var button := Button.new()
 	SkinKit.apply_button_token(button, &"secondary", &"button")
 	_check_player_font(button.get_theme_font("font"), "button")
-	_check(_font_base_path(button.get_theme_font("font")) == READABLE_FONT_PATH, "button did not use readable role")
+	_check(_font_base_path(button.get_theme_font("font")) == DISPLAY_FONT_PATH, "button did not use FusionPixel")
 	_check(button.get_meta("ui_composition_role", &"") == &"button", "button composition metadata missing")
 
 	var long_button := Button.new()
@@ -371,12 +371,11 @@ func _check_player_font(font: Font, consumer: String) -> void:
 		return
 	var variation := font as FontVariation
 	var base_path := _resource_path(variation.base_font)
-	_check(base_path in [DISPLAY_FONT_PATH, READABLE_FONT_PATH], "%s primary font=%s" % [consumer, base_path])
+	_check(base_path == DISPLAY_FONT_PATH, "%s primary font is not FusionPixel: %s" % [consumer, base_path])
 	var fallback_paths: Array[String] = []
 	for fallback in variation.fallbacks:
 		fallback_paths.append(_resource_path(fallback))
-	var expected_fallback := READABLE_FONT_PATH if base_path == DISPLAY_FONT_PATH else DISPLAY_FONT_PATH
-	_check(fallback_paths.has(expected_fallback), "%s lacks role fallback %s: %s" % [consumer, expected_fallback, fallback_paths])
+	_check(fallback_paths.has(READABLE_FONT_PATH), "%s lacks Noto glyph fallback %s: %s" % [consumer, READABLE_FONT_PATH, fallback_paths])
 
 
 func _font_base_path(font: Font) -> String:
@@ -392,7 +391,7 @@ func _check(condition: bool, message: String) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("I3R_UI_COMPOSITION_CONTRACT=PASS fonts=FusionPixel,Noto roles=display,readable surfaces=settings,tooltip,item,world,option_popup,result texture_safe=5 license=upstream_ofl")
+		print("I3R_UI_COMPOSITION_CONTRACT=PASS primary=FusionPixel fallback=Noto roles=display,readable surfaces=settings,tooltip,item,world,option_popup,result texture_safe=5 license=upstream_ofl")
 		quit(0)
 		return
 	for failure in failures:

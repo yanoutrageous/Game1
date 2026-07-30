@@ -5,6 +5,7 @@ const MetaProgressAdapterScript := preload("res://scripts/core/save/meta_progres
 const PASS_MARKER := "I3_PRODUCTION_INPUT_JOURNEY=PASS"
 const FAIL_MARKER := "I3_PRODUCTION_INPUT_JOURNEY=FAIL"
 const FIXED_SEED := 13
+const CLEANUP_UNWIND_FRAMES := 4
 const FRAME_STEP := 0.02
 
 var failures: Array[String] = []
@@ -592,23 +593,32 @@ func _assert_exit_revisit_map_contract() -> Dictionary:
 			if count_label != null:
 				_require(count_label.text == str(adjacent), "%s adjacent-mine text diverged from production marker metadata" % tile.name)
 				_require(count_label.is_visible_in_tree(), "%s adjacent-mine number is not visible in the expanded map" % tile.name)
-				_require(count_label.horizontal_alignment == HORIZONTAL_ALIGNMENT_RIGHT, "%s adjacent-mine number is not right-anchored" % tile.name)
-				_require(count_label.vertical_alignment == VERTICAL_ALIGNMENT_BOTTOM, "%s adjacent-mine number is not bottom-anchored" % tile.name)
+				_require(count_label.horizontal_alignment == HORIZONTAL_ALIGNMENT_CENTER, "%s adjacent-mine badge text is not horizontally centered" % tile.name)
+				_require(count_label.vertical_alignment == VERTICAL_ALIGNMENT_CENTER, "%s adjacent-mine badge text is not vertically centered" % tile.name)
 				_require(count_label.mouse_filter == Control.MOUSE_FILTER_IGNORE, "%s adjacent-mine number intercepts tile input" % tile.name)
+				var count_badge := tile.get_node_or_null("AdjacentMineBadgeBackground") as ColorRect
+				_require(count_badge != null, "%s adjacent-mine number lacks its contrast badge" % tile.name)
+				var layer_layout: Dictionary = tile.get_meta("map_cell_layer_layout", {})
+				var safe_rect := Rect2(layer_layout.get("safe_rect", Rect2()))
+				var authored_count_rect := Rect2(layer_layout.get("count_rect", Rect2()))
+				var rendered_count_rect := count_label.get_rect()
 				_require(
-					is_equal_approx(count_label.anchor_left, 0.0)
-					and is_equal_approx(count_label.anchor_top, 0.0)
-					and is_equal_approx(count_label.anchor_right, 1.0)
-					and is_equal_approx(count_label.anchor_bottom, 1.0),
-					"%s adjacent-mine number does not fill-anchor to its production tile" % tile.name
+					authored_count_rect.has_area()
+					and rendered_count_rect.is_equal_approx(authored_count_rect),
+					"%s adjacent-mine number diverged from its authored layer rect" % tile.name
 				)
 				_require(
-					count_label.offset_left >= 0.0
-					and count_label.offset_top >= 0.0
-					and count_label.offset_right < 0.0
-					and count_label.offset_bottom < 0.0,
-					"%s adjacent-mine number lacks an inset bottom-right scan anchor" % tile.name
+					rendered_count_rect.has_area()
+					and Rect2(Vector2.ZERO, tile.size).encloses(rendered_count_rect)
+					and rendered_count_rect.end.is_equal_approx(safe_rect.end)
+					and rendered_count_rect.position.x >= tile.size.x * 0.5
+					and rendered_count_rect.position.y >= tile.size.y * 0.5,
+					"%s adjacent-mine badge lacks an inset bottom-right scan anchor" % tile.name
 				)
+				if count_badge != null:
+					_require(count_badge.get_rect().is_equal_approx(rendered_count_rect), "%s adjacent-mine contrast badge is misaligned" % tile.name)
+					_require(count_badge.mouse_filter == Control.MOUSE_FILTER_IGNORE, "%s adjacent-mine contrast badge intercepts tile input" % tile.name)
+					_require(count_label.z_index > count_badge.z_index, "%s adjacent-mine text is not layered above its badge" % tile.name)
 		else:
 			_require(count_label == null, "%s rendered a mine number without public marker metadata" % tile.name)
 
@@ -874,6 +884,10 @@ func _schedule_quit(exit_code: int) -> void:
 func _quit_after_cleanup(exit_code: int) -> void:
 	# Let the calling journey coroutine unwind so local PackedScene/Control
 	# references are released before SceneTree performs its leak diagnostics.
-	await process_frame
-	await process_frame
+	# Two submissions occasionally left one replacement-popup resource alive
+	# even though every business assertion and the runner exit code had passed.
+	# This wait runs only after evidence is written and main is freed; it cannot
+	# substitute for a gameplay state or input completion condition.
+	for _cleanup_frame in range(CLEANUP_UNWIND_FRAMES):
+		await process_frame
 	quit(exit_code)

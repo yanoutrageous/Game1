@@ -13,7 +13,7 @@
 | Requirement matrix | `docs/00_governance/I4_REQUIREMENT_MATRIX.md` |
 | Entry commit | `4127bd27a05b75cb5e3071cf6dc87d9287f679a9` |
 | Entry tree | `e1455ffd8c7a754c63eb2141a47e41f8fe5cdf3a` |
-| Implementation candidate | `f950eefb000ab298344059dfa8afc125aa79ed8a` / exact-head/full PASS |
+| Implementation candidate | 本文件所在提交；精确身份不得自指硬编码，须由提交后的 exact-head 报告与远端 SHA 绑定 |
 | Branch | `codex/i4-production-interaction-convergence` |
 | Authorization | 用户于 2026-07-30 明确授权计划审计、执行、测试、阶段审计与 push |
 
@@ -38,12 +38,18 @@ Windows CRLF 假漂移；修复和重新验证属于 I4.0 入口门。
 
 ## 当前顺序
 
-1. P0–P7 已按依赖完成候选实现与定向复验；原 I4-R001–R042 和新增 R043–R049 均保留。
-2. P8 已完成 Deploy 12 图、长期 25 页、生产 14 个高风险状态的真实渲染与当前逐图复核；
-   非 Deploy 四分辨率×三比例全状态和动态玩家输入仍未关闭。
-3. P9 已完成实现候选 `f950eef` 的 clean exact-head/full 与 51 图；当前回填阶段审计，
-   随后对最终审计提交重跑 clean exact-head/full、push 并核对远端 SHA。
-4. 物理手柄、功能听音、目标 GPU 长局和动态玩家验收是已登记外部门；没有设备时不得补写 PASS。
+1. P0–P7 已按依赖完成候选实现与定向复验；原 I4-R001–R042、新增 R043–R049 和存储
+   收口 R050 均保留。
+2. P8 已在正确 FusionPixel 主字体下完成 156 行 × 12 组的 1872 个覆盖单元和 1140 张
+   真实 Windows renderer 原图；机器捕获为 PASS，但状态严格保持 `VISUAL_CANDIDATE`，
+   逐原图 ledger 和动态玩家输入仍未关闭。
+3. P9 的 post-audit worktree 已通过 I1 full 104/104、I4 full、旧断言 15/15 与完整矩阵；
+   本文件所在提交是最终候选对象，提交后须在零源码修改条件下重跑 exact-head/full、
+   exact-head 矩阵、push 和远端 SHA。
+4. C/E 盘清理已按 R050 完成第一轮精确收口，E 盘释放 19,342,217,216 字节，C 盘因候选
+   属于用户截图、活动内核或来源不明而零删除；正确矩阵、最终/失败证据、来源、用户档、
+   stash、CAS/index 和恢复证明均保留，最终 exact-head 后仍须末轮复量。
+5. 物理手柄、功能听音、目标 GPU 长局和动态玩家验收是已登记外部门；没有设备时不得补写 PASS。
 
 任何单门 PASS、截图清单、exact-head 或 push 都不能单独表述为 I4 已关闭。I4 当前只允许
 作为活动交付候选；I2 仍是最新生效的闭合非美术基线。

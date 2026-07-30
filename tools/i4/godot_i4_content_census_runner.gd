@@ -252,7 +252,7 @@ func _add_in_run_rows() -> void:
 		["minimap", "局内 → 折叠小地图", "run_minimap", [&"missing_asset", &"ui_150"]],
 		["map_overlay", "局内 → 展开地图", "run_map_overlay", [&"modal", &"focus_restore", &"ui_150"]],
 		["inventory", "局内 → 背包", "run_inventory_modal", [&"overflow", &"scroll_end", &"modal", &"focus_restore"]],
-		["ground_loot", "局内 → 地面掉落", "run_ground_loot_modal", [&"missing_asset", &"domain_rejection", &"modal"]],
+		["ground_loot", "局内 → 地面掉落与就地拾取", "run_ground_loot_world", [&"missing_asset", &"domain_rejection", &"transition"]],
 		["interaction", "局内 → 世界交互提示", "run_world_interaction", [&"long_text", &"transition"]],
 		["quick_bag_empty", "局内 → 左下物品簇 → 空包", "run_quick_bag", [&"ui_150"]],
 		["quick_bag_one", "局内 → 左下物品簇 → 1 件", "run_quick_bag", [&"long_text", &"ui_150"]],

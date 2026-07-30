@@ -24,6 +24,7 @@ var write_blocked: bool = false
 var write_block_reason: String = ""
 var _meta_action_transaction_active: bool = false
 var _meta_action_deferred_save_requested: bool = false
+var _debug_fail_next_save := false
 
 
 func _init() -> void:
@@ -65,7 +66,29 @@ func describe_boundary() -> Dictionary:
 func set_active_profile_path(path: String, profile_id: String = SaveProfileManifestScript.DEFAULT_PROFILE_ID) -> void:
 	active_profile_id = SaveProfileManifestScript.sanitize_profile_id(profile_id)
 	active_meta_progress_path = path if path != "" else SaveProfileManifestScript.profile_paths(active_profile_id).get("meta_progress", SaveProfileManifestScript.default_meta_progress_path())
+	# A debug failure injection is scoped to one sandbox profile admission.  A
+	# profile switch must clear it before any production path can save.
+	_debug_fail_next_save = false
 	load_or_create_default()
+
+
+func debug_inject_next_save_failure() -> Dictionary:
+	if not _ensure_debug_sandbox("inject_next_save_failure"):
+		return {
+			"ok": false,
+			"status": &"debug_sandbox_profile_required",
+			"reason": last_error,
+		}
+	_debug_fail_next_save = true
+	return {
+		"ok": true,
+		"status": &"debug_next_save_failure_armed",
+		"profile_id": active_profile_id,
+	}
+
+
+func debug_save_failure_armed() -> bool:
+	return _debug_fail_next_save and is_debug_sandbox_profile()
 
 
 func load_or_create_default() -> Dictionary:
@@ -439,7 +462,7 @@ func purchase_items(
 			"error": last_error,
 			"summary": get_summary(),
 		}
-	return {
+	var result := {
 		"ok": true,
 		"status": "purchased" if quantity == 1 else "batch_purchased",
 		"atomicity": &"all_or_nothing",
@@ -454,6 +477,10 @@ func purchase_items(
 		"gold_after": int(data.get("gold", 0)),
 		"summary": get_summary(),
 	}
+	if quantity == 1:
+		result["item"] = created_items[0].duplicate(true)
+		result["price"] = unit_price
+	return result
 
 
 func sell_collectible(instance_id: String, blocked_instance_ids: Array = []) -> Dictionary:
@@ -1106,6 +1133,11 @@ func _result_uses_debug(result_snapshot: Dictionary) -> bool:
 
 
 func _save_now() -> bool:
+	if _debug_fail_next_save:
+		_debug_fail_next_save = false
+		last_error = "debug_injected_next_save_failure"
+		save_adapter.last_error = last_error
+		return false
 	var ok := save_adapter.save_json(data, active_meta_progress_path, false)
 	last_error = save_adapter.last_error
 	return ok

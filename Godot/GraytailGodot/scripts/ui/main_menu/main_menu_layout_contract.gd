@@ -87,7 +87,9 @@ const NOTICE_DESCRIPTION_RULE := {
 	"preferred_font_size": 13,
 	"min_font_size": 10,
 	"max_lines": 5,
-	"line_height_ratio": 1.5,
+	# The governed FusionPixel-primary readable stack plus its two-pixel line
+	# gap needs more vertical room than the former arithmetic estimate at 150%.
+	"line_height_ratio": 1.65,
 	"padding": Vector2(2, 2),
 }
 
