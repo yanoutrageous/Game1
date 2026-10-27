@@ -67,9 +67,9 @@ func _run() -> void:
 		_require(checked_visible_controls > 0, "production UI visible-text font scan found no controls")
 
 	for entry in [
-		["main", run_scene.get("main_menu_panel") as Control],
-		["deploy", run_scene.get("deploy_shell_panel") as Control],
-		["long_term", run_scene.get("long_term_shell_panel") as Control],
+		["main", run_scene.get("ui_shell").call("get_main_page") as Control],
+		["deploy", run_scene.get("ui_shell").call("get_deploy_page") as Control],
+		["long_term", run_scene.get("ui_shell").call("get_long_term_page") as Control],
 		["settings", app_shell.get("settings_panel") as Control if app_shell != null else null],
 		["runtime_settings", run_scene.get("runtime_settings_panel") as Control],
 		["run", run_surface],

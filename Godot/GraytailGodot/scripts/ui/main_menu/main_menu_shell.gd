@@ -109,8 +109,10 @@ var page_active := true
 var ui_scale_factor := 1.0
 
 
-func build(model: Dictionary = {}) -> void:
+func build(model: Dictionary = {}, initial_snapshot: Dictionary = {}) -> void:
 	_clear_children()
+	if not initial_snapshot.is_empty():
+		current_snapshot = initial_snapshot.duplicate(true)
 	Art10UISkinKitScript.apply_player_ui_theme(self)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()

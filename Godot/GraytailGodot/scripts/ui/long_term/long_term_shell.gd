@@ -161,8 +161,10 @@ var ambient_particles: Array[CPUParticles2D] = []
 var ui_scale_factor := 1.0
 
 
-func build(model: Dictionary = {}) -> void:
+func build(model: Dictionary = {}, initial_snapshot: Dictionary = {}) -> void:
 	_clear_children()
+	if not initial_snapshot.is_empty():
+		current_app_snapshot = initial_snapshot.duplicate(true)
 	navigation_history.clear()
 	content_scroll_by_group.clear()
 	restoring_navigation = false
@@ -170,7 +172,12 @@ func build(model: Dictionary = {}) -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
 	set_meta("runtime_ui_scale_factor", ui_scale_factor)
-	current_model = model.duplicate(true) if not model.is_empty() else LongTermModelScript.build(selected_module_id)
+	if not model.is_empty():
+		current_model = model.duplicate(true)
+	elif not initial_snapshot.is_empty():
+		current_model = LongTermModelScript.build_from_snapshot(selected_module_id, current_app_snapshot, &"app_shell_snapshot")
+	else:
+		current_model = LongTermModelScript.build(selected_module_id)
 	selected_module_id = _normalize_module_id(StringName(current_model.get("selected_module_id", selected_module_id)))
 	displayed_module_id = selected_module_id
 	requested_module_id = selected_module_id

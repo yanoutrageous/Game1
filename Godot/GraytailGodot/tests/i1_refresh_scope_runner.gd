@@ -38,6 +38,29 @@ class CombatRuntimeProbe:
 		return {"probe": &"combat_runtime"}
 
 
+class ControlledTextureLoader:
+	extends ResourceFormatLoader
+	var release := Semaphore.new()
+	var texture := PlaceholderTexture2D.new()
+	var fail := false
+
+	func _get_recognized_extensions() -> PackedStringArray:
+		return PackedStringArray(["i1warm"])
+
+	func _handles_type(type: StringName) -> bool:
+		return type == &"Texture2D"
+
+	func _get_resource_type(_path: String) -> String:
+		return "Texture2D" if _path.get_extension() == "i1warm" else ""
+
+	func _exists(_path: String) -> bool:
+		return _path.get_extension() == "i1warm"
+
+	func _load(_path: String, _original_path: String, _use_sub_threads: bool, _cache_mode: int) -> Variant:
+		release.wait()
+		return ERR_CANT_OPEN if fail else texture
+
+
 func _initialize() -> void:
 	call_deferred("_run")
 
@@ -55,6 +78,10 @@ func _run() -> void:
 	if app_shell_script == null or not app_shell_script.can_instantiate():
 		_finish()
 		return
+	await _exercise_idle_resource_prewarm(canvas, app_shell_script)
+	await _exercise_pending_prewarm_release(canvas, app_shell_script)
+	_require(Engine.print_error_messages, "controlled failure fixture left engine diagnostics disabled")
+	await _exercise_owned_page_lifecycle(canvas, app_shell_script)
 
 	var shell := app_shell_script.new() as Control
 	canvas.add_child(shell)
@@ -132,6 +159,173 @@ func _run() -> void:
 	canvas.queue_free()
 	await process_frame
 	_finish()
+
+
+func _exercise_idle_resource_prewarm(canvas: Control, shell_script: Script) -> void:
+	var shell := shell_script.new() as Control
+	canvas.add_child(shell)
+	shell.call("build")
+	var content_db := root.get_node("ContentDB")
+	var target_record: Dictionary = content_db.call("get_asset", &"ui.art22.deploy_prep.panel.parchment")
+	var path := str(target_record.get("godot_path", ""))
+	_require(not path.is_empty(), "prewarm fixture asset missing")
+	shell.visible = false
+	var deadline := Time.get_ticks_msec() + 400
+	while Time.get_ticks_msec() < deadline:
+		await process_frame
+	_require(not ResourceLoader.has_cached(path), "hidden shell started unrelated resource prewarm")
+	shell.visible = true
+	shell.call("show_main")
+	deadline = Time.get_ticks_msec() + 5000
+	while not ResourceLoader.has_cached(path) and Time.get_ticks_msec() < deadline:
+		await process_frame
+	_require(ResourceLoader.has_cached(path), "idle main menu did not prewarm Deploy resources")
+	_require(shell.get_node_or_null("DeployPrepShell") == null and shell.get_node_or_null("LongTermShell") == null, "resource prewarm constructed full pages on the main thread")
+	_require(shell.call("get_visible_page_id") == PAGE_MAIN, "resource prewarm changed the active route")
+	var queued := (shell.get("_prewarm_queue") as Array).size()
+	shell.visible = false
+	deadline = Time.get_ticks_msec() + 150
+	while Time.get_ticks_msec() < deadline:
+		await process_frame
+	_require((shell.get("_prewarm_queue") as Array).size() == queued, "hidden shell advanced unrelated prewarm requests")
+	var released_shell: WeakRef = weakref(shell)
+	shell.queue_free()
+	await process_frame
+	await process_frame
+	_require(released_shell.get_ref() == null, "prewarm completion retained its released shell")
+	_require(not ResourceLoader.has_cached(path), "released shell retained prewarmed page textures")
+
+
+func _exercise_pending_prewarm_release(canvas: Control, shell_script: Script) -> void:
+	var loader := ControlledTextureLoader.new()
+	ResourceLoader.add_resource_format_loader(loader, true)
+	var shell := shell_script.new() as Control
+	canvas.add_child(shell)
+	shell.call("build")
+	var path := "user://overlapping_shell_prewarm.i1warm"
+	_queue_controlled_prewarm(shell, path)
+	var first_worker := shell.get("_prewarm_thread") as Thread
+	_require(first_worker != null and first_worker.is_alive(), "controlled load did not remain pending")
+	shell.call("build")
+	_queue_controlled_prewarm(shell, path)
+	var second_worker := shell.get("_prewarm_thread") as Thread
+	var released_shell: WeakRef = weakref(shell)
+	shell.queue_free()
+	await process_frame
+	loader.release.post()
+	var deadline := Time.get_ticks_msec() + 2000
+	while (first_worker.is_started() or second_worker.is_started()) and Time.get_ticks_msec() < deadline:
+		await process_frame
+	_require(not first_worker.is_started() and not second_worker.is_started(), "repeated release left a worker unjoined")
+	_require(released_shell.get_ref() == null, "pending worker retained its released shell")
+	ResourceLoader.remove_resource_format_loader(loader)
+
+	loader = ControlledTextureLoader.new()
+	loader.fail = true
+	ResourceLoader.add_resource_format_loader(loader, true)
+	shell = shell_script.new() as Control
+	canvas.add_child(shell)
+	shell.call("build")
+	path = "user://failed_shell_prewarm.i1warm"
+	var previous_error_output := Engine.print_error_messages
+	# Only this controlled I/O failure is injected; completion, collection and no retained result are asserted.
+	Engine.print_error_messages = false
+	_queue_controlled_prewarm(shell, path)
+	var failed_worker := shell.get("_prewarm_thread") as Thread
+	shell.set_process(false)
+	loader.release.post()
+	deadline = Time.get_ticks_msec() + 2000
+	while failed_worker.is_alive() and Time.get_ticks_msec() < deadline:
+		await process_frame
+	_require(not failed_worker.is_alive() and failed_worker.is_started(), "failure fixture did not finish before collection")
+	shell.call("_process", 0.0)
+	_require(not failed_worker.is_started() and shell.get("_prewarm_thread") == null, "failed worker was abandoned without joining")
+	_require((shell.get("_prewarm_resources") as Array).is_empty(), "failed worker retained a resource")
+	Engine.print_error_messages = previous_error_output
+	shell.queue_free()
+	await process_frame
+	ResourceLoader.remove_resource_format_loader(loader)
+
+
+func _queue_controlled_prewarm(shell: Control, path: String) -> void:
+	var queue: Array[Dictionary] = [{"page": PAGE_DEPLOY, "path": path}]
+	shell.set("_prewarm_queue", queue)
+	shell.set("_prewarm_queued", true)
+	shell.set("_prewarm_after_msec", 0)
+	shell.call("_process", 0.0)
+
+
+func _exercise_owned_page_lifecycle(canvas: Control, shell_script: Script) -> void:
+	var shell := shell_script.new() as Control
+	canvas.add_child(shell)
+	shell.call("build")
+	await process_frame
+	_require(shell.get_node_or_null("DeployPrepShell") == null, "startup constructed unopened Deploy")
+	_require(shell.get_node_or_null("LongTermShell") == null, "startup constructed unopened LongTerm")
+	shell.call("apply_snapshot", _snapshot(31, false))
+	shell.visible = false
+	shell.call("apply_snapshot", _snapshot(32, false))
+	_require(not bool(shell.call("apply_meta_action_result", {"source_page": PAGE_DEPLOY})), "unopened page accepted an unsolicited result")
+	_require(shell.get_node_or_null("DeployPrepShell") == null and shell.get_node_or_null("LongTermShell") == null, "passive snapshot/result delivery constructed unopened pages")
+	shell.visible = true
+	shell.call("show_main")
+	var manager := shell.call("get_bound_settings_manager") as Node
+	manager.call("begin_transaction")
+	_require(bool(manager.call("set_draft_value", &"ui_scale_percent", 125)), "settings rejected pre-creation UI scale")
+	_require(bool(manager.call("apply_draft")), "settings did not apply before page creation")
+	var main := shell.call("get_main_page") as Control
+	var entry := main.find_child("MainMenuEntry_deploy", true, false) as Button
+	_require(entry != null, "real main-menu Deploy entry missing")
+	if entry != null:
+		entry.pressed.emit()
+	var deploy := shell.get_node_or_null("DeployPrepShell") as Control
+	_require(deploy != null, "navigation did not prepare Deploy")
+	if deploy != null:
+		_require(not deploy.visible and not bool(deploy.call("is_page_active")), "prepared page became visible/active before commit")
+		_require(is_equal_approx(float(deploy.call("get_ui_scale_factor")), 1.25), "lazy Deploy did not inherit current UI scale")
+		_require_equal(_page_marker(deploy, &"current_snapshot"), 32, "prepared page was built from stale defaults instead of its initial snapshot")
+		_require(shell.call("get_visible_page_id") == PAGE_MAIN, "prepare changed route authority")
+		var cancel := InputEventAction.new()
+		cancel.action = &"cancel"
+		cancel.pressed = true
+		_require(bool(shell.call("handle_cancel_event", cancel)), "prepared navigation did not accept cancel")
+		await process_frame
+		_require(shell.call("get_visible_page_id") == PAGE_MAIN and not deploy.visible, "cancel committed the prepared target")
+		_require(root.gui_get_focus_owner() == entry, "cancel did not restore source entry focus")
+		entry.pressed.emit()
+		_require(shell.call("get_deploy_page") == deploy, "retry after cancel replaced its prepared page")
+		main.call("_process", 1.2)
+		await process_frame
+		_require(deploy.visible and bool(deploy.call("is_page_active")), "committed target did not activate")
+		_require_equal(_page_marker(deploy, &"current_snapshot"), 32, "first visit did not receive latest hidden snapshot")
+		shell.call("show_main")
+		shell.call("show_deploy", &"warehouse")
+		_require(shell.call("get_deploy_page") == deploy, "re-entry replaced the retained Deploy instance")
+		_require_equal(_refresh_count(shell, PAGE_DEPLOY), 1, "unchanged re-entry reapplied snapshot")
+	manager.call("begin_transaction")
+	_require(bool(manager.call("set_draft_value", &"reduce_motion", true)), "settings rejected pre-creation reduced motion")
+	_require(bool(manager.call("apply_draft")), "settings did not apply reduced motion before page creation")
+	var long_term := shell.call("get_long_term_page") as Control
+	_require(long_term != null and not long_term.visible and not bool(long_term.call("is_page_active")), "explicit access did not prepare an inactive LongTerm")
+	_require(is_equal_approx(float(long_term.call("get_ui_scale_factor")), 1.25) and bool(long_term.call("is_reduced_motion_enabled")), "lazy LongTerm did not inherit changed settings")
+	_require_equal(_page_marker(long_term, &"current_app_snapshot"), 32, "LongTerm preparation omitted initial snapshot")
+	shell.call("show_long_term", &"task_archive")
+	_require_equal(_page_marker(long_term, &"current_app_snapshot"), 32, "first LongTerm visit lost latest snapshot")
+	var old_pages := [weakref(main), weakref(deploy), weakref(long_term)]
+	shell.call("build")
+	await process_frame
+	await process_frame
+	for old_page: WeakRef in old_pages:
+		_require(old_page.get_ref() == null, "shell rebuild retained an old page")
+	_require(shell.get_node_or_null("DeployPrepShell") == null and shell.get_node_or_null("LongTermShell") == null, "rebuild eagerly recreated inactive pages")
+	var rebuilt_main: WeakRef = weakref(shell.call("get_main_page"))
+	manager.call("begin_transaction")
+	manager.call("set_draft_value", &"ui_scale_percent", 100)
+	manager.call("set_draft_value", &"reduce_motion", false)
+	_require(bool(manager.call("apply_draft")), "settings did not reset after lifecycle fixture")
+	shell.queue_free()
+	await process_frame
+	_require(rebuilt_main.get_ref() == null, "shell release retained its owned page")
 
 
 func _exercise_long_term_catalog() -> void:

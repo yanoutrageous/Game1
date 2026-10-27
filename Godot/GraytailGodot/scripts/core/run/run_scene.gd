@@ -92,9 +92,6 @@ var meta_progress_adapter: MetaProgressAdapter
 var save_manager
 var ui_root: Control
 var ui_shell: Control
-var main_menu_panel: Control
-var deploy_shell_panel: Control
-var long_term_shell_panel: Control
 var run_overlay_root: Control
 var run_surface
 var room_badge: Label
@@ -512,9 +509,6 @@ func _build_shell_pages() -> void:
 	ui_shell.connect("page_changed", _on_app_shell_page_changed)
 	ui_shell.connect("meta_action_requested", _on_m7_meta_action_requested)
 	ui_shell.connect("ui_scale_changed", _on_app_shell_ui_scale_changed)
-	main_menu_panel = ui_shell.call("get_main_page") as Control
-	deploy_shell_panel = ui_shell.call("get_deploy_page") as Control
-	long_term_shell_panel = ui_shell.call("get_long_term_page") as Control
 
 
 func _build_run_overlay() -> void:
@@ -1217,36 +1211,6 @@ func _on_app_shell_page_changed(page_id: StringName, _payload: Dictionary) -> vo
 	if run_overlay_root != null:
 		run_overlay_root.visible = false
 	_hide_runtime_popups()
-
-
-func _on_main_entry_requested(entry_id: StringName) -> void:
-	match entry_id:
-		&"deploy", &"deploy_config":
-			_show_deploy_shell(&"config")
-		&"long_term":
-			_show_long_term_shell()
-		&"settings":
-			_show_settings_shell()
-		_:
-			_show_main_menu()
-
-
-func _on_deploy_entry_requested(entry_id: StringName) -> void:
-	match entry_id:
-		&"back_main":
-			_show_main_menu()
-		&"long_term":
-			_show_long_term_shell()
-
-
-func _on_long_term_entry_requested(entry_id: StringName) -> void:
-	match entry_id:
-		&"back_main":
-			_show_main_menu()
-		&"deploy":
-			_show_deploy_shell()
-		_:
-			_show_long_term_shell(entry_id)
 
 
 func _on_m7_meta_action_requested(action: Dictionary) -> void:
@@ -2672,8 +2636,7 @@ func _on_tutorial_popup_confirmed() -> void:
 
 func _start_standard_from_ui() -> void:
 	_show_deploy_shell(&"config")
-	if deploy_shell_panel != null and deploy_shell_panel.has_method("_on_primary_action_pressed"):
-		deploy_shell_panel.call("_on_primary_action_pressed")
+	ui_shell.call("request_deploy_primary_action")
 
 
 func _start_run_from_route(intent: Dictionary) -> void:
@@ -2692,7 +2655,7 @@ func _start_run_from_route(intent: Dictionary) -> void:
 		if not bool(abandon_result.get("ok", false)):
 			_show_deploy_shell(&"config")
 			var abandon_feedback := "请在放弃确认窗口中再次确认；当前探索保持不变。" if StringName(abandon_result.get("status", &"")) == &"abandon_confirmation_required" else "放弃未完成，当前探索保持不变。"
-			deploy_shell_panel.call("show_action_message", abandon_feedback)
+			ui_shell.call("show_deploy_action_message", abandon_feedback)
 		return
 	var route_result := RunSceneRouteControllerScript.start_from_intent(
 		intent,

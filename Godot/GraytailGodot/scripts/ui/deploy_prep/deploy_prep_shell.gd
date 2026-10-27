@@ -122,9 +122,11 @@ var warehouse_batch_selected_ids: Array[String] = []
 var warehouse_batch_feedback := ""
 
 
-func build(model: Dictionary = {}) -> void:
+func build(model: Dictionary = {}, initial_snapshot: Dictionary = {}) -> void:
 	modal_focus_stack.clear(false)
 	_clear_children()
+	if not initial_snapshot.is_empty():
+		current_snapshot = initial_snapshot.duplicate(true)
 	ui_scale_factor = Art10UISkinKitScript.runtime_ui_scale_factor()
 	set_meta("runtime_ui_scale_factor", ui_scale_factor)
 	Art10UISkinKitScript.apply_player_ui_theme(self)
@@ -1811,6 +1813,10 @@ func _batch_validation_player_message(result: Dictionary) -> String:
 
 
 func _on_primary_action_pressed() -> void:
+	request_primary_action()
+
+
+func request_primary_action() -> void:
 	if _has_active_run():
 		var continue_payload := {"target_route": &"run", "route_mode": &"continue_run", "entry_id": &"m6_continue_active_run", "uses_existing_route": true, "continue_active_run": true}
 		deploy_start_intent_requested.emit(NavigationIntentScript.make_run(&"deploy_prep", continue_payload))

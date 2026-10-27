@@ -24,3 +24,10 @@ static func _resolve_content_db() -> Node:
 	if not (main_loop is SceneTree):
 		return null
 	return (main_loop as SceneTree).root.get_node_or_null("ContentDB")
+
+
+static func get_asset_paths_for_variants(variants: Array[StringName]) -> Array[String]:
+	var content_db := _resolve_content_db()
+	if content_db == null:
+		return []
+	return content_db.call("get_asset_paths_for_variants", variants) as Array[String]

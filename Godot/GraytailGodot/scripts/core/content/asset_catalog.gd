@@ -69,6 +69,18 @@ func get_godot_path(asset_id: StringName) -> String:
 	return String(record.get("godot_path", ""))
 
 
+func get_paths_for_variants(variants: Array[StringName]) -> Array[String]:
+	var paths: Array[String] = []
+	for record: Dictionary in asset_records.values():
+		if StringName(record.get("variant", "")) not in variants:
+			continue
+		var path := str(record.get("godot_path", ""))
+		if not path.is_empty() and not paths.has(path) and ResourceLoader.exists(path):
+			paths.append(path)
+	paths.sort()
+	return paths
+
+
 func get_asset_ref(asset_id: StringName) -> Resource:
 	var godot_path := get_godot_path(asset_id)
 	if godot_path.is_empty():

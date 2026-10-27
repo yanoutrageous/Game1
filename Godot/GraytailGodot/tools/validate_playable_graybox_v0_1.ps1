@@ -37,7 +37,7 @@ function Test-FileContains {
 Test-FileContains $ProjectRoot 'scripts/core/run/run_scene.gd' @(
     'ModeEntryPanel',
     '_show_deploy_shell',
-    'deploy_shell_panel.call("_on_primary_action_pressed")',
+    'ui_shell.call("request_deploy_primary_action")',
     '_start_run_from_route',
     'command_bus.dispatch(command_name, payload)'
 )

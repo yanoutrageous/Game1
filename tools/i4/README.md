@@ -25,7 +25,7 @@
   `CAPTURE_COMPLETE / VISUAL_CANDIDATE`，不能代替逐原图人工签收。
 - manual visual ledger：逐原图记录规则、实际结果、失败矩形、根因和复验范围。
 - legacy assertion disposition：`legacy_assertion_disposition.json` 冻结 I4 入口以来全部
-  17 个被修改的既有测试文件及其逐项处置；`audit_i4_legacy_assertions.ps1` 重新导出
+  21 个被修改的既有测试文件及其逐项处置；`audit_i4_legacy_assertions.ps1` 重新导出
   入口到当前源的精确文件集、规范化 diff 哈希和当前文件哈希。旧断言只能保留权威、
   带具体 I4 替代门取代或有证据无效；任何未重新审计的测试改动都会使静态门失败。
 - map composition report：折叠/展开地图的 base/semantic/count/focus 层、clip 和越格像素。

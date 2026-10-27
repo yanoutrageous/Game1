@@ -669,6 +669,12 @@ func _dispose_case(fixture: Dictionary) -> void:
 	if main != null:
 		main.queue_free()
 	await _frames(4)
+	# The audio mixer can outlive four headless frames after a rejection cue.
+	var cue_path := "res://assets/audio/sfx/sfx_click.wav"
+	var deadline := Time.get_ticks_msec() + 2000
+	while ResourceLoader.has_cached(cue_path) and Time.get_ticks_msec() < deadline:
+		await process_frame
+	_require(not ResourceLoader.has_cached(cue_path), "disposed production case retained its click audio playback")
 
 
 func _frames(count: int) -> void:

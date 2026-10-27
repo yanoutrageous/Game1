@@ -309,7 +309,7 @@ func _exercise_main(main: Node) -> void:
 	_require(_run_domain_state_signature(run_scene) == domain_before_result_escape, "result Esc route mutated settled run domain state")
 	_require(int(stack.call("depth")) == 0 and stack.call("top_modal_id") == &"", "result Esc did not close exactly the result stack top")
 	_require(result_panel == null or not result_panel.visible, "result remained visible after Esc route")
-	var deploy_panel := run_scene.get("deploy_shell_panel") as Control
+	var deploy_panel := run_scene.get("ui_shell").call("get_deploy_page") as Control
 	_require(deploy_panel != null and deploy_panel.is_visible_in_tree(), "result Esc did not route safely to deploy")
 	_assert_focus_inside(deploy_panel, "result Esc deploy route")
 	_require(input_shield == null or not input_shield.visible, "result Esc route left the runtime input shield visible")

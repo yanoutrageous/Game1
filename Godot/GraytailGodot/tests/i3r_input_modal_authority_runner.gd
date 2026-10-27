@@ -479,7 +479,7 @@ func _check_production_authority() -> void:
 
 	run_scene.call("_show_deploy_shell", &"config")
 	await _frames(4)
-	var deploy := run_scene.get("deploy_shell_panel") as Control
+	var deploy := run_scene.get("ui_shell").call("get_deploy_page") as Control
 	_require(deploy != null, "production Deploy page is missing")
 	if deploy != null:
 		var deploy_intents: Array[Dictionary] = []
@@ -633,7 +633,7 @@ func _check_production_authority() -> void:
 	run_scene.call("_show_main_menu")
 	await _frames(3)
 	var shell := run_scene.get("ui_shell") as Control
-	var main_page := run_scene.get("main_menu_panel") as Control
+	var main_page := run_scene.get("ui_shell").call("get_main_page") as Control
 	var main_focus := _first_focusable(main_page)
 	if main_focus != null:
 		main_focus.grab_focus()

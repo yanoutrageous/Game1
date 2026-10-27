@@ -15,15 +15,20 @@ const SettingsManagerScript := preload("res://scripts/core/settings/settings_man
 const SettingsPanelScript := preload("res://scripts/ui/settings/settings_panel.gd")
 const ModalFocusStackScript := preload("res://scripts/ui/shell/modal_focus_stack.gd")
 const MetaActionRequestIdScript := preload("res://scripts/core/progression/meta_action_request_id.gd")
+const ContentDBAccessScript := preload("res://scripts/core/content/content_db_access.gd")
 
 signal host_route_requested(intent: Dictionary)
 signal page_changed(page_id: StringName, payload: Dictionary)
 signal meta_action_requested(action: Dictionary)
 signal ui_scale_changed(factor: float)
 
-var main_menu_shell: Control
-var deploy_page: Control
-var long_term_page: Control
+var _pages: Dictionary = {}
+var main_menu_shell: Control:
+	get: return _pages.get(PageRouterScript.PAGE_MAIN_MENU) as Control
+var deploy_page: Control:
+	get: return _pages.get(PageRouterScript.PAGE_DEPLOY_PREP) as Control
+var long_term_page: Control:
+	get: return _pages.get(PageRouterScript.PAGE_LONG_TERM) as Control
 var settings_page: Control
 var settings_panel: PanelContainer
 var settings_modal_art: TextureRect
@@ -40,6 +45,13 @@ var _last_meta_result_delivery: Dictionary = {}
 var _current_page_id: StringName = PageRouterScript.PAGE_MAIN_MENU
 var _shell_active := true
 var _ui_scale_factor := 1.0
+var _reduced_motion := false
+var _prewarm_queue: Array[Dictionary] = []
+var _prewarm_resources: Array[Resource] = []
+var _prewarm_thread: Thread
+var _prewarm_shutdown_join: Callable
+var _prewarm_after_msec := 0
+var _prewarm_queued := false
 var _navigation_transition_coordinator: RefCounted
 var modal_focus_stack = ModalFocusStackScript.new()
 var _page_snapshot_revisions: Dictionary = {
@@ -55,6 +67,7 @@ var _snapshot_refresh_counts: Dictionary = {
 
 
 func build() -> void:
+	_release_page_prewarm()
 	_cancel_active_navigation_transition(&"shell_rebuilt", false)
 	modal_focus_stack.clear(false)
 	_navigation_transition_coordinator = NavigationTransitionCoordinatorScript.new()
@@ -66,16 +79,96 @@ func build() -> void:
 	if not visibility_changed.is_connected(_on_shell_visibility_changed):
 		visibility_changed.connect(_on_shell_visibility_changed)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_build_main_menu()
-	_build_deploy_prep()
-	_build_long_term()
 	_build_settings_overlay()
 	_build_exit_confirm_layer()
 	_ensure_settings_manager_bound()
 	_apply_bound_runtime_settings()
-	_apply_ui_scale_to_pages()
+	_ensure_page(PageRouterScript.PAGE_MAIN_MENU)
 	_shell_active = is_visible_in_tree()
 	show_main()
+	_prewarm_after_msec = Time.get_ticks_msec() + 250
+	set_process(true)
+
+
+func _process(_delta: float) -> void:
+	if get_visible_page_id() != PageRouterScript.PAGE_MAIN_MENU or Time.get_ticks_msec() < _prewarm_after_msec:
+		return
+	if _navigation_transition_coordinator != null and bool(_navigation_transition_coordinator.call("is_busy")):
+		return
+	var started := Time.get_ticks_usec()
+	if not _prewarm_queued:
+		for page_id: StringName in [PageRouterScript.PAGE_DEPLOY_PREP, PageRouterScript.PAGE_LONG_TERM]:
+			var variants: Array[StringName] = []
+			variants.assign([&"deploy_default", &"deploy_map"] if page_id == PageRouterScript.PAGE_DEPLOY_PREP else [&"long_term_default", &"long_term_goals"])
+			for path: String in ContentDBAccessScript.get_asset_paths_for_variants(variants):
+				_prewarm_queue.append({"page": page_id, "path": path})
+		_prewarm_queued = true
+		return
+	if _prewarm_thread != null:
+		if _prewarm_thread.is_alive():
+			return
+		var resource := _collect_prewarm_thread(_prewarm_thread, get_tree(), _prewarm_shutdown_join)
+		if resource != null:
+			_prewarm_resources.append(resource)
+		_prewarm_thread = null
+		_prewarm_shutdown_join = Callable()
+	# At most one completed resource and one new request per frame; never build nodes here.
+	while not _prewarm_queue.is_empty() and Time.get_ticks_usec() - started < 1000:
+		var next: Dictionary = _prewarm_queue.pop_front()
+		if _pages.has(next["page"]):
+			continue
+		var path := str(next["path"])
+		var thread := Thread.new()
+		if thread.start(_load_prewarm_resource.bind(path), Thread.PRIORITY_LOW) == OK:
+			_prewarm_thread = thread
+			_prewarm_shutdown_join = _make_shutdown_join(thread)
+			get_tree().root.tree_exiting.connect(_prewarm_shutdown_join, CONNECT_ONE_SHOT)
+		return
+	if _prewarm_queue.is_empty() and _prewarm_thread == null:
+		set_process(false)
+
+
+func _exit_tree() -> void:
+	_release_page_prewarm()
+
+
+func _release_page_prewarm() -> void:
+	if _prewarm_thread != null and is_inside_tree():
+		_discard_prewarm_thread(_prewarm_thread, get_tree(), _prewarm_shutdown_join)
+	_prewarm_thread = null
+	_prewarm_shutdown_join = Callable()
+	_prewarm_queue.clear()
+	_prewarm_resources.clear()
+	_prewarm_queued = false
+
+
+static func _load_prewarm_resource(path: String) -> Resource:
+	# A joined worker avoids the 4.6.3 threaded-request token race; no scene nodes are touched.
+	return ResourceLoader.load(path, "Texture2D")
+
+
+static func _join_prewarm_thread(thread: Thread) -> void:
+	# Root exit is the only blocking path: no future process frame can collect a live worker then.
+	if thread.is_started():
+		thread.wait_to_finish()
+
+
+static func _make_shutdown_join(thread: Thread) -> Callable:
+	return func() -> void: _join_prewarm_thread(thread)
+
+
+static func _collect_prewarm_thread(thread: Thread, tree: SceneTree, shutdown_join: Callable) -> Resource:
+	if tree.root.tree_exiting.is_connected(shutdown_join):
+		tree.root.tree_exiting.disconnect(shutdown_join)
+	return thread.wait_to_finish() as Resource if thread.is_started() else null
+
+
+static func _discard_prewarm_thread(thread: Thread, tree: SceneTree, shutdown_join: Callable) -> void:
+	if thread.is_alive():
+		var collect_request := func() -> void: _discard_prewarm_thread(thread, tree, shutdown_join)
+		tree.process_frame.connect(collect_request, CONNECT_ONE_SHOT)
+	else:
+		_collect_prewarm_thread(thread, tree, shutdown_join)
 
 
 func set_ui_scale_factor(value: float) -> bool:
@@ -91,7 +184,7 @@ func get_ui_scale_factor() -> float:
 
 
 func _apply_ui_scale_to_pages() -> void:
-	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+	for page: Control in _pages.values():
 		if page != null and page.has_method("set_ui_scale_factor"):
 			page.call("set_ui_scale_factor", _ui_scale_factor)
 	if settings_panel != null:
@@ -134,6 +227,7 @@ func show_deploy(_tab_id: StringName = &"overview") -> void:
 
 
 func _show_deploy_internal(tab_id: StringName = &"overview") -> void:
+	_ensure_page(PageRouterScript.PAGE_DEPLOY_PREP)
 	_current_page_id = PageRouterScript.PAGE_DEPLOY_PREP
 	_set_page_visible(deploy_page)
 	_hide_settings(false)
@@ -149,6 +243,7 @@ func show_long_term(_entry_id: StringName = NavigationIntentScript.LONG_TERM_DEF
 
 
 func _show_long_term_internal(entry_id: StringName = NavigationIntentScript.LONG_TERM_DEFAULT_MODULE) -> void:
+	_ensure_page(PageRouterScript.PAGE_LONG_TERM)
 	_current_page_id = PageRouterScript.PAGE_LONG_TERM
 	_set_page_visible(long_term_page)
 	_hide_settings(false)
@@ -207,15 +302,23 @@ func get_visible_page_id() -> StringName:
 
 
 func get_main_page() -> Control:
-	return main_menu_shell
+	return _ensure_page(PageRouterScript.PAGE_MAIN_MENU)
 
 
 func get_deploy_page() -> Control:
-	return deploy_page
+	return _ensure_page(PageRouterScript.PAGE_DEPLOY_PREP)
 
 
 func get_long_term_page() -> Control:
-	return long_term_page
+	return _ensure_page(PageRouterScript.PAGE_LONG_TERM)
+
+
+func request_deploy_primary_action() -> void:
+	get_deploy_page().call("request_primary_action")
+
+
+func show_deploy_action_message(message: String) -> void:
+	get_deploy_page().call("show_action_message", message)
 
 
 func get_navigation_transition_snapshot() -> Dictionary:
@@ -239,14 +342,7 @@ func handle_cancel_event(event: InputEvent) -> bool:
 		return false
 	if modal_focus_stack.handle_cancel_event(event):
 		return true
-	var active_page: Control = null
-	match _current_page_id:
-		PageRouterScript.PAGE_DEPLOY_PREP:
-			active_page = deploy_page
-		PageRouterScript.PAGE_LONG_TERM:
-			active_page = long_term_page
-		PageRouterScript.PAGE_MAIN_MENU:
-			active_page = main_menu_shell
+	var active_page := _pages.get(_current_page_id) as Control
 	if active_page != null and active_page.has_method("handle_cancel_event"):
 		return bool(active_page.call("handle_cancel_event", event))
 	return false
@@ -370,13 +466,13 @@ func _apply_runtime_settings_to_pages(runtime_settings: Dictionary) -> void:
 	set_ui_scale_factor(normalized_ui_scale)
 	if ui_scale_did_change:
 		ui_scale_changed.emit(_ui_scale_factor)
-	var reduce_motion := bool(runtime_settings.get("reduce_motion", false))
+	_reduced_motion = bool(runtime_settings.get("reduce_motion", false))
 	if _navigation_transition_coordinator != null and bool(_navigation_transition_coordinator.call("is_busy")):
 		var active_token := int(_navigation_transition_coordinator.call("active_token"))
-		_navigation_transition_coordinator.call("set_reduced_motion", active_token, reduce_motion)
-	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+		_navigation_transition_coordinator.call("set_reduced_motion", active_token, _reduced_motion)
+	for page: Control in _pages.values():
 		if page != null and page.has_method("set_reduced_motion_enabled"):
-			page.call("set_reduced_motion_enabled", reduce_motion)
+			page.call("set_reduced_motion_enabled", _reduced_motion)
 
 
 func _clear_children() -> void:
@@ -385,44 +481,52 @@ func _clear_children() -> void:
 			continue
 		remove_child(child)
 		child.queue_free()
+	_pages.clear()
+	settings_page = null
+	settings_panel = null
+	exit_confirm_panel = null
 
 
-func _build_main_menu() -> void:
-	main_menu_shell = MainMenuShellScript.new() as Control
-	main_menu_shell.name = "MainMenuShell"
-	add_child(main_menu_shell)
-	main_menu_shell.call("build")
-	main_menu_shell.connect("navigation_intent_requested", _on_navigation_intent_requested)
-	if main_menu_shell.has_signal("navigation_transition_requested"):
-		main_menu_shell.connect("navigation_transition_requested", _on_main_menu_navigation_transition_requested)
-	if main_menu_shell.has_signal("navigation_transition_finished"):
-		main_menu_shell.connect("navigation_transition_finished", _on_main_menu_navigation_transition_finished)
-	if main_menu_shell.has_signal("navigation_transition_cancel_requested"):
-		main_menu_shell.connect("navigation_transition_cancel_requested", _on_main_menu_navigation_transition_cancel_requested)
-
-
-func _build_deploy_prep() -> void:
-	deploy_page = DeployPrepShellScript.new() as Control
-	deploy_page.name = "DeployPrepShell"
-	add_child(deploy_page)
-	deploy_page.call("build")
-	if deploy_page.has_signal("navigation_intent_requested"):
-		deploy_page.connect("navigation_intent_requested", _on_navigation_intent_requested)
-	if deploy_page.has_signal("deploy_start_intent_requested"):
-		deploy_page.connect("deploy_start_intent_requested", _on_deploy_start_intent_requested)
-	if deploy_page.has_signal("meta_action_requested"):
-		deploy_page.connect("meta_action_requested", _forward_meta_action.bind(PageRouterScript.PAGE_DEPLOY_PREP))
-
-
-func _build_long_term() -> void:
-	long_term_page = LongTermShellScript.new() as Control
-	long_term_page.name = "LongTermShell"
-	add_child(long_term_page)
-	long_term_page.call("build")
-	if long_term_page.has_signal("navigation_intent_requested"):
-		long_term_page.connect("navigation_intent_requested", _on_navigation_intent_requested)
-	if long_term_page.has_signal("meta_action_requested"):
-		long_term_page.connect("meta_action_requested", _forward_meta_action.bind(PageRouterScript.PAGE_LONG_TERM))
+func _ensure_page(page_id: StringName) -> Control:
+	if _pages.has(page_id):
+		return _pages[page_id] as Control
+	var page_script: Script
+	var page_name: String
+	match page_id:
+		PageRouterScript.PAGE_MAIN_MENU:
+			page_script = MainMenuShellScript
+			page_name = "MainMenuShell"
+		PageRouterScript.PAGE_DEPLOY_PREP:
+			page_script = DeployPrepShellScript
+			page_name = "DeployPrepShell"
+		PageRouterScript.PAGE_LONG_TERM:
+			page_script = LongTermShellScript
+			page_name = "LongTermShell"
+		_:
+			return null
+	var page := page_script.new() as Control
+	page.name = page_name
+	page.visible = false
+	_pages[page_id] = page
+	add_child(page)
+	# Control input follows sibling order even when overlays have a higher z_index.
+	move_child(page, 0)
+	page.call("build", {}, current_snapshot if _has_snapshot else {})
+	if _has_snapshot:
+		_page_snapshot_revisions[page_id] = _snapshot_revision
+		_snapshot_refresh_counts[page_id] = int(_snapshot_refresh_counts.get(page_id, 0)) + 1
+	page.call("set_reduced_motion_enabled", _reduced_motion)
+	page.call("set_page_active", false)
+	page.connect("navigation_intent_requested", _on_navigation_intent_requested)
+	if page_id == PageRouterScript.PAGE_MAIN_MENU:
+		page.connect("navigation_transition_requested", _on_main_menu_navigation_transition_requested)
+		page.connect("navigation_transition_finished", _on_main_menu_navigation_transition_finished)
+		page.connect("navigation_transition_cancel_requested", _on_main_menu_navigation_transition_cancel_requested)
+	if page.has_signal("deploy_start_intent_requested"):
+		page.connect("deploy_start_intent_requested", _on_deploy_start_intent_requested)
+	if page.has_signal("meta_action_requested"):
+		page.connect("meta_action_requested", _forward_meta_action.bind(page_id))
+	return page
 
 
 func _forward_meta_action(action: Dictionary, source_page: StringName = &"") -> void:
@@ -442,14 +546,7 @@ func _forward_meta_action(action: Dictionary, source_page: StringName = &"") -> 
 
 func apply_meta_action_result(envelope: Dictionary) -> bool:
 	var source_page := StringName(envelope.get("source_page", &""))
-	var target_page: Control
-	match source_page:
-		PageRouterScript.PAGE_DEPLOY_PREP:
-			target_page = deploy_page
-		PageRouterScript.PAGE_LONG_TERM:
-			target_page = long_term_page
-		_:
-			return false
+	var target_page := _pages.get(source_page) as Control
 	if target_page == null or not target_page.has_method("apply_meta_action_result"):
 		return false
 	var accepted := bool(target_page.call("apply_meta_action_result", envelope))
@@ -470,19 +567,6 @@ func get_meta_result_delivery_snapshot() -> Dictionary:
 		"current_snapshot_revision": _snapshot_revision,
 		"last_delivery": _last_meta_result_delivery.duplicate(true),
 	}
-
-
-func _build_placeholder_page(page_name: String, title: String, body: String) -> Control:
-	var page := Control.new()
-	page.name = page_name
-	page.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(page)
-	_add_color_rect(page, "%sBackdrop" % page_name, Rect2(0, 0, 1280, 720), Color(0.020, 0.040, 0.048, 1.0))
-	_add_label(page, "%sTitle" % page_name, Rect2(80, 86, 620, 52), title, 34, PresentationTheme.color_for_key(&"ui.accent"))
-	_add_label(page, "%sBody" % page_name, Rect2(84, 166, 720, 180), body, 18, PresentationTheme.text_color())
-	_add_label(page, "%sBoundary" % page_name, Rect2(84, 382, 820, 110), "边界：设置入口只保留 route 占位。真实设置系统、持久化、资源配置和偏好保存后置。", 15, PresentationTheme.color_for_key(&"ui.muted"))
-	_add_button(page, "%sBackButton" % page_name, Rect2(84, 548, 180, 44), "返回主菜单", func() -> void: show_main())
-	return page
 
 
 func _build_settings_overlay() -> void:
@@ -620,7 +704,7 @@ func _on_main_menu_navigation_transition_requested(intent: Dictionary, profile_i
 		_restore_main_menu_entry_focus(entry_id)
 		return
 	var token := int(requested.get("token", 0))
-	if not _can_prepare_navigation_target(target_page):
+	if not _prepare_navigation_target(target_page):
 		var prepare_failure: Dictionary = _navigation_transition_coordinator.call(
 			"mark_prepared", token, false, &"target_prepare_failed"
 		)
@@ -698,7 +782,7 @@ func _commit_navigation_intent(intent: Dictionary) -> Dictionary:
 	var committed := true
 	match page_id:
 		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER:
-			if deploy_page == null:
+			if _ensure_page(PageRouterScript.PAGE_DEPLOY_PREP) == null:
 				committed = false
 				committed_page_id = PageRouterScript.PAGE_MAIN_MENU
 				_show_main_internal()
@@ -706,7 +790,7 @@ func _commit_navigation_intent(intent: Dictionary) -> Dictionary:
 				var deploy_payload := page_payload
 				_show_deploy_internal(StringName(deploy_payload.get("tab", &"overview")))
 		PageRouterScript.PAGE_LONG_TERM:
-			if long_term_page == null:
+			if _ensure_page(PageRouterScript.PAGE_LONG_TERM) == null:
 				committed = false
 				committed_page_id = PageRouterScript.PAGE_MAIN_MENU
 				_show_main_internal()
@@ -755,12 +839,10 @@ func _profile_for_page(page_id: StringName) -> StringName:
 			return &""
 
 
-func _can_prepare_navigation_target(page_id: StringName) -> bool:
+func _prepare_navigation_target(page_id: StringName) -> bool:
 	match page_id:
-		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER:
-			return deploy_page != null
-		PageRouterScript.PAGE_LONG_TERM:
-			return long_term_page != null
+		PageRouterScript.PAGE_DEPLOY_PLACEHOLDER, PageRouterScript.PAGE_LONG_TERM:
+			return _ensure_page(page_id) != null
 		PageRouterScript.PAGE_SETTINGS_PLACEHOLDER:
 			return settings_page != null and settings_panel != null and settings_manager != null
 		PageRouterScript.PAGE_EXIT_CONFIRM:
@@ -824,7 +906,7 @@ func _on_deploy_start_intent_requested(intent: Dictionary) -> void:
 
 
 func _set_page_visible(active_page: Control) -> void:
-	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+	for page: Control in _pages.values():
 		if page != null:
 			page.visible = page == active_page
 	_refresh_snapshot_page(active_page)
@@ -836,11 +918,8 @@ func _sync_page_lifecycle() -> void:
 	var overlay_visible := (settings_page != null and settings_page.visible) or (exit_confirm_panel != null and exit_confirm_panel.visible)
 	var active_page: Control = null
 	if shell_visible and not overlay_visible:
-		for page: Control in [main_menu_shell, deploy_page, long_term_page]:
-			if page != null and page.visible:
-				active_page = page
-				break
-	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+		active_page = _pages.get(_current_page_id) as Control
+	for page: Control in _pages.values():
 		if page == null:
 			continue
 		var page_active := page == active_page
@@ -869,7 +948,7 @@ func _on_shell_visibility_changed() -> void:
 func _refresh_visible_snapshot_page() -> void:
 	if not is_visible_in_tree():
 		return
-	for page: Control in [main_menu_shell, deploy_page, long_term_page]:
+	for page: Control in _pages.values():
 		if page != null and page.visible:
 			_refresh_snapshot_page(page)
 			return
@@ -889,12 +968,9 @@ func _refresh_snapshot_page(page: Control) -> void:
 
 
 func _snapshot_page_id(page: Control) -> StringName:
-	if page == main_menu_shell:
-		return PageRouterScript.PAGE_MAIN_MENU
-	if page == deploy_page:
-		return PageRouterScript.PAGE_DEPLOY_PREP
-	if page == long_term_page:
-		return PageRouterScript.PAGE_LONG_TERM
+	for page_id: StringName in _pages:
+		if _pages[page_id] == page:
+			return page_id
 	return &""
 
 
@@ -999,28 +1075,6 @@ func _refresh_exit_confirm_text() -> void:
 		exit_confirm_body.text = "确认退出游戏？本操作只关闭程序，不执行探索放弃、结算或资源变动。"
 
 
-func _add_button(parent: Control, node_name: String, rect: Rect2, text: String, callback: Callable) -> Button:
-	var button := Button.new()
-	button.name = node_name
-	button.text = text
-	button.offset_left = rect.position.x
-	button.offset_top = rect.position.y
-	button.offset_right = rect.position.x + rect.size.x
-	button.offset_bottom = rect.position.y + rect.size.y
-	button.pressed.connect(callback)
-	parent.add_child(button)
-	return button
-
-
-func _add_menu_button(parent: Control, text: String, callback: Callable) -> Button:
-	var button := Button.new()
-	button.text = text
-	button.custom_minimum_size = Vector2(150, 40)
-	button.pressed.connect(callback)
-	parent.add_child(button)
-	return button
-
-
 func _add_art21_texture(parent: Control, node_name: String, rect: Rect2, visual_key: StringName) -> TextureRect:
 	var texture := Art21UIPlacementContractScript.main_menu_scene_texture(visual_key)
 	if texture == null:
@@ -1082,21 +1136,6 @@ func _style_art21_modal_button(button: Button, rect: Rect2) -> void:
 	button.add_theme_color_override("font_color", Color(0.96, 0.81, 0.48))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.93, 0.68))
 	button.add_theme_color_override("font_pressed_color", Color(0.82, 0.64, 0.35))
-
-
-func _add_label(parent: Control, node_name: String, rect: Rect2, text: String, font_size: int, color: Color) -> Label:
-	var label := Label.new()
-	label.name = node_name
-	label.text = text
-	label.offset_left = rect.position.x
-	label.offset_top = rect.position.y
-	label.offset_right = rect.position.x + rect.size.x
-	label.offset_bottom = rect.position.y + rect.size.y
-	var composition_role := &"title" if node_name.ends_with("Title") else &"body"
-	Art10UISkinKitScript.apply_composition_label(label, composition_role, font_size, color)
-	label.clip_text = true
-	parent.add_child(label)
-	return label
 
 
 func _add_color_rect(parent: Control, node_name: String, rect: Rect2, color: Color) -> ColorRect:

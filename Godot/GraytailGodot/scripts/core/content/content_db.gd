@@ -32,6 +32,10 @@ func get_asset_ref(asset_id: StringName) -> Resource:
 	return asset_catalog.get_asset_ref(asset_id)
 
 
+func get_asset_paths_for_variants(variants: Array[StringName]) -> Array[String]:
+	return asset_catalog.get_paths_for_variants(variants)
+
+
 func get_placeholder_label(asset_id: StringName) -> String:
 	return asset_catalog.get_usage(asset_id)
 

@@ -44,10 +44,8 @@ func _run() -> void:
 	app_shell.connect("page_changed", _on_page_changed)
 
 	var main_menu := app_shell.get_node_or_null("MainMenuShell") as Control
-	var deploy_page := app_shell.get_node_or_null("DeployPrepShell") as Control
 	_check(main_menu != null and main_menu.visible, "Actual startup route is not the main menu")
-	_check(deploy_page != null, "Actual AppShell is missing DeployPrepShell")
-	if main_menu == null or deploy_page == null:
+	if main_menu == null:
 		_finish()
 		return
 
@@ -58,6 +56,11 @@ func _run() -> void:
 		return
 
 	deploy_button.emit_signal("pressed")
+	var deploy_page := app_shell.get_node_or_null("DeployPrepShell") as Control
+	_check(deploy_page != null, "Actual AppShell is missing DeployPrepShell")
+	if deploy_page == null:
+		_finish()
+		return
 	var playing: Dictionary = app_shell.call("get_navigation_transition_snapshot")
 	_check(StringName(playing.get("state", &"")) == &"playing", "Deploy route did not enter coordinator PLAYING")
 	_check(StringName(playing.get("profile_id", &"")) == &"enter_cave", "Deploy route did not use enter_cave")

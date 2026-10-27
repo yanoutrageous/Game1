@@ -45,10 +45,8 @@ func _run() -> void:
 	app_shell.connect("page_changed", _on_page_changed)
 
 	var main_menu := app_shell.get_node_or_null("MainMenuShell") as Control
-	var long_term := app_shell.get_node_or_null("LongTermShell") as Control
 	_check(main_menu != null and main_menu.visible, "actual startup route is not main menu")
-	_check(long_term != null, "actual AppShell is missing LongTermShell")
-	if main_menu == null or long_term == null:
+	if main_menu == null:
 		_finish()
 		return
 
@@ -59,6 +57,11 @@ func _run() -> void:
 		return
 
 	long_term_button.emit_signal("pressed")
+	var long_term := app_shell.get_node_or_null("LongTermShell") as Control
+	_check(long_term != null, "actual AppShell is missing LongTermShell")
+	if long_term == null:
+		_finish()
+		return
 	var playing: Dictionary = app_shell.call("get_navigation_transition_snapshot")
 	_check(StringName(playing.get("state", &"")) == &"playing", "Long-term route did not enter coordinator PLAYING")
 	_check(StringName(playing.get("profile_id", &"")) == &"descend", "Long-term route did not use descend")

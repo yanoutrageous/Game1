@@ -190,8 +190,8 @@
     },
     {
       "path": "Godot/GraytailGodot/tests/i2_runtime_modal_priority_runner.gd",
-      "diff_sha256": "DA8F2A7062058321D1B2EB74CC9001753040EB4854706DF773DDF786EF701817",
-      "current_file_sha256": "EE885016EBE737F627877E50F174CBE571F425812C27329534F9658F02479EA0",
+      "diff_sha256": "35E1DAFB04B7EB0ED582E109174219B7C9EB4EAED759DDB4BC462F1E614114D8",
+      "current_file_sha256": "5B49227B1EE726C26FDC8C8F9C46B3E295B11E4E51C2D30FC54291E811600A4C",
       "dispositions": [
         {
           "id": "extract_modal_t4_copy",
@@ -208,6 +208,12 @@
           "disposition": "STILL_AUTHORITATIVE",
           "authority_preserved": "Modal-stack priority, blocked gameplay input, focus ownership, cancel behavior, carried-item row geometry and non-intercepting rarity markers remain unchanged.",
           "verification": "The complete modal-priority runner still executes all stack and geometry assertions."
+        },
+        {
+          "id": "app_shell_owned_page_lifecycle_20261027",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All existing route, focus, font, copy, modal, snapshot and gameplay assertions remain authoritative. Tests obtain presentation pages from AppShell, the single owner, instead of removed RunScene aliases. Main-route tests still assert a prepared hidden target, no early route commit, exactly one successful commit, and the same production content.",
+          "verification": "Run the complete original runner in I1 full. I1_REFRESH_SCOPE additionally rejects eager unopened pages, passive construction, premature activation, stale initial data, duplicate snapshot refresh, instance replacement on re-entry, and retained pages after rebuild/release."
         }
       ]
     },
@@ -317,8 +323,8 @@
     },
     {
       "path": "Godot/GraytailGodot/tests/i3r_font_surface_coverage_runner.gd",
-      "diff_sha256": "73FB6672CEAAEF4737C2A3EEE2928D138C060F7AF8B30A1518B3BBFC611D13FC",
-      "current_file_sha256": "9BA52B05E35EC61ECA852FE6D93F2D1F2131C42949543F54B53A450AA4D0787A",
+      "diff_sha256": "4BEE7AD7A53F43CBF2B158273435F05C8C15B3598CE880052063D5359EA21264",
+      "current_file_sha256": "EA6DEDE19384C81E2EC1A0F292CC0059410B967E7981B3751A00B19D0E0527A3",
       "dispositions": [
         {
           "id": "surface_single_font_role",
@@ -331,6 +337,12 @@
           "disposition": "STILL_AUTHORITATIVE",
           "authority_preserved": "The same production surfaces, visible controls, tooltips and settings popups remain enumerated; a missing or non-FontVariation stack still fails.",
           "verification": "Coverage counters and per-consumer checks remain in the PASS contract."
+        },
+        {
+          "id": "app_shell_owned_page_lifecycle_20261027",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All existing route, focus, font, copy, modal, snapshot and gameplay assertions remain authoritative. Tests obtain presentation pages from AppShell, the single owner, instead of removed RunScene aliases. Main-route tests still assert a prepared hidden target, no early route commit, exactly one successful commit, and the same production content.",
+          "verification": "Run the complete original runner in I1 full. I1_REFRESH_SCOPE additionally rejects eager unopened pages, passive construction, premature activation, stale initial data, duplicate snapshot refresh, instance replacement on re-entry, and retained pages after rebuild/release."
         }
       ]
     },
@@ -359,8 +371,8 @@
     },
     {
       "path": "Godot/GraytailGodot/tests/i3r_player_copy_leakage_runner.gd",
-      "diff_sha256": "3D284DC801442A0072F90E27DBEB038FFD486C9F730DABA94870D317011B927B",
-      "current_file_sha256": "352DF3F013E56851427F855C8E5319C1693AE3681157BCDDF3493581A672162C",
+      "diff_sha256": "5C0250E2613E599C5CA8AFB58277F99B5ABDDFBE88660970E8383AB005B3B131",
+      "current_file_sha256": "6FA84795E3B77691929C73BF69443ED6E9EEFA9665D78BA63AFFA9F008A5394F",
       "dispositions": [
         {
           "id": "dev_only_root_name_allowlist",
@@ -377,6 +389,12 @@
           "disposition": "STILL_AUTHORITATIVE",
           "authority_preserved": "Every non-development visible label, button, tooltip and projected fragment across the enumerated production surfaces must remain free of forbidden engineering, fixture and internal-state copy.",
           "verification": "The complete production-state and fragment scan remains unchanged; only the explicit development ownership classifier was extended."
+        },
+        {
+          "id": "app_shell_owned_page_lifecycle_20261027",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All existing route, focus, font, copy, modal, snapshot and gameplay assertions remain authoritative. Tests obtain presentation pages from AppShell, the single owner, instead of removed RunScene aliases. Main-route tests still assert a prepared hidden target, no early route commit, exactly one successful commit, and the same production content.",
+          "verification": "Run the complete original runner in I1 full. I1_REFRESH_SCOPE additionally rejects eager unopened pages, passive construction, premature activation, stale initial data, duplicate snapshot refresh, instance replacement on re-entry, and retained pages after rebuild/release."
         }
       ]
     },
@@ -428,14 +446,86 @@
     },
     {
       "path": "Godot/GraytailGodot/tests/i1_refresh_scope_runner.gd",
-      "diff_sha256": "18C4FB359E61A434844AC92D81C2E82A02C478F2909F489E95CA6A468DC9195C",
-      "current_file_sha256": "E96B4681D909F194438CCDFEE0BC80C60DD6BC4C23DF5A2F3420A0DEA89CBAF2",
+      "diff_sha256": "0B9CE0437FFBEB8E535B73DD6FB65E07FF5018C05EC1C97D803CDF725D4928F7",
+      "current_file_sha256": "0F493610E51BC05C831F9BF868AC7A71D0E47D730B01131F6486DA13FDB81CE8",
       "dispositions": [
         {
           "id": "i1_refresh_scope_performance_refresh_authority",
           "disposition": "STILL_AUTHORITATIVE",
           "authority_preserved": "All existing visible-only refresh counts, snapshot catch-up, modal copy and combat authority assertions remain authoritative. Additive assertions require independent nested catalog copies, inexpensive single-module lookup, fallback identity and preservation of settled hidden-page controls.",
           "verification": "I1_REFRESH_SCOPE retains every prior assertion and measures paired catalog construction/lookup samples, mutates returned copies, and compares actual long-term content controls across hiding."
+        },
+        {
+          "id": "app_shell_owned_page_lifecycle_20261027",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All existing route, focus, font, copy, modal, snapshot and gameplay assertions remain authoritative. Tests obtain presentation pages from AppShell, the single owner, instead of removed RunScene aliases. Main-route tests still assert a prepared hidden target, no early route commit, exactly one successful commit, and the same production content.",
+          "verification": "Run the complete original runner in I1 full. I1_REFRESH_SCOPE additionally rejects eager unopened pages, passive construction, premature activation, stale initial data, duplicate snapshot refresh, instance replacement on re-entry, and retained pages after rebuild/release."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/art22_deploy_prep_main_route_runner.gd",
+      "diff_sha256": "4F67E4744A342699A2AC16733CA809C1551C101FC8B606343C41747A72E6BB54",
+      "current_file_sha256": "1F6BF1489CC303E0DD4C8BF8A70B95D1CAAF360601D49D82371AB5A9FC572E05",
+      "dispositions": [
+        {
+          "id": "eager_startup_target_presence",
+          "disposition": "INVALID_WITH_EVIDENCE",
+          "invalid_reason": "Requiring an unopened target instance before any navigation pins eager allocation, which the explicitly requested loading/lifecycle refactor replaces. Target existence is still mandatory immediately after the real navigation request and before playback commits.",
+          "evidence": "49f4c5b fails the new unopened-page lifecycle test in refactor/red_lifecycle.log. The migrated production-route runner obtains the target after its real button pressed signal; its hidden/pre-commit, exactly-one-commit, screen-state and full-content checks remain.",
+          "verification": "ART22_DEPLOY_PREP_MAIN_ROUTE and ART23_LONG_TERM_MAIN_ROUTE plus I1_REFRESH_SCOPE in current-worktree I1 full."
+        },
+        {
+          "id": "app_shell_owned_page_lifecycle_20261027",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All existing route, focus, font, copy, modal, snapshot and gameplay assertions remain authoritative. Tests obtain presentation pages from AppShell, the single owner, instead of removed RunScene aliases. Main-route tests still assert a prepared hidden target, no early route commit, exactly one successful commit, and the same production content.",
+          "verification": "Run the complete original runner in I1 full. I1_REFRESH_SCOPE additionally rejects eager unopened pages, passive construction, premature activation, stale initial data, duplicate snapshot refresh, instance replacement on re-entry, and retained pages after rebuild/release."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/art23_long_term_main_route_runner.gd",
+      "diff_sha256": "0B0130A064360013A1B21A3136FA710E2B9FFB5499EADA7AF6DF04E00F36A524",
+      "current_file_sha256": "2B32F6481FC7E7586252C948DA0EFB3B4C4316791E07F345F5B58F220495928F",
+      "dispositions": [
+        {
+          "id": "eager_startup_target_presence",
+          "disposition": "INVALID_WITH_EVIDENCE",
+          "invalid_reason": "Requiring an unopened target instance before any navigation pins eager allocation, which the explicitly requested loading/lifecycle refactor replaces. Target existence is still mandatory immediately after the real navigation request and before playback commits.",
+          "evidence": "49f4c5b fails the new unopened-page lifecycle test in refactor/red_lifecycle.log. The migrated production-route runner obtains the target after its real button pressed signal; its hidden/pre-commit, exactly-one-commit, screen-state and full-content checks remain.",
+          "verification": "ART22_DEPLOY_PREP_MAIN_ROUTE and ART23_LONG_TERM_MAIN_ROUTE plus I1_REFRESH_SCOPE in current-worktree I1 full."
+        },
+        {
+          "id": "app_shell_owned_page_lifecycle_20261027",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All existing route, focus, font, copy, modal, snapshot and gameplay assertions remain authoritative. Tests obtain presentation pages from AppShell, the single owner, instead of removed RunScene aliases. Main-route tests still assert a prepared hidden target, no early route commit, exactly one successful commit, and the same production content.",
+          "verification": "Run the complete original runner in I1 full. I1_REFRESH_SCOPE additionally rejects eager unopened pages, passive construction, premature activation, stale initial data, duplicate snapshot refresh, instance replacement on re-entry, and retained pages after rebuild/release."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3r_input_modal_authority_runner.gd",
+      "diff_sha256": "C601C7A89E82A16F89F96E95E2AFC787444AA25DA788793632C7B1ABF6A633D0",
+      "current_file_sha256": "7604F85E24C9C53CD7E43D62AF6ECCF2C22800D72AD3EB72B3F32A22B36C41E6",
+      "dispositions": [
+        {
+          "id": "app_shell_owned_page_lifecycle_20261027",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All existing route, focus, font, copy, modal, snapshot and gameplay assertions remain authoritative. Tests obtain presentation pages from AppShell, the single owner, instead of removed RunScene aliases. Main-route tests still assert a prepared hidden target, no early route commit, exactly one successful commit, and the same production content.",
+          "verification": "Run the complete original runner in I1 full. I1_REFRESH_SCOPE additionally rejects eager unopened pages, passive construction, premature activation, stale initial data, duplicate snapshot refresh, instance replacement on re-entry, and retained pages after rebuild/release."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3r_player_movement_appearance_runner.gd",
+      "diff_sha256": "52ACF1E3A3A3E20AB3028AE21F5A5A1B229FB19C7233156FF9BDF4E4A38C4A23",
+      "current_file_sha256": "1B149D62C282F7097977D877BDDA4D46BECBC4F2D75D515116F16BFC10B6AD13",
+      "dispositions": [
+        {
+          "id": "app_shell_owned_page_lifecycle_20261027",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All movement, appearance, geometry, collision, unowned/catalog fallback and hurt assertions remain unchanged. After the production case is freed, teardown now waits with a 2-second deadline for the click audio stream to leave the resource cache and asserts its release. Four headless frames alone could exit while the audio mixer still retained AudioStreamPlaybackWAV.",
+          "verification": "The unchanged runner emitted PASS but one final full run had 19 instead of the existing 18 exit resources. movement_joined_verbose_2 identified only sfx_click.wav/AudioStreamPlaybackWAV as extra; baseline49 three runs retained 18. movement_audio_cleanup_1-3 preserve the original 18-resource diagnostic contract. Current full must pass without modifying its manifest or cleanup whitelist."
         }
       ]
     }

@@ -75,9 +75,9 @@ func _run() -> void:
 		_finish()
 		return
 	var app_shell := run_scene.get("ui_shell") as Control
-	var main_menu := run_scene.get("main_menu_panel") as Control
-	var deploy := run_scene.get("deploy_shell_panel") as Control
-	var long_term := run_scene.get("long_term_shell_panel") as Control
+	var main_menu := run_scene.get("ui_shell").call("get_main_page") as Control
+	var deploy := run_scene.get("ui_shell").call("get_deploy_page") as Control
+	var long_term := run_scene.get("ui_shell").call("get_long_term_page") as Control
 	_require(app_shell != null, "production AppShell is missing")
 	_require(main_menu != null, "production MainMenuShell is missing")
 	_require(deploy != null, "production DeployPrepShell is missing")
