@@ -129,6 +129,7 @@ var active_guidance_action: StringName = &""
 var encounter_option_base_rect := Rect2()
 var last_backpack_signature := "__uninitialized__"
 var current_backpack_item_count := 0
+var current_map_dimensions := Vector2i.ZERO
 var current_protocol_level := 5
 var current_protocol_pressure := 0.0
 var command_feedback_time_remaining := 0.0
@@ -164,7 +165,8 @@ func build() -> void:
 	left_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.72), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(left_backdrop, &"deep")
 	left_rail_art = _add_nine_patch_from_ref("Art21RunLeftInfoRail", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"left_info_rail", &"ui.art21.shared.panel.page_frame.normal"), 0.96, 14)
-	_apply_art24_frame(left_rail_art, "res://assets/art24/ui/ue/ui_panel_left.png", 20)
+	_apply_art24_frame(left_rail_art, "res://assets/art24/ui/modal_frame.png", 18)
+	left_rail_art.draw_center = false
 	center_backdrop = _add_panel("RunRoomSignalPanel", Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"))
 	center_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.012, 0.014, 0.10), PresentationTheme.color_for_key(&"mini.normal"), 1))
 	room_background_layer = _add_texture_rect_from_ref("RunRoomBackgroundFill", _room_background_ref(&"Normal"), 1.0)
@@ -185,7 +187,7 @@ func build() -> void:
 	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.006, 0.014, 0.016, 0.70), PresentationTheme.color_for_key(&"ui.accent"), 2))
 	Art10UISkinKitScript.apply_panel(bottom_backdrop, &"summary")
 	bottom_overlay_art = _add_nine_patch_from_ref("Art21RunBottomOverlay", Art21UIPlacementContractScript.slot_ref(&"run_hud", &"bottom_overlay", &"ui.art19.bar.summary_dark"), 0.96, 12)
-	_apply_art24_frame(bottom_overlay_art, "res://assets/art24/ui/ue/ui_bottom_bar.png", 20)
+	_apply_art24_frame(bottom_overlay_art, "res://assets/art24/ui/bottom_bar.png", 12)
 	mine_risk_tag_art = _add_texture_rect_from_ref(
 		"RunMineRiskTagArt",
 		Art09ManifestAssetMappingScript.asset_ref(
@@ -364,12 +366,16 @@ func _process(delta: float) -> void:
 func apply_surface_model(model: Dictionary) -> void:
 	if not built:
 		build()
+	var map_dimensions := Vector2i(model.get("map_dimensions", Vector2i.ZERO))
+	if current_map_dimensions != map_dimensions:
+		current_map_dimensions = map_dimensions
+		call_deferred("_reflow_backpack_content_layout")
 	scanner_title_label.text = "区域扫描图"
 	scanner_legend_label.text = _resource_lines(String(model.get("resource_summary", "")))
 	scanner_detail_label.text = "作业包  %s 展开" % SemanticActionHintScript.current_binding_label(&"open_inventory")
 	_refresh_backpack_strip(model.get("backpack_items", []))
 	backpack_capacity_label.text = "负重 %s / %s" % [model.get("backpack_used", 0), model.get("backpack_capacity", 0)]
-	scanner_summary_label.text = ""
+	scanner_summary_label.text = "%d × %d · 展开详情" % [current_map_dimensions.x, current_map_dimensions.y] if current_map_dimensions.x > 0 and current_map_dimensions.y > 0 else "地图尚未公开"
 	room_title_label.text = ""
 	room_body_label.text = ""
 	objective_label.text = ""
@@ -563,20 +569,22 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var width: float = maxf(1.0, viewport_size.x)
 	var height: float = maxf(1.0, viewport_size.y)
 	var ui_scale_step := (ui_scale_factor - 1.0) / 0.5
-	# UE widget constants are authored against a 1920x1080 presentation. Scale
-	# those HUD-only dimensions to the active viewport instead of copying 720 px
-	# widths verbatim into the 1280x720 Godot target.
-	var ue_reference_scale: float = minf(width / 1920.0, height / 1080.0)
-	ue_reference_scale = clampf(ue_reference_scale, 0.60, 1.34)
 	var margin: float = 10.0 if is_low else 12.0
 	var left_width: float = UILayerContractScript.run_left_width(profile)
 	var gameplay_left: float = left_width
 	var gameplay_width: float = max(1.0, width - gameplay_left)
-	var rail_content_left: float = margin + 12.0
-	var rail_content_width: float = max(220.0, left_width - rail_content_left - margin)
+	var rail_content_left: float = margin + 18.0
+	var rail_content_width: float = max(220.0, left_width - rail_content_left * 2.0)
 	var right_card_size := UILayerContractScript.run_status_card_size(profile)
 	var right_card_width: float = right_card_size.x
-	var right_card_height: float = right_card_size.y
+	var body_font_size := Art10UISkinKitScript.scaled_font_size(13 if is_low else (16 if is_high else 14), ui_scale_factor)
+	var body_line_height := ceilf(scanner_legend_label.get_theme_font("font").get_height(body_font_size))
+	var title_font_size := Art10UISkinKitScript.scaled_font_size(16 if is_low else (20 if is_high else 18), ui_scale_factor)
+	var right_title_height := maxf(24.0 + 18.0 * ui_scale_step, ceilf(right_title_label.get_theme_font("font").get_height(title_font_size)))
+	var protocol_body_minimum_height := maxf(20.0, body_line_height)
+	# Two text lines, their gaps, the pressure track, and the authored 18 px
+	# top/bottom safe insets must fit before allocating either label.
+	var right_card_height: float = maxf(right_card_size.y, right_title_height + protocol_body_minimum_height + 52.0)
 	# The stable footer contains only the mine-risk plate and the action dock.
 	# Command feedback is a short overlay toast and must not reserve a third band.
 	var footer_geometry := UILayerContractScript.run_footer_geometry(profile)
@@ -586,25 +594,24 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var right_left: float = width - right_card_width - margin
 	var right_content_left: float = right_left + margin
 	var right_content_width: float = right_card_width - margin * 2.0
-	var scanner_title_height := 28.0 + 14.0 * ui_scale_step
-	var scanner_title_top := 24.0 + 4.0 * ui_scale_step
-	var scanner_map_top: float = scanner_title_top + scanner_title_height + 8.0
-	var scanner_map_height: float = minf(rail_content_width, 300.0 * ue_reference_scale)
-	var scanner_stats_top: float = scanner_map_top + scanner_map_height + 10.0
-	var stats_height: float = (84.0 if is_low else 94.0) + 10.0 * ui_scale_step
-	var backpack_top: float = scanner_stats_top + stats_height + 10.0
+	var scanner_title_height := maxf(28.0 + 14.0 * ui_scale_step, ceilf(scanner_title_label.get_theme_font("font").get_height(title_font_size)))
+	var scanner_title_top := 36.0 + 4.0 * ui_scale_step
+	var scanner_summary_height := maxf(20.0, body_line_height)
+	var scanner_map_top: float = scanner_title_top + scanner_title_height + scanner_summary_height + 8.0
+	var stats_line_spacing := maxi(2, int(round(float(2 if is_low else 3) * ui_scale_factor)))
+	var stats_height: float = maxf(48.0 + 20.0 * ui_scale_step, body_line_height * 2.0 + stats_line_spacing + 16.0)
 	var backpack_row_height := 46.0
 	var backpack_gap := 4.0
 	var backpack_capacity_gap := 8.0
-	var backpack_visible_rows := mini(current_backpack_item_count, 3)
+	var backpack_visible_rows := mini(current_backpack_item_count, 2 if ui_scale_factor >= 1.49 else 3)
 	var backpack_list_height := (
 		48.0
 		if current_backpack_item_count == 0
 		else backpack_row_height * backpack_visible_rows + backpack_gap * maxf(0.0, backpack_visible_rows - 1.0)
 	)
-	var backpack_header_height := 24.0
-	var backpack_detail_height := 44.0
-	var backpack_capacity_height := 24.0
+	var backpack_header_height := 24.0 + 10.0 * ui_scale_step
+	var backpack_detail_height := 44.0 + 12.0 * ui_scale_step
+	var backpack_capacity_height := 24.0 + 12.0 * ui_scale_step
 	var backpack_outer_padding := 6.0
 	var backpack_panel_height := (
 		backpack_outer_padding * 2.0
@@ -615,6 +622,12 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		+ backpack_gap * 2.0
 		+ backpack_capacity_gap
 	)
+	var map_aspect := float(current_map_dimensions.y) / float(current_map_dimensions.x) if current_map_dimensions.x > 0 else 1.0
+	var preferred_map_height := minf(rail_content_width, (rail_content_width - 16.0) * map_aspect + 16.0)
+	var map_available_height := height - 24.0 - scanner_map_top - stats_height - backpack_panel_height - 20.0
+	var scanner_map_height := maxf(80.0, minf(preferred_map_height, map_available_height))
+	var scanner_stats_top: float = scanner_map_top + scanner_map_height + 10.0
+	var backpack_top: float = scanner_stats_top + stats_height + 10.0
 	var backpack_available_height := maxf(168.0, height - backpack_top - 12.0)
 	if backpack_panel_height > backpack_available_height and backpack_visible_rows > 0:
 		var excess_per_row := ceilf(
@@ -658,12 +671,13 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	encounter_left = clampf(gameplay_square_left + gameplay_square_size * 0.58, gameplay_square_left + 20.0, gameplay_square_left + gameplay_square_size - encounter_width - 20.0)
 	encounter_top = clampf(gameplay_square_top + gameplay_square_size * 0.68, gameplay_square_top + 120.0, gameplay_square_top + gameplay_square_size - encounter_height - 24.0)
 
-	_set_rect(left_backdrop, Rect2(0, 0, left_width, height))
 	var left_rail_height := minf(
 		height - margin,
 		backpack_top + backpack_panel_height + 12.0
 	)
-	_set_rect(left_rail_art, Rect2(0, 0, left_width, left_rail_height))
+	_set_rect(left_rail_art, Rect2(8, 12, left_width - 16, left_rail_height - 12))
+	_set_rect(left_backdrop, left_rail_art.get_rect().grow(-8.0))
+	left_backdrop.add_theme_stylebox_override("panel", _interior_band_style(Color(0.060, 0.065, 0.055, 0.98)))
 	_set_rect(right_backdrop, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(status_card_art, Rect2(right_left, margin, right_card_width, right_card_height))
 	_set_rect(protocol_level_plate, Rect2())
@@ -724,7 +738,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	_set_rect(protocol_glow_layer, protocol_safe_rect)
 	_set_rect(bottom_key_glow_layer, Rect2(bottom_key_left + 8.0, bottom_key_top + 8.0, bottom_key_width - 16.0, bottom_key_height - 16.0))
 	_set_rect(right_game_fill_layer, Rect2(0, 0, 0, 0))
-	left_backdrop.visible = false
+	left_backdrop.visible = true
 	left_rail_art.visible = true
 	right_backdrop.visible = false
 	status_card_art.visible = true
@@ -734,15 +748,19 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	protocol_level_plate.visible = false
 	protocol_pressure_track.visible = true
 	protocol_pressure_fill.visible = true
-	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.008, 0.024, 0.027, 0.98), Color(0.58, 0.39, 0.16, 0.96), 2))
+	bottom_backdrop.add_theme_stylebox_override("panel", _panel_style(Color(0.055, 0.060, 0.050, 0.98), Color(0.46, 0.40, 0.27, 0.96), 1))
 	bottom_backdrop.visible = true
 	bottom_overlay_art.visible = true
+	bottom_overlay_art.draw_center = false
 	encounter_backdrop.visible = false
 	center_backdrop.visible = false
 	room_background_layer.visible = false
 	player_sprite_layer.visible = false
 	resource_backdrop.visible = true
+	var resource_band := _interior_band_style(Color(0.075, 0.080, 0.063, 0.96))
+	resource_backdrop.add_theme_stylebox_override("panel", resource_band)
 	scanner_text_mask.visible = true
+	scanner_text_mask.add_theme_stylebox_override("panel", _interior_band_style(Color(0.060, 0.065, 0.055, 0.98)))
 	threat_mask.visible = false
 	event_mask.visible = false
 	room_glow_layer.visible = false
@@ -754,7 +772,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	right_game_fill_layer.visible = false
 
 	_set_rect(scanner_title_label, Rect2(rail_content_left + 2.0, scanner_title_top, rail_content_width - 4.0, scanner_title_height))
-	_set_rect(scanner_summary_label, Rect2(0, 0, 0, 0))
+	_set_rect(scanner_summary_label, Rect2(rail_content_left + 2.0, scanner_title_top + scanner_title_height, rail_content_width - 4.0, scanner_summary_height))
 	_set_rect(minimap_panel, Rect2(rail_content_left, scanner_map_top, rail_content_width, scanner_map_height))
 	minimap_panel.apply_layout_profile(profile)
 	_set_rect(scanner_legend_label, Rect2(rail_content_left + 10.0, scanner_stats_top + 8.0, rail_content_width - 20.0, stats_height - 16.0))
@@ -790,7 +808,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	backpack_scroll.mouse_filter = Control.MOUSE_FILTER_STOP if backpack_scroll.visible else Control.MOUSE_FILTER_IGNORE
 	backpack_scroll.vertical_scroll_mode = (
 		ScrollContainer.SCROLL_MODE_AUTO
-		if current_backpack_item_count > 3
+		if current_backpack_item_count > backpack_visible_rows
 		else ScrollContainer.SCROLL_MODE_DISABLED
 	)
 	backpack_strip.custom_minimum_size = Vector2(maxf(80.0, backpack_content_width - 12.0), 0.0)
@@ -834,21 +852,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		)
 	)
 
-	var desired_right_title_height := 24.0 + 18.0 * ui_scale_step
 	var protocol_title_body_gap := 4.0
 	var protocol_body_track_gap := 6.0
-	var protocol_body_minimum_height := 20.0
-	var right_title_height := minf(
-		desired_right_title_height,
-		maxf(
-			20.0,
-			protocol_safe_rect.size.y
-			- protocol_title_body_gap
-			- protocol_body_minimum_height
-			- protocol_body_track_gap
-			- protocol_track_rect.size.y
-		)
-	)
 	var right_title_top := protocol_safe_rect.position.y
 	var protocol_copy_bottom := protocol_track_rect.position.y - protocol_body_track_gap
 	_set_rect(right_title_label, Rect2(protocol_copy_left, right_title_top, protocol_copy_width, right_title_height))
@@ -1882,8 +1887,8 @@ func _apply_action_button_style(button: Button, tone: StringName, enabled: bool)
 
 func _art24_keycap_style(state: String, tone: StringName = &"secondary") -> StyleBox:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.018, 0.052, 0.054, 0.98)
-	style.border_color = Color(0.48, 0.67, 0.54, 0.82)
+	style.bg_color = Color(0.075, 0.080, 0.065, 0.98)
+	style.border_color = Color(0.48, 0.44, 0.32, 0.82)
 	if tone == &"primary":
 		style.bg_color = Color(0.075, 0.070, 0.035, 0.98)
 		style.border_color = Color(0.94, 0.70, 0.27, 0.95)
@@ -1897,12 +1902,12 @@ func _art24_keycap_style(state: String, tone: StringName = &"secondary") -> Styl
 		style.bg_color = style.bg_color.lightened(0.08)
 		style.border_color = _tone_color(tone).lightened(0.16)
 	elif state == "disabled":
-		style.bg_color = Color(0.012, 0.028, 0.030, 0.96)
-		style.border_color = Color(0.26, 0.34, 0.32, 0.78)
-	style.border_width_left = 1
-	style.border_width_top = 1
+		style.bg_color = Color(0.045, 0.050, 0.042, 0.96)
+		style.border_color = Color(0.28, 0.29, 0.24, 0.78)
+	style.border_width_left = 0
+	style.border_width_top = 0
 	style.border_width_right = 1
-	style.border_width_bottom = 1
+	style.border_width_bottom = 1 if state == "pressed" or tone in [&"primary", &"danger"] else 0
 	style.corner_radius_top_left = 2
 	style.corner_radius_top_right = 2
 	style.corner_radius_bottom_left = 2
@@ -2133,6 +2138,7 @@ func _apply_ue_readability_tokens(profile: Dictionary = {}) -> void:
 		"font_size",
 		Art10UISkinKitScript.scaled_font_size(16 if is_low else (20 if is_high else 18), ui_scale_factor)
 	)
+	scanner_title_label.add_theme_color_override("font_color", Color(0.92, 0.82, 0.61))
 	right_title_label.add_theme_font_size_override(
 		"font_size",
 		Art10UISkinKitScript.scaled_font_size(16 if is_low else (20 if is_high else 18), ui_scale_factor)

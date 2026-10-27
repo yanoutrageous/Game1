@@ -140,7 +140,7 @@ func _check_reduced_motion_path() -> void:
 	_require(is_zero_approx(player.animation_elapsed), "reduced-motion player clock")
 	_require_path(player.last_texture_path, "down_attack_impact.png", "reduced-motion attack pose")
 	var player_sprite := player.get_node("Sprite") as Sprite2D
-	_require(is_equal_approx(player_sprite.position.y, -20.0), "reduced-motion player retained bob motion")
+	_require(is_equal_approx(player_sprite.position.y, -37.0), "reduced-motion player retained bob motion")
 	player.set_runtime_visual_state(&"move")
 	player.call("_process", 1.0)
 	_require_path(player.last_texture_path, "down_walk_a.png", "reduced-motion move pose")

@@ -557,7 +557,7 @@ func _check_movement_direction_and_stop(fixture: Dictionary) -> void:
 	_require(settled_texture.contains("/up_idle_"), "stopped player never reached a facing-stable idle pose")
 	var sprite := player.get_node_or_null("Sprite") as Sprite2D
 	_require(
-		sprite != null and absf(sprite.position.y + 20.0) <= 1.0,
+		sprite != null and absf(sprite.position.y + 37.0) <= 1.0,
 		"stopped player visual anchor is unstable: %s" % (sprite.position if sprite != null else Vector2.INF)
 	)
 	player.move_local(Vector2.ZERO, 0.10)

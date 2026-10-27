@@ -56,7 +56,7 @@ func _check_frame_rate_projection() -> void:
 			_check(frame_index >= 0 and frame_index < EXPECTED_MOVE_PHASES.size(), "%d Hz produced invalid phase %d" % [sample_rate, frame_index])
 			var expected_motion: StringName = RuntimeAnimationCatalog.player_motion(&"move", frame_index, false)
 			_check(player.last_texture_path.ends_with("_%s.png" % String(expected_motion)), "%d Hz texture escaped phase %d" % [sample_rate, frame_index])
-			var expected_y := -20.0 + RuntimeAnimationCatalog.player_walk_bob_offset(player.animation_elapsed, false)
+			var expected_y := -37.0 + RuntimeAnimationCatalog.player_walk_bob_offset(player.animation_elapsed, false)
 			var sprite := player.get_node("Sprite") as Sprite2D
 			_check(is_equal_approx(sprite.position.y, expected_y), "%d Hz bob lost animation phase" % sample_rate)
 		_check(seen_phases.size() == EXPECTED_MOVE_PHASES.size(), "%d Hz did not sample all four movement phases" % sample_rate)
@@ -73,7 +73,7 @@ func _check_reduced_motion_pose() -> void:
 		_check(player.animation_frame == 0, "%d Hz reduced motion advanced movement pose" % sample_rate)
 		_check(is_zero_approx(player.animation_elapsed), "%d Hz reduced motion advanced animation clock" % sample_rate)
 		_check(player.last_texture_path.ends_with("_walk_a.png"), "%d Hz reduced motion did not retain readable contact pose" % sample_rate)
-		_check(is_equal_approx(sprite.position.y, -20.0), "%d Hz reduced motion retained bob" % sample_rate)
+		_check(is_equal_approx(sprite.position.y, -37.0), "%d Hz reduced motion retained bob" % sample_rate)
 	player.free()
 	ProjectSettings.set_setting(REDUCE_MOTION_SETTING, false)
 

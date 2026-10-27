@@ -14,11 +14,28 @@ const CHEST_BODY_SIZE := Vector2(64.0 / 560.0, 28.0 / 560.0)
 const CHEST_INTERACTION_RADIUS := 112.0 / 560.0
 const GROUND_INTERACTION_RADIUS := 0.14
 const SPECIAL_INTERACTION_RADIUS := 0.18
-const EVENT_LOCAL_POS := Vector2(0.50, 0.42)
+const EVENT_LOCAL_POS := Vector2(0.50, 0.50)
+const EVENT_BADGE_ANCHOR := Vector2(0.50, 0.42)
 const MINE_LOCAL_POS := Vector2(0.50, 0.51)
 const MINE_DISPLAY_SIZE := Vector2(72.0 / 560.0, 72.0 / 560.0)
 const EXIT_LOCAL_POS := Vector2(0.50, 0.45)
 const MONSTER_ALTAR_OCCLUDER_RECT := Rect2(Vector2(0.34, 0.36), Vector2(0.32, 0.28))
+# Measured solid footprints in the admitted room plates. The middle strip in
+# each wall is the existing door lane. Flat motifs, loose debris, mine spikes
+# and the exit platform remain floor; this does not create hazard rules.
+const ROOM_WALL_RECTS := [
+	Rect2(0.0, 0.0, 0.37, 0.15), Rect2(0.63, 0.0, 0.37, 0.15),
+	Rect2(0.0, 0.87, 0.37, 0.13), Rect2(0.63, 0.87, 0.37, 0.13),
+	Rect2(0.0, 0.15, 0.125, 0.22), Rect2(0.0, 0.63, 0.125, 0.24),
+	Rect2(0.875, 0.15, 0.125, 0.22), Rect2(0.875, 0.63, 0.125, 0.24),
+]
+const NORMAL_PROP_RECTS := [
+	Rect2(0.145, 0.18, 0.055, 0.035), Rect2(0.795, 0.19, 0.06, 0.04),
+	Rect2(0.135, 0.81, 0.06, 0.04), Rect2(0.79, 0.80, 0.07, 0.05),
+]
+const EVENT_PROP_RECTS := [
+	Rect2(0.36, 0.445, 0.28, 0.14),
+]
 
 const DOOR_DIRECTIONS := [
 	{"id": &"north", "delta": Vector2i.UP, "local_pos": Vector2(0.50, 0.06), "body_size": Vector2(0.15, 0.06), "display_size": Vector2(0.17, 0.10), "context_offset": Vector2(0.0, 0.11)},
@@ -46,7 +63,7 @@ static func build(snapshot: Dictionary, combat_snapshot: Dictionary = {}) -> Dic
 		if not special_projection.is_empty():
 			world_objects.append(special_projection)
 		for item in room_floor_items:
-			world_objects.append(_ground_loot_projection(item))
+			world_objects.append(_ground_loot_projection(item, room_type))
 
 	return {
 		"projection_contract": &"i3r.world_object_projection.v2",
@@ -83,9 +100,11 @@ static func _event_projection(snapshot: Dictionary, room_key: String) -> Diction
 		"projection_id": "event:%s" % room_key,
 		"interaction_kind": &"event",
 		"local_pos": EVENT_LOCAL_POS,
+		"ground_anchor_local": EVENT_BADGE_ANCHOR,
+		"display_size_local": Vector2.ONE * (48.0 / 560.0),
 		"interaction_radius": SPECIAL_INTERACTION_RADIUS,
-		"body_rect": _centered_rect(EVENT_LOCAL_POS, Vector2(0.085, 0.085)),
-		"context_anchor_local": EVENT_LOCAL_POS + Vector2(0.0, -0.09),
+		"body_rect": _centered_rect(EVENT_BADGE_ANCHOR, Vector2(0.085, 0.085)),
+		"context_anchor_local": EVENT_BADGE_ANCHOR + Vector2(0.0, -0.09),
 		"visual_state": &"completed" if completed else &"available",
 		"visual_key": StringName("ui.art25.long_term.event.%s" % String(event_type)),
 		"depth_key": &"world.interactable.event",
@@ -229,9 +248,9 @@ static func _chest_projection(snapshot: Dictionary, room_key: String) -> Diction
 	})
 
 
-static func _ground_loot_projection(item: Dictionary) -> Dictionary:
+static func _ground_loot_projection(item: Dictionary, room_type: StringName) -> Dictionary:
 	var instance_id := String(item.get("instance_id", "missing_instance"))
-	var local_pos := _loot_position_for(instance_id)
+	var local_pos := _loot_position_for(instance_id, room_type)
 	var item_id := String(item.get("item_id", item.get("definition_id", "回收物")))
 	return _descriptor({
 		"projection_id": instance_id,
@@ -298,7 +317,7 @@ static func _door_projections(snapshot: Dictionary, combat_snapshot: Dictionary,
 			"depth_key": &"world.door",
 			"enabled": false,
 			"prompt_text": "",
-			"payload": {"direction": direction, "target": target, "orientation": orientation},
+			"payload": {"direction": direction, "target": target, "orientation": orientation, "inner_floor_rect": room_floor_interior()},
 		}))
 	return result
 
@@ -312,33 +331,58 @@ static func _door_room_visual_token(room_type: StringName) -> String:
 	return token
 
 
+static func room_floor_interior() -> Rect2:
+	# Derive entry clearance from the same wall bodies used by collision.
+	var top_left := Vector2(ROOM_WALL_RECTS[4].end.x, ROOM_WALL_RECTS[0].end.y)
+	var bottom_right := Vector2(ROOM_WALL_RECTS[6].position.x, ROOM_WALL_RECTS[2].position.y)
+	return Rect2(top_left, bottom_right - top_left)
+
+
+static func room_solid_rects(room_type: StringName) -> Array[Rect2]:
+	var result: Array[Rect2] = []
+	match room_type:
+		&"Monster":
+			result.append(MONSTER_ALTAR_OCCLUDER_RECT)
+		&"Normal", &"Spawn", &"Chest":
+			result.assign(NORMAL_PROP_RECTS)
+		&"Event":
+			result.assign(EVENT_PROP_RECTS)
+	for wall: Rect2 in ROOM_WALL_RECTS:
+		result.append(wall)
+	return result
+
+
 static func _occluder_projections(room_type: StringName, room_key: String) -> Array[Dictionary]:
-	if room_type != &"Monster":
-		return []
-	var rect := MONSTER_ALTAR_OCCLUDER_RECT
-	return [_descriptor({
-		"projection_id": "occluder:%s:monster_altar" % room_key,
+	var result: Array[Dictionary] = []
+	var rects := room_solid_rects(room_type)
+	for index in range(rects.size()):
+		var rect := rects[index]
+		var is_altar := room_type == &"Monster" and index == 0
+		var solid_id := "monster_altar" if is_altar else "room_solid_%d" % index
+		result.append(_descriptor({
+		"projection_id": "occluder:%s:%s" % [room_key, solid_id],
 		"interaction_kind": &"visual_occluder",
 		"local_pos": rect.get_center(),
-		"ground_anchor_local": rect.get_center(),
-		"pivot_normalized": Vector2(0.5, 0.5),
+		"ground_anchor_local": Vector2(rect.get_center().x, rect.end.y),
+		"pivot_normalized": Vector2(0.5, 1.0),
 		"display_size_local": rect.size,
 		"texture_region_normalized": rect,
 		"interaction_radius": 0.0,
 		"body_rect": rect,
 		"context_anchor_local": rect.position,
 		"visual_state": &"foreground",
-		"visual_key": &"visual.art24.room.monster",
-		"depth_key": &"world.foreground_occluder",
+		"visual_key": StringName("visual.art24.room.%s" % _door_room_visual_token(room_type)),
+		"depth_key": &"world.foreground_occluder" if is_altar else &"world.room_body",
 		"enabled": false,
 		"prompt_text": "",
 		"payload": {
 			"occlusion_rect_local": rect,
 			"depth_split_local_y": rect.end.y,
-			"masks_combat_geometry": true,
+			"masks_combat_geometry": is_altar,
 			"source": &"room_plate_crop",
 		},
-	})]
+		}))
+	return result
 
 
 static func _descriptor(values: Dictionary) -> Dictionary:
@@ -359,11 +403,26 @@ static func _public_cell_at(cells: Array, target: Vector2i) -> Dictionary:
 	return {}
 
 
-static func _loot_position_for(instance_id: String) -> Vector2:
+static func _loot_position_for(instance_id: String, room_type: StringName) -> Vector2:
 	var hash_value := absi(instance_id.hash())
 	var column := hash_value % 4
 	var row := (hash_value / 4) % 3
-	return Vector2(0.38 + float(column) * 0.085, 0.58 + float(row) * 0.075)
+	var column_x := 0.38 + float(column) * 0.085
+	var clear_rows: Array[Vector2] = []
+	var solids := room_solid_rects(room_type)
+	for row_y in [0.58, 0.655, 0.73, 0.80, 0.27]:
+		var candidate := Vector2(column_x, row_y)
+		var clear := true
+		for solid in solids:
+			if solid.grow(G41RuntimeLayout.PLAYER_BODY_RADIUS).has_point(candidate):
+				clear = false
+				break
+		if clear:
+			clear_rows.append(candidate)
+	# Every admitted room provides at least three reachable rows in these four
+	# columns. Preserve deterministic instance placement without dropping items
+	# onto a tabletop or inside the altar's player-clearance footprint.
+	return clear_rows[row % clear_rows.size()]
 
 
 static func _centered_rect(center: Vector2, size: Vector2) -> Rect2:

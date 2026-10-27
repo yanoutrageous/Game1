@@ -11,6 +11,12 @@ const REFERENCE_VIEWPORT_SIZE := Vector2(1280.0, 720.0)
 const MIN_LOCAL_SIZE := Vector2(0.001, 0.001)
 
 
+static func ground_depth(local_y: float) -> int:
+	# Shared foot depth for upright world objects and moving actors. Floor art
+	# remains at zero; the door lips and transient feedback use reserved layers.
+	return 100 + roundi(clampf(local_y, 0.0, 1.0) * 500.0)
+
+
 static func build(values: Dictionary) -> Dictionary:
 	var local_pos := Vector2(values.get("local_pos", Vector2(0.5, 0.5)))
 	var ground_anchor := Vector2(values.get("ground_anchor_local", local_pos))

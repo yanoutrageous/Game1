@@ -4,6 +4,7 @@ class_name G41Interactable
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
 const RuntimeInputProfileScript := preload("res://scripts/core/input/runtime_input_profile.gd")
 const SemanticActionHintScript := preload("res://scripts/core/input/semantic_action_hint.gd")
+const PresentationDescriptor := preload("res://scripts/gameplay/runtime/g41_world_object_presentation_descriptor.gd")
 
 var interaction_id: String = ""
 var interaction_kind: StringName = &"unknown"
@@ -49,7 +50,7 @@ func configure_interactable(data: Dictionary) -> void:
 	prompt_text = String(data.get("prompt_text", prompt_text))
 	payload = (data.get("payload", {}) as Dictionary).duplicate(true)
 	position = local_to_world(local_pos)
-	z_index = _z_index_for_depth(depth_key)
+	z_index = _z_index_for_depth(depth_key, ground_anchor_local.y)
 	_ensure_contract_nodes()
 	_apply_visual_state()
 
@@ -215,17 +216,13 @@ static func local_to_world(value: Vector2) -> Vector2:
 	return G41RuntimeLayout.local_to_world(value)
 
 
-static func _z_index_for_depth(value: StringName) -> int:
+static func _z_index_for_depth(value: StringName, ground_y: float) -> int:
 	match value:
 		# Mine grates are embedded in the room floor. At the shared z=0 the
 		# earlier RoomLayer draws them before the later PlayerLayer, matching
 		# the UE floor-hazard ordering while transient burst FX stays above.
-		&"world.interactable.mine":
+		&"world.interactable.mine", &"world.interactable.loot", &"world.interactable.exit":
 			return 0
-		&"world.interactable.loot":
-			return 32
-		&"world.interactable.chest":
-			return 24
 		&"world.door":
 			return 4
-	return 16
+	return PresentationDescriptor.ground_depth(ground_y)

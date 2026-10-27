@@ -55,6 +55,7 @@ static func build(snapshot: Dictionary, minimap_view_model: MiniMapViewModel, la
 		"command_feedback": "",
 		"encounter_section": encounter_section,
 		"scanner_summary": _scanner_summary(minimap_view_model, position),
+		"map_dimensions": Vector2i(minimap_view_model.width, minimap_view_model.height) if minimap_view_model != null else Vector2i.ZERO,
 		"scanner_legend_lines": _scanner_legend_lines(minimap_view_model),
 		"scanner_detail": _scanner_detail(minimap_view_model, run_map_snapshot),
 		"scanner_markers": _scanner_markers(minimap_view_model),

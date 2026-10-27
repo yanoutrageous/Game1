@@ -2317,6 +2317,8 @@ func _apply_full_view_models() -> void:
 		debug_panel_controller.set_log_text(String(snapshot.get("last_message", "")))
 	if debug_panel != null and debug_panel.visible:
 		debug_panel_controller.sync_coordinates()
+	if debug_panel_controller != null:
+		debug_panel_controller.call_deferred("refresh_session_banner_layout")
 	if result_panel != null and bool(snapshot.get("run_active", false)):
 		result_panel.hide_result()
 
@@ -2403,6 +2405,10 @@ func _apply_game_stage_layout(layout_profile: Dictionary) -> void:
 			"room_stage_rect",
 			stage_rect
 		)
+	var status_margin := 10.0 if bool(layout_profile.get("is_low_resolution", false)) else 12.0
+	var status_left := width - UILayerContractScript.run_status_card_size(layout_profile).x - status_margin
+	# Keep the entire room clear of the persistent status card at every UI scale.
+	stage_rect.size.x = maxf(1.0, minf(stage_rect.end.x, status_left - 12.0) - stage_rect.position.x)
 	var scale_value: float = minf(
 		stage_rect.size.x / maxf(1.0, room_visual_size.x),
 		stage_rect.size.y / maxf(1.0, room_visual_size.y)

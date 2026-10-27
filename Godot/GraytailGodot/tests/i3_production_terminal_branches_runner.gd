@@ -216,12 +216,14 @@ func _exercise_failure_branch() -> void:
 	_require(not enemies.is_empty(), "failure combat exposed no authoritative enemy snapshot")
 	var enemy: Dictionary = enemies[0] if not enemies.is_empty() else {}
 	var enemy_pos := Vector2(enemy.get("simulation_pos", enemy.get("pos", Vector2(0.70, 0.50))))
+	# The visible corner walls now provide real cover. Expose the player in
+	# the clear horizontal lane so genuine projectiles can deliver defeat.
 	var exposure_target := Vector2(
-		0.82 if enemy_pos.x >= 0.50 else 0.18,
-		0.20 if enemy_pos.y <= 0.50 else 0.80
+		0.74 if enemy_pos.x >= 0.50 else 0.26,
+		0.50
 	)
-	await _move_axis(&"x", exposure_target.x)
-	await _move_axis(&"y", exposure_target.y)
+	_require(await _move_axis(&"x", exposure_target.x), "combat exposure lane is not horizontally reachable")
+	_require(await _move_axis(&"y", exposure_target.y), "combat exposure lane is not vertically reachable")
 	_record_failure_observation("failure.combat_exposure", {
 		"enemy_id": String(enemy.get("enemy_id", "")),
 		"monster_type": String(enemy.get("monster_type", &"")),

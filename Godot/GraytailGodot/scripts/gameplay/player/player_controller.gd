@@ -5,7 +5,7 @@ const DEFAULT_ROOM_RECT := G41RuntimeLayout.ROOM_RECT
 const LOCAL_MOVE_SPEED := 0.74
 const LOCAL_ACCELERATION := 8.0
 const LOCAL_DECELERATION := 12.0
-const PLAYER_RADIUS := 0.055
+const PLAYER_RADIUS := G41RuntimeLayout.PLAYER_BODY_RADIUS
 const DOOR_ALIGN_HALF := 0.16
 const DOOR_ENTRY_INSET := 0.005
 const DOOR_ENTRY_MOTION_MARGIN_PX := 3.0
@@ -17,9 +17,11 @@ const HURT_FEEDBACK_MODULATE := Color(1.0, 0.62, 0.58, 1.0)
 # the final silhouette. 0.50 restores the observed 62-65 px target while the
 # logical collider and movement radius remain unchanged.
 const PLAYER_ART_SCALE := 0.50
+const PLAYER_ART_GROUND_OFFSET := Vector2(0, -37)
 const Art24MotionSettingsScript := preload("res://scripts/presentation/art24/art24_motion_settings.gd")
 const RuntimeAnimationCatalog := preload("res://scripts/presentation/art24/art24_runtime_animation_catalog.gd")
 const TextureCache := preload("res://scripts/presentation/runtime_texture_cache.gd")
+const CONTACT_SHADOW := preload("res://assets/ui/art21/main_menu/scene/character/shadow.png")
 
 var input_enabled := true
 var appearance_id: StringName = RuntimeAnimationCatalog.DEFAULT_PLAYER_APPEARANCE_ID
@@ -66,8 +68,7 @@ func get_move_vector() -> Vector2:
 
 func reset_local_position() -> void:
 	local_velocity = Vector2.ZERO
-	# The normal-room center is a program-owned obstacle in G41. Spawn on the
-	# left safe floor so production input is live from the first frame.
+	# Spawn on the clear left aisle, away from the room's upright furniture.
 	set_local_position(Vector2(0.30, 0.5))
 
 
@@ -241,7 +242,13 @@ func place_from_entry(direction: Vector2i) -> Vector2:
 	if direction != Vector2i.ZERO:
 		set_facing_vector(Vector2(direction))
 	set_runtime_visual_state(&"idle")
-	set_local_position(entry_local_position(direction))
+	var landing := entry_local_position(direction)
+	var entry_door := _door_projection_for_direction(-direction)
+	var floor_rect := Rect2((entry_door.get("payload", {}) as Dictionary).get("inner_floor_rect", Rect2()))
+	if floor_rect.has_area():
+		var safe_floor := floor_rect.grow(-PLAYER_RADIUS - DOOR_ENTRY_INSET)
+		landing = landing.clamp(safe_floor.position, safe_floor.end)
+	set_local_position(landing)
 	return local_pos
 
 
@@ -508,6 +515,16 @@ func _apply_local_position() -> void:
 
 
 func _apply_visual() -> void:
+	var shadow := get_node_or_null("GroundShadow") as Sprite2D
+	if shadow == null:
+		shadow = Sprite2D.new()
+		shadow.name = "GroundShadow"
+		shadow.texture = CONTACT_SHADOW
+		shadow.position = Vector2.ZERO
+		shadow.scale = Vector2(0.25, 0.34)
+		shadow.modulate = Color(0.70, 0.63, 0.50, 0.62)
+		shadow.z_index = -1
+		add_child(shadow)
 	var sprite := get_node_or_null("Sprite") as Sprite2D
 	var body := get_node_or_null("Body") as Polygon2D
 	if sprite == null:
@@ -516,7 +533,7 @@ func _apply_visual() -> void:
 		add_child(sprite)
 		move_child(sprite, 0)
 	sprite.scale = Vector2.ONE * PLAYER_ART_SCALE
-	sprite.position = Vector2(0, -20)
+	sprite.position = PLAYER_ART_GROUND_OFFSET
 	if body != null:
 		body.visible = false
 	_apply_art24_frame(false)
@@ -571,7 +588,7 @@ func _apply_idle_motion(walking: bool) -> void:
 		var pulse := sin(visual_clock * (11.0 if action_visual else 2.4))
 		bob_offset = pulse * 0.8
 		scale_pulse += pulse * 0.006
-	sprite.position.y = -20.0 + bob_offset
+	sprite.position.y = PLAYER_ART_GROUND_OFFSET.y + bob_offset
 	sprite.scale = Vector2.ONE * PLAYER_ART_SCALE * scale_pulse
 	_apply_appearance_modulate(sprite)
 	sprite.rotation = -0.18 if visual_state == &"dead" else 0.0

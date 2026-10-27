@@ -1147,7 +1147,7 @@
     {
       "id": "I3_MAP_LOCAL_CONTEXT_INTERACTION",
       "relative_path": "Godot/GraytailGodot/tests/i3_map_local_context_interaction_runner.gd",
-      "pass_marker": "I3_MAP_LOCAL_CONTEXT_INTERACTION=PASS sizes=7,10,13 minimap=5x5 semantics=monster,mine,flag,fast_return activation=pointer,ui_accept exactly_once=PASS focus=selection_only authority=signal_boundary known_map=sealed close=outside_click",
+      "pass_marker": "I3_MAP_LOCAL_CONTEXT_INTERACTION=PASS sizes=5,7,10,13,13x7,7x13 minimap=actual_dimensions scales=100,125,150 semantics=monster,mine,flag,fast_return activation=pointer,ui_accept exactly_once=PASS focus=selection_only authority=signal_boundary known_map=sealed close=outside_click",
       "fail_marker": "I3_MAP_LOCAL_CONTEXT_INTERACTION=FAIL",
       "coverage": ["in_run", "minimap", "map_overlay", "known_map", "public_information", "single_activation", "pointer_input", "semantic_input", "exactly_once", "focus_restoration"]
     },
@@ -1396,7 +1396,7 @@
       "id": "I4_IN_RUN_VISUAL_PHYSICS",
       "relative_path": "Godot/GraytailGodot/tests/i4_in_run_visual_physics_runner.gd",
       "pass_marker": "I4_IN_RUN_VISUAL_PHYSICS=PASS",
-      "pass_line_regex": "^I4_IN_RUN_VISUAL_PHYSICS=PASS palette=8 resolver=formal_same_path\\+typed_fallback map=base,semantic,count,focus collision=normal0,monster1,event1,chest1 drops=body\\+rarity_beam\\+failure_marker hud=protocol_safe_rect\\+bag_0,1,4$",
+      "pass_line_regex": "^I4_IN_RUN_VISUAL_PHYSICS=PASS palette=8 resolver=formal_same_path\\+typed_fallback map=base,semantic,count,focus collision=normal12,monster9,event9,chest13 drops=body\\+rarity_beam\\+failure_marker hud=protocol_safe_rect\\+bag_0,1,4$",
       "fail_marker": "I4_IN_RUN_VISUAL_PHYSICS=FAIL",
       "coverage": ["i4", "rarity_palette", "item_visual_resolver", "map_layers", "collision_visual_correspondence", "ground_loot_fallback", "protocol_safe_rect", "backpack_density"]
     }

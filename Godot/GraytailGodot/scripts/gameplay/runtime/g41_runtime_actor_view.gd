@@ -50,7 +50,7 @@ var cached_shadow_position := Vector2.ZERO
 var enemy_visual_enabled := false
 var projectile_visual_radius := 0.0
 
-const ENEMY_STATUS_Z := 80
+const ENEMY_STATUS_Z := 800
 
 
 func configure(next_subject: StringName, snapshot: Dictionary) -> void:

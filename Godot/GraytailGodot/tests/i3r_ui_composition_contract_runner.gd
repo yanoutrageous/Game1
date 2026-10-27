@@ -182,7 +182,10 @@ func _check_shared_ui_consumers() -> void:
 		"res://scripts/ui/ground_loot/ground_loot_panel.gd",
 	]:
 		var source := FileAccess.get_file_as_string(path)
-		_check(not source.contains("StyleBoxFlat.new()"), "%s still replaces image borders with local flat plastic styling" % path)
+		# The 2026-10-27 room/HUD design keeps Inventory's shared outer frame,
+		# while its four inner sections use a single divider (I4-R033/R034).
+		if path != "res://scripts/ui/inventory/inventory_panel.gd":
+			_check(not source.contains("StyleBoxFlat.new()"), "%s still replaces image borders with local flat plastic styling" % path)
 		_check(source.contains("texture_for_visual_key"), "%s does not consume shared framed art" % path)
 		_check(source.contains("style_box_from_texture_with_insets"), "%s outer frame bypasses the size-specific safe-zone helper" % path)
 		_check(source.contains("apply_composition_label"), "%s title bypasses the composition role contract" % path)
@@ -199,6 +202,17 @@ func _check_shared_ui_consumers() -> void:
 		var title_plate := panel.find_child("*TitlePlate", true, false) as PanelContainer
 		if title_plate == null:
 			failures.append("%s title plate missing" % panel_label)
+		elif panel is InventoryPanel:
+			for section_name in ["InventoryTitlePlate", "InventorySummaryPanel", "InventoryItemListPanel", "InventoryTooltipPanel"]:
+				var section := panel.find_child(section_name, true, false) as PanelContainer
+				_check(section != null, "Inventory inner section is missing: " + section_name)
+				if section == null:
+					continue
+				var style := section.get_theme_stylebox("panel")
+				_check(style is StyleBoxFlat, "Inventory inner section must use a quiet divider")
+				if style is StyleBoxFlat:
+					_check(style.border_width_left == 0 and style.border_width_top == 0 and style.border_width_right == 0 and style.border_width_bottom <= 1, "Inventory inner section regained a complete frame")
+					_check(style.content_margin_left >= 10 and style.content_margin_right >= 10 and style.content_margin_top >= 10 and style.content_margin_bottom >= 10, "Inventory divider lost its content safe insets")
 		else:
 			_check_texture_style(title_plate.get_theme_stylebox("panel"), panel_label + "_title_plate")
 		var minimum_size: Vector2 = panel.get_combined_minimum_size()

@@ -263,7 +263,7 @@ func _rebuild_grid() -> void:
 	_synchronize_selected_marker()
 	_apply_overlay_text_hierarchy(title, detail, action_button, footer)
 	if title != null:
-		Art10UISkinKitScript.apply_composition_label(title, &"title", title_font_size, PresentationTheme.color_for_key(&"ui.accent"))
+		Art10UISkinKitScript.apply_composition_label(title, &"title", title_font_size, Color(0.92, 0.82, 0.61))
 		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title.text = "区域扫描图"
@@ -430,8 +430,8 @@ func _apply_overlay_panel_style(control: Control) -> void:
 	# The host remains tightly fitted, but it must be opaque enough that protocol
 	# copy and room art cannot remain legible through grid gaps.
 	var backing := StyleBoxFlat.new()
-	backing.bg_color = Color(0.008, 0.021, 0.023, 0.97)
-	backing.border_color = Color(0.42, 0.66, 0.58, 0.92)
+	backing.bg_color = Color(0.045, 0.050, 0.042, 0.99)
+	backing.border_color = Color(0.54, 0.46, 0.30, 0.96)
 	backing.set_border_width_all(2)
 	backing.content_margin_left = 0
 	backing.content_margin_top = 0

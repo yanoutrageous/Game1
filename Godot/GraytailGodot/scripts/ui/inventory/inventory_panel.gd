@@ -51,7 +51,7 @@ func build() -> void:
 		return
 	opaque_content_backing = ColorRect.new()
 	opaque_content_backing.name = "InventoryOpaqueContentBacking"
-	opaque_content_backing.color = Color(0.010, 0.022, 0.025, 0.985)
+	opaque_content_backing.color = Color(0.045, 0.050, 0.042, 0.99)
 	opaque_content_backing.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(opaque_content_backing)
 	var root := VBoxContainer.new()
@@ -62,7 +62,7 @@ func build() -> void:
 
 	var header_panel := PanelContainer.new()
 	header_panel.name = "InventoryTitlePlate"
-	_apply_art21r2_modal_panel(header_panel, &"art21r2.modal.title_plate", 8, 34)
+	_apply_art21r2_modal_panel(header_panel, &"art21r2.modal.title_plate", 10)
 	root.add_child(header_panel)
 	var header := HBoxContainer.new()
 	header.name = "InventoryPanelHeader"
@@ -74,7 +74,7 @@ func build() -> void:
 	title_label.add_theme_color_override("font_color", PresentationTheme.color_for_key(&"ui.accent"))
 	title_label.add_theme_font_size_override("font_size", 20)
 	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	Art10UISkinKitScript.apply_composition_label(title_label, &"title", 20, PresentationTheme.color_for_key(&"ui.accent"))
+	Art10UISkinKitScript.apply_composition_label(title_label, &"title", 20, Color(0.92, 0.82, 0.61))
 	header.add_child(title_label)
 	close_button = Button.new()
 	close_button.name = "InventoryCloseButton"
@@ -87,7 +87,7 @@ func build() -> void:
 
 	var summary_panel := PanelContainer.new()
 	summary_panel.name = "InventorySummaryPanel"
-	_apply_art21r2_modal_panel(summary_panel, &"art21r2.modal.section.panel", 8, 32)
+	_apply_art21r2_modal_panel(summary_panel, &"art21r2.modal.section.panel", 10)
 	root.add_child(summary_panel)
 	summary_label = Label.new()
 	summary_label.name = "InventorySummary"
@@ -102,7 +102,7 @@ func build() -> void:
 	var item_list_panel := PanelContainer.new()
 	item_list_panel.name = "InventoryItemListPanel"
 	item_list_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_apply_art21r2_modal_panel(item_list_panel, &"art21r2.modal.section.panel", 8, 32)
+	_apply_art21r2_modal_panel(item_list_panel, &"art21r2.modal.section.panel", 10)
 	root.add_child(item_list_panel)
 	item_backdrop = TextureRect.new()
 	item_backdrop.name = "InventoryBackpackWatermark"
@@ -127,7 +127,7 @@ func build() -> void:
 
 	var tooltip_panel := PanelContainer.new()
 	tooltip_panel.name = "InventoryTooltipPanel"
-	_apply_art21r2_modal_panel(tooltip_panel, &"art21r2.modal.section.panel", 8, 32)
+	_apply_art21r2_modal_panel(tooltip_panel, &"art21r2.modal.section.panel", 10)
 	root.add_child(tooltip_panel)
 	detail_column = VBoxContainer.new()
 	detail_column.name = "InventoryDetailColumn"
@@ -294,7 +294,10 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	if tooltip_label != null:
 		tooltip_label.custom_minimum_size = Vector2(content_width, 48.0 if is_low else (64.0 if is_high else 54.0))
 	if detail_scroll != null:
-		detail_scroll.custom_minimum_size = Vector2(content_width, 54.0 if is_low else (82.0 if is_high else 68.0))
+		var detail_height := 54.0 if is_low else (82.0 if is_high else 68.0)
+		var detail_font_size := Art10UISkinKitScript.scaled_font_size(15, _ui_scale_factor)
+		var two_lines := tooltip_label.get_theme_font("font").get_height(detail_font_size) * 2.0 + 6.0
+		detail_scroll.custom_minimum_size = Vector2(content_width, maxf(detail_height, two_lines))
 	_apply_art21_panel_frame()
 	_refresh_ui_scale_metrics()
 
@@ -535,22 +538,20 @@ func _apply_art09_item_icon(button: Button, item: Dictionary) -> void:
 	Art10UISkinKitScript.controlled_button_icon(button, &"slot")
 
 
-func _apply_art21r2_modal_panel(panel: PanelContainer, visual_key: StringName, padding: int = 8, texture_margin: int = 32) -> void:
-	var texture := Art21UIPlacementContractScript.texture_for_visual_key(visual_key, &"ui.art19.panel.terminal_main")
-	var content_insets := Vector4(40.0, 16.0, 18.0, 14.0)
+func _apply_art21r2_modal_panel(panel: PanelContainer, visual_key: StringName, padding: int = 10) -> void:
+	# The admitted outer modal frame carries the material. Inner sections use
+	# one divider, leaving the full content width available to text and actions.
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.070, 0.075, 0.060, 0.98)
+	style.border_color = Color(0.46, 0.40, 0.27, 0.90)
+	style.border_width_bottom = 1
 	if String(visual_key).contains("title"):
-		content_insets = Vector4(28.0, 18.0, 28.0, 18.0)
-	var slice := float(maxi(texture_margin, padding))
-	var style := Art10UISkinKitScript.style_box_from_texture_with_insets(
-		texture,
-		content_insets,
-		Vector4(slice, slice, slice, slice)
-	)
-	if style != null:
-		panel.add_theme_stylebox_override("panel", style)
-		return
-	var is_title := String(visual_key).find("title") >= 0
-	Art10UISkinKitScript.apply_panel(panel, &"notice" if is_title else &"deep")
+		style.bg_color = Color(0.105, 0.105, 0.080, 0.98)
+	style.content_margin_left = padding + 2
+	style.content_margin_right = padding + 2
+	style.content_margin_top = padding
+	style.content_margin_bottom = padding
+	panel.add_theme_stylebox_override("panel", style)
 
 
 func _apply_art21r2_modal_button(button: Button, visual_key: StringName, tone: StringName, font_size_value: int, padding: int = 8, texture_margin: int = 18) -> void:

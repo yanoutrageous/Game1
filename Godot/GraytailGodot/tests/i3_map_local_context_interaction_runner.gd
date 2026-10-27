@@ -4,6 +4,7 @@ const MiniMapViewModelScript := preload("res://scripts/ui/minimap/minimap_view_m
 const MiniMapScene := preload("res://scenes/ui/minimap/minimap_panel.tscn")
 const MapOverlayScene := preload("res://scenes/ui/map_overlay/map_overlay_panel.tscn")
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
+const RunSurfaceModelScript := preload("res://scripts/ui/run_surface/run_surface_model.gd")
 
 var failures: Array[String] = []
 var mini_open_count := 0
@@ -19,42 +20,71 @@ func _run() -> void:
 	var canvas := Control.new()
 	canvas.size = Vector2(1280, 720)
 	root.add_child(canvas)
-	for map_size in [7, 10, 13]:
-		await _check_local_minimap(canvas, map_size)
+	for dimensions in [Vector2i(5, 5), Vector2i(7, 7), Vector2i(10, 10), Vector2i(13, 13), Vector2i(13, 7), Vector2i(7, 13)]:
+		for factor in [1.0, 1.25, 1.5]:
+			await _check_local_minimap(canvas, dimensions.x, dimensions.y, factor)
 	await _check_expanded_map(canvas, 10)
 	canvas.queue_free()
 	await _frames(2)
 	_finish()
 
 
-func _check_local_minimap(canvas: Control, map_size: int) -> void:
-	var view_model := MiniMapViewModelScript.build_from_run_map_snapshot(_public_snapshot(map_size))
+func _check_local_minimap(canvas: Control, map_size: int, map_height: int, factor: float) -> void:
+	var view_model := MiniMapViewModelScript.build_from_run_map_snapshot(_public_snapshot(map_size, map_height))
 	var retained := var_to_str(view_model.map_snapshot)
-	_check(not retained.contains("TruthMap") and not retained.contains("internal-secret"), "%dx%d minimap retained an internal field" % [map_size, map_size])
+	_check(not retained.contains("TruthMap") and not retained.contains("internal-secret"), "%dx%d minimap retained an internal field" % [map_size, map_height])
 	var panel := MiniMapScene.instantiate() as MiniMapPanel
 	panel.position = Vector2(20, 20)
 	panel.size = Vector2(260, 220)
 	panel.open_map_requested.connect(func() -> void: mini_open_count += 1)
 	canvas.add_child(panel)
-	panel.apply_layout_profile(UILayoutProfileScript.profile_for_resolution(&"1280x720"))
+	var profile := UILayoutProfileScript.profile_for_resolution(&"1280x720")
+	profile["ui_scale_factor"] = factor
+	panel.apply_layout_profile(profile)
 	panel.apply_view_model(view_model)
+	var surface_model := RunSurfaceModelScript.build({}, view_model, profile, {})
+	_check(surface_model.get("map_dimensions") == Vector2i(map_size, map_height), "HUD dimensions were not taken from the authoritative public projection")
 	await _frames(2)
 	var grid := panel.get_node("Grid") as GridContainer
-	_check(panel.visible_map_rect.size == Vector2i(5, 5), "%dx%d minimap is not a 5x5 local context window" % [map_size, map_size])
-	_check(grid.get_child_count() == 25 and grid.columns == 5, "%dx%d minimap rendered the full map instead of 25 local cells" % [map_size, map_size])
-	_check(panel.marker_size.x >= 40.0 and panel.marker_size.y >= 36.0, "%dx%d local minimap cells became unreadably small" % [map_size, map_size])
-	_check(panel.get_node_or_null("Grid/MiniMapCell_0_0") == null, "%dx%d local minimap still includes a distant corner" % [map_size, map_size])
-	var current := _current_pos(map_size)
+	_check(panel.visible_map_rect == Rect2i(Vector2i.ZERO, Vector2i(map_size, map_height)), "Overview did not retain actual map dimensions")
+	_check(grid.get_child_count() == map_size * map_height and grid.columns == map_size, "Overview omitted actual public cells")
+	_check(is_equal_approx(panel.marker_size.x, panel.marker_size.y), "Overview distorted the map aspect ratio")
+	_check(Rect2(Vector2.ZERO, panel.size).encloses(grid.get_rect()), "Overview grid exceeds its allocated HUD area")
+	var distant := panel.get_node_or_null("Grid/MiniMapCell_0_0") as Control
+	_check(distant != null and distant.get_meta("map_marker_state") == &"unknown", "Overview lost distant unknown cells or exposed their hidden type")
+	if distant != null:
+		_check(distant.get_node_or_null("SemanticMarker") == null and distant.get_node_or_null("AdjacentMineCount") == null, "Unknown cell leaked its hidden icon or count")
+	var current := _current_pos(map_size, map_height)
 	var monster_pos := current + Vector2i(-1, 0)
 	var mine_pos := current + Vector2i(1, 0)
 	var monster_cell := panel.get_node_or_null("Grid/MiniMapCell_%d_%d" % [monster_pos.x, monster_pos.y]) as Control
 	var mine_cell := panel.get_node_or_null("Grid/MiniMapCell_%d_%d" % [mine_pos.x, mine_pos.y]) as Control
-	_check(monster_cell != null and StringName(monster_cell.get_meta("map_marker_state", &"")) == &"monster", "%dx%d minimap lost the Monster semantic" % [map_size, map_size])
-	_check(mine_cell != null and StringName(mine_cell.get_meta("map_marker_state", &"")) == &"mine", "%dx%d minimap lost the Mine semantic" % [map_size, map_size])
+	_check(monster_cell != null and StringName(monster_cell.get_meta("map_marker_state", &"")) == &"monster", "%dx%d minimap lost the Monster semantic" % [map_size, map_height])
+	_check(mine_cell != null and StringName(mine_cell.get_meta("map_marker_state", &"")) == &"mine", "%dx%d minimap lost the Mine semantic" % [map_size, map_height])
 	var monster_icon := monster_cell.get_node_or_null("SemanticMarker") as TextureRect if monster_cell != null else null
 	var mine_icon := mine_cell.get_node_or_null("SemanticMarker") as TextureRect if mine_cell != null else null
-	_check(monster_icon != null and mine_icon != null and monster_icon.texture != mine_icon.texture, "%dx%d minimap Monster and Mine do not have distinct rendered icons" % [map_size, map_size])
-	if map_size == 7:
+	_check(monster_icon != null and mine_icon != null and monster_icon.texture != mine_icon.texture, "%dx%d minimap Monster and Mine do not have distinct rendered icons" % [map_size, map_height])
+	var current_cell := panel.get_node("Grid/MiniMapCell_%d_%d" % [current.x, current.y]) as Control
+	_check(current_cell.get_node_or_null("CurrentPositionRing") != null, "Overview lacks a distinct current-position ring")
+	if minf(panel.marker_size.x, panel.marker_size.y) < 32.0:
+		_check(current_cell.get_node_or_null("AdjacentMineCount") == null, "Compact overview retained an unreadable count badge")
+		_check(not current_cell.tooltip_text.is_empty(), "Compact overview lost access to detailed public information")
+	if is_equal_approx(factor, 1.0):
+		var overlay := MapOverlayScene.instantiate() as MapOverlayPanel
+		canvas.add_child(overlay)
+		overlay.apply_layout_profile(profile)
+		overlay.apply_view_model(view_model)
+		overlay.show_overlay()
+		await _frames(2)
+		for cell in grid.get_children():
+			var map_cell := overlay.get_node("Panel/Content/Grid/" + String(cell.name).trim_prefix("Mini")) as Control
+			_check(cell.get_meta("map_marker_state") == map_cell.get_meta("map_marker_state"), "Overview and expanded map disagree on public cell state")
+		var expanded_current := overlay.get_node("Panel/Content/Grid/MapCell_%d_%d" % [current.x, current.y])
+		_check(expanded_current.get_node_or_null("AdjacentMineCount") != null, "Expanded map lost the public count suppressed in the compact overview")
+		overlay.hide_overlay()
+		overlay.queue_free()
+		await _frames(1)
+	if map_size == 7 and map_height == 7 and is_equal_approx(factor, 1.0):
 		panel.grab_focus()
 		var gamepad_accept := InputEventAction.new()
 		gamepad_accept.action = &"ui_accept"
@@ -153,10 +183,12 @@ func _check_expanded_map(canvas: Control, map_size: int) -> void:
 	await _frames(1)
 
 
-func _public_snapshot(map_size: int) -> Dictionary:
-	var current := _current_pos(map_size)
+func _public_snapshot(map_size: int, map_height: int = -1) -> Dictionary:
+	if map_height < 0:
+		map_height = map_size
+	var current := _current_pos(map_size, map_height)
 	var public_cells: Array[Dictionary] = []
-	for y in range(map_size):
+	for y in range(map_height):
 		for x in range(map_size):
 			var pos := Vector2i(x, y)
 			var cell := {
@@ -188,7 +220,7 @@ func _public_snapshot(map_size: int) -> Dictionary:
 		"TruthMap": {"internal-secret": true, "width": 99, "height": 99},
 		"KnownMap": {
 			"width": map_size,
-			"height": map_size,
+			"height": map_height,
 			"player_pos": current,
 			"public_cells": public_cells,
 			"read_only": true,
@@ -196,8 +228,8 @@ func _public_snapshot(map_size: int) -> Dictionary:
 	}
 
 
-func _current_pos(map_size: int) -> Vector2i:
-	return Vector2i(map_size / 2, map_size - 2)
+func _current_pos(map_size: int, map_height: int = -1) -> Vector2i:
+	return Vector2i(map_size / 2, (map_size if map_height < 0 else map_height) - 2)
 
 
 func _click_control(control: Control) -> void:
@@ -244,7 +276,7 @@ func _check(condition: bool, message: String) -> void:
 
 func _finish() -> void:
 	if failures.is_empty():
-		print("I3_MAP_LOCAL_CONTEXT_INTERACTION=PASS sizes=7,10,13 minimap=5x5 semantics=monster,mine,flag,fast_return activation=pointer,ui_accept exactly_once=PASS focus=selection_only authority=signal_boundary known_map=sealed close=outside_click")
+		print("I3_MAP_LOCAL_CONTEXT_INTERACTION=PASS sizes=5,7,10,13,13x7,7x13 minimap=actual_dimensions scales=100,125,150 semantics=monster,mine,flag,fast_return activation=pointer,ui_accept exactly_once=PASS focus=selection_only authority=signal_boundary known_map=sealed close=outside_click")
 		quit(0)
 		return
 	for failure in failures:

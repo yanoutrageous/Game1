@@ -1116,7 +1116,11 @@ func _check_bounded_laser_turn() -> void:
 
 func _check_production_arena_contract() -> void:
 	var arena: Array[Rect2] = CombatSimulationScript.production_arena_obstacles()
-	_require(arena.size() == 1, "production monster-room arena did not expose its finite visible altar obstacle")
+	_require(arena.size() == 9, "production monster-room arena must expose the altar and eight visible wall segments")
+	_require(arena[0] == Rect2(Vector2(0.34, 0.36), Vector2(0.32, 0.28)), "visible altar footprint changed")
+	for door_center in [Vector2(0.5, 0.06), Vector2(0.94, 0.5), Vector2(0.5, 0.94), Vector2(0.06, 0.5)]:
+		for body in arena:
+			_require(not body.grow(CombatSimulationScript.PLAYER_RADIUS).has_point(door_center), "visible wall blocks an existing door lane")
 	var room_view = RoomRuntimeViewScript.new()
 	var view_obstacles: Array[Rect2] = room_view.call("_obstacles_for_room", &"Monster")
 	_require(view_obstacles == arena, "monster-room presentation and combat simulation do not share one obstacle contract")

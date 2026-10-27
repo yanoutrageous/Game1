@@ -10,6 +10,8 @@ const ItemRarityDescriptorScript := preload("res://scripts/presentation/item_rar
 const MapCellLayerLayoutScript := preload("res://scripts/ui/map_shared/map_cell_layer_layout.gd")
 const RunSurfaceScript := preload("res://scripts/ui/run_surface/run_surface.gd")
 const UILayoutProfileScript := preload("res://scripts/ui/shell/ui_layout_profile.gd")
+const PlayerScene := preload("res://scenes/player/player.tscn")
+const MiniMapScene := preload("res://scenes/ui/minimap/minimap_panel.tscn")
 
 const EXPECTED_RARITY_COLORS := {
 	&"tier_1": Color("d0d8e0"),
@@ -36,7 +38,260 @@ func _run() -> void:
 	await _check_texture_fallback_and_world_drop()
 	await _check_collision_visible_correspondence()
 	await _check_protocol_and_left_density()
+	await _check_player_contact_shadow()
+	await _check_ground_depth_and_floor_reachability()
+	_check_clear_world_loot_placement()
+	await _check_minimap_texture_bounds()
+	await _check_scaled_capacity_text()
+	await _check_debug_chest_spawn()
 	_finish()
+
+
+func _check_scaled_capacity_text() -> void:
+	var settings := root.get_node("SettingsManager")
+	var original_percent := int(settings.applied.get("ui_scale_percent", 100))
+	var canvas := Control.new()
+	canvas.size = Vector2(1280, 720)
+	root.add_child(canvas)
+	var surface = RunSurfaceScript.new()
+	canvas.add_child(surface)
+	surface.build()
+	for factor in [1.0, 1.25, 1.5]:
+		settings.begin_transaction()
+		_check(settings.set_draft_value(&"ui_scale_percent", int(round(factor * 100))), "Scale transaction rejected valid percentage")
+		_check(settings.apply_draft(), "Scale transaction failed to apply")
+		var profile := UILayoutProfileScript.profile_for_resolution(&"1280x720")
+		profile["ui_scale_factor"] = factor
+		surface.set_ui_scale_factor(factor)
+		surface.apply_layout_profile(profile)
+		for dimensions in [Vector2i(5, 5), Vector2i(7, 7), Vector2i(10, 10), Vector2i(13, 13), Vector2i(13, 7), Vector2i(7, 13)]:
+			for count in [0, 4]:
+				var model := _surface_model(profile, _sample_items(count), 5, 100)
+				model["map_dimensions"] = dimensions
+				surface.apply_surface_model(model)
+				var minimap_model := MiniMapViewModel.new()
+				minimap_model.width = dimensions.x
+				minimap_model.height = dimensions.y
+				surface.minimap_panel.apply_view_model(minimap_model)
+				await process_frame
+				await process_frame
+				var capacity := surface.backpack_capacity_label as Label
+				_check(is_equal_approx(surface.ui_scale_factor, factor), "Capacity probe did not use requested scale")
+				_check(capacity.size.y >= capacity.get_line_height(), "HUD capacity line is clipped at scale %s: height=%s line=%s" % [factor, capacity.size.y, capacity.get_line_height()])
+				_check(capacity.get_global_rect().end.y <= 708.0, "Actual-size map pushed capacity off screen")
+				_check(surface.minimap_panel.get_global_rect().end.y < surface.resource_backdrop.get_global_rect().position.y, "Actual-size map overlaps the resource band")
+				var grid := surface.minimap_panel.get_node("Grid") as GridContainer
+				_check(Rect2(Vector2.ZERO, surface.minimap_panel.size).encloses(grid.get_rect()), "Actual-size map escapes the left rail at UI scale %s" % factor)
+				_check(grid.get_child_count() == dimensions.x * dimensions.y, "HUD cropped the actual map at UI scale %s" % factor)
+				if count == 4:
+					_check(surface.backpack_scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO, "Scaled map made backpack overflow inaccessible")
+	var high_profile := UILayoutProfileScript.profile_for_resolution(&"2560x1440")
+	high_profile["ui_scale_factor"] = 1.5
+	surface.apply_layout_profile(high_profile)
+	surface.apply_surface_model(_surface_model(high_profile, [], 5, 100))
+	await process_frame
+	_check(surface.scanner_title_label.size.y >= surface.scanner_title_label.get_line_height(), "High-resolution overview title is clipped at 150 percent")
+	settings.set_draft_value(&"ui_scale_percent", original_percent)
+	settings.apply_draft()
+	settings.close_transaction()
+	canvas.queue_free()
+	await canvas.tree_exited
+
+
+func _check_minimap_texture_bounds() -> void:
+	var minimap = MiniMapScene.instantiate()
+	root.add_child(minimap)
+	minimap.size = Vector2(248, 200)
+	var model := MiniMapViewModel.new()
+	model.width = 7
+	model.height = 7
+	model.set_room_markers([{"pos": Vector2i(3, 3), "is_current": true, "known_state": &"explored", "adjacent_mines": 2}])
+	minimap.apply_view_model(model)
+	await process_frame
+	await process_frame
+	for cell in minimap.get_node("Grid").get_children():
+		var base := cell.get_node("CellBase") as TextureRect
+		var intended := Rect2((cell.get_meta("map_cell_layer_layout") as Dictionary)["base_rect"])
+		_check(base.get_rect().is_equal_approx(intended), "Minimap texture retained its native minimum size: %s expected=%s" % [base.get_rect(), intended])
+		_check(Rect2(Vector2.ZERO, cell.size).encloses(base.get_rect()), "Minimap cell clips its base texture")
+		var semantic := cell.get_node_or_null("SemanticMarker") as TextureRect
+		if semantic != null:
+			var semantic_rect := Rect2((cell.get_meta("map_cell_layer_layout") as Dictionary)["semantic_rect"])
+			_check(semantic.get_rect().is_equal_approx(semantic_rect), "Minimap semantic marker retained its native minimum size")
+	_check(minimap.get_node("Grid/MiniMapCell_3_3/SemanticMarker") != null, "Minimap bound check lacks a public player marker")
+	minimap.queue_free()
+	await minimap.tree_exited
+
+
+func _check_player_contact_shadow() -> void:
+	var player = PlayerScene.instantiate()
+	root.add_child(player)
+	var sprite := player.get_node_or_null("Sprite") as Sprite2D
+	var shadow := player.get_node_or_null("GroundShadow") as Sprite2D
+	_check(shadow != null and shadow.texture != null, "Player lacks a textured contact shadow")
+	if shadow != null and shadow.texture != null and sprite != null:
+		var foot_y := sprite.position.y + sprite.get_rect().end.y * sprite.scale.y
+		_check(absf(foot_y) <= 5.0 and shadow.position.length() <= 1.0, "Player feet and contact shadow are not grounded at the collision origin")
+		_check(absf(shadow.position.y - foot_y) <= 5.0, "Contact shadow is detached from the authored feet")
+		_check(shadow.z_index < sprite.z_index, "Contact shadow draws over the actor")
+		var width := shadow.texture.get_width() * shadow.scale.x
+		_check(width >= 24.0 and width <= sprite.texture.get_width() * sprite.scale.x, "Contact shadow exceeds the actor silhouette")
+		var original_obstacles: Array = player.logical_obstacles.duplicate()
+		var offset := shadow.position
+		player.set_local_position(Vector2(0.25, 0.75))
+		_check(shadow.global_position.is_equal_approx(player.global_position + offset), "Contact shadow did not follow the real player position")
+		_check(player.logical_obstacles == original_obstacles, "Contact shadow changed collision authority")
+		player.call("_apply_visual")
+		_check(player.get_node("GroundShadow") == shadow, "Refreshing appearance duplicated the contact shadow")
+	player.queue_free()
+	await player.tree_exited
+
+
+func _check_ground_depth_and_floor_reachability() -> void:
+	var scene := Node2D.new()
+	var room_layer := Node2D.new()
+	room_layer.name = "RoomLayer"
+	scene.add_child(room_layer)
+	var player_layer := Node2D.new()
+	player_layer.name = "PlayerLayer"
+	scene.add_child(player_layer)
+	var view = RoomRuntimeViewScript.new()
+	room_layer.add_child(view)
+	var player = PlayerScene.instantiate()
+	player.name = "PlayerController"
+	player_layer.add_child(player)
+	root.add_child(scene)
+	view.configure_room(_room_snapshot(&"Chest", Vector2i.ZERO))
+	view.call("_update_visual_depths", Vector2(0.50, 0.43))
+	_check(player.z_index < view.chest.z_index, "Player behind the chest draws over its lid")
+	view.call("_update_visual_depths", Vector2(0.50, 0.635))
+	_check(player.z_index > view.chest.z_index, "Chest cuts through the player standing in front")
+	var rear_actor := Node2D.new()
+	var front_actor := Node2D.new()
+	view.add_child(rear_actor)
+	view.add_child(front_actor)
+	view.call("_apply_actor_depth", rear_actor, Vector2(0.50, 0.43))
+	view.call("_apply_actor_depth", front_actor, Vector2(0.50, 0.70))
+	_check(rear_actor.z_index < player.z_index and front_actor.z_index > player.z_index, "Nearby actors do not share the player's foot-depth order")
+	view.configure_room(_room_snapshot(&"Normal", Vector2i.ZERO))
+	player.set_logical_obstacles(view.get_logical_obstacles())
+	player.set_door_projections(view.get_door_projections())
+	for entry_direction in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+		var landing: Vector2 = player.place_from_entry(entry_direction)
+		_check(WorldObjectProjectionScript.room_floor_interior().grow(-player.PLAYER_RADIUS).has_point(landing), "Door entry did not clear the wall thickness for lateral movement")
+		_check(not player.call("_position_hits_obstacle", landing), "Door entry landed inside a solid body")
+	for blocked in [Vector2(0.30, 0.10), Vector2(0.10, 0.30), Vector2(0.18, 0.23)]:
+		_check(player.call("_position_hits_obstacle", blocked), "Visible wall or corner prop has no body at %s" % blocked)
+	for floor_point in [Vector2(0.30, 0.32), Vector2(0.50, 0.50), Vector2(0.65, 0.72), Vector2(0.43, 0.10), Vector2(0.57, 0.10), Vector2(0.10, 0.43), Vector2(0.10, 0.57)]:
+		_check(not player.call("_position_hits_obstacle", floor_point), "Clear floor or door lane is blocked at %s" % floor_point)
+	player.set_local_position(Vector2(0.35, 0.72))
+	for index in range(25):
+		player.move_local(Vector2.RIGHT, 1.0 / 60.0)
+	_check(player.get_local_position().x > 0.60, "Held movement could not cross clear interior floor")
+	player.local_velocity = Vector2.ZERO
+	player.set_local_position(Vector2(0.30, 0.50))
+	for index in range(60):
+		player.move_local(Vector2.UP, 1.0 / 60.0)
+	_check(player.get_local_position().y >= 0.20, "Player walked through the visible north wall")
+	view.configure_room(_room_snapshot(&"Event", Vector2i.ZERO))
+	player.set_logical_obstacles(view.get_logical_obstacles())
+	_check(player.call("_position_hits_obstacle", Vector2(0.50, 0.535)), "Event table remains walkable while its detached badge blocks floor")
+	_check(not player.call("_position_hits_obstacle", Vector2(0.50, 0.70)), "Event table blocks the clear floor in front")
+	scene.queue_free()
+	await scene.tree_exited
+
+
+func _check_clear_world_loot_placement() -> void:
+	for room_type in [&"Normal", &"Monster", &"Event", &"Mine", &"Exit"]:
+		var snapshot := _room_snapshot(room_type, Vector2i.ZERO)
+		var items: Array[Dictionary] = []
+		for index in range(48):
+			items.append({"instance_id": "floor_clearance_%d" % index, "item_id": "tool_blade", "display_name": "测试物资"})
+		snapshot["room_floor_items"] = items
+		var projection := WorldObjectProjectionScript.build(snapshot)
+		var floor_count := 0
+		var positions: Dictionary = {}
+		for object in projection["world_objects"]:
+			if object["interaction_kind"] != &"ground_loot":
+				continue
+			floor_count += 1
+			var point: Vector2 = object["local_pos"]
+			positions[point] = true
+			for solid in WorldObjectProjectionScript.room_solid_rects(room_type):
+				_check(not solid.grow(G41RuntimeLayout.PLAYER_BODY_RADIUS).has_point(point), "%s loot is on furniture or unreachable floor: %s" % [room_type, point])
+		_check(floor_count == items.size(), "%s geometry adjustment lost ledger instances" % room_type)
+		_check(positions.size() == 12, "%s geometry adjustment collapsed the existing twelve floor slots" % room_type)
+
+
+func _check_debug_chest_spawn() -> void:
+	var manager := root.get_node("SettingsManager")
+	var original_resolution: String = str(manager.applied.get("resolution_id", "auto"))
+	manager.begin_transaction()
+	manager.set_draft_value(&"resolution_id", "1280x720")
+	manager.apply_draft()
+	manager.confirm_pending_changes()
+	manager.close_transaction()
+	var main := (load("res://scenes/main/main.tscn") as PackedScene).instantiate()
+	root.add_child(main)
+	# Let the freshly attached scene finish its deferred anchor layout before
+	# dispatching a route from this same frame's component-test teardown.
+	await process_frame
+	var run_scene := main.get_node("RunScene")
+	await _wait_until(func() -> bool: return run_scene.get("result_panel").is_node_ready(), "main scene controls ready")
+	run_scene.call("_show_settings_shell")
+	var settings = run_scene.get("ui_shell").get("settings_panel")
+	settings.get("test_room_button").pressed.emit()
+	if not await _wait_until(func() -> bool: return run_scene.get("screen_state") == &"run", "original sandbox entry"):
+		run_scene.get("in_run_runtime").bind(null)
+		run_scene.get("command_bus").bind_runtime_controller(null)
+		main.queue_free()
+		await main.tree_exited
+		return
+	run_scene.get("debug_panel_controller").call("teleport_to_room_type", &"Chest")
+	var view = run_scene.get("room_runtime_view")
+	await _wait_until(func() -> bool: return view.get("room_type") == &"Chest", "original debug Chest teleport")
+	var player = run_scene.get("player_controller")
+	var before: Vector2 = player.get_local_position()
+	var banner := main.find_child("DebugSandboxBanner", true, false) as Label
+	var room_bounds: Rect2 = view.get_global_transform_with_canvas() * G41RuntimeLayout.ROOM_RECT
+	_check(banner != null and not banner.get_global_rect().intersects(room_bounds), "Sandbox status banner covers the traversable room and player")
+	await _wait_until(func() -> bool: return view.context_popup.visible and banner.size.y <= 300.0, "sandbox banner and Chest context layout")
+	_check(Rect2(Vector2.ZERO, root.size).encloses(banner.get_global_rect()), "Sandbox banner extends beyond the visible viewport")
+	_check(not banner.get_global_rect().intersects(view.context_popup.get_global_rect()), "Chest action card covers the sandbox identity")
+	var original_scale := int(manager.applied.get("ui_scale_percent", 100))
+	var protocol_card := main.find_child("Art21RunStatusCard", true, false) as Control
+	for scale_percent in [125, 150, 100]:
+		manager.begin_transaction()
+		manager.set_draft_value(&"ui_scale_percent", scale_percent)
+		manager.apply_draft()
+		await _wait_until(func() -> bool:
+			return (
+				banner.get_global_rect().position.y >= protocol_card.get_global_rect().end.y + 11.0
+				and not banner.get_global_rect().intersects(view.get_global_transform() * G41RuntimeLayout.ROOM_RECT)
+			)
+		, "sandbox banner follows room and protocol scale")
+		_check(not banner.get_global_rect().intersects(protocol_card.get_global_rect()), "Sandbox banner overlaps the scaled protocol card")
+		_check(not protocol_card.get_global_rect().intersects(view.get_global_transform() * G41RuntimeLayout.ROOM_RECT), "Protocol card covers the playable room at %d%%" % scale_percent)
+		_check(not banner.get_global_rect().intersects(view.get_global_transform() * G41RuntimeLayout.ROOM_RECT), "UI scaling moved the banner into the room")
+	manager.begin_transaction()
+	manager.set_draft_value(&"ui_scale_percent", original_scale)
+	manager.apply_draft()
+	_check(not player.call("_position_hits_obstacle", before), "Debug Chest teleport placed the player inside a solid body")
+	_check(view.chest.can_interact_from(before), "Debug Chest inspection spawn is outside interaction reach")
+	for index in range(20):
+		player.move_local(Vector2.RIGHT, 1.0 / 60.0)
+	_check(player.get_local_position().x - before.x > 0.10, "Debug Chest spawn remains stuck under held movement")
+	run_scene.get("in_run_runtime").bind(null)
+	run_scene.get("command_bus").bind_runtime_controller(null)
+	var main_instance_id := main.get_instance_id()
+	main.queue_free()
+	await main.tree_exited
+	await _wait_until(func() -> bool: return not is_instance_id_valid(main_instance_id), "main scene released before restoring settings")
+	manager.begin_transaction()
+	manager.set_draft_value(&"resolution_id", original_resolution)
+	manager.apply_draft()
+	manager.confirm_pending_changes()
+	manager.close_transaction()
 
 
 func _check_rarity_palette_and_item_resolver() -> void:
@@ -181,10 +436,10 @@ func _check_collision_visible_correspondence() -> void:
 	var view = RoomRuntimeViewScript.new()
 	root.add_child(view)
 	for room_case in [
-		{"type": &"Normal", "position": Vector2i(0, 0), "expected": 0},
-		{"type": &"Monster", "position": Vector2i(1, 0), "expected": 1},
-		{"type": &"Event", "position": Vector2i(2, 0), "expected": 1},
-		{"type": &"Chest", "position": Vector2i(3, 0), "expected": 1},
+		{"type": &"Normal", "position": Vector2i(0, 0), "expected": 12},
+		{"type": &"Monster", "position": Vector2i(1, 0), "expected": 9},
+		{"type": &"Event", "position": Vector2i(2, 0), "expected": 9},
+		{"type": &"Chest", "position": Vector2i(3, 0), "expected": 13},
 	]:
 		var snapshot := _room_snapshot(room_case["type"], room_case["position"])
 		if room_case["type"] == &"Event":
@@ -433,7 +688,7 @@ func _finish() -> void:
 			"I4_IN_RUN_VISUAL_PHYSICS=PASS"
 			+ " palette=8 resolver=formal_same_path+typed_fallback"
 			+ " map=base,semantic,count,focus"
-			+ " collision=normal0,monster1,event1,chest1"
+			+ " collision=normal12,monster9,event9,chest13"
 			+ " drops=body+rarity_beam+failure_marker"
 			+ " hud=protocol_safe_rect+bag_0,1,4"
 		)

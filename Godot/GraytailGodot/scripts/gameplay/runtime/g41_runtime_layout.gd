@@ -7,6 +7,8 @@ class_name G41RuntimeLayout
 # (640, 360) and rendered at 0.45, which places their 560 px presentation plate
 # at roughly (360, 80).  Actors and hit tests therefore share the same plate.
 const ROOM_RECT := Rect2(Vector2(360, 80), Vector2(560, 560))
+const PLAYER_BODY_RADIUS := 0.055
+const CONTEXT_RESERVED_UI_GROUP := &"g41_context_reserved_ui"
 const CONTEXT_FEEDBACK_RESERVE_HEIGHT := 60.0
 # Context panels are UI, not colliders. Their live safe lane is calculated from
 # the same visible rails/footer proportions used by the run surface; a fixed

@@ -18,8 +18,8 @@ var marker_font_size: int = 13
 var visible_map_rect: Rect2i = Rect2i()
 const LEGACY_MINIMAP_VALIDATION_MARKER := "MiniMap: icons fallback to text"
 const G10_MINIMAP_CLICK_VALIDATION_MARKER := "MiniMapPanel click opens MapOverlay"
-const LOCAL_WINDOW_SIZE := 5
 const UNKNOWN_CELL_ASSET_ID := &"ui.art21.map.cell.unknown"
+const UNKNOWN_CELL_TEXTURE := preload("res://assets/art24/ui/map_tile_unknown.png")
 const EXPLORED_CELL_ASSET_ID := &"ui.art21r2.minimap.hud.explored"
 const SCANNED_CELL_ASSET_ID := &"ui.art21r2.minimap.hud.scanned"
 const FLAGGED_CELL_ASSET_ID := &"icon.minimap.flag"
@@ -109,8 +109,9 @@ func _rebuild_grid() -> void:
 
 	if view_model.room_markers.is_empty():
 		if view_model.width > 0 and view_model.height > 0:
-			visible_map_rect = _local_window_rect()
+			visible_map_rect = Rect2i(Vector2i.ZERO, Vector2i(view_model.width, view_model.height))
 			_apply_marker_scale_for_view_model(visible_map_rect.size)
+			_apply_child_layout()
 			grid.columns = max(1, visible_map_rect.size.x)
 			for y in range(visible_map_rect.position.y, visible_map_rect.end.y):
 				for x in range(visible_map_rect.position.x, visible_map_rect.end.x):
@@ -132,8 +133,9 @@ func _rebuild_grid() -> void:
 			placeholder.text = "地图未公开"
 		return
 
-	visible_map_rect = _local_window_rect()
+	visible_map_rect = Rect2i(Vector2i.ZERO, Vector2i(view_model.width, view_model.height))
 	_apply_marker_scale_for_view_model(visible_map_rect.size)
+	_apply_child_layout()
 	grid.columns = max(1, visible_map_rect.size.x)
 	if view_model.width > 0 and view_model.height > 0:
 		var markers_by_pos := _markers_by_position(view_model.room_markers)
@@ -166,7 +168,7 @@ func _apply_marker_scale_for_view_model(grid_size: Vector2i) -> void:
 	var grid_gap: float = 2.0
 	var cell_width: float = floor((panel_size.x - 16.0 - grid_gap * maxf(0.0, columns - 1.0)) / columns)
 	var cell_height: float = floor((panel_size.y - 16.0 - grid_gap * maxf(0.0, rows - 1.0)) / rows)
-	marker_size = Vector2(clampf(cell_width, 14.0, 56.0), clampf(cell_height, 14.0, 48.0))
+	marker_size = Vector2.ONE * clampf(minf(cell_width, cell_height), 1.0, 56.0)
 	marker_font_size = clampi(int(min(marker_size.x, marker_size.y) * 0.62), 9, 20)
 
 
@@ -176,6 +178,8 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
 	if asset_id != &"":
 		asset_ref = ContentDBAccessScript.get_asset_ref(asset_id)
+	if asset_id == UNKNOWN_CELL_ASSET_ID:
+		asset_ref = UNKNOWN_CELL_TEXTURE
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var cell := Control.new()
 	cell.name = "MiniMapCell_%d_%d" % [pos.x, pos.y]
@@ -186,16 +190,19 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 	cell.tooltip_text = String(marker.get("detail_text", marker.get("tooltip", "")))
 	cell.gui_input.connect(Callable(self, "_emit_open_map_from_mouse_event"))
 	var adjacent := _public_adjacent_mines(marker)
-	var layer_layout := MapCellLayerLayoutScript.calculate(size, adjacent >= 0)
+	var compact := minf(size.x, size.y) < 32.0
+	var layer_layout := MapCellLayerLayoutScript.calculate(size, adjacent >= 0 and not compact)
+	if compact:
+		layer_layout["semantic_rect"] = Rect2(layer_layout["safe_rect"]).grow(-1.0)
 	cell.set_meta("map_cell_layer_layout", layer_layout.duplicate(true))
 	cell.set_meta("map_cell_clip_contract", true)
 	if asset_ref is Texture2D:
 		var base_icon := TextureRect.new()
 		base_icon.name = "CellBase"
 		base_icon.texture = asset_ref
-		MapCellLayerLayoutScript.apply_rect(base_icon, Rect2(layer_layout.get("base_rect", Rect2())))
 		base_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		base_icon.stretch_mode = TextureRect.STRETCH_SCALE
+		MapCellLayerLayoutScript.apply_rect(base_icon, Rect2(layer_layout.get("base_rect", Rect2())))
 		base_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		base_icon.z_index = int(layer_layout.get("base_z", 0))
 		cell.add_child(base_icon)
@@ -205,9 +212,9 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		var overlay_icon := TextureRect.new()
 		overlay_icon.name = "SemanticMarker"
 		overlay_icon.texture = overlay_ref
-		MapCellLayerLayoutScript.apply_rect(overlay_icon, Rect2(layer_layout.get("semantic_rect", Rect2())))
 		overlay_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		overlay_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		MapCellLayerLayoutScript.apply_rect(overlay_icon, Rect2(layer_layout.get("semantic_rect", Rect2())))
 		overlay_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		overlay_icon.z_index = int(layer_layout.get("semantic_z", 20))
 		cell.add_child(overlay_icon)
@@ -228,6 +235,18 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		label.text = label_text
 		cell.add_child(label)
 	_add_adjacent_mine_count(cell, marker, layer_layout)
+	if bool(marker.get("is_current", false)):
+		var current_ring := Panel.new()
+		current_ring.name = "CurrentPositionRing"
+		current_ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		current_ring.z_index = int(layer_layout.get("focus_z", 40))
+		var ring_style := StyleBoxFlat.new()
+		ring_style.bg_color = Color.TRANSPARENT
+		ring_style.border_color = Color(1.0, 0.79, 0.31, 1.0)
+		ring_style.set_border_width_all(2 if minf(size.x, size.y) >= 24.0 else 1)
+		current_ring.add_theme_stylebox_override("panel", ring_style)
+		MapCellLayerLayoutScript.apply_rect(current_ring, Rect2(layer_layout["focus_rect"]))
+		cell.add_child(current_ring)
 	grid.add_child(cell)
 
 
@@ -238,6 +257,8 @@ func _add_adjacent_mine_count(cell: Control, marker: Dictionary, layer_layout: D
 	if layer_layout.is_empty():
 		layer_layout = MapCellLayerLayoutScript.calculate(cell.custom_minimum_size, true)
 	var count_rect := Rect2(layer_layout.get("count_rect", Rect2()))
+	if not count_rect.has_area():
+		return
 	var badge_background := ColorRect.new()
 	badge_background.name = "AdjacentMineBadgeBackground"
 	badge_background.color = Color(0.015, 0.025, 0.028, 0.92)
@@ -345,35 +366,6 @@ func _public_adjacent_mines(marker: Dictionary) -> int:
 	return PresentationMapping.public_adjacent_mines(marker)
 
 
-func _local_window_rect() -> Rect2i:
-	if view_model == null or view_model.width <= 0 or view_model.height <= 0:
-		return Rect2i()
-	var window_size := Vector2i(
-		mini(LOCAL_WINDOW_SIZE, view_model.width),
-		mini(LOCAL_WINDOW_SIZE, view_model.height)
-	)
-	var center := _current_map_position()
-	if center.x < 0 or center.y < 0:
-		center = Vector2i(window_size.x / 2, window_size.y / 2)
-	center.x = clampi(center.x, 0, view_model.width - 1)
-	center.y = clampi(center.y, 0, view_model.height - 1)
-	var start := Vector2i(
-		clampi(center.x - window_size.x / 2, 0, view_model.width - window_size.x),
-		clampi(center.y - window_size.y / 2, 0, view_model.height - window_size.y)
-	)
-	return Rect2i(start, window_size)
-
-
-func _current_map_position() -> Vector2i:
-	if view_model == null:
-		return Vector2i(-1, -1)
-	for marker in view_model.room_markers:
-		if bool(marker.get("is_current", false)):
-			return Vector2i(marker.get("pos", Vector2i(-1, -1)))
-	var known_map: Dictionary = view_model.map_snapshot.get("KnownMap", {})
-	return Vector2i(known_map.get("player_pos", Vector2i(-1, -1)))
-
-
 func _apply_child_layout() -> void:
 	var grid := get_node_or_null("Grid") as GridContainer
 	var placeholder := get_node_or_null("PlaceholderLabel") as Label
@@ -383,10 +375,11 @@ func _apply_child_layout() -> void:
 	if panel_size.y <= 0.0:
 		panel_size.y = 220.0
 	if grid != null:
-		grid.offset_left = 8.0
-		grid.offset_top = 8.0
-		grid.offset_right = panel_size.x - 8.0
-		grid.offset_bottom = panel_size.y - 8.0
+		var grid_size := Vector2(visible_map_rect.size) * marker_size
+		grid_size += Vector2(maxi(0, visible_map_rect.size.x - 1), maxi(0, visible_map_rect.size.y - 1)) * 2.0
+		grid.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		grid.position = ((panel_size - grid_size) * 0.5).floor()
+		grid.size = grid_size
 		grid.add_theme_constant_override("h_separation", 2)
 		grid.add_theme_constant_override("v_separation", 2)
 	if placeholder != null:

@@ -124,7 +124,7 @@ func _check_reduced_motion_contract() -> void:
 	player.call("_apply_idle_motion", true)
 	var player_sprite := player.get_node("Sprite") as Sprite2D
 	_check(player.last_texture_path.ends_with("down_walk_a.png"), "Reduced motion did not retain a readable player movement pose")
-	_check(is_equal_approx(player_sprite.position.y, -20.0), "Reduced motion retained player idle bob")
+	_check(is_equal_approx(player_sprite.position.y, -37.0), "Reduced motion retained player idle bob")
 	ProjectSettings.set_setting(setting_key, false)
 	actor.call("_process", 0.50)
 	_check(actor.animation_frame != 0, "Full motion did not restore enemy texture animation")

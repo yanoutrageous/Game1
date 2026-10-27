@@ -9,6 +9,7 @@ const ChestInteractableScript := preload("res://scripts/gameplay/interactables/g
 const ActorViewScript := preload("res://scripts/gameplay/runtime/g41_runtime_actor_view.gd")
 const WorldContextPopupScript := preload("res://scripts/gameplay/interaction/g41_world_context_popup.gd")
 const WorldObjectProjectionScript := preload("res://scripts/gameplay/runtime/g41_world_object_projection.gd")
+const PresentationDescriptor := preload("res://scripts/gameplay/runtime/g41_world_object_presentation_descriptor.gd")
 const InteractableScript := preload("res://scripts/gameplay/interaction/g41_interactable.gd")
 const Art24MotionSettingsScript := preload("res://scripts/presentation/art24/art24_motion_settings.gd")
 const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_kit.gd")
@@ -59,13 +60,11 @@ const FOCUS_MIN_RESIDENCE_SECONDS := 0.12
 const FOCUS_LOST_GRACE_SECONDS := 0.10
 const EXIT_PULSE_FRAME_COUNT := 8
 const MINE_BURST_FRAME_COUNT := 6
-const DOOR_FOREGROUND_Z := 60
-const ALTAR_FOREGROUND_Z := 40
-const ACTOR_FOREGROUND_Z := 50
+const DOOR_FOREGROUND_Z := 700
 const ATTACK_FX_Z := 20
 const COMBAT_LOCK_ICON_SIZE := 36.0
-const SIDE_DOOR_PROMPT_LIFT_LOCAL := 0.16
-const SOUTH_DOOR_PROMPT_LIFT_LOCAL := 0.09
+const SIDE_DOOR_PROMPT_LIFT_LOCAL := 0.20
+const SOUTH_DOOR_PROMPT_LIFT_LOCAL := 0.13
 # The generated slash frames are centered on the ellipse at (131, 95).
 # Sprite2D is centered on the texture, so the authored origin must be mapped
 # back onto the authoritative attack origin instead of subtracting it twice.
@@ -536,6 +535,11 @@ func _apply_foreground_occluder(sprite: Sprite2D, descriptor: Dictionary) -> voi
 		world_size.y / maxf(1.0, source_rect.size.y)
 	)
 	var payload: Dictionary = descriptor.get("payload", {})
+	sprite.z_index = (
+		PresentationDescriptor.ground_depth(Vector2(descriptor["ground_anchor_local"]).y)
+		if StringName(descriptor.get("depth_key", &"")) == &"world.foreground_occluder"
+		else 0
+	)
 	sprite.set_meta("projection_id", String(descriptor.get("projection_id", "")))
 	sprite.set_meta("occlusion_rect_local", Rect2(payload.get(
 		"occlusion_rect_local",
@@ -604,11 +608,12 @@ func _combat_slash_frame(snapshot: Dictionary, geometry: Dictionary) -> int:
 
 
 func _update_visual_depths(player_local_pos: Vector2) -> void:
-	var split_y := _foreground_depth_split()
-	var has_foreground := room_type == &"Monster" and split_y < INF
 	var player := _production_player_canvas_item()
 	if player != null:
-		player.z_index = ACTOR_FOREGROUND_Z if has_foreground and player_local_pos.y >= split_y else 0
+		_apply_actor_depth(player, player_local_pos)
+	var attack_fx := get_node_or_null("AttackFx") as Node2D
+	if attack_fx != null:
+		attack_fx.z_index = PresentationDescriptor.ground_depth(player_local_pos.y) + 1
 	for view in enemy_views.values():
 		if view is CanvasItem:
 			_apply_actor_depth(view as CanvasItem, _actor_local_position(view))
@@ -620,19 +625,9 @@ func _update_visual_depths(player_local_pos: Vector2) -> void:
 func _apply_actor_depth(actor: CanvasItem, local_pos: Vector2) -> void:
 	if actor == null:
 		return
-	var split_y := _foreground_depth_split()
-	actor.z_index = (
-		ACTOR_FOREGROUND_Z
-		if room_type == &"Monster" and split_y < INF and local_pos.y >= split_y
-		else 0
-	)
-
-
-func _foreground_depth_split() -> float:
-	for sprite in foreground_occluders.values():
-		if sprite is CanvasItem and (sprite as CanvasItem).is_visible():
-			return float((sprite as CanvasItem).get_meta("depth_split_local_y", INF))
-	return INF
+	# The mine grate and exit beacon are floor effects. Preserve their shared
+	# floor ordering; upright props and combat actors use the same foot depth.
+	actor.z_index = 0 if room_type in [&"Mine", &"Exit"] else PresentationDescriptor.ground_depth(local_pos.y)
 
 
 func _actor_local_position(actor: Variant) -> Vector2:
@@ -762,7 +757,7 @@ func _apply_special_art(entity, projection: Dictionary) -> void:
 		&"event":
 			var event_type := StringName((projection.get("payload", {}) as Dictionary).get("event_type", &"trader"))
 			texture = EVENT_BADGE_TEXTURES.get(event_type, EVENT_BADGE_TEXTURES[&"trader"]) as Texture2D
-			sprite.scale = Vector2.ONE * 1.22
+			uses_projected_geometry = true
 		&"mine":
 			texture = MINE_TRAP_TEXTURE
 			uses_projected_geometry = true
@@ -975,13 +970,18 @@ func _refresh_context_popup(player_local_pos: Vector2, nearest = null) -> void:
 	var popup_parent_control := context_popup.get_parent() as Control
 	if popup_parent_control != null and popup_parent_control.size.x > 0.0 and popup_parent_control.size.y > 0.0:
 		overlay_size = popup_parent_control.size
+	var reserved_rects := G41RuntimeLayout.context_reserved_rects_for_viewport(overlay_size)
+	if popup_parent_control != null and is_inside_tree():
+		for control in get_tree().get_nodes_in_group(G41RuntimeLayout.CONTEXT_RESERVED_UI_GROUP):
+			if control is Control and control.is_visible_in_tree():
+				reserved_rects.append(popup_parent_control.get_global_transform().affine_inverse() * control.get_global_rect())
 	context_popup.apply_context({
 		"interaction_kind": kind,
 		"world_pos": anchor_ui,
 		"player_world_pos": player_ui,
 		"room_bounds": G41RuntimeLayout.context_ui_rect_for_viewport(overlay_size),
 		"gameplay_focus_rect": gameplay_focus_ui_rect,
-		"reserved_rects": G41RuntimeLayout.context_reserved_rects_for_viewport(overlay_size),
+		"reserved_rects": reserved_rects,
 		"items": items,
 		"opened_once": chest != null and chest.is_opened() if kind == &"chest" else false,
 		"container_open": chest != null and chest.is_opened() if kind == &"chest" else false,
@@ -1258,12 +1258,13 @@ func _ensure_layers() -> void:
 	if get_node_or_null("ForegroundOccluders") == null:
 		var occluders := Node2D.new()
 		occluders.name = "ForegroundOccluders"
-		occluders.z_index = ALTAR_FOREGROUND_Z
+		occluders.z_index = 0
 		add_child(occluders)
+		move_child(occluders, 0)
 	if get_node_or_null("SpecialRoomFx") == null:
 		var special_fx := Node2D.new()
 		special_fx.name = "SpecialRoomFx"
-		special_fx.z_index = 48
+		special_fx.z_index = 720
 		add_child(special_fx)
 		var mine_burst := Sprite2D.new()
 		mine_burst.name = "MineBurst"
@@ -1374,19 +1375,14 @@ func _remove_missing_views(views: Dictionary, active_ids: Dictionary) -> void:
 func _rebuild_obstacle_projection() -> void:
 	obstacle_descriptors.clear()
 	logical_obstacles.clear()
-	if room_type == &"Monster":
-		for raw_occluder in (world_projection.get("occluders", []) as Array):
-			if not raw_occluder is Dictionary:
-				continue
-			var occluder := raw_occluder as Dictionary
-			var projection_id := String(occluder.get("projection_id", ""))
-			var sprite := foreground_occluders.get(projection_id) as Sprite2D
-			_append_texture_obstacle_descriptor(occluder, sprite, true)
-	elif room_type == &"Event":
-		for entity in special_entities.values():
-			if entity != null and entity.interaction_kind == &"event":
-				_append_interactable_obstacle_descriptor(entity, true)
-	elif room_type == &"Chest" and chest != null:
+	for raw_occluder in (world_projection.get("occluders", []) as Array):
+		if not raw_occluder is Dictionary:
+			continue
+		var occluder := raw_occluder as Dictionary
+		var projection_id := String(occluder.get("projection_id", ""))
+		var sprite := foreground_occluders.get(projection_id) as Sprite2D
+		_append_texture_obstacle_descriptor(occluder, sprite, true)
+	if room_type == &"Chest" and chest != null:
 		_append_interactable_obstacle_descriptor(chest, true)
 	for descriptor in obstacle_descriptors:
 		if bool(descriptor.get("collision_enabled", false)):

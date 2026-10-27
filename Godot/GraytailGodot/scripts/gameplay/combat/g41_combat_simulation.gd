@@ -3,6 +3,7 @@ class_name G41CombatSimulation
 
 const RngScript := preload("res://scripts/gameplay/combat/g41_deterministic_rng.gd")
 const MonsterCatalogScript := preload("res://scripts/gameplay/combat/g41_monster_catalog.gd")
+const WorldObjectProjection := preload("res://scripts/gameplay/runtime/g41_world_object_projection.gd")
 
 const FIXED_STEP := 1.0 / 60.0
 const MAX_FRAME_DELTA := 0.25
@@ -12,7 +13,7 @@ const ROOM_MAX := 0.945
 const PLAYER_SPEED := 0.385
 const PLAYER_ACCELERATION := 16.0
 const PLAYER_DECELERATION := 22.0
-const PLAYER_RADIUS := 0.055
+const PLAYER_RADIUS := G41RuntimeLayout.PLAYER_BODY_RADIUS
 const PLAYER_ATTACK_RANGE := 0.21
 const PLAYER_ATTACK_CONE_DOT := 0.50
 const PLAYER_ATTACK_COOLDOWN := 0.85
@@ -40,11 +41,6 @@ const MELEE_NAVIGATION_MARGIN := 0.012
 const MELEE_WAYPOINT_REACHED_DISTANCE := 0.010
 const ATTACK_VISIBILITY_SEGMENTS := 32
 const ARENA_CONTRACT_ID := &"g41.combat_arena.monster_room.v1"
-# Conservative footprint of the solid bone-and-horn altar already visible in
-# room_monster.png. Loose bones, webs and corner rubble remain walkable.
-const PRODUCTION_ARENA_OBSTACLES := [
-	Rect2(Vector2(0.34, 0.36), Vector2(0.32, 0.28)),
-]
 
 var active: bool = false
 var paused: bool = false
@@ -78,10 +74,7 @@ var encounter_profile: Dictionary = {}
 
 
 static func production_arena_obstacles() -> Array[Rect2]:
-	var result: Array[Rect2] = []
-	for obstacle in PRODUCTION_ARENA_OBSTACLES:
-		result.append(obstacle)
-	return result
+	return WorldObjectProjection.room_solid_rects(&"Monster")
 
 
 func start(config: Dictionary = {}) -> void:

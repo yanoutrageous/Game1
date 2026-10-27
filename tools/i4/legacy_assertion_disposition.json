@@ -252,9 +252,22 @@
     },
     {
       "path": "Godot/GraytailGodot/tests/i3_map_local_context_interaction_runner.gd",
-      "diff_sha256": "5F4ED1C32C6B5BB1CA906588636EF013D680681A8853E4A3B76AC24A49F41913",
-      "current_file_sha256": "1A507BA257FD53AA19E6F16E80E641431E04D717A6BA68CAC8E1CA027A4B7952",
+      "diff_sha256": "398A2DFF6FAE3AF32E6EBF0EBFAB139DA2AA0E9245D8A476FAEB097700318115",
+      "current_file_sha256": "D877244A799A845A8680CBBFAAC95BF8D31E0873CD7E44B13B9F352602322472",
       "dispositions": [
+        {
+          "id": "actual_size_overview_20261027",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "The minimap always showed a 5x5 local window, omitted distant corners, and imposed a minimum local cell size.",
+          "reason": "The user explicitly requested a complete overview derived from actual map dimensions on 2026-10-27; public visibility authority remains unchanged.",
+          "replacement_requirement_ids": [
+            "I4-R033",
+            "I4-R043"
+          ],
+          "replacement_gate": "Require every public grid position for 5x5, 7x7, 10x10, 13x13, 13x7 and 7x13, square fitted cells at 100/125/150 percent, sealed unknown type/count, distinct known icons, current-position ring and exact state parity with the expanded map. Small overview counts remain accessible through tooltip and expanded map.",
+          "scope_preserved": "No TruthMap access, generation or passage changes. All original expanded-map pointer, focus, action, mark, fast-return and exactly-once assertions remain active.",
+          "verification": "_check_local_minimap now verifies dimensions, all cells, fog, hierarchy and expanded-map parity; _check_expanded_map retains production interaction boundary assertions."
+        },
         {
           "id": "expanded_map_icon_carrier",
           "disposition": "SUPERSEDED_WITH_REPLACEMENT",
@@ -400,9 +413,22 @@
     },
     {
       "path": "Godot/GraytailGodot/tests/i3r_ui_composition_contract_runner.gd",
-      "diff_sha256": "CF72EA5010BC25B377FCEB14D6160299994EB6565598F3F494904FE728C6B361",
-      "current_file_sha256": "5A9A57327C8883BE9CBA6556AE4A89A17B30B0E7D18BDB44CBFC445327B85E60",
+      "diff_sha256": "3D4E16A8FB70B7EDC809C006211C44F7477E41D260CF68260D7457F9AE72C6F3",
+      "current_file_sha256": "8279F06179586805E9AD54D5DA99FC1AA944DFBE7DF37A324EEB2E2035F39695",
       "dispositions": [
+        {
+          "id": "inventory_inner_dividers_20261027",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Inventory and ground loot both rejected any local flat style, and both inner title plates required texture frames.",
+          "reason": "The user-authorized room/HUD design retains Inventory shared outer art while replacing four redundant inner complete frames with one-pixel bottom dividers.",
+          "replacement_requirement_ids": [
+            "I4-R033",
+            "I4-R034"
+          ],
+          "replacement_gate": "Inventory outer frame must remain a shared texture with measured safe insets. Its four named inner sections must be flat with no top/left/right borders, at most one bottom pixel, and at least ten content pixels on every side. Ground loot retains the original flat-style rejection and texture title requirement.",
+          "scope_preserved": "Shared outer-frame ownership, fonts, license, composition tokens, content minimums and all other modal consumers remain authoritative.",
+          "verification": "_check_shared_ui_consumers checks all four named sections plus the existing outer texture, title font, frame minimums and other consumers."
+        },
         {
           "id": "composition_single_font_role",
           "disposition": "SUPERSEDED_WITH_REPLACEMENT",
@@ -420,8 +446,8 @@
           "reason": "I4-R034 freezes different border budgets for page, workspace, card and compact controls; safe insets must therefore be derived for the actual frame size/class.",
           "replacement_requirement_ids": ["I4-R033", "I4-R034"],
           "replacement_gate": "Require each governed consumer to resolve shared framed art through texture_for_visual_key and construct its frame with style_box_from_texture_with_insets.",
-          "scope_preserved": "Shared image-frame ownership, prohibition on local StyleBoxFlat plastic and composition-label ownership remain authoritative.",
-          "verification": "_check_shared_ui_consumers scans each production source for the size-specific inset helper and rejects local flat-frame replacement."
+          "scope_preserved": "Shared image-frame ownership, prohibition on replacing outer art with local flat frames (Inventory inner sections superseded separately below) and composition-label ownership remain authoritative.",
+          "verification": "_check_shared_ui_consumers scans each production source for the size-specific inset helper and rejects local flat-frame replacement except for the separately audited Inventory inner dividers."
         },
         {
           "id": "composition_authority",
@@ -518,14 +544,121 @@
     },
     {
       "path": "Godot/GraytailGodot/tests/i3r_player_movement_appearance_runner.gd",
-      "diff_sha256": "52ACF1E3A3A3E20AB3028AE21F5A5A1B229FB19C7233156FF9BDF4E4A38C4A23",
-      "current_file_sha256": "1B149D62C282F7097977D877BDDA4D46BECBC4F2D75D515116F16BFC10B6AD13",
+      "diff_sha256": "C4EF7F3398B0E7790E7B214E29598CE0AC014D0AE04DBE3FF544E90F1B5F6EE1",
+      "current_file_sha256": "E3FD67A2C6EAE56BA904DA695502332D5916C1CA3B0616E853AE955970CF5F8E",
       "dispositions": [
         {
           "id": "app_shell_owned_page_lifecycle_20261027",
           "disposition": "STILL_AUTHORITATIVE",
           "authority_preserved": "All movement, appearance, geometry, collision, unowned/catalog fallback and hurt assertions remain unchanged. After the production case is freed, teardown now waits with a 2-second deadline for the click audio stream to leave the resource cache and asserts its release. Four headless frames alone could exit while the audio mixer still retained AudioStreamPlaybackWAV.",
           "verification": "The unchanged runner emitted PASS but one final full run had 19 instead of the existing 18 exit resources. movement_joined_verbose_2 identified only sfx_click.wav/AudioStreamPlaybackWAV as extra; baseline49 three runs retained 18. movement_audio_cleanup_1-3 preserve the original 18-resource diagnostic contract. Current full must pass without modifying its manifest or cleanup whitelist."
+        },
+        {
+          "id": "player_ground_anchor_alignment_20261027",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Player art baseline is fixed at -20px, including reduced motion, walking phase and settled idle checks.",
+          "reason": "The user requested correction of visible player/component overlap. The admitted player art foot is now aligned with the unchanged logical ground origin at -37px; the original -20px value placed it 17px below that origin.",
+          "replacement_requirement_ids": [
+            "I4-R044"
+          ],
+          "replacement_gate": "Change only the old art-baseline number to -37px. Preserve every original animation phase/amplitude, reduced-motion freeze, idle tolerance, appearance, movement, collision and door assertion. I4_IN_RUN_VISUAL_PHYSICS independently requires zero shadow offset and ground alignment.",
+          "scope_preserved": "No timing, tolerance, input, movement parameter, animation catalog, PASS marker or expected cleanup diagnostic changes.",
+          "verification": "Full run 20261027T144241222Z_be60611c reproduces precisely the four old-baseline failures. Re-run all four original runners and the full worktree suite after this expected-value migration."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3r_combat_attack_contract_runner.gd",
+      "diff_sha256": "F71A775535F9548437762E55999EE19E55BD480638A24D377C5B00F13417BB93",
+      "current_file_sha256": "654679E2F02802C0EC732CA5B9BAC5148E9D345730670FF560E71B497479EB54",
+      "dispositions": [
+        {
+          "id": "visible_room_walls_20261027",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "The production Monster room must contain exactly one obstacle, its central altar.",
+          "reason": "The user explicitly requested alignment of visible room components and non-walkable floor. Eight wall segments now stop movement into the baked stone perimeter while retaining the four original door lanes.",
+          "replacement_requirement_ids": [
+            "I4-R044"
+          ],
+          "replacement_gate": "Require exactly nine bodies, preserve the original altar rectangle byte-for-value, assert all four door centers have player-radius clearance, and retain the same view/simulation geometry equality plus every original movement, navigation, attack clipping and combat assertion.",
+          "scope_preserved": "The central altar, collision radius, movement/attack parameters, door transitions, combat phase semantics and original contract assertions remain authoritative. Only the obsolete one-body count is replaced.",
+          "verification": "I3R_COMBAT_ATTACK_CONTRACT checks shared arena, altar, door clearance and all original combat geometry. I4_IN_RUN_VISUAL_PHYSICS adds original-entry Chest teleport, held movement, visible walls/corners, empty floor and foreground/background ordering."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/g41_in_run_core_gameplay_runtime_runner.gd",
+      "diff_sha256": "28B696683BA31B86A66B62E4016E3FAE08EC3A1262D33B16251F50F179C6580B",
+      "current_file_sha256": "D8EBBC286B5D4A35E4BEE54DE9EFAB5A99B19E7F8483058A21A1E1EB3E1BD44B",
+      "dispositions": [
+        {
+          "id": "player_ground_anchor_alignment_20261027",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Player art baseline is fixed at -20px, including reduced motion, walking phase and settled idle checks.",
+          "reason": "The user requested correction of visible player/component overlap. The admitted player art foot is now aligned with the unchanged logical ground origin at -37px; the original -20px value placed it 17px below that origin.",
+          "replacement_requirement_ids": [
+            "I4-R044"
+          ],
+          "replacement_gate": "Change only the old art-baseline number to -37px. Preserve every original animation phase/amplitude, reduced-motion freeze, idle tolerance, appearance, movement, collision and door assertion. I4_IN_RUN_VISUAL_PHYSICS independently requires zero shadow offset and ground alignment.",
+          "scope_preserved": "No timing, tolerance, input, movement parameter, animation catalog, PASS marker or expected cleanup diagnostic changes.",
+          "verification": "Full run 20261027T144241222Z_be60611c reproduces precisely the four old-baseline failures. Re-run all four original runners and the full worktree suite after this expected-value migration."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i1_animation_runtime_runner.gd",
+      "diff_sha256": "07D858CF3664D94EA4D40FA0DC5BD6EDDD477D53698B73B64C8878ACF20A54B8",
+      "current_file_sha256": "DD805E004F2EA34C6501BF72E5858025D0D6098E00346665F42A8F947E36C7BC",
+      "dispositions": [
+        {
+          "id": "player_ground_anchor_alignment_20261027",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Player art baseline is fixed at -20px, including reduced motion, walking phase and settled idle checks.",
+          "reason": "The user requested correction of visible player/component overlap. The admitted player art foot is now aligned with the unchanged logical ground origin at -37px; the original -20px value placed it 17px below that origin.",
+          "replacement_requirement_ids": [
+            "I4-R044"
+          ],
+          "replacement_gate": "Change only the old art-baseline number to -37px. Preserve every original animation phase/amplitude, reduced-motion freeze, idle tolerance, appearance, movement, collision and door assertion. I4_IN_RUN_VISUAL_PHYSICS independently requires zero shadow offset and ground alignment.",
+          "scope_preserved": "No timing, tolerance, input, movement parameter, animation catalog, PASS marker or expected cleanup diagnostic changes.",
+          "verification": "Full run 20261027T144241222Z_be60611c reproduces precisely the four old-baseline failures. Re-run all four original runners and the full worktree suite after this expected-value migration."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i2_player_motion_projection_runner.gd",
+      "diff_sha256": "39DBFFDA8DBEF400D904780BAA046744F7D87DDF3D6A028FA939A9CD16BD293E",
+      "current_file_sha256": "BEF64543EA50770B480A90CA44FF5FB45167B0A35B8B500865A65ED65F5D7652",
+      "dispositions": [
+        {
+          "id": "player_ground_anchor_alignment_20261027",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Player art baseline is fixed at -20px, including reduced motion, walking phase and settled idle checks.",
+          "reason": "The user requested correction of visible player/component overlap. The admitted player art foot is now aligned with the unchanged logical ground origin at -37px; the original -20px value placed it 17px below that origin.",
+          "replacement_requirement_ids": [
+            "I4-R044"
+          ],
+          "replacement_gate": "Change only the old art-baseline number to -37px. Preserve every original animation phase/amplitude, reduced-motion freeze, idle tolerance, appearance, movement, collision and door assertion. I4_IN_RUN_VISUAL_PHYSICS independently requires zero shadow offset and ground alignment.",
+          "scope_preserved": "No timing, tolerance, input, movement parameter, animation catalog, PASS marker or expected cleanup diagnostic changes.",
+          "verification": "Full run 20261027T144241222Z_be60611c reproduces precisely the four old-baseline failures. Re-run all four original runners and the full worktree suite after this expected-value migration."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3_production_terminal_branches_runner.gd",
+      "diff_sha256": "9155A6C0E0DF2361D1C97DDE3BDBEA983E0EB7F6611813E620FB0F89BF8AE81A",
+      "current_file_sha256": "A605295872CCCF443022D5D6753BD0BA60B2E558B9FE04D662FEA265D1B4DDD9",
+      "dispositions": [
+        {
+          "id": "terminal_failure_clear_lane_20261027",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Natural-defeat setup assumes the (.82,.20) or mirrored room corner is an exposed and reachable projectile target.",
+          "reason": "The user-authorized visible wall alignment makes that corner a wall boundary and legitimate cover. The same production-input trace takes real damage from HP10 to2, then shows projectiles blocked by the east doorway wall.",
+          "replacement_requirement_ids": [
+            "I4-R044"
+          ],
+          "replacement_gate": "Use actual movement to the open same-side horizontal lane (.74 or .26,.50), and assert both movement axes are reachable. Retain all mine preparation, natural damage, 14-second deadline, Failed reason, salvage and return-to-main assertions.",
+          "scope_preserved": "No health/result/context writes, damage or AI changes, longer deadlines, input bypasses, removed assertions or cleanup whitelist changes.",
+          "verification": "geometry_terminal_trace and geometry_terminal_clear_floor retain failure evidence. geometry_terminal_clear_lane passes the original failure journey with genuine parsed inputs and return to main; final full reruns all branches."
         }
       ]
     }

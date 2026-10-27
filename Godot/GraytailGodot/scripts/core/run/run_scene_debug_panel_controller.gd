@@ -17,6 +17,7 @@ var _command_bus: Variant
 var _player_controller: Variant
 var _debug_panel: PanelContainer
 var _session_banner: Label
+var _protocol_card: Control
 var _debug_x_spin: SpinBox
 var _debug_y_spin: SpinBox
 var _debug_log: Label
@@ -451,7 +452,11 @@ func teleport_to_room_type(room_type: StringName) -> void:
 		# deterministic walkable inspection point inside the chest interaction
 		# radius when the requested room is a chest.
 		if room_type == &"Chest":
-			_player_controller.call("set_local_position", Vector2(0.56, 0.53))
+			var inspection_point := Vector2(0.56, 0.53)
+			for body: Rect2 in _player_controller.get("logical_obstacles"):
+				if body.grow(_player_controller.PLAYER_RADIUS).has_point(inspection_point):
+					inspection_point = Vector2(body.get_center().x, body.end.y + _player_controller.PLAYER_RADIUS + 0.01)
+			_player_controller.call("set_local_position", inspection_point)
 		else:
 			_player_controller.call("reset_local_position")
 	sync_coordinates()
@@ -856,14 +861,13 @@ func _ensure_session_banner(parent: Control) -> void:
 	if parent == null or _session_banner != null:
 		return
 	_session_banner = Label.new()
+	_protocol_card = parent.find_child("Art21RunStatusCard", true, false) as Control
 	_session_banner.name = "DebugSandboxBanner"
-	_session_banner.position = Vector2(288.0, 6.0)
-	_session_banner.size = Vector2(720.0, 62.0)
-	_session_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_session_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_session_banner.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_session_banner.clip_text = true
-	_session_banner.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_session_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_session_banner.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	_session_banner.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_session_banner.clip_text = false
+	_session_banner.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
 	_session_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_session_banner.add_theme_color_override("font_color", Color(1.0, 0.82, 0.32, 1.0))
 	_session_banner.add_theme_color_override("font_outline_color", Color(0.08, 0.02, 0.02, 1.0))
@@ -887,6 +891,8 @@ func _ensure_session_banner(parent: Control) -> void:
 	_session_banner.add_theme_stylebox_override("normal", banner_style)
 	_session_banner.visible = false
 	parent.add_child(_session_banner)
+	_session_banner.add_to_group(G41RuntimeLayout.CONTEXT_RESERVED_UI_GROUP)
+	_session_banner.minimum_size_changed.connect(_fit_session_banner_height)
 	_session_commit_id = DebugFailureBundleScript.commit_id()
 
 
@@ -899,7 +905,7 @@ func _update_session_banner() -> void:
 	if not _session_banner.visible:
 		return
 	var commit_short := _session_commit_id.substr(0, mini(8, _session_commit_id.length()))
-	_session_banner.text = "DEBUG/TEST · %s · commit=%s\nprofile=%s · scenario=%s · seed=%s\nsave=%s" % [
+	_session_banner.text = "DEBUG/TEST · %s\ncommit=%s\nprofile=%s\nscenario=%s\nseed=%s\nsave=%s" % [
 		"TAINTED" if bool(snapshot.get("tainted", false)) else "CLEAN",
 		commit_short,
 		snapshot.get("profile_id", ""),
@@ -907,3 +913,28 @@ func _update_session_banner() -> void:
 		snapshot.get("seed", 0),
 		snapshot.get("save_target", ""),
 	]
+	refresh_session_banner_layout()
+
+
+func refresh_session_banner_layout() -> void:
+	if not is_instance_valid(_player_controller) or not is_instance_valid(_session_banner) or not _session_banner.is_inside_tree():
+		return
+	var player_layer := _player_controller.get_parent() as Node2D
+	if player_layer == null:
+		return
+	var overlay := _session_banner.get_parent() as Control
+	var room_bounds: Rect2 = overlay.get_global_transform().affine_inverse() * player_layer.get_global_transform() * _player_controller.room_rect
+	var viewport_size := overlay.size
+	var protocol_rect: Rect2 = G41RuntimeLayout.context_reserved_rects_for_viewport(viewport_size)[0]
+	if is_instance_valid(_protocol_card) and _protocol_card.is_inside_tree():
+		protocol_rect = overlay.get_global_transform().affine_inverse() * _protocol_card.get_global_rect()
+	# Keep the complete sandbox identity in the unused side lane. A top-center
+	# watermark concealed the avatar and north wall even at a valid floor point.
+	_session_banner.position = Vector2(room_bounds.end.x + 12.0, protocol_rect.end.y + 12.0)
+	_session_banner.size.x = maxf(1.0, viewport_size.x - _session_banner.position.x - 12.0)
+	call_deferred("_fit_session_banner_height")
+
+
+func _fit_session_banner_height() -> void:
+	if is_instance_valid(_session_banner):
+		_session_banner.size.y = _session_banner.get_minimum_size().y
