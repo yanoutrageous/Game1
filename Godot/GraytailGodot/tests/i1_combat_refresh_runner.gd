@@ -104,6 +104,32 @@ func _run() -> void:
 	var full_p95 := _percentile(full_samples, 0.95)
 	_require(combat_p95 <= 8000, "combat refresh p95 exceeded 8 ms: %d usec" % combat_p95)
 	_require(combat_p95 < full_p95, "combat refresh p95 was not lower than full refresh p95")
+	var map_overlay := run_scene.get("map_overlay_panel") as MapOverlayPanel
+	var map_grid := map_overlay.get_node("Panel/Content/Grid") as GridContainer
+	_require(not map_overlay.visible and map_grid.get_child_count() == 0, "closed map allocated cell controls during full run refreshes")
+	map_overlay.show_overlay()
+	_require(map_grid.get_child_count() == map_overlay.view_model.width * map_overlay.view_model.height, "opening the deferred map did not build the latest grid")
+	var visible_cells := map_grid.get_children()
+	map_overlay.hide_overlay()
+	run_scene.call("_refresh_view_models")
+	_require(map_grid.get_children() == visible_cells, "closed map rebuilt its existing cells during a full refresh")
+	var updated_map := MiniMapViewModel.new()
+	updated_map.width = 2
+	updated_map.height = 2
+	updated_map.room_markers = [{"pos": Vector2i.ZERO, "known_state": &"explored", "room_type": &"Normal", "is_current": true, "adjacent_mines": 3}]
+	var updated_layout := map_overlay.layout_profile.duplicate(true)
+	updated_layout["ui_scale_factor"] = 1.5
+	map_overlay.apply_layout_profile(updated_layout)
+	map_overlay.apply_view_model(updated_map)
+	_require(map_grid.get_children() == visible_cells, "hidden data/scale update rebuilt the map")
+	map_overlay.show_overlay()
+	await process_frame
+	await process_frame
+	_require(map_grid.get_child_count() == 4 and is_equal_approx(map_overlay.get_ui_scale_factor(), 1.5), "reopened map retained stale dimensions or scale")
+	var adjacent_count := map_grid.get_node_or_null("MapCell_0_0/AdjacentMineCount") as Label
+	_require(adjacent_count != null and adjacent_count.text == "3", "reopened map did not render the newest public cell data")
+	var map_focus := map_overlay.preferred_focus_control()
+	_require(map_focus != null and map_focus.has_focus(), "reopened map did not restore focus inside the updated grid")
 
 	main.queue_free()
 	await process_frame

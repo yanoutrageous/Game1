@@ -7,7 +7,7 @@
     {
       "path": "Godot/GraytailGodot/tests/art22_deploy_prep_runtime_runner.gd",
       "diff_sha256": "B06D7CB8EA96911602C2921787F5F4142A31B978E0A32A2FABF2C33387F9FC4A",
-      "current_file_sha256": "5BDD842E16685DFBF7FDF6F5720FB2D072D1997A5B3EF9B98F1BB1240E1CD13A",
+      "current_file_sha256": "048D631C1C008985A43C9A3730CE622C7CC25A5D839B6698DD5ED4E7088B0CCA",
       "dispositions": [
         {
           "id": "deploy_summary_single_line_cap",
@@ -66,7 +66,7 @@
     {
       "path": "Godot/GraytailGodot/tests/art23_long_term_matrix_capture_runner.gd",
       "diff_sha256": "484E1FA982CB4B0E1560F1B9C2E21C4B8AD6FCF1BD0D59358AF3D9B2873DD70A",
-      "current_file_sha256": "795088FBD0DFD588BB683A026807F9097AB08A49B7097F567413D07D20FCB38B",
+      "current_file_sha256": "64F5E46216F08C556254B9F78C1F8042A7AD822C85484EDC5F961768E373A146",
       "dispositions": [
         {
           "id": "art23_fixed_frame_waits",
@@ -89,7 +89,7 @@
     {
       "path": "Godot/GraytailGodot/tests/art25_production_visual_capture_runner.gd",
       "diff_sha256": "C2B0BC7A3873CECDF174D09CFC2FB3FBE3688AD12E75D4EB4EC4507504E70273",
-      "current_file_sha256": "4C9334F9A92D609F1742BB0206A292B0C431A34764BAED20FC4492A027054B1A",
+      "current_file_sha256": "7AD5A5A85A8411E40CF580A7896B257231D994EC4D610171002ED6B0CD8C92C5",
       "dispositions": [
         {
           "id": "art25_fixed_frame_waits",
@@ -122,7 +122,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i2_inventory_hover_focus_runner.gd",
       "diff_sha256": "DFF8CA7BFC66CC0679FCC88B6B6EC23AC5136DD492C857AD838F899817B71716",
-      "current_file_sha256": "22552D4F343D0481FC3B3115FCC4F5B03FE6FC017A3B1EE3978AE17A6B2FA76B",
+      "current_file_sha256": "35A2E0AD3B1AA171DFB9D904E1B7044450EB0D6DD187B1E59F70EA867EA2325E",
       "dispositions": [
         {
           "id": "inventory_t6_copy",
@@ -145,7 +145,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i2_item_rarity_presentation_runner.gd",
       "diff_sha256": "F359AFB08BF8CBDEBD6DD41F9833CFD0E486153272EAA540DD64FC8D595CAFE3",
-      "current_file_sha256": "980166891EFF81DF388A12E5DE7D6BCC0545AEE59376BD8D307E7BC5629FD8E2",
+      "current_file_sha256": "7470B60DDDAFA19276E0CB9682509EA160E05E15A2A46860FD950FE000C6567D",
       "dispositions": [
         {
           "id": "rarity_consumer_t_codes",
@@ -168,7 +168,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i2_run_information_surface_runner.gd",
       "diff_sha256": "7EA48A3ECCE1CF33A239A0200C21E9FA6B49FF27902797641C2508858B486CDF",
-      "current_file_sha256": "41EF22EA4224F54D894184AA7FF42499C9018BF0BD9A83DB96203E49D442E25F",
+      "current_file_sha256": "0683346F888922CA075DC36E3EF9CB3AD1900BC47941AA4E4613124478F36FC8",
       "dispositions": [
         {
           "id": "quick_bag_t_code",
@@ -191,7 +191,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i2_runtime_modal_priority_runner.gd",
       "diff_sha256": "DA8F2A7062058321D1B2EB74CC9001753040EB4854706DF773DDF786EF701817",
-      "current_file_sha256": "2BDDF6308B2E05F5E7549C84EBF0032C09BD9F0C4673126B6B0957B50E73B26A",
+      "current_file_sha256": "EE885016EBE737F627877E50F174CBE571F425812C27329534F9658F02479EA0",
       "dispositions": [
         {
           "id": "extract_modal_t4_copy",
@@ -214,7 +214,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i3_hud_item_input_character_runner.gd",
       "diff_sha256": "9696C8FB7E6050B29231B8BB6B35B516FC1163AD2C701906CC21C7ED488399B7",
-      "current_file_sha256": "0591710B6F3D4794FE64F0029D311D7D3201CBCD2171D89A8CF72CB6E4DE4A82",
+      "current_file_sha256": "C905350640AF4DADFAD1E35F42EDF28015021C4A51A5353F823BE963CE326F49",
       "dispositions": [
         {
           "id": "hud_item_t6_copy",
@@ -247,7 +247,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i3_map_local_context_interaction_runner.gd",
       "diff_sha256": "5F4ED1C32C6B5BB1CA906588636EF013D680681A8853E4A3B76AC24A49F41913",
-      "current_file_sha256": "4FA9EFA4B03BB5D238762DEAA777B40BE2166155329A3D39AACE0EC77510810C",
+      "current_file_sha256": "1A507BA257FD53AA19E6F16E80E641431E04D717A6BA68CAC8E1CA027A4B7952",
       "dispositions": [
         {
           "id": "expanded_map_icon_carrier",
@@ -270,7 +270,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i3_production_input_journey_runner.gd",
       "diff_sha256": "9EA477B7B1751E54D92D457C77342DF7E2CAF22D74E058CC30F4C030A0FEE64F",
-      "current_file_sha256": "B55CB8C55B8B44865B579637A39A2F66CCC2E7073F4851EF9CABBFAE29F8F775",
+      "current_file_sha256": "6A96DE6188C1D762755B31B2FA413BE4D92655B90D58A2CF789923A6CC406B34",
       "dispositions": [
         {
           "id": "adjacent_count_fill_anchor",
@@ -299,7 +299,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i3r_font_raster_policy_runner.gd",
       "diff_sha256": "7E060BB3878C6B7A9E5DDEBCC07FE71DEC75F2D9861D7E579FEC9B2A5AD94B84",
-      "current_file_sha256": "0EAA906D95CFFA944AAF7AA3AAE62FA81BA8FD361554AC5505744C5A3E48E6A5",
+      "current_file_sha256": "A8F2BD34E8D162A7FA440F9BA6B3EE5BEB6D4659704ED951E668C80CAC3CEDA3",
       "dispositions": [
         {
           "id": "single_primary_font_policy",
@@ -318,7 +318,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i3r_font_surface_coverage_runner.gd",
       "diff_sha256": "73FB6672CEAAEF4737C2A3EEE2928D138C060F7AF8B30A1518B3BBFC611D13FC",
-      "current_file_sha256": "610B89CD6A98A9CA80E706D2E58416F6387DACD747DCD016EE1A51AD4D6F7F76",
+      "current_file_sha256": "9BA52B05E35EC61ECA852FE6D93F2D1F2131C42949543F54B53A450AA4D0787A",
       "dispositions": [
         {
           "id": "surface_single_font_role",
@@ -337,7 +337,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i3r_out_of_run_production_journey_runner.gd",
       "diff_sha256": "203AB9A8C7C46CFCCE4584D36E8E5387D3DE967280ED73426B85CF04B846AB7E",
-      "current_file_sha256": "6A43294ED329CB489F9D90F517517C78CDA0638BD1C4417A153E567493517DFA",
+      "current_file_sha256": "EE56A9C0ED6EFC826FB4B5B654C80D06747FB82E882595F0A2A1C8B906B998C0",
       "dispositions": [
         {
           "id": "long_term_three_stage_escape",
@@ -360,7 +360,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i3r_player_copy_leakage_runner.gd",
       "diff_sha256": "3D284DC801442A0072F90E27DBEB038FFD486C9F730DABA94870D317011B927B",
-      "current_file_sha256": "F973BFB3C3915C2659D7A7532C038B0FF38C335A70E60757354018B7938435B7",
+      "current_file_sha256": "352DF3F013E56851427F855C8E5319C1693AE3681157BCDDF3493581A672162C",
       "dispositions": [
         {
           "id": "dev_only_root_name_allowlist",
@@ -383,7 +383,7 @@
     {
       "path": "Godot/GraytailGodot/tests/i3r_ui_composition_contract_runner.gd",
       "diff_sha256": "CF72EA5010BC25B377FCEB14D6160299994EB6565598F3F494904FE728C6B361",
-      "current_file_sha256": "ADCB598AE10D8296C51511E07BE167167229324421C3EF4871FB6C625F80DD19",
+      "current_file_sha256": "5A9A57327C8883BE9CBA6556AE4A89A17B30B0E7D18BDB44CBFC445327B85E60",
       "dispositions": [
         {
           "id": "composition_single_font_role",
@@ -410,6 +410,32 @@
           "disposition": "STILL_AUTHORITATIVE",
           "authority_preserved": "Every composition descriptor must keep positive line limits, minimum safe margins and label padding; settings, tooltip, item, world, popup and result consumers must continue using governed roles and shared framed art.",
           "verification": "All unchanged token, safe-area, consumer and license assertions remain active."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i1_combat_refresh_runner.gd",
+      "diff_sha256": "9BEBD63F522669476B66148D08E0440B354B7F535CF3D8A137AFDF9276CFACED",
+      "current_file_sha256": "670332CAAFBF7BF18C84B287FBD9E99FBCB6C0A42235E549028C9C09F7156FCB",
+      "dispositions": [
+        {
+          "id": "i1_combat_refresh_performance_refresh_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "The existing 180 damage/40 full-refresh samples, scope routing and 8 ms combat p95 gate remain authoritative. Additive assertions prevent allocation/rebuilding of hidden map cells and require latest dimensions, public cell data, UI scale and modal focus when reopened.",
+          "verification": "I1_COMBAT_REFRESH retains every prior assertion and adds hidden/open/hidden-update/reopen checks against the real production MapOverlayPanel; no gameplay or performance threshold was weakened."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i1_refresh_scope_runner.gd",
+      "diff_sha256": "18C4FB359E61A434844AC92D81C2E82A02C478F2909F489E95CA6A468DC9195C",
+      "current_file_sha256": "E96B4681D909F194438CCDFEE0BC80C60DD6BC4C23DF5A2F3420A0DEA89CBAF2",
+      "dispositions": [
+        {
+          "id": "i1_refresh_scope_performance_refresh_authority",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All existing visible-only refresh counts, snapshot catch-up, modal copy and combat authority assertions remain authoritative. Additive assertions require independent nested catalog copies, inexpensive single-module lookup, fallback identity and preservation of settled hidden-page controls.",
+          "verification": "I1_REFRESH_SCOPE retains every prior assertion and measures paired catalog construction/lookup samples, mutates returned copies, and compares actual long-term content controls across hiding."
         }
       ]
     }

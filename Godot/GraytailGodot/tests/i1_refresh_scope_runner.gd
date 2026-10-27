@@ -1,6 +1,7 @@
 extends SceneTree
 
 const RunSceneRefreshControllerScript := preload("res://scripts/core/run/run_scene_refresh_controller.gd")
+const LongTermContentFrameworkScript := preload("res://scripts/ui/long_term/long_term_content_framework.gd")
 const PASS_MARKER := "I1_REFRESH_SCOPE=PASS"
 const FAIL_MARKER := "I1_REFRESH_SCOPE=FAIL"
 const PAGE_MAIN := &"main_menu"
@@ -47,6 +48,7 @@ func _run() -> void:
 	canvas.size = Vector2(1280, 720)
 	root.add_child(canvas)
 	_exercise_run_scene_refresh_controller(canvas)
+	_exercise_long_term_catalog()
 
 	var app_shell_script := load("res://scripts/ui/app_shell/app_shell.gd") as Script
 	_require(app_shell_script != null and app_shell_script.can_instantiate(), "AppShell could not be instantiated")
@@ -95,7 +97,10 @@ func _run() -> void:
 	_assert_counts(shell, 1, 2, 2, "visible long-term apply")
 	_require_equal(_page_marker(long_term_page, &"current_app_snapshot"), 3, "long-term received visible update")
 
+	var card_grid := long_term_page.get("card_grid_container") as Control
+	var settled_cards := card_grid.get_children()
 	shell.visible = false
+	_require(card_grid.get_children() == settled_cards, "hiding a settled long-term page rebuilt its content cards")
 	shell.call("apply_snapshot", _snapshot(4, true))
 	_assert_counts(shell, 1, 2, 2, "hidden shell cache only")
 	_require_equal(_page_marker(main_page, &"current_snapshot"), 1, "hidden shell kept main untouched")
@@ -127,6 +132,28 @@ func _run() -> void:
 	canvas.queue_free()
 	await process_frame
 	_finish()
+
+
+func _exercise_long_term_catalog() -> void:
+	var build_samples: Array[int] = []
+	var lookup_samples: Array[int] = []
+	for index in range(16):
+		var started := Time.get_ticks_usec()
+		LongTermContentFrameworkScript.build_modules()
+		build_samples.append(Time.get_ticks_usec() - started)
+		started = Time.get_ticks_usec()
+		LongTermContentFrameworkScript.find_module(&"task_archive")
+		lookup_samples.append(Time.get_ticks_usec() - started)
+	build_samples.sort()
+	lookup_samples.sort()
+	_require(lookup_samples[8] * 2 < build_samples[8], "one-module lookup still costs at least half of constructing the entire catalog: %d/%d usec" % [lookup_samples[8], build_samples[8]])
+	var modules := LongTermContentFrameworkScript.build_modules()
+	modules[0]["secondary_groups"][0]["title"] = "caller mutation"
+	var module := LongTermContentFrameworkScript.find_module(&"task_archive")
+	_require(module["secondary_groups"][0]["title"] == "任务", "catalog callers share mutable nested module data")
+	module["secondary_groups"].clear()
+	_require(LongTermContentFrameworkScript.find_module(&"task_archive")["secondary_groups"].size() == 3, "lookup caller mutation damaged the shared catalog")
+	_require(LongTermContentFrameworkScript.find_module(&"unknown")["module_id"] == &"task_archive", "unknown module no longer falls back to task archive")
 
 
 func _exercise_run_scene_refresh_controller(canvas: Control) -> void:

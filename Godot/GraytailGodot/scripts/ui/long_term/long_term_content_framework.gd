@@ -9,8 +9,22 @@ const STATE_DISABLED := &"disabled"
 const STATE_AVAILABLE := &"available"
 const STATE_ARCHIVE := &"archive"
 
+static var _module_cache: Array = []
+
 
 static func build_modules() -> Array:
+	return _cached_modules().duplicate(true)
+
+
+static func _cached_modules() -> Array:
+	# These definitions contain no save or runtime state. Keep callers' editable
+	# projections separate from the fixed catalog, including nested dictionaries.
+	if _module_cache.is_empty():
+		_module_cache = _build_modules()
+	return _module_cache
+
+
+static func _build_modules() -> Array:
 	return [
 		_module(
 			&"task_archive",
@@ -151,10 +165,10 @@ static func normalize_module_id(module_id: StringName) -> StringName:
 
 static func find_module(module_id: StringName) -> Dictionary:
 	var normalized_module_id := normalize_module_id(module_id)
-	for module: Dictionary in build_modules():
+	for module: Dictionary in _cached_modules():
 		if StringName(module.get("module_id", &"")) == normalized_module_id:
 			return module.duplicate(true)
-	return build_modules()[0].duplicate(true)
+	return _cached_modules()[0].duplicate(true)
 
 
 static func module_summaries(modules: Array = []) -> Dictionary:

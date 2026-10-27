@@ -263,7 +263,8 @@ func set_page_active(value: bool) -> void:
 	if content_tween != null and content_tween.is_valid():
 		content_tween.kill()
 	if module_group != null:
-		_apply_module_immediately(requested_module_id)
+		if switch_running or requested_module_id != displayed_module_id or transition_state != STATE_OPEN:
+			_apply_module_immediately(requested_module_id)
 		module_group.position = LongTermLayoutContractScript.COLLAPSED_OFFSET if archive_collapsed else Vector2.ZERO
 	for particles in ambient_particles:
 		if particles != null:

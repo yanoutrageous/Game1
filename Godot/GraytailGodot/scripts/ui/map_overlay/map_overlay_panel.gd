@@ -232,6 +232,10 @@ func _focus_preferred_control() -> void:
 
 
 func _rebuild_grid() -> void:
+	# Hidden snapshots still update view_model and layout_profile. Opening the
+	# overlay builds the latest cells once instead of rebuilding every run tick.
+	if not is_visible_in_tree():
+		return
 	var grid := get_node_or_null("Panel/Content/Grid") as GridContainer
 	var title := get_node_or_null("Panel/Content/Title") as Label
 	var detail := _ensure_detail_label()

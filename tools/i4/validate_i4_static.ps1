@@ -174,9 +174,9 @@ $legacyAssertions = Invoke-I4Captured `
     }
 if (
     $legacyAssertions.exit_code -ne 0 -or
-    $legacyAssertions.text -notmatch '(?m)^I4_LEGACY_ASSERTION_AUDIT=PASS source_mode=(?:worktree|head) files=15 '
+    $legacyAssertions.text -notmatch '(?m)^I4_LEGACY_ASSERTION_AUDIT=PASS source_mode=(?:worktree|head) files=17 '
 ) {
-    throw 'I4 legacy-assertion disposition audit failed or omitted its exact 15-file marker.'
+    throw 'I4 legacy-assertion disposition audit failed or omitted its exact 17-file marker.'
 }
 $legacyReportMatch = [regex]::Match(
     $legacyAssertions.text,
@@ -325,7 +325,7 @@ Write-I4Json -Value $report -Path $reportPath
 
 $summaryFormat = (
     'I4_STATIC=PASS source_mode={0} quality=12/12 i4_runners={1} protected_dirty=0 ' +
-    'fixed_frame_helpers=0 legacy_assertions=15/15 report={2} sha256={3}'
+    'fixed_frame_helpers=0 legacy_assertions=17/17 report={2} sha256={3}'
 )
 $summaryArguments = [object[]]@(
     $SourceMode,
