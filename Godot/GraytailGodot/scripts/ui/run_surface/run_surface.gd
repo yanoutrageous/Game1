@@ -573,8 +573,8 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var left_width: float = UILayerContractScript.run_left_width(profile)
 	var gameplay_left: float = left_width
 	var gameplay_width: float = max(1.0, width - gameplay_left)
-	var rail_content_left: float = margin + 18.0
-	var rail_content_width: float = max(220.0, left_width - rail_content_left * 2.0)
+	var rail_content_left: float = margin + 12.0
+	var rail_content_width: float = left_width - rail_content_left * 2.0
 	var right_card_size := UILayerContractScript.run_status_card_size(profile)
 	var right_card_width: float = right_card_size.x
 	var body_font_size := Art10UISkinKitScript.scaled_font_size(13 if is_low else (16 if is_high else 14), ui_scale_factor)
@@ -597,7 +597,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	var scanner_title_height := maxf(28.0 + 14.0 * ui_scale_step, ceilf(scanner_title_label.get_theme_font("font").get_height(title_font_size)))
 	var scanner_title_top := 36.0 + 4.0 * ui_scale_step
 	var scanner_summary_height := maxf(20.0, body_line_height)
-	var scanner_map_top: float = scanner_title_top + scanner_title_height + scanner_summary_height + 8.0
+	var scanner_map_top: float = scanner_title_top + scanner_title_height + scanner_summary_height + 4.0
 	var stats_line_spacing := maxi(2, int(round(float(2 if is_low else 3) * ui_scale_factor)))
 	var stats_height: float = maxf(48.0 + 20.0 * ui_scale_step, body_line_height * 2.0 + stats_line_spacing + 16.0)
 	var backpack_row_height := 46.0
@@ -610,7 +610,14 @@ func apply_layout_profile(profile: Dictionary) -> void:
 		else backpack_row_height * backpack_visible_rows + backpack_gap * maxf(0.0, backpack_visible_rows - 1.0)
 	)
 	var backpack_header_height := 24.0 + 10.0 * ui_scale_step
-	var backpack_detail_height := 44.0 + 12.0 * ui_scale_step
+	var detail_font_size := Art10UISkinKitScript.scaled_font_size(Art10UISkinKitScript.font_size(&"hud_small"), ui_scale_factor)
+	var detail_line_count := 3 if current_backpack_item_count > 0 else 1
+	var backpack_detail_height := maxf(
+		44.0 + 12.0 * ui_scale_step,
+		ceilf(backpack_detail_label.get_theme_font("font").get_height(detail_font_size)) * detail_line_count
+		+ backpack_detail_label.get_theme_constant("line_spacing") * (detail_line_count - 1)
+		+ backpack_detail_label.get_theme_stylebox("normal").get_minimum_size().y
+	)
 	var backpack_capacity_height := 24.0 + 12.0 * ui_scale_step
 	var backpack_outer_padding := 6.0
 	var backpack_panel_height := (
@@ -624,6 +631,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	)
 	var map_aspect := float(current_map_dimensions.y) / float(current_map_dimensions.x) if current_map_dimensions.x > 0 else 1.0
 	var preferred_map_height := minf(rail_content_width, (rail_content_width - 16.0) * map_aspect + 16.0)
+	preferred_map_height = minf(preferred_map_height, 300.0 * height / 1080.0)
 	var map_available_height := height - 24.0 - scanner_map_top - stats_height - backpack_panel_height - 20.0
 	var scanner_map_height := maxf(80.0, minf(preferred_map_height, map_available_height))
 	var scanner_stats_top: float = scanner_map_top + scanner_map_height + 10.0
@@ -771,7 +779,7 @@ func apply_layout_profile(profile: Dictionary) -> void:
 	bottom_key_glow_layer.visible = false
 	right_game_fill_layer.visible = false
 
-	_set_rect(scanner_title_label, Rect2(rail_content_left + 2.0, scanner_title_top, rail_content_width - 4.0, scanner_title_height))
+	_set_rect(scanner_title_label, Rect2(rail_content_left + 6.0, scanner_title_top, rail_content_width - 12.0, scanner_title_height))
 	_set_rect(scanner_summary_label, Rect2(rail_content_left + 2.0, scanner_title_top + scanner_title_height, rail_content_width - 4.0, scanner_summary_height))
 	_set_rect(minimap_panel, Rect2(rail_content_left, scanner_map_top, rail_content_width, scanner_map_height))
 	minimap_panel.apply_layout_profile(profile)

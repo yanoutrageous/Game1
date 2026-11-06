@@ -19,7 +19,6 @@ var visible_map_rect: Rect2i = Rect2i()
 const LEGACY_MINIMAP_VALIDATION_MARKER := "MiniMap: icons fallback to text"
 const G10_MINIMAP_CLICK_VALIDATION_MARKER := "MiniMapPanel click opens MapOverlay"
 const UNKNOWN_CELL_ASSET_ID := &"ui.art21.map.cell.unknown"
-const UNKNOWN_CELL_TEXTURE := preload("res://assets/art24/ui/map_tile_unknown.png")
 const EXPLORED_CELL_ASSET_ID := &"ui.art21r2.minimap.hud.explored"
 const SCANNED_CELL_ASSET_ID := &"ui.art21r2.minimap.hud.scanned"
 const FLAGGED_CELL_ASSET_ID := &"icon.minimap.flag"
@@ -165,9 +164,8 @@ func _apply_marker_scale_for_view_model(grid_size: Vector2i) -> void:
 		panel_size.y = 220.0
 	var columns: float = float(max(1, grid_size.x))
 	var rows: float = float(max(1, grid_size.y))
-	var grid_gap: float = 2.0
-	var cell_width: float = floor((panel_size.x - 16.0 - grid_gap * maxf(0.0, columns - 1.0)) / columns)
-	var cell_height: float = floor((panel_size.y - 16.0 - grid_gap * maxf(0.0, rows - 1.0)) / rows)
+	var cell_width: float = floor((panel_size.x - 8.0) / columns)
+	var cell_height: float = floor((panel_size.y - 8.0) / rows)
 	marker_size = Vector2.ONE * clampf(minf(cell_width, cell_height), 1.0, 56.0)
 	marker_font_size = clampi(int(min(marker_size.x, marker_size.y) * 0.62), 9, 20)
 
@@ -178,8 +176,6 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 	var theme_key := StringName(marker.get("theme_key", &"mini.normal"))
 	if asset_id != &"":
 		asset_ref = ContentDBAccessScript.get_asset_ref(asset_id)
-	if asset_id == UNKNOWN_CELL_ASSET_ID:
-		asset_ref = UNKNOWN_CELL_TEXTURE
 	var pos: Vector2i = marker.get("pos", Vector2i.ZERO)
 	var cell := Control.new()
 	cell.name = "MiniMapCell_%d_%d" % [pos.x, pos.y]
@@ -192,8 +188,15 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 	var adjacent := _public_adjacent_mines(marker)
 	var compact := minf(size.x, size.y) < 32.0
 	var layer_layout := MapCellLayerLayoutScript.calculate(size, adjacent >= 0 and not compact)
+	layer_layout["base_rect"] = Rect2(Vector2.ZERO, size)
 	if compact:
-		layer_layout["semantic_rect"] = Rect2(layer_layout["safe_rect"]).grow(-1.0)
+		layer_layout["semantic_rect"] = Rect2(Vector2.ONE, size - Vector2.ONE * 2.0)
+		if adjacent >= 0:
+			var count_font := Art10UISkinKitScript.pixel_font() as Font
+			var count_font_size := clampi(floori(minf(size.x, size.y) / 1.5), 9, 12)
+			var count_size := Vector2(count_font.get_string_size(str(adjacent), HORIZONTAL_ALIGNMENT_LEFT, -1, count_font_size).x + 2.0, count_font.get_height(count_font_size)).ceil()
+			layer_layout["count_rect"] = Rect2(size - count_size, count_size)
+			layer_layout["count_font_size"] = count_font_size
 	cell.set_meta("map_cell_layer_layout", layer_layout.duplicate(true))
 	cell.set_meta("map_cell_clip_contract", true)
 	if asset_ref is Texture2D:
@@ -243,7 +246,7 @@ func _add_marker_node(grid: GridContainer, marker: Dictionary, size: Vector2) ->
 		var ring_style := StyleBoxFlat.new()
 		ring_style.bg_color = Color.TRANSPARENT
 		ring_style.border_color = Color(1.0, 0.79, 0.31, 1.0)
-		ring_style.set_border_width_all(2 if minf(size.x, size.y) >= 24.0 else 1)
+		ring_style.set_border_width_all(1 if compact else 2)
 		current_ring.add_theme_stylebox_override("panel", ring_style)
 		MapCellLayerLayoutScript.apply_rect(current_ring, Rect2(layer_layout["focus_rect"]))
 		cell.add_child(current_ring)
@@ -259,9 +262,10 @@ func _add_adjacent_mine_count(cell: Control, marker: Dictionary, layer_layout: D
 	var count_rect := Rect2(layer_layout.get("count_rect", Rect2()))
 	if not count_rect.has_area():
 		return
+	var compact := minf(cell.custom_minimum_size.x, cell.custom_minimum_size.y) < 32.0
 	var badge_background := ColorRect.new()
 	badge_background.name = "AdjacentMineBadgeBackground"
-	badge_background.color = Color(0.015, 0.025, 0.028, 0.92)
+	badge_background.color = Color.TRANSPARENT if compact else Color(0.015, 0.025, 0.028, 0.92)
 	badge_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge_background.z_index = int(layer_layout.get("count_z", 30))
 	MapCellLayerLayoutScript.apply_rect(badge_background, count_rect)
@@ -270,13 +274,13 @@ func _add_adjacent_mine_count(cell: Control, marker: Dictionary, layer_layout: D
 	count_label.name = "AdjacentMineCount"
 	cell.add_child(count_label)
 	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	count_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM if compact else VERTICAL_ALIGNMENT_CENTER
 	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	count_label.z_index = int(layer_layout.get("count_z", 30)) + 1
 	var count_font := Art10UISkinKitScript.pixel_font()
 	if count_font is Font:
 		count_label.add_theme_font_override("font", count_font as Font)
-	count_label.add_theme_font_size_override("font_size", clampi(int(count_rect.size.y * 0.62), 9, 15))
+	count_label.add_theme_font_size_override("font_size", int(layer_layout.get("count_font_size", clampi(int(count_rect.size.y * 0.62), 9, 15))))
 	count_label.add_theme_constant_override("line_spacing", 0)
 	count_label.add_theme_color_override("font_color", Color(0.98, 0.94, 0.78, 1.0))
 	count_label.add_theme_color_override("font_outline_color", Color(0.02, 0.03, 0.03, 1.0))
@@ -376,12 +380,11 @@ func _apply_child_layout() -> void:
 		panel_size.y = 220.0
 	if grid != null:
 		var grid_size := Vector2(visible_map_rect.size) * marker_size
-		grid_size += Vector2(maxi(0, visible_map_rect.size.x - 1), maxi(0, visible_map_rect.size.y - 1)) * 2.0
 		grid.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		grid.position = ((panel_size - grid_size) * 0.5).floor()
 		grid.size = grid_size
-		grid.add_theme_constant_override("h_separation", 2)
-		grid.add_theme_constant_override("v_separation", 2)
+		grid.add_theme_constant_override("h_separation", 0)
+		grid.add_theme_constant_override("v_separation", 0)
 	if placeholder != null:
 		placeholder.offset_left = 8.0
 		placeholder.offset_top = panel_size.y - 30.0

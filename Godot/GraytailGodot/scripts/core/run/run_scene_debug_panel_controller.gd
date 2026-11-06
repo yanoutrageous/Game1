@@ -17,6 +17,7 @@ var _command_bus: Variant
 var _player_controller: Variant
 var _debug_panel: PanelContainer
 var _session_banner: Label
+var _session_details: Label
 var _protocol_card: Control
 var _debug_x_spin: SpinBox
 var _debug_y_spin: SpinBox
@@ -68,6 +69,7 @@ func bind_targets(
 	_command_bus = command_bus
 	_player_controller = player_controller
 	_debug_panel = debug_panel
+	_session_details = debug_panel.find_child("DebugSessionIdentity", true, false) as Label if debug_panel != null else null
 	_debug_x_spin = debug_x_spin
 	_debug_y_spin = debug_y_spin
 	_debug_log = debug_log
@@ -331,12 +333,14 @@ func _open_panel_internal() -> void:
 		_release_gui_focus()
 		return
 	_debug_panel.visible = true
+	_update_session_banner()
 	call_deferred("_focus_first_panel_control")
 
 
 func close_panel() -> void:
 	if _debug_panel != null:
 		_debug_panel.visible = false
+	_update_session_banner()
 	if _opened_from_pause and _show_pause.is_valid():
 		_show_pause.call()
 		call_deferred("_restore_previous_focus")
@@ -348,6 +352,7 @@ func close_panel() -> void:
 func hide_panel(release_focus: bool = true) -> void:
 	if _debug_panel != null:
 		_debug_panel.visible = false
+	_update_session_banner()
 	_opened_from_pause = false
 	if release_focus:
 		_release_gui_focus()
@@ -712,7 +717,14 @@ static func build_panel_view(parent: Control, close_callback: Callable) -> Dicti
 	var content := VBoxContainer.new()
 	content.name = "DebugOperationButtons"
 	content.add_theme_constant_override("separation", 6)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(content)
+	var session_details := Label.new()
+	session_details.name = "DebugSessionIdentity"
+	session_details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	session_details.add_theme_font_size_override("font_size", 13)
+	session_details.visible = false
+	content.add_child(session_details)
 	var log_label := Label.new()
 	log_label.name = "DebugLastMessage"
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -901,18 +913,24 @@ func _update_session_banner() -> void:
 		return
 	_sandbox_session.refresh_taint(_run_context, _meta_progress_adapter)
 	var snapshot := _sandbox_session.snapshot()
-	_session_banner.visible = bool(snapshot.get("active", false))
-	if not _session_banner.visible:
+	var active := bool(snapshot.get("active", false))
+	_session_banner.visible = active and not is_open()
+	if _session_details != null:
+		_session_details.visible = active
+	if not active:
 		return
+	var status := "TAINTED" if bool(snapshot.get("tainted", false)) else "CLEAN"
+	_session_banner.text = "测试场 · %s" % status
 	var commit_short := _session_commit_id.substr(0, mini(8, _session_commit_id.length()))
-	_session_banner.text = "DEBUG/TEST · %s\ncommit=%s\nprofile=%s\nscenario=%s\nseed=%s\nsave=%s" % [
-		"TAINTED" if bool(snapshot.get("tainted", false)) else "CLEAN",
-		commit_short,
-		snapshot.get("profile_id", ""),
-		snapshot.get("scenario_id", ""),
-		snapshot.get("seed", 0),
-		snapshot.get("save_target", ""),
-	]
+	if _session_details != null:
+		_session_details.text = "DEBUG/TEST · %s\ncommit=%s\nprofile=%s\nscenario=%s\nseed=%s\nsave=%s" % [
+			status,
+			commit_short,
+			snapshot.get("profile_id", ""),
+			snapshot.get("scenario_id", ""),
+			snapshot.get("seed", 0),
+			snapshot.get("save_target", ""),
+		]
 	refresh_session_banner_layout()
 
 
@@ -928,8 +946,7 @@ func refresh_session_banner_layout() -> void:
 	var protocol_rect: Rect2 = G41RuntimeLayout.context_reserved_rects_for_viewport(viewport_size)[0]
 	if is_instance_valid(_protocol_card) and _protocol_card.is_inside_tree():
 		protocol_rect = overlay.get_global_transform().affine_inverse() * _protocol_card.get_global_rect()
-	# Keep the complete sandbox identity in the unused side lane. A top-center
-	# watermark concealed the avatar and north wall even at a valid floor point.
+	# Keep the brief sandbox marker clear of the room and protocol card.
 	_session_banner.position = Vector2(room_bounds.end.x + 12.0, protocol_rect.end.y + 12.0)
 	_session_banner.size.x = maxf(1.0, viewport_size.x - _session_banner.position.x - 12.0)
 	call_deferred("_fit_session_banner_height")

@@ -252,8 +252,8 @@
     },
     {
       "path": "Godot/GraytailGodot/tests/i3_map_local_context_interaction_runner.gd",
-      "diff_sha256": "398A2DFF6FAE3AF32E6EBF0EBFAB139DA2AA0E9245D8A476FAEB097700318115",
-      "current_file_sha256": "D877244A799A845A8680CBBFAAC95BF8D31E0873CD7E44B13B9F352602322472",
+      "diff_sha256": "6663DB1DBC38BC18BA501400ECA256B0A5D3A7C015FDE3E36C5FB867A4D1A44F",
+      "current_file_sha256": "EC49AA6192417B462959A4D2AAA513C7349C30BA0BC5929B826D51EE6E101453",
       "dispositions": [
         {
           "id": "actual_size_overview_20261027",
@@ -283,6 +283,19 @@
           "disposition": "STILL_AUTHORITATIVE",
           "authority_preserved": "Expanded-map semantic states, selection synchronization, focus movement and local-context interaction remain authoritative.",
           "verification": "All unchanged map navigation and interaction assertions remain active."
+        },
+        {
+          "id": "compact_public_counts_20261106",
+          "disposition": "SUPERSEDED_WITH_REPLACEMENT",
+          "old_assertion": "Compact minimap cells below 32px omitted AdjacentMineCount.",
+          "reason": "On 2026-11-06 the user explicitly requested public mine counts as bottom-right foreground digits on all known cells, including player, room-type and flagged cells.",
+          "replacement_requirement_ids": [
+            "I4-R033",
+            "I4-R043"
+          ],
+          "replacement_gate": "Require public 0-8 count text, bottom-right anchoring, foreground z order and readable digit height; preserve full-size icons, unknown-count masking and expanded-map parity.",
+          "scope_preserved": "All public projection, complete dimensions, fog, pointer/keyboard, flag, fast-return and exactly-once assertions remain active. Shared expanded-map layer layout is unchanged.",
+          "verification": "I3 checks the compact current-cell count; I4 checks 0-8 across player, room types and known flag cells at 7x7 and 10x10; real-render fixtures cover 100/125/150 percent."
         }
       ]
     },
@@ -659,6 +672,19 @@
           "replacement_gate": "Use actual movement to the open same-side horizontal lane (.74 or .26,.50), and assert both movement axes are reachable. Retain all mine preparation, natural damage, 14-second deadline, Failed reason, salvage and return-to-main assertions.",
           "scope_preserved": "No health/result/context writes, damage or AI changes, longer deadlines, input bypasses, removed assertions or cleanup whitelist changes.",
           "verification": "geometry_terminal_trace and geometry_terminal_clear_floor retain failure evidence. geometry_terminal_clear_lane passes the original failure journey with genuine parsed inputs and return to main; final full reruns all branches."
+        }
+      ]
+    },
+    {
+      "path": "Godot/GraytailGodot/tests/i3r_tutorial_player_journey_runner.gd",
+      "diff_sha256": "325ADFBE19816CAA23E73A0620AFE2C1B3828D4F4D33661D64714823A8106983",
+      "current_file_sha256": "5FBB945B4D1AD359B9B537CDCAF33F21603899B254DA345818F1A05FE6367612",
+      "dispositions": [
+        {
+          "id": "tutorial_audio_completion_sync_20261106",
+          "disposition": "STILL_AUTHORITATIVE",
+          "authority_preserved": "All tutorial completion, replay, parsed-input, save-reload, zero-growth and return-route assertions remain unchanged. Before teardown, the fixture waits up to three seconds for the existing feedback players to finish and free themselves; timeout is a new failure. Production audio and the exact 18-resource cleanup contract are unchanged.",
+          "verification": "The retained 20261106T063247304Z_547a4537 full run passes tutorial behavior but exposes one unfinished 0.4-second extraction cue at exit. Verbose comparison identifies only sfx_extract.wav beyond the original 18 scripts. The state-based wait observes one player becoming zero, then three fresh original-runner processes pass with exactly the original 18-resource diagnostics. The other 103 full-run cases are retained with unchanged production sources."
         }
       ]
     }

@@ -538,7 +538,7 @@ func _context_item_text(presentation: Dictionary) -> String:
 	return "%s ×%d\n%s" % [
 		String(presentation.get("display_name", "未命名物资")),
 		int(presentation.get("quantity", 1)),
-		" · ".join(item_meta),
+		"·".join(item_meta),
 	]
 
 

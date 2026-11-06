@@ -42,9 +42,28 @@ func _run() -> void:
 	await _check_ground_depth_and_floor_reachability()
 	_check_clear_world_loot_placement()
 	await _check_minimap_texture_bounds()
+	await _check_readable_compact_minimap()
+	await _check_compact_corner_counts()
 	await _check_scaled_capacity_text()
+	await _check_world_item_summary_fit()
 	await _check_debug_chest_spawn()
 	_finish()
+
+
+func _check_world_item_summary_fit() -> void:
+	var popup := G41WorldContextPopup.new()
+	root.add_child(popup)
+	var item := {"instance_id": "summary_fit", "item_id": "col_10", "display_name": "旧工具头", "item_type": "collectible", "rarity": &"tier_3", "collectible_level": 3, "weight": 1}
+	popup.apply_context({"interaction_kind": &"ground_loot", "world_pos": Vector2(640, 360), "items": [item], "backpack_remaining": 10})
+	var button := popup.find_child("ContextItemInfo", true, false) as Button
+	await _wait_until(func() -> bool: return button != null and button.size.x > 156.0, "world item summary row sized")
+	var icon_width := minf(button.icon.get_width(), button.size.y - button.get_theme_stylebox("normal").get_minimum_size().y) if button.icon != null else 0.0
+	var text_width := button.size.x - button.get_theme_stylebox("normal").get_minimum_size().x - icon_width - button.get_theme_constant("h_separation")
+	var summary := button.text.split("\n")[1]
+	_check(summary.contains("3") and summary.contains("重1"), "World item summary lost collection level or weight")
+	_check(button.get_theme_font("font").get_string_size(summary, HORIZONTAL_ALIGNMENT_LEFT, -1, button.get_theme_font_size("font_size")).x <= text_width, "World item summary clips its weight behind the pickup action")
+	popup.queue_free()
+	await popup.tree_exited
 
 
 func _check_scaled_capacity_text() -> void:
@@ -76,6 +95,12 @@ func _check_scaled_capacity_text() -> void:
 				await process_frame
 				await process_frame
 				var capacity := surface.backpack_capacity_label as Label
+				var detail := surface.backpack_detail_label as Label
+				var detail_text_height := detail.get_line_height() * mini(3, detail.get_line_count()) + detail.get_theme_constant("line_spacing") * mini(2, maxi(0, detail.get_line_count() - 1))
+				_check(detail.size.y >= detail_text_height + detail.get_theme_stylebox("normal").get_minimum_size().y, "Backpack detail text exceeds its allocation at UI scale %s" % factor)
+				_check(detail.get_global_rect().end.y + 4.0 <= capacity.get_global_rect().position.y, "Backpack detail overlaps the capacity line")
+				_check(surface.left_rail_art.get_global_rect().end.x <= 270.0, "Permanent left rail exceeds the compact 1280px budget at scale %s" % factor)
+				_check(surface.minimap_panel.size.y <= 200.0, "Permanent scanner exceeds its 720p height budget")
 				_check(is_equal_approx(surface.ui_scale_factor, factor), "Capacity probe did not use requested scale")
 				_check(capacity.size.y >= capacity.get_line_height(), "HUD capacity line is clipped at scale %s: height=%s line=%s" % [factor, capacity.size.y, capacity.get_line_height()])
 				_check(capacity.get_global_rect().end.y <= 708.0, "Actual-size map pushed capacity off screen")
@@ -121,6 +146,66 @@ func _check_minimap_texture_bounds() -> void:
 	_check(minimap.get_node("Grid/MiniMapCell_3_3/SemanticMarker") != null, "Minimap bound check lacks a public player marker")
 	minimap.queue_free()
 	await minimap.tree_exited
+
+
+func _check_readable_compact_minimap() -> void:
+	for edge in [7, 10]:
+		var minimap = MiniMapScene.instantiate()
+		root.add_child(minimap)
+		minimap.size = Vector2(212, 200)
+		var model := MiniMapViewModel.new()
+		model.width = edge
+		model.height = edge
+		model.set_room_markers([
+			{"pos": Vector2i(3, 3), "is_current": true, "known_state": &"explored", "adjacent_mines": 2},
+			{"pos": Vector2i(2, 3), "room_type": &"Normal", "known_state": &"explored", "adjacent_mines": 2},
+		])
+		minimap.apply_view_model(model)
+		await process_frame
+		await process_frame
+		var grid := minimap.get_node("Grid") as GridContainer
+		_check(grid.get_child_count() == edge * edge, "Readable minimap lost complete map dimensions")
+		var first := grid.get_child(0) as Control
+		var second := grid.get_child(1) as Control
+		_check(is_equal_approx(first.get_rect().end.x, second.position.x), "Compact minimap cells still have an empty gutter")
+		_check(first.get_node("CellBase").get_rect().is_equal_approx(Rect2(Vector2.ZERO, first.size)), "Compact minimap base still wastes cell area on fixed insets")
+		var current := grid.get_node("MiniMapCell_3_3") as Control
+		var icon := current.get_node("SemanticMarker") as TextureRect
+		_check(icon.size.x >= current.size.x - 2.0 and icon.size.y >= current.size.y - 2.0, "Compact minimap icon is reduced to a tiny central patch")
+		var count := grid.get_node("MiniMapCell_2_3").get_node_or_null("AdjacentMineCount") as Label
+		_check(count != null and count.text == "2", "Plain known minimap room hides its public risk number")
+		if count != null:
+			_check(count.size.y >= count.get_line_height(), "Compact public risk number is vertically clipped")
+		minimap.queue_free()
+		await minimap.tree_exited
+
+
+func _check_compact_corner_counts() -> void:
+	for edge in [7, 10]:
+		var panel = MiniMapScene.instantiate()
+		root.add_child(panel)
+		panel.size = Vector2(212, 200)
+		var model := MiniMapViewModel.new()
+		model.width = edge
+		model.height = edge
+		var types := [&"Normal", &"Chest", &"Monster", &"Mine", &"Event", &"Exit", &"Normal", &"Unknown", &"Normal"]
+		var markers: Array[Dictionary] = []
+		for value in range(9):
+			markers.append({"pos": Vector2i(value % 5 + 1, value / 5 + 1), "room_type": types[value], "known_state": &"scanned" if value == 7 else &"explored", "is_current": value == 0, "flagged": value == 8, "adjacent_mines": value})
+		model.set_room_markers(markers)
+		panel.apply_view_model(model)
+		await process_frame
+		await process_frame
+		for marker in markers:
+			var cell: Control = panel.get_node("Grid/MiniMapCell_%d_%d" % [marker.pos.x, marker.pos.y])
+			var count := cell.get_node_or_null("AdjacentMineCount") as Label
+			_check(count != null and count.text == str(marker.adjacent_mines), "Compact minimap lost public count on %s" % marker.room_type)
+			if count != null:
+				_check(count.get_rect().end.is_equal_approx(cell.size), "Public count is not anchored at the cell bottom-right")
+				_check(count.z_index > 20, "Public count does not float above room content")
+				_check(count.size.y >= count.get_line_height(), "Corner count clips its digit")
+		panel.queue_free()
+		await panel.tree_exited
 
 
 func _check_player_contact_shadow() -> void:
@@ -251,10 +336,66 @@ func _check_debug_chest_spawn() -> void:
 	var view = run_scene.get("room_runtime_view")
 	await _wait_until(func() -> bool: return view.get("room_type") == &"Chest", "original debug Chest teleport")
 	var player = run_scene.get("player_controller")
+	var map_player_position: Vector2 = player.get_local_position()
+	run_scene.call("_open_map_from_ui", &"keyboard")
+	var overlay = run_scene.get("map_overlay_panel")
+	await _wait_until(func() -> bool: return root.gui_get_focus_owner() is Button and overlay.is_ancestor_of(root.gui_get_focus_owner()), "map initial cell focus")
+	var map_start: Vector2i = overlay.selected_marker.get("pos", Vector2i.ZERO)
+	for step in [{"key": KEY_LEFT, "offset": Vector2i.LEFT}, {"key": KEY_RIGHT, "offset": Vector2i.ZERO}, {"key": KEY_DOWN, "offset": Vector2i.DOWN}, {"key": KEY_UP, "offset": Vector2i.ZERO}]:
+		await _tap_map_key(step.key)
+		var expected: Vector2i = map_start + Vector2i(step.offset)
+		var expected_cell := overlay.get_node("Panel/Content/Grid/MapCell_%d_%d" % [expected.x, expected.y]) as Button
+		_check(root.gui_get_focus_owner() == expected_cell, "Map direction key escaped the adjacent cell onto the overlay root")
+		_check(overlay.visible and expected_cell.is_visible_in_tree(), "Map vanished during keyboard navigation")
+	for key in [KEY_LEFT, KEY_UP, KEY_RIGHT, KEY_DOWN]:
+		for index in range(8):
+			await _tap_map_key(key)
+			var focus := root.gui_get_focus_owner()
+			_check(focus != null and overlay.is_ancestor_of(focus), "Map edge navigation escaped to the background HUD")
+			_check(overlay.visible and overlay.get_node("Panel/Content/Grid").get_child_count() == 49, "Map content disappeared at a directional edge")
+			var selected_outlines := 0
+			for cell in overlay.get_node("Panel/Content/Grid").get_children():
+				if cell.get_node("FocusSelectionOutline").visible:
+					selected_outlines += 1
+			_check(selected_outlines == 1, "Map navigation left stale selection outlines on previous cells")
+	await _tap_map_key(KEY_LEFT)
+	var flag_target: Vector2i = overlay.selected_marker.pos
+	var original_flags := _map_flag_positions(overlay)
+	var expected_flags := original_flags.duplicate()
+	expected_flags.append(str(flag_target))
+	expected_flags.sort()
+	await _tap_map_key(KEY_ENTER)
+	await _wait_until(func() -> bool: return _map_flag_positions(overlay) == expected_flags, "keyboard flag changes only the selected cell")
+	await _tap_map_key(KEY_ENTER)
+	await _wait_until(func() -> bool: return _map_flag_positions(overlay) == original_flags, "keyboard flag cancellation restores only the selected cell")
+	_check(player.get_local_position().is_equal_approx(map_player_position) and not player.input_enabled, "Map navigation moved the character or left gameplay input enabled")
+	await _tap_map_key(KEY_ESCAPE)
+	for close_key in [{"key": KEY_TAB, "shift": false}, {"key": KEY_TAB, "shift": true}, {"key": KEY_ESCAPE, "shift": false}]:
+		await _tap_map_key(KEY_M)
+		await _wait_until(func() -> bool: return overlay.visible and not player.input_enabled, "keyboard map reopen blocks movement")
+		await _tap_map_key(close_key.key, close_key.shift)
+		await _wait_until(func() -> bool: return not overlay.visible and player.input_enabled, "existing map close shortcut restores gameplay input")
+	var move_input := InputEventKey.new()
+	move_input.keycode = KEY_D
+	move_input.physical_keycode = KEY_D
+	move_input.pressed = true
+	Input.parse_input_event(move_input)
+	await _wait_until(func() -> bool: return player.get_local_position().x > map_player_position.x + 0.02, "held movement resumes after closing the map")
+	move_input.pressed = false
+	Input.parse_input_event(move_input)
 	var before: Vector2 = player.get_local_position()
 	var banner := main.find_child("DebugSandboxBanner", true, false) as Label
 	var room_bounds: Rect2 = view.get_global_transform_with_canvas() * G41RuntimeLayout.ROOM_RECT
 	_check(banner != null and not banner.get_global_rect().intersects(room_bounds), "Sandbox status banner covers the traversable room and player")
+	_check(not banner.text.contains("commit=") and not banner.text.contains("save=") and banner.text.split("\n").size() <= 2, "Sandbox banner repeats detailed diagnostic identity")
+	var identity := main.find_child("DebugSessionIdentity", true, false) as Label
+	_check(identity != null and identity.text.contains("commit=") and identity.text.contains("profile=") and identity.text.contains("scenario=") and identity.text.contains("seed=") and identity.text.contains("save="), "Diagnostic panel lost the sandbox identity fields")
+	_check(identity != null and not identity.is_visible_in_tree(), "Detailed sandbox identity is visible outside diagnostics")
+	run_scene.get("debug_panel_controller").open_panel()
+	_check(identity != null and identity.is_visible_in_tree(), "Existing diagnostic panel cannot reveal the full sandbox identity")
+	_check(not banner.is_visible_in_tree(), "Redundant sandbox marker covers the open diagnostic panel header")
+	run_scene.get("debug_panel_controller").close_panel()
+	_check(banner.is_visible_in_tree(), "Closing diagnostics did not restore the sandbox marker")
 	await _wait_until(func() -> bool: return view.context_popup.visible and banner.size.y <= 300.0, "sandbox banner and Chest context layout")
 	_check(Rect2(Vector2.ZERO, root.size).encloses(banner.get_global_rect()), "Sandbox banner extends beyond the visible viewport")
 	_check(not banner.get_global_rect().intersects(view.context_popup.get_global_rect()), "Chest action card covers the sandbox identity")
@@ -276,8 +417,8 @@ func _check_debug_chest_spawn() -> void:
 	manager.begin_transaction()
 	manager.set_draft_value(&"ui_scale_percent", original_scale)
 	manager.apply_draft()
-	_check(not player.call("_position_hits_obstacle", before), "Debug Chest teleport placed the player inside a solid body")
-	_check(view.chest.can_interact_from(before), "Debug Chest inspection spawn is outside interaction reach")
+	_check(not player.call("_position_hits_obstacle", map_player_position), "Debug Chest teleport placed the player inside a solid body")
+	_check(view.chest.can_interact_from(map_player_position), "Debug Chest inspection spawn is outside interaction reach")
 	for index in range(20):
 		player.move_local(Vector2.RIGHT, 1.0 / 60.0)
 	_check(player.get_local_position().x - before.x > 0.10, "Debug Chest spawn remains stuck under held movement")
@@ -292,6 +433,28 @@ func _check_debug_chest_spawn() -> void:
 	manager.apply_draft()
 	manager.confirm_pending_changes()
 	manager.close_transaction()
+
+
+func _tap_map_key(key: int, shift: bool = false) -> void:
+	var input := InputEventKey.new()
+	input.keycode = key
+	input.physical_keycode = key
+	input.shift_pressed = shift
+	input.pressed = true
+	Input.parse_input_event(input)
+	await process_frame
+	input.pressed = false
+	Input.parse_input_event(input)
+	await process_frame
+
+
+func _map_flag_positions(overlay: Control) -> Array[String]:
+	var result: Array[String] = []
+	for marker in overlay.get("view_model").room_markers:
+		if bool(marker.get("flagged", false)):
+			result.append(str(marker.pos))
+	result.sort()
+	return result
 
 
 func _check_rarity_palette_and_item_resolver() -> void:
@@ -529,7 +692,7 @@ func _check_protocol_and_left_density() -> void:
 		var capacity := Rect2(geometry.get("capacity", Rect2()))
 		var rail: Rect2 = surface.left_rail_art.get_rect()
 		_check(header.size.y >= 24.0 and header.size.y <= 34.0, "Backpack header height is outside its compact band")
-		_check(detail.size.y >= 44.0 and detail.size.y <= 56.0, "Backpack detail height is outside 44..56 px")
+		_check(detail.size.y >= 44.0 and detail.encloses(surface.backpack_detail_label.get_rect()), "Backpack detail allocation does not contain its actual text control")
 		_check(capacity.size.y >= 24.0 and capacity.size.y <= 30.0, "Backpack capacity height is outside 24..30 px")
 		_check(_vertical_gap(header, list) >= 4.0 and _vertical_gap(header, list) <= 8.0, "Backpack header/list gap is outside 4..8 px")
 		_check(_vertical_gap(list, detail) >= 4.0 and _vertical_gap(list, detail) <= 8.0, "Backpack list/detail gap is outside 4..8 px")

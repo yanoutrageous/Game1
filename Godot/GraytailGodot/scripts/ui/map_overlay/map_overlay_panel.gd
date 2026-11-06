@@ -135,7 +135,8 @@ func _ready() -> void:
 	Art10UISkinKitScript.apply_player_ui_theme(self)
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	focus_mode = Control.FOCUS_ALL
+	# Keep directional focus on cells rather than the full-screen backdrop.
+	focus_mode = Control.FOCUS_CLICK
 	_apply_layer_order()
 	_rebuild_grid()
 
@@ -770,6 +771,7 @@ func _refresh_selection_presentation() -> void:
 			var selected := _is_selected_marker(marker)
 			_apply_marker_button_style(button, StringName(marker.get("theme_key", &"mini.normal")), state, selected)
 			button.modulate = _modulate_for_marker_state(state, selected)
+			(button.get_node("FocusSelectionOutline") as Control).visible = selected
 		if action_button != null and not selected_marker.is_empty():
 			var selected_pos: Vector2i = selected_marker.get("pos", Vector2i(-1, -1))
 			var selected_button := grid.get_node_or_null("MapCell_%d_%d" % [selected_pos.x, selected_pos.y]) as Button
@@ -786,11 +788,20 @@ func _wire_action_focus_neighbors(grid: GridContainer, action_button: Button) ->
 	for child in grid.get_children():
 		if child is Button:
 			var button := child as Button
-			button.focus_neighbor_bottom = NodePath()
 			buttons.append(button)
+	var columns := maxi(1, grid.columns)
+	# Explicit grid edges keep directional focus inside the open modal.
+	for index in range(buttons.size()):
+		var button := buttons[index]
+		button.focus_neighbor_left = button.get_path_to(buttons[index - 1 if index % columns > 0 else index])
+		button.focus_neighbor_right = button.get_path_to(buttons[index + 1 if index % columns < columns - 1 and index + 1 < buttons.size() else index])
+		button.focus_neighbor_top = button.get_path_to(buttons[index - columns if index >= columns else index])
+		button.focus_neighbor_bottom = button.get_path_to(buttons[index + columns if index + columns < buttons.size() else index])
+	action_button.focus_neighbor_left = NodePath(".")
+	action_button.focus_neighbor_right = NodePath(".")
+	action_button.focus_neighbor_bottom = NodePath(".")
 	if not action_button.visible or action_button.disabled:
 		return
-	var columns := maxi(1, grid.columns)
 	var bottom_start := maxi(0, buttons.size() - columns)
 	for index in range(bottom_start, buttons.size()):
 		buttons[index].focus_neighbor_bottom = buttons[index].get_path_to(action_button)

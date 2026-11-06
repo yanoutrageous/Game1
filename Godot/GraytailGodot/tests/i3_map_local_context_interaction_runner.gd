@@ -67,7 +67,10 @@ func _check_local_minimap(canvas: Control, map_size: int, map_height: int, facto
 	var current_cell := panel.get_node("Grid/MiniMapCell_%d_%d" % [current.x, current.y]) as Control
 	_check(current_cell.get_node_or_null("CurrentPositionRing") != null, "Overview lacks a distinct current-position ring")
 	if minf(panel.marker_size.x, panel.marker_size.y) < 32.0:
-		_check(current_cell.get_node_or_null("AdjacentMineCount") == null, "Compact overview retained an unreadable count badge")
+		var current_count := current_cell.get_node_or_null("AdjacentMineCount") as Label
+		_check(current_count != null and current_count.text == "2", "Compact overview omitted the player's public count")
+		if current_count != null:
+			_check(current_count.get_rect().end.is_equal_approx(current_cell.size) and current_count.z_index > 20, "Compact public count is not a bottom-right foreground layer")
 		_check(not current_cell.tooltip_text.is_empty(), "Compact overview lost access to detailed public information")
 	if is_equal_approx(factor, 1.0):
 		var overlay := MapOverlayScene.instantiate() as MapOverlayPanel
@@ -80,7 +83,7 @@ func _check_local_minimap(canvas: Control, map_size: int, map_height: int, facto
 			var map_cell := overlay.get_node("Panel/Content/Grid/" + String(cell.name).trim_prefix("Mini")) as Control
 			_check(cell.get_meta("map_marker_state") == map_cell.get_meta("map_marker_state"), "Overview and expanded map disagree on public cell state")
 		var expanded_current := overlay.get_node("Panel/Content/Grid/MapCell_%d_%d" % [current.x, current.y])
-		_check(expanded_current.get_node_or_null("AdjacentMineCount") != null, "Expanded map lost the public count suppressed in the compact overview")
+		_check(expanded_current.get_node_or_null("AdjacentMineCount") != null, "Expanded map lost the player's public count")
 		overlay.hide_overlay()
 		overlay.queue_free()
 		await _frames(1)

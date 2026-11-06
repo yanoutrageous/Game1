@@ -500,6 +500,10 @@ func _require(condition: bool, message: String) -> void:
 
 
 func _finish() -> void:
+	# Let the final cue finish before destroying its player and exiting the engine.
+	var feedback := run_scene.get("player_feedback_service") as Node if is_instance_valid(run_scene) else null
+	if feedback != null:
+		_require(await _wait_until(func() -> bool: return feedback.get_child_count() == 0, 3.0), "tutorial_feedback_not_finished")
 	var written_evidence := _write_evidence()
 	if main != null and is_instance_valid(main):
 		main.free()
