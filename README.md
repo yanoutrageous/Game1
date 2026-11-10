@@ -1,5 +1,10 @@
 # Game1 / GraytailGodot
 
+2026-11-10 更新汇总分支：`codex/i5-performance-ui-consolidation`。本轮性能、页面生命周期、
+房间与小地图修正的提交范围、验证结果和保留事项见
+[I5 更新交付说明](docs/handoff/HANDOFF_I5_PERFORMANCE_UI_CONSOLIDATION.md)。
+I5 在本次仅作为更新汇总分支名称；项目活动阶段及 I4 尚未完成的验收状态保持不变。
+
 I4 是当前用户已授权的生产交互收敛与可复现验证阶段，状态为 `ACTIVE`；入口提交为
 `4127bd27a05b75cb5e3071cf6dc87d9287f679a9`。I3R 的 96/96 worktree full、
 132/125/12 矩阵和 269/269 静态复核保持历史机器证据；用户后续生产反馈指出的字体、

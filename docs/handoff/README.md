@@ -1,10 +1,11 @@
 # Handoff Docs
 
 文档状态：阶段交接原文入口。
-最后更新：2026-07-23
+最后更新：2026-11-10
 
-最新闭合交接为 HANDOFF_I3_PLAYER_PERCEPTION_AND_BASELINE_CALIBRATION.md，状态
-CLOSED / PASS_WITH_NOTES。当前无 active stage，I3 关闭不自动授权新阶段。
+当前更新汇总见 [I5 更新交付说明](HANDOFF_I5_PERFORMANCE_UI_CONSOLIDATION.md)。I5 仅为本次
+交付分支名称，I4 仍为活动阶段；有效闭合基线以 `docs/50_stages/active/STAGE_INDEX.md` 为准。
+以下 I3 范围及交付条件保留为 2026-07-23 的历史记录，不代表当前阶段状态。
 
 ## I3 交接范围
 
