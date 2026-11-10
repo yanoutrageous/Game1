@@ -10,6 +10,8 @@ const Art10UISkinKitScript := preload("res://scripts/presentation/art10_ui_skin_
 const Art21UIPlacementContractScript := preload("res://scripts/presentation/art21_ui_placement_contract.gd")
 const Art23LongTermAssetContractScript := preload("res://scripts/presentation/art23_long_term_asset_contract.gd")
 const CharacterPresentationCatalogScript := preload("res://scripts/presentation/character/character_presentation_catalog.gd")
+const MainMenuVisualsScript := preload("res://scripts/ui/main_menu/main_menu_visuals.gd")
+const MainMenuSignButtonScript := preload("res://scripts/ui/main_menu/main_menu_sign_button.gd")
 
 signal navigation_intent_requested(intent: Dictionary)
 signal navigation_transition_requested(intent: Dictionary, profile_id: StringName, entry_id: StringName)
@@ -107,6 +109,7 @@ var transition_presenter = MainMenuTransitionPresenterScript.new()
 var reduced_motion := false
 var page_active := true
 var ui_scale_factor := 1.0
+var main_menu_visuals: Node
 
 
 func build(model: Dictionary = {}, initial_snapshot: Dictionary = {}) -> void:
@@ -127,6 +130,10 @@ func build(model: Dictionary = {}, initial_snapshot: Dictionary = {}) -> void:
 	_build_menu_signpost()
 	_build_ambient_fx()
 	_build_transition_layer()
+	main_menu_visuals = MainMenuVisualsScript.new()
+	main_menu_visuals.name = "MainMenuVisuals"
+	add_child(main_menu_visuals)
+	main_menu_visuals.setup(self)
 	_index_entries()
 	_connect_focus_neighbors()
 	_set_focus_state(&"deploy")
@@ -241,6 +248,7 @@ func cancel_navigation_transition(token: int, restore_focus: bool = true) -> boo
 
 
 func _clear_children() -> void:
+	main_menu_visuals = null
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -461,7 +469,7 @@ func _build_entry(parent: Control, entry: Dictionary) -> void:
 		Color(0.98, 0.79, 0.39),
 		2
 	)
-	var button := Button.new()
+	var button := MainMenuSignButtonScript.new()
 	button.name = "MainMenuEntry_%s" % String(entry_id)
 	button.text = ""
 	button.focus_mode = Control.FOCUS_ALL
@@ -661,6 +669,8 @@ func _set_entry_visual_state(entry_id: StringName, state: StringName) -> void:
 			_set_rect(explore_focus_texture, focus_rect)
 		elif entry_id != &"deploy" and generic_focus_texture != null:
 			_set_rect(generic_focus_texture, focus_rect)
+	if main_menu_visuals != null:
+		main_menu_visuals.refresh_mounts()
 
 
 func _update_character_focus_texture() -> void:
@@ -689,6 +699,8 @@ func _process(delta: float) -> void:
 	if not page_active or not is_visible_in_tree():
 		return
 	scene_elapsed += delta
+	if main_menu_visuals != null:
+		main_menu_visuals.advance(delta, reduced_motion)
 	if not reduced_motion:
 		_update_cloud_drift()
 	if transition_active:
@@ -725,6 +737,8 @@ func _process(delta: float) -> void:
 
 
 func _update_ambient_motion(delta: float) -> void:
+	if main_menu_visuals != null:
+		return
 	for index in range(animated_groups.size()):
 		var group := animated_groups[index]
 		var node := group.get("node") as TextureRect
@@ -816,6 +830,8 @@ func _apply_reduced_motion_pose() -> void:
 		cave_activation_texture.modulate = Color(1, 1, 1, 0.30)
 	if company_activation_texture != null and company_activation_texture.visible:
 		company_activation_texture.modulate = Color(1, 1, 1, 0.30)
+	if main_menu_visuals != null:
+		main_menu_visuals.advance(0.0, true)
 
 
 func _finish_navigation_transition() -> void:

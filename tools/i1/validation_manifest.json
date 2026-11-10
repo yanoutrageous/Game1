@@ -95,6 +95,7 @@
     "I1_UI_INTERACTION",
     "I1_PROJECT_METADATA",
     "ART21_MAIN_MENU_RUNTIME",
+    "I5_MAIN_MENU_VISUALS",
     "I2_CHARACTER_PRESENTATION_SWAP",
     "I2_MAIN_MENU_ANCHOR_TEXT",
     "I2_MAIN_MENU_TRANSITION_COORDINATOR",
@@ -198,6 +199,7 @@
         "I1_UI_INTERACTION",
         "I1_PROJECT_METADATA",
         "ART21_MAIN_MENU_RUNTIME",
+        "I5_MAIN_MENU_VISUALS",
         "I2_CHARACTER_PRESENTATION_SWAP",
         "I2_MAIN_MENU_ANCHOR_TEXT",
         "I2_MAIN_MENU_TRANSITION_COORDINATOR",
@@ -332,6 +334,7 @@
         "I1_ANIMATION_RUNTIME",
         "I1_UI_INTERACTION",
         "ART21_MAIN_MENU_RUNTIME",
+        "I5_MAIN_MENU_VISUALS",
         "I2_CHARACTER_PRESENTATION_SWAP",
         "I2_MAIN_MENU_ANCHOR_TEXT",
         "I2_MAIN_MENU_TRANSITION_COORDINATOR",
@@ -433,6 +436,7 @@
         "I1_UI_INTERACTION",
         "I1_PROJECT_METADATA",
         "ART21_MAIN_MENU_RUNTIME",
+        "I5_MAIN_MENU_VISUALS",
         "I2_CHARACTER_PRESENTATION_SWAP",
         "I2_MAIN_MENU_ANCHOR_TEXT",
         "I2_MAIN_MENU_TRANSITION_COORDINATOR",
@@ -830,6 +834,13 @@
       "pass_marker": "ART21_MAIN_MENU_RUNTIME=PASS entries=4 overlays=2 transitions=4 shortcuts=2 motion_groups=10",
       "fail_marker": "ART21_MAIN_MENU_RUNTIME=FAIL",
       "coverage": ["main_menu", "transitions", "motion"]
+    },
+    {
+      "id": "I5_MAIN_MENU_VISUALS",
+      "relative_path": "Godot/GraytailGodot/tests/i5_main_menu_visuals_runner.gd",
+      "pass_marker": "I5_MAIN_MENU_VISUALS=PASS layers=18 clock_steps=120 ui_scales=3 entries=4 reduced_motion=PASS lifecycle=PASS",
+      "fail_marker": "I5_MAIN_MENU_VISUALS=FAIL",
+      "coverage": ["main_menu", "perspective", "continuous_motion", "reduced_motion", "ui_scale"]
     },
     {
       "id": "I2_CHARACTER_PRESENTATION_SWAP",
@@ -1491,6 +1502,7 @@
         "ERROR: 7 resources still in use at exit (run with --verbose for details)."
       ],
       "ART21_MAIN_MENU_RUNTIME": [],
+      "I5_MAIN_MENU_VISUALS": [],
       "I2_CHARACTER_PRESENTATION_SWAP": [],
       "I2_MAIN_MENU_ANCHOR_TEXT": [],
       "I2_MAIN_MENU_TRANSITION_COORDINATOR": [],
